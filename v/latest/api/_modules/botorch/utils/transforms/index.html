@@ -220,32 +220,22 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        True if at least one model is a `SaasFullyBayesianSingleTaskGP`</span>
 <span class="sd">    """</span>
-    <span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">ModelList</span><span class="p">,</span> <span class="n">ModelListGP</span>
+    <span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">ModelList</span>
     <span class="kn">from</span> <span class="nn">botorch.models.fully_bayesian</span> <span class="kn">import</span> <span class="n">SaasFullyBayesianSingleTaskGP</span>
     <span class="kn">from</span> <span class="nn">botorch.models.fully_bayesian_multitask</span> <span class="kn">import</span> <span class="n">SaasFullyBayesianMultiTaskGP</span>
 
-    <span class="n">full_bayesian_model_cls</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">full_bayesian_model_cls</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">SaasFullyBayesianSingleTaskGP</span><span class="p">,</span>
         <span class="n">SaasFullyBayesianMultiTaskGP</span><span class="p">,</span>
-    <span class="p">]</span>
+    <span class="p">)</span>
 
-    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span>
-        <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">m_cls</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"is_fully_bayesian"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">m_cls</span> <span class="ow">in</span> <span class="n">full_bayesian_model_cls</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">full_bayesian_model_cls</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span>
+        <span class="n">model</span><span class="p">,</span> <span class="s2">"is_fully_bayesian"</span><span class="p">,</span> <span class="kc">False</span>
     <span class="p">):</span>
         <span class="k">return</span> <span class="kc">True</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ModelList</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">models</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span>
-                <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">m_cls</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"is_fully_bayesian"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">m_cls</span> <span class="ow">in</span> <span class="n">full_bayesian_model_cls</span>
-            <span class="p">):</span>
-                <span class="k">return</span> <span class="kc">True</span>
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">ModelListGP</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span>
-                <span class="nb">isinstance</span><span class="p">(</span><span class="n">m_sub</span><span class="p">,</span> <span class="n">m_cls</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">m_sub</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">models</span>
-                <span class="k">for</span> <span class="n">m_cls</span> <span class="ow">in</span> <span class="n">full_bayesian_model_cls</span>
-            <span class="p">):</span>
+            <span class="k">if</span> <span class="n">is_fully_bayesian</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
                 <span class="k">return</span> <span class="kc">True</span>
     <span class="k">return</span> <span class="kc">False</span></div>
 

@@ -819,24 +819,10 @@
 <span class="sd">    """</span>
     <span class="c1"># create tensors representing linear inequality constraints</span>
     <span class="c1"># of the form Ax &gt;= b.</span>
-    <span class="c1"># TODO: remove this error handling functionality in a few releases.</span>
-    <span class="c1"># Context: BoTorch inadvertently supported indices with unusual dtypes.</span>
-    <span class="c1"># This is now not supported.</span>
-    <span class="n">index_dtype_error</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="s2">"Normalizing </span><span class="si">{var_name}</span><span class="s2"> failed. Check that the first "</span>
-        <span class="s2">"element of </span><span class="si">{var_name}</span><span class="s2"> is the correct dtype following "</span>
-        <span class="s2">"the previous IndexError."</span>
-    <span class="p">)</span>
     <span class="k">if</span> <span class="n">inequality_constraints</span><span class="p">:</span>
         <span class="c1"># normalize_linear_constraints is called to solve this issue:</span>
         <span class="c1"># https://github.com/pytorch/botorch/issues/1225</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="c1"># non-standard dtypes used to be supported for indices in constraints;</span>
-            <span class="c1"># this is no longer true</span>
-            <span class="n">constraints</span> <span class="o">=</span> <span class="n">normalize_linear_constraints</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">inequality_constraints</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">IndexError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="n">index_dtype_error</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">var_name</span><span class="o">=</span><span class="s2">"`inequality_constraints`"</span><span class="p">)</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="n">normalize_linear_constraints</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">inequality_constraints</span><span class="p">)</span>
 
         <span class="n">A</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">sparse_to_dense_constraints</span><span class="p">(</span>
             <span class="n">d</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
@@ -849,16 +835,7 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">dense_inequality_constraints</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">equality_constraints</span><span class="p">:</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="c1"># non-standard dtypes used to be supported for indices in constraints;</span>
-            <span class="c1"># this is no longer true</span>
-            <span class="n">constraints</span> <span class="o">=</span> <span class="n">normalize_linear_constraints</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">equality_constraints</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">IndexError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="n">index_dtype_error</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">var_name</span><span class="o">=</span><span class="s2">"`equality_constraints`"</span><span class="p">)</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
-
-        <span class="c1"># normalize_linear_constraints is called to solve this issue:</span>
-        <span class="c1"># https://github.com/pytorch/botorch/issues/1225</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="n">normalize_linear_constraints</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">equality_constraints</span><span class="p">)</span>
         <span class="n">dense_equality_constraints</span> <span class="o">=</span> <span class="n">sparse_to_dense_constraints</span><span class="p">(</span>
             <span class="n">d</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span>
         <span class="p">)</span>
