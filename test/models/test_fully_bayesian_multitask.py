@@ -6,7 +6,7 @@
 
 
 import itertools
-from typing import Optional
+from typing import Optional, List
 
 import torch
 from botorch import fit_fully_bayesian_model_nuts
@@ -72,7 +72,11 @@ EXPECTED_KEYS_NOISE = EXPECTED_KEYS + [
 
 class TestFullyBayesianMultiTaskGP(BotorchTestCase):
     def _get_data_and_model(
-        self, task_rank: Optional[int] = 1, infer_noise: bool = False, **tkwargs
+        self,
+        task_rank: Optional[int] = 1,
+        output_tasks: Optional[List[int]] = None,
+        infer_noise: bool = False,
+        **tkwargs
     ):
         with torch.random.fork_rng():
             torch.manual_seed(0)
@@ -89,6 +93,7 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
                 train_Y=train_Y,
                 train_Yvar=None if infer_noise else train_Yvar,
                 task_feature=4,
+                output_tasks=output_tasks,
                 rank=task_rank,
             )
         return train_X, train_Y, train_Yvar, model
@@ -427,12 +432,10 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
 
     def test_acquisition_functions(self):
         tkwargs = {"device": self.device, "dtype": torch.double}
+        # Using a single output model here since we test with single objective acqfs.
         train_X, train_Y, train_Yvar, model = self._get_data_and_model(
-            task_rank=1, **tkwargs
+            task_rank=1, output_tasks=[0], **tkwargs
         )
-        # Make the model single-output.
-        model._output_tasks = [0]
-        model._num_outputs = 1
         fit_fully_bayesian_model_nuts(
             model, warmup_steps=8, num_samples=5, thinning=2, disable_progbar=True
         )
