@@ -527,7 +527,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
         return new_model
 
 
-class ModelListGPyTorchModel(GPyTorchModel, ModelList, ABC):
+class ModelListGPyTorchModel(ModelList, GPyTorchModel, ABC):
     r"""Abstract base class for models based on multi-output GPyTorch models.
 
     This is meant to be used with a gpytorch ModelList wrapper for independent
