@@ -430,6 +430,9 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
         train_X, train_Y, train_Yvar, model = self._get_data_and_model(
             task_rank=1, **tkwargs
         )
+        # Make the model single-output.
+        model._output_tasks = [0]
+        model._num_outputs = 1
         fit_fully_bayesian_model_nuts(
             model, warmup_steps=8, num_samples=5, thinning=2, disable_progbar=True
         )
