@@ -6,7 +6,7 @@
 
 
 import itertools
-from typing import Optional, List
+from typing import List, Optional
 
 import torch
 from botorch import fit_fully_bayesian_model_nuts
