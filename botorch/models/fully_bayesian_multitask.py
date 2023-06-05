@@ -209,8 +209,17 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
             train_Yvar: Observed noise variance (n x 1). If None, we infer the noise.
                 Note that the inferred noise is common across all tasks.
             task_feature: The index of the task feature (`-d <= task_feature <= d`).
+            output_tasks: A list of task indices for which to compute model
+                outputs for. If omitted, return outputs for all task indices.
             rank: The num of learned task embeddings to be used in the task kernel.
                 If omitted, set it to be 1.
+            outcome_transform: An outcome transform that is applied to the
+                training data during instantiation and to the posterior during
+                inference (that is, the `Posterior` obtained by calling
+                `.posterior` on the model will be on the original scale).
+            input_transform: An input transform that is applied to the inputs `X`
+                in the model's forward pass.
+            pyro_model: Optional `PyroModel`, defaults to `MultitaskSaasPyroModel`.
         """
         if not (
             train_X.ndim == train_Y.ndim == 2
