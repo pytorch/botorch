@@ -17,6 +17,7 @@ from botorch.models.model import Model, ModelList
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.multitask import MultiTaskGP
 from botorch.utils.sampling import manual_seed
+from botorch.utils.transforms import is_fully_bayesian
 from gpytorch.kernels import Kernel, MaternKernel, RBFKernel, ScaleKernel
 from linear_operator.utils.cholesky import psd_safe_cholesky
 from torch import Tensor
@@ -42,6 +43,7 @@ class GPDraw(Module):
         """
         super().__init__()
         self._model = deepcopy(model)
+        self._num_outputs = self._model.num_outputs
         seed = torch.tensor(
             seed if seed is not None else torch.randint(0, 1000000, (1,)).item()
         )
@@ -82,6 +84,9 @@ class GPDraw(Module):
             X_eval = torch.cat([self.Xs, X], dim=-2)
         posterior = self._model.posterior(X=X_eval)
         base_sample_shape = posterior.base_sample_shape
+        if self._num_outputs == 1:
+            # Needed to comply with base sample shape assumptions made here.
+            base_sample_shape = base_sample_shape + (1,)
         # re-use old samples
         bs_shape = base_sample_shape[:-2] + X.shape[-2:-1] + base_sample_shape[-1:]
         with manual_seed(seed=int(self._seed)):
@@ -92,10 +97,15 @@ class GPDraw(Module):
         else:
             base_samples = torch.cat([self._base_samples, new_base_samples], dim=-2)
         # TODO: Deduplicate repeated evaluations / deal with numerical degeneracies
-        # that could lead to non-determinsitic evaluations. We could use SVD- or
+        # that could lead to non-deterministic evaluations. We could use SVD- or
         # eigendecomposition-based sampling, but we probably don't want to use this
         # by default for performance reasonse.
-        Ys = posterior.rsample(torch.Size(), base_samples=base_samples)
+        Ys = posterior.rsample_from_base_samples(
+            torch.Size(),
+            base_samples=base_samples.squeeze(-1)
+            if self._num_outputs == 1
+            else base_samples,
+        )
         self.register_buffer("_Xs", X_eval)
         self.register_buffer("_Ys", Ys)
         self.register_buffer("_seed", seed)
@@ -219,7 +229,20 @@ class RandomFourierFeatures(Module):
             a `batch_shape`, the output `batch_shape` will be
             `(sample_shape) x (kernel_batch_shape)`.
         """
-        self._check_forward_X_shape_compatibility(X)
+        try:
+            self._check_forward_X_shape_compatibility(X)
+        except ValueError as e:
+            # A workaround to support batched SAAS models.
+            # TODO: Support batch evaluation of multi-sample RFFs as well.
+            # Multi-sample RFFs have input batch as the 0-th dimension,
+            # which is different than other posteriors which would have
+            # the sample shape as the 0-th dimension.
+            if len(self.kernel_batch_shape) == 1:
+                X = X.unsqueeze(-3)
+                self._check_forward_X_shape_compatibility(X)
+            else:
+                raise e
+
         # X is of shape (additional_batch_shape) x (sample_shape)
         # x (kernel_batch_shape) x n x d.
         # Weights is of shape (sample_shape) x (kernel_batch_shape) x d x num_rff.
@@ -453,7 +476,7 @@ def get_gp_samples(
         phi_X = basis(train_X)
         # Sample weights from bayesian linear model.
         # weights.sample().shape == (n_samples, batch_shape_input, num_rff_features)
-        sigma_sq = _model.likelihood.noise
+        sigma_sq = _model.likelihood.noise.mean(dim=-1, keepdim=True)
         if len(basis.kernel_batch_shape) > 0:
             sigma_sq = sigma_sq.unsqueeze(-2)
         mvn = get_weights_posterior(
@@ -480,6 +503,7 @@ def get_gp_samples(
                 models[m].outcome_transform = _octf
             if _intf is not None:
                 base_gp_samples.models[m].input_transform = _intf
+        base_gp_samples.is_fully_bayesian = is_fully_bayesian(model=model)
         return base_gp_samples
     elif n_samples > 1:
         base_gp_samples = get_deterministic_model_multi_samples(
@@ -498,4 +522,5 @@ def get_gp_samples(
     if octf is not None:
         base_gp_samples.outcome_transform = octf
         model.outcome_transform = octf
+    base_gp_samples.is_fully_bayesian = is_fully_bayesian(model=model)
     return base_gp_samples

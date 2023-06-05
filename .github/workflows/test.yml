@@ -7,7 +7,8 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-
+# TODO: Revert to PyTorch nightly after Pyro supports PyTorch 2.0
+# TODO: Also, revert the corresponding change in requirements.txt
 jobs:
 
   tests-and-coverage-pip:
@@ -19,16 +20,16 @@ jobs:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
         python-version: ["3.8", "3.10"]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       env:
         ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
-        pip install --pre torch -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
+        pip install torch torchvision
         pip install git+https://github.com/cornellius-gp/linear_operator.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git
         pip install .[test]
@@ -49,7 +50,7 @@ jobs:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
         python-version: ["3.8", "3.10"]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: conda-incubator/setup-miniconda@v2
       with:
         miniconda-version: "latest"
@@ -60,7 +61,7 @@ jobs:
       env:
         ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
-        conda install -y -c pytorch-nightly pytorch cpuonly
+        conda install pytorch torchvision -c pytorch
         conda install -y pip scipy sphinx pytest flake8
         pip install git+https://github.com/cornellius-gp/linear_operator.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git

@@ -44,6 +44,7 @@ from linear_operator.operators import (
     LinearOperator,
     ZeroLinearOperator,
 )
+from linear_operator.settings import _fast_solves
 from torch import Tensor
 from torch.nn import ModuleList, Parameter, ParameterList
 
@@ -158,6 +159,19 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
     they would have a 6,000 x 6,000 covariance matrix, with 36 million entries.
     The Kronecker structure allows representing this as a product of 10x10,
     20x20, and 30x30 covariance matrices, with only 1,400 entries.
+
+    NOTE: This model requires the use of specialized Kronecker solves in
+    linear operator, which are disabled by default in BoTorch. These are enabled
+    by default in the `HigherOrderGP.posterior` call. However, they need to be
+    manually enabled by the user during model fitting.
+
+    Example:
+        >>> from linear_operator.settings import _fast_solves
+        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> mll = ExactMarginalLogLikelihood(model.likelihood, model)
+        >>> with _fast_solves(True):
+        >>>     fit_gpytorch_mll_torch(mll)
+        >>> samples = model.posterior(test_X).rsample()
     """
 
     def __init__(
@@ -448,6 +462,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         with ExitStack() as es:
             es.enter_context(gpt_posterior_settings())
             es.enter_context(fast_pred_var(True))
+            es.enter_context(_fast_solves(True))
 
             # we need to skip posterior variances here
             es.enter_context(skip_posterior_variances(True))
@@ -472,7 +487,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
             # we now compute the data covariances for the training data, the testing
             # data, the joint covariances, and the test train cross-covariance
             train_train_covar = self.prediction_strategy.lik_train_train_covar.detach()
-            base_train_train_covar = train_train_covar.lazy_tensor
+            base_train_train_covar = train_train_covar.linear_op
 
             data_train_covar = base_train_train_covar.linear_ops[0]
             data_covar = self.covar_modules[0]
@@ -520,7 +535,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
             # return a specialized Posterior to allow for sampling
             # cloning the full covar allows backpropagation through it
             posterior = HigherOrderGPPosterior(
-                mvn=mvn,
+                distribution=mvn,
                 train_targets=self.train_targets.unsqueeze(-1),
                 train_train_covar=train_train_covar,
                 test_train_covar=test_train_covar,
@@ -556,7 +571,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         )
         full_test_train_covar_tuple = (test_train_covar,) + jcm_linops
 
-        train_evals, train_evecs = full_train_train_covar.symeig(eigenvectors=True)
+        train_evals, train_evecs = full_train_train_covar.eigh()
         # (\kron \Lambda_i + \sigma^2 I)^{-1}
         train_inv_evals = DiagLinearOperator(
             1.0 / (train_evals + self.likelihood.noise)
@@ -574,5 +589,5 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         #  (\kron K_i S_i * K_i S_i) \tilde{\Lambda}^{-1}
         test_train_pred_covar = test_train_hadamard.matmul(train_inv_evals).sum(dim=-1)
 
-        pred_variances = full_test_test_covar.diag() - test_train_pred_covar
+        pred_variances = full_test_test_covar.diagonal() - test_train_pred_covar
         return pred_variances

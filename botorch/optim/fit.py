@@ -43,12 +43,12 @@ from botorch.optim.stopping import ExpMAStoppingCriterion
 from botorch.optim.utils import (
     _filter_kwargs,
     _get_extra_mll_args,
-    DEFAULT,
     get_name_filter,
     get_parameters_and_bounds,
     TorchAttr,
 )
 from botorch.optim.utils.model_utils import get_parameters
+from botorch.utils.types import DEFAULT
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.settings import fast_computations
 from numpy import ndarray
@@ -79,6 +79,7 @@ def fit_gpytorch_mll_scipy(
     method: str = "L-BFGS-B",
     options: Optional[Dict[str, Any]] = None,
     callback: Optional[Callable[[Dict[str, Tensor], OptimizationResult], None]] = None,
+    timeout_sec: Optional[float] = None,
 ) -> OptimizationResult:
     r"""Generic scipy.optimized-based fitting routine for GPyTorch MLLs.
 
@@ -98,6 +99,8 @@ def fit_gpytorch_mll_scipy(
         options: Dictionary of solver options, passed along to scipy.minimize.
         callback: Optional callback taking `parameters` and an OptimizationResult as its
             sole arguments.
+        timeout_sec: Timeout in seconds after which to terminate the fitting loop
+            (note that timing out can result in bad fits!).
 
     Returns:
         The final OptimizationResult.
@@ -121,6 +124,7 @@ def fit_gpytorch_mll_scipy(
         method=method,
         options=options,
         callback=callback,
+        timeout_sec=timeout_sec,
     )
     if result.status != OptimizationStatus.SUCCESS:
         warn(
@@ -143,6 +147,7 @@ def fit_gpytorch_mll_torch(
     optimizer: Union[Optimizer, Callable[..., Optimizer]] = Adam,
     scheduler: Optional[Union[_LRScheduler, Callable[..., _LRScheduler]]] = None,
     callback: Optional[Callable[[Dict[str, Tensor], OptimizationResult], None]] = None,
+    timeout_sec: Optional[float] = None,
 ) -> OptimizationResult:
     r"""Generic torch.optim-based fitting routine for GPyTorch MLLs.
 
@@ -164,6 +169,8 @@ def fit_gpytorch_mll_torch(
             that takes an `Optimizer` instance and returns an `_LRSchedule`.
         callback: Optional callback taking `parameters` and an OptimizationResult as its
             sole arguments.
+        timeout_sec: Timeout in seconds after which to terminate the fitting loop
+            (note that timing out can result in bad fits!).
 
     Returns:
         The final OptimizationResult.
@@ -191,6 +198,7 @@ def fit_gpytorch_mll_torch(
         step_limit=step_limit,
         stopping_criterion=stopping_criterion,
         callback=callback,
+        timeout_sec=timeout_sec,
     )
 
 

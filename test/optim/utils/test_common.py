@@ -10,30 +10,62 @@ from functools import partial
 from warnings import catch_warnings, warn
 
 import numpy as np
-from botorch.optim.utils import _handle_numerical_errors, _warning_handler_template
+from botorch.optim.utils import (
+    _filter_kwargs,
+    _handle_numerical_errors,
+    _warning_handler_template,
+)
 from botorch.utils.testing import BotorchTestCase
 from linear_operator.utils.errors import NanError, NotPSDError
 
 
 class TestUtilsCommon(BotorchTestCase):
+    def test__filter_kwargs(self) -> None:
+        def mock_adam(params, lr: float = 0.001) -> None:
+            return  # pragma: nocover
+
+        kwargs = {"lr": 0.01, "maxiter": 3000}
+        expected_msg = (
+            r"Keyword arguments \['maxiter'\] will be ignored because they are "
+            r"not allowed parameters for function mock_adam. Allowed parameters "
+            r"are \['params', 'lr'\]."
+        )
+
+        with self.assertWarnsRegex(Warning, expected_msg):
+            valid_kwargs = _filter_kwargs(mock_adam, **kwargs)
+        self.assertEqual(set(valid_kwargs.keys()), {"lr"})
+
+        mock_partial = partial(mock_adam, lr=2.0)
+        expected_msg = (
+            r"Keyword arguments \['maxiter'\] will be ignored because they are "
+            r"not allowed parameters. Allowed parameters are \['params', 'lr'\]."
+        )
+        with self.assertWarnsRegex(Warning, expected_msg):
+            valid_kwargs = _filter_kwargs(mock_partial, **kwargs)
+        self.assertEqual(set(valid_kwargs.keys()), {"lr"})
+
     def test_handle_numerical_errors(self):
-        x = np.zeros(1)
+        x = np.zeros(1, dtype=np.float64)
 
         with self.assertRaisesRegex(NotPSDError, "foo"):
-            _handle_numerical_errors(error=NotPSDError("foo"), x=x)
+            _handle_numerical_errors(NotPSDError("foo"), x=x)
 
         for error in (
             NanError(),
             RuntimeError("singular"),
             RuntimeError("input is not positive-definite"),
         ):
-            fake_loss, fake_grad = _handle_numerical_errors(error=error, x=x)
+            fake_loss, fake_grad = _handle_numerical_errors(error, x=x)
             self.assertTrue(np.isnan(fake_loss))
             self.assertEqual(fake_grad.shape, x.shape)
             self.assertTrue(np.isnan(fake_grad).all())
 
+        fake_loss, fake_grad = _handle_numerical_errors(error, x=x, dtype=np.float32)
+        self.assertEqual(np.float32, fake_loss.dtype)
+        self.assertEqual(np.float32, fake_grad.dtype)
+
         with self.assertRaisesRegex(RuntimeError, "foo"):
-            _handle_numerical_errors(error=RuntimeError("foo"), x=x)
+            _handle_numerical_errors(RuntimeError("foo"), x=x)
 
     def test_warning_handler_template(self):
         with catch_warnings(record=True) as ws:

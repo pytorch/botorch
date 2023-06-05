@@ -27,6 +27,7 @@ from botorch.acquisition.input_constructors import (
     get_best_f_analytic,
     get_best_f_mc,
 )
+from botorch.acquisition.joint_entropy_search import qJointEntropySearch
 from botorch.acquisition.knowledge_gradient import (
     qKnowledgeGradient,
     qMultiFidelityKnowledgeGradient,
@@ -67,8 +68,9 @@ from botorch.acquisition.utils import (
     project_to_target_fidelity,
 )
 from botorch.exceptions.errors import UnsupportedError
+from botorch.models import SingleTaskGP
 from botorch.models.deterministic import FixedSingleSampleModel
-from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
+from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.constraints import get_outcome_constraint_transforms
 from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
@@ -294,11 +296,14 @@ class TestAnalyticAcquisitionFunctionInputConstructors(
         mock_model.num_outputs = 3
         mock_model.train_inputs = [None]
         mock_pref_model = mock.Mock()
+
+        # test basic construction
         kwargs = c(model=mock_model, pref_model=mock_pref_model)
         self.assertTrue(isinstance(kwargs["outcome_model"], FixedSingleSampleModel))
         self.assertTrue(kwargs["pref_model"] is mock_pref_model)
         self.assertTrue(kwargs["previous_winner"] is None)
 
+        # test previous_winner
         previous_winner = torch.randn(3)
         kwargs = c(
             model=mock_model,
@@ -306,6 +311,16 @@ class TestAnalyticAcquisitionFunctionInputConstructors(
             previous_winner=previous_winner,
         )
         self.assertTrue(torch.equal(kwargs["previous_winner"], previous_winner))
+
+        # test sample_multiplier
+        torch.manual_seed(123)
+        kwargs = c(
+            model=mock_model,
+            pref_model=mock_pref_model,
+            sample_multiplier=1e6,
+        )
+        # w by default is drawn from std normal and very unlikely to be > 10.0
+        self.assertTrue((kwargs["outcome_model"].w.abs() > 10.0).all())
 
 
 class TestMCAcquisitionFunctionInputConstructors(
@@ -375,7 +390,7 @@ class TestMCAcquisitionFunctionInputConstructors(
         self.assertIsNone(kwargs["objective"])
         self.assertIsNone(kwargs["X_pending"])
         self.assertIsNone(kwargs["sampler"])
-        self.assertFalse(kwargs["prune_baseline"])
+        self.assertTrue(kwargs["prune_baseline"])
         self.assertTrue(torch.equal(kwargs["X_baseline"], self.blockX_blockY[0].X()))
         with self.assertRaisesRegex(ValueError, "Field `X` must be shared"):
             c(model=mock_model, training_data=self.multiX_multiY)
@@ -384,13 +399,13 @@ class TestMCAcquisitionFunctionInputConstructors(
             model=mock_model,
             training_data=self.blockX_blockY,
             X_baseline=X_baseline,
-            prune_baseline=True,
+            prune_baseline=False,
         )
         self.assertEqual(kwargs["model"], mock_model)
         self.assertIsNone(kwargs["objective"])
         self.assertIsNone(kwargs["X_pending"])
         self.assertIsNone(kwargs["sampler"])
-        self.assertTrue(kwargs["prune_baseline"])
+        self.assertFalse(kwargs["prune_baseline"])
         self.assertTrue(torch.equal(kwargs["X_baseline"], X_baseline))
 
     def test_construct_inputs_qPI(self):
@@ -576,9 +591,8 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         objective_thresholds = torch.rand(2)
 
         # Test defaults
-        mean = torch.rand(1, 2)
-        variance = torch.ones(1, 2)
-        mm = MockModel(MockPosterior(mean=mean, variance=variance))
+        mm = SingleTaskGP(torch.rand(1, 2), torch.rand(1, 2))
+        mean = mm.posterior(self.blockX_blockY[0].X()).mean
         kwargs = c(
             model=mm,
             training_data=self.blockX_blockY,
@@ -598,6 +612,18 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         self.assertIsNone(kwargs["constraints"])
         self.assertEqual(kwargs["eta"], 1e-3)
 
+        # Test IID sampler
+        kwargs = c(
+            model=mm,
+            training_data=self.blockX_blockY,
+            objective_thresholds=objective_thresholds,
+            qmc=False,
+            mc_samples=64,
+        )
+        sampler = kwargs["sampler"]
+        self.assertIsInstance(sampler, IIDNormalSampler)
+        self.assertEqual(sampler.sample_shape, torch.Size([64]))
+
         # Test outcome constraints and custom inputs
         mean = torch.tensor([[1.0, 0.25], [0.5, 1.0]])
         variance = torch.ones(1, 1)
@@ -615,8 +641,6 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             X_pending=X_pending,
             alpha=0.05,
             eta=1e-2,
-            qmc=False,
-            mc_samples=64,
         )
         self.assertIsInstance(kwargs["objective"], WeightedMCMultiOutputObjective)
         ref_point_expected = objective_thresholds * weights
@@ -627,9 +651,6 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         self.assertTrue(torch.equal(partitioning._neg_ref_point, -ref_point_expected))
         Y_expected = mean[:1] * weights
         self.assertTrue(torch.equal(partitioning._neg_Y, -Y_expected))
-        sampler = kwargs["sampler"]
-        self.assertIsInstance(sampler, IIDNormalSampler)
-        self.assertEqual(sampler.sample_shape, torch.Size([64]))
         self.assertTrue(torch.equal(kwargs["X_pending"], X_pending))
         cons_tfs = kwargs["constraints"]
         self.assertEqual(len(cons_tfs), 1)
@@ -649,12 +670,10 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
                 X_pending=X_pending,
                 alpha=0.05,
                 eta=1e-2,
-                qmc=False,
-                mc_samples=64,
             )
 
         # Test custom sampler
-        custom_sampler = SobolQMCNormalSampler(num_samples=16, seed=1234)
+        custom_sampler = SobolQMCNormalSampler(sample_shape=torch.Size([16]), seed=1234)
         kwargs = c(
             model=mm,
             training_data=self.blockX_blockY,
@@ -669,12 +688,10 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
     def test_construct_inputs_qNEHVI(self):
         c = get_acqf_input_constructor(qNoisyExpectedHypervolumeImprovement)
         objective_thresholds = torch.rand(2)
-        mock_model = mock.Mock()
-        mock_model.num_outputs = 2
 
         # Test defaults
         kwargs = c(
-            model=mock_model,
+            model=SingleTaskGP(torch.rand(1, 2), torch.rand(1, 2)),
             training_data=self.blockX_blockY,
             objective_thresholds=objective_thresholds,
         )
@@ -692,8 +709,11 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         self.assertTrue(kwargs["cache_pending"])
         self.assertEqual(kwargs["max_iep"], 0)
         self.assertTrue(kwargs["incremental_nehvi"])
+        self.assertTrue(kwargs["cache_root"])
 
         # Test check for block designs
+        mock_model = mock.Mock()
+        mock_model.num_outputs = 2
         with self.assertRaisesRegex(ValueError, "Field `X` must be shared"):
             c(
                 model=mock_model,
@@ -705,7 +725,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         weights = torch.rand(2)
         objective = WeightedMCMultiOutputObjective(weights=weights)
         X_baseline = torch.rand(2, 2)
-        sampler = IIDNormalSampler(num_samples=4)
+        sampler = IIDNormalSampler(sample_shape=torch.Size([4]))
         outcome_constraints = (torch.tensor([[0.0, 1.0]]), torch.tensor([[0.5]]))
         X_pending = torch.rand(1, 2)
         kwargs = c(
@@ -723,6 +743,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             cache_pending=False,
             max_iep=1,
             incremental_nehvi=False,
+            cache_root=False,
         )
         ref_point_expected = objective(objective_thresholds)
         self.assertTrue(torch.equal(kwargs["ref_point"], ref_point_expected))
@@ -743,6 +764,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         self.assertFalse(kwargs["cache_pending"])
         self.assertEqual(kwargs["max_iep"], 1)
         self.assertFalse(kwargs["incremental_nehvi"])
+        self.assertFalse(kwargs["cache_root"])
 
         # Test with risk measures.
         with self.assertRaisesRegex(UnsupportedError, "feasibility-weighted"):
@@ -864,7 +886,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             cm = kwargs["cost_aware_utility"].cost_model
             w = torch.tensor(list(fidelity_weights.values()), dtype=cm.weights.dtype)
             self.assertEqual(cm.fixed_cost, cost_intercept)
-            self.assertTrue(torch.allclose(cm.weights, w))
+            self.assertAllClose(cm.weights, w)
 
         with self.subTest("test_missing_fidelity_weights"):
             kwargs = construct_inputs_mf_base(
@@ -875,7 +897,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
                 cost_intercept=cost_intercept,
             )
             cm = kwargs["cost_aware_utility"].cost_model
-            self.assertTrue(torch.allclose(cm.weights, torch.ones_like(cm.weights)))
+            self.assertAllClose(cm.weights, torch.ones_like(cm.weights))
 
         with self.subTest("test_mismatched_weights"):
             with self.assertRaisesRegex(
@@ -948,3 +970,29 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             inputs_mfmes = input_constructor(**constructor_args)
             inputs_test = {"foo": 0, "bar": 1, "current_value": current_value}
             self.assertEqual(inputs_mfmes, inputs_test)
+
+    def test_construct_inputs_jes(self):
+        func = get_acqf_input_constructor(qJointEntropySearch)
+        # we need to run optimize_posterior_samples, so we sort of need
+        # a real model as there is no other (apparent) option
+        model = SingleTaskGP(self.blockX_blockY[0].X(), self.blockX_blockY[0].Y())
+
+        kwargs = func(
+            model=model,
+            training_data=self.blockX_blockY,
+            objective=LinearMCObjective(torch.rand(2)),
+            bounds=self.bounds,
+            num_optima=17,
+            maximize=False,
+        )
+
+        self.assertFalse(kwargs["maximize"])
+        self.assertEqual(
+            self.blockX_blockY[0].X().dtype, kwargs["optimal_inputs"].dtype
+        )
+        self.assertEqual(len(kwargs["optimal_inputs"]), 17)
+        self.assertEqual(len(kwargs["optimal_outputs"]), 17)
+        # asserting that, for the non-batch case, the optimal inputs are
+        # of shape N x D and outputs are N x 1
+        self.assertEqual(len(kwargs["optimal_inputs"].shape), 2)
+        self.assertEqual(len(kwargs["optimal_outputs"].shape), 2)

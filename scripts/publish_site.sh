@@ -4,6 +4,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+set -e
+
 usage() {
   echo "Usage: $0 [-d] [-v VERSION]"
   echo ""
@@ -141,9 +143,14 @@ if [[ $VERSION == false ]]; then
   # Push changes to gh-pages
   cd botorch-gh-pages || exit
   git add .
-  git commit -m 'Update latest version of site'
-  git push
-
+  if [[ -z $(git diff --cached --exit-code) ]]; then
+    # Exit gracefully if there's nothing to commit.
+    echo "Nothing to commit"
+  else
+    # Commit & push if there's something to commit.
+    git commit -m 'Update latest version of site'
+    git push
+  fi
 else
   echo "-----------------------------------------"
   echo "Building new version ($VERSION) of site "
@@ -218,11 +225,17 @@ else
   rsync -avh ./new-site/ ./botorch-gh-pages/
   cd botorch-gh-pages || exit
   git add --all
-  git commit -m "Publish version ${VERSION} of site"
-  git push
-
+  if [[ -z $(git diff --cached --exit-code) ]]; then
+    # Exit gracefully if there's nothing to commit.
+    echo "Nothing to commit"
+  else
+    # Commit & push if there's something to commit.
+    git commit -m "Publish version ${VERSION} of site"
+    git push
+  fi
 fi
 
 # Clean up
+echo "Cleaning up temporary directories."
 cd "${SCRIPT_DIR}" || exit
 rm -rf "${WORK_DIR}"

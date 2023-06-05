@@ -12,12 +12,13 @@ from botorch import settings
 from botorch.acquisition.cached_cholesky import CachedCholeskyMCAcquisitionFunction
 from botorch.acquisition.monte_carlo import MCAcquisitionFunction
 from botorch.acquisition.objective import GenericMCObjective
-from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning
 from botorch.models import SingleTaskGP
 from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.higher_order_gp import HigherOrderGP
-from botorch.sampling.samplers import IIDNormalSampler
+from botorch.models.model import ModelList
+from botorch.models.transforms.outcome import Log
+from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.low_rank import extract_batch_covar
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from linear_operator.utils.errors import NanError, NotPSDError
@@ -38,52 +39,45 @@ class TestCachedCholeskyMCAcquisitionFunction(BotorchTestCase):
         mean = torch.zeros(1, 1)
         variance = torch.ones(1, 1)
         mm = MockModel(MockPosterior(mean=mean, variance=variance))
-        # basic test
-        sampler = IIDNormalSampler(1)
+        # basic test w/ invalid model.
+        sampler = IIDNormalSampler(sample_shape=torch.Size([1]))
         acqf = DummyCachedCholeskyAcqf(model=mm, sampler=sampler)
-        acqf._setup(model=mm, sampler=sampler)
-        self.assertFalse(acqf._is_mt)
-        self.assertFalse(acqf._is_deterministic)
-        self.assertFalse(acqf._uses_matheron)
+        acqf._setup(model=mm)
         self.assertFalse(acqf._cache_root)
-        acqf._setup(model=mm, sampler=sampler, cache_root=True)
+        with self.assertWarnsRegex(RuntimeWarning, "cache_root"):
+            acqf._setup(model=mm, cache_root=True)
+        self.assertFalse(acqf._cache_root)
+        # Unsupported outcome transform.
+        stgp = SingleTaskGP(
+            torch.zeros(1, 1), torch.zeros(1, 1), outcome_transform=Log()
+        )
+        with self.assertWarnsRegex(RuntimeWarning, "cache_root"):
+            acqf._setup(model=stgp, cache_root=True)
+        self.assertFalse(acqf._cache_root)
+        # ModelList is not supported.
+        model_list = ModelList(SingleTaskGP(torch.zeros(1, 1), torch.zeros(1, 1)))
+        with self.assertWarnsRegex(RuntimeWarning, "cache_root"):
+            acqf._setup(model=model_list, cache_root=True)
+        self.assertFalse(acqf._cache_root)
+
+        # basic test w/ supported model.
+        stgp = SingleTaskGP(torch.zeros(1, 1), torch.zeros(1, 1))
+        acqf = DummyCachedCholeskyAcqf(model=mm, sampler=sampler)
+        acqf._setup(model=stgp, cache_root=True)
         self.assertTrue(acqf._cache_root)
 
-        # test check_sampler
-        with warnings.catch_warnings(record=True) as ws, settings.debug(True):
-            acqf._setup(model=mm, sampler=sampler, check_sampler=True)
-            self.assertEqual(len(ws), 0)
-
-        # test collapse_batch_dims=False
-        sampler = IIDNormalSampler(1, collapse_batch_dims=False)
-        acqf = DummyCachedCholeskyAcqf(model=mm, sampler=sampler)
-        with self.assertRaises(UnsupportedError):
-            acqf._setup(model=mm, sampler=sampler, check_sampler=True)
-        # test warning if base_samples is not None
-        sampler = IIDNormalSampler(1)
-        sampler.base_samples = torch.zeros(1, 1)
-        acqf = DummyCachedCholeskyAcqf(model=mm, sampler=sampler)
-        with warnings.catch_warnings(record=True) as ws, settings.debug(True):
-            acqf._setup(model=mm, sampler=sampler, check_sampler=True)
-            self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
         # test the base_samples are set to None
         self.assertIsNone(acqf.sampler.base_samples)
         # test model that uses matheron's rule and sampler.batch_range != (0, -1)
         hogp = HigherOrderGP(torch.zeros(1, 1), torch.zeros(1, 1, 1)).eval()
         acqf = DummyCachedCholeskyAcqf(model=hogp, sampler=sampler)
-        with self.assertRaises(RuntimeError):
-            acqf._setup(model=hogp, sampler=sampler, cache_root=True)
-        self.assertTrue(acqf._uses_matheron)
-        self.assertTrue(acqf._is_mt)
-        self.assertFalse(acqf._is_deterministic)
+        with self.assertWarnsRegex(RuntimeWarning, "cache_root"):
+            acqf._setup(model=hogp, cache_root=True)
 
         # test deterministic model
         model = GenericDeterministicModel(f=lambda X: X)
         acqf = DummyCachedCholeskyAcqf(model=model, sampler=sampler)
-        acqf._setup(model=model, sampler=sampler, cache_root=True)
-        self.assertTrue(acqf._is_deterministic)
-        self.assertFalse(acqf._uses_matheron)
-        self.assertFalse(acqf._is_mt)
+        acqf._setup(model=model, cache_root=True)
         self.assertFalse(acqf._cache_root)
 
     def test_cache_root_decomposition(self):
@@ -95,7 +89,7 @@ class TestCachedCholeskyMCAcquisitionFunction(BotorchTestCase):
             train_y = torch.rand(2, 2, **tkwargs)
             test_x = torch.rand(2, 1, **tkwargs)
             model = SingleTaskGP(train_x, train_y)
-            sampler = IIDNormalSampler(1)
+            sampler = IIDNormalSampler(sample_shape=torch.Size([1]))
             with torch.no_grad():
                 posterior = model.posterior(test_x)
             acqf = DummyCachedCholeskyAcqf(
@@ -110,8 +104,12 @@ class TestCachedCholeskyMCAcquisitionFunction(BotorchTestCase):
                 with mock.patch(
                     CHOLESKY_PATH, return_value=baseline_L
                 ) as mock_cholesky:
-                    acqf._cache_root_decomposition(posterior=posterior)
-                    mock_extract_batch_covar.assert_called_once_with(posterior.mvn)
+                    baseline_L_acqf = acqf._compute_root_decomposition(
+                        posterior=posterior
+                    )
+                    mock_extract_batch_covar.assert_called_once_with(
+                        posterior.distribution
+                    )
                     mock_cholesky.assert_called_once()
             # test mvn
             model = SingleTaskGP(train_x, train_y[:, :1])
@@ -121,10 +119,12 @@ class TestCachedCholeskyMCAcquisitionFunction(BotorchTestCase):
                 with mock.patch(
                     CHOLESKY_PATH, return_value=baseline_L
                 ) as mock_cholesky:
-                    acqf._cache_root_decomposition(posterior=posterior)
+                    baseline_L_acqf = acqf._compute_root_decomposition(
+                        posterior=posterior
+                    )
                     mock_extract_batch_covar.assert_not_called()
                     mock_cholesky.assert_called_once()
-            self.assertTrue(torch.equal(acqf._baseline_L, baseline_L))
+            self.assertTrue(torch.equal(baseline_L_acqf, baseline_L))
 
     def test_get_f_X_samples(self):
         tkwargs = {"device": self.device}
@@ -138,9 +138,12 @@ class TestCachedCholeskyMCAcquisitionFunction(BotorchTestCase):
                 )
             )
             # basic test
-            sampler = IIDNormalSampler(1)
+            sampler = IIDNormalSampler(sample_shape=torch.Size([1]))
             acqf = DummyCachedCholeskyAcqf(model=mm, sampler=sampler)
-            acqf._setup(model=mm, sampler=sampler, cache_root=True)
+            with self.assertWarnsRegex(RuntimeWarning, "cache_root"):
+                acqf._setup(model=mm, cache_root=True)
+            self.assertFalse(acqf._cache_root)
+            acqf._cache_root = True
             q = 3
             baseline_L = torch.eye(5 - q, **tkwargs)
             acqf._baseline_L = baseline_L
@@ -186,7 +189,7 @@ class TestCachedCholeskyMCAcquisitionFunction(BotorchTestCase):
             # test HOGP
             hogp = HigherOrderGP(torch.zeros(2, 1), torch.zeros(2, 1, 1)).eval()
             acqf = DummyCachedCholeskyAcqf(model=hogp, sampler=sampler)
-            acqf._setup(model=hogp, sampler=sampler, cache_root=True)
+            acqf._setup(model=hogp, cache_root=True)
             mock_samples = torch.rand(5, 1, 1, **tkwargs)
             posterior = MockPosterior(
                 mean=mean, variance=variance, samples=mock_samples

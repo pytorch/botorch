@@ -13,15 +13,12 @@ from unittest import mock
 
 import numpy as np
 import torch
-from botorch import settings
 from botorch.exceptions.errors import BotorchError
-from botorch.exceptions.warnings import SamplingWarning
-from botorch.posteriors.gpytorch import GPyTorchPosterior
+from botorch.models import FixedNoiseGP
+from botorch.sampling.pathwise import draw_matheron_paths
 from botorch.utils.sampling import (
     _convert_bounds_to_inequality_constraints,
     batched_multinomial,
-    construct_base_samples,
-    construct_base_samples_from_posterior,
     DelaunayPolytopeSampler,
     draw_sobol_samples,
     find_interior_point,
@@ -29,14 +26,13 @@ from botorch.utils.sampling import (
     HitAndRunPolytopeSampler,
     manual_seed,
     normalize_linear_constraints,
+    optimize_posterior_samples,
     PolytopeSampler,
     sample_hypersphere,
     sample_simplex,
     sparse_to_dense_constraints,
 )
 from botorch.utils.testing import BotorchTestCase
-from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from torch.quasirandom import SobolEngine
 
 
 class TestManualSeed(BotorchTestCase):
@@ -47,129 +43,6 @@ class TestManualSeed(BotorchTestCase):
         with manual_seed(1234):
             self.assertFalse(torch.all(torch.random.get_rng_state() == initial_state))
         self.assertTrue(torch.all(torch.random.get_rng_state() == initial_state))
-
-
-class TestConstructBaseSamples(BotorchTestCase):
-    def test_construct_base_samples(self):
-        test_shapes = [
-            {"batch": [2], "output": [4, 3], "sample": [5]},
-            {"batch": [1], "output": [5, 3], "sample": [5, 6]},
-            {"batch": [2, 3], "output": [2, 3], "sample": [5]},
-        ]
-        for tshape, qmc, seed, dtype in itertools.product(
-            test_shapes, (False, True), (None, 1234), (torch.float, torch.double)
-        ):
-            batch_shape = torch.Size(tshape["batch"])
-            output_shape = torch.Size(tshape["output"])
-            sample_shape = torch.Size(tshape["sample"])
-            expected_shape = sample_shape + batch_shape + output_shape
-            samples = construct_base_samples(
-                batch_shape=batch_shape,
-                output_shape=output_shape,
-                sample_shape=sample_shape,
-                qmc=qmc,
-                seed=seed,
-                device=self.device,
-                dtype=dtype,
-            )
-            self.assertEqual(samples.shape, expected_shape)
-            self.assertEqual(samples.device.type, self.device.type)
-            self.assertEqual(samples.dtype, dtype)
-        # check that warning is issued if dimensionality is too large
-        with warnings.catch_warnings(record=True) as w, settings.debug(True):
-            construct_base_samples(
-                batch_shape=torch.Size(),
-                output_shape=torch.Size([2000, 11]),  # 200 * 11 = 22000 > 21201
-                sample_shape=torch.Size([1]),
-                qmc=True,
-            )
-            self.assertEqual(len(w), 1)
-            self.assertTrue(issubclass(w[-1].category, SamplingWarning))
-            exp_str = f"maximum supported by qmc ({SobolEngine.MAXDIM})"
-            self.assertTrue(exp_str in str(w[-1].message))
-
-    def test_construct_base_samples_from_posterior(self):  # noqa: C901
-        for dtype in (torch.float, torch.double):
-            # single-output
-            mean = torch.zeros(2, device=self.device, dtype=dtype)
-            cov = torch.eye(2, device=self.device, dtype=dtype)
-            mvn = MultivariateNormal(mean=mean, covariance_matrix=cov)
-            posterior = GPyTorchPosterior(mvn=mvn)
-            for sample_shape, qmc, seed in itertools.product(
-                (torch.Size([5]), torch.Size([5, 3])), (False, True), (None, 1234)
-            ):
-                expected_shape = sample_shape + torch.Size([2, 1])
-                samples = construct_base_samples_from_posterior(
-                    posterior=posterior, sample_shape=sample_shape, qmc=qmc, seed=seed
-                )
-                self.assertEqual(samples.shape, expected_shape)
-                self.assertEqual(samples.device.type, self.device.type)
-                self.assertEqual(samples.dtype, dtype)
-            # single-output, batch mode
-            mean = torch.zeros(2, 2, device=self.device, dtype=dtype)
-            cov = torch.eye(2, device=self.device, dtype=dtype).expand(2, 2, 2)
-            mvn = MultivariateNormal(mean=mean, covariance_matrix=cov)
-            posterior = GPyTorchPosterior(mvn=mvn)
-            for sample_shape, qmc, seed, collapse_batch_dims in itertools.product(
-                (torch.Size([5]), torch.Size([5, 3])),
-                (False, True),
-                (None, 1234),
-                (False, True),
-            ):
-                if collapse_batch_dims:
-                    expected_shape = sample_shape + torch.Size([1, 2, 1])
-                else:
-                    expected_shape = sample_shape + torch.Size([2, 2, 1])
-                samples = construct_base_samples_from_posterior(
-                    posterior=posterior,
-                    sample_shape=sample_shape,
-                    qmc=qmc,
-                    collapse_batch_dims=collapse_batch_dims,
-                    seed=seed,
-                )
-                self.assertEqual(samples.shape, expected_shape)
-                self.assertEqual(samples.device.type, self.device.type)
-                self.assertEqual(samples.dtype, dtype)
-            # multi-output
-            mean = torch.zeros(2, 2, device=self.device, dtype=dtype)
-            cov = torch.eye(4, device=self.device, dtype=dtype)
-            mtmvn = MultitaskMultivariateNormal(mean=mean, covariance_matrix=cov)
-            posterior = GPyTorchPosterior(mvn=mtmvn)
-            for sample_shape, qmc, seed in itertools.product(
-                (torch.Size([5]), torch.Size([5, 3])), (False, True), (None, 1234)
-            ):
-                expected_shape = sample_shape + torch.Size([2, 2])
-                samples = construct_base_samples_from_posterior(
-                    posterior=posterior, sample_shape=sample_shape, qmc=qmc, seed=seed
-                )
-                self.assertEqual(samples.shape, expected_shape)
-                self.assertEqual(samples.device.type, self.device.type)
-                self.assertEqual(samples.dtype, dtype)
-            # multi-output, batch mode
-            mean = torch.zeros(2, 2, 2, device=self.device, dtype=dtype)
-            cov = torch.eye(4, device=self.device, dtype=dtype).expand(2, 4, 4)
-            mtmvn = MultitaskMultivariateNormal(mean=mean, covariance_matrix=cov)
-            posterior = GPyTorchPosterior(mvn=mtmvn)
-            for sample_shape, qmc, seed, collapse_batch_dims in itertools.product(
-                (torch.Size([5]), torch.Size([5, 3])),
-                (False, True),
-                (None, 1234),
-                (False, True),
-            ):
-                if collapse_batch_dims:
-                    expected_shape = sample_shape + torch.Size([1, 2, 2])
-                else:
-                    expected_shape = sample_shape + torch.Size([2, 2, 2])
-                samples = construct_base_samples_from_posterior(
-                    posterior=posterior,
-                    sample_shape=sample_shape,
-                    qmc=qmc,
-                    collapse_batch_dims=collapse_batch_dims,
-                    seed=seed,
-                )
-                self.assertEqual(samples.shape, expected_shape)
-                self.assertEqual(samples.device.type, self.device.type)
-                self.assertEqual(samples.dtype, dtype)
 
 
 class TestSampleUtils(BotorchTestCase):
@@ -349,64 +222,6 @@ class TestSampleUtils(BotorchTestCase):
         x = find_interior_point(A=A, b=b)
         self.assertAlmostEqual(x.item(), 5.0, places=4)
 
-    def test_get_polytope_samples_wrong_inequality_constraints_dtype(self):
-        for dtype in (torch.float, torch.double):
-            with self.subTest(dtype=dtype):
-                tkwargs = {"device": self.device, "dtype": dtype}
-                bounds = torch.zeros(2, 4, **tkwargs)
-                inequality_constraints = [
-                    (
-                        torch.tensor([3], dtype=torch.float, device=self.device),
-                        torch.tensor([-4], **tkwargs),
-                        -3,
-                    )
-                ]
-
-                msg = (
-                    "Normalizing `inequality_constraints` failed. Check that the first "
-                    "element of `inequality_constraints` is the correct dtype following"
-                    " the previous IndexError."
-                )
-                msg_orig = "tensors used as indices must be long, byte or bool tensors"
-
-                with self.assertRaisesRegex(ValueError, msg), self.assertRaisesRegex(
-                    IndexError, msg_orig
-                ):
-                    get_polytope_samples(
-                        n=5,
-                        bounds=bounds,
-                        inequality_constraints=inequality_constraints,
-                    )
-
-    def test_get_polytope_samples_wrong_equality_constraints_dtype(self):
-        for dtype in (torch.float, torch.double):
-            with self.subTest(dtype=dtype):
-                tkwargs = {"device": self.device, "dtype": dtype}
-                bounds = torch.zeros(2, 4, **tkwargs)
-
-                equality_constraints = [
-                    (
-                        torch.tensor([0], dtype=torch.float, device=self.device),
-                        torch.tensor([1], **tkwargs),
-                        0.5,
-                    )
-                ]
-                msg = (
-                    "Normalizing `equality_constraints` failed. Check that the first "
-                    "element of `equality_constraints` is the correct dtype following "
-                    "the previous IndexError."
-                )
-                msg_orig = "tensors used as indices must be long, byte or bool tensors"
-
-                with self.assertRaisesRegex(ValueError, msg), self.assertRaisesRegex(
-                    IndexError, msg_orig
-                ):
-                    get_polytope_samples(
-                        n=5,
-                        bounds=bounds,
-                        equality_constraints=equality_constraints,
-                    )
-
     def test_get_polytope_samples(self):
         tkwargs = {"device": self.device}
         for dtype in (torch.float, torch.double):
@@ -491,7 +306,6 @@ class TestSampleUtils(BotorchTestCase):
 
 
 class PolytopeSamplerTestBase:
-
     sampler_class: Type[PolytopeSampler]
     sampler_kwargs: Dict[str, Any] = {}
 
@@ -635,13 +449,11 @@ class PolytopeSamplerTestBase:
 
 
 class TestHitAndRunPolytopeSampler(PolytopeSamplerTestBase, BotorchTestCase):
-
     sampler_class = HitAndRunPolytopeSampler
     sampler_kwargs = {"n_burnin": 2}
 
 
 class TestDelaunayPolytopeSampler(PolytopeSamplerTestBase, BotorchTestCase):
-
     sampler_class = DelaunayPolytopeSampler
 
     def test_sample_polytope_unbounded(self):
@@ -658,3 +470,42 @@ class TestDelaunayPolytopeSampler(PolytopeSamplerTestBase, BotorchTestCase):
                     interior_point=self.x0,
                     **self.sampler_kwargs,
                 )
+
+
+class TestOptimizePosteriorSamples(BotorchTestCase):
+    def test_optimize_posterior_samples(self):
+        # Restrict the random seed to prevent flaky failures.
+        seed = torch.randint(high=5, size=(1,)).item()
+        torch.manual_seed(seed)
+        dims = 2
+        dtype = torch.float64
+        eps = 1e-6
+        for_testing_speed_kwargs = {"raw_samples": 512, "num_restarts": 10}
+        nums_optima = (1, 7)
+        batch_shapes = ((), (3,), (5, 2))
+        for num_optima, batch_shape in itertools.product(nums_optima, batch_shapes):
+            bounds = torch.tensor([[0, 1]] * dims, dtype=dtype).T
+            X = torch.rand(*batch_shape, 13, dims, dtype=dtype)
+            Y = torch.pow(X - 0.5, 2).sum(dim=-1, keepdim=True)
+
+            # having a noiseless model all but guarantees that the found optima
+            # will be better than the observations
+            model = FixedNoiseGP(X, Y, torch.full_like(Y, eps))
+            paths = draw_matheron_paths(
+                model=model, sample_shape=torch.Size([num_optima])
+            )
+            X_opt, f_opt = optimize_posterior_samples(
+                paths, bounds, **for_testing_speed_kwargs
+            )
+
+            correct_X_shape = (num_optima,) + batch_shape + (dims,)
+            correct_f_shape = (num_optima,) + batch_shape + (1,)
+
+            self.assertEqual(X_opt.shape, correct_X_shape)
+            self.assertEqual(f_opt.shape, correct_f_shape)
+            self.assertTrue(torch.all(X_opt >= bounds[0]))
+            self.assertTrue(torch.all(X_opt <= bounds[1]))
+
+            # Check that the all found optima are larger than the observations
+            # This is not 100% deterministic, but just about.
+            self.assertTrue(torch.all((f_opt > Y.max(dim=-2).values)))

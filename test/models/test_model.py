@@ -8,12 +8,13 @@ from unittest.mock import patch
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
+from botorch.exceptions.errors import InputDataError
 from botorch.models.deterministic import GenericDeterministicModel
-from botorch.models.model import Model, ModelList
+from botorch.models.model import Model, ModelDict, ModelList
 from botorch.models.utils import parse_training_data
 from botorch.posteriors.deterministic import DeterministicPosterior
-from botorch.posteriors.posterior import PosteriorList
-from botorch.utils.testing import BotorchTestCase
+from botorch.posteriors.posterior_list import PosteriorList
+from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 
 
 class NotSoAbstractBaseModel(Model):
@@ -117,3 +118,15 @@ class TestBaseModel(BotorchTestCase):
                 posterior_tf.mean, torch.cat((2 * m1(X) + 1, 2 * m2(X) + 1), dim=-1)
             )
         )
+
+
+class TestModelDict(BotorchTestCase):
+    def test_model_dict(self):
+        models = {"m1": MockModel(MockPosterior()), "m2": MockModel(MockPosterior())}
+        model_dict = ModelDict(**models)
+        self.assertIs(model_dict["m1"], models["m1"])
+        self.assertIs(model_dict["m2"], models["m2"])
+        with self.assertRaisesRegex(
+            InputDataError, "Expected all models to be a BoTorch `Model`."
+        ):
+            ModelDict(m=MockPosterior())

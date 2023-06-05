@@ -5,12 +5,12 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
-import random
 import warnings
 
 import torch
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_mll
+from botorch.models.converter import batched_to_model_list
 from botorch.models.gp_regression_mixed import MixedSingleTaskGP
 from botorch.models.kernels.categorical import CategoricalKernel
 from botorch.models.transforms import Normalize
@@ -43,15 +43,6 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             )
             cat_dims = list(range(ncat))
             ord_dims = sorted(set(range(d)) - set(cat_dims))
-            with self.assertRaises(ValueError):
-                MixedSingleTaskGP(
-                    train_X,
-                    train_Y,
-                    cat_dims=cat_dims,
-                    input_transform=Normalize(
-                        d=d, bounds=bounds.to(**tkwargs), transform_on_train=True
-                    ),
-                )
             # test correct indices
             if (ncat < 3) and (ncat > 0):
                 MixedSingleTaskGP(
@@ -65,30 +56,6 @@ class TestMixedSingleTaskGP(BotorchTestCase):
                         indices=ord_dims,
                     ),
                 )
-                with self.assertRaises(ValueError):
-                    MixedSingleTaskGP(
-                        train_X,
-                        train_Y,
-                        cat_dims=cat_dims,
-                        input_transform=Normalize(
-                            d=d,
-                            bounds=bounds.to(**tkwargs),
-                            transform_on_train=True,
-                            indices=cat_dims,
-                        ),
-                    )
-                with self.assertRaises(ValueError):
-                    MixedSingleTaskGP(
-                        train_X,
-                        train_Y,
-                        cat_dims=cat_dims,
-                        input_transform=Normalize(
-                            d=d,
-                            bounds=bounds.to(**tkwargs),
-                            transform_on_train=True,
-                            indices=ord_dims + [random.choice(cat_dims)],
-                        ),
-                    )
 
             if len(cat_dims) == 0:
                 with self.assertRaises(ValueError):
@@ -140,7 +107,7 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             self.assertEqual(posterior_pred.variance.shape, expected_shape)
             pvar = posterior_pred.variance
             pvar_exp = _get_pvar_expected(posterior, model, X, m)
-            self.assertTrue(torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-5))
+            self.assertAllClose(pvar, pvar_exp, rtol=1e-4, atol=1e-5)
 
             # test batch evaluation
             X = torch.rand(2, *batch_shape, 3, d, **tkwargs)
@@ -154,7 +121,11 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             self.assertEqual(posterior_pred.mean.shape, expected_shape)
             pvar = posterior_pred.variance
             pvar_exp = _get_pvar_expected(posterior, model, X, m)
-            self.assertTrue(torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-5))
+            self.assertAllClose(pvar, pvar_exp, rtol=1e-4, atol=1e-5)
+
+            # test that model converter throws an exception
+            with self.assertRaisesRegex(NotImplementedError, "not supported"):
+                batched_to_model_list(model)
 
     def test_condition_on_observations(self):
         d = 3
@@ -237,8 +208,10 @@ class TestMixedSingleTaskGP(BotorchTestCase):
                     )
                     self.assertTrue(
                         torch.allclose(
-                            posterior_same_inputs.mvn.covariance_matrix[:, 0, :, :],
-                            non_batch_posterior.mvn.covariance_matrix,
+                            posterior_same_inputs.distribution.covariance_matrix[
+                                :, 0, :, :
+                            ],
+                            non_batch_posterior.distribution.covariance_matrix,
                             atol=1e-3,
                         )
                     )
@@ -260,7 +233,7 @@ class TestMixedSingleTaskGP(BotorchTestCase):
 
             # fantasize
             X_f = torch.rand(torch.Size(batch_shape + torch.Size([4, d])), **tkwargs)
-            sampler = SobolQMCNormalSampler(num_samples=3)
+            sampler = SobolQMCNormalSampler(sample_shape=torch.Size([3]))
             fm = model.fantasize(X=X_f, sampler=sampler)
             self.assertIsInstance(fm, model.__class__)
             fm = model.fantasize(X=X_f, sampler=sampler, observation_noise=False)

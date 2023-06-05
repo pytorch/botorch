@@ -9,31 +9,27 @@ r"""Utilities for interfacing Numpy and Torch."""
 from __future__ import annotations
 
 from itertools import tee
-from math import prod
 from typing import Callable, Dict, Iterator, Optional, Tuple, Union
 
 import numpy as np
 import torch
+from botorch.utils.types import NoneType
 from numpy import ndarray
 from torch import Tensor
 
-# Dictionaries mapping numpy to torch dtypes and vice-versa
-numpy_to_torch_dtype_dict = {
-    np.bool: torch.bool,
-    np.uint8: torch.uint8,
-    np.int8: torch.int8,
-    np.int16: torch.int16,
-    np.int32: torch.int32,
-    np.int64: torch.int64,
-    np.float16: torch.float16,
-    np.float32: torch.float32,
-    np.float64: torch.float64,
-    np.complex64: torch.complex64,
-    np.complex128: torch.complex128,
-}
 
 torch_to_numpy_dtype_dict = {
-    value: key for (key, value) in numpy_to_torch_dtype_dict.items()
+    torch.bool: bool,
+    torch.uint8: np.uint8,
+    torch.int8: np.int8,
+    torch.int16: np.int16,
+    torch.int32: np.int32,
+    torch.int64: np.int64,
+    torch.float16: np.float16,
+    torch.float32: np.float32,
+    torch.float64: np.float64,
+    torch.complex64: np.complex64,
+    torch.complex128: np.complex128,
 }
 
 
@@ -66,7 +62,7 @@ def as_ndarray(
 
         # Convert to ndarray and maybe cast to `dtype`
         out = out.numpy()
-        return out if (dtype is None or dtype == out.dtype) else out.astype(dtype)
+        return out.astype(dtype, copy=False)
 
 
 def get_tensors_as_ndarray_1d(
@@ -140,35 +136,37 @@ def set_tensors_from_ndarray_1d(
 
 def get_bounds_as_ndarray(
     parameters: Dict[str, Tensor],
-    bounds: Dict[str, Tuple[Optional[float], Optional[float]]],
+    bounds: Dict[
+        str, Tuple[Union[float, Tensor, NoneType], Union[float, Tensor, NoneType]]
+    ],
 ) -> Optional[np.ndarray]:
-    r"""Helper method for extracting a module's parameters and their respective
-    ranges.
+    r"""Helper method for converting bounds into an ndarray.
 
     Args:
-        module: The target module from which parameters are to be extracted.
-        name_filter: Optional Boolean function used to filter parameters by name.
-        requires_grad: Optional Boolean used to filter parameters based on whether
-            or not their require_grad attribute matches the user provided value.
-        default_bounds: Default lower and upper bounds for constrained parameters
-            with `None` typed bounds.
+        parameters: A dictionary of parameters.
+        bounds: A dictionary of (optional) lower and upper bounds.
 
     Returns:
-        A dictionary of parameters and a dictionary of parameter bounds.
+        An ndarray of bounds.
     """
     inf = float("inf")
-    out = None
+    full_size = sum(param.numel() for param in parameters.values())
+    out = np.full((full_size, 2), (-inf, inf))
     index = 0
     for name, param in parameters.items():
-        size = prod(param.shape)
+        size = param.numel()
         if name in bounds:
             lower, upper = bounds[name]
             lower = -inf if lower is None else lower
             upper = inf if upper is None else upper
-            if lower != -inf or upper != inf:
-                if out is None:
-                    full_size = sum(prod(param.shape) for param in parameters.values())
-                    out = np.full((full_size, 2), (-inf, inf))
-                out[index : index + size] = (lower, upper)
+            if isinstance(lower, Tensor):
+                lower = lower.cpu()
+            if isinstance(upper, Tensor):
+                upper = upper.cpu()
+            out[index : index + size, 0] = lower
+            out[index : index + size, 1] = upper
         index = index + size
+    # If all bounds are +/- inf, return None.
+    if np.isinf(out).all():
+        out = None
     return out

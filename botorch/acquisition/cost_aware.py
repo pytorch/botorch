@@ -20,7 +20,7 @@ from botorch import settings
 from botorch.acquisition.objective import IdentityMCObjective, MCAcquisitionObjective
 from botorch.exceptions.warnings import CostAwareWarning
 from botorch.models.model import Model
-from botorch.sampling.samplers import MCSampler
+from botorch.sampling.base import MCSampler
 from torch import Tensor
 from torch.nn import Module
 

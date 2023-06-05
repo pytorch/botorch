@@ -40,9 +40,10 @@ from botorch.test_functions.multi_objective import (
     ZDT3,
 )
 from botorch.utils.testing import (
+    BaseTestProblemTestCaseMixIn,
     BotorchTestCase,
-    ConstrainedMultiObjectiveTestProblemBaseTestCase,
-    MultiObjectiveTestProblemBaseTestCase,
+    ConstrainedTestProblemTestCaseMixin,
+    MultiObjectiveTestProblemTestCaseMixin,
 )
 
 
@@ -50,6 +51,7 @@ class DummyMOProblem(MultiObjectiveTestProblem):
     _ref_point = [0.0, 0.0]
     _num_objectives = 2
     _bounds = [(0.0, 1.0)] * 2
+    dim = 2
 
     def evaluate_true(self, X):
         f_X = X + 2
@@ -73,7 +75,11 @@ class TestBaseTestMultiObjectiveProblem(BotorchTestCase):
                     f.gen_pareto_front(1)
 
 
-class TestBraninCurrin(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
+class TestBraninCurrin(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+):
     functions = [BraninCurrin()]
 
     def test_init(self):
@@ -82,7 +88,11 @@ class TestBraninCurrin(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
             self.assertEqual(f.dim, 2)
 
 
-class TestDH(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
+class TestDH(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+):
     functions = [DH1(dim=2), DH2(dim=3), DH3(dim=4), DH4(dim=5)]
     dims = [2, 3, 4, 5]
     bounds = [
@@ -114,10 +124,14 @@ class TestDH(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
             test_X[1] = 1.0
             actual = f(test_X)
             expected = torch.tensor(self.expected[i], device=self.device)
-            self.assertTrue(torch.allclose(actual, expected))
+            self.assertAllClose(actual, expected)
 
 
-class TestDTLZ(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
+class TestDTLZ(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+):
     functions = [
         DTLZ1(dim=5, num_objectives=2),
         DTLZ2(dim=5, num_objectives=2),
@@ -179,7 +193,11 @@ class TestDTLZ(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
                             )
 
 
-class TestGMM(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
+class TestGMM(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+):
     functions = [GMM(num_objectives=4)]
 
     def test_init(self):
@@ -225,7 +243,12 @@ class TestGMM(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
             )
 
 
-class TestMW7(ConstrainedMultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
+class TestMW7(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+    ConstrainedTestProblemTestCaseMixin,
+):
     functions = [MW7(dim=3)]
 
     def test_init(self):
@@ -236,7 +259,11 @@ class TestMW7(ConstrainedMultiObjectiveTestProblemBaseTestCase, BotorchTestCase)
             self.assertEqual(f.dim, 3)
 
 
-class TestZDT(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
+class TestZDT(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+):
     functions = [
         ZDT1(dim=3, num_objectives=2),
         ZDT2(dim=3, num_objectives=2),
@@ -303,27 +330,119 @@ class TestZDT(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
                         )
 
 
-class TestMultiObjectiveProblems(
-    MultiObjectiveTestProblemBaseTestCase, BotorchTestCase
+# ------------------ Unconstrained Multi-objective test problems ------------------ #
+
+
+class TestCarSideImpact(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
 ):
-    functions = [CarSideImpact(), Penicillin(), ToyRobust(), VehicleSafety()]
+
+    functions = [CarSideImpact()]
 
 
-class TestConstrainedMultiObjectiveProblems(
-    ConstrainedMultiObjectiveTestProblemBaseTestCase, BotorchTestCase
+class TestPenicillin(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+):
+    functions = [Penicillin()]
+
+
+class TestToyRobust(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+):
+    functions = [ToyRobust()]
+
+
+class TestVehicleSafety(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+):
+    functions = [VehicleSafety()]
+
+
+# ------------------ Constrained Multi-objective test problems ------------------ #
+
+
+class TestBNH(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+    ConstrainedTestProblemTestCaseMixin,
+):
+    functions = [BNH()]
+
+
+class TestSRN(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+    ConstrainedTestProblemTestCaseMixin,
+):
+    functions = [SRN()]
+
+
+class TestCONSTR(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+    ConstrainedTestProblemTestCaseMixin,
+):
+    functions = [CONSTR()]
+
+
+class TestConstrainedBraninCurrin(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+    ConstrainedTestProblemTestCaseMixin,
 ):
     functions = [
-        BNH(),
-        SRN(),
-        CONSTR(),
         ConstrainedBraninCurrin(),
-        C2DTLZ2(dim=3, num_objectives=2),
-        DiscBrake(),
-        WeldedBeam(),
-        OSY(),
     ]
 
-    def test_c2dtlz2_batch_exception(self):
+
+class TestC2DTLZ2(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+    ConstrainedTestProblemTestCaseMixin,
+):
+    functions = [C2DTLZ2(dim=3, num_objectives=2)]
+
+    def test_batch_exception(self):
         f = C2DTLZ2(dim=3, num_objectives=2)
         with self.assertRaises(NotImplementedError):
             f.evaluate_slack_true(torch.empty(1, 1, 3))
+
+
+class TestDiscBrake(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+    ConstrainedTestProblemTestCaseMixin,
+):
+    functions = [DiscBrake()]
+
+
+class TestWeldedBeam(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+    ConstrainedTestProblemTestCaseMixin,
+):
+    functions = [WeldedBeam()]
+
+
+class TestOSY(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+    ConstrainedTestProblemTestCaseMixin,
+):
+    functions = [OSY()]

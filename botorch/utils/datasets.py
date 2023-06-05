@@ -37,30 +37,27 @@ class SupervisedDatasetMeta(type):
         r"""Converts Tensor-valued fields to DenseContainer under the assumption
         that said fields house collections of feature vectors."""
         hints = get_type_hints(cls)
-        f_iter = filter(
-            lambda f: f.init and issubclass(hints[f.name], BotorchContainer),
-            fields(cls),
-        )
+        f_iter = filter(lambda f: f.init, fields(cls))
         f_dict = {}
         for obj, f in chain(
             zip(args, f_iter), ((kwargs.pop(f.name, MISSING), f) for f in f_iter)
         ):
             if obj is MISSING:
                 if f.default is not MISSING:
-
                     obj = f.default
                 elif f.default_factory is not MISSING:
                     obj = f.default_factory()
                 else:
                     raise RuntimeError(f"Missing required field `{f.name}`.")
 
-            if isinstance(obj, Tensor):
-                obj = DenseContainer(obj, event_shape=obj.shape[-1:])
-            elif not isinstance(obj, BotorchContainer):
-                raise TypeError(
-                    f"Expected <BotorchContainer | Tensor> for field `{f.name}` "
-                    f"but was {type(obj)}."
-                )
+            if issubclass(hints[f.name], BotorchContainer):
+                if isinstance(obj, Tensor):
+                    obj = DenseContainer(obj, event_shape=obj.shape[-1:])
+                elif not isinstance(obj, BotorchContainer):
+                    raise TypeError(
+                        f"Expected <BotorchContainer | Tensor> for field `{f.name}` "
+                        f"but was {type(obj)}."
+                    )
             f_dict[f.name] = obj
 
         return super().__call__(**f_dict, **kwargs)

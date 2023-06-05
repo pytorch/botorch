@@ -23,7 +23,7 @@ class TestIshigami(BotorchTestCase):
             self.assertEqual(len(m), 3)
         Z = f.evaluate_true(X)
         Ztrue = torch.tensor([5.8401, 7.4245])
-        self.assertTrue(torch.allclose(Z, Ztrue, atol=1e-3))
+        self.assertAllClose(Z, Ztrue, atol=1e-3)
         self.assertIsNone(f._optimizers)
         with self.assertRaises(NotImplementedError):
             f.optimal_value
@@ -40,7 +40,7 @@ class TestGsobol(BotorchTestCase):
         X = torch.tensor([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]])
         Z = f.evaluate_true(X)
         Ztrue = torch.tensor([2.5, 21.0])
-        self.assertTrue(torch.allclose(Z, Ztrue, atol=1e-3))
+        self.assertAllClose(Z, Ztrue, atol=1e-3)
         self.assertIsNone(f._optimizers)
         with self.assertRaises(NotImplementedError):
             f.optimal_value
@@ -52,7 +52,7 @@ class TestMorris(BotorchTestCase):
         X = torch.stack((torch.zeros(20), torch.ones(20)))
         Z = f.evaluate_true(X)
         Ztrue = torch.tensor([5163.0, -8137.0])
-        self.assertTrue(torch.allclose(Z, Ztrue, atol=1e-3))
+        self.assertAllClose(Z, Ztrue, atol=1e-3)
         self.assertIsNone(f._optimizers)
         with self.assertRaises(NotImplementedError):
             f.optimal_value

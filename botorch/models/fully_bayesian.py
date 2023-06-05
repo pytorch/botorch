@@ -38,6 +38,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 import pyro
 import torch
 from botorch.acquisition.objective import PosteriorTransform
+from botorch.models.gp_regression import MIN_INFERRED_NOISE_LEVEL
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
@@ -46,7 +47,7 @@ from botorch.posteriors.fully_bayesian import FullyBayesianPosterior, MCMC_DIM
 from gpytorch.constraints import GreaterThan
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
-from gpytorch.kernels.kernel import Distance, Kernel
+from gpytorch.kernels.kernel import dist, Kernel
 from gpytorch.likelihoods.gaussian_likelihood import (
     FixedNoiseGaussianLikelihood,
     GaussianLikelihood,
@@ -55,25 +56,38 @@ from gpytorch.likelihoods.likelihood import Likelihood
 from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.means.mean import Mean
 from gpytorch.models.exact_gp import ExactGP
+from pyro.ops.integrator import register_exception_handler
 from torch import Tensor
 
-MIN_INFERRED_NOISE_LEVEL = 1e-6
+
+_sqrt5 = math.sqrt(5)
+
+
+def _handle_torch_linalg(exception: Exception) -> bool:
+    return type(exception) == torch.linalg.LinAlgError
+
+
+def _handle_valerr_in_dist_init(exception: Exception) -> bool:
+    if not type(exception) == ValueError:
+        return False
+    return "satisfy the constraint PositiveDefinite()" in str(exception)
+
+
+register_exception_handler("torch_linalg", _handle_torch_linalg)
+register_exception_handler("valerr_in_dist_init", _handle_valerr_in_dist_init)
 
 
 def matern52_kernel(X: Tensor, lengthscale: Tensor) -> Tensor:
     """Matern-5/2 kernel."""
-    nu = 5 / 2
     dist = compute_dists(X=X, lengthscale=lengthscale)
-    exp_component = torch.exp(-math.sqrt(nu * 2) * dist)
-    constant_component = (math.sqrt(5) * dist).add(1).add(5.0 / 3.0 * (dist**2))
-    return constant_component * exp_component
+    sqrt5_dist = _sqrt5 * dist
+    return sqrt5_dist.add(1 + 5 / 3 * (dist**2)) * torch.exp(-sqrt5_dist)
 
 
 def compute_dists(X: Tensor, lengthscale: Tensor) -> Tensor:
     """Compute kernel distances."""
-    return Distance()._dist(
-        X / lengthscale, X / lengthscale, postprocess=False, x1_eq_x2=True
-    )
+    scaled_X = X / lengthscale
+    return dist(scaled_X, scaled_X, x1_eq_x2=True)
 
 
 def reshape_and_detach(target: Tensor, new_value: Tensor) -> None:
@@ -162,13 +176,13 @@ class SaasPyroModel(PyroModel):
         mean = self.sample_mean(**tkwargs)
         noise = self.sample_noise(**tkwargs)
         lengthscale = self.sample_lengthscale(dim=self.ard_num_dims, **tkwargs)
-        k = matern52_kernel(X=self.train_X, lengthscale=lengthscale)
-        k = outputscale * k + noise * torch.eye(self.train_X.shape[0], **tkwargs)
+        K = matern52_kernel(X=self.train_X, lengthscale=lengthscale)
+        K = outputscale * K + noise * torch.eye(self.train_X.shape[0], **tkwargs)
         pyro.sample(
             "Y",
             pyro.distributions.MultivariateNormal(
                 loc=mean.view(-1).expand(self.train_X.shape[0]),
-                covariance_matrix=k,
+                covariance_matrix=K,
             ),
             obs=self.train_Y.squeeze(-1),
         )
@@ -198,7 +212,7 @@ class SaasPyroModel(PyroModel):
     def sample_noise(self, **tkwargs: Any) -> Tensor:
         r"""Sample the noise variance."""
         if self.train_Yvar is None:
-            return pyro.sample(
+            return MIN_INFERRED_NOISE_LEVEL + pyro.sample(
                 "noise",
                 pyro.distributions.Gamma(
                     torch.tensor(0.9, **tkwargs),
@@ -225,7 +239,7 @@ class SaasPyroModel(PyroModel):
         )
         lengthscale = pyro.deterministic(
             "lengthscale",
-            (1.0 / inv_length_sq).sqrt(),
+            inv_length_sq.rsqrt(),
         )
         return lengthscale
 
@@ -241,7 +255,7 @@ class SaasPyroModel(PyroModel):
             mcmc_samples["kernel_tausq"].unsqueeze(-1)
             * mcmc_samples["_kernel_inv_length_sq"]
         )
-        mcmc_samples["lengthscale"] = (1.0 / inv_length_sq).sqrt()
+        mcmc_samples["lengthscale"] = inv_length_sq.rsqrt()
         # Delete `kernel_tausq` and `_kernel_inv_length_sq` since they aren't loaded
         # into the final model.
         del mcmc_samples["kernel_tausq"], mcmc_samples["_kernel_inv_length_sq"]
@@ -522,5 +536,5 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
             posterior_transform=posterior_transform,
             **kwargs,
         )
-        posterior = FullyBayesianPosterior(mvn=posterior.mvn)
+        posterior = FullyBayesianPosterior(distribution=posterior.distribution)
         return posterior

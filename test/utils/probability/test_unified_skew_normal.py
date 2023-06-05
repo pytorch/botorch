@@ -168,8 +168,8 @@ class TestUnifiedSkewNormal(BotorchTestCase):
                 _accept.count_nonzero() ** -0.5 + self.mc_num_rsamples**-0.5
             )
 
-            self.assertTrue(torch.allclose(_means, means, rtol=0, atol=atol))
-            self.assertTrue(torch.allclose(_covar, covar, rtol=0, atol=atol))
+            self.assertAllClose(_means, means, rtol=0, atol=atol)
+            self.assertAllClose(_covar, covar, rtol=0, atol=atol)
 
     def test_expand(self):
         usn = next(iter(self.distributions))
@@ -255,7 +255,7 @@ class TestUnifiedSkewNormal(BotorchTestCase):
             self.assertTrue(isinstance(cov, Tensor))
 
             # testing for symmetry
-            self.assertTrue(torch.allclose(cov, cov.mT))
+            self.assertAllClose(cov, cov.mT)
 
             # testing for positive-definiteness
             ispd = False
@@ -274,7 +274,7 @@ class TestUnifiedSkewNormal(BotorchTestCase):
             )
             cov_linop = usn_linop.covariance_matrix
             self.assertTrue(isinstance(cov_linop, Tensor))
-            self.assertTrue(torch.allclose(cov, cov_linop))
+            self.assertAllClose(cov, cov_linop)
 
     def test_repr(self):
         for d in self.distributions:

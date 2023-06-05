@@ -5,8 +5,10 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
+import warnings
 
 import torch
+from botorch.fit import fit_gpytorch_mll
 from botorch.models.approximate_gp import (
     _SingleTaskVariationalGP,
     ApproximateGPyTorchModel,
@@ -14,6 +16,10 @@ from botorch.models.approximate_gp import (
 )
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Log
+from botorch.models.utils.inducing_point_allocators import (
+    GreedyImprovementReduction,
+    GreedyVarianceReduction,
+)
 from botorch.posteriors import GPyTorchPosterior, TransformedPosterior
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.likelihoods import GaussianLikelihood, MultitaskGaussianLikelihood
@@ -79,19 +85,22 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
         train_Y = torch.randn(3, 10, 2, device=self.device)
         test_X = torch.rand(3, 5, 1, device=self.device)
 
-        non_batched = [train_X[0], train_Y[0, :, 0].unsqueeze(-1), test_X[0]]
-        non_batched_mo = [train_X[0], train_Y[0], test_X[0]]
-        batched = [train_X, train_Y[..., 0].unsqueeze(-1), test_X]
-        # batched multi-output is not supported at this time
-        # batched_mo = [train_X, train_Y, test_X]
-        non_batched_to_batched = [train_X[0], train_Y[0], test_X]
-        all_test_lists = [non_batched, non_batched_mo, batched, non_batched_to_batched]
+        all_tests = {
+            "non_batched": [train_X[0], train_Y[0, :, :1], test_X[0]],
+            "non_batched_mo": [train_X[0], train_Y[0], test_X[0]],
+            "batched": [train_X, train_Y[..., :1], test_X],
+            # batched multi-output is not supported at this time
+            # "batched_mo": [train_X, train_Y, test_X],
+            "non_batched_to_batched": [train_X[0], train_Y[0], test_X],
+        }
 
-        for [tx, ty, test] in all_test_lists:
-            print(tx.shape, ty.shape, test.shape)
-            model = SingleTaskVariationalGP(tx, ty, inducing_points=tx)
-            posterior = model.posterior(test)
-            self.assertIsInstance(posterior, GPyTorchPosterior)
+        for test_name, [tx, ty, test] in all_tests.items():
+            with self.subTest(test_name=test_name):
+                model = SingleTaskVariationalGP(tx, ty, inducing_points=tx)
+                posterior = model.posterior(test)
+                self.assertIsInstance(posterior, GPyTorchPosterior)
+                # test batch_shape property
+                self.assertEqual(model.batch_shape, tx.shape[:-2])
 
     def test_variational_setUp(self):
         for dtype in [torch.float, torch.double]:
@@ -181,6 +190,27 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
             else:
                 self.assertFalse(hasattr(model, "outcome_transform"))
 
+        # test default inducing point allocator
+        self.assertIsInstance(model._inducing_point_allocator, GreedyVarianceReduction)
+
+        # test that can specify an inducing point allocator
+        for ipa in [
+            GreedyVarianceReduction(),
+            GreedyImprovementReduction(model, maximize=True),
+        ]:
+            model = SingleTaskVariationalGP(train_X, inducing_point_allocator=ipa)
+            self.assertTrue(type(model._inducing_point_allocator), type(ipa))
+
+        # test warning when learning on and custom IPA provided
+        with self.assertWarnsRegex(
+            UserWarning, r"set `learn_inducing_points` to False"
+        ):
+            SingleTaskVariationalGP(
+                train_X,
+                learn_inducing_points=True,
+                inducing_point_allocator=GreedyVarianceReduction(),
+            )
+
     def test_inducing_point_init(self):
         train_X_1 = torch.rand(15, 1, device=self.device)
         train_X_2 = torch.rand(15, 1, device=self.device)
@@ -193,7 +223,9 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
         model_2 = SingleTaskVariationalGP(train_X=train_X_2, inducing_points=5)
         model_2_inducing = model_2.model.variational_strategy.inducing_points
 
-        self.assertTrue(torch.allclose(model_1_inducing, model_2_inducing))
+        self.assertEqual(model_1_inducing.shape, (5, 1))
+        self.assertEqual(model_2_inducing.shape, (5, 1))
+        self.assertAllClose(model_1_inducing, model_2_inducing)
 
         # multi-task
         model_1 = SingleTaskVariationalGP(
@@ -211,7 +243,9 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
             model_2.model.variational_strategy.base_variational_strategy.inducing_points
         )
 
-        self.assertTrue(torch.allclose(model_1_inducing, model_2_inducing))
+        self.assertEqual(model_1_inducing.shape, (5, 1))
+        self.assertEqual(model_2_inducing.shape, (5, 1))
+        self.assertAllClose(model_1_inducing, model_2_inducing)
 
         # batched inputs
         train_X_1 = torch.rand(2, 15, 1, device=self.device)
@@ -223,12 +257,75 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
         )
         model_1.init_inducing_points(train_X_2)
         model_1_inducing = model_1.model.variational_strategy.inducing_points
-
         model_2 = SingleTaskVariationalGP(
             train_X=train_X_2, train_Y=train_Y, inducing_points=5
         )
         model_2_inducing = model_2.model.variational_strategy.inducing_points
 
-        self.assertTrue(model_1_inducing.shape == (2, 5, 1))
-        self.assertTrue(model_2_inducing.shape == (2, 5, 1))
-        self.assertTrue(torch.allclose(model_1_inducing, model_2_inducing))
+        self.assertEqual(model_1_inducing.shape, (2, 5, 1))
+        self.assertEqual(model_2_inducing.shape, (2, 5, 1))
+        self.assertAllClose(model_1_inducing, model_2_inducing)
+
+    def test_custom_inducing_point_init(self):
+        train_X_0 = torch.rand(15, 1, device=self.device)
+        train_X_1 = torch.rand(15, 1, device=self.device)
+        train_X_2 = torch.rand(15, 1, device=self.device)
+        train_X_3 = torch.rand(15, 1, device=self.device)
+
+        model_from_previous_step = SingleTaskVariationalGP(
+            train_X=train_X_0, inducing_points=5
+        )
+
+        model_1 = SingleTaskVariationalGP(
+            train_X=train_X_1,
+            inducing_points=5,
+            inducing_point_allocator=GreedyImprovementReduction(
+                model_from_previous_step, maximize=True
+            ),
+        )
+        model_1.init_inducing_points(train_X_2)
+        model_1_inducing = model_1.model.variational_strategy.inducing_points
+
+        model_2 = SingleTaskVariationalGP(
+            train_X=train_X_2,
+            inducing_points=5,
+            inducing_point_allocator=GreedyImprovementReduction(
+                model_from_previous_step, maximize=True
+            ),
+        )
+        model_2_inducing = model_2.model.variational_strategy.inducing_points
+
+        model_3 = SingleTaskVariationalGP(
+            train_X=train_X_3,
+            inducing_points=5,
+            inducing_point_allocator=GreedyImprovementReduction(
+                model_from_previous_step, maximize=False
+            ),
+        )
+        model_3.init_inducing_points(train_X_2)
+        model_3_inducing = model_3.model.variational_strategy.inducing_points
+
+        self.assertEqual(model_1_inducing.shape, (5, 1))
+        self.assertEqual(model_2_inducing.shape, (5, 1))
+        self.assertAllClose(model_1_inducing, model_2_inducing)
+        self.assertFalse(model_1_inducing[0, 0] == model_3_inducing[0, 0])
+
+    def test_input_transform(self) -> None:
+        train_X = torch.linspace(1, 3, 10, dtype=torch.double)[:, None]
+        y = -3 * train_X + 5
+
+        for input_transform in [None, Normalize(1)]:
+            with self.subTest(input_transform=input_transform):
+                with warnings.catch_warnings():
+                    warnings.filterwarnings(
+                        "ignore", message="Input data is not contained"
+                    )
+                    model = SingleTaskVariationalGP(
+                        train_X=train_X, train_Y=y, input_transform=input_transform
+                    )
+                mll = VariationalELBO(
+                    model.likelihood, model.model, num_data=train_X.shape[-2]
+                )
+                fit_gpytorch_mll(mll)
+                post = model.posterior(torch.tensor([train_X.mean()]))
+                self.assertAllClose(post.mean[0][0], y.mean(), atol=1e-3, rtol=1e-3)

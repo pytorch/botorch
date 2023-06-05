@@ -12,10 +12,11 @@ from unittest import mock
 import torch
 from botorch.exceptions import BotorchTensorDimensionError
 from botorch.posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
-from botorch.utils.testing import _get_test_posterior, BotorchTestCase
+from botorch.utils.testing import _get_test_posterior, BotorchTestCase, MockPosterior
 from gpytorch import settings as gpt_settings
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from linear_operator.operators import to_linear_operator
+from torch.distributions.normal import Normal
 
 ROOT_DECOMP_PATH = (
     "linear_operator.operators.dense_linear_operator."
@@ -25,17 +26,28 @@ ROOT_DECOMP_PATH = (
 
 class TestGPyTorchPosterior(BotorchTestCase):
     def test_GPyTorchPosterior(self):
+        # Test init & mvn property.
+        mock_mvn = MockPosterior()
+        with self.assertWarnsRegex(DeprecationWarning, "The `mvn` argument of"):
+            posterior = GPyTorchPosterior(mvn=mock_mvn)
+        self.assertIs(posterior.mvn, mock_mvn)
+        self.assertIs(posterior.distribution, mock_mvn)
+        with self.assertRaisesRegex(RuntimeError, "Got both a `distribution`"):
+            GPyTorchPosterior(mvn=mock_mvn, distribution=mock_mvn)
+        with self.assertRaisesRegex(RuntimeError, "GPyTorchPosterior must have"):
+            GPyTorchPosterior()
+
         for dtype in (torch.float, torch.double):
             n = 3
             mean = torch.rand(n, dtype=dtype, device=self.device)
             variance = 1 + torch.rand(n, dtype=dtype, device=self.device)
             covar = variance.diag()
             mvn = MultivariateNormal(mean, to_linear_operator(covar))
-            posterior = GPyTorchPosterior(mvn=mvn)
+            posterior = GPyTorchPosterior(distribution=mvn)
             # basics
             self.assertEqual(posterior.device.type, self.device.type)
             self.assertTrue(posterior.dtype == dtype)
-            self.assertEqual(posterior.event_shape, torch.Size([n, 1]))
+            self.assertEqual(posterior._extended_shape(), torch.Size([n, 1]))
             self.assertTrue(torch.equal(posterior.mean, mean.unsqueeze(-1)))
             self.assertTrue(torch.equal(posterior.variance, variance.unsqueeze(-1)))
             # rsample
@@ -57,7 +69,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
                 )
                 # need to clear cache, cannot re-use previous objects
                 mvn = MultivariateNormal(mean, to_linear_operator(covar))
-                posterior = GPyTorchPosterior(mvn=mvn)
+                posterior = GPyTorchPosterior(distribution=mvn)
                 posterior.rsample(sample_shape=torch.Size([4]))
                 mock_func.assert_called_once()
 
@@ -79,13 +91,26 @@ class TestGPyTorchPosterior(BotorchTestCase):
                     )
                     for _ in range(2)
                 ]
-                self.assertTrue(torch.allclose(*samples))
+                self.assertAllClose(*samples)
+            # Quantile & Density.
+            marginal = Normal(
+                loc=mean.unsqueeze(-1), scale=variance.unsqueeze(-1).sqrt()
+            )
+            q_val = torch.rand(2, dtype=dtype, device=self.device)
+            quantile = posterior.quantile(q_val)
+            self.assertEqual(quantile.shape, posterior._extended_shape(torch.Size([2])))
+            expected = torch.stack([marginal.icdf(q) for q in q_val], dim=0)
+            self.assertAllClose(quantile, expected)
+            density = posterior.density(q_val)
+            self.assertEqual(density.shape, posterior._extended_shape(torch.Size([2])))
+            expected = torch.stack([marginal.log_prob(q).exp() for q in q_val], dim=0)
+            self.assertAllClose(density, expected)
             # collapse_batch_dims
             b_mean = torch.rand(2, 3, dtype=dtype, device=self.device)
             b_variance = 1 + torch.rand(2, 3, dtype=dtype, device=self.device)
             b_covar = torch.diag_embed(b_variance)
             b_mvn = MultivariateNormal(b_mean, to_linear_operator(b_covar))
-            b_posterior = GPyTorchPosterior(mvn=b_mvn)
+            b_posterior = GPyTorchPosterior(distribution=b_mvn)
             b_base_samples = torch.randn(4, 1, 3, 1, device=self.device, dtype=dtype)
             b_samples = b_posterior.rsample(
                 sample_shape=torch.Size([4]), base_samples=b_base_samples
@@ -98,11 +123,11 @@ class TestGPyTorchPosterior(BotorchTestCase):
             variance = 1 + torch.rand(3, 2, dtype=dtype, device=self.device)
             covar = variance.view(-1).diag()
             mvn = MultitaskMultivariateNormal(mean, to_linear_operator(covar))
-            posterior = GPyTorchPosterior(mvn=mvn)
+            posterior = GPyTorchPosterior(distribution=mvn)
             # basics
             self.assertEqual(posterior.device.type, self.device.type)
             self.assertTrue(posterior.dtype == dtype)
-            self.assertEqual(posterior.event_shape, torch.Size([3, 2]))
+            self.assertEqual(posterior._extended_shape(), torch.Size([3, 2]))
             self.assertTrue(torch.equal(posterior.mean, mean))
             self.assertTrue(torch.equal(posterior.variance, variance))
             # rsample
@@ -118,7 +143,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
             samples_b2 = posterior.rsample(
                 sample_shape=torch.Size([4]), base_samples=base_samples
             )
-            self.assertTrue(torch.allclose(samples_b1, samples_b2))
+            self.assertAllClose(samples_b1, samples_b2)
             base_samples2 = torch.randn(4, 2, 3, 2, device=self.device, dtype=dtype)
             samples2_b1 = posterior.rsample(
                 sample_shape=torch.Size([4, 2]), base_samples=base_samples2
@@ -126,13 +151,13 @@ class TestGPyTorchPosterior(BotorchTestCase):
             samples2_b2 = posterior.rsample(
                 sample_shape=torch.Size([4, 2]), base_samples=base_samples2
             )
-            self.assertTrue(torch.allclose(samples2_b1, samples2_b2))
+            self.assertAllClose(samples2_b1, samples2_b2)
             # collapse_batch_dims
             b_mean = torch.rand(2, 3, 2, dtype=dtype, device=self.device)
             b_variance = 1 + torch.rand(2, 3, 2, dtype=dtype, device=self.device)
             b_covar = torch.diag_embed(b_variance.view(2, 6))
             b_mvn = MultitaskMultivariateNormal(b_mean, to_linear_operator(b_covar))
-            b_posterior = GPyTorchPosterior(mvn=b_mvn)
+            b_posterior = GPyTorchPosterior(distribution=b_mvn)
             b_base_samples = torch.randn(4, 1, 3, 2, device=self.device, dtype=dtype)
             b_samples = b_posterior.rsample(
                 sample_shape=torch.Size([4]), base_samples=b_base_samples
@@ -147,11 +172,11 @@ class TestGPyTorchPosterior(BotorchTestCase):
             )
             mean = torch.rand(3, dtype=dtype, device=self.device)
             mvn = MultivariateNormal(mean, to_linear_operator(degenerate_covar))
-            posterior = GPyTorchPosterior(mvn=mvn)
+            posterior = GPyTorchPosterior(distribution=mvn)
             # basics
             self.assertEqual(posterior.device.type, self.device.type)
             self.assertTrue(posterior.dtype == dtype)
-            self.assertEqual(posterior.event_shape, torch.Size([3, 1]))
+            self.assertEqual(posterior._extended_shape(), torch.Size([3, 1]))
             self.assertTrue(torch.equal(posterior.mean, mean.unsqueeze(-1)))
             variance_exp = degenerate_covar.diag().unsqueeze(-1)
             self.assertTrue(torch.equal(posterior.variance, variance_exp))
@@ -174,7 +199,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
             samples_b2 = posterior.rsample(
                 sample_shape=torch.Size([4]), base_samples=base_samples
             )
-            self.assertTrue(torch.allclose(samples_b1, samples_b2))
+            self.assertAllClose(samples_b1, samples_b2)
             base_samples2 = torch.randn(4, 2, 3, 1, device=self.device, dtype=dtype)
             samples2_b1 = posterior.rsample(
                 sample_shape=torch.Size([4, 2]), base_samples=base_samples2
@@ -182,12 +207,12 @@ class TestGPyTorchPosterior(BotorchTestCase):
             samples2_b2 = posterior.rsample(
                 sample_shape=torch.Size([4, 2]), base_samples=base_samples2
             )
-            self.assertTrue(torch.allclose(samples2_b1, samples2_b2))
+            self.assertAllClose(samples2_b1, samples2_b2)
             # collapse_batch_dims
             b_mean = torch.rand(2, 3, dtype=dtype, device=self.device)
             b_degenerate_covar = degenerate_covar.expand(2, *degenerate_covar.shape)
             b_mvn = MultivariateNormal(b_mean, to_linear_operator(b_degenerate_covar))
-            b_posterior = GPyTorchPosterior(mvn=b_mvn)
+            b_posterior = GPyTorchPosterior(distribution=b_mvn)
             b_base_samples = torch.randn(4, 2, 3, 1, device=self.device, dtype=dtype)
             with warnings.catch_warnings(record=True) as ws:
                 b_samples = b_posterior.rsample(
@@ -206,11 +231,11 @@ class TestGPyTorchPosterior(BotorchTestCase):
             mean = torch.rand(3, dtype=dtype, device=self.device)
             mvn = MultivariateNormal(mean, to_linear_operator(degenerate_covar))
             mvn = MultitaskMultivariateNormal.from_independent_mvns([mvn, mvn])
-            posterior = GPyTorchPosterior(mvn=mvn)
+            posterior = GPyTorchPosterior(distribution=mvn)
             # basics
             self.assertEqual(posterior.device.type, self.device.type)
             self.assertTrue(posterior.dtype == dtype)
-            self.assertEqual(posterior.event_shape, torch.Size([3, 2]))
+            self.assertEqual(posterior._extended_shape(), torch.Size([3, 2]))
             mean_exp = mean.unsqueeze(-1).repeat(1, 2)
             self.assertTrue(torch.equal(posterior.mean, mean_exp))
             variance_exp = degenerate_covar.diag().unsqueeze(-1).repeat(1, 2)
@@ -233,7 +258,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
             samples_b2 = posterior.rsample(
                 sample_shape=torch.Size([4]), base_samples=base_samples
             )
-            self.assertTrue(torch.allclose(samples_b1, samples_b2))
+            self.assertAllClose(samples_b1, samples_b2)
             base_samples2 = torch.randn(4, 2, 3, 2, device=self.device, dtype=dtype)
             samples2_b1 = posterior.rsample(
                 sample_shape=torch.Size([4, 2]), base_samples=base_samples2
@@ -241,13 +266,13 @@ class TestGPyTorchPosterior(BotorchTestCase):
             samples2_b2 = posterior.rsample(
                 sample_shape=torch.Size([4, 2]), base_samples=base_samples2
             )
-            self.assertTrue(torch.allclose(samples2_b1, samples2_b2))
+            self.assertAllClose(samples2_b1, samples2_b2)
             # collapse_batch_dims
             b_mean = torch.rand(2, 3, dtype=dtype, device=self.device)
             b_degenerate_covar = degenerate_covar.expand(2, *degenerate_covar.shape)
             b_mvn = MultivariateNormal(b_mean, to_linear_operator(b_degenerate_covar))
             b_mvn = MultitaskMultivariateNormal.from_independent_mvns([b_mvn, b_mvn])
-            b_posterior = GPyTorchPosterior(mvn=b_mvn)
+            b_posterior = GPyTorchPosterior(distribution=b_mvn)
             b_base_samples = torch.randn(4, 1, 3, 2, device=self.device, dtype=dtype)
             with warnings.catch_warnings(record=True) as ws:
                 b_samples = b_posterior.rsample(
@@ -269,12 +294,15 @@ class TestGPyTorchPosterior(BotorchTestCase):
                 weights = torch.randn(m, **tkwargs)
             # test q=1
             posterior = _get_test_posterior(batch_shape, m=m, lazy=lazy, **tkwargs)
-            mean, covar = posterior.mvn.mean, posterior.mvn.covariance_matrix
+            mean, covar = (
+                posterior.distribution.mean,
+                posterior.distribution.covariance_matrix,
+            )
             new_posterior = scalarize_posterior(posterior, weights, offset)
             exp_size = torch.Size(batch_shape + [1, 1])
             self.assertEqual(new_posterior.mean.shape, exp_size)
             new_mean_exp = offset + (mean @ weights).unsqueeze(-1)
-            self.assertTrue(torch.allclose(new_posterior.mean, new_mean_exp))
+            self.assertAllClose(new_posterior.mean, new_mean_exp)
             self.assertEqual(new_posterior.variance.shape, exp_size)
             new_covar_exp = ((covar @ weights) @ weights).unsqueeze(-1)
             self.assertTrue(
@@ -285,22 +313,25 @@ class TestGPyTorchPosterior(BotorchTestCase):
             posterior = _get_test_posterior(
                 batch_shape, q=q, m=m, lazy=lazy, interleaved=True, **tkwargs
             )
-            mean, covar = posterior.mvn.mean, posterior.mvn.covariance_matrix
+            mean, covar = (
+                posterior.distribution.mean,
+                posterior.distribution.covariance_matrix,
+            )
             new_posterior = scalarize_posterior(posterior, weights, offset)
             exp_size = torch.Size(batch_shape + [q, 1])
             self.assertEqual(new_posterior.mean.shape, exp_size)
             new_mean_exp = offset + (mean @ weights).unsqueeze(-1)
-            self.assertTrue(torch.allclose(new_posterior.mean, new_mean_exp))
+            self.assertAllClose(new_posterior.mean, new_mean_exp)
             self.assertEqual(new_posterior.variance.shape, exp_size)
-            new_covar = new_posterior.mvn.covariance_matrix
+            new_covar = new_posterior.distribution.covariance_matrix
             if m == 1:
-                self.assertTrue(torch.allclose(new_covar, weights**2 * covar))
+                self.assertAllClose(new_covar, weights**2 * covar)
             else:
                 w = weights.unsqueeze(0)
                 covar00_exp = (w * covar[..., :m, :m] * w.t()).sum(-1).sum(-1)
-                self.assertTrue(torch.allclose(new_covar[..., 0, 0], covar00_exp))
+                self.assertAllClose(new_covar[..., 0, 0], covar00_exp)
                 covarnn_exp = (w * covar[..., -m:, -m:] * w.t()).sum(-1).sum(-1)
-                self.assertTrue(torch.allclose(new_covar[..., -1, -1], covarnn_exp))
+                self.assertAllClose(new_covar[..., -1, -1], covarnn_exp)
             # test q=2, non-interleaved
             # test independent special case as well
             for independent in (False, True) if m > 1 else (False,):
@@ -313,16 +344,19 @@ class TestGPyTorchPosterior(BotorchTestCase):
                     independent=independent,
                     **tkwargs,
                 )
-                mean, covar = posterior.mvn.mean, posterior.mvn.covariance_matrix
+                mean, covar = (
+                    posterior.distribution.mean,
+                    posterior.distribution.covariance_matrix,
+                )
                 new_posterior = scalarize_posterior(posterior, weights, offset)
                 exp_size = torch.Size(batch_shape + [q, 1])
                 self.assertEqual(new_posterior.mean.shape, exp_size)
                 new_mean_exp = offset + (mean @ weights).unsqueeze(-1)
-                self.assertTrue(torch.allclose(new_posterior.mean, new_mean_exp))
+                self.assertAllClose(new_posterior.mean, new_mean_exp)
                 self.assertEqual(new_posterior.variance.shape, exp_size)
-                new_covar = new_posterior.mvn.covariance_matrix
+                new_covar = new_posterior.distribution.covariance_matrix
                 if m == 1:
-                    self.assertTrue(torch.allclose(new_covar, weights**2 * covar))
+                    self.assertAllClose(new_covar, weights**2 * covar)
                 else:
                     # construct the indices manually
                     cs = list(itertools.combinations_with_replacement(range(m), 2))
@@ -334,10 +368,10 @@ class TestGPyTorchPosterior(BotorchTestCase):
                     w = weights[idx_nlzd[:, 0]] * weights[idx_nlzd[:, 1]]
                     idx = q * idx_nlzd
                     covar00_exp = (covar[..., idx[:, 0], idx[:, 1]] * w).sum(-1)
-                    self.assertTrue(torch.allclose(new_covar[..., 0, 0], covar00_exp))
+                    self.assertAllClose(new_covar[..., 0, 0], covar00_exp)
                     idx_ = q - 1 + idx
                     covarnn_exp = (covar[..., idx_[:, 0], idx_[:, 1]] * w).sum(-1)
-                    self.assertTrue(torch.allclose(new_covar[..., -1, -1], covarnn_exp))
+                    self.assertAllClose(new_covar[..., -1, -1], covarnn_exp)
 
             # test errors
             with self.assertRaises(RuntimeError):

@@ -17,9 +17,9 @@ from time import monotonic
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 from botorch.optim.closures import NdarrayOptimizationClosure
-from botorch.optim.utils import get_bounds_as_ndarray
-from numpy import asarray, ndarray
-from scipy.optimize import minimize
+from botorch.optim.utils.numpy_utils import get_bounds_as_ndarray
+from botorch.optim.utils.timeout import minimize_with_timeout
+from numpy import asarray, float64 as np_float64, ndarray
 from torch import Tensor
 from torch.optim.adam import Adam
 from torch.optim.optimizer import Optimizer
@@ -62,6 +62,7 @@ def scipy_minimize(
     x0: Optional[ndarray] = None,
     method: str = "L-BFGS-B",
     options: Optional[Dict[str, Any]] = None,
+    timeout_sec: Optional[float] = None,
 ) -> OptimizationResult:
     r"""Generic scipy.optimize.minimize-based optimization routine.
 
@@ -74,6 +75,8 @@ def scipy_minimize(
         x0: An optional initialization vector passed to scipy.optimize.minimize.
         method: Solver type, passed along to scipy.minimize.
         options: Dictionary of solver options, passed along to scipy.minimize.
+        timeout_sec: Timeout in seconds to wait before aborting the optimization loop
+            if not converged (will return the best found solution thus far).
 
     Returns:
         An OptimizationResult summarizing the final state of the run.
@@ -103,14 +106,15 @@ def scipy_minimize(
             )
             return callback(parameters, result)  # pyre-ignore [29]
 
-    raw = minimize(
+    raw = minimize_with_timeout(
         wrapped_closure,
-        wrapped_closure.state if x0 is None else x0,
+        wrapped_closure.state if x0 is None else x0.astype(np_float64, copy=False),
         jac=True,
         bounds=bounds_np,
         method=method,
         options=options,
         callback=wrapped_callback,
+        timeout_sec=timeout_sec,
     )
 
     # Post-processing and outcome handling
@@ -122,6 +126,7 @@ def scipy_minimize(
         status = (  # Check whether we stopped due to reaching maxfun or maxiter
             OptimizationStatus.STOPPED
             if _LBFGSB_MAXITER_MAXFUN_REGEX.search(msg)
+            or "Optimization timed out after" in msg
             else OptimizationStatus.FAILURE
         )
 
@@ -142,6 +147,7 @@ def torch_minimize(
     optimizer: Union[Optimizer, Callable[[List[Tensor]], Optimizer]] = Adam,
     scheduler: Optional[Union[LRScheduler, Callable[[Optimizer], LRScheduler]]] = None,
     step_limit: Optional[int] = None,
+    timeout_sec: Optional[float] = None,
     stopping_criterion: Optional[Callable[[Tensor], bool]] = None,
 ) -> OptimizationResult:
     r"""Generic torch.optim-based optimization routine.
@@ -152,20 +158,24 @@ def torch_minimize(
         parameters: A dictionary of tensors to be optimized.
         bounds: An optional dictionary of bounds for elements of `parameters`.
         callback: A callable taking `parameters` and an OptimizationResult as arguments.
-        step_limit: Integer specifying a maximum number of optimization steps.
-            One of `step_limit` or `stopping_criterion` must be passed.
-        stopping_criterion: A StoppingCriterion for the optimization loop.
         optimizer: A `torch.optim.Optimizer` instance or a factory that takes
             a list of parameters and returns an `Optimizer` instance.
         scheduler: A `torch.optim.lr_scheduler._LRScheduler` instance or a factory
             that takes a `Optimizer` instance and returns a `_LRSchedule` instance.
+        step_limit: Integer specifying a maximum number of optimization steps.
+            One of `step_limit`, `stopping_criterion`, or `timeout_sec` must be passed.
+        timeout_sec: Timeout in seconds before terminating the optimization loop.
+            One of `step_limit`, `stopping_criterion`, or `timeout_sec` must be passed.
+        stopping_criterion: A StoppingCriterion for the optimization loop.
 
     Returns:
         An OptimizationResult summarizing the final state of the run.
     """
+    result: OptimizationResult
     start_time = monotonic()
+
     if step_limit is None:
-        if stopping_criterion is None:
+        if stopping_criterion is None and timeout_sec is None:
             raise RuntimeError("No termination conditions were given.")
         step_limit = maxsize
 
@@ -180,20 +190,26 @@ def torch_minimize(
         if bounds is None
         else {name: limits for name, limits in bounds.items() if name in parameters}
     )
-    result: OptimizationResult
-    for step in range(step_limit):
+    for step in range(1, step_limit + 1):
         fval, _ = closure()
+        runtime = monotonic() - start_time
         result = OptimizationResult(
             step=step,
             fval=fval.detach().cpu().item(),
             status=OptimizationStatus.RUNNING,
-            runtime=monotonic() - start_time,
+            runtime=runtime,
         )
 
         # TODO: Update stopping_criterion API to return a message.
         if stopping_criterion and stopping_criterion(fval):
             result.status = OptimizationStatus.STOPPED
             result.message = "`torch_minimize` stopped due to `stopping_criterion`."
+
+        if timeout_sec is not None and runtime >= timeout_sec:
+            result.status = OptimizationStatus.STOPPED
+            result.message = (
+                f"`torch_minimize` stopped due to timeout after {runtime} seconds."
+            )
 
         if callback:
             callback(parameters, result)
@@ -213,7 +229,7 @@ def torch_minimize(
 
     # Account for final parameter update when stopping due to step_limit
     return OptimizationResult(
-        step=step + 1,
+        step=step,
         fval=closure()[0].detach().cpu().item(),
         status=OptimizationStatus.STOPPED,
         runtime=monotonic() - start_time,

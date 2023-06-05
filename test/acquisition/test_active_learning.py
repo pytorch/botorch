@@ -19,7 +19,7 @@ from botorch.acquisition.objective import (
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.pairwise_gp import PairwiseGP
 from botorch.posteriors.gpytorch import GPyTorchPosterior
-from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
+from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from gpytorch.distributions import MultitaskMultivariateNormal
 
@@ -32,11 +32,10 @@ class TestQNegIntegratedPosteriorVariance(BotorchTestCase):
         sampler = qNIPV.sampler
         self.assertIsInstance(sampler, SobolQMCNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([1]))
-        self.assertFalse(sampler.resample)
         self.assertTrue(torch.equal(mc_points, qNIPV.mc_points))
         self.assertIsNone(qNIPV.X_pending)
         self.assertIsNone(qNIPV.posterior_transform)
-        sampler = IIDNormalSampler(num_samples=2, resample=True)
+        sampler = IIDNormalSampler(sample_shape=torch.Size([2]))
         qNIPV = qNegIntegratedPosteriorVariance(
             model=mm, mc_points=mc_points, sampler=sampler
         )
@@ -61,7 +60,7 @@ class TestQNegIntegratedPosteriorVariance(BotorchTestCase):
                     )
                     X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
                     val = qNIPV(X)
-                    self.assertTrue(torch.allclose(val, -(variance.mean()), atol=1e-4))
+                    self.assertAllClose(val, -(variance.mean()), atol=1e-4)
             # batched model
             mean = torch.zeros(2, 4, 1, device=self.device, dtype=dtype)
             variance = torch.rand(2, 4, 1, device=self.device, dtype=dtype)
@@ -79,7 +78,7 @@ class TestQNegIntegratedPosteriorVariance(BotorchTestCase):
                     X = torch.empty(2, 1, 1, device=self.device, dtype=dtype)  # dummy
                     val = qNIPV(X)
                     val_exp = -variance.mean(dim=-2).squeeze(-1)
-                    self.assertTrue(torch.allclose(val, val_exp, atol=1e-4))
+                    self.assertAllClose(val, val_exp, atol=1e-4)
             # multi-output model
             mean = torch.zeros(4, 2, device=self.device, dtype=dtype)
             variance = torch.rand(4, 2, device=self.device, dtype=dtype)
@@ -135,7 +134,7 @@ class TestQNegIntegratedPosteriorVariance(BotorchTestCase):
                     X = torch.empty(3, 1, 1, device=self.device, dtype=dtype)  # dummy
                     val = qNIPV(X)
                     val_exp = -0.5 * variance.mean(dim=0).view(3, -1).mean(dim=-1)
-                    self.assertTrue(torch.allclose(val, val_exp, atol=1e-4))
+                    self.assertAllClose(val, val_exp, atol=1e-4)
 
 
 class TestPairwiseMCPosteriorVariance(BotorchTestCase):

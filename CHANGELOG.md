@@ -2,6 +2,186 @@
 
 The release log for BoTorch.
 
+## [0.8.5] - May 8, 2023
+
+#### New Features
+* Support inferred noise in `SaasFullyBayesianMultiTaskGP` (#1809).
+
+#### Other Changes
+* More informative error message when `Standardize` has wrong batch shape (#1807).
+* Make GIBBON robust to numerical instability (#1814).
+* Add `sample_multiplier` in EUBO's `acqf_input_constructor` (#1816).
+
+#### Bug Fixes
+* Only do checks for `_optimize_acqf_sequential_q` when it will be used (#1808).
+* Fix an issue where `PairwiseGP` comparisons might be implicitly modified (#1811).
+
+
+## [0.8.4] - Apr 24, 2023
+
+#### Compatibility
+* Require GPyTorch == 1.10 and linear_operator == 0.4.0 (#1803).
+
+#### New Features
+* Polytope sampling for linear constraints along the q-dimension (#1757).
+* Single-objective joint entropy search with additional conditioning, various improvements to entropy-based acquisition functions (#1738).
+
+#### Other changes
+* Various updates to improve numerical stability of `PairwiseGP` (#1754, #1755).
+* Change batch range for `FullyBayesianPosterior` (1176a38352b69d01def0a466233e6633c17d6862, #1773).
+* Make `gen_batch_initial_conditions` more flexible (#1779).
+* Deprecate `objective` in favor of `posterior_transform` for `MultiObjectiveAnalyticAcquisitionFunction` (#1781).
+* Use `prune_baseline=True` as default for `qNoisyExpectedImprovement` (#1796).
+* Add `batch_shape` property to `SingleTaskVariationalGP` (#1799).
+* Change minimum inferred noise level for `SaasFullyBayesianSingleTaskGP` (#1800).
+
+#### Bug fixes
+* Add `output_task` to `MultiTaskGP.construct_inputs` (#1753).
+* Fix custom bounds handling in test problems (#1760).
+* Remove incorrect `BotorchTensorDimensionWarning` (#1790).
+* Fix handling of non-Container-typed positional arguments in `SupervisedDatasetMeta` (#1663).
+
+
+## [0.8.3] - Mar 15, 2023
+
+#### New Features
+* Add BAxUS tutorial (#1559).
+
+#### Other changes
+* Various improvements to tutorials (#1703, #1706, #1707, #1708, #1710, #1711, #1718, #1719, #1739, #1740, #1742).
+* Allow tensor input for `integer_indices` in `Round` transform (#1709).
+* Expose `cache_root` in qNEHVI input constructor (#1730).
+* Add `get_init_args` helper to `Normalize` & `Round` transforms (#1731).
+* Allowing custom dimensionality and improved gradient stability in `ModifiedFixedSingleSampleModel` (#1732).
+
+#### Bug fixes
+* Improve batched model handling in `_verify_output_shape` (#1715).
+* Fix qNEI with Derivative Enabled BO (#1716).
+* Fix `get_infeasible_cost` for objectives that require X (#1721).
+
+
+## [0.8.2] - Feb 23, 2023
+
+#### Compatibility
+* Require PyTorch >= 1.12 (#1699).
+
+#### New Features
+* Introduce pathwise sampling API for efficiently sampling functions from (approximate) GP priors and posteriors (#1463).
+* Add `OneHotToNumeric` input transform (#1517).
+* Add `get_rounding_input_transform` utility for constructing rounding input transforms (#1531).
+* Introduce `EnsemblePosterior` (#1636).
+* Inducing Point Allocators for Sparse GPs (#1652).
+* Pass `gen_candidates` callable in `optimize_acqf` (#1655).
+* Adding `logmeanexp` and `logdiffexp` numerical utilities (#1657).
+
+#### Other changes
+* Warn if inoperable keyword arguments are passed to optimizers (#1421).
+* Add `BotorchTestCase.assertAllClose` (#1618).
+* Add `sample_shape` property to `ListSampler` (#1624).
+* Do not filter out `BoTorchWarning`s by default (#1630).
+* Introduce a `DeterministicSampler` (#1641).
+* Warn when optimizer kwargs are being ignored in BoTorch optim utils `_filter_kwargs` (#1645).
+* Don't use `functools.lru_cache` on methods (#1650).
+* More informative error when someone adds a module without updating the corresponding rst file (#1653).
+* Make indices a buffer in `AffineInputTransform` (#1656).
+* Clean up `optimize_acqf` and `_make_linear_constraints` (#1660, #1676).
+* Support NaN `max_reference_point` in `infer_reference_point` (#1671).
+* Use `_fast_solves` in `HOGP.posterior` (#1682).
+* Approximate qPI using `MVNXPB` (#1684).
+* Improve filtering for `cache_root` in `CachedCholeskyMCAcquisitionFunction` (#1688).
+* Add option to disable retrying on optimization warning (#1696).
+
+#### Bug fixes
+* Fix normalization in Chebyshev scalarization (#1616).
+* Fix `TransformedPosterior` missing batch shape error in `_update_base_samples` (#1625).
+* Detach `coefficient` and `offset` in `AffineTransform` in eval mode (#1642).
+* Fix pickle error in `TorchPosterior` (#1644).
+* Fix shape error in `optimize_acqf_cyclic` (#1648).
+* Fixed bug where `optimize_acqf` didn't work with different batch sizes (#1668).
+* Fix EUBO optimization error when two Xs are identical (#1670).
+* Bug fix: `_filter_kwargs` was erroring when provided a function without a `__name__` attribute (#1678).
+
+
+## [0.8.1] - Jan 5, 2023
+
+### Highlights
+* This release includes changes for compatibility with the newest versions of linear_operator and gpytorch.
+* Several acquisition functions now have "Log" counterparts, which provide better
+numerical behavior for improvement-based acquisition functions in areas where the probability of
+improvement is low. For example, `LogExpectedImprovement` (#1565) should behave better than
+`ExpectedImprovement`. These new acquisition functions are
+    * `LogExpectedImprovement` (#1565).
+    * `LogNoisyExpectedImprovement` (#1577).
+    * `LogProbabilityOfImprovement` (#1594).
+    * `LogConstrainedExpectedImprovement` (#1594).
+* Bug fix: Stop `ModelListGP.posterior` from quietly ignoring `Log`, `Power`, and `Bilog` outcome transforms (#1563).
+* Turn off `fast_computations` setting in linear_operator by default (#1547).
+
+#### Compatibility
+* Require linear_operator == 0.3.0 (#1538).
+* Require pyro-ppl >= 1.8.4 (#1606).
+* Require gpytorch == 1.9.1 (#1612).
+
+#### New Features
+* Add `eta` to `get_acquisition_function` (#1541).
+* Support 0d-features in `FixedFeatureAcquisitionFunction` (#1546).
+* Add timeout ability to optimization functions (#1562, #1598).
+* Add `MultiModelAcquisitionFunction`, an abstract base class for acquisition functions that require multiple types of models (#1584).
+* Add `cache_root` option for qNEI in `get_acquisition_function` (#1608).
+
+#### Other changes
+* Docstring corrections (#1551, #1557, #1573).
+* Removal of `_fit_multioutput_independent` and `allclose_mll` (#1570).
+* Better numerical behavior for fully Bayesian models (#1576).
+* More verbose Scipy `minimize` failure messages (#1579).
+* Lower-bound noise in`SaasPyroModel` to avoid Cholesky errors (#1586).
+
+#### Bug fixes
+* Error rather than failing silently for NaN values in box decomposition (#1554).
+* Make `get_bounds_as_ndarray` device-safe (#1567).
+
+
+## [0.8.0] - Dec 6, 2022
+
+### Highlights
+This release includes some backwards incompatible changes.
+* Refactor `Posterior` and `MCSampler` modules to better support non-Gaussian distributions in BoTorch (#1486).
+    * Introduced a `TorchPosterior` object that wraps a PyTorch `Distribution` object and makes it compatible with the rest of `Posterior` API.
+    * `PosteriorList` no longer accepts Gaussian base samples. It should be used with a `ListSampler` that includes the appropriate sampler for each posterior.
+    * The MC acquisition functions no longer construct a Sobol sampler by default. Instead, they rely on a `get_sampler` helper, which dispatches an appropriate sampler based on the posterior provided.
+    * The `resample` and `collapse_batch_dims` arguments to `MCSampler`s have been removed. The `ForkedRNGSampler` and `StochasticSampler` can be used to get the same functionality.
+    * Refer to the PR for additional changes. We will update the website documentation to reflect these changes in a future release.
+* #1191 refactors much of `botorch.optim` to operate based on closures that abstract
+away how losses (and gradients) are computed. By default, these closures are created
+using multiply-dispatched factory functions (such as `get_loss_closure`), which may be
+customized by registering methods with an associated dispatcher (e.g. `GetLossClosure`).
+Future releases will contain tutorials that explore these features in greater detail.
+
+#### New Features
+* Add mixed optimization for list optimization (#1342).
+* Add entropy search acquisition functions (#1458).
+* Add utilities for straight-through gradient estimators for discretization functions (#1515).
+* Add support for categoricals in Round input transform and use STEs (#1516).
+* Add closure-based optimizers (#1191).
+
+#### Other Changes
+* Do not count hitting maxiter as optimization failure & update default maxiter (#1478).
+* `BoxDecomposition` cleanup (#1490).
+* Deprecate `torch.triangular_solve` in favor of `torch.linalg.solve_triangular` (#1494).
+* Various docstring improvements (#1496, #1499, #1504).
+* Remove `__getitem__` method from `LinearTruncatedFidelityKernel` (#1501).
+* Handle Cholesky errors when fitting a fully Bayesian model (#1507).
+* Make eta configurable in `apply_constraints` (#1526).
+* Support SAAS ensemble models in RFFs (#1530).
+* Deprecate `botorch.optim.numpy_converter` (#1191).
+* Deprecate `fit_gpytorch_scipy` and `fit_gpytorch_torch` (#1191).
+
+#### Bug Fixes
+* Enforce use of float64 in `NdarrayOptimizationClosure` (#1508).
+* Replace deprecated np.bool with equivalent bool (#1524).
+* Fix RFF bug when using FixedNoiseGP models (#1528).
+
+
 ## [0.7.3] - Nov 10, 2022
 
 ### Highlights

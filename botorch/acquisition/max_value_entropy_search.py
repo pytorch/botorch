@@ -13,8 +13,8 @@ References
 
 .. [Moss2021gibbon]
     Moss, H. B., et al.,
-    GIBBON: General-purpose Information-Based Bayesian OptimisatioN
-    arXiv:2102.03324, 2021
+    GIBBON: General-purpose Information-Based Bayesian OptimisatioN.
+    Journal of Machine Learning Research, 2021.
 
 .. [Takeno2020mfmves]
     S. Takeno, H. Fukuoka, Y. Tsukada, T. Koyama, M. Shiga, I. Takeuchi,
@@ -37,14 +37,14 @@ from typing import Any, Callable, Optional
 
 import numpy as np
 import torch
-from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
 from botorch.acquisition.cost_aware import CostAwareUtility, InverseCostWeightedUtility
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.model import Model
 from botorch.models.utils import check_no_nans
-from botorch.sampling.samplers import SobolQMCNormalSampler
+from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils.transforms import match_batch_shape, t_batch_mode_transform
 
 from linear_operator.functions import inv_quad
@@ -297,7 +297,7 @@ class DiscreteMaxValueBase(MaxValueBase):
             )
 
 
-class qMaxValueEntropy(DiscreteMaxValueBase):
+class qMaxValueEntropy(DiscreteMaxValueBase, MCSamplerMixin):
     r"""The acquisition function for Max-value Entropy Search.
 
     This acquisition function computes the mutual information of max values and
@@ -360,9 +360,14 @@ class qMaxValueEntropy(DiscreteMaxValueBase):
             X_pending=X_pending,
             train_inputs=train_inputs,
         )
+        MCSamplerMixin.__init__(
+            self,
+            sampler=SobolQMCNormalSampler(sample_shape=torch.Size([num_y_samples])),
+        )
         self._init_model = model  # used for `fantasize()` when setting `X_pending`
-        self.sampler = SobolQMCNormalSampler(num_y_samples)
-        self.fantasies_sampler = SobolQMCNormalSampler(num_fantasies)
+        self.fantasies_sampler = SobolQMCNormalSampler(
+            sample_shape=torch.Size([num_fantasies])
+        )
         self.num_fantasies = num_fantasies
         self.set_X_pending(X_pending)  # this did not happen in the super constructor
 
@@ -428,11 +433,11 @@ class qMaxValueEntropy(DiscreteMaxValueBase):
         # batch_shape x num_fantasies x (m) x (1 + num_trace_observations)
         mean_m = self.weight * posterior_m.mean.squeeze(-1)
         # batch_shape x num_fantasies x (m) x (1 + num_trace_observations)
-        variance_m = posterior_m.mvn.covariance_matrix
+        variance_m = posterior_m.distribution.covariance_matrix
         check_no_nans(variance_m)
 
         # compute mean and std for fM|ym, x, Dt ~ N(u, s^2)
-        samples_m = self.weight * self.sampler(posterior_m).squeeze(-1)
+        samples_m = self.weight * self.get_posterior_samples(posterior_m).squeeze(-1)
         # s_m x batch_shape x num_fantasies x (m) (1 + num_trace_observations)
         L = psd_safe_cholesky(variance_m)
         temp_term = torch.cholesky_solve(covar_mM.unsqueeze(-1), L).transpose(-2, -1)
@@ -480,11 +485,13 @@ class qMaxValueEntropy(DiscreteMaxValueBase):
         # s_M x 1 x batch_shape x num_fantasies x (m)
 
         # Compute log(p(ym | x, Dt))
-        log_pdf_fm = posterior_m.mvn.log_prob(self.weight * samples_m).unsqueeze(0)
+        log_pdf_fm = posterior_m.distribution.log_prob(
+            self.weight * samples_m
+        ).unsqueeze(0)
         # 1 x s_m x batch_shape x num_fantasies x (m)
 
         # H0 = H(ym | x, Dt)
-        H0 = posterior_m.mvn.entropy()  # batch_shape x num_fantasies x (m)
+        H0 = posterior_m.distribution.entropy()  # batch_shape x num_fantasies x (m)
 
         # regression adjusted H1 estimation, H1_hat = H1_bar - beta * (H0_bar - H0)
         # H1 = E_{f*|x, Dt}[H(ym|f*, x, Dt)]
@@ -636,15 +643,23 @@ class qLowerBoundMaxValueEntropy(DiscreteMaxValueBase):
             self.X_pending,
             observation_noise=True,
             posterior_transform=self.posterior_transform,
-        ).mvn.covariance_matrix.unsqueeze(0)
+        ).distribution.covariance_matrix.unsqueeze(0)
         # 1 x m x m
 
         # use determinant of block matrix formula
-        V_determinant = variance_m - inv_quad(B, A.transpose(1, 2)).unsqueeze(1)
+        inv_quad_term = inv_quad(B, A.transpose(1, 2)).unsqueeze(1)
+        # NOTE: Even when using Cholesky to compute inv_quad, `V_determinant` can be
+        # negative due to numerical issues. To avoid this, we clamp the variance
+        # so that `V_determinant` > 0, while still allowing gradients to be
+        # propagated through `inv_quad_term`, as well as through `variance_m`
+        # in the expression for `r` below.
+        # choosing eps to be small while avoiding numerical underflow
+        eps = 1e-6 if inv_quad_term.dtype == torch.float32 else 1e-12
+        V_determinant = variance_m.clamp(inv_quad_term * (1 + eps)) - inv_quad_term
         # batch_shape x 1
 
         # Take logs and convert covariances to correlations.
-        r = V_determinant.log() - variance_m.log()
+        r = V_determinant.log() - variance_m.log()  # = log(1 - inv_quad / var)
         r = 0.5 * r.transpose(0, 1)
         return acq + r
 
@@ -783,7 +798,7 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
         mean_M = self.weight * posterior.mean[..., -1, 0]  # batch_shape x num_fantasies
         variance_M = posterior.variance[..., -1, 0].clamp_min(CLAMP_LB)
         # get the covariance between the low fidelities and max fidelity
-        covar_mM = posterior.mvn.covariance_matrix[..., :-1, -1]
+        covar_mM = posterior.distribution.covariance_matrix[..., :-1, -1]
         # batch_shape x num_fantasies x (1 + num_trace_observations)
 
         check_no_nans(mean_M)

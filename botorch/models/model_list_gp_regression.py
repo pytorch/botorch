@@ -52,6 +52,8 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel, FantasizeMixin):
         """
         super().__init__(*gp_models)
 
+    # pyre-fixme[14]: Inconsistent override. Here `X` is a List[Tensor], but in the
+    # parent method it's a Tensor.
     def condition_on_observations(
         self, X: List[Tensor], Y: Tensor, **kwargs: Any
     ) -> ModelListGP:

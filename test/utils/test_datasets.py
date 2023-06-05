@@ -15,7 +15,7 @@ from botorch.utils.datasets import (
     SupervisedDataset,
 )
 from botorch.utils.testing import BotorchTestCase
-from torch import rand, randperm, Size, stack, tensor
+from torch import rand, randperm, Size, stack, tensor, Tensor
 
 
 class TestDatasets(BotorchTestCase):
@@ -31,6 +31,7 @@ class TestDatasets(BotorchTestCase):
         X = rand(3, 2)
         Y = rand(3, 1)
         A = DenseContainer(rand(3, 5), event_shape=Size([5]))
+        B = rand(2, 1)
 
         SupervisedDatasetWithDefaults = make_dataclass(
             cls_name="SupervisedDatasetWithDefaults",
@@ -38,6 +39,7 @@ class TestDatasets(BotorchTestCase):
             fields=[
                 ("default", DenseContainer, field(default=A)),
                 ("factory", DenseContainer, field(default_factory=lambda: A)),
+                ("other", Tensor, field(default_factory=lambda: B)),
             ],
         )
 
@@ -55,13 +57,23 @@ class TestDatasets(BotorchTestCase):
         dataset = SupervisedDatasetWithDefaults(X=X, Y=Y)
         self.assertEqual(dataset.default, A)
         self.assertEqual(dataset.factory, A)
+        self.assertTrue(dataset.other is B)
 
         # Check type coercion
-        dataset = SupervisedDatasetWithDefaults(X=X, Y=Y, default=X, factory=Y)
+        dataset = SupervisedDatasetWithDefaults(X=X, Y=Y, default=X, factory=Y, other=B)
         self.assertIsInstance(dataset.X, DenseContainer)
         self.assertIsInstance(dataset.Y, DenseContainer)
         self.assertEqual(dataset.default, dataset.X)
         self.assertEqual(dataset.factory, dataset.Y)
+        self.assertTrue(dataset.other is B)
+
+        # Check handling of positional arguments
+        dataset = SupervisedDatasetWithDefaults(X, Y, X, Y, X)
+        self.assertIsInstance(dataset.X, DenseContainer)
+        self.assertIsInstance(dataset.Y, DenseContainer)
+        self.assertEqual(dataset.default, dataset.X)
+        self.assertEqual(dataset.factory, dataset.Y)
+        self.assertTrue(dataset.other is X)
 
     def test_supervised(self):
         # Generate some data

@@ -1,6 +1,20 @@
 name: Reusable Tutorials Workflow
 
 on:
+  workflow_dispatch:
+    inputs:
+      smoke_test:
+        required: true
+        type: boolean
+      use_stable_pytorch_gpytorch:
+        required: true
+        type: boolean
+      use_stable_ax:
+        required: true
+        type: boolean
+      upload_artifact:
+        required: true
+        type: boolean
   workflow_call:
     inputs:
       smoke_test:
@@ -15,15 +29,19 @@ on:
         required: false
         type: boolean
         default: false
+      upload_artifact:
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   tutorials:
     name: Run tutorials
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: "3.8"
     - name: Fetch all history for all tags and branches
@@ -70,3 +88,26 @@ jobs:
       name: Run tutorials without smoke test
       run: |
         python scripts/run_tutorials.py -p "$(pwd)"
+    - if: ${{ inputs.upload_artifact }}
+      name: Upload performance data to artifacts branch
+      # Sometimes pushing to this branch doesn't work -- fix planned
+      continue-on-error: true
+      # 1) Switch to artifacts branch
+      # 2) Add the new CSV file
+      # 3) Get .py and .ipynb files needed for analyzing tutorials data from main
+      # 4) Run `scripts/analyze_tutorials_performance.py` to merge CSVs and
+      #  update notebook
+      # 5) Commit updated notebook and new CSVs to artifacts branch
+      run: |
+        git config user.email "github-actions@github.com"
+        git config user.name "github-actions"
+        cp scripts/analyze_tutorials_performance.py analyze_tutorials_performance.py
+        cp notebooks/tutorials_performance_tracking.ipynb tutorials_performance_tracking.ipynb
+        git switch artifacts
+        mv *.csv tutorial_performance_data/
+        mv tutorials_performance_tracking.ipynb notebooks/
+        pip install seaborn
+        python analyze_tutorials_performance.py
+        git add tutorial_performance_data/*.csv notebooks/tutorials_performance_tracking.ipynb
+        git commit -a -m "Adding most recent tutorials CSVs and performance analytics notebook"
+        git push origin artifacts

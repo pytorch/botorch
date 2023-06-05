@@ -19,6 +19,7 @@ from botorch.acquisition.analytic import (
     NoisyExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
+    qAnalyticProbabilityOfImprovement,
     UpperConfidenceBound,
 )
 from botorch.acquisition.cost_aware import (
@@ -57,7 +58,10 @@ from botorch.acquisition.objective import (
     ScalarizedObjective,
     ScalarizedPosteriorTransform,
 )
-from botorch.acquisition.preference import AnalyticExpectedUtilityOfBestOption
+from botorch.acquisition.preference import (
+    AnalyticExpectedUtilityOfBestOption,
+    PairwiseBayesianActiveLearningByDisagreement,
+)
 from botorch.acquisition.proximal import ProximalAcquisitionFunction
 from botorch.acquisition.utils import get_acquisition_function
 
@@ -72,11 +76,13 @@ __all__ = [
     "InverseCostWeightedUtility",
     "NoisyExpectedImprovement",
     "OneShotAcquisitionFunction",
+    "PairwiseBayesianActiveLearningByDisagreement",
     "PairwiseMCPosteriorVariance",
     "PosteriorMean",
     "ProbabilityOfImprovement",
     "ProximalAcquisitionFunction",
     "UpperConfidenceBound",
+    "qAnalyticProbabilityOfImprovement",
     "qExpectedImprovement",
     "qKnowledgeGradient",
     "MaxValueBase",

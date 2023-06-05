@@ -8,6 +8,7 @@ import warnings
 from contextlib import ExitStack
 from itertools import product
 from random import random
+from typing import Optional
 from unittest import mock
 
 import torch
@@ -33,16 +34,49 @@ from botorch.optim.initializers import (
     gen_value_function_initial_conditions,
     sample_perturbed_subset_dims,
     sample_points_around_best,
+    sample_q_batches_from_polytope,
     sample_truncated_normal_perturbations,
+    transform_constraints,
+    transform_inter_point_constraint,
+    transform_intra_point_constraint,
 )
-from botorch.sampling import IIDNormalSampler
-from botorch.utils.sampling import draw_sobol_samples
+from botorch.sampling.normal import IIDNormalSampler
+from botorch.utils.sampling import draw_sobol_samples, manual_seed
 from botorch.utils.testing import (
+    _get_max_violation_of_bounds,
+    _get_max_violation_of_constraints,
     BotorchTestCase,
     MockAcquisitionFunction,
     MockModel,
     MockPosterior,
 )
+
+
+class TestBoundsAndConstraintCheckers(BotorchTestCase):
+    def test_bounds_check(self) -> None:
+        bounds = torch.tensor([[1, 2], [3, 4]], device=self.device)
+        samples = torch.tensor([[2, 3], [2, 3.1]], device=self.device)[None, :, :]
+        result = _get_max_violation_of_bounds(samples, bounds)
+        self.assertAlmostEqual(result, -0.9, delta=1e-6)
+
+        samples = torch.tensor([[2, 3], [2, 4.1]], device=self.device)[None, :, :]
+        result = _get_max_violation_of_bounds(samples, bounds)
+        self.assertAlmostEqual(result, 0.1, delta=1e-6)
+
+    def test_constraint_check(self) -> None:
+        constraints = [
+            (
+                torch.tensor([1], device=self.device),
+                torch.tensor([1.0], device=self.device),
+                3,
+            )
+        ]
+        samples = torch.tensor([[2, 3], [2, 3.1]], device=self.device)[None, :, :]
+        result = _get_max_violation_of_constraints(samples, constraints, equality=True)
+        self.assertAlmostEqual(result, 0.1, delta=1e-6)
+
+        result = _get_max_violation_of_constraints(samples, constraints, equality=False)
+        self.assertAlmostEqual(result, 0.0, delta=1e-6)
 
 
 class TestInitializeQBatch(BotorchTestCase):
@@ -175,6 +209,10 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                     self.assertEqual(batch_initial_conditions.shape, expected_shape)
                     self.assertEqual(batch_initial_conditions.device, bounds.device)
                     self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
+                    self.assertLess(
+                        _get_max_violation_of_bounds(batch_initial_conditions, bounds),
+                        1e-6,
+                    )
                     batch_shape = (
                         torch.Size([])
                         if init_batch_limit is None
@@ -232,6 +270,9 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                 self.assertEqual(batch_initial_conditions.shape, expected_shape)
                 self.assertEqual(batch_initial_conditions.device, bounds.device)
                 self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
+                self.assertLess(
+                    _get_max_violation_of_bounds(batch_initial_conditions, bounds), 1e-6
+                )
                 if ffs is not None:
                     for idx, val in ffs.items():
                         self.assertTrue(
@@ -268,6 +309,219 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                         batch_initial_conditions,
                         torch.zeros(2, 1, 2, device=self.device, dtype=dtype),
                     )
+                )
+
+    def test_gen_batch_initial_conditions_transform_intra_point_constraint(self):
+        for dtype in (torch.float, torch.double):
+            constraint = (
+                torch.tensor([0, 1], dtype=torch.int64, device=self.device),
+                torch.tensor([-1, -1]).to(dtype=dtype, device=self.device),
+                -1.0,
+            )
+            constraints = transform_intra_point_constraint(
+                constraint=constraint, d=3, q=3
+            )
+            self.assertEqual(len(constraints), 3)
+            self.assertAllClose(
+                constraints[0][0],
+                torch.tensor([0, 1], dtype=torch.int64, device=self.device),
+            )
+            self.assertAllClose(
+                constraints[1][0],
+                torch.tensor([3, 4], dtype=torch.int64, device=self.device),
+            )
+            self.assertAllClose(
+                constraints[2][0],
+                torch.tensor([6, 7], dtype=torch.int64, device=self.device),
+            )
+            for constraint in constraints:
+                self.assertAllClose(
+                    torch.tensor([-1, -1], dtype=dtype, device=self.device),
+                    constraint[1],
+                )
+                self.assertEqual(constraint[2], -1.0)
+            # test failure on invalid d
+            constraint = (
+                torch.tensor([[0, 3]], dtype=torch.int64, device=self.device),
+                torch.tensor([-1.0, -1.0], dtype=dtype, device=self.device),
+                0,
+            )
+            with self.assertRaisesRegex(
+                ValueError,
+                "Constraint indices cannot exceed the problem dimension d=3.",
+            ):
+                transform_intra_point_constraint(constraint=constraint, d=3, q=2)
+
+    def test_gen_batch_intial_conditions_transform_inter_point_constraint(self):
+        for dtype in (torch.float, torch.double):
+            constraint = (
+                torch.tensor([[0, 1], [1, 1]], dtype=torch.int64, device=self.device),
+                torch.tensor([1.0, -1.0], dtype=dtype, device=self.device),
+                0,
+            )
+            transformed = transform_inter_point_constraint(constraint=constraint, d=3)
+            self.assertAllClose(
+                transformed[0],
+                torch.tensor([1, 4], dtype=torch.int64, device=self.device),
+            )
+            self.assertAllClose(
+                transformed[1],
+                torch.tensor([1.0, -1.0]).to(dtype=dtype, device=self.device),
+            )
+            self.assertEqual(constraint[2], 0.0)
+            # test failure on invalid d
+            constraint = (
+                torch.tensor([[0, 1], [1, 3]], dtype=torch.int64, device=self.device),
+                torch.tensor([1.0, -1.0], dtype=dtype, device=self.device),
+                0,
+            )
+            with self.assertRaisesRegex(
+                ValueError,
+                "Constraint indices cannot exceed the problem dimension d=3.",
+            ):
+                transform_inter_point_constraint(constraint=constraint, d=3)
+
+    def test_gen_batch_initial_conditions_transform_constraints(self):
+        for dtype in (torch.float, torch.double):
+            # test with None
+            self.assertIsNone(transform_constraints(constraints=None, d=3, q=3))
+            constraints = [
+                (
+                    torch.tensor([0, 1], dtype=torch.int64, device=self.device),
+                    torch.tensor([-1.0, -1.0], dtype=dtype, device=self.device),
+                    -1.0,
+                ),
+                (
+                    torch.tensor(
+                        [[0, 1], [1, 1]], device=self.device, dtype=torch.int64
+                    ),
+                    torch.tensor([1.0, -1.0], dtype=dtype, device=self.device),
+                    0,
+                ),
+            ]
+            transformed = transform_constraints(constraints=constraints, d=3, q=3)
+            self.assertEqual(len(transformed), 4)
+            self.assertAllClose(
+                transformed[0][0],
+                torch.tensor([0, 1], dtype=torch.int64, device=self.device),
+            )
+            self.assertAllClose(
+                transformed[1][0],
+                torch.tensor([3, 4], dtype=torch.int64, device=self.device),
+            )
+            self.assertAllClose(
+                transformed[2][0],
+                torch.tensor([6, 7], dtype=torch.int64, device=self.device),
+            )
+            for constraint in transformed[:3]:
+                self.assertAllClose(
+                    torch.tensor([-1, -1], dtype=dtype, device=self.device),
+                    constraint[1],
+                )
+                self.assertEqual(constraint[2], -1.0)
+            self.assertAllClose(
+                transformed[-1][0],
+                torch.tensor([1, 4], dtype=torch.int64, device=self.device),
+            )
+            self.assertAllClose(
+                transformed[-1][1],
+                torch.tensor([1.0, -1.0], dtype=dtype, device=self.device),
+            )
+            self.assertEqual(transformed[-1][2], 0.0)
+
+    def test_gen_batch_initial_conditions_sample_q_batches_from_polytope(self):
+        n = 5
+        q = 2
+        d = 3
+
+        for dtype in (torch.float, torch.double):
+            bounds = torch.tensor(
+                [[0, 0, 0], [1, 1, 1]], device=self.device, dtype=dtype
+            )
+            inequality_constraints = [
+                (
+                    torch.tensor([0, 1], device=self.device, dtype=torch.int64),
+                    torch.tensor([-1, 1], device=self.device, dtype=dtype),
+                    torch.tensor(-0.5, device=self.device, dtype=dtype),
+                )
+            ]
+            inter_point_inequality_constraints = [
+                (
+                    torch.tensor([0, 1], device=self.device, dtype=torch.int64),
+                    torch.tensor([-1, 1], device=self.device, dtype=dtype),
+                    torch.tensor(-0.4, device=self.device, dtype=dtype),
+                ),
+                (
+                    torch.tensor(
+                        [[0, 1], [1, 1]], device=self.device, dtype=torch.int64
+                    ),
+                    torch.tensor([1, 1], device=self.device, dtype=dtype),
+                    torch.tensor(0.3, device=self.device, dtype=dtype),
+                ),
+            ]
+            equality_constraints = [
+                (
+                    torch.tensor([0, 1, 2], device=self.device, dtype=torch.int64),
+                    torch.tensor([1, 1, 1], device=self.device, dtype=dtype),
+                    torch.tensor(1, device=self.device, dtype=dtype),
+                )
+            ]
+            inter_point_equality_constraints = [
+                (
+                    torch.tensor([0, 1, 2], device=self.device, dtype=torch.int64),
+                    torch.tensor([1, 1, 1], device=self.device, dtype=dtype),
+                    torch.tensor(1, device=self.device, dtype=dtype),
+                ),
+                (
+                    torch.tensor(
+                        [[0, 0], [1, 0]], device=self.device, dtype=torch.int64
+                    ),
+                    torch.tensor([1.0, -1.0], device=self.device, dtype=dtype),
+                    0,
+                ),
+            ]
+            for equalities, inequalities in product(
+                [None, equality_constraints, inter_point_equality_constraints],
+                [None, inequality_constraints, inter_point_inequality_constraints],
+            ):
+                samples = sample_q_batches_from_polytope(
+                    n=n,
+                    q=q,
+                    bounds=bounds,
+                    n_burnin=10000,
+                    thinning=32,
+                    seed=42,
+                    inequality_constraints=inequalities,
+                    equality_constraints=equalities,
+                )
+                self.assertEqual(samples.shape, torch.Size((n, q, d)))
+
+                tol = 4e-7
+
+                # samples are always on cpu
+                def _to_self_device(
+                    x: Optional[torch.Tensor],
+                ) -> Optional[torch.Tensor]:
+                    return None if x is None else x.to(device=self.device)
+
+                self.assertLess(
+                    _get_max_violation_of_bounds(_to_self_device(samples), bounds), tol
+                )
+
+                self.assertLess(
+                    _get_max_violation_of_constraints(
+                        _to_self_device(samples), constraints=equalities, equality=True
+                    ),
+                    tol,
+                )
+
+                self.assertLess(
+                    _get_max_violation_of_constraints(
+                        _to_self_device(samples),
+                        constraints=inequalities,
+                        equality=False,
+                    ),
+                    tol,
                 )
 
     def test_gen_batch_initial_conditions_constraints(self):
@@ -318,6 +572,27 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                     self.assertEqual(batch_initial_conditions.shape, expected_shape)
                     self.assertEqual(batch_initial_conditions.device, bounds.device)
                     self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
+                    self.assertLess(
+                        _get_max_violation_of_bounds(batch_initial_conditions, bounds),
+                        1e-6,
+                    )
+                    self.assertLess(
+                        _get_max_violation_of_constraints(
+                            batch_initial_conditions,
+                            inequality_constraints,
+                            equality=False,
+                        ),
+                        1e-6,
+                    )
+                    self.assertLess(
+                        _get_max_violation_of_constraints(
+                            batch_initial_conditions,
+                            equality_constraints,
+                            equality=True,
+                        ),
+                        1e-6,
+                    )
+
                     batch_shape = (
                         torch.Size([])
                         if init_batch_limit is None
@@ -339,12 +614,177 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                                 torch.all(batch_initial_conditions[..., idx] == val)
                             )
 
+    def test_gen_batch_initial_conditions_interpoint_constraints(self):
+        for dtype in (torch.float, torch.double):
+            bounds = torch.tensor([[0, 0], [1, 1]], device=self.device, dtype=dtype)
+            inequality_constraints = [
+                (
+                    torch.tensor([0, 1], device=self.device, dtype=torch.int64),
+                    torch.tensor([-1, -1.0], device=self.device, dtype=dtype),
+                    torch.tensor(-1.0, device=self.device, dtype=dtype),
+                )
+            ]
+            equality_constraints = [
+                (
+                    torch.tensor(
+                        [[0, 0], [1, 0]], device=self.device, dtype=torch.int64
+                    ),
+                    torch.tensor([1.0, -1.0], device=self.device, dtype=dtype),
+                    0,
+                ),
+                (
+                    torch.tensor(
+                        [[0, 0], [2, 0]], device=self.device, dtype=torch.int64
+                    ),
+                    torch.tensor([1.0, -1.0], device=self.device, dtype=dtype),
+                    0,
+                ),
+            ]
+
+            for nonnegative, seed in product([True, False], [None, 1234]):
+                mock_acqf = MockAcquisitionFunction()
+                with mock.patch.object(
+                    MockAcquisitionFunction,
+                    "__call__",
+                    wraps=mock_acqf.__call__,
+                ):
+                    batch_initial_conditions = gen_batch_initial_conditions(
+                        acq_function=mock_acqf,
+                        bounds=bounds,
+                        q=3,
+                        num_restarts=2,
+                        raw_samples=10,
+                        options={
+                            "nonnegative": nonnegative,
+                            "eta": 0.01,
+                            "alpha": 0.1,
+                            "seed": seed,
+                            "init_batch_limit": None,
+                            "thinning": 2,
+                            "n_burnin": 3,
+                        },
+                        inequality_constraints=inequality_constraints,
+                        equality_constraints=equality_constraints,
+                    )
+                    expected_shape = torch.Size([2, 3, 2])
+                    self.assertEqual(batch_initial_conditions.shape, expected_shape)
+                    self.assertEqual(batch_initial_conditions.device, bounds.device)
+                    self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
+
+                    self.assertTrue((batch_initial_conditions.sum(dim=-1) <= 1).all())
+
+                    self.assertAllClose(
+                        batch_initial_conditions[0, 0, 0],
+                        batch_initial_conditions[0, 1, 0],
+                        batch_initial_conditions[0, 2, 0],
+                    )
+
+                    self.assertAllClose(
+                        batch_initial_conditions[1, 0, 0],
+                        batch_initial_conditions[1, 1, 0],
+                        batch_initial_conditions[1, 2, 0],
+                    )
+                    self.assertLess(
+                        _get_max_violation_of_constraints(
+                            batch_initial_conditions,
+                            inequality_constraints,
+                            equality=False,
+                        ),
+                        1e-6,
+                    )
+
+    def test_gen_batch_initial_conditions_generator(self):
+        mock_acqf = MockAcquisitionFunction()
+        mock_acqf.objective = lambda y: y.squeeze(-1)
+        for dtype in (torch.float, torch.double):
+            bounds = torch.tensor(
+                [[0, 0, 0], [1, 1, 1]], device=self.device, dtype=dtype
+            )
+            for nonnegative, seed, init_batch_limit, ffs in product(
+                [True, False], [None, 1234], [None, 1], [None, {0: 0.5}]
+            ):
+
+                def generator(n: int, q: int, seed: int):
+                    with manual_seed(seed):
+                        X_rnd_nlzd = torch.rand(
+                            n,
+                            q,
+                            bounds.shape[-1],
+                            dtype=bounds.dtype,
+                            device=self.device,
+                        )
+                        X_rnd = bounds[0] + (bounds[1] - bounds[0]) * X_rnd_nlzd
+                        X_rnd[..., -1] = 0.42
+                        return X_rnd
+
+                mock_acqf = MockAcquisitionFunction()
+                with mock.patch.object(
+                    MockAcquisitionFunction,
+                    "__call__",
+                    wraps=mock_acqf.__call__,
+                ):
+                    batch_initial_conditions = gen_batch_initial_conditions(
+                        acq_function=mock_acqf,
+                        bounds=bounds,
+                        q=2,
+                        num_restarts=4,
+                        raw_samples=10,
+                        generator=generator,
+                        fixed_features=ffs,
+                        options={
+                            "nonnegative": nonnegative,
+                            "eta": 0.01,
+                            "alpha": 0.1,
+                            "seed": seed,
+                            "init_batch_limit": init_batch_limit,
+                        },
+                    )
+                    expected_shape = torch.Size([4, 2, 3])
+                    self.assertEqual(batch_initial_conditions.shape, expected_shape)
+                    self.assertEqual(batch_initial_conditions.device, bounds.device)
+                    self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
+                    self.assertTrue((batch_initial_conditions[..., -1] == 0.42).all())
+                    self.assertLess(
+                        _get_max_violation_of_bounds(batch_initial_conditions, bounds),
+                        1e-6,
+                    )
+                    if ffs is not None:
+                        for idx, val in ffs.items():
+                            self.assertTrue(
+                                torch.all(batch_initial_conditions[..., idx] == val)
+                            )
+
+    def test_error_generator_with_sample_around_best(self):
+        tkwargs = {"device": self.device, "dtype": torch.double}
+
+        def generator(n: int, q: int, seed: int):
+            return torch.rand(n, q, 3).to(**tkwargs)
+
+        with self.assertRaisesRegex(
+            UnsupportedError,
+            "Option 'sample_around_best' is not supported when custom "
+            "generator is be used.",
+        ):
+            gen_batch_initial_conditions(
+                MockAcquisitionFunction(),
+                bounds=torch.tensor([[0, 0], [1, 1]], **tkwargs),
+                q=1,
+                num_restarts=1,
+                raw_samples=1,
+                generator=generator,
+                options={"sample_around_best": True},
+            )
+
     def test_error_equality_constraints_with_sample_around_best(self):
         tkwargs = {"device": self.device, "dtype": torch.double}
         # this will give something that does not respect the constraints
         # TODO: it would be good to have a utils function to check if the
         # constraints are obeyed
-        with self.assertRaises(UnsupportedError) as e:
+        with self.assertRaisesRegex(
+            UnsupportedError,
+            "Option 'sample_around_best' is not supported when equality"
+            "constraints are present.",
+        ):
             gen_batch_initial_conditions(
                 MockAcquisitionFunction(),
                 bounds=torch.tensor([[0, 0], [1, 1]], **tkwargs),
@@ -360,10 +800,6 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                 ],
                 options={"sample_around_best": True},
             )
-        self.assertTrue(
-            "Option 'sample_around_best' is not supported when equality"
-            "constraints are present." in str(e.exception)
-        )
 
 
 class TestGenOneShotKGInitialConditions(BotorchTestCase):
@@ -436,7 +872,9 @@ class TestGenValueFunctionInitialConditions(BotorchTestCase):
         train_Y = torch.rand(n_train, 1, device=self.device, dtype=dtype)
         model = SingleTaskGP(train_X, train_Y)
         fant_X = torch.rand(num_solutions, 1, dim, device=self.device, dtype=dtype)
-        fantasy_model = model.fantasize(fant_X, IIDNormalSampler(num_fantasies))
+        fantasy_model = model.fantasize(
+            fant_X, IIDNormalSampler(sample_shape=torch.Size([num_fantasies]))
+        )
         bounds = torch.tensor([[0, 0], [1, 1]], device=self.device, dtype=dtype)
         value_function = PosteriorMean(fantasy_model)
         # test option error
@@ -475,7 +913,9 @@ class TestGenValueFunctionInitialConditions(BotorchTestCase):
         train_Y = torch.rand(n_train, 1, device=self.device, dtype=dtype)
         model = SingleTaskGP(train_X, train_Y)
         fant_X = torch.rand(1, 1, dim, device=self.device, dtype=dtype)
-        fantasy_model = model.fantasize(fant_X, IIDNormalSampler(num_fantasies))
+        fantasy_model = model.fantasize(
+            fant_X, IIDNormalSampler(sample_shape=torch.Size([num_fantasies]))
+        )
         bounds = torch.tensor([[0], [1]], device=self.device, dtype=dtype)
         value_function = PosteriorMean(fantasy_model)
         ics = gen_value_function_initial_conditions(
@@ -615,7 +1055,7 @@ class TestSampleAroundBest(BotorchTestCase):
             )
             # test NEI with X_baseline
             acqf = qNoisyExpectedImprovement(
-                model, X_baseline=X_train, cache_root=False
+                model, X_baseline=X_train, prune_baseline=False, cache_root=False
             )
             with mock.patch(
                 "botorch.optim.initializers.sample_perturbed_subset_dims"
@@ -637,7 +1077,7 @@ class TestSampleAroundBest(BotorchTestCase):
                 )
             )
             acqf = qNoisyExpectedImprovement(
-                model, X_baseline=X_train, cache_root=False
+                model, X_baseline=X_train, prune_baseline=False, cache_root=False
             )
             X_rnd = sample_points_around_best(
                 acq_function=acqf,
@@ -727,6 +1167,7 @@ class TestSampleAroundBest(BotorchTestCase):
                     X_baseline=X_train,
                     constraints=constraints,
                     cache_root=False,
+                    sampler=IIDNormalSampler(sample_shape=torch.Size([2])),
                 )
                 X_rnd = sample_points_around_best(
                     acq_function=acqf,
@@ -761,7 +1202,7 @@ class TestSampleAroundBest(BotorchTestCase):
             bounds[1] = 2
             # test NEI with X_baseline
             acqf = qNoisyExpectedImprovement(
-                model, X_baseline=X_train, cache_root=False
+                model, X_baseline=X_train, prune_baseline=False, cache_root=False
             )
             with mock.patch(
                 "botorch.optim.initializers.sample_perturbed_subset_dims",

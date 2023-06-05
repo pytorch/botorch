@@ -15,9 +15,19 @@ Abstract Posterior API
 .. automodule:: botorch.posteriors.posterior
     :members:
 
+Posterior List API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.posteriors.posterior_list
+    :members:
+
 
 Posteriors
 -------------------------------------------
+
+Torch Posterior
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.posteriors.torch
+    :members:
 
 GPyTorch Posterior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -27,6 +37,11 @@ GPyTorch Posterior
 Determinstic Posterior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.posteriors.deterministic
+    :members:
+
+Ensemble Posterior
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.posteriors.ensemble
     :members:
 
 Higher Order GP Posterior

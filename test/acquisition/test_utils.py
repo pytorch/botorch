@@ -5,12 +5,9 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
-import warnings
-from contextlib import ExitStack
 from unittest import mock
 
 import torch
-from botorch import settings
 from botorch.acquisition import monte_carlo
 from botorch.acquisition.multi_objective import (
     MCMultiOutputObjective,
@@ -25,13 +22,13 @@ from botorch.acquisition.utils import (
     expand_trace_observations,
     get_acquisition_function,
     get_infeasible_cost,
+    get_optimal_samples,
     project_to_sample_points,
     project_to_target_fidelity,
     prune_inferior_points,
 )
 from botorch.exceptions.errors import UnsupportedError
-from botorch.exceptions.warnings import SamplingWarning
-from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
+from botorch.models import SingleTaskGP
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     FastNondominatedPartitioning,
     NondominatedPartitioning,
@@ -54,7 +51,7 @@ class DummyMCMultiOutputObjective(MCMultiOutputObjective):
 class TestGetAcquisitionFunction(BotorchTestCase):
     def setUp(self):
         super().setUp()
-        self.model = mock.MagicMock()
+        self.model = MockModel(MockPosterior())
         self.objective = DummyMCObjective()
         self.X_observed = torch.tensor([[1.0, 2.0, 3.0], [2.0, 3.0, 4.0]])
         self.X_pending = torch.tensor([[1.0, 3.0, 4.0]])
@@ -104,7 +101,6 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
         sampler = kwargs["sampler"]
-        self.assertIsInstance(sampler, SobolQMCNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 1)
         self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
@@ -112,7 +108,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         # test w/ posterior transform
         pm = torch.tensor([1.0, 2.0])
         mvn = MultivariateNormal(pm, torch.eye(2))
-        self.model._posterior.mvn = mvn
+        self.model._posterior.distribution = mvn
         self.model._posterior._mean = pm.unsqueeze(-1)
         pt = ScalarizedPosteriorTransform(weights=torch.tensor([-1]))
         acqf = get_acquisition_function(
@@ -155,7 +151,6 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
         sampler = kwargs["sampler"]
-        self.assertIsInstance(sampler, SobolQMCNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 1)
         self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
@@ -167,7 +162,6 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             X_observed=self.X_observed,
             X_pending=self.X_pending,
             mc_samples=self.mc_samples,
-            qmc=False,
             seed=2,
             tau=1.0,
         )
@@ -176,7 +170,6 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertEqual(args, ())
         self.assertEqual(kwargs["tau"], 1.0)
         sampler = kwargs["sampler"]
-        self.assertIsInstance(sampler, IIDNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 2)
         self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
@@ -187,7 +180,6 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             X_observed=self.X_observed,
             X_pending=self.X_pending,
             mc_samples=self.mc_samples,
-            qmc=False,
             seed=2,
             tau=1.0,
         )
@@ -224,10 +216,26 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertTrue(torch.equal(kwargs["X_baseline"], self.X_observed))
         self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
         sampler = kwargs["sampler"]
-        self.assertIsInstance(sampler, SobolQMCNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 1)
         self.assertEqual(kwargs["marginalize_dim"], 0)
+        self.assertEqual(kwargs["cache_root"], True)
+        # test with cache_root = False
+        acqf = get_acquisition_function(
+            acquisition_function_name="qNEI",
+            model=self.model,
+            objective=self.objective,
+            X_observed=self.X_observed,
+            X_pending=self.X_pending,
+            mc_samples=self.mc_samples,
+            seed=self.seed,
+            marginalize_dim=0,
+            cache_root=False,
+        )
+        self.assertTrue(acqf == mock_acqf.return_value)
+        self.assertTrue(mock_acqf.call_count, 1)
+        args, kwargs = mock_acqf.call_args
+        self.assertEqual(kwargs["cache_root"], False)
         # test with non-qmc, no X_pending
         acqf = get_acquisition_function(
             acquisition_function_name="qNEI",
@@ -236,7 +244,6 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             X_observed=self.X_observed,
             X_pending=None,
             mc_samples=self.mc_samples,
-            qmc=False,
             seed=2,
         )
         self.assertTrue(mock_acqf.call_count, 2)
@@ -245,7 +252,6 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertTrue(torch.equal(kwargs["X_baseline"], self.X_observed))
         self.assertEqual(kwargs["X_pending"], None)
         sampler = kwargs["sampler"]
-        self.assertIsInstance(sampler, IIDNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 2)
         self.assertTrue(torch.equal(kwargs["X_baseline"], self.X_observed))
@@ -273,7 +279,6 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
         sampler = kwargs["sampler"]
-        self.assertIsInstance(sampler, SobolQMCNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 1)
         self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
@@ -285,14 +290,12 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             X_observed=self.X_observed,
             X_pending=self.X_pending,
             mc_samples=self.mc_samples,
-            qmc=False,
             seed=2,
         )
         self.assertTrue(mock_acqf.call_count, 2)
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
         sampler = kwargs["sampler"]
-        self.assertIsInstance(sampler, IIDNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 2)
         self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
@@ -332,7 +335,6 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
         sampler = kwargs["sampler"]
-        self.assertIsInstance(sampler, SobolQMCNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 1)
         self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
@@ -344,7 +346,6 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             X_observed=self.X_observed,
             X_pending=self.X_pending,
             mc_samples=self.mc_samples,
-            qmc=False,
             seed=2,
             beta=0.2,
         )
@@ -353,7 +354,6 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertEqual(args, ())
         self.assertEqual(kwargs["beta"], 0.2)
         sampler = kwargs["sampler"]
-        self.assertIsInstance(sampler, IIDNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 2)
         self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
@@ -411,6 +411,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertTrue(acqf == mock_acqf.return_value)
         mock_acqf.assert_called_once_with(
             constraints=None,
+            eta=1e-3,
             model=self.model,
             objective=self.mo_objective,
             ref_point=self.ref_point,
@@ -421,10 +422,9 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
         sampler = kwargs["sampler"]
-        self.assertIsInstance(sampler, SobolQMCNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 1)
-        # test with non-qmc
+
         acqf = get_acquisition_function(
             acquisition_function_name="qEHVI",
             model=self.model,
@@ -433,7 +433,6 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             X_pending=self.X_pending,
             mc_samples=self.mc_samples,
             seed=2,
-            qmc=False,
             ref_point=self.ref_point,
             Y=self.Y,
         )
@@ -442,14 +441,12 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertEqual(args, ())
         self.assertEqual(kwargs["ref_point"], self.ref_point)
         sampler = kwargs["sampler"]
-        self.assertIsInstance(sampler, IIDNormalSampler)
         self.assertIsInstance(kwargs["objective"], DummyMCMultiOutputObjective)
         partitioning = kwargs["partitioning"]
         self.assertIsInstance(partitioning, FastNondominatedPartitioning)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 2)
         # test that approximate partitioning is used when alpha > 0
-        # test with non-qmc
         acqf = get_acquisition_function(
             acquisition_function_name="qEHVI",
             model=self.model,
@@ -458,7 +455,6 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             X_pending=self.X_pending,
             mc_samples=self.mc_samples,
             seed=2,
-            qmc=False,
             ref_point=self.ref_point,
             Y=self.Y,
             alpha=0.1,
@@ -476,14 +472,15 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             X_pending=self.X_pending,
             mc_samples=self.mc_samples,
             constraints=[lambda Y: Y[..., -1]],
+            eta=1e-2,
             seed=2,
-            qmc=False,
             ref_point=self.ref_point,
             Y=self.Y,
         )
         _, kwargs = mock_acqf.call_args
         partitioning = kwargs["partitioning"]
         self.assertEqual(partitioning.pareto_Y.shape[0], 0)
+        self.assertEqual(kwargs["eta"], 1e-2)
 
     @mock.patch(f"{moo_monte_carlo.__name__}.qNoisyExpectedHypervolumeImprovement")
     def test_GetQNEHVI(self, mock_acqf):
@@ -511,6 +508,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertTrue(acqf == mock_acqf.return_value)
         mock_acqf.assert_called_once_with(
             constraints=None,
+            eta=1e-3,
             model=self.model,
             X_baseline=self.X_observed,
             objective=self.objective,
@@ -525,7 +523,6 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
         sampler = kwargs["sampler"]
-        self.assertIsInstance(sampler, SobolQMCNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 1)
         # test with non-qmc
@@ -537,7 +534,6 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             X_pending=self.X_pending,
             mc_samples=self.mc_samples,
             seed=2,
-            qmc=False,
             ref_point=self.ref_point,
         )
         self.assertTrue(mock_acqf.call_count, 2)
@@ -545,10 +541,8 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertEqual(args, ())
         self.assertEqual(kwargs["ref_point"], self.ref_point)
         sampler = kwargs["sampler"]
-        self.assertIsInstance(sampler, IIDNormalSampler)
         ref_point = kwargs["ref_point"]
         self.assertEqual(ref_point, self.ref_point)
-
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 2)
 
@@ -561,7 +555,6 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             X_pending=self.X_pending,
             mc_samples=self.mc_samples,
             seed=2,
-            qmc=False,
             ref_point=self.ref_point,
             alpha=0.01,
         )
@@ -586,7 +579,7 @@ class TestGetInfeasibleCost(BotorchTestCase):
     def test_get_infeasible_cost(self):
         for dtype in (torch.float, torch.double):
             tkwargs = {"dtype": dtype, "device": self.device}
-            X = torch.zeros(5, 1, **tkwargs)
+            X = torch.ones(5, 1, **tkwargs)
             means = torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0], **tkwargs).view(-1, 1)
             variances = torch.tensor([0.09, 0.25, 0.36, 0.25, 0.09], **tkwargs).view(
                 -1, 1
@@ -595,24 +588,29 @@ class TestGetInfeasibleCost(BotorchTestCase):
             # means - 6 * std = [-0.8, -1, -0.6, 1, 3.2]. After applying the
             # objective, the minimum becomes -6.0, so 6.0 should be returned.
             M = get_infeasible_cost(
-                X=X, model=mm, objective=lambda Y: Y.squeeze(-1) - 5.0
+                X=X, model=mm, objective=lambda Y, X: Y.squeeze(-1) - 5.0
             )
-            self.assertTrue(torch.allclose(M, torch.tensor([6.0], **tkwargs)))
+            self.assertAllClose(M, torch.tensor([6.0], **tkwargs))
+            M = get_infeasible_cost(
+                X=X, model=mm, objective=lambda Y, X: Y.squeeze(-1) - 5.0 - X[0, 0]
+            )
+            self.assertAllClose(M, torch.tensor([7.0], **tkwargs))
+            # test it with using also X in the objective
             # Test default objective (squeeze last dim).
             M2 = get_infeasible_cost(X=X, model=mm)
-            self.assertTrue(torch.allclose(M2, torch.tensor([1.0], **tkwargs)))
+            self.assertAllClose(M2, torch.tensor([1.0], **tkwargs))
             # Test multi-output.
             m_ = means.repeat(1, 2)
             m_[:, 1] -= 10
             mm = MockModel(MockPosterior(mean=m_, variance=variances.expand(-1, 2)))
             M3 = get_infeasible_cost(X=X, model=mm)
-            self.assertTrue(torch.allclose(M3, torch.tensor([1.0, 11.0], **tkwargs)))
+            self.assertAllClose(M3, torch.tensor([1.0, 11.0], **tkwargs))
             # With a batched model.
             means = means.expand(2, 4, -1, -1)
             variances = variances.expand(2, 4, -1, -1)
             mm = MockModel(MockPosterior(mean=means, variance=variances))
             M4 = get_infeasible_cost(X=X, model=mm)
-            self.assertTrue(torch.allclose(M4, torch.tensor([1.0], **tkwargs)))
+            self.assertAllClose(M4, torch.tensor([1.0], **tkwargs))
 
 
 class TestPruneInferiorPoints(BotorchTestCase):
@@ -674,24 +672,6 @@ class TestPruneInferiorPoints(BotorchTestCase):
                 mm = MockModel(MockPosterior(samples=samples))
                 X_pruned = prune_inferior_points(model=mm, X=X)
             self.assertTrue(torch.equal(X_pruned, X[:2]))
-            # test high-dim sampling
-            with ExitStack() as es:
-                mock_event_shape = es.enter_context(
-                    mock.patch(
-                        "botorch.utils.testing.MockPosterior.base_sample_shape",
-                        new_callable=mock.PropertyMock,
-                    )
-                )
-                mock_event_shape.return_value = torch.Size(
-                    [1, 1, torch.quasirandom.SobolEngine.MAXDIM + 1]
-                )
-                es.enter_context(
-                    mock.patch.object(MockPosterior, "rsample", return_value=samples)
-                )
-                mm = MockModel(MockPosterior(samples=samples))
-                with warnings.catch_warnings(record=True) as ws, settings.debug(True):
-                    prune_inferior_points(model=mm, X=X)
-                    self.assertTrue(issubclass(ws[-1].category, SamplingWarning))
 
 
 class TestFidelityUtils(BotorchTestCase):
@@ -773,7 +753,7 @@ class TestFidelityUtils(BotorchTestCase):
             grad_exp[..., fdims] = 1 + sum(
                 (i + 1) / (num_tr + 1) for i in range(num_tr)
             )
-            self.assertTrue(torch.allclose(X.grad, grad_exp))
+            self.assertAllClose(X.grad, grad_exp)
 
     def test_project_to_sample_points(self):
         for batch_shape, dtype in itertools.product(
@@ -785,10 +765,38 @@ class TestFidelityUtils(BotorchTestCase):
             X_augmented = project_to_sample_points(X=X, sample_points=sample_points)
             self.assertEqual(X_augmented.shape, torch.Size(batch_shape + [p, d]))
             if batch_shape == [2]:
-                self.assertTrue(
-                    torch.allclose(X_augmented[0, :, -d_prime:], sample_points)
-                )
+                self.assertAllClose(X_augmented[0, :, -d_prime:], sample_points)
             else:
-                self.assertTrue(
-                    torch.allclose(X_augmented[:, -d_prime:], sample_points)
-                )
+                self.assertAllClose(X_augmented[:, -d_prime:], sample_points)
+
+
+class TestGetOptimalSamples(BotorchTestCase):
+    def test_get_optimal_samples(self):
+        dims = 3
+        dtype = torch.float64
+        for_testing_speed_kwargs = {"raw_samples": 50, "num_restarts": 3}
+        num_optima = 7
+        batch_shape = (3,)
+
+        bounds = torch.tensor([[0, 1]] * dims, dtype=dtype).T
+        X = torch.rand(*batch_shape, 4, dims, dtype=dtype)
+        Y = torch.sin(X).sum(dim=-1, keepdim=True).to(dtype)
+        model = SingleTaskGP(X, Y)
+        X_opt, f_opt = get_optimal_samples(
+            model, bounds, num_optima=num_optima, **for_testing_speed_kwargs
+        )
+        X_opt, f_opt_min = get_optimal_samples(
+            model,
+            bounds,
+            num_optima=num_optima,
+            maximize=False,
+            **for_testing_speed_kwargs,
+        )
+
+        correct_X_shape = (num_optima,) + batch_shape + (dims,)
+        correct_f_shape = (num_optima,) + batch_shape + (1,)
+        self.assertEqual(X_opt.shape, correct_X_shape)
+        self.assertEqual(f_opt.shape, correct_f_shape)
+        # asserting that the solutions found by minimization the samples are smaller
+        # than those found by maximization
+        self.assertTrue(torch.all(f_opt_min < f_opt))

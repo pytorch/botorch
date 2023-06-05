@@ -62,7 +62,9 @@ class MixedSingleTaskGP(SingleTaskGP):
         train_X: Tensor,
         train_Y: Tensor,
         cat_dims: List[int],
-        cont_kernel_factory: Optional[Callable[[int, List[int]], Kernel]] = None,
+        cont_kernel_factory: Optional[
+            Callable[[torch.Size, int, List[int]], Kernel]
+        ] = None,
         likelihood: Optional[Likelihood] = None,
         outcome_transform: Optional[OutcomeTransform] = None,  # TODO
         input_transform: Optional[InputTransform] = None,  # TODO
@@ -74,9 +76,9 @@ class MixedSingleTaskGP(SingleTaskGP):
             train_Y: A `batch_shape x n x m` tensor of training observations.
             cat_dims: A list of indices corresponding to the columns of
                 the input `X` that should be considered categorical features.
-            cont_kernel_factory: A method that accepts `ard_num_dims` and
-                `active_dims` arguments and returns an instantiated GPyTorch
-                `Kernel` object to be used as the ase kernel for the continuous
+            cont_kernel_factory: A method that accepts  `batch_shape`, `ard_num_dims`,
+                and `active_dims` arguments and returns an instantiated GPyTorch
+                `Kernel` object to be used as the base kernel for the continuous
                 dimensions. If omitted, this model uses a Matern-2.5 kernel as
                 the kernel for the ordinal parameters.
             likelihood: A likelihood. If omitted, use a standard
@@ -87,29 +89,17 @@ class MixedSingleTaskGP(SingleTaskGP):
                 `.posterior` on the model will be on the original scale).
             input_transform: An input transform that is applied in the model's
                 forward pass. Only input transforms are allowed which do not
-                transform the categorical dimensions. This can be achieved
-                by using the `indices` argument when constructing the transform.
+                transform the categorical dimensions. If you want to use it
+                for example in combination with a `OneHotToNumeric` input transform
+                one has to instantiate the transform with `transform_on_train` == False
+                and pass in the already transformed input.
         """
-        if input_transform is not None:
-            if not hasattr(input_transform, "indices"):
-                raise ValueError(
-                    "Only continuous inputs can be transformed. "
-                    "Please use `indices` in the `input_transform`."
-                )
-            # check that no cat dim is in indices
-            elif any(idx in input_transform.indices for idx in cat_dims):
-                raise ValueError(
-                    "Only continuous inputs can be transformed. "
-                    "Categorical index found in `indices` of the `input_transform`."
-                )
         if len(cat_dims) == 0:
             raise ValueError(
                 "Must specify categorical dimensions for MixedSingleTaskGP"
             )
         self._ignore_X_dims_scaling_check = cat_dims
-        input_batch_shape, aug_batch_shape = self.get_batch_dimensions(
-            train_X=train_X, train_Y=train_Y
-        )
+        _, aug_batch_shape = self.get_batch_dimensions(train_X=train_X, train_Y=train_Y)
 
         if cont_kernel_factory is None:
 

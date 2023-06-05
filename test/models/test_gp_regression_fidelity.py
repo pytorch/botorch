@@ -166,7 +166,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                     pp_tf = model.posterior(X)
                     model.outcome_transform = tmp_tf
                     expected_var = tmp_tf.untransform_posterior(pp_tf).variance
-                    self.assertTrue(torch.allclose(posterior.variance, expected_var))
+                    self.assertAllClose(posterior.variance, expected_var)
 
                 # test batch evaluation
                 X = torch.rand(2, *batch_shape, 3, num_dim, **tkwargs)
@@ -182,7 +182,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                     pp_tf = model.posterior(X)
                     model.outcome_transform = tmp_tf
                     expected_var = tmp_tf.untransform_posterior(pp_tf).variance
-                    self.assertTrue(torch.allclose(posterior.variance, expected_var))
+                    self.assertAllClose(posterior.variance, expected_var)
 
     def test_condition_on_observations(self):
         for (iteration_fidelity, data_fidelity) in self.FIDELITY_TEST_PAIRS:
@@ -296,8 +296,10 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                         )
                         self.assertTrue(
                             torch.allclose(
-                                posterior_same_inputs.mvn.covariance_matrix[:, 0, :, :],
-                                non_batch_posterior.mvn.covariance_matrix,
+                                posterior_same_inputs.distribution.covariance_matrix[
+                                    :, 0, :, :
+                                ],
+                                non_batch_posterior.distribution.covariance_matrix,
                                 atol=1e-3,
                             )
                         )
@@ -325,7 +327,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 X_f = torch.rand(
                     torch.Size(batch_shape + torch.Size([4, num_dim])), **tkwargs
                 )
-                sampler = SobolQMCNormalSampler(num_samples=3)
+                sampler = SobolQMCNormalSampler(sample_shape=torch.Size([3]))
                 fm = model.fantasize(X=X_f, sampler=sampler)
                 self.assertIsInstance(fm, model.__class__)
                 fm = model.fantasize(X=X_f, sampler=sampler, observation_noise=False)

@@ -11,7 +11,8 @@ from unittest import mock
 import torch
 from botorch.models.converter import batched_to_model_list
 from botorch.models.deterministic import DeterministicModel
-from botorch.models.gp_regression import SingleTaskGP
+from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
+from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
 from botorch.models.model import ModelList
 from botorch.models.multitask import MultiTaskGP
 from botorch.models.transforms.input import Normalize
@@ -26,6 +27,7 @@ from botorch.utils.gp_sampling import (
     RandomFourierFeatures,
 )
 from botorch.utils.testing import BotorchTestCase
+from botorch.utils.transforms import is_fully_bayesian
 from gpytorch.kernels import MaternKernel, PeriodicKernel, RBFKernel, ScaleKernel
 from torch.distributions import MultivariateNormal
 
@@ -328,7 +330,7 @@ class TestRandomFourierFeatures(BotorchTestCase):
                     _arg_to_cos = X / base_kernel.lengthscale @ rff.weights
                     _bias_expanded = rff.bias.unsqueeze(-2)
                     expected_Y = _constant * (torch.cos(_arg_to_cos + _bias_expanded))
-                    self.assertTrue(torch.allclose(Y, expected_Y))
+                    self.assertAllClose(Y, expected_Y)
 
             # test get_weights
             for sample_shape in [torch.Size(), torch.Size([5])]:
@@ -413,7 +415,7 @@ class TestRandomFourierFeatures(BotorchTestCase):
                     expected_Y = torch.stack(
                         [basis(X) @ w for w, basis in zip(weights, bases)], dim=-1
                     )
-                    self.assertTrue(torch.allclose(Y, expected_Y))
+                    self.assertAllClose(Y, expected_Y)
                     self.assertEqual(Y.shape, torch.Size([*batch_shape, 1, m]))
 
     def test_get_deterministic_model_multi_samples(self):
@@ -466,7 +468,7 @@ class TestRandomFourierFeatures(BotorchTestCase):
                 Y = model(X)
                 for i in range(m):
                     expected_Yi = (bases[i](X) @ weights[i].unsqueeze(-1)).squeeze(-1)
-                    self.assertTrue(torch.allclose(Y[..., i], expected_Yi))
+                    self.assertAllClose(Y[..., i], expected_Yi)
                 self.assertEqual(
                     Y.shape,
                     torch.Size([*batch_shape_x, n_samples, 1, m]),
@@ -500,7 +502,7 @@ class TestRandomFourierFeatures(BotorchTestCase):
                 Y = Y_true + sigma * torch.randn_like(Y_true)
                 posterior = get_weights_posterior(X=X, y=Y, sigma_sq=sigma**2)
                 self.assertIsInstance(posterior, MultivariateNormal)
-                self.assertTrue(torch.allclose(w, posterior.mean, atol=1e-1))
+                self.assertAllClose(w, posterior.mean, atol=1e-1)
                 w_samp = posterior.sample()
                 self.assertEqual(w_samp.shape, w.shape)
 
@@ -564,7 +566,7 @@ class TestRandomFourierFeatures(BotorchTestCase):
                 Y_hat_rff = samples.mean(dim=0)
                 with torch.no_grad():
                     Y_hat = model.posterior(X).mean
-                self.assertTrue(torch.allclose(Y_hat_rff, Y_hat, atol=5e-1))
+                self.assertAllClose(Y_hat_rff, Y_hat, atol=5e-1)
 
                 # test batched evaluation
                 test_X = torch.randn(13, n_samples, 3, X.shape[-1], **tkwargs)
@@ -634,7 +636,7 @@ class TestRandomFourierFeatures(BotorchTestCase):
                 Y_hat_rff = torch.stack(means, dim=0).mean(dim=0)
                 with torch.no_grad():
                     Y_hat = model.posterior(X).mean
-                self.assertTrue(torch.allclose(Y_hat_rff, Y_hat, atol=5e-1))
+                self.assertAllClose(Y_hat_rff, Y_hat, atol=5e-1)
                 # test batched evaluation
                 test_X = torch.randn(13, 5, 3, X.shape[-1], **tkwargs)
                 if batched_inputs:
@@ -644,3 +646,48 @@ class TestRandomFourierFeatures(BotorchTestCase):
                     expected = torch.Size([13, 5, 3, m])
                 Y_batched = gp_samples.posterior(test_X).mean
                 self.assertEqual(Y_batched.shape, expected)
+
+    def test_with_fixed_noise(self):
+        for n_samples in (1, 20):
+            gp_samples = get_gp_samples(
+                model=FixedNoiseGP(
+                    torch.rand(5, 3, dtype=torch.double),
+                    torch.randn(5, 1, dtype=torch.double),
+                    torch.rand(5, 1, dtype=torch.double) * 0.1,
+                ),
+                num_outputs=1,
+                n_samples=n_samples,
+            )
+            samples = gp_samples(torch.rand(2, 3))
+            expected_shape = (
+                torch.Size([2, 1]) if n_samples == 1 else torch.Size([n_samples, 2, 1])
+            )
+            self.assertEqual(samples.shape, expected_shape)
+
+    def test_with_saas_models(self):
+        # Construct a SAAS model.
+        tkwargs = {"dtype": torch.double, "device": self.device}
+        num_samples = 4
+        model = SaasFullyBayesianSingleTaskGP(
+            train_X=torch.rand(10, 4, **tkwargs), train_Y=torch.randn(10, 1, **tkwargs)
+        )
+        mcmc_samples = {
+            "lengthscale": torch.rand(num_samples, 1, 4, **tkwargs),
+            "outputscale": torch.rand(num_samples, **tkwargs),
+            "mean": torch.randn(num_samples, **tkwargs),
+            "noise": torch.rand(num_samples, 1, **tkwargs),
+        }
+        model.load_mcmc_samples(mcmc_samples)
+        # Test proper setup & sampling support.
+        gp_samples = get_gp_samples(
+            model=model,
+            num_outputs=1,
+            n_samples=1,
+        )
+        self.assertTrue(is_fully_bayesian(gp_samples))
+        # Non-batch evaluation.
+        samples = gp_samples(torch.rand(2, 4, **tkwargs))
+        self.assertEqual(samples.shape, torch.Size([4, 2, 1]))
+        # Batch evaluation.
+        samples = gp_samples(torch.rand(5, 2, 4, **tkwargs))
+        self.assertEqual(samples.shape, torch.Size([5, 4, 2, 1]))

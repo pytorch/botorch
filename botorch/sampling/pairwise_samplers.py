@@ -7,12 +7,13 @@
 from __future__ import annotations
 
 from itertools import combinations
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 import torch
 from botorch.posteriors.posterior import Posterior
-from botorch.sampling.samplers import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
+from botorch.sampling.base import MCSampler
+from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from torch import Tensor
 
 
@@ -79,66 +80,44 @@ class PairwiseMCSampler(MCSampler):
 class PairwiseIIDNormalSampler(PairwiseMCSampler, IIDNormalSampler):
     def __init__(
         self,
-        num_samples: int,
-        resample: bool = False,
+        sample_shape: torch.Size,
         seed: Optional[int] = None,
-        collapse_batch_dims: bool = True,
         max_num_comparisons: int = None,
+        **kwargs: Any,
     ) -> None:
         r"""
         Args:
-            num_samples: The number of samples to use.
-            resample: If `True`, re-draw samples in each `forward` evaluation -
-                this results in stochastic acquisition functions (and thus should
-                not be used with deterministic optimization algorithms).
+            sample_shape: The `sample_shape` of the samples to generate.
             seed: The seed for the RNG. If omitted, use a random seed.
-            collapse_batch_dims: If True, collapse the t-batch dimensions to
-                size 1. This is useful for preventing sampling variance across
-                t-batches.
             max_num_comparisons:  Max number of comparisons drawn within samples.
                 If None, use all possible pairwise comparisons.
+            kwargs: Catch-all for deprecated arguments.
         """
         PairwiseMCSampler.__init__(
             self, max_num_comparisons=max_num_comparisons, seed=seed
         )
-        IIDNormalSampler.__init__(
-            self,
-            num_samples,
-            resample=resample,
-            seed=seed,
-            collapse_batch_dims=collapse_batch_dims,
-        )
+        IIDNormalSampler.__init__(self, sample_shape=sample_shape, seed=seed, **kwargs)
 
 
 class PairwiseSobolQMCNormalSampler(PairwiseMCSampler, SobolQMCNormalSampler):
     def __init__(
         self,
-        num_samples: int,
-        resample: bool = False,
+        sample_shape: torch.Size,
         seed: Optional[int] = None,
-        collapse_batch_dims: bool = True,
         max_num_comparisons: int = None,
+        **kwargs: Any,
     ) -> None:
         r"""
         Args:
-            num_samples: The number of samples to use.
-            resample: If `True`, re-draw samples in each `forward` evaluation -
-                this results in stochastic acquisition functions (and thus should
-                not be used with deterministic optimization algorithms).
+            sample_shape: The `sample_shape` of the samples to generate.
             seed: The seed for the RNG. If omitted, use a random seed.
-            collapse_batch_dims: If True, collapse the t-batch dimensions to
-                size 1. This is useful for preventing sampling variance across
-                t-batches.
             max_num_comparisons:  Max number of comparisons drawn within samples.
                 If None, use all possible pairwise comparisons.
+            kwargs: Catch-all for deprecated arguments.
         """
         PairwiseMCSampler.__init__(
             self, max_num_comparisons=max_num_comparisons, seed=seed
         )
         SobolQMCNormalSampler.__init__(
-            self,
-            num_samples,
-            resample=resample,
-            seed=seed,
-            collapse_batch_dims=collapse_batch_dims,
+            self, sample_shape=sample_shape, seed=seed, **kwargs
         )

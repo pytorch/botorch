@@ -131,16 +131,27 @@ def _verify_output_shape(acqf: Any, X: Tensor, output: Tensor) -> bool:
         True if `output` has the correct shape, False otherwise.
     """
     try:
-        return (
-            output.shape == X.shape[:-2]
-            or (output.shape == torch.Size() and X.shape[:-2] == torch.Size([1]))
-            or output.shape == acqf.model.batch_shape
-            # for a batched model, we may unsqueeze a batch dimension in X
-            # corresponding to the model's batch dim. In that case the
-            # acquisition function output should replace the right-most
-            # batch dim of X with the model's batch shape.
-            or output.shape == X.shape[:-3] + acqf.model.batch_shape
-        )
+        X_batch_shape = X.shape[:-2]
+        if output.shape == X_batch_shape:
+            return True
+        if output.shape == torch.Size() and X_batch_shape == torch.Size([1]):
+            # X has a batch shape of [1] which gets squeezed.
+            return True
+        # Cases with model batch shape involved.
+        model_b_shape = acqf.model.batch_shape
+        if output.shape == model_b_shape:
+            # Simple inputs with batched model.
+            return True
+        model_b_dim = len(model_b_shape)
+        if output.shape == X_batch_shape[:-model_b_dim] + model_b_shape and all(
+            xs in [1, ms] for xs, ms in zip(X_batch_shape[-model_b_dim:], model_b_shape)
+        ):
+            # X has additional batch dimensions beyond the model batch shape.
+            # For a batched model, some of the input dimensions might get broadcasted
+            # to the model batch shape. In that case the acquisition function output
+            # should replace the right-most batch dim of X with the model's batch shape.
+            return True
+        return False
     except (AttributeError, NotImplementedError):
         # acqf does not have model or acqf.model does not define `batch_shape`
         warnings.warn(
@@ -162,26 +173,22 @@ def is_fully_bayesian(model: Model) -> bool:
     Returns:
         True if at least one model is a `SaasFullyBayesianSingleTaskGP`
     """
-    from botorch.models import ModelList, ModelListGP
+    from botorch.models import ModelList
     from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
     from botorch.models.fully_bayesian_multitask import SaasFullyBayesianMultiTaskGP
 
-    full_bayesian_model_cls = [
+    full_bayesian_model_cls = (
         SaasFullyBayesianSingleTaskGP,
         SaasFullyBayesianMultiTaskGP,
-    ]
+    )
 
-    if any(isinstance(model, m_cls) for m_cls in full_bayesian_model_cls):
+    if isinstance(model, full_bayesian_model_cls) or getattr(
+        model, "is_fully_bayesian", False
+    ):
         return True
     elif isinstance(model, ModelList):
         for m in model.models:
-            if any(isinstance(m, m_cls) for m_cls in full_bayesian_model_cls):
-                return True
-            elif isinstance(m, ModelListGP) and any(
-                isinstance(m_sub, m_cls)
-                for m_sub in m.models
-                for m_cls in full_bayesian_model_cls
-            ):
+            if is_fully_bayesian(m):
                 return True
     return False
 

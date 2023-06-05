@@ -6,6 +6,8 @@
 
 import itertools
 
+from warnings import catch_warnings
+
 import torch
 from botorch.posteriors.deterministic import DeterministicPosterior
 from botorch.utils.testing import BotorchTestCase
@@ -18,10 +20,16 @@ class TestDeterministicPosterior(BotorchTestCase):
         ):
             values = torch.randn(*shape, device=self.device, dtype=dtype)
             p = DeterministicPosterior(values)
+            with catch_warnings(record=True) as ws:
+                p = DeterministicPosterior(values)
+                self.assertTrue(
+                    any("marked for deprecation" in str(w.message) for w in ws)
+                )
             self.assertEqual(p.device.type, self.device.type)
             self.assertEqual(p.dtype, dtype)
-            self.assertEqual(p.event_shape, values.shape)
-            self.assertEqual(p.base_sample_shape, torch.Size())
+            self.assertEqual(p._extended_shape(), values.shape)
+            with self.assertRaises(NotImplementedError):
+                p.base_sample_shape
             self.assertTrue(torch.equal(p.mean, values))
             self.assertTrue(torch.equal(p.variance, torch.zeros_like(values)))
             # test sampling
@@ -29,10 +37,3 @@ class TestDeterministicPosterior(BotorchTestCase):
             self.assertTrue(torch.equal(samples, values.unsqueeze(0)))
             samples = p.rsample(torch.Size([2]))
             self.assertTrue(torch.equal(samples, values.expand(2, *values.shape)))
-            base_samples = torch.randn(2, *shape, device=self.device, dtype=dtype)
-            samples = p.rsample(torch.Size([2]), base_samples)
-            self.assertTrue(torch.equal(samples, values.expand(2, *values.shape)))
-            with self.assertRaises(RuntimeError):
-                samples = p.rsample(
-                    torch.Size([2]), base_samples.expand(3, *base_samples.shape)
-                )

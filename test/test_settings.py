@@ -6,6 +6,8 @@
 
 import warnings
 
+import gpytorch.settings as gp_settings
+import linear_operator.settings as linop_settings
 from botorch import settings
 from botorch.exceptions import BotorchWarning
 from botorch.utils.testing import BotorchTestCase
@@ -23,26 +25,40 @@ class TestSettings(BotorchTestCase):
             self.assertTrue(flag.off())
 
     def test_debug(self):
-        # turn on BotorchWarning
+        # Turn on debug.
         settings.debug._set_state(True)
-        # check that warnings are suppressed
+        # Check that debug warnings are suppressed when it is turned off.
         with settings.debug(False):
             with warnings.catch_warnings(record=True) as ws:
-                warnings.warn("test", BotorchWarning)
+                if settings.debug.on():
+                    warnings.warn("test", BotorchWarning)
             self.assertEqual(len(ws), 0)
-        # check that warnings are not suppressed outside of context manager
+        # Check that warnings are not suppressed outside of context manager.
         with warnings.catch_warnings(record=True) as ws:
-            warnings.warn("test", BotorchWarning)
+            if settings.debug.on():
+                warnings.warn("test", BotorchWarning)
         self.assertEqual(len(ws), 1)
 
-        # turn off BotorchWarnings
+        # Turn off debug.
         settings.debug._set_state(False)
-        # check that warnings are not suppressed
+        # Check that warnings are not suppressed within debug.
         with settings.debug(True):
             with warnings.catch_warnings(record=True) as ws:
-                warnings.warn("test", BotorchWarning)
+                if settings.debug.on():
+                    warnings.warn("test", BotorchWarning)
             self.assertEqual(len(ws), 1)
-        # check that warnings are suppressed outside of context manager
+        # Check that warnings are suppressed outside of context manager.
         with warnings.catch_warnings(record=True) as ws:
-            warnings.warn("test", BotorchWarning)
+            if settings.debug.on():
+                warnings.warn("test", BotorchWarning)
         self.assertEqual(len(ws), 0)
+
+
+class TestDefaultGPyTorchLinOpSettings(BotorchTestCase):
+    def test_default_gpytorch_linop_settings(self):
+        self.assertTrue(linop_settings._fast_covar_root_decomposition.off())
+        self.assertTrue(linop_settings._fast_log_prob.off())
+        self.assertTrue(linop_settings._fast_solves.off())
+        self.assertEqual(linop_settings.cholesky_max_tries.value(), 6)
+        self.assertEqual(linop_settings.max_cholesky_size.value(), 4096)
+        self.assertEqual(gp_settings.max_eager_kernel_size.value(), 4096)

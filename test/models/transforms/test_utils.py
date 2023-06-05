@@ -33,8 +33,8 @@ class TestTransformUtils(BotorchTestCase):
             diag_expected = torch.tensor(
                 [2.69099, 2.69099, 1.0], device=self.device, dtype=dtype
             )
-            self.assertTrue(torch.allclose(mu_n, mu_n_expected))
-            self.assertTrue(torch.allclose(Cov_n, torch.diag_embed(diag_expected)))
+            self.assertAllClose(mu_n, mu_n_expected)
+            self.assertAllClose(Cov_n, torch.diag_embed(diag_expected))
 
             # correlated case
             Z = torch.zeros(3, 3, device=self.device, dtype=dtype)
@@ -49,8 +49,8 @@ class TestTransformUtils(BotorchTestCase):
                 device=self.device,
                 dtype=dtype,
             )
-            self.assertTrue(torch.allclose(mu_n, mu_n_expected, atol=1e-4))
-            self.assertTrue(torch.allclose(Cov_n, Cov_n_expected, atol=1e-4))
+            self.assertAllClose(mu_n, mu_n_expected, atol=1e-4)
+            self.assertAllClose(Cov_n, Cov_n_expected, atol=1e-4)
 
     def test_norm_to_lognorm(self):
         for dtype in (torch.float, torch.double):
@@ -67,8 +67,8 @@ class TestTransformUtils(BotorchTestCase):
                 [0.75, 8.0, 54.0], device=self.device, dtype=dtype
             )
             Cov_ln_expected = torch.diag_embed(diag_ln_expected)
-            self.assertTrue(torch.allclose(Cov_ln, Cov_ln_expected))
-            self.assertTrue(torch.allclose(mu_ln, mu_ln_expected))
+            self.assertAllClose(Cov_ln, Cov_ln_expected)
+            self.assertAllClose(mu_ln, mu_ln_expected)
 
             # Test joint, correlated
             Cov[0, 2] = 0.1
@@ -76,8 +76,8 @@ class TestTransformUtils(BotorchTestCase):
             mu_ln, Cov_ln = norm_to_lognorm(mu, Cov)
             Cov_ln_expected[0, 2] = 0.669304
             Cov_ln_expected[2, 0] = 0.669304
-            self.assertTrue(torch.allclose(Cov_ln, Cov_ln_expected))
-            self.assertTrue(torch.allclose(mu_ln, mu_ln_expected))
+            self.assertAllClose(Cov_ln, Cov_ln_expected)
+            self.assertAllClose(mu_ln, mu_ln_expected)
 
             # Test marginal
             mu = torch.tensor([-1.0, 0.0, 1.0], device=self.device, dtype=dtype)
@@ -89,8 +89,8 @@ class TestTransformUtils(BotorchTestCase):
                 [1.0, 2.0, 3.0], device=self.device, dtype=dtype
             )
             var_ln_expected = (torch.exp(var) - 1) * mu_ln_expected**2
-            self.assertTrue(torch.allclose(mu_ln, mu_ln_expected))
-            self.assertTrue(torch.allclose(var_ln, var_ln_expected))
+            self.assertAllClose(mu_ln, mu_ln_expected)
+            self.assertAllClose(var_ln, var_ln_expected)
 
     def test_round_trip(self):
         for dtype, batch_shape in product((torch.float, torch.double), ([], [2])):
@@ -105,8 +105,8 @@ class TestTransformUtils(BotorchTestCase):
                 Cov = a @ a.transpose(-1, -2) + torch.diag_embed(diag)
                 mu_n, Cov_n = lognorm_to_norm(mu, Cov)
                 mu_rt, Cov_rt = norm_to_lognorm(mu_n, Cov_n)
-                self.assertTrue(torch.allclose(mu_rt, mu, atol=1e-4))
-                self.assertTrue(torch.allclose(Cov_rt, Cov, atol=1e-4))
+                self.assertAllClose(mu_rt, mu, atol=1e-4)
+                self.assertAllClose(Cov_rt, Cov, atol=1e-4)
 
     def test_expand_and_copy_tensor(self):
         for input_batch_shape, batch_shape in product(

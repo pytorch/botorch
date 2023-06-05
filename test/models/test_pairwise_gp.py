@@ -15,7 +15,11 @@ from botorch.models.likelihoods.pairwise import (
     PairwiseLogitLikelihood,
     PairwiseProbitLikelihood,
 )
-from botorch.models.pairwise_gp import PairwiseGP, PairwiseLaplaceMarginalLogLikelihood
+from botorch.models.pairwise_gp import (
+    _ensure_psd_with_jitter,
+    PairwiseGP,
+    PairwiseLaplaceMarginalLogLikelihood,
+)
 from botorch.models.transforms.input import Normalize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling.pairwise_samplers import PairwiseSobolQMCNormalSampler
@@ -24,6 +28,7 @@ from gpytorch.kernels import RBFKernel, ScaleKernel
 from gpytorch.kernels.linear_kernel import LinearKernel
 from gpytorch.means import ConstantMean
 from gpytorch.priors import GammaPrior, SmoothedBoxPrior
+from linear_operator.utils.errors import NotPSDError
 
 
 class TestPairwiseGP(BotorchTestCase):
@@ -175,6 +180,66 @@ class TestPairwiseGP(BotorchTestCase):
             with self.assertRaises(RuntimeError):
                 model.set_train_data(train_X, changed_train_comp, strict=True)
 
+    def test_consolidation(self):
+        for batch_shape, dtype, likelihood_cls in itertools.product(
+            (torch.Size(), torch.Size([2])),
+            (torch.float, torch.double),
+            (PairwiseLogitLikelihood, PairwiseProbitLikelihood),
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            X_dim = 2
+
+            _, model_kwargs = self._get_model_and_data(
+                batch_shape=batch_shape,
+                X_dim=X_dim,
+                likelihood_cls=likelihood_cls,
+                **tkwargs,
+            )
+            train_X = model_kwargs["datapoints"]
+            train_comp = model_kwargs["comparisons"]
+
+            # Test consolidation
+            i1, i2 = train_X.shape[-2], train_X.shape[-2] + 1
+            dup_comp = torch.cat(
+                [
+                    train_comp,
+                    torch.tensor(
+                        [[i1, i2]], dtype=train_comp.dtype, device=train_comp.device
+                    ).expand(*batch_shape, 1, 2),
+                ],
+                dim=-2,
+            )
+            dup_X = torch.cat([train_X, train_X[..., :2, :]], dim=-2)
+            model = PairwiseGP(datapoints=dup_X, comparisons=dup_comp)
+            self.assertTrue(dup_X is model.unconsolidated_datapoints)
+            self.assertTrue(dup_comp is model.unconsolidated_comparisons)
+            if batch_shape:
+                self.assertTrue(dup_X is model.consolidated_datapoints)
+                self.assertTrue(dup_comp is model.consolidated_comparisons)
+                self.assertTrue(model.utility is model.unconsolidated_utility)
+            else:
+                self.assertFalse(torch.equal(dup_X, model.consolidated_datapoints))
+                self.assertFalse(torch.equal(dup_comp, model.consolidated_comparisons))
+                self.assertFalse(
+                    torch.equal(model.utility, model.unconsolidated_utility)
+                )
+
+            # calling forward with duplicated datapoints should work after consolidation
+            mll = PairwiseLaplaceMarginalLogLikelihood(model.likelihood, model)
+            # make sure model is in training mode
+            self.assertTrue(model.training)
+            pred = model(dup_X)
+            # posterior shape in training should match the consolidated utility
+            self.assertEqual(pred.shape(), model.utility.shape)
+            if batch_shape:
+                # do not perform consolidation in batch mode
+                # because the block structure cannot be guaranteed
+                self.assertEqual(pred.shape(), dup_X.shape[:-1])
+            else:
+                self.assertEqual(pred.shape(), train_X.shape[:-1])
+            # Pass the original comparisons through mll should work
+            mll(pred, dup_comp)
+
     def test_condition_on_observations(self):
         for batch_shape, dtype, likelihood_cls in itertools.product(
             (torch.Size(), torch.Size([2])),
@@ -272,8 +337,10 @@ class TestPairwiseGP(BotorchTestCase):
                     )
                     self.assertTrue(
                         torch.allclose(
-                            posterior_same_inputs.mvn.covariance_matrix[:, 0, :, :],
-                            non_batch_posterior.mvn.covariance_matrix,
+                            posterior_same_inputs.distribution.covariance_matrix[
+                                :, 0, :, :
+                            ],
+                            non_batch_posterior.distribution.covariance_matrix,
                             atol=1e-3,
                         )
                     )
@@ -298,7 +365,7 @@ class TestPairwiseGP(BotorchTestCase):
             X_f = torch.rand(
                 torch.Size(batch_shape + torch.Size([4, X_dim])), **tkwargs
             )
-            sampler = PairwiseSobolQMCNormalSampler(num_samples=3)
+            sampler = PairwiseSobolQMCNormalSampler(sample_shape=torch.Size([3]))
             fm = model.fantasize(X=X_f, sampler=sampler)
             self.assertIsInstance(fm, model.__class__)
             fm = model.fantasize(X=X_f, sampler=sampler, observation_noise=False)
@@ -318,3 +385,21 @@ class TestPairwiseGP(BotorchTestCase):
         _ = model.load_state_dict(sd)
         for buffer_name in model._buffer_names:
             self.assertIsNone(model.get_buffer(buffer_name))
+
+    def test_helper_functions(self):
+        for batch_shape, dtype in itertools.product(
+            (torch.Size(), torch.Size([2])), (torch.float, torch.double)
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            # M is borderline PSD
+            M = torch.ones((*batch_shape, 2, 2), **tkwargs)
+            with self.assertRaises(torch._C._LinAlgError):
+                torch.cholesky(M)
+            # This should work fine
+            _ensure_psd_with_jitter(M)
+
+            bad_M = torch.tensor([[1.0, 2.0], [2.0, 1.0]], **tkwargs).expand(
+                (*batch_shape, 2, 2)
+            )
+            with self.assertRaises(NotPSDError):
+                _ensure_psd_with_jitter(bad_M)

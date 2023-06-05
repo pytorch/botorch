@@ -16,21 +16,23 @@ References
 
 from __future__ import annotations
 
-import warnings
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-from typing import Generator, Iterable, List, Optional, Tuple
+from typing import Any, Generator, Iterable, List, Optional, Tuple, TYPE_CHECKING
 
 import numpy as np
 import scipy
 import torch
 from botorch.exceptions.errors import BotorchError
-from botorch.exceptions.warnings import SamplingWarning
-from botorch.posteriors.posterior import Posterior
 from botorch.sampling.qmc import NormalQMCEngine
+from botorch.utils.transforms import unnormalize
 from scipy.spatial import Delaunay, HalfspaceIntersection
 from torch import LongTensor, Tensor
 from torch.quasirandom import SobolEngine
+
+
+if TYPE_CHECKING:
+    from botorch.sampling.pathwise.paths import SamplePath  # pragma: no cover
 
 
 @contextmanager
@@ -55,103 +57,6 @@ def manual_seed(seed: Optional[int] = None) -> Generator[None, None, None]:
     finally:
         if seed is not None:
             torch.random.set_rng_state(old_state)
-
-
-def construct_base_samples(
-    batch_shape: torch.Size,
-    output_shape: torch.Size,
-    sample_shape: torch.Size,
-    qmc: bool = True,
-    seed: Optional[int] = None,
-    device: Optional[torch.device] = None,
-    dtype: Optional[torch.dtype] = None,
-) -> Tensor:
-    r"""Construct base samples from a multi-variate standard normal N(0, I_qo).
-
-    Args:
-        batch_shape: The batch shape of the base samples to generate. Typically,
-            this is used with each dimension of size 1, so as to eliminate
-            sampling variance across batches.
-        output_shape: The output shape (`q x m`) of the base samples to generate.
-        sample_shape: The sample shape of the samples to draw.
-        qmc: If True, use quasi-MC sampling (instead of iid draws).
-        seed: If provided, use as a seed for the RNG.
-
-    Returns:
-        A `sample_shape x batch_shape x mutput_shape` dimensional tensor of base
-        samples, drawn from a N(0, I_qm) distribution (using QMC if `qmc=True`).
-        Here `output_shape = q x m`.
-
-    Example:
-        >>> batch_shape = torch.Size([2])
-        >>> output_shape = torch.Size([3])
-        >>> sample_shape = torch.Size([10])
-        >>> samples = construct_base_samples(batch_shape, output_shape, sample_shape)
-    """
-    base_sample_shape = batch_shape + output_shape
-    output_dim = output_shape.numel()
-    if qmc and output_dim <= SobolEngine.MAXDIM:
-        n = (sample_shape + batch_shape).numel()
-        base_samples = draw_sobol_normal_samples(
-            d=output_dim, n=n, device=device, dtype=dtype, seed=seed
-        )
-        base_samples = base_samples.view(sample_shape + base_sample_shape)
-    else:
-        if qmc and output_dim > SobolEngine.MAXDIM:
-            warnings.warn(
-                f"Number of output elements (q*d={output_dim}) greater than "
-                f"maximum supported by qmc ({SobolEngine.MAXDIM}). "
-                "Using iid sampling instead.",
-                SamplingWarning,
-            )
-        with manual_seed(seed=seed):
-            base_samples = torch.randn(
-                sample_shape + base_sample_shape, device=device, dtype=dtype
-            )
-    return base_samples
-
-
-def construct_base_samples_from_posterior(
-    posterior: Posterior,
-    sample_shape: torch.Size,
-    qmc: bool = True,
-    collapse_batch_dims: bool = True,
-    seed: Optional[int] = None,
-) -> Tensor:
-    r"""Construct a tensor of normally distributed base samples.
-
-    Args:
-        posterior: A Posterior object.
-        sample_shape: The sample shape of the samples to draw.
-        qmc: If True, use quasi-MC sampling (instead of iid draws).
-        seed: If provided, use as a seed for the RNG.
-
-    Returns:
-        A `num_samples x 1 x q x m` dimensional Tensor of base samples, drawn
-        from a N(0, I_qm) distribution (using QMC if `qmc=True`). Here `q` and
-        `m` are the same as in the posterior's `event_shape` `b x q x m`.
-        Importantly, this only obtain a single t-batch of samples, so as to not
-        introduce any sampling variance across t-batches.
-
-    Example:
-        >>> sample_shape = torch.Size([10])
-        >>> samples = construct_base_samples_from_posterior(posterior, sample_shape)
-    """
-    output_shape = posterior.event_shape[-2:]  # shape of joint output: q x m
-    if collapse_batch_dims:
-        batch_shape = torch.Size([1] * len(posterior.event_shape[:-2]))
-    else:
-        batch_shape = posterior.event_shape[:-2]
-    base_samples = construct_base_samples(
-        batch_shape=batch_shape,
-        output_shape=output_shape,
-        sample_shape=sample_shape,
-        qmc=qmc,
-        seed=seed,
-        device=posterior.device,
-        dtype=posterior.dtype,
-    )
-    return base_samples
 
 
 def draw_sobol_samples(
@@ -888,24 +793,10 @@ def get_polytope_samples(
     """
     # create tensors representing linear inequality constraints
     # of the form Ax >= b.
-    # TODO: remove this error handling functionality in a few releases.
-    # Context: BoTorch inadvertently supported indices with unusual dtypes.
-    # This is now not supported.
-    index_dtype_error = (
-        "Normalizing {var_name} failed. Check that the first "
-        "element of {var_name} is the correct dtype following "
-        "the previous IndexError."
-    )
     if inequality_constraints:
         # normalize_linear_constraints is called to solve this issue:
         # https://github.com/pytorch/botorch/issues/1225
-        try:
-            # non-standard dtypes used to be supported for indices in constraints;
-            # this is no longer true
-            constraints = normalize_linear_constraints(bounds, inequality_constraints)
-        except IndexError as e:
-            msg = index_dtype_error.format(var_name="`inequality_constraints`")
-            raise ValueError(msg) from e
+        constraints = normalize_linear_constraints(bounds, inequality_constraints)
 
         A, b = sparse_to_dense_constraints(
             d=bounds.shape[-1],
@@ -918,16 +809,7 @@ def get_polytope_samples(
     else:
         dense_inequality_constraints = None
     if equality_constraints:
-        try:
-            # non-standard dtypes used to be supported for indices in constraints;
-            # this is no longer true
-            constraints = normalize_linear_constraints(bounds, equality_constraints)
-        except IndexError as e:
-            msg = index_dtype_error.format(var_name="`equality_constraints`")
-            raise ValueError(msg) from e
-
-        # normalize_linear_constraints is called to solve this issue:
-        # https://github.com/pytorch/botorch/issues/1225
+        constraints = normalize_linear_constraints(bounds, equality_constraints)
         dense_equality_constraints = sparse_to_dense_constraints(
             d=bounds.shape[-1], constraints=constraints
         )
@@ -973,3 +855,71 @@ def sparse_to_dense_constraints(
         A[i, indices.long()] = coefficients
         b[i] = rhs
     return A, b
+
+
+def optimize_posterior_samples(
+    paths: SamplePath,
+    bounds: Tensor,
+    candidates: Optional[Tensor] = None,
+    raw_samples: Optional[int] = 1024,
+    num_restarts: int = 20,
+    maximize: bool = True,
+    **kwargs: Any,
+) -> Tuple[Tensor, Tensor]:
+    r"""Cheaply maximizes posterior samples by random querying followed by vanilla
+    gradient descent on the best num_restarts points.
+
+    Args:
+        paths: Random Fourier Feature-based sample paths from the GP
+        bounds: The bounds on the search space.
+        candidates: A priori good candidates (typically previous design points)
+            which acts as extra initial guesses for the optimization routine.
+        raw_samples: The number of samples with which to query the samples initially.
+        num_restarts: The number of points selected for gradient-based optimization.
+        maximize: Boolean indicating whether to maimize or minimize
+
+    Returns:
+        A two-element tuple containing:
+            - X_opt: A `num_optima x [batch_size] x d`-dim tensor of optimal inputs x*.
+            - f_opt: A `num_optima x [batch_size] x 1`-dim tensor of optimal outputs f*.
+    """
+    if maximize:
+
+        def path_func(x):
+            return paths(x)
+
+    else:
+
+        def path_func(x):
+            return -paths(x)
+
+    candidate_set = unnormalize(
+        SobolEngine(dimension=bounds.shape[1], scramble=True).draw(raw_samples), bounds
+    )
+
+    # queries all samples on all candidates - output shape
+    # raw_samples * num_optima * num_models
+    candidate_queries = path_func(candidate_set)
+    argtop_k = torch.topk(candidate_queries, num_restarts, dim=-1).indices
+    X_top_k = candidate_set[argtop_k, :]
+
+    # to avoid circular import, the import occurs here
+    from botorch.generation.gen import gen_candidates_torch
+
+    X_top_k, f_top_k = gen_candidates_torch(
+        X_top_k, path_func, lower_bounds=bounds[0], upper_bounds=bounds[1], **kwargs
+    )
+    f_opt, arg_opt = f_top_k.max(dim=-1, keepdim=True)
+
+    # For each sample (and possibly for every model in the batch of models), this
+    # retrieves the argmax. We flatten, pick out the indices and then reshape to
+    # the original batch shapes (so instead of pickig out the argmax of a
+    # (3, 7, num_restarts, D)) along the num_restarts dim, we pick it out of a
+    # (21  , num_restarts, D)
+    final_shape = candidate_queries.shape[:-1]
+    X_opt = X_top_k.reshape(final_shape.numel(), num_restarts, -1)[
+        torch.arange(final_shape.numel()), arg_opt.flatten()
+    ].reshape(*final_shape, -1)
+    if not maximize:
+        f_opt = -f_opt
+    return X_opt, f_opt

@@ -10,6 +10,7 @@ Candidate generation utilities.
 
 from __future__ import annotations
 
+import time
 import warnings
 from functools import partial
 from typing import Any, Callable, Dict, List, NoReturn, Optional, Tuple, Type, Union
@@ -19,6 +20,7 @@ import torch
 from botorch.acquisition import AcquisitionFunction
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.generation.utils import _remove_fixed_features_from_optimization
+from botorch.logging import _get_logger
 from botorch.optim.parameter_constraints import (
     _arrayify,
     make_scipy_bounds,
@@ -28,9 +30,14 @@ from botorch.optim.parameter_constraints import (
 )
 from botorch.optim.stopping import ExpMAStoppingCriterion
 from botorch.optim.utils import _filter_kwargs, columnwise_clamp, fix_features
-from scipy.optimize import minimize
+from botorch.optim.utils.timeout import minimize_with_timeout
+from scipy.optimize import OptimizeResult
 from torch import Tensor
 from torch.optim import Optimizer
+
+logger = _get_logger()
+
+TGenCandidates = Callable[[Tensor, AcquisitionFunction, Any], Tuple[Tensor, Tensor]]
 
 
 def gen_candidates_scipy(
@@ -43,6 +50,7 @@ def gen_candidates_scipy(
     nonlinear_inequality_constraints: Optional[List[Callable]] = None,
     options: Optional[Dict[str, Any]] = None,
     fixed_features: Optional[Dict[int, Optional[float]]] = None,
+    timeout_sec: Optional[float] = None,
 ) -> Tuple[Tensor, Tensor]:
     r"""Generate a set of candidates using `scipy.optimize.minimize`.
 
@@ -50,7 +58,8 @@ def gen_candidates_scipy(
     using `scipy.optimize.minimize` via a numpy converter.
 
     Args:
-        initial_conditions: Starting points for optimization.
+        initial_conditions: Starting points for optimization, with shape
+            (b) x q x d.
         acquisition_function: Acquisition function to be used.
         lower_bounds: Minimum values for each column of initial_conditions.
         upper_bounds: Maximum values for each column of initial_conditions.
@@ -68,12 +77,17 @@ def gen_candidates_scipy(
         options: Options used to control the optimization including "method"
             and "maxiter". Select method for `scipy.minimize` using the
             "method" key. By default uses L-BFGS-B for box-constrained problems
-            and SLSQP if inequality or equality constraints are present.
+            and SLSQP if inequality or equality constraints are present. If
+            `with_grad=False`, then we use a two-point finite difference estimate
+            of the gradient.
         fixed_features: This is a dictionary of feature indices to values, where
             all generated candidates will have features fixed to these values.
             If the dictionary value is None, then that feature will just be
             fixed to the clamped value and not optimized. Assumes values to be
             compatible with lower_bounds and upper_bounds!
+        timeout_sec: Timeout (in seconds) for `scipy.optimize.minimize` routine -
+            if provided, optimization will stop after this many seconds and return
+            the best solution found so far.
 
     Returns:
         2-element tuple containing
@@ -95,6 +109,7 @@ def gen_candidates_scipy(
             )
     """
     options = options or {}
+    options = {**options, "maxiter": options.get("maxiter", 2000)}
 
     # if there are fixed features we may optimize over a domain of lower dimension
     reduced_domain = False
@@ -133,12 +148,12 @@ def gen_candidates_scipy(
             equality_constraints=_no_fixed_features.equality_constraints,
             options=options,
             fixed_features=None,
+            timeout_sec=timeout_sec,
         )
         clamped_candidates = _no_fixed_features.acquisition_function._construct_X_full(
             clamped_candidates
         )
         return clamped_candidates, batch_acquisition
-
     clamped_candidates = columnwise_clamp(
         X=initial_conditions, lower=lower_bounds, upper=upper_bounds
     )
@@ -149,39 +164,53 @@ def gen_candidates_scipy(
         X=initial_conditions, lower_bounds=lower_bounds, upper_bounds=upper_bounds
     )
     constraints = make_scipy_linear_constraints(
-        shapeX=clamped_candidates.shape,
+        shapeX=shapeX,
         inequality_constraints=inequality_constraints,
         equality_constraints=equality_constraints,
     )
 
-    def f_np_wrapper(x: np.ndarray, f: Callable):
-        """Given a torch callable, compute value + grad given a numpy array."""
-        if np.isnan(x).any():
-            raise RuntimeError(
-                f"{np.isnan(x).sum()} elements of the {x.size} element array "
-                f"`x` are NaN."
+    with_grad = options.get("with_grad", True)
+    if with_grad:
+
+        def f_np_wrapper(x: np.ndarray, f: Callable):
+            """Given a torch callable, compute value + grad given a numpy array."""
+            if np.isnan(x).any():
+                raise RuntimeError(
+                    f"{np.isnan(x).sum()} elements of the {x.size} element array "
+                    f"`x` are NaN."
+                )
+            X = (
+                torch.from_numpy(x)
+                .to(initial_conditions)
+                .view(shapeX)
+                .contiguous()
+                .requires_grad_(True)
             )
-        X = (
-            torch.from_numpy(x)
-            .to(initial_conditions)
-            .view(shapeX)
-            .contiguous()
-            .requires_grad_(True)
-        )
-        X_fix = fix_features(X, fixed_features=fixed_features)
-        loss = f(X_fix).sum()
-        # compute gradient w.r.t. the inputs (does not accumulate in leaves)
-        gradf = _arrayify(torch.autograd.grad(loss, X)[0].contiguous().view(-1))
-        if np.isnan(gradf).any():
-            msg = (
-                f"{np.isnan(gradf).sum()} elements of the {x.size} element "
-                "gradient array `gradf` are NaN. This often indicates numerical issues."
-            )
-            if initial_conditions.dtype != torch.double:
-                msg += " Consider using `dtype=torch.double`."
-            raise RuntimeError(msg)
-        fval = loss.item()
-        return fval, gradf
+            X_fix = fix_features(X, fixed_features=fixed_features)
+            loss = f(X_fix).sum()
+            # compute gradient w.r.t. the inputs (does not accumulate in leaves)
+            gradf = _arrayify(torch.autograd.grad(loss, X)[0].contiguous().view(-1))
+            if np.isnan(gradf).any():
+                msg = (
+                    f"{np.isnan(gradf).sum()} elements of the {x.size} element "
+                    "gradient array `gradf` are NaN. "
+                    "This often indicates numerical issues."
+                )
+                if initial_conditions.dtype != torch.double:
+                    msg += " Consider using `dtype=torch.double`."
+                raise RuntimeError(msg)
+            fval = loss.item()
+            return fval, gradf
+
+    else:
+
+        def f_np_wrapper(x: np.ndarray, f: Callable):
+            X = torch.from_numpy(x).to(initial_conditions).view(shapeX).contiguous()
+            with torch.no_grad():
+                X_fix = fix_features(X=X, fixed_features=fixed_features)
+                loss = f(X_fix).sum()
+            fval = loss.item()
+            return fval
 
     if nonlinear_inequality_constraints:
         # Make sure `batch_limit` is 1 for now.
@@ -200,34 +229,24 @@ def gen_candidates_scipy(
     def f(x):
         return -acquisition_function(x)
 
-    res = minimize(
+    res = minimize_with_timeout(
         fun=f_np_wrapper,
         args=(f,),
         x0=x0,
         method=options.get("method", "SLSQP" if constraints else "L-BFGS-B"),
-        jac=True,
+        jac=with_grad,
         bounds=bounds,
         constraints=constraints,
         callback=options.get("callback", None),
-        options={k: v for k, v in options.items() if k not in ["method", "callback"]},
+        options={
+            k: v
+            for k, v in options.items()
+            if k not in ["method", "callback", "with_grad"]
+        },
+        timeout_sec=timeout_sec,
     )
+    _process_scipy_result(res=res, options=options)
 
-    if "success" not in res.keys() or "status" not in res.keys():
-        with warnings.catch_warnings():
-            warnings.simplefilter("always", category=OptimizationWarning)
-            warnings.warn(
-                "Optimization failed within `scipy.optimize.minimize` with no "
-                "status returned to `res.`",
-                OptimizationWarning,
-            )
-    elif not res.success:
-        with warnings.catch_warnings():
-            warnings.simplefilter("always", category=OptimizationWarning)
-            warnings.warn(
-                f"Optimization failed within `scipy.optimize.minimize` with status "
-                f"{res.status}.",
-                OptimizationWarning,
-            )
     candidates = fix_features(
         X=torch.from_numpy(res.x).to(initial_conditions).reshape(shapeX),
         fixed_features=fixed_features,
@@ -263,6 +282,7 @@ def gen_candidates_torch(
     options: Optional[Dict[str, Union[float, str]]] = None,
     callback: Optional[Callable[[int, Tensor, Tensor], NoReturn]] = None,
     fixed_features: Optional[Dict[int, Optional[float]]] = None,
+    timeout_sec: Optional[float] = None,
 ) -> Tuple[Tensor, Tensor]:
     r"""Generate a set of candidates using a `torch.optim` optimizer.
 
@@ -286,6 +306,9 @@ def gen_candidates_torch(
             If the dictionary value is None, then that feature will just be
             fixed to the clamped value and not optimized. Assumes values to be
             compatible with lower_bounds and upper_bounds!
+        timeout_sec: Timeout (in seconds) for optimization. If provided,
+            `gen_candidates_torch` will stop after this many seconds and return
+            the best solution found so far.
 
     Returns:
         2-element tuple containing
@@ -306,6 +329,7 @@ def gen_candidates_torch(
                 upper_bounds=bounds[1],
             )
     """
+    start_time = time.monotonic()
     options = options or {}
 
     # if there are fixed features we may optimize over a domain of lower dimension
@@ -321,6 +345,7 @@ def gen_candidates_torch(
         )
 
         # call the routine with no fixed_features
+        elapsed = time.monotonic() - start_time
         clamped_candidates, batch_acquisition = gen_candidates_torch(
             initial_conditions=subproblem.initial_conditions,
             acquisition_function=subproblem.acquisition_function,
@@ -330,12 +355,12 @@ def gen_candidates_torch(
             options=options,
             callback=callback,
             fixed_features=None,
+            timeout_sec=timeout_sec - elapsed if timeout_sec else None,
         )
         clamped_candidates = subproblem.acquisition_function._construct_X_full(
             clamped_candidates
         )
         return clamped_candidates, batch_acquisition
-
     _clamp = partial(columnwise_clamp, lower=lower_bounds, upper=upper_bounds)
     clamped_candidates = _clamp(initial_conditions).requires_grad_(True)
     _optimizer = optimizer(params=[clamped_candidates], lr=options.get("lr", 0.025))
@@ -362,6 +387,11 @@ def gen_candidates_torch(
 
         _optimizer.step(assign_grad)
         stop = stopping_criterion.evaluate(fvals=loss.detach())
+        if timeout_sec is not None:
+            runtime = time.monotonic() - start_time
+            if runtime > timeout_sec:
+                stop = True
+                logger.info(f"Optimization timed out after {runtime} seconds.")
 
     clamped_candidates = _clamp(clamped_candidates)
     with torch.no_grad():
@@ -399,3 +429,51 @@ def get_best_candidates(batch_candidates: Tensor, batch_values: Tensor) -> Tenso
     """
     best = torch.argmax(batch_values.view(-1), dim=0)
     return batch_candidates[best]
+
+
+def _process_scipy_result(res: OptimizeResult, options: Dict[str, Any]) -> None:
+    r"""Process scipy optimization result to produce relevant logs and warnings."""
+    if "success" not in res.keys() or "status" not in res.keys():
+        with warnings.catch_warnings():
+            warnings.simplefilter("always", category=OptimizationWarning)
+            warnings.warn(
+                "Optimization failed within `scipy.optimize.minimize` with no "
+                "status returned to `res.`",
+                OptimizationWarning,
+            )
+    elif not res.success:
+        if (
+            "ITERATIONS REACHED LIMIT" in res.message
+            or "Iteration limit reached" in res.message
+        ):
+            logger.info(
+                "`scipy.minimize` exited by reaching the iteration limit of "
+                f"`maxiter: {options.get('maxiter')}`."
+            )
+        elif "EVALUATIONS EXCEEDS LIMIT" in res.message:
+            logger.info(
+                "`scipy.minimize` exited by reaching the function evaluation limit of "
+                f"`maxfun: {options.get('maxfun')}`."
+            )
+        elif "Optimization timed out after" in res.message:
+            logger.info(res.message)
+        else:
+            with warnings.catch_warnings():
+                warnings.simplefilter("always", category=OptimizationWarning)
+                warnings.warn(
+                    f"Optimization failed within `scipy.optimize.minimize` with status "
+                    f"{res.status} and message {res.message}.",
+                    OptimizationWarning,
+                )
+
+
+def minimize(*args, **kwargs):
+    """Deprecated, use `botorch.generation.gen.minimize_with_timeout`."""
+    # TODO: Reap this after the next stable Ax release.
+    warnings.warn(
+        "`botorch.generation.gen.minimize` is an alias for "
+        "`botorch.generation.gen.minimize_with_timeout` and will "
+        "be removed in a future release.",
+        DeprecationWarning,
+    )
+    return minimize_with_timeout(*args, **kwargs)

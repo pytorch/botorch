@@ -35,3 +35,8 @@ Sensitivity Analysis Test Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.test_functions.sensitivity_analysis
     :members:
+
+Utilities For Test Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.test_functions.utils
+    :members:

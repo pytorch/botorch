@@ -83,13 +83,18 @@ def _gen_model_single_output(**tkwargs):
 
 
 def _gen_fixed_noise_model_and_data(
-    task_feature: int = 0, input_transform=None, outcome_transform=None, **tkwargs
+    task_feature: int = 0,
+    input_transform=None,
+    outcome_transform=None,
+    use_fixed_noise_model_class: bool = False,
+    **tkwargs
 ):
     datasets, (train_X, train_Y, train_Yvar) = _gen_datasets(yvar=0.05, **tkwargs)
-    model = FixedNoiseMultiTaskGP(
+    model_class = FixedNoiseMultiTaskGP if use_fixed_noise_model_class else MultiTaskGP
+    model = model_class(
         train_X,
         train_Y,
-        train_Yvar,
+        train_Yvar=train_Yvar,
         task_feature=task_feature,
         input_transform=input_transform,
         outcome_transform=outcome_transform,
@@ -225,7 +230,7 @@ class TestMultiTaskGP(BotorchTestCase):
             test_x = torch.rand(2, 1, **tkwargs)
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultitaskMultivariateNormal)
             self.assertEqual(posterior_f.mean.shape, torch.Size([2, 2]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([2, 2]))
 
@@ -245,7 +250,7 @@ class TestMultiTaskGP(BotorchTestCase):
             # test posterior w/ single output index
             posterior_f = model.posterior(test_x, output_indices=[0])
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultivariateNormal)
             self.assertEqual(posterior_f.mean.shape, torch.Size([2, 1]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([2, 1]))
 
@@ -257,7 +262,7 @@ class TestMultiTaskGP(BotorchTestCase):
             test_x = torch.rand(3, 2, 1, **tkwargs)
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultitaskMultivariateNormal)
 
             # test that unsupported batch shape MTGPs throw correct error
             with self.assertRaises(ValueError):
@@ -280,7 +285,7 @@ class TestMultiTaskGP(BotorchTestCase):
                 p_utf = model.posterior(test_x)
                 model.outcome_transform = tmp_tf
                 expected_var = tmp_tf.untransform_posterior(p_utf).variance
-                self.assertTrue(torch.allclose(posterior_f.variance, expected_var))
+                self.assertAllClose(posterior_f.variance, expected_var)
 
     def test_MultiTaskGP_single_output(self):
         for dtype in (torch.float, torch.double):
@@ -312,13 +317,13 @@ class TestMultiTaskGP(BotorchTestCase):
             test_x = torch.rand(2, 1, **tkwargs)
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultivariateNormal)
 
             # test posterior (batch eval)
             test_x = torch.rand(3, 2, 1, **tkwargs)
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultivariateNormal)
 
             # test posterior transform
             post_tf = ScalarizedPosteriorTransform(weights=torch.ones(1, **tkwargs))
@@ -348,6 +353,11 @@ class TestMultiTaskGP(BotorchTestCase):
 
 
 class TestFixedNoiseMultiTaskGP(BotorchTestCase):
+    def test_deprecation_warning(self):
+        tkwargs = {"device": self.device, "dtype": torch.float}
+        with self.assertWarnsRegex(DeprecationWarning, "FixedNoise"):
+            _gen_fixed_noise_model_and_data(use_fixed_noise_model_class=True, **tkwargs)
+
     def test_FixedNoiseMultiTaskGP(self):
         bounds = torch.tensor([[-1.0, 0.0], [1.0, 1.0]])
         for dtype, use_intf, use_octf in itertools.product(
@@ -363,7 +373,7 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             model, _, (train_X, _, _) = _gen_fixed_noise_model_and_data(
                 input_transform=intf, outcome_transform=octf, **tkwargs
             )
-            self.assertIsInstance(model, FixedNoiseMultiTaskGP)
+            self.assertIsInstance(model, MultiTaskGP)
             self.assertEqual(model.num_outputs, 2)
             self.assertIsInstance(model.likelihood, FixedNoiseGaussianLikelihood)
             self.assertIsInstance(model.mean_module, ConstantMean)
@@ -400,7 +410,7 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             test_x = torch.rand(2, 1, **tkwargs)
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultitaskMultivariateNormal)
             self.assertEqual(posterior_f.mean.shape, torch.Size([2, 2]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([2, 2]))
 
@@ -412,7 +422,7 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
                 pp_tf = model.posterior(test_x)
                 model.outcome_transform = tmp_tf
                 expected_var = tmp_tf.untransform_posterior(pp_tf).variance
-                self.assertTrue(torch.allclose(posterior_pred.variance, expected_var))
+                self.assertAllClose(posterior_pred.variance, expected_var)
 
             # test that posterior w/ observation noise raises appropriate error
             with self.assertRaises(NotImplementedError):
@@ -423,7 +433,7 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             # test posterior w/ single output index
             posterior_f = model.posterior(test_x, output_indices=[0])
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultivariateNormal)
             self.assertEqual(posterior_f.mean.shape, torch.Size([2, 1]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([2, 1]))
 
@@ -435,7 +445,7 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             test_x = torch.rand(3, 2, 1, **tkwargs)
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultitaskMultivariateNormal)
 
             # test that unsupported batch shape MTGPs throw correct error
             with self.assertRaises(ValueError):
@@ -483,13 +493,13 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             test_x = torch.rand(2, 1, **tkwargs)
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultivariateNormal)
 
             # test posterior (batch eval)
             test_x = torch.rand(3, 2, 1, **tkwargs)
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultivariateNormal)
 
     def test_FixedNoiseMultiTaskGP_fixed_prior(self):
         for dtype in (torch.float, torch.double):
@@ -551,11 +561,13 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             data_dict = model.construct_inputs(
                 datasets,
                 task_feature=task_feature,
+                output_tasks=[0],
                 prior_config={"use_LKJ_prior": True, "eta": 0.6},
             )
+            self.assertEqual(data_dict["output_tasks"], [0])
+            self.assertEqual(data_dict["task_feature"], task_feature)
             self.assertTrue(torch.equal(data_dict["train_X"], train_X))
             self.assertTrue(torch.equal(data_dict["train_Y"], train_Y))
-            self.assertEqual(data_dict["task_feature"], task_feature)
             self.assertIsInstance(data_dict["task_covar_prior"], LKJCovariancePrior)
 
     def test_FixedNoiseMultiTaskGP_construct_inputs(self):
@@ -594,7 +606,7 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             )
             self.assertTrue(torch.equal(data_dict["train_X"], train_X))
             self.assertTrue(torch.equal(data_dict["train_Y"], train_Y))
-            self.assertTrue(torch.allclose(data_dict["train_Yvar"], train_Yvar))
+            self.assertAllClose(data_dict["train_Yvar"], train_Yvar)
             self.assertEqual(data_dict["task_feature"], task_feature)
             self.assertIsInstance(data_dict["task_covar_prior"], LKJCovariancePrior)
 
@@ -657,11 +669,13 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             posterior_f = model.posterior(test_x)
             if not use_octf:
                 self.assertIsInstance(posterior_f, GPyTorchPosterior)
-                self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+                self.assertIsInstance(
+                    posterior_f.distribution, MultitaskMultivariateNormal
+                )
             else:
                 self.assertIsInstance(posterior_f, TransformedPosterior)
                 self.assertIsInstance(
-                    posterior_f._posterior.mvn, MultitaskMultivariateNormal
+                    posterior_f._posterior.distribution, MultitaskMultivariateNormal
                 )
 
             self.assertEqual(posterior_f.mean.shape, torch.Size([2, 2]))
@@ -674,7 +688,7 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
                 p_tf = model.posterior(test_x)
                 model.outcome_transform = tmp_tf
                 expected_var = tmp_tf.untransform_posterior(p_tf).variance
-                self.assertTrue(torch.allclose(posterior_f.variance, expected_var))
+                self.assertAllClose(posterior_f.variance, expected_var)
             else:
                 # test observation noise
                 # TODO: outcome transform + likelihood noise?
@@ -682,7 +696,7 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
                 self.assertTrue(
                     torch.allclose(
                         posterior_noisy.variance,
-                        model.likelihood(posterior_f.mvn).variance,
+                        model.likelihood(posterior_f.distribution).variance,
                     )
                 )
 
@@ -691,11 +705,13 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             posterior_f = model.posterior(test_x)
             if not use_octf:
                 self.assertIsInstance(posterior_f, GPyTorchPosterior)
-                self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+                self.assertIsInstance(
+                    posterior_f.distribution, MultitaskMultivariateNormal
+                )
             else:
                 self.assertIsInstance(posterior_f, TransformedPosterior)
                 self.assertIsInstance(
-                    posterior_f._posterior.mvn, MultitaskMultivariateNormal
+                    posterior_f._posterior.distribution, MultitaskMultivariateNormal
                 )
             self.assertEqual(posterior_f.mean.shape, torch.Size([3, 2, 2]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([3, 2, 2]))
@@ -772,7 +788,9 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
                 with max_cholesky_size(max_cholesky), max_root_decomposition_size(3):
                     posterior_f = model.posterior(test_x)
                     self.assertIsInstance(posterior_f, GPyTorchPosterior)
-                    self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+                    self.assertIsInstance(
+                        posterior_f.distribution, MultitaskMultivariateNormal
+                    )
                     self.assertEqual(posterior_f.mean.shape, torch.Size([2, 2]))
                     self.assertEqual(posterior_f.variance.shape, torch.Size([2, 2]))
 
@@ -780,7 +798,8 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             posterior_noisy = model.posterior(test_x, observation_noise=True)
             self.assertTrue(
                 torch.allclose(
-                    posterior_noisy.variance, model.likelihood(posterior_f.mvn).variance
+                    posterior_noisy.variance,
+                    model.likelihood(posterior_f.distribution).variance,
                 )
             )
 
@@ -788,6 +807,6 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             test_x = torch.rand(3, 2, 2, **tkwargs)
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultitaskMultivariateNormal)
             self.assertEqual(posterior_f.mean.shape, torch.Size([3, 2, 2]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([3, 2, 2]))

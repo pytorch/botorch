@@ -51,12 +51,24 @@ class BoxDecomposition(Module, ABC):
             Y: A `(batch_shape) x n x m`-dim tensor of outcomes.
         """
         super().__init__()
-        self.register_buffer("_neg_ref_point", -ref_point)
-        self.register_buffer("sort", torch.tensor(sort, dtype=torch.bool))
+        self._neg_ref_point = -ref_point
+        self.sort = torch.tensor(sort, dtype=torch.bool)
         self.num_outcomes = ref_point.shape[-1]
+        self.register_buffer("hypercell_bounds", None)
+
         if Y is not None:
-            self._update_neg_Y(Y=Y)
-            self.reset()
+            if Y.isnan().any():
+                raise ValueError(
+                    "NaN inputs are not supported. Got Y with "
+                    f"{Y.isnan().sum()} NaN values."
+                )
+            self._neg_Y = -Y
+            self._validate_inputs()
+            self._neg_pareto_Y = self._compute_pareto_Y()
+            self.partition_space()
+        else:
+            self._neg_Y = None
+            self._neg_pareto_Y = None
 
     @property
     def pareto_Y(self) -> Tensor:
@@ -65,10 +77,9 @@ class BoxDecomposition(Module, ABC):
         Returns:
             A `n_pareto x m`-dim tensor of outcomes.
         """
-        try:
+        if self._neg_pareto_Y is not None:
             return -self._neg_pareto_Y
-        except AttributeError:
-            raise BotorchError("pareto_Y has not been initialized")
+        raise BotorchError("pareto_Y has not been initialized")
 
     @property
     def ref_point(self) -> Tensor:
@@ -86,7 +97,34 @@ class BoxDecomposition(Module, ABC):
         Returns:
             A `n x m`-dim tensor of outcomes.
         """
-        return -self._neg_Y
+        if self._neg_Y is not None:
+            return -self._neg_Y
+        raise BotorchError("Y data has not been initialized")
+
+    def _compute_pareto_Y(self) -> Tensor:
+        if self._neg_Y is None:
+            raise BotorchError("Y data has not been initialized")
+        # is_non_dominated assumes maximization
+        if self._neg_Y.shape[-2] == 0:
+            return self._neg_Y
+        # assumes maximization
+        pareto_Y = -_pad_batch_pareto_frontier(
+            Y=self.Y,
+            ref_point=_expand_ref_point(
+                ref_point=self.ref_point, batch_shape=self.batch_shape
+            ),
+        )
+        if not self.sort:
+            return pareto_Y
+        # sort by first objective
+        if len(self.batch_shape) > 0:
+            pareto_Y = pareto_Y.gather(
+                index=torch.argsort(pareto_Y[..., :1], dim=-2).expand(pareto_Y.shape),
+                dim=-2,
+            )
+        else:
+            pareto_Y = pareto_Y[torch.argsort(pareto_Y[:, 0])]
+        return pareto_Y
 
     def _reset_pareto_Y(self) -> bool:
         r"""Update the non-dominated front.
@@ -94,33 +132,12 @@ class BoxDecomposition(Module, ABC):
         Returns:
             A boolean indicating whether the Pareto frontier has changed.
         """
-        # is_non_dominated assumes maximization
-        if self._neg_Y.shape[-2] == 0:
-            pareto_Y = self._neg_Y
-        else:
-            # assumes maximization
-            pareto_Y = -_pad_batch_pareto_frontier(
-                Y=self.Y,
-                ref_point=_expand_ref_point(
-                    ref_point=self.ref_point, batch_shape=self.batch_shape
-                ),
-            )
-            if self.sort:
-                # sort by first objective
-                if len(self.batch_shape) > 0:
-                    pareto_Y = pareto_Y.gather(
-                        index=torch.argsort(pareto_Y[..., :1], dim=-2).expand(
-                            pareto_Y.shape
-                        ),
-                        dim=-2,
-                    )
-                else:
-                    pareto_Y = pareto_Y[torch.argsort(pareto_Y[:, 0])]
+        pareto_Y = self._compute_pareto_Y()
 
-        if not hasattr(self, "_neg_pareto_Y") or not torch.equal(
+        if (self._neg_pareto_Y is None) or not torch.equal(
             pareto_Y, self._neg_pareto_Y
         ):
-            self.register_buffer("_neg_pareto_Y", pareto_Y)
+            self._neg_pareto_Y = pareto_Y
             return True
         return False
 
@@ -139,13 +156,12 @@ class BoxDecomposition(Module, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def _partition_space(self):
+    def _partition_space(self) -> None:
         r"""Partition the non-dominated space into disjoint hypercells.
 
         This method supports an arbitrary number of outcomes, but is
         less efficient than `partition_space_2d` for the 2-outcome case.
         """
-        pass  # pragma: no cover
 
     @abstractmethod
     def get_hypercell_bounds(self) -> Tensor:
@@ -155,7 +171,6 @@ class BoxDecomposition(Module, ABC):
             A `2 x num_cells x num_outcomes`-dim tensor containing the
                 lower and upper vertices bounding each hypercell.
         """
-        pass  # pragma: no cover
 
     def _update_neg_Y(self, Y: Tensor) -> bool:
         r"""Update the set of outcomes.
@@ -163,13 +178,17 @@ class BoxDecomposition(Module, ABC):
         Returns:
             A boolean indicating if _neg_Y was initialized.
         """
+        if Y.isnan().any():
+            raise ValueError(
+                "NaN inputs are not supported. Got Y with "
+                f"{Y.isnan().sum()} NaN values."
+            )
         # multiply by -1, since internally we minimize.
-        try:
+        if self._neg_Y is not None:
             self._neg_Y = torch.cat([self._neg_Y, -Y], dim=-2)
             return False
-        except AttributeError:
-            self.register_buffer("_neg_Y", -Y)
-            return True
+        self._neg_Y = -Y
+        return True
 
     def update(self, Y: Tensor) -> None:
         r"""Update non-dominated front and decomposition.
@@ -183,8 +202,7 @@ class BoxDecomposition(Module, ABC):
         self._update_neg_Y(Y=Y)
         self.reset()
 
-    def reset(self) -> None:
-        r"""Reset non-dominated front and decomposition."""
+    def _validate_inputs(self) -> None:
         self.batch_shape = self.Y.shape[:-2]
         self.num_outcomes = self.Y.shape[-1]
         if len(self.batch_shape) > 1:
@@ -198,12 +216,19 @@ class BoxDecomposition(Module, ABC):
                 f"{type(self).__name__} only supports a batched box "
                 f"decompositions in the 2-objective setting."
             )
+
+    def reset(self) -> None:
+        r"""Reset non-dominated front and decomposition."""
+        self._validate_inputs()
         is_new_pareto = self._reset_pareto_Y()
         # Update decomposition if the Pareto front changed
         if is_new_pareto:
             self.partition_space()
 
     @abstractmethod
+    def _compute_hypervolume_if_y_has_data(self) -> Tensor:
+        """Compute hypervolume for the case that there is data in self._neg_pareto_Y."""
+
     def compute_hypervolume(self) -> Tensor:
         r"""Compute hypervolume that is dominated by the Pareto Froniter.
 
@@ -211,7 +236,16 @@ class BoxDecomposition(Module, ABC):
             A `(batch_shape)`-dim tensor containing the hypervolume dominated by
                 each Pareto frontier.
         """
-        pass  # pragma: no cover
+        if self._neg_pareto_Y is None:
+            return torch.tensor(0.0)
+
+        if self._neg_pareto_Y.shape[-2] == 0:
+            return torch.zeros(
+                self._neg_pareto_Y.shape[:-2],
+                dtype=self._neg_pareto_Y.dtype,
+                device=self._neg_pareto_Y.device,
+            )
+        return self._compute_hypervolume_if_y_has_data()
 
 
 class FastPartitioning(BoxDecomposition, ABC):

@@ -57,6 +57,7 @@ Sampling from GP priors
 .. automodule:: botorch.utils.gp_sampling
 		:members:
 
+
 Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.testing
@@ -75,6 +76,11 @@ Transformations
 Feasible Volume
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.feasible_volume
+		:members:
+
+Types and Type Hints
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.types
 		:members:
 
 Constants

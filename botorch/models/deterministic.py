@@ -26,18 +26,16 @@ functions or in other places where a `Model` is expected.
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from typing import Any, Callable, List, Optional, Union
+from abc import abstractmethod
+from typing import Callable, List, Optional, Union
 
 import torch
-from botorch.acquisition.objective import PosteriorTransform
-from botorch.exceptions.errors import UnsupportedError
+from botorch.models.ensemble import EnsembleModel
 from botorch.models.model import Model
-from botorch.posteriors.deterministic import DeterministicPosterior
 from torch import Tensor
 
 
-class DeterministicModel(Model, ABC):
+class DeterministicModel(EnsembleModel):
     r"""
     Abstract base class for deterministic models.
 
@@ -57,55 +55,9 @@ class DeterministicModel(Model, ABC):
         """
         pass  # pragma: no cover
 
-    @property
-    def num_outputs(self) -> int:
-        r"""The number of outputs of the model."""
-        return self._num_outputs
-
-    def posterior(
-        self,
-        X: Tensor,
-        output_indices: Optional[List[int]] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
-        **kwargs: Any,
-    ) -> DeterministicPosterior:
-        r"""Compute the (deterministic) posterior at X.
-
-        Args:
-            X: A `batch_shape x n x d`-dim input tensor `X`.
-            output_indices: A list of indices, corresponding to the outputs over
-                which to compute the posterior. If omitted, computes the posterior
-                over all model outputs.
-            posterior_transform: An optional PosteriorTransform.
-
-        Returns:
-            A `DeterministicPosterior` object, representing `batch_shape` joint
-            posteriors over `n` points and the outputs selected by `output_indices`.
-        """
-        # Apply the input transforms in `eval` mode.
-        self.eval()
-        X = self.transform_inputs(X)
-        # Note: we use a Tensor instance check so that `observation_noise = True`
-        # just gets ignored. This avoids having to do a bunch of case distinctions
-        # when using a ModelList.
-        if isinstance(kwargs.get("observation_noise"), Tensor):
-            # TODO: Consider returning an MVN here instead
-            raise UnsupportedError(
-                "Deterministic models do not support observation noise."
-            )
-        values = self.forward(X)
-        # NOTE: The `outcome_transform` `untransform`s the predictions rather than the
-        # `posterior` (as is done in GP models). This is more general since it works
-        # even if the transform doesn't support `untransform_posterior`.
-        if hasattr(self, "outcome_transform"):
-            values, _ = self.outcome_transform.untransform(values)
-        if output_indices is not None:
-            values = values[..., output_indices]
-        posterior = DeterministicPosterior(values=values)
-        if posterior_transform is not None:
-            return posterior_transform(posterior)
-        else:
-            return posterior
+    def _forward(self, X: Tensor) -> Tensor:
+        r"""Compatibilizes the `DeterministicModel` with `EnsemblePosterior`"""
+        return self.forward(X=X).unsqueeze(-3)
 
 
 class GenericDeterministicModel(DeterministicModel):
@@ -226,18 +178,39 @@ class FixedSingleSampleModel(DeterministicModel):
     We assume the outcomes are uncorrelated here.
     """
 
-    def __init__(self, model: Model, w: Optional[Tensor] = None) -> None:
+    def __init__(
+        self,
+        model: Model,
+        w: Optional[Tensor] = None,
+        dim: Optional[int] = None,
+        jitter: Optional[float] = 1e-8,
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[torch.dtype] = None,
+    ) -> None:
         r"""
         Args:
             model: The base model.
             w: A 1-d tensor with length model.num_outputs.
                 If None, draw it from a standard normal distribution.
+            dim: dimensionality of w.
+                If None and w is not provided, draw w samples of size model.num_outputs.
+            jitter: jitter value to be added for numerical stability, 1e-8 by default.
+            dtype: dtype for w if specified
+            device: device for w if specified
         """
         super().__init__()
         self.model = model
         self._num_outputs = model.num_outputs
-        self.w = torch.randn(model.num_outputs)
+        self.jitter = jitter
+        if w is None:
+            self.w = (
+                torch.randn(model.num_outputs, dtype=dtype, device=device)
+                if dim is None
+                else torch.randn(dim, dtype=dtype, device=device)
+            )
+        else:
+            self.w = w
 
     def forward(self, X: Tensor) -> Tensor:
         post = self.model.posterior(X)
-        return post.mean + post.variance.sqrt() * self.w.to(X)
+        return post.mean + torch.sqrt(post.variance + self.jitter) * self.w.to(X)

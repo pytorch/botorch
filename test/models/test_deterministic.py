@@ -19,7 +19,7 @@ from botorch.models.deterministic import (
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
-from botorch.posteriors.deterministic import DeterministicPosterior
+from botorch.posteriors.ensemble import EnsemblePosterior
 from botorch.utils.testing import BotorchTestCase
 
 
@@ -61,7 +61,8 @@ class TestDeterministicModels(BotorchTestCase):
         X = torch.rand(3, 2)
         # basic test
         p = model.posterior(X)
-        self.assertIsInstance(p, DeterministicPosterior)
+        self.assertIsInstance(p, EnsemblePosterior)
+        self.assertEqual(p.ensemble_size, 1)
         self.assertTrue(torch.equal(p.mean, f(X)))
         # check that observation noise doesn't change things
         p_noisy = model.posterior(X, observation_noise=True)
@@ -95,7 +96,7 @@ class TestDeterministicModels(BotorchTestCase):
             X = torch.rand(*shape)
             p = model.posterior(X)
             mean_exp = model.b + (X.unsqueeze(-1) * a).sum(dim=-2)
-            self.assertTrue(torch.equal(p.mean, mean_exp))
+            self.assertAllClose(p.mean, mean_exp)
         # # test two-dim output
         a = torch.rand(3, 2)
         model = AffineDeterministicModel(a)
@@ -104,7 +105,7 @@ class TestDeterministicModels(BotorchTestCase):
             X = torch.rand(*shape)
             p = model.posterior(X)
             mean_exp = model.b + (X.unsqueeze(-1) * a).sum(dim=-2)
-            self.assertTrue(torch.equal(p.mean, mean_exp))
+            self.assertAllClose(p.mean, mean_exp)
         # test subset output
         X = torch.rand(4, 3)
         subset_model = model.subset_output([0])
@@ -129,7 +130,7 @@ class TestDeterministicModels(BotorchTestCase):
             posterior = model.posterior(test_X)
             msg = "does not have a `train_inputs` attribute"
             self.assertTrue(any(msg in str(w.message) for w in ws))
-        self.assertTrue(torch.allclose(expected_Y, posterior.mean))
+        self.assertAllClose(expected_Y, posterior.mean)
         # check that model.train/eval works and raises the warning
         model.train()
         with self.assertWarns(RuntimeWarning):
@@ -143,7 +144,7 @@ class TestDeterministicModels(BotorchTestCase):
         test_X = torch.rand(3, 2)
         post_tf = ScalarizedPosteriorTransform(weights=torch.rand(2))
         # expect error due to post_tf expecting an MVN
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(NotImplementedError):
             model.posterior(test_X, posterior_transform=post_tf)
 
     def test_PosteriorMeanModel(self):
@@ -165,6 +166,7 @@ class TestDeterministicModels(BotorchTestCase):
         model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
         fss_model = FixedSingleSampleModel(model=model)
 
+        # test without specifying w and dim
         test_X = torch.rand(2, 3)
         w = fss_model.w
         post = model.posterior(test_X)
@@ -173,6 +175,20 @@ class TestDeterministicModels(BotorchTestCase):
         self.assertTrue(torch.equal(original_output, fss_output))
 
         self.assertTrue(hasattr(fss_model, "num_outputs"))
+
+        # test specifying w
+        w = torch.randn(4)
+        fss_model = FixedSingleSampleModel(model=model, w=w)
+        self.assertTrue(fss_model.w.shape == w.shape)
+        # test dim
+        dim = 5
+        fss_model = FixedSingleSampleModel(model=model, w=w, dim=dim)
+        # dim should be ignored
+        self.assertTrue(fss_model.w.shape == w.shape)
+        # test dim when no w is provided
+        fss_model = FixedSingleSampleModel(model=model, dim=dim)
+        # dim should be ignored
+        self.assertTrue(fss_model.w.shape == torch.Size([dim]))
 
         # check w dtype conversion
         train_X_double = torch.rand(2, 3, dtype=torch.double)

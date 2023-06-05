@@ -11,11 +11,9 @@ Utilities for acquisition functions.
 from __future__ import annotations
 
 import math
-import warnings
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
-from botorch import settings
 from botorch.acquisition import analytic, monte_carlo, multi_objective  # noqa F401
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.multi_objective import monte_carlo as moo_monte_carlo
@@ -25,17 +23,18 @@ from botorch.acquisition.objective import (
     PosteriorTransform,
 )
 from botorch.exceptions.errors import UnsupportedError
-from botorch.exceptions.warnings import SamplingWarning
 from botorch.models.fully_bayesian import MCMC_DIM
 from botorch.models.model import Model
-from botorch.sampling.samplers import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
+from botorch.sampling.base import MCSampler
+from botorch.sampling.get_sampler import get_sampler
+from botorch.sampling.pathwise import draw_matheron_paths
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     FastNondominatedPartitioning,
     NondominatedPartitioning,
 )
+from botorch.utils.sampling import optimize_posterior_samples
 from botorch.utils.transforms import is_fully_bayesian
 from torch import Tensor
-from torch.quasirandom import SobolEngine
 
 
 def get_acquisition_function(
@@ -46,8 +45,8 @@ def get_acquisition_function(
     posterior_transform: Optional[PosteriorTransform] = None,
     X_pending: Optional[Tensor] = None,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
-    mc_samples: int = 500,
-    qmc: bool = True,
+    eta: Optional[Union[Tensor, float]] = 1e-3,
+    mc_samples: int = 512,
     seed: Optional[int] = None,
     **kwargs,
 ) -> monte_carlo.MCAcquisitionFunction:
@@ -65,11 +64,15 @@ def get_acquisition_function(
         constraints: A list of callables, each mapping a Tensor of dimension
             `sample_shape x batch-shape x q x m` to a Tensor of dimension
             `sample_shape x batch-shape x q`, where negative values imply
-            feasibility. Used when constraint_transforms are not passed
-            as part of the objective.
+            feasibility. Used only for qEHVI and qNEHVI.
+        eta: The temperature parameter for the sigmoid function used for the
+            differentiable approximation of the constraints. In case of a float the
+            same eta is used for every constraint in constraints. In case of a
+            tensor the length of the tensor must match the number of provided
+            constraints. The i-th constraint is then estimated with the i-th
+            eta value. Used only for qEHVI and qNEHVI.
         mc_samples: The number of samples to use for (q)MC evaluation of the
             acquisition function.
-        qmc: If True, use quasi-Monte-Carlo sampling (instead of iid).
         seed: If provided, perform deterministic optimization (i.e. the
             function to optimize is fixed and not stochastic).
 
@@ -82,10 +85,11 @@ def get_acquisition_function(
         >>> acqf = get_acquisition_function("qEI", model, obj, train_X)
     """
     # initialize the sampler
-    if qmc:
-        sampler = SobolQMCNormalSampler(num_samples=mc_samples, seed=seed)
-    else:
-        sampler = IIDNormalSampler(num_samples=mc_samples, seed=seed)
+    sampler = get_sampler(
+        posterior=model.posterior(X_observed[:1]),
+        sample_shape=torch.Size([mc_samples]),
+        seed=seed,
+    )
     if posterior_transform is not None and acquisition_function_name in [
         "qEHVI",
         "qNEHVI",
@@ -127,8 +131,9 @@ def get_acquisition_function(
             objective=objective,
             posterior_transform=posterior_transform,
             X_pending=X_pending,
-            prune_baseline=kwargs.get("prune_baseline", False),
+            prune_baseline=kwargs.get("prune_baseline", True),
             marginalize_dim=kwargs.get("marginalize_dim"),
+            cache_root=kwargs.get("cache_root", True),
         )
     elif acquisition_function_name == "qSR":
         return monte_carlo.qSimpleRegret(
@@ -183,6 +188,7 @@ def get_acquisition_function(
             sampler=sampler,
             objective=objective,
             constraints=constraints,
+            eta=eta,
             X_pending=X_pending,
         )
     elif acquisition_function_name == "qNEHVI":
@@ -195,6 +201,7 @@ def get_acquisition_function(
             sampler=sampler,
             objective=objective,
             constraints=constraints,
+            eta=eta,
             prune_baseline=kwargs.get("prune_baseline", True),
             alpha=kwargs.get("alpha", 0.0),
             X_pending=X_pending,
@@ -239,7 +246,7 @@ def get_infeasible_cost(
             return Y.squeeze(-1)
 
     posterior = model.posterior(X, posterior_transform=posterior_transform)
-    lb = objective(posterior.mean - 6 * posterior.variance.clamp_min(0).sqrt())
+    lb = objective(posterior.mean - 6 * posterior.variance.clamp_min(0).sqrt(), X=X)
     if lb.ndim < posterior.mean.ndim:
         lb = lb.unsqueeze(-1)
     # Take outcome-wise min. Looping in to handle batched models.
@@ -337,17 +344,9 @@ def prune_inferior_points(
     with torch.no_grad():
         posterior = model.posterior(X=X, posterior_transform=posterior_transform)
     if sampler is None:
-        if posterior.base_sample_shape.numel() > SobolEngine.MAXDIM:
-            if settings.debug.on():
-                warnings.warn(
-                    f"Sample dimension q*m={posterior.base_sample_shape.numel()} "
-                    f"exceeding Sobol max dimension ({SobolEngine.MAXDIM}). "
-                    "Using iid samples instead.",
-                    SamplingWarning,
-                )
-            sampler = IIDNormalSampler(num_samples=num_samples)
-        else:
-            sampler = SobolQMCNormalSampler(num_samples=num_samples)
+        sampler = get_sampler(
+            posterior=posterior, sample_shape=torch.Size([num_samples])
+        )
     samples = sampler(posterior)
     if objective is None:
         objective = IdentityMCObjective()
@@ -476,3 +475,39 @@ def project_to_sample_points(X: Tensor, sample_points: Tensor) -> Tensor:
     X_new = X.repeat(*(1 for _ in batch_shape), p, 1)  # batch_shape x p x d
     X_new[..., -d_prime:] = sample_points
     return X_new
+
+
+def get_optimal_samples(
+    model: Model,
+    bounds: Tensor,
+    num_optima: int,
+    raw_samples: int = 1024,
+    num_restarts: int = 20,
+    maximize: bool = True,
+) -> Tuple[Tensor, Tensor]:
+    """Draws sample paths from the posterior and maximizes the samples using GD.
+
+    Args:
+        model (Model): The model from which samples are drawn.
+        bounds: (Tensor): Bounds of the search space. If the model inputs are
+            normalized, the bounds should be normalized as well.
+        num_optima (int): The number of paths to be drawn and optimized.
+        raw_samples (int, optional): The number of candidates randomly sample.
+            Defaults to 1024.
+        num_restarts (int, optional): The number of candidates to do gradient-based
+            optimization on. Defaults to 20.
+        maximize: Whether to maximize or minimize the samples.
+    Returns:
+        Tuple[Tensor, Tensor]: The optimal input locations and corresponding
+        outputs, x* and f*.
+
+    """
+    paths = draw_matheron_paths(model, sample_shape=torch.Size([num_optima]))
+    optimal_inputs, optimal_outputs = optimize_posterior_samples(
+        paths,
+        bounds=bounds,
+        raw_samples=raw_samples,
+        num_restarts=num_restarts,
+        maximize=maximize,
+    )
+    return optimal_inputs, optimal_outputs

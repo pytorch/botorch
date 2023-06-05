@@ -32,7 +32,7 @@ class DummyBoxDecomposition(BoxDecomposition):
     def _partition_space(self):
         pass
 
-    def compute_hypervolume(self):
+    def _compute_hypervolume_if_y_has_data(self):
         pass
 
     def get_hypercell_bounds(self):
@@ -66,7 +66,7 @@ class TestBoxDecomposition(BotorchTestCase):
             device=self.device,
         )
 
-    def test_box_decomposition(self):
+    def test_box_decomposition(self) -> None:
         with self.assertRaises(TypeError):
             BoxDecomposition()
         for dtype, m, sort in product(
@@ -270,8 +270,20 @@ class TestBoxDecomposition(BotorchTestCase):
                 with self.assertRaises(NotImplementedError):
                     DummyFastPartitioning(ref_point=ref_point, Y=Y.unsqueeze(0))
 
+    def test_nan_values(self) -> None:
+        Y = torch.rand(10, 2)
+        Y[8:, 1] = float("nan")
+        ref_pt = torch.rand(2)
+        # On init.
+        with self.assertRaisesRegex(ValueError, "with 2 NaN values"):
+            DummyBoxDecomposition(ref_point=ref_pt, sort=True, Y=Y)
+        # On update.
+        bd = DummyBoxDecomposition(ref_point=ref_pt, sort=True)
+        with self.assertRaisesRegex(ValueError, "with 2 NaN values"):
+            bd.update(Y=Y)
 
-class TestBoxDecomposition_Hypervolume(BotorchTestCase):
+
+class TestBoxDecomposition_no_set_up(BotorchTestCase):
     def helper_hypervolume(self, Box_Decomp_cls: type) -> None:
         """
         This test should be run for each non-abstract subclass of `BoxDecomposition`.
@@ -285,16 +297,15 @@ class TestBoxDecomposition_Hypervolume(BotorchTestCase):
         box_decomp = Box_Decomp_cls(ref_point=ref_point, Y=Y)
         hv = box_decomp.compute_hypervolume()
         self.assertEqual(hv.shape, (batch_dim,))
-        self.assertTrue(torch.allclose(hv, torch.ones(batch_dim)))
+        self.assertAllClose(hv, torch.ones(batch_dim))
 
         # no batching
         Y = torch.ones(n, n_outcomes)
 
         box_decomp = Box_Decomp_cls(ref_point=ref_point, Y=Y)
         hv = box_decomp.compute_hypervolume()
-
         self.assertEqual(hv.shape, ())
-        self.assertTrue(torch.allclose(hv, torch.tensor(1.0)))
+        self.assertAllClose(hv, torch.tensor(1.0))
 
         # cases where there is nothing in Y, either because n=0 or Y is None
         n = 0
@@ -307,7 +318,7 @@ class TestBoxDecomposition_Hypervolume(BotorchTestCase):
             box_decomp = Box_Decomp_cls(ref_point=ref_point, Y=Y)
             hv = box_decomp.compute_hypervolume()
             self.assertEqual(hv.shape, expected_shape)
-            self.assertTrue(torch.allclose(hv, torch.tensor(0.0)))
+            self.assertAllClose(hv, torch.zeros(expected_shape))
 
     def test_hypervolume(self) -> None:
         for cl in [
@@ -316,3 +327,11 @@ class TestBoxDecomposition_Hypervolume(BotorchTestCase):
             FastNondominatedPartitioning,
         ]:
             self.helper_hypervolume(cl)
+
+    def test_uninitialized_y(self) -> None:
+        ref_point = torch.zeros(2)
+        box_decomp = NondominatedPartitioning(ref_point=ref_point)
+        with self.assertRaises(BotorchError):
+            box_decomp.Y
+        with self.assertRaises(BotorchError):
+            box_decomp._compute_pareto_Y()

@@ -439,7 +439,9 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
             y_grid = torch.stack(
                 [
                     torch.stack(
-                        torch.meshgrid([Y_sorted[b, :, i] for i in range(m)]),
+                        torch.meshgrid(
+                            [Y_sorted[b, :, i] for i in range(m)], indexing=None
+                        ),
                         dim=-1,
                     ).view(-1, m)
                     for b in range(batch)

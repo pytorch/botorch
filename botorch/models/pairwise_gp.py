@@ -34,6 +34,7 @@ from botorch.models.likelihoods.pairwise import (
 )
 from botorch.models.model import FantasizeMixin, Model
 from botorch.models.transforms.input import InputTransform
+from botorch.models.utils.assorted import consolidate_duplicates
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
 from gpytorch import settings
@@ -48,9 +49,72 @@ from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
 from gpytorch.priors.torch_priors import GammaPrior
 from linear_operator.operators import LinearOperator, RootLinearOperator
 from linear_operator.utils.cholesky import psd_safe_cholesky
+from linear_operator.utils.errors import NotPSDError
 from scipy import optimize
 from torch import float32, float64, Tensor
 from torch.nn.modules.module import _IncompatibleKeys
+
+
+# Helper functions
+def _check_strict_input(
+    inputs: List[Tensor], t_inputs: List[Tensor], target_or_inputs: str
+):
+    for input_, t_input in zip(inputs, t_inputs or (None,)):
+        for attr in {"shape", "dtype", "device"}:
+            expected_attr = getattr(t_input, attr, None)
+            found_attr = getattr(input_, attr, None)
+            if expected_attr != found_attr:
+                msg = (
+                    "Cannot modify {attr} of {t_or_i} "
+                    "(expected {e_attr}, found {f_attr})."
+                )
+                msg = msg.format(
+                    attr=attr,
+                    e_attr=expected_attr,
+                    f_attr=found_attr,
+                    t_or_i=target_or_inputs,
+                )
+                raise RuntimeError(msg)
+
+
+def _scaled_psd_safe_cholesky(
+    matrix: Tensor, scale: Union[float, Tensor], jitter: Optional[float] = None
+) -> Tensor:
+    r"""scale matrix by 1/outputscale before cholesky for better numerical stability"""
+    matrix = matrix / scale
+    chol = psd_safe_cholesky(matrix, jitter=jitter)
+    chol = chol * scale.sqrt()
+    return chol
+
+
+def _ensure_psd_with_jitter(
+    matrix: Tensor,
+    scale: Union[float, Tensor] = 1.0,
+    jitter: float = 1e-8,
+    max_tries: int = 3,
+) -> Tensor:
+    scaled_matrix = matrix / scale
+    new_jitter = 0
+    for i in range(max_tries):
+        scaled_matrix = scaled_matrix + new_jitter * torch.diag_embed(
+            torch.ones(
+                scaled_matrix.shape[:-1],
+                device=scaled_matrix.device,
+                dtype=scaled_matrix.dtype,
+            )
+        )
+        _, info = torch.linalg.cholesky_ex(scaled_matrix)
+        psd = (info == 0).all()
+        if psd:
+            break
+        else:
+            new_jitter = jitter * (10**i) - new_jitter
+    if not psd:
+        raise NotPSDError(
+            "Matrix not positive definite after repeatedly adding jitter "
+            f"up to {jitter * (10**i):.1e}."
+        )
+    return scaled_matrix * scale
 
 
 # Why we subclass GP even though it provides no functionality:
@@ -77,7 +141,6 @@ class PairwiseGP(Model, GP, FantasizeMixin):
     In the example below, the user/decision maker has stated that they prefer
     the first item over the second item and the third item over the second item,
     generating comparisons [0, 1] and [2, 1].
-
     Example:
         >>> from botorch.models import PairwiseGP
         >>> import torch
@@ -87,8 +150,8 @@ class PairwiseGP(Model, GP, FantasizeMixin):
     """
 
     _buffer_names = [
-        "datapoints",
-        "comparisons",
+        "consolidated_datapoints",
+        "consolidated_comparisons",
         "D",
         "DT",
         "utility",
@@ -97,6 +160,9 @@ class PairwiseGP(Model, GP, FantasizeMixin):
         "hlcov_eye",
         "covar",
         "covar_inv",
+        "unconsolidated_datapoints",
+        "unconsolidated_comparisons",
+        "consolidated_indices",
     ]
 
     def __init__(
@@ -121,6 +187,20 @@ class PairwiseGP(Model, GP, FantasizeMixin):
         """
         super().__init__()
 
+        # Set optional parameters
+        # Explicitly set jitter for numerical stability in psd_safe_cholesky
+        self._jitter = kwargs.get("jitter", 1e-6)
+        # Stopping creteria in scipy.optimize.fsolve used to find f_map in _update()
+        # If None, set to 1e-6 by default in _update
+        self._xtol = kwargs.get("xtol")
+        # atol rtol for consolidate_duplicates
+        self._consolidate_rtol = kwargs.get("consolidate_rtol", 0)
+        self._consolidate_atol = kwargs.get("consolidate_atol", 1e-4)
+        # The maximum number of calls to the function in scipy.optimize.fsolve
+        # If None, set to 100 by default in _update
+        # If zero, then 100*(N+1) is used by default by fsolve;
+        self._maxfev = kwargs.get("maxfev")
+
         if input_transform is not None:
             input_transform.to(datapoints)
             # input transformation is applied in set_train_data
@@ -142,23 +222,17 @@ class PairwiseGP(Model, GP, FantasizeMixin):
 
         self.pred_cov_fac_need_update = True
         self.dim = None
+        self.unconsolidated_datapoints = None
+        self.unconsolidated_comparisons = None
+        self.consolidated_datapoints = None
+        self.consolidated_comparisons = None
+        self.consolidated_indices = None
 
         # See set_train_data for additional compatibility variables.
         # Not that the datapoints here are not transformed even if input_transform
         # is not None to avoid double transformation during model fitting.
         # self.transform_inputs is called in `forward`
         self.set_train_data(datapoints, comparisons, update_model=False)
-
-        # Set optional parameters
-        # Explicitly set jitter for numerical stability in psd_safe_cholesky
-        self._jitter = kwargs.get("jitter", 1e-6)
-        # Stopping creteria in scipy.optimize.fsolve used to find f_map in _update()
-        # If None, set to 1e-6 by default in _update
-        self._xtol = kwargs.get("xtol")
-        # The maximum number of calls to the function in scipy.optimize.fsolve
-        # If None, set to 100 by default in _update
-        # If zero, then 100*(N+1) is used by default by fsolve;
-        self._maxfev = kwargs.get("maxfev")
 
         # Set hyperparameters
         # Do not set the batch_shape explicitly so mean_module can operate in both mode
@@ -175,7 +249,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
         # at 0 or 1
         if covar_module is None:
             os_lb, os_ub = 1e-2, 1e2
-            ls_prior = GammaPrior(1.2, 0.5)
+            ls_prior = GammaPrior(concentration=2.4, rate=2.7)
             ls_prior_mode = (ls_prior.concentration - 1) / ls_prior.rate
             covar_module = ScaleKernel(
                 RBFKernel(
@@ -185,6 +259,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
                     lengthscale_constraint=GreaterThan(
                         lower_bound=1e-4, transform=None, initial_value=ls_prior_mode
                     ),
+                    dtype=torch.float64,
                 ),
                 outputscale_prior=SmoothedBoxPrior(a=os_lb, b=os_ub),
                 # make sure we won't get extreme values for the output scale
@@ -193,6 +268,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
                     upper_bound=os_ub * 2.0,
                     initial_value=1.0,
                 ),
+                dtype=torch.float64,
             )
         if not isinstance(covar_module, ScaleKernel):
             raise UnsupportedError("PairwiseGP must be used with a ScaleKernel.")
@@ -202,22 +278,26 @@ class PairwiseGP(Model, GP, FantasizeMixin):
         if self.datapoints is not None and self.comparisons is not None:
             self.to(dtype=self.datapoints.dtype, device=self.datapoints.device)
             # Find f_map for initial parameters with transformed datapoints
-            transformed_dp = self.transform_inputs(datapoints)
+            transformed_dp = self.transform_inputs(self.datapoints)
             self._update(transformed_dp)
 
         self.to(self.datapoints)
 
     def __deepcopy__(self, memo) -> PairwiseGP:
         attrs = (
-            "datapoints",
-            "comparisons",
+            "consolidated_datapoints",
+            "consolidated_comparisons",
             "covar",
             "covar_inv",
             "covar_chol",
             "likelihood_hess",
             "utility",
             "hlcov_eye",
+            "unconsolidated_datapoints",
+            "unconsolidated_comparisons",
+            "consolidated_indices",
         )
+
         if any(getattr(self, attr) is not None for attr in attrs):
             # Temporarily remove non-leaf tensors so that pytorch allows deepcopy
             old_attr = {}
@@ -237,16 +317,6 @@ class PairwiseGP(Model, GP, FantasizeMixin):
             self.__deepcopy__ = dcp
             return new_model
 
-    def _scaled_psd_safe_cholesky(
-        self, M: Tensor, jitter: Optional[float] = None
-    ) -> Tensor:
-        r"""scale M by 1/outputscale before cholesky for better numerical stability"""
-        scale = self.covar_module.outputscale.unsqueeze(-1).unsqueeze(-1)
-        M = M / scale
-        chol = psd_safe_cholesky(M, jitter=jitter)
-        chol = chol * scale.sqrt()
-        return chol
-
     def _has_no_data(self):
         r"""Return true if the model does not have both datapoints and comparisons"""
         return (
@@ -257,8 +327,16 @@ class PairwiseGP(Model, GP, FantasizeMixin):
 
     def _calc_covar(self, X1: Tensor, X2: Tensor) -> Union[Tensor, LinearOperator]:
         r"""Calculate the covariance matrix given two sets of datapoints"""
-        covar = self.covar_module(X1, X2)
-        return covar.to_dense()
+        covar = self.covar_module(X1, X2).to_dense()
+        # making sure covar is PSD when it's a covariance matrix
+        if X1 is X2:
+            scale = self.covar_module.outputscale.unsqueeze(-1).unsqueeze(-1).detach()
+            covar = _ensure_psd_with_jitter(
+                matrix=covar,
+                scale=scale,
+                jitter=self._jitter,
+            )
+        return covar
 
     def _update_covar(self, datapoints: Tensor) -> None:
         r"""Update values derived from the data and hyperparameters
@@ -269,8 +347,11 @@ class PairwiseGP(Model, GP, FantasizeMixin):
             datapoints: (Transformed) datapoints for finding f_max
         """
         self.covar = self._calc_covar(datapoints, datapoints)
-        self.covar_chol = self._scaled_psd_safe_cholesky(
-            self.covar, jitter=self._jitter
+        scale = self.covar_module.outputscale.unsqueeze(-1).unsqueeze(-1).detach()
+        self.covar_chol = _scaled_psd_safe_cholesky(
+            matrix=self.covar,
+            scale=scale,
+            jitter=self._jitter,
         )
         self.covar_inv = torch.cholesky_inverse(self.covar_chol)
 
@@ -430,8 +511,16 @@ class PairwiseGP(Model, GP, FantasizeMixin):
                     .cpu()
                     .numpy()
                 )
-                # initialize x0 using std normal but clip by 3 std to keep it bounded
-                x0 = np.random.standard_normal(init_x0_size).clip(min=-3, max=3)
+                # Heuristic intialization using winning count with perturbation
+                # to avoid extreme or unprobable likelihood values
+                win_count = self.D.sum(dim=-2).detach().cpu().numpy()
+                wc_mean, wc_std = (
+                    win_count.mean(axis=-1, keepdims=True),
+                    win_count.std(axis=-1, keepdims=True).clip(min=1e-6),
+                )
+                x0 = (win_count - wc_mean) / wc_std
+                # adding random perturbation to in case get stuck at strange init values
+                x0 = x0 + 0.05 * np.random.standard_normal(init_x0_size)
                 # scale x0 to be on roughly the right scale
                 x0 = x0 * sqrt_scale
             else:
@@ -587,25 +676,61 @@ class PairwiseGP(Model, GP, FantasizeMixin):
 
         return x
 
-    def _check_strict_input(self, inputs, t_inputs, target_or_inputs):
-        for input_, t_input in zip(inputs, t_inputs or (None,)):
-            for attr in {"shape", "dtype", "device"}:
-                expected_attr = getattr(t_input, attr, None)
-                found_attr = getattr(input_, attr, None)
-                if expected_attr != found_attr:
-                    msg = (
-                        "Cannot modify {attr} of {t_or_i} "
-                        "(expected {e_attr}, found {f_attr})."
-                    )
-                    msg = msg.format(
-                        attr=attr,
-                        e_attr=expected_attr,
-                        f_attr=found_attr,
-                        t_or_i=target_or_inputs,
-                    )
-                    raise RuntimeError(msg)
+    def _consolidate_duplicates(
+        self, datapoints: Tensor, comparisons: Tensor
+    ) -> Tuple[Tensor, Tensor]:
+        """Consolidate and cache datapoints and comparisons"""
+        # check if consolidated datapoints/comparisons are cached
+        if (
+            (datapoints is not self.unconsolidated_datapoints)
+            or (comparisons is not self.unconsolidated_comparisons)
+            or (self.consolidated_datapoints is None)
+            or (self.consolidated_comparisons is None)
+        ):
+            self.unconsolidated_datapoints, self.unconsolidated_comparisons = (
+                datapoints,
+                comparisons,
+            )
+
+            if len(datapoints.shape) > 2 or len(comparisons.shape) > 2:
+                # Do not perform consolidation in batch mode as block design
+                # cannot be guaranteed
+                self.consolidated_datapoints = datapoints
+                self.consolidated_comparisons = comparisons
+                self.consolidated_indices = None
+            else:
+                (
+                    self.consolidated_datapoints,
+                    self.consolidated_comparisons,
+                    self.consolidated_indices,
+                ) = consolidate_duplicates(
+                    datapoints,
+                    comparisons,
+                    rtol=self._consolidate_rtol,
+                    atol=self._consolidate_atol,
+                )
+
+        return self.consolidated_datapoints, self.consolidated_comparisons
 
     # ============== public APIs ==============
+    @property
+    def datapoints(self) -> Tensor:
+        r"""Alias for consolidated datapoints"""
+        return self.consolidated_datapoints
+
+    @property
+    def comparisons(self) -> Tensor:
+        r"""Alias for consolidated comparisons"""
+        return self.consolidated_comparisons
+
+    @property
+    def unconsolidated_utility(self) -> Tensor:
+        r"""Utility of the unconsolidated datapoints"""
+        if self.consolidated_indices is None:
+            # self.consolidated_indices is None in batch mode
+            return self.utility
+        else:
+            return self.utility[self.consolidated_indices]
 
     @property
     def num_outputs(self) -> int:
@@ -655,30 +780,33 @@ class PairwiseGP(Model, GP, FantasizeMixin):
         # following gpytorch.models.exact_gp.set_train_data
         if datapoints is not None:
             if torch.is_tensor(datapoints):
-                inputs = (datapoints,)
+                inputs = [datapoints]
 
             inputs = tuple(
                 input_.unsqueeze(-1) if input_.ndimension() == 1 else input_
                 for input_ in inputs
             )
             if strict:
-                self._check_strict_input(inputs, self.train_inputs, "inputs")
+                _check_strict_input(inputs, self.train_inputs, "inputs")
 
-            self.datapoints = inputs[0]
+            datapoints = inputs[0]
             # Compatibility variables with fit_gpytorch_*
             # alias for datapoints ("train_inputs")
             self.train_inputs = inputs
 
         if comparisons is not None:
             if strict:
-                self._check_strict_input([comparisons], [self.train_targets], "targets")
+                _check_strict_input([comparisons], [self.train_targets], "targets")
 
             # convert to long so that it can be used as index and
             # compatible with Tensor.scatter_
-            self.comparisons = comparisons.long()
+            comparisons = comparisons.long()
             # Compatibility variables with fit_gpytorch_*
             # alias for comparisons ("train_targets" here)
-            self.train_targets = self.comparisons
+            self.train_targets = comparisons
+
+        # self.datapoints and self.comparisons are being updated here
+        self._consolidate_duplicates(datapoints, comparisons)
 
         # Compatibility variables with optimize_acqf
         self._dtype = self.datapoints.dtype
@@ -704,7 +832,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
         self.DT = self.D.transpose(-1, -2)
 
         if update_model:
-            transformed_dp = self.transform_inputs(datapoints)
+            transformed_dp = self.transform_inputs(self.datapoints)
             self._update(transformed_dp)
 
         self.to(self.datapoints)
@@ -780,18 +908,23 @@ class PairwiseGP(Model, GP, FantasizeMixin):
                     "or call .set_train_data() to add training data."
                 )
 
-            if datapoints is not self.datapoints:
+            if datapoints is not self.unconsolidated_datapoints:
                 raise RuntimeError("Must train on training data")
-
-            transformed_dp = self.transform_inputs(datapoints)
 
             # We pass in the untransformed datapoints into set_train_data
             # as we will be setting self.datapoints as the untransformed datapoints
             # self.transform_inputs will be called inside before calling _update()
-            self.set_train_data(datapoints, self.comparisons, update_model=True)
+            self.set_train_data(
+                datapoints=datapoints,
+                comparisons=self.unconsolidated_comparisons,
+                update_model=True,
+            )
+
+            transformed_dp = self.transform_inputs(self.datapoints)
 
             hl = self.likelihood_hess
             covar = self.covar
+
             # Apply matrix inversion lemma on eq. in page 27 of [Brochu2010tutorial]_
             # (A + B)^-1 = A^-1 - A^-1 @ (I + BA^-1)^-1 @ BA^-1
             # where A = covar_inv, B = hl
@@ -849,12 +982,17 @@ class PairwiseGP(Model, GP, FantasizeMixin):
 
             output_mean, output_covar = pred_mean, pred_covar
 
+        scale = self.covar_module.outputscale.unsqueeze(-1).unsqueeze(-1).detach()
         post = MultivariateNormal(
             mean=output_mean,
             # output_covar is sometimes non-PSD
             # perform a cholesky decomposition to check and amend
             covariance_matrix=RootLinearOperator(
-                self._scaled_psd_safe_cholesky(output_covar, jitter=self._jitter)
+                _scaled_psd_safe_cholesky(
+                    matrix=output_covar,
+                    scale=scale,
+                    jitter=self._jitter,
+                )
             ),
         )
         return post
@@ -965,9 +1103,13 @@ class PairwiseLaplaceMarginalLogLikelihood(MarginalLogLikelihood):
     def forward(self, post: Posterior, comp: Tensor) -> Tensor:
         r"""Calculate approximated log evidence, i.e., log(P(D|theta))
 
+        Note that post will be based on the consolidated/deduped datapoints for
+        numerical stability, but comp will still be the unconsolidated comparisons
+        so that it's still compatible with fit_gpytorch_*.
+
         Args:
-            post: training posterior distribution from self.model
-            comp: Comparisons pairs, see PairwiseGP.__init__ for more details
+            post: training posterior distribution from self.model (after consolidation)
+            comp: Comparisons pairs (before consolidation)
 
         Returns:
             The approximated evidence, i.e., the marginal log likelihood
@@ -975,7 +1117,7 @@ class PairwiseLaplaceMarginalLogLikelihood(MarginalLogLikelihood):
 
         model = self.model
         likelihood = self.likelihood
-        if comp is not model.comparisons:
+        if comp is not model.unconsolidated_comparisons:
             raise RuntimeError("Must train on training data")
 
         f_map = post.mean.squeeze(-1)

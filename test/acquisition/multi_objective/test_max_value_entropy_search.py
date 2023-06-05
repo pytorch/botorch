@@ -10,12 +10,47 @@ from unittest import mock
 import torch
 from botorch.acquisition.max_value_entropy_search import qMaxValueEntropy
 from botorch.acquisition.multi_objective.max_value_entropy_search import (
+    qLowerBoundMultiObjectiveMaxValueEntropySearch,
     qMultiObjectiveMaxValueEntropy,
 )
+from botorch.acquisition.multi_objective.utils import compute_sample_box_decomposition
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
-from botorch.sampling.samplers import SobolQMCNormalSampler
+from botorch.models.transforms.outcome import Standardize
+from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase
+
+
+def get_model(train_X, train_Y, use_model_list, standardize_model):
+    num_objectives = train_Y.shape[-1]
+
+    if standardize_model:
+        if use_model_list:
+            outcome_transform = Standardize(m=1)
+        else:
+            outcome_transform = Standardize(m=num_objectives)
+    else:
+        outcome_transform = None
+
+    if use_model_list:
+        model = ModelListGP(
+            *[
+                SingleTaskGP(
+                    train_X=train_X,
+                    train_Y=train_Y[:, i : i + 1],
+                    outcome_transform=outcome_transform,
+                )
+                for i in range(num_objectives)
+            ]
+        )
+    else:
+        model = SingleTaskGP(
+            train_X=train_X,
+            train_Y=train_Y,
+            outcome_transform=outcome_transform,
+        )
+
+    return model
 
 
 def dummy_sample_pareto_frontiers(model):
@@ -46,6 +81,9 @@ class TestMultiObjectiveMaxValueEntropy(BotorchTestCase):
             model = SingleTaskGP(train_X, train_Y)
             mesmo = qMultiObjectiveMaxValueEntropy(model, dummy_sample_pareto_frontiers)
             self.assertEqual(mesmo.num_fantasies, 16)
+            # Initialize the sampler.
+            dummy_post = model.posterior(train_X[:1])
+            mesmo.get_posterior_samples(dummy_post)
             self.assertIsInstance(mesmo.sampler, SobolQMCNormalSampler)
             self.assertEqual(mesmo.sampler.sample_shape, torch.Size([128]))
             self.assertIsInstance(mesmo.fantasies_sampler, SobolQMCNormalSampler)
@@ -66,6 +104,9 @@ class TestMultiObjectiveMaxValueEntropy(BotorchTestCase):
             mock_sample_pfs.return_value = dummy_sample_pareto_frontiers(model=model)
             mesmo = qMultiObjectiveMaxValueEntropy(model, mock_sample_pfs)
             self.assertEqual(mesmo.num_fantasies, 16)
+            # Initialize the sampler.
+            dummy_post = model.posterior(train_X[:1])
+            mesmo.get_posterior_samples(dummy_post)
             self.assertIsInstance(mesmo.sampler, SobolQMCNormalSampler)
             self.assertEqual(mesmo.sampler.sample_shape, torch.Size([128]))
             self.assertIsInstance(mesmo.fantasies_sampler, SobolQMCNormalSampler)
@@ -127,3 +168,60 @@ class TestMultiObjectiveMaxValueEntropy(BotorchTestCase):
                     X_pending=torch.rand(1, 2, device=self.device, dtype=dtype),
                 )
                 mock_fantasize.assert_called_once()
+
+
+class TestQLowerBoundMultiObjectiveMaxValueEntropySearch(BotorchTestCase):
+    def _base_test_lb_moo_max_value_entropy_search(self, estimation_type):
+        torch.manual_seed(1)
+        tkwargs = {"device": self.device}
+
+        for (dtype, num_objectives, use_model_list, standardize_model) in product(
+            (torch.float, torch.double),
+            (1, 2, 3),
+            (False, True),
+            (False, True),
+        ):
+            tkwargs["dtype"] = dtype
+            input_dim = 2
+            train_X = torch.rand(4, input_dim, **tkwargs)
+            train_Y = torch.rand(4, num_objectives, **tkwargs)
+            model = get_model(train_X, train_Y, use_model_list, standardize_model)
+
+            pareto_fronts = dummy_sample_pareto_frontiers(model)
+            hypercell_bounds = compute_sample_box_decomposition(pareto_fronts)
+
+            # test acquisition
+            X_pending_list = [None, torch.rand(2, input_dim, **tkwargs)]
+            for X_pending in X_pending_list:
+                acq = qLowerBoundMultiObjectiveMaxValueEntropySearch(
+                    model=model,
+                    hypercell_bounds=hypercell_bounds,
+                    estimation_type=estimation_type,
+                    num_samples=64,
+                    X_pending=X_pending,
+                )
+                self.assertIsInstance(acq.sampler, SobolQMCNormalSampler)
+
+                test_Xs = [
+                    torch.rand(4, 1, input_dim, **tkwargs),
+                    torch.rand(4, 3, input_dim, **tkwargs),
+                    torch.rand(4, 5, 1, input_dim, **tkwargs),
+                    torch.rand(4, 5, 3, input_dim, **tkwargs),
+                ]
+
+                for test_X in test_Xs:
+                    acq_X = acq(test_X)
+                    # assess shape
+                    self.assertTrue(acq_X.shape == test_X.shape[:-2])
+
+    def test_lb_moo_max_value_entropy_search_0(self):
+        self._base_test_lb_moo_max_value_entropy_search(estimation_type="0")
+
+    def test_lb_moo_max_value_entropy_search_LB(self):
+        self._base_test_lb_moo_max_value_entropy_search(estimation_type="LB")
+
+    def test_lb_moo_max_value_entropy_search_LB2(self):
+        self._base_test_lb_moo_max_value_entropy_search(estimation_type="LB2")
+
+    def test_lb_moo_max_value_entropy_search_MC(self):
+        self._base_test_lb_moo_max_value_entropy_search(estimation_type="MC")

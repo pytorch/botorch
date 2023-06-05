@@ -6,9 +6,10 @@
 
 import numpy as np
 import torch
+from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.multitask import KroneckerMultiTaskGP
 from botorch.posteriors.multitask import MultitaskGPPosterior
-from botorch.sampling import IIDNormalSampler
+from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.testing import BotorchTestCase
 
 
@@ -46,13 +47,13 @@ class TestMultitaskGPPosterior(BotorchTestCase):
             self.assertIsInstance(posterior, MultitaskGPPosterior)
 
             batch_shape = test_x.shape[:-2]
-            expected_event_shape = batch_shape + sample_shaping
+            expected_extended_shape = batch_shape + sample_shaping
 
-            self.assertEqual(posterior.event_shape, expected_event_shape)
+            self.assertEqual(posterior._extended_shape(), expected_extended_shape)
 
             # test providing no base samples
             samples_0 = posterior.rsample()
-            self.assertEqual(samples_0.shape, torch.Size((1, *expected_event_shape)))
+            self.assertEqual(samples_0.shape, torch.Size((1, *expected_extended_shape)))
 
             # test that providing all base samples produces non-torch.random results
             scale = 2 if posterior.observation_noise else 1
@@ -72,39 +73,41 @@ class TestMultitaskGPPosterior(BotorchTestCase):
                 8, *expected_base_sample_shape, device=self.device
             )
 
-            samples_1 = posterior.rsample(
+            samples_1 = posterior.rsample_from_base_samples(
                 base_samples=base_samples, sample_shape=torch.Size((8,))
             )
-            samples_2 = posterior.rsample(
+            samples_2 = posterior.rsample_from_base_samples(
                 base_samples=base_samples, sample_shape=torch.Size((8,))
             )
             self.assertTrue(torch.allclose(samples_1, samples_2))
 
             # test that botorch.sampler picks up the correct shapes
-            sampler = IIDNormalSampler(num_samples=5)
+            sampler = IIDNormalSampler(sample_shape=torch.Size([5]))
             samples_det_shape = sampler(posterior).shape
-            self.assertEqual(samples_det_shape, torch.Size([5, *expected_event_shape]))
+            self.assertEqual(
+                samples_det_shape, torch.Size([5, *expected_extended_shape])
+            )
 
             # test that providing only some base samples is okay
             base_samples = torch.randn(
-                8, np.prod(expected_event_shape), device=self.device
+                8, np.prod(expected_extended_shape), device=self.device
             )
-            samples_3 = posterior.rsample(
+            samples_3 = posterior.rsample_from_base_samples(
                 base_samples=base_samples, sample_shape=torch.Size((8,))
             )
-            self.assertEqual(samples_3.shape, torch.Size([8, *expected_event_shape]))
+            self.assertEqual(samples_3.shape, torch.Size([8, *expected_extended_shape]))
 
-            # test that providing the wrong number base samples is okay
+            # test that providing the wrong number base samples errors out
             base_samples = torch.randn(8, 50 * 2 * 3, device=self.device)
-            samples_4 = posterior.rsample(
-                base_samples=base_samples, sample_shape=torch.Size((8,))
-            )
-            self.assertEqual(samples_4.shape, torch.Size([8, *expected_event_shape]))
+            with self.assertRaises(BotorchTensorDimensionError):
+                posterior.rsample_from_base_samples(
+                    base_samples=base_samples, sample_shape=torch.Size((8,))
+                )
 
             # test that providing the wrong shapes of base samples fails
             base_samples = torch.randn(8, 5 * 2 * 3, device=self.device)
             with self.assertRaises(RuntimeError):
-                samples_4 = posterior.rsample(
+                posterior.rsample_from_base_samples(
                     base_samples=base_samples, sample_shape=torch.Size((4,))
                 )
 
@@ -136,7 +139,7 @@ class TestMultitaskGPPosterior(BotorchTestCase):
             # slightly higher tolerance here because of the potential for low norms
             self.assertLess(
                 (posterior_mean - sampled_mean).norm() / posterior_mean.norm(),
-                1e-1,
+                0.12,
             )
             self.assertLess(
                 (posterior_variance - sampled_variance).norm()

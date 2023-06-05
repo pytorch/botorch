@@ -24,7 +24,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import torch
 from botorch.models.transforms.utils import (
@@ -101,8 +101,22 @@ class OutcomeTransform(Module, ABC):
             f"{self.__class__.__name__} does not implement the `untransform` method"
         )
 
+    @property
+    def _is_linear(self) -> bool:
+        """
+        True for transformations such as `Standardize`; these should be able to apply
+        `untransform_posterior` to a GPyTorchPosterior and return a GPyTorchPosterior,
+        because a multivariate normal distribution should remain multivariate normal
+        after applying the transform.
+        """
+        return False
+
     def untransform_posterior(self, posterior: Posterior) -> Posterior:
-        r"""Un-transform a posterior
+        r"""Un-transform a posterior.
+
+        Posteriors with `_is_linear=True` should return a `GPyTorchPosterior` when
+        `posterior` is a `GPyTorchPosterior`. Posteriors with `_is_linear=False`
+        likely return a `TransformedPosterior` instead.
 
         Args:
             posterior: A posterior in the transformed space.
@@ -182,6 +196,14 @@ class ChainedOutcomeTransform(OutcomeTransform, ModuleDict):
             Y, Yvar = tf.untransform(Y, Yvar)
         return Y, Yvar
 
+    @property
+    def _is_linear(self) -> bool:
+        """
+        A `ChainedOutcomeTransform` is linear only if all of the component transforms
+        are linear.
+        """
+        return all((octf._is_linear for octf in self.values()))
+
     def untransform_posterior(self, posterior: Posterior) -> Posterior:
         r"""Un-transform a posterior
 
@@ -223,9 +245,9 @@ class Standardize(OutcomeTransform):
                 standardization (if lower, only de-mean the data).
         """
         super().__init__()
-        self.register_buffer("means", torch.zeros(*batch_shape, 1, m))
-        self.register_buffer("stdvs", torch.zeros(*batch_shape, 1, m))
-        self.register_buffer("_stdvs_sq", torch.zeros(*batch_shape, 1, m))
+        self.register_buffer("means", None)
+        self.register_buffer("stdvs", None)
+        self.register_buffer("_stdvs_sq", None)
         self._outputs = normalize_indices(outputs, d=m)
         self._m = m
         self._batch_shape = batch_shape
@@ -253,9 +275,16 @@ class Standardize(OutcomeTransform):
         """
         if self.training:
             if Y.shape[:-2] != self._batch_shape:
-                raise RuntimeError("wrong batch shape")
+                raise RuntimeError(
+                    f"Expected Y.shape[:-2] to be {self._batch_shape}, matching "
+                    "the `batch_shape` argument to `Standardize`, but got "
+                    f"Y.shape[:-2]={Y.shape[:-2]}."
+                )
             if Y.size(-1) != self._m:
-                raise RuntimeError("wrong output dimension")
+                raise RuntimeError(
+                    f"Wrong output dimension. Y.size(-1) is {Y.size(-1)}; expected "
+                    f"{self._m}."
+                )
             stdvs = Y.std(dim=-2, keepdim=True)
             stdvs = stdvs.where(stdvs >= self._min_stdv, torch.full_like(stdvs, 1.0))
             means = Y.mean(dim=-2, keepdim=True)
@@ -296,9 +325,10 @@ class Standardize(OutcomeTransform):
             batch_shape=self._batch_shape,
             min_stdv=self._min_stdv,
         )
-        new_tf.means = self.means[..., nlzd_idcs]
-        new_tf.stdvs = self.stdvs[..., nlzd_idcs]
-        new_tf._stdvs_sq = self._stdvs_sq[..., nlzd_idcs]
+        if self.means is not None:
+            new_tf.means = self.means[..., nlzd_idcs]
+            new_tf.stdvs = self.stdvs[..., nlzd_idcs]
+            new_tf._stdvs_sq = self._stdvs_sq[..., nlzd_idcs]
         if not self.training:
             new_tf.eval()
         return new_tf
@@ -319,32 +349,53 @@ class Standardize(OutcomeTransform):
             - The un-standardized outcome observations.
             - The un-standardized observation noise (if applicable).
         """
+        if self.means is None:
+            raise RuntimeError(
+                "`Standardize` transforms must be called on outcome data "
+                "(e.g. `transform(Y)`) before calling `untransform`, since "
+                "means and standard deviations need to be computed."
+            )
+
         Y_utf = self.means + self.stdvs * Y
         Yvar_utf = self._stdvs_sq * Yvar if Yvar is not None else None
         return Y_utf, Yvar_utf
 
-    def untransform_posterior(self, posterior: Posterior) -> Posterior:
+    @property
+    def _is_linear(self) -> bool:
+        return True
+
+    def untransform_posterior(
+        self, posterior: Posterior
+    ) -> Union[GPyTorchPosterior, TransformedPosterior]:
         r"""Un-standardize the posterior.
 
         Args:
             posterior: A posterior in the standardized space.
 
         Returns:
-            The un-standardized posterior. If the input posterior is a MVN,
-            the transformed posterior is again an MVN.
+            The un-standardized posterior. If the input posterior is a
+            `GPyTorchPosterior`, return a `GPyTorchPosterior`. Otherwise, return a
+            `TransformedPosterior`.
         """
         if self._outputs is not None:
             raise NotImplementedError(
                 "Standardize does not yet support output selection for "
                 "untransform_posterior"
             )
+        if self.means is None:
+            raise RuntimeError(
+                "`Standardize` transforms must be called on outcome data "
+                "(e.g. `transform(Y)`) before calling `untransform_posterior`, since "
+                "means and standard deviations need to be computed."
+            )
         is_mtgp_posterior = False
         if type(posterior) is GPyTorchPosterior:
             is_mtgp_posterior = posterior._is_mt
-        if not self._m == posterior.event_shape[-1] and not is_mtgp_posterior:
+        if not self._m == posterior._extended_shape()[-1] and not is_mtgp_posterior:
             raise RuntimeError(
-                "Incompatible output dimensions encountered for transform "
-                f"{self._m} and posterior {posterior.event_shape[-1]}."
+                "Incompatible output dimensions encountered. Transform has output "
+                f"dimension {self._m} and posterior has "
+                f"{posterior._extended_shape()[-1]}."
             )
 
         if type(posterior) is not GPyTorchPosterior:
@@ -357,7 +408,7 @@ class Standardize(OutcomeTransform):
                 variance_transform=lambda m, v: self._stdvs_sq * v,
             )
         # GPyTorchPosterior (TODO: Should we Lazy-evaluate the mean here as well?)
-        mvn = posterior.mvn
+        mvn = posterior.distribution
         offset = self.means
         scale_fac = self.stdvs
         if not posterior._is_mt:
@@ -497,7 +548,7 @@ class Log(OutcomeTransform):
             )
         return Y_utf, Yvar
 
-    def untransform_posterior(self, posterior: Posterior) -> Posterior:
+    def untransform_posterior(self, posterior: Posterior) -> TransformedPosterior:
         r"""Un-transform the log-transformed posterior.
 
         Args:
@@ -626,7 +677,7 @@ class Power(OutcomeTransform):
             )
         return Y_utf, Yvar
 
-    def untransform_posterior(self, posterior: Posterior) -> Posterior:
+    def untransform_posterior(self, posterior: Posterior) -> TransformedPosterior:
         r"""Un-transform the power-transformed posterior.
 
         Args:
@@ -750,7 +801,7 @@ class Bilog(OutcomeTransform):
             )
         return Y_utf, Yvar
 
-    def untransform_posterior(self, posterior: Posterior) -> Posterior:
+    def untransform_posterior(self, posterior: Posterior) -> TransformedPosterior:
         r"""Un-transform the bilog-transformed posterior.
 
         Args:

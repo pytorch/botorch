@@ -6,7 +6,32 @@
 
 r"""
 Synthetic functions for optimization benchmarks.
-Reference: https://www.sfu.ca/~ssurjano/optimization.html
+
+Most test functions (if not indicated otherwise) are taken from
+[Bingham2013virtual]_.
+
+
+References:
+
+.. [Bingham2013virtual]
+    D. Bingham, S. Surjanovic. Virtual Library of Simulation Experiments.
+    https://www.sfu.ca/~ssurjano/optimization.html
+
+.. [CoelloCoello2002constraint]
+    C. A. Coello Coello and E. Mezura Montes. Constraint-handling in genetic
+    algorithms through the use of dominance-based tournament selection.
+    Advanced Engineering Informatics, 16(3):193–203, 2002.
+
+.. [Hedar2006derivfree]
+    A.-R. Hedar and M. Fukushima. Derivative-free filter simulated annealing
+    method for constrained continuous global optimization. Journal of Global
+    Optimization, 35(4):521–549, 2006.
+
+.. [Lemonge2010constrained]
+    A. C. C. Lemonge, H. J. C. Barbosa, C. C. H. Borges, and F. B. dos Santos
+    Silva. Constrained optimization problems in mechanical engineering design
+    using a real-coded steady-state genetic algorithm. Mecánica Computacional,
+    XXIX:9287–9303, 2010.
 """
 
 from __future__ import annotations
@@ -15,7 +40,8 @@ import math
 from typing import List, Optional, Tuple
 
 import torch
-from botorch.test_functions.base import BaseTestProblem
+from botorch.test_functions.base import BaseTestProblem, ConstrainedBaseTestProblem
+from botorch.test_functions.utils import round_nearest
 from torch import Tensor
 
 
@@ -38,12 +64,11 @@ class SyntheticTestFunction(BaseTestProblem):
             negate: If True, negate the function.
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
+        if bounds is not None:
+            self._bounds = bounds
         super().__init__(noise_std=noise_std, negate=negate)
         if self._optimizers is not None:
             if bounds is not None:
-                if len(bounds) != self.dim:
-                    raise ValueError("Custom bounds does not match function dim.")
-
                 # Ensure at least one optimizer lies within the custom bounds
                 def in_bounds(
                     optimizer: Tuple[float, ...], bounds: List[Tuple[float, float]]
@@ -64,9 +89,6 @@ class SyntheticTestFunction(BaseTestProblem):
                         "bounds which include at least one point in "
                         f"`{self.__class__.__name__}._optimizers`."
                     )
-
-                self._bounds = bounds
-
             self.register_buffer(
                 "optimizers", torch.tensor(self._optimizers, dtype=torch.float)
             )
@@ -107,7 +129,8 @@ class Ackley(SyntheticTestFunction):
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
-        self._bounds = [(-32.768, 32.768) for _ in range(self.dim)]
+        if bounds is None:
+            bounds = [(-32.768, 32.768) for _ in range(self.dim)]
         self._optimizers = [tuple(0.0 for _ in range(self.dim))]
         super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
         self.a = 20
@@ -232,7 +255,8 @@ class DixonPrice(SyntheticTestFunction):
             negate: If True, negate the function.
         """
         self.dim = dim
-        self._bounds = [(-10.0, 10.0) for _ in range(self.dim)]
+        if bounds is None:
+            bounds = [(-10.0, 10.0) for _ in range(self.dim)]
         self._optimizers = [
             tuple(
                 math.pow(2.0, -(1.0 - 2.0 ** (-(i - 1))))
@@ -291,7 +315,8 @@ class Griewank(SyntheticTestFunction):
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
-        self._bounds = [(-600.0, 600.0) for _ in range(self.dim)]
+        if bounds is None:
+            bounds = [(-600.0, 600.0) for _ in range(self.dim)]
         self._optimizers = [tuple(0.0 for _ in range(self.dim))]
         super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
 
@@ -334,7 +359,8 @@ class Hartmann(SyntheticTestFunction):
         if dim not in (3, 4, 6):
             raise ValueError(f"Hartmann with dim {dim} not defined")
         self.dim = dim
-        self._bounds = [(0.0, 1.0) for _ in range(self.dim)]
+        if bounds is None:
+            bounds = [(0.0, 1.0) for _ in range(self.dim)]
         # optimizers and optimal values for dim=4 not implemented
         optvals = {3: -3.86278, 6: -3.32237}
         optimizers = {
@@ -467,7 +493,8 @@ class Levy(SyntheticTestFunction):
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
-        self._bounds = [(-10.0, 10.0) for _ in range(self.dim)]
+        if bounds is None:
+            bounds = [(-10.0, 10.0) for _ in range(self.dim)]
         self._optimizers = [tuple(1.0 for _ in range(self.dim))]
         super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
 
@@ -508,7 +535,8 @@ class Michalewicz(SyntheticTestFunction):
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
-        self._bounds = [(0.0, math.pi) for _ in range(self.dim)]
+        if bounds is None:
+            bounds = [(0.0, math.pi) for _ in range(self.dim)]
         optvals = {2: -1.80130341, 5: -4.687658, 10: -9.66015}
         optimizers = {2: [(2.20290552, 1.57079633)]}
         self._optimal_value = optvals.get(self.dim)
@@ -553,7 +581,8 @@ class Powell(SyntheticTestFunction):
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
-        self._bounds = [(-4.0, 5.0) for _ in range(self.dim)]
+        if bounds is None:
+            bounds = [(-4.0, 5.0) for _ in range(self.dim)]
         self._optimizers = [tuple(0.0 for _ in range(self.dim))]
         super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
 
@@ -588,7 +617,8 @@ class Rastrigin(SyntheticTestFunction):
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
-        self._bounds = [(-5.12, 5.12) for _ in range(self.dim)]
+        if bounds is None:
+            bounds = [(-5.12, 5.12) for _ in range(self.dim)]
         self._optimizers = [tuple(0.0 for _ in range(self.dim))]
         super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
 
@@ -626,7 +656,8 @@ class Rosenbrock(SyntheticTestFunction):
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
-        self._bounds = [(-5.0, 10.0) for _ in range(self.dim)]
+        if bounds is None:
+            bounds = [(-5.0, 10.0) for _ in range(self.dim)]
         self._optimizers = [tuple(1.0 for _ in range(self.dim))]
         super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
 
@@ -736,7 +767,8 @@ class StyblinskiTang(SyntheticTestFunction):
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
-        self._bounds = [(-5.0, 5.0) for _ in range(self.dim)]
+        if bounds is None:
+            bounds = [(-5.0, 5.0) for _ in range(self.dim)]
         self._optimal_value = -39.166166 * self.dim
         self._optimizers = [tuple(-2.903534 for _ in range(self.dim))]
         super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
@@ -755,3 +787,182 @@ class ThreeHumpCamel(SyntheticTestFunction):
     def evaluate_true(self, X: Tensor) -> Tensor:
         x1, x2 = X[..., 0], X[..., 1]
         return 2.0 * x1**2 - 1.05 * x1**4 + x1**6 / 6.0 + x1 * x2 + x2**2
+
+
+#  ------------ Constrained synthetic test functions ----------- #
+
+
+class PressureVessel(SyntheticTestFunction, ConstrainedBaseTestProblem):
+    r"""Pressure vessel design problem with constraints.
+
+    The four-dimensional pressure vessel design problem with four black-box
+    constraints from [CoelloCoello2002constraint]_.
+    """
+
+    dim = 4
+    num_constraints = 4
+    _bounds = [(0.0, 10.0), (0.0, 10.0), (10.0, 50.0), (150.0, 200.0)]
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        x1, x2, x3, x4 = X.unbind(-1)
+        x1 = round_nearest(x1, increment=0.0625, bounds=self._bounds[0])
+        x2 = round_nearest(x2, increment=0.0625, bounds=self._bounds[1])
+        return (
+            0.6224 * x1 * x3 * x4
+            + 1.7781 * x2 * (x3**2)
+            + 3.1661 * (x1**2) * x4
+            + 19.84 * (x1**2) * x3
+        )
+
+    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+        x1, x2, x3, x4 = X.unbind(-1)
+        return -torch.stack(
+            [
+                -x1 + 0.0193 * x3,
+                -x2 + 0.00954 * x3,
+                -math.pi * (x3**2) * x4 - (4 / 3) * math.pi * (x3**3) + 1296000.0,
+                x4 - 240.0,
+            ],
+            dim=-1,
+        )
+
+
+class WeldedBeamSO(SyntheticTestFunction, ConstrainedBaseTestProblem):
+    r"""Welded beam design problem with constraints (single-outcome).
+
+    The four-dimensional welded beam design proble problem with six
+    black-box constraints from [CoelloCoello2002constraint]_.
+
+    For a (somewhat modified) multi-objective version, see
+    `botorch.test_functions.multi_objective.WeldedBeam`.
+    """
+
+    dim = 4
+    num_constraints = 6
+    _bounds = [(0.125, 10.0), (0.1, 10.0), (0.1, 10.0), (0.1, 10.0)]
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        x1, x2, x3, x4 = X.unbind(-1)
+        return 1.10471 * (x1**2) * x2 + 0.04811 * x3 * x4 * (14.0 + x2)
+
+    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+        x1, x2, x3, x4 = X.unbind(-1)
+        P = 6000.0
+        L = 14.0
+        E = 30e6
+        G = 12e6
+        t_max = 13600.0
+        s_max = 30000.0
+        d_max = 0.25
+
+        M = P * (L + x2 / 2)
+        R = torch.sqrt(0.25 * (x2**2 + (x1 + x3) ** 2))
+        J = 2 * math.sqrt(2) * x1 * x2 * (x2**2 / 12 + 0.25 * (x1 + x3) ** 2)
+        P_c = (
+            4.013
+            * E
+            * x3
+            * (x4**3)
+            * 6
+            / (L**2)
+            * (1 - 0.25 * x3 * math.sqrt(E / G) / L)
+        )
+        t1 = P / (math.sqrt(2) * x1 * x2)
+        t2 = M * R / J
+        t = torch.sqrt(t1**2 + t1 * t2 * x2 / R + t2**2)
+        s = 6 * P * L / (x4 * x3**2)
+        d = 4 * P * L**3 / (E * x3**3 * x4)
+
+        g1 = t - t_max
+        g2 = s - s_max
+        g3 = x1 - x4
+        g4 = 0.10471 * x1**2 + 0.04811 * x3 * x4 * (14.0 + x2) - 5.0
+        g5 = d - d_max
+        g6 = P - P_c
+
+        return -torch.stack([g1, g2, g3, g4, g5, g6], dim=-1)
+
+
+class TensionCompressionString(SyntheticTestFunction, ConstrainedBaseTestProblem):
+    r"""Tension compression string optimization problem with constraints.
+
+    The three-dimensional tension compression string optimization problem with
+    four black-box constraints from [Hedar2006derivfree]_.
+    """
+
+    dim = 3
+    num_constraints = 4
+    _bounds = [(0.01, 1.0), (0.01, 1.0), (0.01, 20.0)]
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        x1, x2, x3 = X.unbind(-1)
+        return (x1**2) * x2 * (x3 + 2)
+
+    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+        x1, x2, x3 = X.unbind(-1)
+        constraints = torch.stack(
+            [
+                1 - (x2**3) * x3 / (71785 * (x1**4)),
+                (4 * (x2**2) - x1 * x2) / (12566 * (x1**3) * (x2 - x1))
+                + 1 / (5108 * (x1**2))
+                - 1,
+                1 - 140.45 * x1 / (x3 * (x2**2)),
+                (x1 + x2) / 1.5 - 1,
+            ],
+            dim=-1,
+        )
+        return -constraints.clamp_max(100)
+
+
+class SpeedReducer(SyntheticTestFunction, ConstrainedBaseTestProblem):
+    r"""Speed Reducer design problem with constraints.
+
+    The seven-dimensional speed reducer design problem with eleven black-box
+    constraints from [Lemonge2010constrained]_.
+    """
+
+    dim = 7
+    num_constraints = 11
+    _bounds = [
+        (2.6, 3.6),
+        (0.7, 0.8),
+        (17.0, 28.0),
+        (7.3, 8.3),
+        (7.8, 8.3),
+        (2.9, 3.9),
+        (5.0, 5.5),
+    ]
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        x1, x2, x3, x4, x5, x6, x7 = X.unbind(-1)
+        return (
+            0.7854 * x1 * (x2**2) * (3.3333 * (x3**2) + 14.9334 * x3 - 43.0934)
+            + -1.508 * x1 * (x6**2 + x7**2)
+            + 7.4777 * (x6**3 + x7**3)
+            + 0.7854 * (x4 * (x6**2) + x5 * (x7**2))
+        )
+
+    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+        x1, x2, x3, x4, x5, x6, x7 = X.unbind(-1)
+        return -torch.stack(
+            [
+                27.0 * (1 / x1) * (1 / (x2**2)) * (1 / x3) - 1,
+                397.5 * (1 / x1) * (1 / (x2**2)) * (1 / (x3**2)) - 1,
+                1.93 * (1 / x2) * (1 / x3) * (x4**3) * (1 / (x6**4)) - 1,
+                1.93 * (1 / x2) * (1 / x3) * (x5**3) * (1 / (x7**4)) - 1,
+                1
+                / (0.1 * (x6**3))
+                * torch.sqrt((745 * x4 / (x2 * x3)) ** 2 + 16.9 * 1e6)
+                - 1100,
+                1
+                / (0.1 * (x7**3))
+                * torch.sqrt((745 * x5 / (x2 * x3)) ** 2 + 157.5 * 1e6)
+                - 850,
+                x2 * x3 - 40,
+                5 - x1 / x2,
+                x1 / x2 - 12,
+                (1.5 * x6 + 1.9) / x4 - 1,
+                (1.1 * x7 + 1.9) / x5 - 1,
+            ],
+            dim=-1,
+        )

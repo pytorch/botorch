@@ -17,9 +17,9 @@ jobs:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
         python-version: ["3.8", "3.10"]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -44,11 +44,11 @@ jobs:
     strategy:
       fail-fast: true
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Fetch all history for all tags and branches
       run: git fetch --prune --unshallow
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: 3.8
     - name: Install dependencies
@@ -67,9 +67,13 @@ jobs:
         no_local_version=$(python -m setuptools_scm | cut -d "+" -f 1)
         echo "SETUPTOOLS_SCM_PRETEND_VERSION=${no_local_version}" >> $GITHUB_ENV
     - name: Build packages (wheel and source distribution)
+      env:
+        ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
         python -m build --sdist --wheel
     - name: Verify packages
+      env:
+        ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
         ./scripts/build_and_verify_py_packages.sh
     - name: Deploy to Test PyPI
@@ -87,7 +91,7 @@ jobs:
     strategy:
       fail-fast: true
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: conda-incubator/setup-miniconda@v2
       with:
         miniconda-version: "latest"
@@ -105,7 +109,7 @@ jobs:
         conda install -y scipy multipledispatch setuptools_scm conda-build conda-verify
         conda config --set anaconda_upload no
         conda install -y -c pytorch-nightly pytorch cpuonly
-        conda install -y -c conda-forge pyro-ppl>=1.8.2
+        conda install -y -c conda-forge pyro-ppl>=1.8.4
         pip install git+https://github.com/cornellius-gp/linear_operator.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git
     - name: Build and verify conda package
@@ -115,36 +119,11 @@ jobs:
 
   publish-latest-website:
     name: Publish latest website
-    runs-on: ubuntu-latest
     needs: [tests-and-coverage-nightly, package-test-deploy-pypi, package-conda]
-    strategy:
-      fail-fast: true
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
-    - name: Fetch all history for all tags and branches
-      run: git fetch --prune --unshallow
-    - name: Install dependencies
-      env:
-        ALLOW_LATEST_GPYTORCH_LINOP: true
-        ALLOW_BOTORCH_LATEST: true  # allow Ax to install w/ new BoTorch release
-      run: |
-        pip install git+https://github.com/cornellius-gp/linear_operator.git
-        pip install git+https://github.com/cornellius-gp/gpytorch.git
-        pip install .[dev]
-        pip install git+https://github.com/facebook/Ax.git
-        pip install beautifulsoup4 ipython nbconvert jinja2
-    - name: Unit tests
-      run: |
-        pytest -ra
-    - name: Publish latest website
-      env:
-        DOCUSAURUS_PUBLISH_TOKEN: ${{ secrets.DOCUSAURUS_PUBLISH_TOKEN }}
-      run: |
-        ./scripts/publish_site.sh -d
+    uses: ./.github/workflows/reusable_website.yml
+    with:
+      publish_versioned_website: false
+    secrets: inherit
 
   run_tutorials:
     name: Run tutorials without smoke test on latest PyTorch / GPyTorch / Ax
@@ -153,3 +132,4 @@ jobs:
       smoke_test: false
       use_stable_pytorch_gpytorch: false
       use_stable_ax: false
+      upload_artifact: true

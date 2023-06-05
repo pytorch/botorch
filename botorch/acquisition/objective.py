@@ -11,19 +11,23 @@ from __future__ import annotations
 import inspect
 import warnings
 from abc import ABC, abstractmethod
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Optional, TYPE_CHECKING, Union
 
 import torch
-from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedError
 from botorch.models.model import Model
+from botorch.models.transforms.outcome import Standardize
 from botorch.posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
-from botorch.posteriors.posterior import Posterior
 from botorch.sampling import IIDNormalSampler, MCSampler
 from botorch.utils import apply_constraints
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from linear_operator.operators.dense_linear_operator import to_linear_operator
 from torch import Tensor
 from torch.nn import Module
+
+if TYPE_CHECKING:
+    from botorch.posteriors.posterior import Posterior  # pragma: no cover
+    from botorch.posteriors.posterior_list import PosteriorList  # pragma: no cover
 
 
 class PosteriorTransform(Module, ABC):
@@ -32,8 +36,6 @@ class PosteriorTransform(Module, ABC):
 
     :meta private:
     """
-
-    scalarize: bool  # True if the transform reduces to single-output
 
     @abstractmethod
     def evaluate(self, Y: Tensor) -> Tensor:
@@ -48,7 +50,7 @@ class PosteriorTransform(Module, ABC):
         pass  # pragma: no cover
 
     @abstractmethod
-    def forward(self, posterior: Posterior) -> Posterior:
+    def forward(self, posterior) -> Posterior:
         r"""Compute the transformed posterior.
 
         Args:
@@ -107,7 +109,9 @@ class ScalarizedPosteriorTransform(PosteriorTransform):
         """
         return self.offset + Y @ self.weights
 
-    def forward(self, posterior: GPyTorchPosterior) -> GPyTorchPosterior:
+    def forward(
+        self, posterior: Union[GPyTorchPosterior, PosteriorList]
+    ) -> GPyTorchPosterior:
         r"""Compute the posterior of the affine transformation.
 
         Args:
@@ -183,7 +187,7 @@ class ExpectationPosteriorTransform(PosteriorTransform):
         Returns:
             An `m`-outcome joint posterior over `q` expectations.
         """
-        org_mvn = posterior.mvn
+        org_mvn = posterior.distribution
         if getattr(org_mvn, "_interleaved", False):
             raise UnsupportedError(
                 "`ExpectationPosteriorTransform` does not support "
@@ -225,7 +229,45 @@ class ExpectationPosteriorTransform(PosteriorTransform):
             new_mvn = MultitaskMultivariateNormal(
                 new_loc, to_linear_operator(new_cov), interleaved=False
             )
-        return GPyTorchPosterior(mvn=new_mvn)
+        return GPyTorchPosterior(distribution=new_mvn)
+
+
+class UnstandardizePosteriorTransform(PosteriorTransform):
+    r"""Posterior transform that unstandardizes the posterior.
+
+    TODO: remove this when MultiTask models support outcome transforms.
+
+    Example:
+        >>> unstd_transform = UnstandardizePosteriorTransform(Y_mean, Y_std)
+        >>> unstd_posterior = unstd_transform(posterior)
+    """
+
+    def __init__(self, Y_mean: Tensor, Y_std: Tensor) -> None:
+        r"""Initialize objective.
+
+        Args:
+            Y_mean: `m`-dim tensor of outcome means
+            Y_std: `m`-dim tensor of outcome standard deviations
+
+        """
+        if Y_mean.ndim > 1 or Y_std.ndim > 1:
+            raise BotorchTensorDimensionError(
+                "Y_mean and Y_std must both be 1-dimensional, but got "
+                f"{Y_mean.ndim} and {Y_std.ndim}"
+            )
+        super().__init__()
+        self.outcome_transform = Standardize(m=Y_mean.shape[0]).to(Y_mean)
+        Y_std_unsqueezed = Y_std.unsqueeze(0)
+        self.outcome_transform.means = Y_mean.unsqueeze(0)
+        self.outcome_transform.stdvs = Y_std_unsqueezed
+        self.outcome_transform._stdvs_sq = Y_std_unsqueezed.pow(2)
+        self.outcome_transform.eval()
+
+    def evaluate(self, Y: Tensor) -> Tensor:
+        return self.outcome_transform.untransform(Y)[0]
+
+    def forward(self, posterior: GPyTorchPosterior) -> Tensor:
+        return self.outcome_transform.untransform_posterior(posterior)
 
 
 class MCAcquisitionObjective(Module, ABC):
@@ -426,7 +468,7 @@ class ConstrainedMCObjective(GenericMCObjective):
         objective: Callable[[Tensor, Optional[Tensor]], Tensor],
         constraints: List[Callable[[Tensor], Tensor]],
         infeasible_cost: Union[Tensor, float] = 0.0,
-        eta: float = 1e-3,
+        eta: Union[Tensor, float] = 1e-3,
     ) -> None:
         r"""
         Args:
@@ -441,11 +483,17 @@ class ConstrainedMCObjective(GenericMCObjective):
             infeasible_cost: The cost of a design if all associated samples are
                 infeasible.
             eta: The temperature parameter of the sigmoid function approximating
-                the constraint.
+                the constraint. Can be either a float or a 1-dim tensor. In case
+                of a float the same eta is used for every constraint in
+                constraints. In case of a tensor the length of the tensor must
+                match the number of provided constraints. The i-th constraint is
+                then estimated with the i-th eta value.
         """
         super().__init__(objective=objective)
         self.constraints = constraints
-        self.register_buffer("eta", torch.as_tensor(eta))
+        if type(eta) != Tensor:
+            eta = torch.full((len(constraints),), eta)
+        self.register_buffer("eta", eta)
         self.register_buffer("infeasible_cost", torch.as_tensor(infeasible_cost))
 
     def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
@@ -501,7 +549,7 @@ class LearnedObjective(MCAcquisitionObjective):
             sampler: Sampler for the preference model to account for uncertainty in
                 preferece when calculating the objective; it's not the one used
                 in MC acquisition functions. If None,
-                it uses `IIDNormalSampler(num_samples=1)`.
+                it uses `IIDNormalSampler(sample_shape=torch.Size([1]))`.
         """
         super().__init__()
         self.pref_model = pref_model
@@ -510,7 +558,7 @@ class LearnedObjective(MCAcquisitionObjective):
             self.sampler = None
         else:
             if sampler is None:
-                self.sampler = IIDNormalSampler(num_samples=1)
+                self.sampler = IIDNormalSampler(sample_shape=torch.Size([1]))
             else:
                 self.sampler = sampler
 

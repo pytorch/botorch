@@ -13,20 +13,12 @@ Before jumping the gun, we recommend you start with the high-level
 
 #### Installation Requirements:
 
-- Python >= 3.8
-- PyTorch >= 1.11
-- gpytorch == 1.9.0
-- linear_operator == 0.2.0
-- scipy
-- multiple-dispatch
-- pyro-ppl >= 1.8.2
-
 BoTorch is easily installed via
-[Anaconda](https://www.anaconda.com/distribution/#download-section) (recommended)
+[Anaconda](https://www.anaconda.com/distribution/#download-section) (strongly recommended for OSX)
 or `pip`:
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--conda-->
+<!--Conda-->
 ```bash
 conda install botorch -c pytorch -c gpytorch -c conda-forge
 ```
@@ -36,7 +28,7 @@ pip install botorch
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-For more detailed installation instructions, please see the
+For more installation options and detailed instructions, please see the
 [Project Readme](https://github.com/pytorch/botorch/blob/main/README.md)
 on GitHub.
 

@@ -32,6 +32,10 @@ from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.analytic import (
     ConstrainedExpectedImprovement,
     ExpectedImprovement,
+    LogConstrainedExpectedImprovement,
+    LogExpectedImprovement,
+    LogNoisyExpectedImprovement,
+    LogProbabilityOfImprovement,
     NoisyExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
@@ -39,6 +43,7 @@ from botorch.acquisition.analytic import (
 )
 from botorch.acquisition.cost_aware import InverseCostWeightedUtility
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
+from botorch.acquisition.joint_entropy_search import qJointEntropySearch
 from botorch.acquisition.knowledge_gradient import (
     qKnowledgeGradient,
     qMultiFidelityKnowledgeGradient,
@@ -77,14 +82,17 @@ from botorch.acquisition.preference import AnalyticExpectedUtilityOfBestOption
 from botorch.acquisition.risk_measures import RiskMeasureMCObjective
 from botorch.acquisition.utils import (
     expand_trace_observations,
+    get_optimal_samples,
     project_to_target_fidelity,
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.deterministic import FixedSingleSampleModel
+from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
 from botorch.optim.optimize import optimize_acqf
-from botorch.sampling.samplers import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
+from botorch.sampling.base import MCSampler
+from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.constraints import get_outcome_constraint_transforms
 from botorch.utils.containers import BotorchContainer
 from botorch.utils.datasets import BotorchDataset, SupervisedDataset
@@ -231,7 +239,12 @@ def construct_inputs_analytic_base(
     }
 
 
-@acqf_input_constructor(ExpectedImprovement, ProbabilityOfImprovement)
+@acqf_input_constructor(
+    ExpectedImprovement,
+    LogExpectedImprovement,
+    ProbabilityOfImprovement,
+    LogProbabilityOfImprovement,
+)
 def construct_inputs_best_f(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
@@ -302,7 +315,9 @@ def construct_inputs_ucb(
     return {**base_inputs, "beta": beta, "maximize": maximize}
 
 
-@acqf_input_constructor(ConstrainedExpectedImprovement)
+@acqf_input_constructor(
+    ConstrainedExpectedImprovement, LogConstrainedExpectedImprovement
+)
 def construct_inputs_constrained_ei(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
@@ -337,7 +352,7 @@ def construct_inputs_constrained_ei(
     raise NotImplementedError  # pragma: nocover
 
 
-@acqf_input_constructor(NoisyExpectedImprovement)
+@acqf_input_constructor(NoisyExpectedImprovement, LogNoisyExpectedImprovement)
 def construct_inputs_noisy_ei(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
@@ -459,7 +474,7 @@ def construct_inputs_qNEI(
     X_pending: Optional[Tensor] = None,
     sampler: Optional[MCSampler] = None,
     X_baseline: Optional[Tensor] = None,
-    prune_baseline: Optional[bool] = False,
+    prune_baseline: Optional[bool] = True,
     cache_root: Optional[bool] = True,
     **kwargs: Any,
 ) -> Dict[str, Any]:
@@ -605,10 +620,10 @@ def construct_inputs_qUCB(
 def _get_sampler(mc_samples: int, qmc: bool) -> MCSampler:
     """Set up MC sampler for q(N)EHVI."""
     # initialize the sampler
-    seed = int(torch.randint(1, 10000, (1,)).item())
+    shape = torch.Size([mc_samples])
     if qmc:
-        return SobolQMCNormalSampler(num_samples=mc_samples, seed=seed)
-    return IIDNormalSampler(num_samples=mc_samples, seed=seed)
+        return SobolQMCNormalSampler(sample_shape=shape)
+    return IIDNormalSampler(sample_shape=shape)
 
 
 @acqf_input_constructor(ExpectedHypervolumeImprovement)
@@ -718,7 +733,7 @@ def construct_inputs_qEHVI(
     )
 
     sampler = kwargs.get("sampler")
-    if sampler is None:
+    if sampler is None and isinstance(model, GPyTorchModel):
         sampler = _get_sampler(
             mc_samples=kwargs.get("mc_samples", 128), qmc=kwargs.get("qmc", True)
         )
@@ -768,7 +783,7 @@ def construct_inputs_qNEHVI(
         cons_tfs = get_outcome_constraint_transforms(outcome_constraints)
 
     sampler = kwargs.get("sampler")
-    if sampler is None:
+    if sampler is None and isinstance(model, GPyTorchModel):
         sampler = _get_sampler(
             mc_samples=kwargs.get("mc_samples", 128), qmc=kwargs.get("qmc", True)
         )
@@ -792,6 +807,7 @@ def construct_inputs_qNEHVI(
         "cache_pending": kwargs.get("cache_pending", True),
         "max_iep": kwargs.get("max_iep", 0),
         "incremental_nehvi": kwargs.get("incremental_nehvi", True),
+        "cache_root": kwargs.get("cache_root", True),
     }
 
 
@@ -987,13 +1003,16 @@ def construct_inputs_analytic_eubo(
     model: Model,
     pref_model: Model,
     previous_winner: Optional[Tensor] = None,
+    sample_multiplier: Optional[float] = 1.0,
     **kwargs: Any,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for the `AnalyticExpectedUtilityOfBestOption` constructor.
 
     Args:
         model: The outcome model to be used in the acquisition function.
-        pref_model: The preference model to be used in preference exploration
+        pref_model: The preference model to be used in preference exploration.
+        previous_winner: The previous winner of the best option.
+        sample_multiplier: The scale factor for the single-sample model.
 
     Returns:
         A dict mapping kwarg names of the constructor to values.
@@ -1001,7 +1020,8 @@ def construct_inputs_analytic_eubo(
     # construct a deterministic fixed single sample model from `model`
     # i.e., performing EUBO-zeta by default as described
     # in https://arxiv.org/abs/2203.11382
-    one_sample_outcome_model = FixedSingleSampleModel(model=model)
+    w = torch.randn(model.num_outputs) * sample_multiplier
+    one_sample_outcome_model = FixedSingleSampleModel(model=model, w=w)
 
     return {
         "pref_model": pref_model,
@@ -1128,7 +1148,7 @@ def optimize_objective(
             model=model,
             objective=objective,
             posterior_transform=posterior_transform,
-            sampler=sampler_cls(num_samples=mc_samples, seed=seed_inner),
+            sampler=sampler_cls(sample_shape=torch.Size([mc_samples]), seed=seed_inner),
         )
     else:
         acq_function = PosteriorMean(
@@ -1178,3 +1198,38 @@ def optimize_objective(
         return_best_only=True,
         sequential=sequential,
     )
+
+
+@acqf_input_constructor(qJointEntropySearch)
+def construct_inputs_qJES(
+    model: Model,
+    training_data: MaybeDict[SupervisedDataset],
+    bounds: List[Tuple[float, float]],
+    num_optima: int = 64,
+    maximize: bool = True,
+    condition_noiseless: bool = True,
+    X_pending: Optional[Tensor] = None,
+    estimation_type: str = "LB",
+    num_samples: int = 64,
+    **kwargs: Any,
+):
+    dtype = model.train_targets.dtype
+    optimal_inputs, optimal_outputs = get_optimal_samples(
+        model=model,
+        bounds=torch.as_tensor(bounds, dtype=dtype).T,
+        num_optima=num_optima,
+        maximize=maximize,
+    )
+
+    inputs = {
+        "model": model,
+        "optimal_inputs": optimal_inputs,
+        "optimal_outputs": optimal_outputs,
+        "condition_noiseless": condition_noiseless,
+        "maximize": maximize,
+        "X_pending": X_pending,
+        "estimation_type": estimation_type,
+        "num_samples": num_samples,
+        **kwargs,
+    }
+    return inputs
