@@ -418,3 +418,57 @@ def _get_test_posterior(
             covar = covar + torch.diag_embed(flat_diag)
         mtmvn = MultitaskMultivariateNormal(mean, covar, interleaved=interleaved)
     return GPyTorchPosterior(mtmvn)
+
+
+def _get_max_violation_of_bounds(samples: torch.Tensor, bounds: torch.Tensor) -> float:
+    """
+    The maximum value by which samples lie outside bounds.
+
+    A negative value indicates that all samples lie within bounds.
+
+    Args:
+        samples: An `n x q x d` - dimension tensor, as might be returned from
+            `sample_q_batches_from_polytope`.
+        bounds: A `2 x d` tensor of lower and upper bounds for each column.
+    """
+    n, q, d = samples.shape
+    samples = samples.reshape((n * q, d))
+    lower = samples.min(0).values
+    upper = samples.max(0).values
+    lower_dist = (bounds[0, :] - lower).max().item()
+    upper_dist = (upper - bounds[1, :]).max().item()
+    return max(lower_dist, upper_dist)
+
+
+def _get_max_violation_of_constraints(
+    samples: torch.Tensor,
+    constraints: Optional[List[Tuple[Tensor, Tensor, float]]],
+    equality: bool,
+) -> float:
+    r"""
+    Amount by which equality constraints are not obeyed.
+
+    Args:
+        samples: An `n x q x d` - dimension tensor, as might be returned from
+            `sample_q_batches_from_polytope`.
+        constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`, or `>=` if
+            `equality` is False.
+        equality: Whether these are equality constraints (not inequality).
+    """
+    n, q, d = samples.shape
+    max_error = 0
+    if constraints is not None:
+        for (ind, coef, rhs) in constraints:
+            if ind.ndim == 1:
+                constr = samples[:, :, ind] @ coef
+            else:
+                constr = samples[:, ind[:, 0], ind[:, 1]] @ coef
+
+            if equality:
+                error = (constr - rhs).abs().max()
+            else:
+                error = (rhs - constr).max()
+            max_error = max(max_error, error)
+    return max_error

@@ -456,7 +456,14 @@ def optimize_acqf(
         options: Options for candidate generation.
         inequality_constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
-            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`. `indices` and
+            `coefficients` should be torch tensors. When q=1, or when
+            applying the same constraint to each candidate in the batch,
+            `indices` should be a 1-d tensor. For inter-point constraints,
+            `indices` must be a 2-d Tensor, where in each row `indices[i] =
+            (k_i, l_i)` the first index `k_i` corresponds to the `k_i`-th
+            element of the `q`-batch and the second index `l_i` corresponds to
+            the `l_i`-th feature of that element.
         equality_constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an equality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
