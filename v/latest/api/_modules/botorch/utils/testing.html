@@ -444,6 +444,60 @@
             <span class="n">covar</span> <span class="o">=</span> <span class="n">covar</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">diag_embed</span><span class="p">(</span><span class="n">flat_diag</span><span class="p">)</span>
         <span class="n">mtmvn</span> <span class="o">=</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">covar</span><span class="p">,</span> <span class="n">interleaved</span><span class="o">=</span><span class="n">interleaved</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">mtmvn</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_max_violation_of_bounds</span><span class="p">(</span><span class="n">samples</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    The maximum value by which samples lie outside bounds.</span>
+
+<span class="sd">    A negative value indicates that all samples lie within bounds.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        samples: An `n x q x d` - dimension tensor, as might be returned from</span>
+<span class="sd">            `sample_q_batches_from_polytope`.</span>
+<span class="sd">        bounds: A `2 x d` tensor of lower and upper bounds for each column.</span>
+<span class="sd">    """</span>
+    <span class="n">n</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">samples</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">n</span> <span class="o">*</span> <span class="n">q</span><span class="p">,</span> <span class="n">d</span><span class="p">))</span>
+    <span class="n">lower</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">upper</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">lower_dist</span> <span class="o">=</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">lower</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <span class="n">upper_dist</span> <span class="o">=</span> <span class="p">(</span><span class="n">upper</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">lower_dist</span><span class="p">,</span> <span class="n">upper_dist</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_max_violation_of_constraints</span><span class="p">(</span>
+    <span class="n">samples</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]],</span>
+    <span class="n">equality</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Amount by which equality constraints are not obeyed.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        samples: An `n x q x d` - dimension tensor, as might be returned from</span>
+<span class="sd">            `sample_q_batches_from_polytope`.</span>
+<span class="sd">        constraints: A list of tuples (indices, coefficients, rhs),</span>
+<span class="sd">            with each tuple encoding an inequality constraint of the form</span>
+<span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`, or `&gt;=` if</span>
+<span class="sd">            `equality` is False.</span>
+<span class="sd">        equality: Whether these are equality constraints (not inequality).</span>
+<span class="sd">    """</span>
+    <span class="n">n</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">max_error</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">ind</span><span class="p">,</span> <span class="n">coef</span><span class="p">,</span> <span class="n">rhs</span><span class="p">)</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ind</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">constr</span> <span class="o">=</span> <span class="n">samples</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">ind</span><span class="p">]</span> <span class="o">@</span> <span class="n">coef</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">constr</span> <span class="o">=</span> <span class="n">samples</span><span class="p">[:,</span> <span class="n">ind</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">ind</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]]</span> <span class="o">@</span> <span class="n">coef</span>
+
+            <span class="k">if</span> <span class="n">equality</span><span class="p">:</span>
+                <span class="n">error</span> <span class="o">=</span> <span class="p">(</span><span class="n">constr</span> <span class="o">-</span> <span class="n">rhs</span><span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">error</span> <span class="o">=</span> <span class="p">(</span><span class="n">rhs</span> <span class="o">-</span> <span class="n">constr</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+            <span class="n">max_error</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_error</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">max_error</span>
 </pre></div>
 </div>
 </div>

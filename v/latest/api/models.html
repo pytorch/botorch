@@ -3116,12 +3116,17 @@ isn’t compatible with <cite>fit_gpytorch_model</cite>.</p>
 <li><p><strong>train_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – Observed noise variance (n x 1). If None, we infer the noise.
 Note that the inferred noise is common across all tasks.</p></li>
 <li><p><strong>task_feature</strong> (<em>int</em>) – The index of the task feature (<cite>-d &lt;= task_feature &lt;= d</cite>).</p></li>
+<li><p><strong>output_tasks</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of task indices for which to compute model
+outputs for. If omitted, return outputs for all task indices.</p></li>
 <li><p><strong>rank</strong> (<em>int</em><em> | </em><em>None</em>) – The num of learned task embeddings to be used in the task kernel.
 If omitted, set it to be 1.</p></li>
-<li><p><strong>output_tasks</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>outcome_transform</strong> (<em>OutcomeTransform</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>input_transform</strong> (<em>InputTransform</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>pyro_model</strong> (<em>PyroModel</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>outcome_transform</strong> (<em>OutcomeTransform</em><em> | </em><em>None</em>) – An outcome transform that is applied to the
+training data during instantiation and to the posterior during
+inference (that is, the <cite>Posterior</cite> obtained by calling
+<cite>.posterior</cite> on the model will be on the original scale).</p></li>
+<li><p><strong>input_transform</strong> (<em>InputTransform</em><em> | </em><em>None</em>) – An input transform that is applied to the inputs <cite>X</cite>
+in the model’s forward pass.</p></li>
+<li><p><strong>pyro_model</strong> (<em>PyroModel</em><em> | </em><em>None</em>) – Optional <cite>PyroModel</cite>, defaults to <cite>MultitaskSaasPyroModel</cite>.</p></li>
 </ul>
 </dd>
 </dl>

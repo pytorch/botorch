@@ -482,7 +482,14 @@
 <span class="sd">        options: Options for candidate generation.</span>
 <span class="sd">        inequality_constraints: A list of tuples (indices, coefficients, rhs),</span>
 <span class="sd">            with each tuple encoding an inequality constraint of the form</span>
-<span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs`</span>
+<span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs`. `indices` and</span>
+<span class="sd">            `coefficients` should be torch tensors. When q=1, or when</span>
+<span class="sd">            applying the same constraint to each candidate in the batch,</span>
+<span class="sd">            `indices` should be a 1-d tensor. For inter-point constraints,</span>
+<span class="sd">            `indices` must be a 2-d Tensor, where in each row `indices[i] =</span>
+<span class="sd">            (k_i, l_i)` the first index `k_i` corresponds to the `k_i`-th</span>
+<span class="sd">            element of the `q`-batch and the second index `l_i` corresponds to</span>
+<span class="sd">            the `l_i`-th feature of that element.</span>
 <span class="sd">        equality_constraints: A list of tuples (indices, coefficients, rhs),</span>
 <span class="sd">            with each tuple encoding an equality constraint of the form</span>
 <span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`</span>

@@ -38,19 +38,27 @@
 <span class="sd">    Lin, Z.J., Astudillo, R., Frazier, P.I. and Bakshy, E. Preference Exploration</span>
 <span class="sd">    for Efficient Bayesian Optimization with Multiple Outcomes. International</span>
 <span class="sd">    Conference on Artificial Intelligence and Statistics (AISTATS), 2022.</span>
+
+<span class="sd">.. [Houlsby2011bald]</span>
+<span class="sd">    Houlsby, N., Huszár, F., Ghahramani, Z. and Lengyel, M.</span>
+<span class="sd">    Bayesian Active Learning for Gaussian Process Classification.</span>
+<span class="sd">    NIPS Workshop on Bayesian optimization, experimental design and bandits:</span>
+<span class="sd">    Theory and applications, 2011.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">AnalyticAcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.monte_carlo</span> <span class="kn">import</span> <span class="n">MCAcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.models.deterministic</span> <span class="kn">import</span> <span class="n">DeterministicModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">match_batch_shape</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Bernoulli</span><span class="p">,</span> <span class="n">Normal</span>
 
 <span class="n">SIGMA_JITTER</span> <span class="o">=</span> <span class="mf">1e-8</span>
 
@@ -71,14 +79,13 @@
 <span class="sd">        Args:</span>
 <span class="sd">            pref_model: The preference model that maps the outcomes (i.e., Y) to</span>
 <span class="sd">                scalar-valued utility.</span>
-<span class="sd">            model: A deterministic model that maps parameters (i.e., X) to outcomes</span>
-<span class="sd">                (i.e., Y). The outcome model f defines the search space of Y = f(X).</span>
-<span class="sd">                If model is None, we are directly calculating EUBO on the parameter</span>
-<span class="sd">                space. When used with `OneSamplePosteriorDrawModel`, we are obtaining</span>
-<span class="sd">                EUBO-zeta as described in [Lin2022preference].</span>
+<span class="sd">            outcome_model: A deterministic model that maps parameters (i.e., X) to</span>
+<span class="sd">                outcomes (i.e., Y). The outcome model f defines the search space of</span>
+<span class="sd">                Y = f(X). If model is None, we are directly calculating EUBO on</span>
+<span class="sd">                the parameter space. When used with `OneSamplePosteriorDrawModel`,</span>
+<span class="sd">                we are obtaining EUBO-zeta as described in [Lin2022preference]_.</span>
 <span class="sd">            previous_winner: Tensor representing the previous winner in the Y space.</span>
 <span class="sd">        """</span>
-        <span class="n">pref_model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">pref_model</span><span class="p">)</span>
         <span class="c1"># ensure the model is in eval mode</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">add_module</span><span class="p">(</span><span class="s2">"outcome_model"</span><span class="p">,</span> <span class="n">outcome_model</span><span class="p">)</span>
@@ -106,7 +113,7 @@
 <span class="sd">            The acquisition value for each batch as a tensor of shape `batch_shape`.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
-            <span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="p">((</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">previous_winner</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">))</span>
             <span class="ow">or</span> <span class="p">((</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">previous_winner</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">))</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
@@ -119,19 +126,14 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">previous_winner</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">Y</span><span class="p">,</span> <span class="n">match_batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">previous_winner</span><span class="p">,</span> <span class="n">Y</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
 
-        <span class="c1"># Calling forward directly instead of posterior here to</span>
-        <span class="c1"># obtain the full covariance matrix</span>
-        <span class="n">pref_posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
-        <span class="n">pref_mean</span> <span class="o">=</span> <span class="n">pref_posterior</span><span class="o">.</span><span class="n">mean</span>
+        <span class="n">pref_posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
+        <span class="n">pref_mean</span> <span class="o">=</span> <span class="n">pref_posterior</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">pref_cov</span> <span class="o">=</span> <span class="n">pref_posterior</span><span class="o">.</span><span class="n">covariance_matrix</span>
         <span class="n">delta</span> <span class="o">=</span> <span class="n">pref_mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">pref_mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
-        <span class="n">sigma</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
-            <span class="n">pref_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
-            <span class="o">+</span> <span class="n">pref_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
-            <span class="o">-</span> <span class="n">pref_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
-            <span class="o">-</span> <span class="n">pref_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
-            <span class="o">+</span> <span class="n">SIGMA_JITTER</span>
-        <span class="p">)</span>
+
+        <span class="n">w</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pref_cov</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">pref_cov</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="n">w</span> <span class="o">@</span> <span class="n">pref_cov</span> <span class="o">@</span> <span class="n">w</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="n">SIGMA_JITTER</span><span class="p">))</span>
 
         <span class="n">u</span> <span class="o">=</span> <span class="n">delta</span> <span class="o">/</span> <span class="n">sigma</span>
 
@@ -141,6 +143,79 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">previous_winner</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">acqf_val</span> <span class="o">=</span> <span class="n">acqf_val</span> <span class="o">+</span> <span class="n">pref_mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">acqf_val</span></div></div>
+
+
+<div class="viewcode-block" id="PairwiseBayesianActiveLearningByDisagreement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.preference.PairwiseBayesianActiveLearningByDisagreement">[docs]</a><span class="k">class</span> <span class="nc">PairwiseBayesianActiveLearningByDisagreement</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""MC Bayesian Active Learning by Disagreement"""</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">pref_model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">outcome_model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DeterministicModel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">num_samples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1024</span><span class="p">,</span>
+        <span class="n">std_noise</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Monte Carlo implementation of Bayesian Active Learning by Disagreement (BALD)</span>
+<span class="sd">        proposed in [Houlsby2011bald]_.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pref_model: The preference model that maps the outcomes (i.e., Y) to</span>
+<span class="sd">                scalar-valued utility.</span>
+<span class="sd">            outcome_model: A deterministic model that maps parameters (i.e., X) to</span>
+<span class="sd">                outcomes (i.e., Y). The outcome model f defines the search space of</span>
+<span class="sd">                Y = f(X). If model is None, we are directly calculating BALD on</span>
+<span class="sd">                the parameter space.</span>
+<span class="sd">            num_samples: number of samples to approximate the conditional_entropy.</span>
+<span class="sd">            std_noise: Additional observational noise to include. Defaults to 0.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">pref_model</span><span class="p">)</span>
+        <span class="c1"># ensure the model is in eval mode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_module</span><span class="p">(</span><span class="s2">"outcome_model"</span><span class="p">,</span> <span class="n">outcome_model</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span> <span class="o">=</span> <span class="n">num_samples</span>
+        <span class="c1"># assuming the relative observation noise is fixed at 1.0 (e.g., in PairwiseGP)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">std_noise</span> <span class="o">=</span> <span class="n">std_noise</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">std_normal</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PairwiseBayesianActiveLearningByDisagreement.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.preference.PairwiseBayesianActiveLearningByDisagreement.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate MC BALD on the candidate set `X`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x 2 x d`-dim Tensor of t-batches with `q=2`</span>
+<span class="sd">                `d`-dim design points each.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape'`-dim Tensor of MC BALD values at the given</span>
+<span class="sd">            design points pair `X`, where `batch_shape'` is the broadcasted</span>
+<span class="sd">            batch shape of model and input `X`.</span>
+<span class="sd">        """</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">X</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_model</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+        <span class="n">pref_posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
+        <span class="n">pref_mean</span> <span class="o">=</span> <span class="n">pref_posterior</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">pref_cov</span> <span class="o">=</span> <span class="n">pref_posterior</span><span class="o">.</span><span class="n">covariance_matrix</span>
+
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">pref_mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">pref_mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pref_cov</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">pref_cov</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">std_noise</span> <span class="o">+</span> <span class="n">w</span> <span class="o">@</span> <span class="n">pref_cov</span> <span class="o">@</span> <span class="n">w</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="n">SIGMA_JITTER</span><span class="p">))</span>
+
+        <span class="c1"># eq (3) in Houlsby, et al. (2011)</span>
+        <span class="n">posterior_entropies</span> <span class="o">=</span> <span class="n">Bernoulli</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">std_normal</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">mu</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">var</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">entropy</span><span class="p">()</span>
+
+        <span class="c1"># Sample-based approx to eq (4) in Houlsby, et al. (2011)</span>
+        <span class="n">obj_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">std_normal</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span>
+            <span class="n">Normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">sigma</span><span class="p">)</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span><span class="p">]))</span>
+        <span class="p">)</span>
+        <span class="n">sample_entropies</span> <span class="o">=</span> <span class="n">Bernoulli</span><span class="p">(</span><span class="n">obj_samples</span><span class="p">)</span><span class="o">.</span><span class="n">entropy</span><span class="p">()</span>
+        <span class="n">conditional_entropies</span> <span class="o">=</span> <span class="n">sample_entropies</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">posterior_entropies</span> <span class="o">-</span> <span class="n">conditional_entropies</span></div></div>
 </pre></div>
 </div>
 </div>

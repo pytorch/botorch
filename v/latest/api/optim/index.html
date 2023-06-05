@@ -295,7 +295,14 @@ if <cite>batch_initial_conditions</cite> is not specified.</p></li>
 <li><p><strong>options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em> | </em><em>str</em><em>] </em><em>| </em><em>None</em>) – Options for candidate generation.</p></li>
 <li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
-<cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite></p></li>
+<cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite>. <cite>indices</cite> and
+<cite>coefficients</cite> should be torch tensors. When q=1, or when
+applying the same constraint to each candidate in the batch,
+<cite>indices</cite> should be a 1-d tensor. For inter-point constraints,
+<cite>indices</cite> must be a 2-d Tensor, where in each row <cite>indices[i] =
+(k_i, l_i)</cite> the first index <cite>k_i</cite> corresponds to the <cite>k_i</cite>-th
+element of the <cite>q</cite>-batch and the second index <cite>l_i</cite> corresponds to
+the <cite>l_i</cite>-th feature of that element.</p></li>
 <li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an equality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite></p></li>
@@ -947,15 +954,13 @@ index <cite>l_i</cite> corresponds to the <cite>l_i</cite>-th feature of that el
 thinning: The amount of thinning (number of steps to take between
 returning samples).</p></li>
 <li><p><strong>seed</strong> (<em>int</em>) – The random seed.</p></li>
-<li><p><strong>constraints</strong> (<em>equality</em>) – A list of tuples (indices, coefficients, rhs),
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite>.</p></li>
-<li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
+<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>.</p></li>
 <li><p><strong>thinning</strong> (<em>int</em>) – </p></li>
-<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

@@ -235,8 +235,17 @@
 <span class="sd">            train_Yvar: Observed noise variance (n x 1). If None, we infer the noise.</span>
 <span class="sd">                Note that the inferred noise is common across all tasks.</span>
 <span class="sd">            task_feature: The index of the task feature (`-d &lt;= task_feature &lt;= d`).</span>
+<span class="sd">            output_tasks: A list of task indices for which to compute model</span>
+<span class="sd">                outputs for. If omitted, return outputs for all task indices.</span>
 <span class="sd">            rank: The num of learned task embeddings to be used in the task kernel.</span>
 <span class="sd">                If omitted, set it to be 1.</span>
+<span class="sd">            outcome_transform: An outcome transform that is applied to the</span>
+<span class="sd">                training data during instantiation and to the posterior during</span>
+<span class="sd">                inference (that is, the `Posterior` obtained by calling</span>
+<span class="sd">                `.posterior` on the model will be on the original scale).</span>
+<span class="sd">            input_transform: An input transform that is applied to the inputs `X`</span>
+<span class="sd">                in the model's forward pass.</span>
+<span class="sd">            pyro_model: Optional `PyroModel`, defaults to `MultitaskSaasPyroModel`.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
             <span class="n">train_X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span>
