@@ -53,7 +53,11 @@ from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import FixedNoiseGaussianLikelihood, GaussianLikelihood
 from gpytorch.means import ConstantMean
 from linear_operator.operators import to_linear_operator
-from pyro.ops.integrator import potential_grad, register_exception_handler
+from pyro.ops.integrator import (
+    _EXCEPTION_HANDLERS,
+    potential_grad,
+    register_exception_handler,
+)
 
 
 EXPECTED_KEYS = [
@@ -634,6 +638,13 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
 
 
 class TestPyroCatchNumericalErrors(BotorchTestCase):
+    def tearDown(self):
+        super().tearDown()
+        # Remove exception handler so they don't affect the tests on rerun
+        # TODO: Add functionality to pyro to clear the handlers so this
+        # does not require touching the internals.
+        del _EXCEPTION_HANDLERS["foo_runtime"]
+
     def test_pyro_catch_error(self):
         def potential_fn(z):
             mvn = pyro.distributions.MultivariateNormal(
