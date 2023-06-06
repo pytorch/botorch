@@ -133,7 +133,6 @@ class qExpectedImprovement(MCAcquisitionFunction):
         objective: Optional[MCAcquisitionObjective] = None,
         posterior_transform: Optional[PosteriorTransform] = None,
         X_pending: Optional[Tensor] = None,
-        **kwargs: Any,
     ) -> None:
         r"""q-Expected Improvement.
 
