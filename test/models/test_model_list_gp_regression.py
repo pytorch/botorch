@@ -14,6 +14,7 @@ from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_mll
 from botorch.models import ModelListGP
 from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
+from botorch.models.multitask import MultiTaskGP
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import ChainedOutcomeTransform, Log, Standardize
 from botorch.posteriors import GPyTorchPosterior, PosteriorList, TransformedPosterior
@@ -101,6 +102,7 @@ class TestModelListGP(BotorchTestCase):
         )
         self.assertIsInstance(model, ModelListGP)
         self.assertIsInstance(model.likelihood, LikelihoodList)
+        self.assertEqual(model.num_outputs, 2)
         for m in model.models:
             self.assertIsInstance(m.mean_module, ConstantMean)
             self.assertIsInstance(m.covar_module, ScaleKernel)
@@ -250,6 +252,19 @@ class TestModelListGP(BotorchTestCase):
             else:
                 self.assertIsInstance(posterior.posteriors[0], TransformedPosterior)
 
+            # Test tensor valued observation noise.
+            observation_noise = torch.rand(2, 2, **tkwargs)
+            with torch.no_grad():
+                noise_free_variance = model.posterior(test_x).variance
+                noisy_variance = model.posterior(
+                    test_x, observation_noise=observation_noise
+                ).variance
+            self.assertEqual(noise_free_variance.shape, noisy_variance.shape)
+            if outcome_transform == "None":
+                self.assertAllClose(
+                    noise_free_variance + observation_noise, noisy_variance
+                )
+
     def test_ModelListGP_fixed_noise(self) -> None:
 
         for dtype, outcome_transform in itertools.product(
@@ -280,6 +295,55 @@ class TestModelListGP(BotorchTestCase):
         posterior = model.posterior(test_x)
         self.assertIsInstance(posterior, GPyTorchPosterior)
         self.assertIsInstance(posterior.distribution, MultivariateNormal)
+
+    def test_ModelListGP_multi_task(self):
+        tkwargs = {"device": self.device, "dtype": torch.float}
+        train_x_raw, train_y = _get_random_data(
+            batch_shape=torch.Size(), m=1, n=10, **tkwargs
+        )
+        task_idx = torch.cat(
+            [torch.ones(5, 1, **tkwargs), torch.zeros(5, 1, **tkwargs)], dim=0
+        )
+        train_x = torch.cat([train_x_raw, task_idx], dim=-1)
+        model = MultiTaskGP(
+            train_X=train_x,
+            train_Y=train_y,
+            task_feature=-1,
+            output_tasks=[0],
+        )
+        # Wrap a single single-output MTGP.
+        model_list_gp = ModelListGP(model)
+        self.assertEqual(model_list_gp.num_outputs, 1)
+        with torch.no_grad():
+            model_mean = model.posterior(train_x_raw).mean
+            model_list_gp_mean = model_list_gp.posterior(train_x_raw).mean
+        self.assertAllClose(model_mean, model_list_gp_mean)
+        # Wrap two single-output MTGPs.
+        model_list_gp = ModelListGP(model, model)
+        self.assertEqual(model_list_gp.num_outputs, 2)
+        with torch.no_grad():
+            model_list_gp_mean = model_list_gp.posterior(train_x_raw).mean
+        expected_mean = torch.cat([model_mean, model_mean], dim=-1)
+        self.assertAllClose(expected_mean, model_list_gp_mean)
+        # Wrap a multi-output MTGP.
+        model2 = MultiTaskGP(
+            train_X=train_x,
+            train_Y=train_y,
+            task_feature=-1,
+        )
+        model_list_gp = ModelListGP(model2)
+        self.assertEqual(model_list_gp.num_outputs, 2)
+        with torch.no_grad():
+            model2_mean = model2.posterior(train_x_raw).mean
+            model_list_gp_mean = model_list_gp.posterior(train_x_raw).mean
+        self.assertAllClose(model2_mean, model_list_gp_mean)
+        # Mix of multi-output and single-output MTGPs.
+        model_list_gp = ModelListGP(model, model2)
+        self.assertEqual(model_list_gp.num_outputs, 3)
+        with torch.no_grad():
+            model_list_gp_mean = model_list_gp.posterior(train_x_raw).mean
+        expected_mean = torch.cat([model_mean, model2_mean], dim=-1)
+        self.assertAllClose(expected_mean, model_list_gp_mean)
 
     def test_transform_revert_train_inputs(self):
         tkwargs = {"device": self.device, "dtype": torch.float}

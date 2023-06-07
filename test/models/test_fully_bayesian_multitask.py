@@ -312,16 +312,16 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
 
             # Test model lists with fully Bayesian models and mixed modeling
             deterministic = GenericDeterministicModel(f=lambda x: x[..., :1])
-            test_X = torch.cat([test_X, torch.ones(*batch_shape, 1, **tkwargs)], dim=-1)
-            for ModelListClass, models in zip(
+            for ModelListClass, models, expected_outputs in zip(
                 [ModelList, ModelListGP],
-                [[deterministic, ModelListGP(model)], [model, model]],
+                [[deterministic, model], [model, model]],
+                [3, 4],
             ):
                 expected_shape = (
                     *batch_shape[: MCMC_DIM + 2],
                     *model.batch_shape,
                     *batch_shape[MCMC_DIM + 2 :],
-                    2,
+                    expected_outputs,
                 )
                 expected_shape = torch.Size(expected_shape)
                 model_list = ModelListClass(*models)
@@ -349,7 +349,6 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
         self.assertEqual(model.state_dict().keys(), m_new.state_dict().keys())
         for k in model.state_dict().keys():
             self.assertTrue((model.state_dict()[k] == m_new.state_dict()[k]).all())
-        test_X = test_X[..., :-1]
         preds1, preds2 = model.posterior(test_X), m_new.posterior(test_X)
         self.assertTrue(torch.equal(preds1.mean, preds2.mean))
         self.assertTrue(torch.equal(preds1.variance, preds2.variance))
@@ -439,80 +438,80 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
         fit_fully_bayesian_model_nuts(
             model, warmup_steps=8, num_samples=5, thinning=2, disable_progbar=True
         )
+        for include_task_feature in [True, False]:
+            if not include_task_feature:
+                test_X = train_X[..., :-1]
+            else:
+                test_X = train_X
 
-        deterministic = GenericDeterministicModel(f=lambda x: x[..., :1])
-        list_gp = ModelListGP(model, model)
-        mixed_list = ModelList(deterministic, ModelListGP(model))
-        simple_sampler = get_sampler(
-            posterior=ModelListGP(model).posterior(train_X),
-            sample_shape=torch.Size([2]),
-        )
-        list_gp_sampler = get_sampler(
-            posterior=list_gp.posterior(train_X), sample_shape=torch.Size([2])
-        )
-        mixed_list_sampler = get_sampler(
-            posterior=mixed_list.posterior(train_X), sample_shape=torch.Size([2])
-        )
-        # wrap mtgp with ModelList
-        acquisition_functions = [
-            ExpectedImprovement(model=ModelListGP(model), best_f=train_Y.max()),
-            ProbabilityOfImprovement(model=ModelListGP(model), best_f=train_Y.max()),
-            PosteriorMean(model=ModelListGP(model)),
-            UpperConfidenceBound(model=ModelListGP(model), beta=4),
-            qExpectedImprovement(
-                model=ModelListGP(model), best_f=train_Y.max(), sampler=simple_sampler
-            ),
-            qNoisyExpectedImprovement(
-                model=ModelListGP(model), X_baseline=train_X, sampler=simple_sampler
-            ),
-            qProbabilityOfImprovement(
-                model=ModelListGP(model), best_f=train_Y.max(), sampler=simple_sampler
-            ),
-            qSimpleRegret(model=ModelListGP(model), sampler=simple_sampler),
-            qUpperConfidenceBound(
-                model=ModelListGP(model), beta=4, sampler=simple_sampler
-            ),
-            qNoisyExpectedHypervolumeImprovement(
-                model=list_gp,
-                X_baseline=train_X,
-                ref_point=torch.zeros(2, **tkwargs),
-                sampler=list_gp_sampler,
-            ),
-            qExpectedHypervolumeImprovement(
-                model=list_gp,
-                ref_point=torch.zeros(2, **tkwargs),
-                sampler=list_gp_sampler,
-                partitioning=NondominatedPartitioning(
-                    ref_point=torch.zeros(2, **tkwargs), Y=train_Y.repeat([1, 2])
+            deterministic = GenericDeterministicModel(f=lambda x: x[..., :1])
+            list_gp = ModelListGP(model, model)
+            mixed_list = ModelList(deterministic, model)
+            simple_sampler = get_sampler(
+                posterior=model.posterior(test_X),
+                sample_shape=torch.Size([2]),
+            )
+            list_gp_sampler = get_sampler(
+                posterior=list_gp.posterior(test_X), sample_shape=torch.Size([2])
+            )
+            mixed_list_sampler = get_sampler(
+                posterior=mixed_list.posterior(test_X), sample_shape=torch.Size([2])
+            )
+            acquisition_functions = [
+                ExpectedImprovement(model=model, best_f=train_Y.max()),
+                ProbabilityOfImprovement(model=model, best_f=train_Y.max()),
+                PosteriorMean(model=model),
+                UpperConfidenceBound(model=model, beta=4),
+                qExpectedImprovement(
+                    model=model, best_f=train_Y.max(), sampler=simple_sampler
                 ),
-            ),
-            # qEHVI/qNEHVI with mixed models
-            qNoisyExpectedHypervolumeImprovement(
-                model=mixed_list,
-                X_baseline=train_X,
-                ref_point=torch.zeros(2, **tkwargs),
-                sampler=mixed_list_sampler,
-            ),
-            qExpectedHypervolumeImprovement(
-                model=mixed_list,
-                ref_point=torch.zeros(2, **tkwargs),
-                sampler=mixed_list_sampler,
-                partitioning=NondominatedPartitioning(
-                    ref_point=torch.zeros(2, **tkwargs), Y=train_Y.repeat([1, 2])
+                qNoisyExpectedImprovement(
+                    model=model, X_baseline=test_X, sampler=simple_sampler
                 ),
-            ),
-        ]
+                qProbabilityOfImprovement(
+                    model=model, best_f=train_Y.max(), sampler=simple_sampler
+                ),
+                qSimpleRegret(model=model, sampler=simple_sampler),
+                qUpperConfidenceBound(model=model, beta=4, sampler=simple_sampler),
+                qNoisyExpectedHypervolumeImprovement(
+                    model=list_gp,
+                    X_baseline=test_X,
+                    ref_point=torch.zeros(2, **tkwargs),
+                    sampler=list_gp_sampler,
+                ),
+                qExpectedHypervolumeImprovement(
+                    model=list_gp,
+                    ref_point=torch.zeros(2, **tkwargs),
+                    sampler=list_gp_sampler,
+                    partitioning=NondominatedPartitioning(
+                        ref_point=torch.zeros(2, **tkwargs), Y=train_Y.repeat([1, 2])
+                    ),
+                ),
+                # qEHVI/qNEHVI with mixed models
+                qNoisyExpectedHypervolumeImprovement(
+                    model=mixed_list,
+                    X_baseline=test_X,
+                    ref_point=torch.zeros(2, **tkwargs),
+                    sampler=mixed_list_sampler,
+                ),
+                qExpectedHypervolumeImprovement(
+                    model=mixed_list,
+                    ref_point=torch.zeros(2, **tkwargs),
+                    sampler=mixed_list_sampler,
+                    partitioning=NondominatedPartitioning(
+                        ref_point=torch.zeros(2, **tkwargs), Y=train_Y.repeat([1, 2])
+                    ),
+                ),
+            ]
 
-        for acqf in acquisition_functions:
-            for batch_shape in [[2], [6, 2], [5, 6, 2]]:
-                test_X = torch.cat(
-                    [
-                        torch.rand(*batch_shape, 1, 4, **tkwargs),
-                        torch.zeros(*batch_shape, 1, 1, **tkwargs),
-                    ],
-                    dim=-1,
-                )
-                self.assertEqual(acqf(test_X).shape, torch.Size(batch_shape))
+            for acqf in acquisition_functions:
+                for batch_shape in [[2], [6, 2], [5, 6, 2]]:
+                    test_X = torch.rand(*batch_shape, 1, 4, **tkwargs)
+                    if include_task_feature:
+                        test_X = torch.cat(
+                            [test_X, torch.zeros_like(test_X[..., :1])], dim=-1
+                        )
+                    self.assertEqual(acqf(test_X).shape, torch.Size(batch_shape))
 
     def test_load_samples(self):
         for task_rank, dtype in itertools.product([1, 2], [torch.float, torch.double]):
