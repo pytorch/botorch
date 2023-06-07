@@ -17,7 +17,7 @@ import itertools
 import warnings
 from abc import ABC
 from copy import deepcopy
-from typing import Any, Iterator, List, Optional, Tuple, TYPE_CHECKING, Union
+from typing import Any, List, Optional, Tuple, TYPE_CHECKING, Union
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
@@ -381,7 +381,10 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
                 if torch.is_tensor(observation_noise):
                     # TODO: Validate noise shape
                     # make observation_noise `batch_shape x q x n`
-                    obs_noise = observation_noise.transpose(-1, -2)
+                    if self.num_outputs > 1:
+                        obs_noise = observation_noise.transpose(-1, -2)
+                    else:
+                        obs_noise = observation_noise.squeeze(-1)
                     mvn = self.likelihood(mvn, X, noise=obs_noise)
                 elif isinstance(self.likelihood, FixedNoiseGaussianLikelihood):
                     # Use the mean of the previous noise values (TODO: be smarter here).
@@ -610,74 +613,30 @@ class ModelListGPyTorchModel(ModelList, GPyTorchModel, ABC):
             hasattr(mod, "outcome_transform") and (not mod.outcome_transform._is_linear)
             for mod in self.models
         )
-        if returns_untransformed:
-            return ModelList.posterior(
-                self,
-                X,
-                output_indices,
-                observation_noise,
-                posterior_transform,
-                **kwargs,
-            )
-
-        self.eval()  # make sure model is in eval mode
-        # input transforms are applied at `posterior` in `eval` mode, and at
-        # `model.forward()` at the training time
-        transformed_X = self.transform_inputs(X)
-        mvn_gen: Iterator
-        with gpt_posterior_settings():
-            # only compute what's necessary
-            if output_indices is not None:
-                mvns = [self.models[i](transformed_X[i]) for i in output_indices]
-                if observation_noise is not False:
-                    if isinstance(observation_noise, Tensor):
-                        lh_kwargs = [
-                            {"noise": observation_noise[..., i]}
-                            for i, lh in enumerate(self.likelihood.likelihoods)
-                        ]
-                    else:
-                        lh_kwargs = [
-                            {"noise": lh.noise.mean().expand(t_X.shape[:-1])}
-                            if isinstance(lh, FixedNoiseGaussianLikelihood)
-                            else {}
-                            for t_X, lh in zip(
-                                transformed_X, self.likelihood.likelihoods
-                            )
-                        ]
-                    mvns = [
-                        self.likelihood_i(i, mvn, transformed_X[i], **lkws)
-                        for i, mvn, lkws in zip(output_indices, mvns, lh_kwargs)
-                    ]
-                mvn_gen = zip(output_indices, mvns)
-            else:
-                mvns = self(*transformed_X)
-                if observation_noise is not False:
-                    mvnX = [(mvn, transformed_X[i]) for i, mvn in enumerate(mvns)]
-                    if torch.is_tensor(observation_noise):
-                        mvns = self.likelihood(*mvnX, noise=observation_noise)
-                    else:
-                        mvns = self.likelihood(*mvnX)
-                mvn_gen = enumerate(mvns)
-        # apply output transforms of individual models if present
-        mvns = []
-        for i, mvn in mvn_gen:
-            if hasattr(self.models[i], "outcome_transform"):
-                oct = self.models[i].outcome_transform
-                tf_mvn = oct.untransform_posterior(GPyTorchPosterior(mvn)).distribution
-            else:
-                tf_mvn = mvn
-            mvns.append(tf_mvn)
-        # return result as a GPyTorchPosteriors/FullyBayesianPosterior
-        mvn = (
-            mvns[0]
-            if len(mvns) == 1
-            else MultitaskMultivariateNormal.from_independent_mvns(mvns=mvns)
+        # NOTE: We're not passing in the posterior transform here. We'll apply it later.
+        posterior = ModelList.posterior(
+            self,
+            X=X,
+            output_indices=output_indices,
+            observation_noise=observation_noise,
+            **kwargs,
         )
-        if any(is_fully_bayesian(m) for m in self.models):
-            # mixing fully Bayesian and other GP models is currently not supported
-            posterior = FullyBayesianPosterior(distribution=mvn)
-        else:
-            posterior = GPyTorchPosterior(distribution=mvn)
+        if not returns_untransformed:
+            mvns = [p.distribution for p in posterior.posteriors]
+            # Combining MTMVNs into a single MTMVN is currently not supported.
+            if not any(isinstance(m, MultitaskMultivariateNormal) for m in mvns):
+                # Return the result as a GPyTorchPosterior/FullyBayesianPosterior.
+                mvn = (
+                    mvns[0]
+                    if len(mvns) == 1
+                    else MultitaskMultivariateNormal.from_independent_mvns(mvns=mvns)
+                )
+                if any(is_fully_bayesian(m) for m in self.models):
+                    # Mixing fully Bayesian and other GP models is currently
+                    # not supported.
+                    posterior = FullyBayesianPosterior(distribution=mvn)
+                else:
+                    posterior = GPyTorchPosterior(distribution=mvn)
         if posterior_transform is not None:
             return posterior_transform(posterior)
         return posterior

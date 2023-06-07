@@ -145,6 +145,16 @@ class TestSingleTaskGP(BotorchTestCase):
                 pvar_exp = _get_pvar_expected(posterior, model, X, m)
                 self.assertAllClose(pvar, pvar_exp, rtol=1e-4, atol=1e-5)
 
+            # Tensor valued observation noise.
+            obs_noise = torch.rand(X.shape, **tkwargs)
+            posterior_pred = model.posterior(X, observation_noise=obs_noise)
+            self.assertIsInstance(posterior_pred, GPyTorchPosterior)
+            self.assertEqual(posterior_pred.mean.shape, expected_shape)
+            self.assertEqual(posterior_pred.variance.shape, expected_shape)
+            if use_octf:
+                _, obs_noise = model.outcome_transform.untransform(obs_noise, obs_noise)
+            self.assertAllClose(posterior_pred.variance, posterior.variance + obs_noise)
+
             # test batch evaluation
             X = torch.rand(2, *batch_shape, 3, 1, **tkwargs)
             expected_shape = torch.Size([2]) + batch_shape + torch.Size([3, m])

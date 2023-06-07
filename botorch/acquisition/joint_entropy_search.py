@@ -139,9 +139,9 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
             warnings.filterwarnings("ignore")
             with fantasize_flag():
                 with settings.propagate_grads(False):
-                    # We must do a forward pass one before conditioning
+                    # We must do a forward pass one before conditioning.
                     self.initial_model.posterior(
-                        self.model.train_inputs[0], observation_noise=False
+                        self.optimal_inputs[:1], observation_noise=False
                     )
 
                 # This equates to the JES version proposed by Hvarfner et. al.

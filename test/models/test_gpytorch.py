@@ -509,12 +509,14 @@ class TestModelListGPyTorchModel(BotorchTestCase):
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertEqual(posterior.mean.shape, torch.Size([2, 2]))
             posterior = model.posterior(
-                test_X, observation_noise=torch.rand(2, **tkwargs)
+                test_X, observation_noise=torch.rand(2, 2, **tkwargs)
             )
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertEqual(posterior.mean.shape, torch.Size([2, 2]))
             posterior = model.posterior(
-                test_X, output_indices=[0], observation_noise=torch.rand(2, **tkwargs)
+                test_X,
+                output_indices=[0],
+                observation_noise=torch.rand(2, 2, **tkwargs),
             )
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertEqual(posterior.mean.shape, torch.Size([2, 1]))

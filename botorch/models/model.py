@@ -368,7 +368,7 @@ class ModelList(Model):
         r"""Convert global subset indices to indices for the individual models.
 
         Args:
-            idcs: A list of inidices to which the `ModelList` model is to be
+            idcs: A list of indices to which the `ModelList` model is to be
                 subset to.
 
         Returns:
@@ -391,7 +391,7 @@ class ModelList(Model):
         self,
         X: Tensor,
         output_indices: Optional[List[int]] = None,
-        observation_noise: bool = False,
+        observation_noise: Union[bool, Tensor] = False,
         posterior_transform: Optional[Callable[[PosteriorList], Posterior]] = None,
         **kwargs: Any,
     ) -> Posterior:
@@ -410,7 +410,11 @@ class ModelList(Model):
                 Can be used to speed up computation if only a subset of the
                 model's outputs are required for optimization. If omitted,
                 computes the posterior over all model outputs.
-            observation_noise: If True, add observation noise to the posterior.
+            observation_noise: If True, add the observation noise from the
+                respective likelihoods to the posterior. If a Tensor of shape
+                `(batch_shape) x q x m`, use it directly as the observation
+                noise (with `observation_noise[...,i]` added to the posterior
+                of the `i`-th model).
             posterior_transform: An optional PosteriorTransform.
 
         Returns:
@@ -418,12 +422,21 @@ class ModelList(Model):
             over `q` points and `m` outputs each.
         """
         group_indices = self._get_group_subset_indices(idcs=output_indices)
-        posteriors = [
-            self.models[i].posterior(
-                X=X, output_indices=idcs, observation_noise=observation_noise
+        posteriors = []
+        for i, idcs in group_indices.items():
+            if isinstance(observation_noise, Tensor):
+                if idcs is None:
+                    start_idx = sum(m.num_outputs for m in self.models[:i])
+                    end_idx = start_idx + self.models[i].num_outputs
+                    idcs = list(range(start_idx, end_idx))
+                obs_noise = observation_noise[..., idcs]
+            else:
+                obs_noise = observation_noise
+            posteriors.append(
+                self.models[i].posterior(
+                    X=X, output_indices=idcs, observation_noise=obs_noise
+                )
             )
-            for i, idcs in group_indices.items()
-        ]
         posterior = PosteriorList(*posteriors)
         if posterior_transform is not None:
             posterior = posterior_transform(posterior)
