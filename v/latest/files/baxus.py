@@ -352,7 +352,7 @@ def create_candidate(
             X_next = thompson_sampling(X_cand, num_samples=1)
 
     elif acqf == "ei":
-        ei = ExpectedImprovement(model, train_Y.max(), maximize=True)
+        ei = ExpectedImprovement(model, train_Y.max())
         X_next, acq_value = optimize_acqf(
             ei,
             bounds=torch.stack([tr_lb, tr_ub]),
@@ -503,7 +503,7 @@ with botorch.settings.validate_input_scaling(False):
             optimizer.step()
 
         # Create a batch
-        ei = ExpectedImprovement(model, train_Y.max(), maximize=True)
+        ei = ExpectedImprovement(model, train_Y.max())
         candidate, acq_value = optimize_acqf(
             ei,
             bounds=torch.stack(

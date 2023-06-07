@@ -165,9 +165,9 @@
             <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">)</span>
             <span class="k">with</span> <span class="n">fantasize_flag</span><span class="p">():</span>
                 <span class="k">with</span> <span class="n">settings</span><span class="o">.</span><span class="n">propagate_grads</span><span class="p">(</span><span class="kc">False</span><span class="p">):</span>
-                    <span class="c1"># We must do a forward pass one before conditioning</span>
+                    <span class="c1"># We must do a forward pass one before conditioning.</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">initial_model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">False</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">optimal_inputs</span><span class="p">[:</span><span class="mi">1</span><span class="p">],</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">False</span>
                     <span class="p">)</span>
 
                 <span class="c1"># This equates to the JES version proposed by Hvarfner et. al.</span>

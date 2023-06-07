@@ -199,7 +199,7 @@ def generate_batch(
             X_next = thompson_sampling(X_cand, num_samples=batch_size)
 
     elif acqf == "ei":
-        ei = qExpectedImprovement(model, train_Y.max(), maximize=True)
+        ei = qExpectedImprovement(model, train_Y.max())
         X_next, acq_value = optimize_acqf(
             ei,
             bounds=torch.stack([tr_lb, tr_ub]),
@@ -304,7 +304,7 @@ while len(Y_ei) < len(Y_turbo):
     fit_gpytorch_mll(mll)
 
     # Create a batch
-    ei = qExpectedImprovement(model, train_Y.max(), maximize=True)
+    ei = qExpectedImprovement(model, train_Y.max())
     candidate, acq_value = optimize_acqf(
         ei,
         bounds=torch.stack(

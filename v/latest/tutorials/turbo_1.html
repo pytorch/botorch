@@ -332,7 +332,7 @@ I0128 075923.914 _utils_internal.py:197] NCCL_DEBUG is forced to WARN from None
             <span class="n">X_next</span> <span class="o">=</span> <span class="n">thompson_sampling</span><span class="p">(</span><span class="n">X_cand</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
 
     <span class="k">elif</span> <span class="n">acqf</span> <span class="o">==</span> <span class="s2">"ei"</span><span class="p">:</span>
-        <span class="n">ei</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">maximize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">ei</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
         <span class="n">X_next</span><span class="p">,</span> <span class="n">acq_value</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
             <span class="n">ei</span><span class="p">,</span>
             <span class="n">bounds</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">tr_lb</span><span class="p">,</span> <span class="n">tr_ub</span><span class="p">]),</span>
@@ -549,7 +549,7 @@ I0128 075923.914 _utils_internal.py:197] NCCL_DEBUG is forced to WARN from None
     <span class="n">fit_gpytorch_mll</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
 
     <span class="c1"># Create a batch</span>
-    <span class="n">ei</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">maximize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">ei</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
     <span class="n">candidate</span><span class="p">,</span> <span class="n">acq_value</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
         <span class="n">ei</span><span class="p">,</span>
         <span class="n">bounds</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>

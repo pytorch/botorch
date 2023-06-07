@@ -566,7 +566,7 @@ tensor([[79, 84, 79, 79, 84, 84],
             <span class="n">X_next</span> <span class="o">=</span> <span class="n">thompson_sampling</span><span class="p">(</span><span class="n">X_cand</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="k">elif</span> <span class="n">acqf</span> <span class="o">==</span> <span class="s2">"ei"</span><span class="p">:</span>
-        <span class="n">ei</span> <span class="o">=</span> <span class="n">ExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">maximize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">ei</span> <span class="o">=</span> <span class="n">ExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
         <span class="n">X_next</span><span class="p">,</span> <span class="n">acq_value</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
             <span class="n">ei</span><span class="p">,</span>
             <span class="n">bounds</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">tr_lb</span><span class="p">,</span> <span class="n">tr_ub</span><span class="p">]),</span>
@@ -843,7 +843,7 @@ iteration 100, d=486)  Best value: -0.398, TR length: 0.2
             <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
 
         <span class="c1"># Create a batch</span>
-        <span class="n">ei</span> <span class="o">=</span> <span class="n">ExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">maximize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">ei</span> <span class="o">=</span> <span class="n">ExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
         <span class="n">candidate</span><span class="p">,</span> <span class="n">acq_value</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
             <span class="n">ei</span><span class="p">,</span>
             <span class="n">bounds</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
