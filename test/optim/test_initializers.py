@@ -677,6 +677,7 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                         batch_initial_conditions[0, 0, 0],
                         batch_initial_conditions[0, 1, 0],
                         batch_initial_conditions[0, 2, 0],
+                        atol=1e-7,
                     )
 
                     self.assertAllClose(

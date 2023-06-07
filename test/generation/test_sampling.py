@@ -14,7 +14,6 @@ from botorch.acquisition.analytic import PosteriorMean
 from botorch.acquisition.objective import (
     IdentityMCObjective,
     LinearMCObjective,
-    ScalarizedObjective,
     ScalarizedPosteriorTransform,
 )
 from botorch.generation.sampling import (
@@ -68,19 +67,6 @@ class TestMaxPosteriorSampling(BotorchTestCase):
                     s = MPS(X, num_samples=num_samples)
                     self.assertTrue(torch.equal(s, X[..., [0] * num_samples, :]))
 
-            # ScalarizedObjective, with replacement
-            with mock.patch.object(MockPosterior, "rsample", return_value=psamples):
-                mp = MockPosterior(None)
-                with mock.patch.object(MockModel, "posterior", return_value=mp):
-                    mm = MockModel(None)
-                    with mock.patch.object(
-                        ScalarizedObjective, "forward", return_value=mp
-                    ):
-                        obj = ScalarizedObjective(torch.rand(2, **tkwargs))
-                        MPS = MaxPosteriorSampling(mm, objective=obj)
-                        s = MPS(X, num_samples=num_samples)
-                        self.assertTrue(torch.equal(s, X[..., [0] * num_samples, :]))
-
             # ScalarizedPosteriorTransform w/ replacement
             with mock.patch.object(MockPosterior, "rsample", return_value=psamples):
                 mp = MockPosterior(None)
@@ -93,14 +79,6 @@ class TestMaxPosteriorSampling(BotorchTestCase):
                         MPS = MaxPosteriorSampling(mm, posterior_transform=post_tf)
                         s = MPS(X, num_samples=num_samples)
                         self.assertTrue(torch.equal(s, X[..., [0] * num_samples, :]))
-
-            # ScalarizedPosteriorTransform and Scalarized obj
-            mp = MockPosterior(None)
-            mm = MockModel(posterior=mp)
-            obj = ScalarizedObjective(torch.rand(2, **tkwargs))
-            post_tf = ScalarizedPosteriorTransform(torch.rand(2, **tkwargs))
-            with self.assertRaises(RuntimeError):
-                MaxPosteriorSampling(mm, posterior_transform=post_tf, objective=obj)
 
             # without replacement
             psamples[..., 1, 0] = 1e-6
@@ -121,29 +99,6 @@ class TestMaxPosteriorSampling(BotorchTestCase):
                                 torch.sort(X[..., :num_samples, :], dim=-2).values,
                             )
                         )
-
-            # ScalarizedMCObjective, without replacement
-            with mock.patch.object(MockPosterior, "rsample", return_value=psamples):
-                mp = MockPosterior(None)
-                with mock.patch.object(MockModel, "posterior", return_value=mp):
-                    mm = MockModel(None)
-                    with mock.patch.object(
-                        ScalarizedObjective, "forward", return_value=mp
-                    ):
-                        obj = ScalarizedObjective(torch.rand(2, **tkwargs))
-                        MPS = MaxPosteriorSampling(mm, objective=obj, replacement=False)
-                        if len(batch_shape) > 1:
-                            with self.assertRaises(NotImplementedError):
-                                MPS(X, num_samples=num_samples)
-                        else:
-                            s = MPS(X, num_samples=num_samples)
-                            # order is not guaranteed, need to sort
-                            self.assertTrue(
-                                torch.equal(
-                                    torch.sort(s, dim=-2).values,
-                                    torch.sort(X[..., :num_samples, :], dim=-2).values,
-                                )
-                            )
 
 
 class TestBoltzmannSampling(BotorchTestCase):
@@ -250,20 +205,6 @@ class TestConstrainedMaxPosteriorSampling(BotorchTestCase):
                         s2 = MPS(X, num_samples=num_samples)
                         assert s1.shape == s2.shape
 
-            # ScalarizedObjective, with replacement
-            with mock.patch.object(MockPosterior, "rsample", return_value=psamples):
-                mp = MockPosterior(None)
-                with mock.patch.object(MockModel, "posterior", return_value=mp):
-                    mm = MockModel(None)
-                    cmms = MockModel(None)
-                    with mock.patch.object(
-                        ScalarizedObjective, "forward", return_value=mp
-                    ):
-                        obj = ScalarizedObjective(torch.rand(2, **tkwargs))
-                        MPS = ConstrainedMaxPosteriorSampling(mm, cmms, objective=obj)
-                        s = MPS(X, num_samples=num_samples)
-                        self.assertTrue(s.shape[-2] == num_samples)
-
             # ScalarizedPosteriorTransform w/ replacement
             with mock.patch.object(MockPosterior, "rsample", return_value=psamples):
                 mp = MockPosterior(None)
@@ -280,18 +221,6 @@ class TestConstrainedMaxPosteriorSampling(BotorchTestCase):
                         s = MPS(X, num_samples=num_samples)
                         self.assertTrue(s.shape[-2] == num_samples)
 
-            # ScalarizedPosteriorTransform and Scalarized obj
-            mp = MockPosterior(None)
-            mm = MockModel(posterior=mp)
-            mp = MockPosterior(None)
-            cmms = MockModel(posterior=mp)
-            obj = ScalarizedObjective(torch.rand(2, **tkwargs))
-            post_tf = ScalarizedPosteriorTransform(torch.rand(2, **tkwargs))
-            with self.assertRaises(RuntimeError):
-                ConstrainedMaxPosteriorSampling(
-                    mm, cmms, posterior_transform=post_tf, objective=obj
-                )
-
             # without replacement
             psamples[..., 1, 0] = 1e-6
             with mock.patch.object(MockPosterior, "rsample", return_value=psamples):
@@ -306,23 +235,3 @@ class TestConstrainedMaxPosteriorSampling(BotorchTestCase):
                     else:
                         s = MPS(X, num_samples=num_samples)
                         self.assertTrue(s.shape[-2] == num_samples)
-
-            # ScalarizedMCObjective, without replacement
-            with mock.patch.object(MockPosterior, "rsample", return_value=psamples):
-                mp = MockPosterior(None)
-                with mock.patch.object(MockModel, "posterior", return_value=mp):
-                    mm = MockModel(None)
-                    cmms = MockModel(None)
-                    with mock.patch.object(
-                        ScalarizedObjective, "forward", return_value=mp
-                    ):
-                        obj = ScalarizedObjective(torch.rand(2, **tkwargs))
-                        MPS = ConstrainedMaxPosteriorSampling(
-                            mm, cmms, objective=obj, replacement=False
-                        )
-                        if len(batch_shape) > 1:
-                            with self.assertRaises(NotImplementedError):
-                                MPS(X, num_samples=num_samples)
-                        else:
-                            s = MPS(X, num_samples=num_samples)
-                            self.assertTrue(s.shape[-2] == num_samples)

@@ -20,7 +20,6 @@ from botorch.acquisition.knowledge_gradient import (
 from botorch.acquisition.monte_carlo import qExpectedImprovement, qSimpleRegret
 from botorch.acquisition.objective import (
     GenericMCObjective,
-    ScalarizedObjective,
     ScalarizedPosteriorTransform,
 )
 from botorch.acquisition.utils import project_to_sample_points
@@ -129,18 +128,13 @@ class TestQKnowledgeGradient(BotorchTestCase):
                     model=mm2,
                     posterior_transform=DummyNonScalarizingPosteriorTransform(),
                 )
-            # test handling of scalarized objective
-            obj = ScalarizedObjective(weights=torch.rand(2))
-            post_tf = ScalarizedPosteriorTransform(weights=torch.rand(2))
-            with self.assertRaises(RuntimeError):
-                qKnowledgeGradient(
-                    model=mm2, objective=obj, posterior_transform=post_tf
-                )
-            acqf = qKnowledgeGradient(model=mm2, objective=obj)
-            self.assertIsInstance(
-                acqf.posterior_transform, ScalarizedPosteriorTransform
-            )
-            self.assertIsNone(acqf.objective)
+
+            with self.assertRaisesRegex(
+                UnsupportedError,
+                "Objectives that are not an `MCAcquisitionObjective` are not "
+                "supported.",
+            ):
+                qKnowledgeGradient(model=mm, objective="car")
 
     def test_evaluate_q_knowledge_gradient(self):
         # Stop gap measure to avoid test failures on Ampere devices

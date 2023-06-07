@@ -55,7 +55,6 @@ from botorch.acquisition.objective import (
     LearnedObjective,
     LinearMCObjective,
     MCAcquisitionObjective,
-    ScalarizedObjective,
     ScalarizedPosteriorTransform,
 )
 from botorch.acquisition.preference import (
@@ -104,7 +103,6 @@ __all__ = [
     "LinearMCObjective",
     "MCAcquisitionFunction",
     "MCAcquisitionObjective",
-    "ScalarizedObjective",
     "ScalarizedPosteriorTransform",
     "get_acquisition_function",
     "get_acqf_input_constructor",

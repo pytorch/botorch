@@ -27,7 +27,6 @@ from botorch.acquisition.analytic import (
 )
 from botorch.acquisition.objective import (
     IdentityMCObjective,
-    ScalarizedObjective,
     ScalarizedPosteriorTransform,
 )
 from botorch.exceptions import UnsupportedError
@@ -66,18 +65,6 @@ class TestAnalyticAcquisitionFunction(BotorchTestCase):
         mm = MockModel(MockPosterior(mean=mean, variance=variance))
         with self.assertRaises(UnsupportedError):
             DummyAnalyticAcquisitionFunction(model=mm)
-
-    def test_deprecate_acqf_objective(self):
-        mean = torch.zeros(1, 2)
-        variance = torch.ones(1, 2)
-        mm = MockModel(MockPosterior(mean=mean, variance=variance))
-        obj = ScalarizedObjective(weights=torch.ones(2))
-        # check for deprecation warning
-        with self.assertWarns(DeprecationWarning):
-            acqf = DummyAnalyticAcquisitionFunction(model=mm, objective=obj)
-        # check that posterior transform was created and assigned
-        self.assertIsInstance(acqf.posterior_transform, ScalarizedPosteriorTransform)
-        self.assertFalse(hasattr(acqf, "objective"))
 
 
 class TestExpectedImprovement(BotorchTestCase):

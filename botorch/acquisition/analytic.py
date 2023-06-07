@@ -41,7 +41,6 @@ from botorch.utils.transforms import convert_to_target_pre_hook, t_batch_mode_tr
 from torch import Tensor
 from torch.nn.functional import pad
 
-_sqrt_2pi = math.sqrt(2 * math.pi)
 # the following two numbers are needed for _log_ei_helper
 _neg_inv_sqrt2 = -(2**-0.5)
 _log_sqrt_pi_div_2 = math.log(math.pi / 2) / 2
@@ -58,7 +57,6 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
         self,
         model: Model,
         posterior_transform: Optional[PosteriorTransform] = None,
-        **kwargs,
     ) -> None:
         r"""Base constructor for analytic acquisition functions.
 
@@ -69,10 +67,6 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
                 single-output posterior is required.
         """
         super().__init__(model=model)
-        posterior_transform = self._deprecate_acqf_objective(
-            posterior_transform=posterior_transform,
-            objective=kwargs.get("objective"),
-        )
         if posterior_transform is None:
             if model.num_outputs != 1:
                 raise UnsupportedError(
@@ -146,7 +140,6 @@ class LogProbabilityOfImprovement(AnalyticAcquisitionFunction):
         best_f: Union[float, Tensor],
         posterior_transform: Optional[PosteriorTransform] = None,
         maximize: bool = True,
-        **kwargs,
     ):
         r"""Single-outcome Probability of Improvement.
 
@@ -159,7 +152,7 @@ class LogProbabilityOfImprovement(AnalyticAcquisitionFunction):
                 single-output posterior is required.
             maximize: If True, consider the problem a maximization problem.
         """
-        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
+        super().__init__(model=model, posterior_transform=posterior_transform)
         self.register_buffer("best_f", torch.as_tensor(best_f))
         self.maximize = maximize
 
@@ -201,7 +194,6 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
         best_f: Union[float, Tensor],
         posterior_transform: Optional[PosteriorTransform] = None,
         maximize: bool = True,
-        **kwargs,
     ):
         r"""Single-outcome Probability of Improvement.
 
@@ -214,7 +206,7 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
                 single-output posterior is required.
             maximize: If True, consider the problem a maximization problem.
         """
-        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
+        super().__init__(model=model, posterior_transform=posterior_transform)
         self.register_buffer("best_f", torch.as_tensor(best_f))
         self.maximize = maximize
 
@@ -250,7 +242,6 @@ class qAnalyticProbabilityOfImprovement(AnalyticAcquisitionFunction):
         best_f: Union[float, Tensor],
         posterior_transform: Optional[PosteriorTransform] = None,
         maximize: bool = True,
-        **kwargs,
     ) -> None:
         """qPI using an analytic approximation.
 
@@ -263,7 +254,7 @@ class qAnalyticProbabilityOfImprovement(AnalyticAcquisitionFunction):
                 single-output posterior is required.
             maximize: If True, consider the problem a maximization problem.
         """
-        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
+        super().__init__(model=model, posterior_transform=posterior_transform)
         self.maximize = maximize
         if not torch.is_tensor(best_f):
             best_f = torch.tensor(best_f)
@@ -328,7 +319,6 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
         best_f: Union[float, Tensor],
         posterior_transform: Optional[PosteriorTransform] = None,
         maximize: bool = True,
-        **kwargs,
     ):
         r"""Single-outcome Expected Improvement (analytic).
 
@@ -341,7 +331,7 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
                 single-output posterior is required.
             maximize: If True, consider the problem a maximization problem.
         """
-        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
+        super().__init__(model=model, posterior_transform=posterior_transform)
         self.register_buffer("best_f", torch.as_tensor(best_f))
         self.maximize = maximize
 
@@ -388,7 +378,6 @@ class LogExpectedImprovement(AnalyticAcquisitionFunction):
         best_f: Union[float, Tensor],
         posterior_transform: Optional[PosteriorTransform] = None,
         maximize: bool = True,
-        **kwargs,
     ):
         r"""Logarithm of single-outcome Expected Improvement (analytic).
 
@@ -401,7 +390,7 @@ class LogExpectedImprovement(AnalyticAcquisitionFunction):
                 single-output posterior is required.
             maximize: If True, consider the problem a maximization problem.
         """
-        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
+        super().__init__(model=model, posterior_transform=posterior_transform)
         self.register_buffer("best_f", torch.as_tensor(best_f))
         self.maximize = maximize
 
@@ -599,7 +588,6 @@ class LogNoisyExpectedImprovement(AnalyticAcquisitionFunction):
         num_fantasies: int = 20,
         maximize: bool = True,
         posterior_transform: Optional[PosteriorTransform] = None,
-        **kwargs,
     ) -> None:
         r"""Single-outcome Noisy Log Expected Improvement (via fantasies).
 
@@ -632,9 +620,7 @@ class LogNoisyExpectedImprovement(AnalyticAcquisitionFunction):
         fantasy_model = _get_noiseless_fantasy_model(
             model=model, batch_X_observed=batch_X_observed, Y_fantasized=Y_fantasized
         )
-        super().__init__(
-            model=fantasy_model, posterior_transform=posterior_transform, **kwargs
-        )
+        super().__init__(model=fantasy_model, posterior_transform=posterior_transform)
         best_f, _ = Y_fantasized.max(dim=-1) if maximize else Y_fantasized.min(dim=-1)
         self.best_f, self.maximize = best_f, maximize
 
@@ -758,7 +744,6 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
         beta: Union[float, Tensor],
         posterior_transform: Optional[PosteriorTransform] = None,
         maximize: bool = True,
-        **kwargs,
     ) -> None:
         r"""Single-outcome Upper Confidence Bound.
 
@@ -772,7 +757,7 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
                 single-output posterior is required.
             maximize: If True, consider the problem a maximization problem.
         """
-        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
+        super().__init__(model=model, posterior_transform=posterior_transform)
         self.register_buffer("beta", torch.as_tensor(beta))
         self.maximize = maximize
 
@@ -852,7 +837,6 @@ class ScalarizedPosteriorMean(AnalyticAcquisitionFunction):
         model: Model,
         weights: Tensor,
         posterior_transform: Optional[PosteriorTransform] = None,
-        **kwargs,
     ) -> None:
         r"""Scalarized Posterior Mean.
 
@@ -864,7 +848,7 @@ class ScalarizedPosteriorMean(AnalyticAcquisitionFunction):
                 a PosteriorTransform that transforms the multi-output posterior into a
                 single-output posterior is required.
         """
-        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
+        super().__init__(model=model, posterior_transform=posterior_transform)
         self.register_buffer("weights", weights)
 
     @t_batch_mode_transform()

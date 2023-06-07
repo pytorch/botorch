@@ -25,7 +25,6 @@ from botorch.acquisition.objective import (
     IdentityMCObjective,
     MCAcquisitionObjective,
     PosteriorTransform,
-    ScalarizedPosteriorTransform,
 )
 from botorch.generation.utils import _flip_sub_unique
 from botorch.models.model import Model
@@ -90,22 +89,7 @@ class MaxPosteriorSampling(SamplingStrategy):
         """
         super().__init__()
         self.model = model
-        if objective is None:
-            objective = IdentityMCObjective()
-        elif not isinstance(objective, MCAcquisitionObjective):
-            # TODO: Clean up once ScalarizedObjective is removed.
-            if posterior_transform is not None:
-                raise RuntimeError(
-                    "A ScalarizedObjective (DEPRECATED) and a posterior transform "
-                    "are not supported at the same time. Use only a posterior "
-                    "transform instead."
-                )
-            else:
-                posterior_transform = ScalarizedPosteriorTransform(
-                    weights=objective.weights, offset=objective.offset
-                )
-                objective = IdentityMCObjective()
-        self.objective = objective
+        self.objective = IdentityMCObjective() if objective is None else objective
         self.posterior_transform = posterior_transform
         self.replacement = replacement
 

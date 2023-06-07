@@ -10,10 +10,10 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import Callable, Optional
+from typing import Optional
 
 import torch
-from botorch.exceptions import BotorchWarning, UnsupportedError
+from botorch.exceptions import BotorchWarning
 from botorch.models.model import Model, ModelDict
 from botorch.posteriors.posterior import Posterior
 from botorch.sampling.base import MCSampler
@@ -40,35 +40,6 @@ class AcquisitionFunction(Module, ABC):
         """
         super().__init__()
         self.model: Model = model
-
-    @classmethod
-    def _deprecate_acqf_objective(
-        cls,
-        posterior_transform: Optional[Callable[[Posterior], Posterior]],
-        objective: Optional[Module],
-    ) -> Optional[Callable[[Posterior], Posterior]]:
-        from botorch.acquisition.objective import (
-            ScalarizedObjective,
-            ScalarizedPosteriorTransform,
-        )
-
-        if objective is None:
-            return posterior_transform
-        warnings.warn(
-            f"{cls.__name__} got a non-MC `objective`. The non-MC "
-            "AcquisitionObjectives and the `objective` argument to"
-            "AnalyticAcquisitionFunctions are DEPRECATED and will be removed in the"
-            "next version. Use `posterior_transform` instead.",
-            DeprecationWarning,
-        )
-        if not isinstance(objective, ScalarizedObjective):
-            raise UnsupportedError(
-                f"{cls.__name__} only supports ScalarizedObjective "
-                "(DEPRECATED) type objectives."
-            )
-        return ScalarizedPosteriorTransform(
-            weights=objective.weights, offset=objective.offset
-        )
 
     def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
         r"""Informs the acquisition function about pending design points.

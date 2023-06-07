@@ -56,7 +56,6 @@ class qNegIntegratedPosteriorVariance(AnalyticAcquisitionFunction):
         sampler: Optional[MCSampler] = None,
         posterior_transform: Optional[PosteriorTransform] = None,
         X_pending: Optional[Tensor] = None,
-        **kwargs,
     ) -> None:
         r"""q-Integrated Negative Posterior Variance.
 
@@ -76,7 +75,7 @@ class qNegIntegratedPosteriorVariance(AnalyticAcquisitionFunction):
                 points that have been submitted for function evaluation but
                 have not yet been evaluated.
         """
-        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
+        super().__init__(model=model, posterior_transform=posterior_transform)
         if sampler is None:
             # If no sampler is provided, we use the following dummy sampler for the
             # fantasize() method in forward. IMPORTANT: This assumes that the posterior

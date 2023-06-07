@@ -19,7 +19,6 @@ from botorch.acquisition.analytic import (
 )
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
 from botorch.acquisition.input_constructors import (
-    _deprecate_objective_arg,
     _field_is_shared,
     acqf_input_constructor,
     construct_inputs_mf_base,
@@ -58,9 +57,7 @@ from botorch.acquisition.multi_objective.objective import (
 )
 from botorch.acquisition.multi_objective.utils import get_default_partitioning_alpha
 from botorch.acquisition.objective import (
-    AcquisitionObjective,
     LinearMCObjective,
-    ScalarizedObjective,
     ScalarizedPosteriorTransform,
 )
 from botorch.acquisition.preference import AnalyticExpectedUtilityOfBestOption
@@ -82,10 +79,6 @@ from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 
 
 class DummyAcquisitionFunction(AcquisitionFunction):
-    ...
-
-
-class DummyObjective(AcquisitionObjective):
     ...
 
 
@@ -121,10 +114,7 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
         with self.assertRaises(NotImplementedError):
             get_best_f_analytic(training_data=self.blockX_multiY)
         weights = torch.rand(2)
-        obj = ScalarizedObjective(weights=weights)
-        best_f_obj = get_best_f_analytic(
-            training_data=self.blockX_multiY, objective=obj
-        )
+
         post_tf = ScalarizedPosteriorTransform(weights=weights)
         best_f_tf = get_best_f_analytic(
             training_data=self.blockX_multiY, posterior_transform=post_tf
@@ -132,7 +122,6 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
 
         multi_Y = torch.cat([d.Y() for d in self.blockX_multiY.values()], dim=-1)
         best_f_expected = post_tf.evaluate(multi_Y).max()
-        self.assertEqual(best_f_obj, best_f_expected)
         self.assertEqual(best_f_tf, best_f_expected)
 
     def test_get_best_f_mc(self):
@@ -158,21 +147,6 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
         )
         best_f_expected = (multi_Y.sum(dim=-1)).max()
         self.assertEqual(best_f, best_f_expected)
-
-    def test_deprecate_objective_arg(self):
-        objective = ScalarizedObjective(weights=torch.ones(1))
-        post_tf = ScalarizedPosteriorTransform(weights=torch.zeros(1))
-        with self.assertRaises(RuntimeError):
-            _deprecate_objective_arg(posterior_transform=post_tf, objective=objective)
-        with self.assertWarns(DeprecationWarning):
-            new_tf = _deprecate_objective_arg(objective=objective)
-        self.assertTrue(torch.equal(new_tf.weights, objective.weights))
-        self.assertIsInstance(new_tf, ScalarizedPosteriorTransform)
-        new_tf = _deprecate_objective_arg(posterior_transform=post_tf)
-        self.assertEqual(id(new_tf), id(post_tf))
-        self.assertIsNone(_deprecate_objective_arg())
-        with self.assertRaises(UnsupportedError):
-            _deprecate_objective_arg(objective=DummyObjective())
 
     @mock.patch("botorch.acquisition.input_constructors.optimize_acqf")
     def test_optimize_objective(self, mock_optimize_acqf):
