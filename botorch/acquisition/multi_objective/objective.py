@@ -12,12 +12,7 @@ from abc import abstractmethod
 from typing import List, Optional
 
 import torch
-from botorch.acquisition.objective import (
-    AcquisitionObjective,
-    GenericMCObjective,
-    MCAcquisitionObjective,
-    UnstandardizePosteriorTransform,
-)
+from botorch.acquisition.objective import GenericMCObjective, MCAcquisitionObjective
 from botorch.exceptions.errors import BotorchError, BotorchTensorDimensionError
 from botorch.models.model import Model
 from botorch.posteriors import GPyTorchPosterior
@@ -262,13 +257,17 @@ class UnstandardizeMCMultiOutputObjective(IdentityMCMultiOutputObjective):
         return samples * self.Y_std + self.Y_mean
 
 
-class AnalyticMultiOutputObjective(AcquisitionObjective):
+class AnalyticMultiOutputObjective(torch.nn.Module):
     r"""Abstract base class for multi-output analyic objectives.
 
     DEPRECATED - This will be removed in the next version.
 
     """
-    pass  # pragma: no cover
+
+    def __init__(self, *args, **kwargs) -> None:
+        """Initialize objective."""
+        warnings.warn("AnalyticMultiOutputObjective is deprecated.", DeprecationWarning)
+        super().__init__(*args, **kwargs)
 
 
 class IdentityAnalyticMultiOutputObjective(AnalyticMultiOutputObjective):
@@ -276,36 +275,7 @@ class IdentityAnalyticMultiOutputObjective(AnalyticMultiOutputObjective):
 
     def __init__(self):
         """Initialize objective."""
-        warnings.warn(
-            "IdentityAnalyticMultiOutputObjective is deprecated. "
-            "Use IdentityPosteriorTransform instead.",
-            DeprecationWarning,
-        )
         super().__init__()
 
     def forward(self, posterior: GPyTorchPosterior) -> GPyTorchPosterior:
         return posterior
-
-
-class UnstandardizeAnalyticMultiOutputObjective(
-    UnstandardizePosteriorTransform, AnalyticMultiOutputObjective
-):
-    r"""Objective that unstandardizes the posterior.
-
-    DEPRECATED - This will be removed in the next version.
-    """
-
-    def __init__(self, Y_mean: Tensor, Y_std: Tensor) -> None:
-        r"""Initialize objective.
-
-        Args:
-            Y_mean: `m`-dim tensor of outcome means
-            Y_std: `m`-dim tensor of outcome standard deviations
-
-        """
-        warnings.warn(
-            "UnstandardizeAnalyticMultiOutputObjective is deprecated. "
-            "Use UnstandardizePosteriorTransform instead.",
-            DeprecationWarning,
-        )
-        super().__init__(Y_mean=Y_mean, Y_std=Y_std)

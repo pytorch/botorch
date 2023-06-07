@@ -15,12 +15,13 @@ from botorch.acquisition.multi_objective.objective import (
     FeasibilityWeightedMCMultiOutputObjective,
     IdentityMCMultiOutputObjective,
     MCMultiOutputObjective,
-    UnstandardizeAnalyticMultiOutputObjective,
     UnstandardizeMCMultiOutputObjective,
-    UnstandardizePosteriorTransform,
     WeightedMCMultiOutputObjective,
 )
-from botorch.acquisition.objective import IdentityMCObjective
+from botorch.acquisition.objective import (
+    IdentityMCObjective,
+    UnstandardizePosteriorTransform,
+)
 from botorch.exceptions.errors import BotorchError, BotorchTensorDimensionError
 from botorch.models.transforms.outcome import Standardize
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
@@ -157,7 +158,6 @@ class TestUnstandardizeMultiOutputObjective(BotorchTestCase):
             )
         for objective_class in (
             UnstandardizeMCMultiOutputObjective,
-            UnstandardizeAnalyticMultiOutputObjective,
             UnstandardizePosteriorTransform,
         ):
             with self.assertRaises(BotorchTensorDimensionError):
@@ -174,10 +174,7 @@ class TestUnstandardizeMultiOutputObjective(BotorchTestCase):
                 if objective_class == UnstandardizeMCMultiOutputObjective:
                     kwargs["outcomes"] = outcomes
                 objective = objective_class(Y_mean=Y_mean, Y_std=Y_std, **kwargs)
-                if (
-                    objective_class == UnstandardizeAnalyticMultiOutputObjective
-                    or objective_class == UnstandardizePosteriorTransform
-                ):
+                if objective_class == UnstandardizePosteriorTransform:
                     objective = objective_class(Y_mean=Y_mean, Y_std=Y_std)
                     if outcomes is None:
                         # passing outcomes is not currently supported

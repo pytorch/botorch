@@ -115,19 +115,12 @@ class qMultiStepLookahead(MCAcquisitionFunction, OneShotAcquisitionFunction):
                 will be applied on fantasy batch dimensions as well, meaning that base
                 samples are the same in all subtrees starting from the same level.
         """
-        if not isinstance(objective, MCAcquisitionObjective):
-            # TODO: clean this up after removing AcquisitionObjective.
-            if posterior_transform is None:
-                posterior_transform = self._deprecate_acqf_objective(
-                    posterior_transform=posterior_transform,
-                    objective=objective,
-                )
-                objective = None
-            else:
-                raise RuntimeError(
-                    "Got both a non-MC objective (DEPRECATED) and a posterior "
-                    "transform. Use only a posterior transform instead."
-                )
+        if objective is not None and not isinstance(objective, MCAcquisitionObjective):
+            raise UnsupportedError(
+                "`qMultiStepLookahead` got a non-MC `objective`. This is not supported."
+                " Use `posterior_transform` and `objective=None` instead."
+            )
+
         super(MCAcquisitionFunction, self).__init__(model=model)
         self.batch_sizes = batch_sizes
         if not ((num_fantasies is None) ^ (samplers is None)):
@@ -156,7 +149,6 @@ class qMultiStepLookahead(MCAcquisitionFunction, OneShotAcquisitionFunction):
             batch_sizes=batch_sizes,
             valfunc_cls=valfunc_cls,
             objective=objective,
-            posterior_transform=posterior_transform,
             inner_mc_samples=inner_mc_samples,
         )
         if valfunc_argfacs is None:
@@ -512,7 +504,6 @@ def _construct_inner_samplers(
     valfunc_cls: List[Optional[Type[AcquisitionFunction]]],
     inner_mc_samples: List[Optional[int]],
     objective: Optional[MCAcquisitionObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
 ) -> List[Optional[MCSampler]]:
     r"""Check validity of inputs and construct inner samplers.
 
@@ -527,11 +518,10 @@ def _construct_inner_samplers(
             respective stage.
         inner_mc_samples: A list `[n_0, ..., n_k]` containing the number of MC
             samples to be used for evaluating the stage value function. Ignored if
-            the objective is `None` or a `ScalarizedObjective`.
+            the objective is `None`.
         objective: The objective under which the output is evaluated. If `None`, use
             the model output (requires a single-output model or a posterior transform).
             Otherwise the objective is MC-evaluated (using `inner_sampler`).
-        posterior_transform: A PosteriorTransform (optional).
 
     Returns:
         A list with `k + 1` elements that are either `MCSampler`s or `None.

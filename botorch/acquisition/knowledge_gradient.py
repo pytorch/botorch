@@ -126,18 +126,10 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
         elif objective is not None and not isinstance(
             objective, MCAcquisitionObjective
         ):
-            # TODO: clean this up after removing AcquisitionObjective.
-            if posterior_transform is None:
-                posterior_transform = self._deprecate_acqf_objective(
-                    posterior_transform=posterior_transform,
-                    objective=objective,
-                )
-                objective = None
-            else:
-                raise RuntimeError(
-                    "Got both a non-MC objective (DEPRECATED) and a posterior "
-                    "transform. Use only a posterior transform instead."
-                )
+            raise UnsupportedError(
+                "Objectives that are not an `MCAcquisitionObjective` are not supported."
+            )
+
         if objective is None and model.num_outputs != 1:
             if posterior_transform is None:
                 raise UnsupportedError(

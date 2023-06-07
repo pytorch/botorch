@@ -13,10 +13,8 @@ from botorch.acquisition.active_learning import (
 )
 from botorch.acquisition.objective import (
     GenericMCObjective,
-    IdentityMCObjective,
     ScalarizedPosteriorTransform,
 )
-from botorch.exceptions.errors import UnsupportedError
 from botorch.models.pairwise_gp import PairwiseGP
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
@@ -90,14 +88,6 @@ class TestQNegIntegratedPosteriorVariance(BotorchTestCase):
                 with mock.patch(no, new_callable=mock.PropertyMock) as mock_num_outputs:
                     mock_num_outputs.return_value = 2
                     mm = MockModel(None)
-
-                    # check error if objective is not ScalarizedPosteriorTransform
-                    with self.assertRaises(UnsupportedError):
-                        qNegIntegratedPosteriorVariance(
-                            model=mm,
-                            mc_points=mc_points,
-                            objective=IdentityMCObjective(),
-                        )
 
                     weights = torch.tensor([0.5, 0.5], device=self.device, dtype=dtype)
                     qNIPV = qNegIntegratedPosteriorVariance(

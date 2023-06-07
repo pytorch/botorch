@@ -30,16 +30,6 @@ if TYPE_CHECKING:
     from botorch.posteriors.posterior_list import PosteriorList  # pragma: no cover
 
 
-class AcquisitionObjective(Module, ABC):
-    r"""Abstract base class for objectives.
-
-    DEPRECATED - This will be removed in the next version.
-
-    :meta private:
-    """
-    ...
-
-
 class PosteriorTransform(Module, ABC):
     r"""
     Abstract base class for objectives that transform the posterior.
@@ -134,23 +124,6 @@ class ScalarizedPosteriorTransform(PosteriorTransform):
         return scalarize_posterior(
             posterior=posterior, weights=self.weights, offset=self.offset
         )
-
-
-class ScalarizedObjective(ScalarizedPosteriorTransform, AcquisitionObjective):
-    """DEPRECATED - Use ScalarizedPosteriorTransform instead."""
-
-    def __init__(self, weights: Tensor, offset: float = 0.0) -> None:
-        r"""
-        Args:
-            weights: A one-dimensional tensor with `m` elements representing the
-                linear weights on the outputs.
-            offset: An offset to be added to posterior mean.
-        """
-        warnings.warn(
-            "ScalarizedObjective is deprecated and will be removed in the next "
-            "version. Use ScalarizedPosteriorTransform instead."
-        )
-        super().__init__(weights=weights, offset=offset)
 
 
 class ExpectationPosteriorTransform(PosteriorTransform):
