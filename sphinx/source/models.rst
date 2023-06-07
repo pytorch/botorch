@@ -123,6 +123,9 @@ Kernels
 .. automodule:: botorch.models.kernels.contextual_sac
 .. autoclass:: SACKernel
 
+.. automodule:: botorch.models.kernels.orthogonal_additive_kernel
+.. autoclass:: OrthogonalAdditiveKernel
+
 Likelihoods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.likelihoods.pairwise
