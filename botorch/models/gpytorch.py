@@ -706,14 +706,17 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
         r"""Computes the posterior over model outputs at the provided points.
 
         Args:
-            X: A `q x d` or `batch_shape x q x d` (batch mode) tensor, where `d` is the
-                dimension of the feature space (not including task indices) and
-                `q` is the number of points considered jointly.
-            output_indices: A list of indices, corresponding to the outputs over
-                which to compute the posterior (if the model is multi-output).
-                Can be used to speed up computation if only a subset of the
-                model's outputs are required for optimization. If omitted,
-                computes the posterior over all model outputs.
+            X: A tensor of shape `batch_shape x q x d` or `batch_shape x q x (d + 1)`,
+                where `d` is the dimension of the feature space (not including task
+                indices) and `q` is the number of points considered jointly. The `+ 1`
+                dimension is the optional task feature / index. If given, the model
+                produces the outputs for the given task indices. If omitted, the
+                model produces outputs for tasks in in `self._output_tasks` (specified
+                as `output_tasks` while constructing the model), which can overwritten
+                using `output_indices`.
+            output_indices: A list of indices, corresponding to the tasks over
+                which to compute the posterior. Only used if `X` does not include the
+                task feature. If omitted, defaults to `self._output_tasks`.
             observation_noise: If True, add observation noise from the respective
                 likelihoods. If a Tensor, specifies the observation noise levels
                 to add.
@@ -721,19 +724,41 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
 
         Returns:
             A `GPyTorchPosterior` object, representing `batch_shape` joint
-            distributions over `q` points and the outputs selected by
-            `output_indices`. Includes measurement noise if
-            `observation_noise` is specified.
+            distributions over `q` points. If the task features are included in `X`,
+            the posterior will be single output. Otherwise, the posterior will be
+            single or multi output corresponding to the tasks included in
+            either the `output_indices` or `self._output_tasks`.
         """
-        if output_indices is None:
-            output_indices = self._output_tasks
-        num_outputs = len(output_indices)
-        if any(i not in self._output_tasks for i in output_indices):
-            raise ValueError("Too many output indices")
-        cls_name = self.__class__.__name__
-
-        # construct evaluation X
-        X_full = _make_X_full(X=X, output_indices=output_indices, tf=self._task_feature)
+        includes_task_feature = X.shape[-1] == self.num_non_task_features + 1
+        if includes_task_feature:
+            # Make sure all task feature values are valid.
+            task_features = X[..., self._task_feature].unique()
+            if not (
+                (task_features >= 0).all() and (task_features < self.num_tasks).all()
+            ):
+                raise ValueError(
+                    "Expected all task features in `X` to be between 0 and "
+                    f"self.num_tasks - 1. Got {task_features}."
+                )
+            if output_indices is not None:
+                raise ValueError(
+                    "`output_indices` must be None when `X` includes task features."
+                )
+            num_outputs = 1
+            X_full = X
+        else:
+            # Add the task features to construct the full X for evaluation.
+            if output_indices is None:
+                output_indices = self._output_tasks
+            num_outputs = len(output_indices)
+            if not all(0 <= i < self.num_tasks for i in output_indices):
+                raise ValueError(
+                    "Expected `output_indices` to be between 0 and self.num_tasks - 1. "
+                    f"Got {output_indices}."
+                )
+            X_full = _make_X_full(
+                X=X, output_indices=output_indices, tf=self._task_feature
+            )
 
         self.eval()  # make sure model is in eval mode
         # input transforms are applied at `posterior` in `eval` mode, and at
@@ -743,7 +768,8 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
             mvn = self(X_full)
             if observation_noise is not False:
                 raise NotImplementedError(
-                    f"Specifying observation noise is not yet supported by {cls_name}"
+                    "Specifying observation noise is not yet supported by "
+                    f"{self.__class__.__name__}."
                 )
         # If single-output, return the posterior of a single-output model
         if num_outputs == 1:

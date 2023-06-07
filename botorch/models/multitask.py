@@ -150,9 +150,10 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
                 X=train_X, input_transform=input_transform
             )
         self._validate_tensor_args(X=transformed_X, Y=train_Y, Yvar=train_Yvar)
-        all_tasks, task_feature, d = self.get_all_tasks(
+        all_tasks, task_feature, self.num_non_task_features = self.get_all_tasks(
             transformed_X, task_feature, output_tasks
         )
+        self.num_tasks = len(all_tasks)
         if outcome_transform is not None:
             train_Y, train_Yvar = outcome_transform(Y=train_Y, Yvar=train_Yvar)
 
@@ -174,7 +175,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
 
         # construct indexer to be used in forward
         self._task_feature = task_feature
-        self._base_idxr = torch.arange(d)
+        self._base_idxr = torch.arange(self.num_non_task_features)
         self._base_idxr[task_feature:] += 1  # exclude task feature
 
         super().__init__(
@@ -184,18 +185,18 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         if covar_module is None:
             self.covar_module = ScaleKernel(
                 base_kernel=MaternKernel(
-                    nu=2.5, ard_num_dims=d, lengthscale_prior=GammaPrior(3.0, 6.0)
+                    nu=2.5,
+                    ard_num_dims=self.num_non_task_features,
+                    lengthscale_prior=GammaPrior(3.0, 6.0),
                 ),
                 outputscale_prior=GammaPrior(2.0, 0.15),
             )
         else:
             self.covar_module = covar_module
 
-        num_tasks = len(all_tasks)
-        self._rank = rank if rank is not None else num_tasks
-
+        self._rank = rank if rank is not None else self.num_tasks
         self.task_covar_module = IndexKernel(
-            num_tasks=num_tasks, rank=self._rank, prior=task_covar_prior
+            num_tasks=self.num_tasks, rank=self._rank, prior=task_covar_prior
         )
         if input_transform is not None:
             self.input_transform = input_transform
