@@ -360,7 +360,9 @@ class AffineInputTransform(ReversibleInputTransform, Module):
         if (indices is not None) and (len(indices) == 0):
             raise ValueError("`indices` list is empty!")
         if (indices is not None) and (len(indices) > 0):
-            indices = torch.as_tensor(indices, dtype=torch.long, device=coefficient.device)
+            indices = torch.as_tensor(
+                indices, dtype=torch.long, device=coefficient.device
+            )
             if len(indices) > d:
                 raise ValueError("Can provide at most `d` indices!")
             if (indices > d - 1).any():
