@@ -2423,7 +2423,7 @@ outputs for. If omitted, return outputs for all task indices.</p></li>
 <div class="citation-list" role="list">
 <div class="citation" id="burt2020svgp" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>burt2020svgp<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id14" role="doc-backlink">1</a>,<a href="#id23" role="doc-backlink">2</a>,<a href="#id25" role="doc-backlink">3</a>,<a href="#id27" role="doc-backlink">4</a>)</span>
+<span class="backrefs">(<a href="#id14" role="doc-backlink">1</a>,<a href="#id24" role="doc-backlink">2</a>,<a href="#id26" role="doc-backlink">3</a>,<a href="#id28" role="doc-backlink">4</a>)</span>
 <p>David R. Burt and Carl Edward Rasmussen and Mark van der Wilk,
 Convergence of Sparse Variational Inference in Gaussian Process Regression,
 Journal of Machine Learning Research, 2020,
@@ -2437,7 +2437,7 @@ Artificial Intelligence, 2013, <a class="reference external" href="https://arxiv
 </div>
 <div class="citation" id="moss2023ipa" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>moss2023ipa<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id15" role="doc-backlink">1</a>,<a href="#id24" role="doc-backlink">2</a>,<a href="#id26" role="doc-backlink">3</a>,<a href="#id30" role="doc-backlink">4</a>)</span>
+<span class="backrefs">(<a href="#id15" role="doc-backlink">1</a>,<a href="#id25" role="doc-backlink">2</a>,<a href="#id27" role="doc-backlink">3</a>,<a href="#id31" role="doc-backlink">4</a>)</span>
 <p>Henry B. Moss and Sebastian W. Ober and Victor Picheny,
 Inducing Point Allocation for Sparse Gaussian Processes
 in High-Throughput Bayesian Optimization,Proceedings of
@@ -3540,6 +3540,38 @@ across contexts.</p></li>
 </dd>
 </dl>
 </dd></dl>
+<span class="target" id="module-botorch.models.kernels.orthogonal_additive_kernel"></span><dl class="py class">
+<dt class="sig sig-object py" id="botorch.models.kernels.orthogonal_additive_kernel.OrthogonalAdditiveKernel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.kernels.orthogonal_additive_kernel.</span></span><span class="sig-name descname"><span class="pre">OrthogonalAdditiveKernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quad_deg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">second_order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coeff_constraint</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Positive()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/kernels/orthogonal_additive_kernel.html#OrthogonalAdditiveKernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.kernels.orthogonal_additive_kernel.OrthogonalAdditiveKernel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Kernel</span></code></p>
+<p>Orthogonal Additive Kernels (OAKs) were introduced in <a class="reference internal" href="#lu2022additive" id="id19"><span>[Lu2022additive]</span></a>, though
+only for the case of Gaussian base kernels with a Gaussian input data distribution.</p>
+<p>The implementation here generalizes OAKs to arbitrary base kernels by using a
+Gauss-Legendre quadrature approximation to the required one-dimensional integrals
+involving the base kernels.</p>
+<div class="citation-list" role="list">
+<div class="citation" id="lu2022additive" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a href="#id19" role="doc-backlink">Lu2022additive</a><span class="fn-bracket">]</span></span>
+<p>X. Lu, A. Boukouvalas, and J. Hensman. Additive Gaussian processes revisited.
+Proceedings of the 39th International Conference on Machine Learning. Jul 2022.</p>
+</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base_kernel</strong> (<em>Kernel</em>) – The kernel which to orthogonalize and evaluate in <cite>forward</cite>.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – Input dimensionality of the kernel.</p></li>
+<li><p><strong>quad_deg</strong> (<em>int</em>) – Number of integration nodes for orthogonalization.</p></li>
+<li><p><strong>second_order</strong> (<em>bool</em>) – Toggles second order interactions. If true, both the time and
+space complexity of evaluating the kernel are quadratic in <cite>dim</cite>.</p></li>
+<li><p><strong>batch_shape</strong> (<em>Size</em><em> | </em><em>None</em>) – Optional batch shape for the kernel and its parameters.</p></li>
+<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>None</em>) – Initialization dtype for required Tensors.</p></li>
+<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>) – Initialization device for required Tensors.</p></li>
+<li><p><strong>coeff_constraint</strong> (<em>Interval</em>) – Constraint on the coefficients of the additive kernel.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 </section>
 <section id="module-botorch.models.likelihoods.pairwise">
 <span id="likelihoods"></span><h3>Likelihoods<a class="headerlink" href="#module-botorch.models.likelihoods.pairwise" title="Permalink to this heading">¶</a></h3>
@@ -3749,7 +3781,7 @@ the model posterior back to the original space.</p>
 <p>References</p>
 <div class="citation-list" role="list">
 <div class="citation" id="eriksson2021scalable" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id19" role="doc-backlink">eriksson2021scalable</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id20" role="doc-backlink">eriksson2021scalable</a><span class="fn-bracket">]</span></span>
 <p>D. Eriksson, M. Poloczek. Scalable Constrained Bayesian Optimization.
 International Conference on Artificial Intelligence and Statistics. PMLR, 2021,
 <a class="reference external" href="http://proceedings.mlr.press/v130/eriksson21a.html">http://proceedings.mlr.press/v130/eriksson21a.html</a></p>
@@ -4172,7 +4204,7 @@ observation noises associated with the training targets
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.outcome.</span></span><span class="sig-name descname"><span class="pre">Bilog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Bilog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Bilog" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OutcomeTransform</span></code></p>
 <p>Bilog-transform outcomes.</p>
-<p>The Bilog transform <a class="reference internal" href="#eriksson2021scalable" id="id19"><span>[eriksson2021scalable]</span></a> is useful for modeling outcome
+<p>The Bilog transform <a class="reference internal" href="#eriksson2021scalable" id="id20"><span>[eriksson2021scalable]</span></a> is useful for modeling outcome
 constraints as it magnifies values near zero and flattens extreme values.</p>
 <p>Bilog-transform outcomes.</p>
 <dl class="field-list simple">
@@ -4512,7 +4544,7 @@ are unnormalized before rounding. In the case of (b) transform_on_train
 should be set to False, so that the raw inputs are rounded and then
 normalized to the unit cube.</p>
 <p>By default, the straight through estimators are used for the gradients as
-proposed in <a class="reference internal" href="utils.html#daulton2022bopr" id="id20"><span>[Daulton2022bopr]</span></a>. This transformation supports differentiable
+proposed in <a class="reference internal" href="utils.html#daulton2022bopr" id="id21"><span>[Daulton2022bopr]</span></a>. This transformation supports differentiable
 approximate rounding (currently only for integers). The rounding function
 is approximated with a piece-wise function where each piece is a hyperbolic
 tangent function.</p>
@@ -4684,8 +4716,8 @@ of the Kumaraswamy distribution.</p></li>
 provided beforehand or generated on the fly via a callable.</p>
 <p>As an example, the predefined set of features can be used with
 <cite>RiskMeasureMCObjective</cite> to optimize risk measures as described in
-<a class="reference internal" href="acquisition.html#cakmak2020risk" id="id21"><span>[Cakmak2020risk]</span></a>. A tutorial notebook implementing the rhoKG acqusition
-function introduced in <a class="reference internal" href="acquisition.html#cakmak2020risk" id="id22"><span>[Cakmak2020risk]</span></a> can be found at
+<a class="reference internal" href="acquisition.html#cakmak2020risk" id="id22"><span>[Cakmak2020risk]</span></a>. A tutorial notebook implementing the rhoKG acqusition
+function introduced in <a class="reference internal" href="acquisition.html#cakmak2020risk" id="id23"><span>[Cakmak2020risk]</span></a> can be found at
 <a class="reference external" href="https://botorch.org/tutorials/risk_averse_bo_with_environmental_variables">https://botorch.org/tutorials/risk_averse_bo_with_environmental_variables</a>.</p>
 <p>The steps for using this to obtain samples of a risk measure are as follows:</p>
 <ul class="simple">
@@ -5354,7 +5386,7 @@ process models.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="chen2018dpp" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>chen2018dpp<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id28" role="doc-backlink">1</a>,<a href="#id29" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id29" role="doc-backlink">1</a>,<a href="#id30" role="doc-backlink">2</a>)</span>
 <p>Laming Chen and Guoxin Zhang and Hanning Zhou, Fast greedy MAP inference
 for determinantal point process to improve recommendation diversity,
 Proceedings of the 32nd International Conference on Neural Information
@@ -5404,7 +5436,7 @@ to a specific criterion.</p>
 <p>A function returning ones for each element. Using this quality function
 for inducing point allocation corresponds to allocating inducing points
 with the sole aim of minimizing predictive variance, i.e. the approach
-of <a class="reference internal" href="#burt2020svgp" id="id23"><span>[burt2020svgp]</span></a>.</p>
+of <a class="reference internal" href="#burt2020svgp" id="id24"><span>[burt2020svgp]</span></a>.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.utils.inducing_point_allocators.ExpectedImprovementQualityFunction">
@@ -5412,7 +5444,7 @@ of <a class="reference internal" href="#burt2020svgp" id="id23"><span>[burt2020s
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.utils.inducing_point_allocators.QualityFunction" title="botorch.models.utils.inducing_point_allocators.QualityFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">QualityFunction</span></code></a></p>
 <p>A function measuring the quality of input points as their expected
 improvement with respect to a conservative baseline. Expectations
-are according to the model from the previous BO step. See <a class="reference internal" href="#moss2023ipa" id="id24"><span>[moss2023ipa]</span></a>
+are according to the model from the previous BO step. See <a class="reference internal" href="#moss2023ipa" id="id25"><span>[moss2023ipa]</span></a>
 for details and justification.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -5429,7 +5461,7 @@ set False.</p></li>
 <dt class="sig sig-object py" id="botorch.models.utils.inducing_point_allocators.GreedyVarianceReduction">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.utils.inducing_point_allocators.</span></span><span class="sig-name descname"><span class="pre">GreedyVarianceReduction</span></span><a class="reference internal" href="_modules/botorch/models/utils/inducing_point_allocators.html#GreedyVarianceReduction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.utils.inducing_point_allocators.GreedyVarianceReduction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.utils.inducing_point_allocators.InducingPointAllocator" title="botorch.models.utils.inducing_point_allocators.InducingPointAllocator"><code class="xref py py-class docutils literal notranslate"><span class="pre">InducingPointAllocator</span></code></a></p>
-<p>The inducing point allocator proposed by <a class="reference internal" href="#burt2020svgp" id="id25"><span>[burt2020svgp]</span></a>, that
+<p>The inducing point allocator proposed by <a class="reference internal" href="#burt2020svgp" id="id26"><span>[burt2020svgp]</span></a>, that
 greedily chooses inducing point locations with maximal (conditional)
 predictive variance.</p>
 </dd></dl>
@@ -5439,7 +5471,7 @@ predictive variance.</p>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.utils.inducing_point_allocators.InducingPointAllocator" title="botorch.models.utils.inducing_point_allocators.InducingPointAllocator"><code class="xref py py-class docutils literal notranslate"><span class="pre">InducingPointAllocator</span></code></a></p>
 <p>An inducing point allocator that greedily chooses inducing points with large
 predictive variance and that are in promising regions of the search
-space (according to the model form the previous BO step), see <a class="reference internal" href="#moss2023ipa" id="id26"><span>[moss2023ipa]</span></a>.</p>
+space (according to the model form the previous BO step), see <a class="reference internal" href="#moss2023ipa" id="id27"><span>[moss2023ipa]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -5454,11 +5486,11 @@ set False.</p></li>
 <dt class="sig sig-object py" id="botorch.models.utils.inducing_point_allocators._pivoted_cholesky_init">
 <span class="sig-prename descclassname"><span class="pre">botorch.models.utils.inducing_point_allocators.</span></span><span class="sig-name descname"><span class="pre">_pivoted_cholesky_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quality_scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/utils/inducing_point_allocators.html#_pivoted_cholesky_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.utils.inducing_point_allocators._pivoted_cholesky_init" title="Permalink to this definition">¶</a></dt>
 <dd><p>A pivoted Cholesky initialization method for the inducing points,
-originally proposed in <a class="reference internal" href="#burt2020svgp" id="id27"><span>[burt2020svgp]</span></a> with the algorithm itself coming from
-<a class="reference internal" href="#chen2018dpp" id="id28"><span>[chen2018dpp]</span></a>. Code is a PyTorch version from <a class="reference internal" href="#chen2018dpp" id="id29"><span>[chen2018dpp]</span></a>, based on
+originally proposed in <a class="reference internal" href="#burt2020svgp" id="id28"><span>[burt2020svgp]</span></a> with the algorithm itself coming from
+<a class="reference internal" href="#chen2018dpp" id="id29"><span>[chen2018dpp]</span></a>. Code is a PyTorch version from <a class="reference internal" href="#chen2018dpp" id="id30"><span>[chen2018dpp]</span></a>, based on
 <a class="reference external" href="https://github.com/laming-chen/fast-map-dpp/blob/master/dpp.py">https://github.com/laming-chen/fast-map-dpp/blob/master/dpp.py</a> but with a small
 modification to allow the underlying DPP to be defined through its diversity-quality
-decomposition,as discussed by <a class="reference internal" href="#moss2023ipa" id="id30"><span>[moss2023ipa]</span></a>. This method returns a greedy
+decomposition,as discussed by <a class="reference internal" href="#moss2023ipa" id="id31"><span>[moss2023ipa]</span></a>. This method returns a greedy
 approximation of the MAP estimate of the specified DPP, i.e. its returns a
 set of points that are highly diverse (according to the provided kernel_matrix)
 and have high quality (according to the provided quality_scores).</p>
