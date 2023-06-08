@@ -324,7 +324,7 @@ class AffineInputTransform(ReversibleInputTransform, Module):
         d: int,
         coefficient: Tensor,
         offset: Tensor,
-        indices: Optional[List[int]] = None,
+        indices: Optional[Union[List[int], Tensor]] = None,
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
@@ -342,7 +342,8 @@ class AffineInputTransform(ReversibleInputTransform, Module):
             offset: Tensor of offset coefficients, shape must to be
                 broadcastable with `(batch_shape x n x d)`-dim input tensors.
             indices: The indices of the inputs to transform. If omitted,
-                take all dimensions of the inputs into account.
+                take all dimensions of the inputs into account. Either a list of ints
+                or a Tensor of type `torch.long`.
             batch_shape: The batch shape of the inputs (assuming input tensors
                 of shape `batch_shape x n x d`). If provided, perform individual
                 transformation per batch, otherwise uses a single transformation.
@@ -359,7 +360,9 @@ class AffineInputTransform(ReversibleInputTransform, Module):
         if (indices is not None) and (len(indices) == 0):
             raise ValueError("`indices` list is empty!")
         if (indices is not None) and (len(indices) > 0):
-            indices = torch.tensor(indices, dtype=torch.long)
+            indices = torch.as_tensor(
+                indices, dtype=torch.long, device=coefficient.device
+            )
             if len(indices) > d:
                 raise ValueError("Can provide at most `d` indices!")
             if (indices > d - 1).any():
@@ -498,7 +501,7 @@ class Normalize(AffineInputTransform):
     def __init__(
         self,
         d: int,
-        indices: Optional[List[int]] = None,
+        indices: Optional[Union[List[int], Tensor]] = None,
         bounds: Optional[Tensor] = None,
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         transform_on_train: bool = True,
@@ -626,7 +629,7 @@ class InputStandardize(AffineInputTransform):
     def __init__(
         self,
         d: int,
-        indices: Optional[List[int]] = None,
+        indices: Optional[Union[List[int], Tensor]] = None,
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
