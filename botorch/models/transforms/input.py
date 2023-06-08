@@ -603,7 +603,7 @@ class Normalize(AffineInputTransform):
         r"""Get the arguments necessary to construct an exact copy of the transform."""
         return {
             "d": self._d,
-            "indices": getattr(self, "indices", None),
+            "indices": list(self.indices) if hasattr(self, "indices") else  None,
             "bounds": self.bounds,
             "batch_shape": self.batch_shape,
             "transform_on_train": self.transform_on_train,
