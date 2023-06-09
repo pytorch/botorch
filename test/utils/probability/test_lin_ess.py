@@ -187,10 +187,35 @@ class TestLinearEllipticalSliceSampler(BotorchTestCase):
             self.assertIsNone(sampler._mean)
             self.assertIsNone(sampler._covariance_root)
             self.assertTrue(torch.all(sampler._is_feasible(sampler.x0)))
-            samples = sampler.draw(n=3)
+            num_samples = 3
+            samples = sampler.draw(n=num_samples)
             self.assertEqual(samples.shape, torch.Size([3, d]))
             self.assertGreaterEqual(samples.min().item(), lower_bound)
             self.assertFalse(torch.equal(sampler._x, sampler.x0))
+            self.assertEqual(sampler.lifetime_samples, num_samples)
+            samples = sampler.draw(n=num_samples)
+            self.assertEqual(sampler.lifetime_samples, 2 * num_samples)
+
+            # thining and burn-in tests
+            burnin = 7
+            thinning = 2
+            sampler = LinearEllipticalSliceSampler(
+                inequality_constraints=(A, b),
+                check_feasibility=True,
+                burnin=burnin,
+                thinning=thinning,
+            )
+            self.assertEqual(sampler.lifetime_samples, burnin)
+            num_samples = 2
+            samples = sampler.draw(n=num_samples)
+            self.assertEqual(samples.shape, torch.Size([num_samples, d]))
+            self.assertEqual(
+                sampler.lifetime_samples, burnin + num_samples * (thinning + 1)
+            )
+            samples = sampler.draw(n=num_samples)
+            self.assertEqual(
+                sampler.lifetime_samples, burnin + 2 * num_samples * (thinning + 1)
+            )
 
             # two special cases of _find_intersection_angles below:
             # 1) testing _find_intersection_angles with a proposal "nu"
@@ -259,6 +284,8 @@ class TestLinearEllipticalSliceSampler(BotorchTestCase):
                 interior_point=interior_point,
                 check_feasibility=True,
             )
-            X_high_d = sampler.draw(n=16)
+            num_samples = 16
+            X_high_d = sampler.draw(n=num_samples)
             self.assertEqual(X_high_d.shape, torch.Size([16, d]))
             self.assertTrue(sampler._is_feasible(X_high_d.T).all())
+            self.assertEqual(sampler.lifetime_samples, num_samples)
