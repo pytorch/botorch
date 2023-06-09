@@ -73,8 +73,9 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
             mean: The `d x 1`-dim mean of the MVN distribution (if omitted, use zero).
             covariance_matrix: The `d x d`-dim covariance matrix of the MVN
                 distribution (if omitted, use the identity).
-            covariance_root: A `d x k`-dim root of the covariance matrix such that
-                covariance_root @ covariance_root.T = covariance_matrix.
+            covariance_root: A `d x d`-dim root of the covariance matrix such that
+                covariance_root @ covariance_root.T = covariance_matrix. NOTE: This
+                matrix is assumed to be lower triangular.
             check_feasibility: If True, raise an error if the sampling results in an
                 infeasible sample. This creates some overhead and so is switched off
                 by default.
@@ -99,18 +100,30 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
                 raise ValueError(
                     "Provide either covariance_matrix or covariance_root, not both."
                 )
-            try:
-                covariance_root = torch.linalg.cholesky(covariance_matrix)
-            except RuntimeError as e:
-                raise_e = e
-                if "positive-definite" in str(raise_e):
-                    raise_e = ValueError(
-                        "Covariance matrix is not positive definite. "
-                        "Currently only non-degenerate distributions are supported."
-                    )
-                raise raise_e
+
+            covariance_root, info = torch.linalg.cholesky_ex(covariance_matrix)
+            not_psd = torch.any(info)
+            if not_psd:
+                raise ValueError(
+                    "Covariance matrix is not positive definite. "
+                    "Currently only non-degenerate distributions are supported."
+                )
         self._covariance_root = covariance_root
-        self._x = self.x0.clone()  # state of the sampler ("current point")
+
+        # For non-standard mean and covariance, we're going to rewrite the problem as
+        # sampling from a standard normal distribution subject to modified constraints.
+        #   Ax - b = A @ (covar_root @ z + mean) - b
+        #          = (A @ covar_root) @ z - (b - A @ mean)
+        #          = _Az @ z - _bz
+        self._Az = (
+            self.A if self._covariance_root is None else self.A @ self._covariance_root
+        )
+        self._bz = self.b if self._mean is None else self.b - self.A @ self._mean
+
+        # state of the sampler ("current point")
+        self._x = self.x0.clone()
+        self._z = self._standardize(self._x)
+
         # We will need the following repeatedly, let's allocate them once
         self._zero = torch.zeros(1, **tkwargs)
         self._nan = torch.tensor(float("nan"), **tkwargs)
@@ -143,15 +156,33 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
             samples.append(self.step())
         return torch.cat(samples, dim=-1).transpose(-1, -2)
 
+    def _unstandardize(self, z: Tensor) -> Tensor:
+        x = z
+        if self._covariance_root is not None:
+            x = self._covariance_root @ x
+        if self._mean is not None:
+            x = x + self._mean
+        return x
+
+    def _standardize(self, x: Tensor) -> Tensor:
+        z = x
+        if self._mean is not None:
+            z = z - self._mean
+        if self._covariance_root is not None:
+            z = torch.linalg.solve_triangular(self._covariance_root, z, upper=False)
+        return z
+
     def step(self) -> Tensor:
         r"""Take a step, return the new sample, update the internal state.
 
         Returns:
             A `d x 1`-dim sample from the domain.
         """
-        nu = self._sample_base_rv()
+        nu = torch.randn_like(self._z)
         theta = self._draw_angle(nu=nu)
-        x = self._get_cart_coords(nu=nu, theta=theta)
+        z = self._get_cart_coords(nu=nu, theta=theta)
+        self._z[:] = z
+        x = self._unstandardize(z)
         self._x[:] = x
         self._lifetime_samples += 1
         if self.check_feasibility and (not self._is_feasible(self._x)):
@@ -164,19 +195,6 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
                 "\n\t- If the error persists, please report this bug on GitHub."
             )
         return x
-
-    def _sample_base_rv(self) -> Tensor:
-        r"""Sample a base random variable from N(mean, covariance_matrix).
-
-        Returns:
-            A `d x 1`-dim sample from the domain
-        """
-        nu = torch.randn_like(self._x)
-        if self._covariance_root is not None:
-            nu = self._covariance_root @ nu
-        if self._mean is not None:
-            nu = self._mean + nu
-        return nu
 
     def _draw_angle(self, nu: Tensor) -> Tensor:
         r"""Draw the rotation angle.
@@ -207,7 +225,7 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         Returns:
             A `d x k`-dim tensor of samples from the domain in cartesian coordinates.
         """
-        return self._x * torch.cos(theta) + nu * torch.sin(theta)
+        return self._z * torch.cos(theta) + nu * torch.sin(theta)
 
     def _find_rotated_intersections(self, nu: Tensor) -> Tuple[Tensor, Tensor]:
         r"""Finds rotated intersections.
@@ -282,12 +300,12 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         # Compared to the implementation in https://github.com/alpiges/LinConGauss
         # we need to flip the sign of A b/c the original algorithm considers
         # A @ x + b >= 0 feasible, whereas we consider A @ x - b <= 0 feasible.
-        g1 = -self.A @ self._x
-        g2 = -self.A @ nu
+        g1 = -self._Az @ self._z
+        g2 = -self._Az @ nu
         r = torch.sqrt(g1**2 + g2**2)
         phi = 2 * torch.atan(g2 / (r + g1)).squeeze()
 
-        arg = -(self.b / r).squeeze()
+        arg = -(self._bz / r).squeeze()
         # Write NaNs if there is no intersection
         arg = torch.where(torch.absolute(arg) <= 1, arg, self._nan)
         # Two solutions per linear constraint, shape of theta: (n_ineq_con, 2)
@@ -328,20 +346,26 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         last_mid = last_mid.where(last_mid < _twopi, last_mid - _twopi)
         theta_mid = torch.cat((last_mid, theta_mid, last_mid), dim=0)
         samples_mid = self._get_cart_coords(nu=nu, theta=theta_mid)
-        delta_feasibility = self._is_feasible(samples_mid).to(dtype=int).diff()
+        delta_feasibility = (
+            self._is_feasible(samples_mid, standardized=True).to(dtype=int).diff()
+        )
         active_indices = delta_feasibility.nonzero()
         return theta[active_indices], delta_feasibility[active_indices]
 
-    def _is_feasible(self, points: Tensor) -> Tensor:
+    def _is_feasible(self, points: Tensor, standardized: bool = False) -> Tensor:
         r"""Returns a Boolean tensor indicating whether the `points` are feasible,
         i.e. they satisfy `A @ points <= b`, where `(A, b)` are the tensors passed
         as the `inequality_constraints` to the constructor of the sampler.
 
         Args:
             points: A `d x M`-dim tensor of points.
+            standardized: Wether points are assumed to be standardized by a change of
+                basis, which means feasibility should be computed based on the
+                standardized constraint system (_A, _b), instead of (A, b).
 
         Returns:
             An `M`-dim binary tensor where `True` indicates that the associated
             point is feasible.
         """
-        return (self.A @ points <= self.b).all(dim=0)
+        A, b = (self._Az, self._bz) if standardized else (self.A, self.b)
+        return (A @ points <= b).all(dim=0)

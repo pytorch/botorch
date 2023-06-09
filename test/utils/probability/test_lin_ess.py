@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+import math
+
 from unittest.mock import patch
 
 import torch
@@ -195,6 +197,78 @@ class TestLinearEllipticalSliceSampler(BotorchTestCase):
             self.assertEqual(sampler.lifetime_samples, num_samples)
             samples = sampler.draw(n=num_samples)
             self.assertEqual(sampler.lifetime_samples, 2 * num_samples)
+
+            # checking sampling from non-standard normal
+            lower_bound = -2
+            b = -torch.full((d, 1), lower_bound, **tkwargs)
+            mean = torch.arange(d, **tkwargs).view(d, 1)
+            cov_matrix = torch.randn(d, d, **tkwargs)
+            cov_matrix = cov_matrix @ cov_matrix.T
+            # normalizing to maximal unit variance so that sem math below applies
+            cov_matrix /= cov_matrix.max()
+            interior_point = torch.ones_like(mean)
+            for mean_i, cov_i in [
+                (None, None),
+                (mean, None),
+                (None, cov_matrix),
+                (mean, cov_matrix),
+            ]:
+                with self.subTest(mean=mean_i, cov=cov_i):
+                    sampler = LinearEllipticalSliceSampler(
+                        inequality_constraints=(A, b),
+                        interior_point=interior_point,
+                        check_feasibility=True,
+                        mean=mean_i,
+                        covariance_matrix=cov_i,
+                    )
+                    # checking standardized system of constraints
+                    mean_i = torch.zeros_like(mean) if mean_i is None else mean_i
+                    cov_root_i = (
+                        torch.eye(d, **tkwargs)
+                        if cov_i is None
+                        else torch.linalg.cholesky_ex(cov_i)[0]
+                    )
+                    self.assertAllClose(sampler._Az, A @ cov_root_i)
+                    self.assertAllClose(sampler._bz, b - A @ mean_i)
+
+                    x = torch.randn_like(mean_i)
+                    z = sampler._standardize(x)
+                    self.assertAllClose(
+                        z,
+                        torch.linalg.solve_triangular(
+                            cov_root_i, x - mean_i, upper=False
+                        ),
+                    )
+                    self.assertAllClose(sampler._unstandardize(z), x)
+
+                    # checking rejection-free property
+                    num_samples = 32
+                    samples = sampler.draw(num_samples)
+                    self.assertEqual(len(samples.unique(dim=0)), num_samples)
+
+                    # checking mean is approximately equal to unconstrained distribution
+                    # mean if the constraint boundary is far away from the unconstrained
+                    # mean. NOTE: Expected failure rate due to statistical fluctuations
+                    # of 5 sigma is 1 in 1.76 million.
+                    # sem ~ 0.7 -> can differentiate from zero mean
+                    sem = 5 / math.sqrt(num_samples)
+                    sample_mean = samples.mean(dim=0)
+                    self.assertAllClose(sample_mean, mean_i.squeeze(-1), atol=sem)
+
+                    # checking that standardization does not change feasibility values
+                    X_test = 3 * torch.randn(d, num_samples, **tkwargs)
+                    self.assertAllClose(
+                        sampler._Az @ sampler._standardize(X_test) - sampler._bz,
+                        A @ X_test - b,
+                        atol=1e-5,
+                    )
+                    self.assertAllClose(
+                        sampler._is_feasible(
+                            sampler._standardize(X_test), standardized=True
+                        ),
+                        sampler._is_feasible(X_test, standardized=False),
+                        atol=1e-5,
+                    )
 
             # thining and burn-in tests
             burnin = 7
