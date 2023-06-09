@@ -261,6 +261,7 @@ class UnstandardizePosteriorTransform(PosteriorTransform):
         self.outcome_transform.means = Y_mean.unsqueeze(0)
         self.outcome_transform.stdvs = Y_std_unsqueezed
         self.outcome_transform._stdvs_sq = Y_std_unsqueezed.pow(2)
+        self.outcome_transform._is_trained = torch.tensor(True)
         self.outcome_transform.eval()
 
     def evaluate(self, Y: Tensor) -> Tensor:

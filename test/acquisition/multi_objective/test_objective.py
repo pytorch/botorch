@@ -188,6 +188,7 @@ class TestUnstandardizeMultiOutputObjective(BotorchTestCase):
                         tf.means = Y_mean
                         tf.stdvs = Y_std
                         tf._stdvs_sq = Y_std.pow(2)
+                        tf._is_trained = torch.tensor(True)
                         tf.eval()
                         expected_posterior = tf.untransform_posterior(mock_posterior)
                         self.assertTrue(
