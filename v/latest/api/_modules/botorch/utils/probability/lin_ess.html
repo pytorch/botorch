@@ -52,7 +52,6 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 <span class="n">_twopi</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span>
-<span class="n">_delta_theta</span> <span class="o">=</span> <span class="mf">1.0e-6</span> <span class="o">*</span> <span class="n">_twopi</span>
 
 
 <div class="viewcode-block" id="LinearEllipticalSliceSampler"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler">[docs]</a><span class="k">class</span> <span class="nc">LinearEllipticalSliceSampler</span><span class="p">(</span><span class="n">PolytopeSampler</span><span class="p">):</span>
@@ -60,11 +59,11 @@
 
 <span class="sd">    TODOs:</span>
 <span class="sd">    - clean up docstrings</span>
+<span class="sd">    - Add batch support, broadcasting over parallel chains.</span>
 <span class="sd">    - optimize computations (if possible)</span>
 
 <span class="sd">    Maybe TODOs:</span>
 <span class="sd">    - Support degenerate domains (with zero volume)?</span>
-<span class="sd">    - Add batch support ?</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -75,6 +74,9 @@
         <span class="n">mean</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">covariance_matrix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">covariance_root</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">check_feasibility</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">burnin</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">thinning</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize LinearEllipticalSliceSampler.</span>
 
@@ -94,8 +96,15 @@
 <span class="sd">            mean: The `d x 1`-dim mean of the MVN distribution (if omitted, use zero).</span>
 <span class="sd">            covariance_matrix: The `d x d`-dim covariance matrix of the MVN</span>
 <span class="sd">                distribution (if omitted, use the identity).</span>
-<span class="sd">            covariance_root: A `d x k`-dim root of the covariance matrix such that</span>
-<span class="sd">                covariance_root @ covariance_root.T = covariance_matrix.</span>
+<span class="sd">            covariance_root: A `d x d`-dim root of the covariance matrix such that</span>
+<span class="sd">                covariance_root @ covariance_root.T = covariance_matrix. NOTE: This</span>
+<span class="sd">                matrix is assumed to be lower triangular.</span>
+<span class="sd">            check_feasibility: If True, raise an error if the sampling results in an</span>
+<span class="sd">                infeasible sample. This creates some overhead and so is switched off</span>
+<span class="sd">                by default.</span>
+<span class="sd">            burnin: Number of samples to generate upon initialization to warm up the</span>
+<span class="sd">                sampler.</span>
+<span class="sd">            thinning: Number of samples to skip before returning a sample in `draw`.</span>
 
 <span class="sd">        This sampler samples from a multivariante Normal `N(mean, covariance_matrix)`</span>
 <span class="sd">        subject to linear domain constraints `A x &lt;= b` (intersected with box bounds,</span>
@@ -114,22 +123,45 @@
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="s2">"Provide either covariance_matrix or covariance_root, not both."</span>
                 <span class="p">)</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">covariance_root</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">covariance_matrix</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">raise_e</span> <span class="o">=</span> <span class="n">e</span>
-                <span class="k">if</span> <span class="s2">"positive-definite"</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">raise_e</span><span class="p">):</span>
-                    <span class="n">raise_e</span> <span class="o">=</span> <span class="ne">ValueError</span><span class="p">(</span>
-                        <span class="s2">"Covariance matrix is not positive definite. "</span>
-                        <span class="s2">"Currently only non-degenerate distributions are supported."</span>
-                    <span class="p">)</span>
-                <span class="k">raise</span> <span class="n">raise_e</span>
+
+            <span class="n">covariance_root</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky_ex</span><span class="p">(</span><span class="n">covariance_matrix</span><span class="p">)</span>
+            <span class="n">not_psd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">not_psd</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"Covariance matrix is not positive definite. "</span>
+                    <span class="s2">"Currently only non-degenerate distributions are supported."</span>
+                <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_covariance_root</span> <span class="o">=</span> <span class="n">covariance_root</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x0</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>  <span class="c1"># state of the sampler ("current point")</span>
+
+        <span class="c1"># For non-standard mean and covariance, we're going to rewrite the problem as</span>
+        <span class="c1"># sampling from a standard normal distribution subject to modified constraints.</span>
+        <span class="c1">#   Ax - b = A @ (covar_root @ z + mean) - b</span>
+        <span class="c1">#          = (A @ covar_root) @ z - (b - A @ mean)</span>
+        <span class="c1">#          = _Az @ z - _bz</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_Az</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_covariance_root</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_covariance_root</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bz</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mean</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mean</span>
+
+        <span class="c1"># state of the sampler ("current point")</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x0</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_standardize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span>
+
         <span class="c1"># We will need the following repeatedly, let's allocate them once</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_zero</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_nan</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">),</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_full_angular_range</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">_twopi</span><span class="p">],</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_feasibility</span> <span class="o">=</span> <span class="n">check_feasibility</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lifetime_samples</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">burnin</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">thinning</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">burnin</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thinning</span> <span class="o">=</span> <span class="n">thinning</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">lifetime_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The total number of samples generated by the sampler during its lifetime."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lifetime_samples</span>
 
 <div class="viewcode-block" id="LinearEllipticalSliceSampler.draw"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler.draw">[docs]</a>    <span class="k">def</span> <span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Draw samples.</span>
@@ -140,9 +172,28 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            A `n x d`-dim tensor of `n` samples.</span>
 <span class="sd">        """</span>
-        <span class="c1"># TODO: Do we need to do any thinnning or warm-up here?</span>
-        <span class="n">samples</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">samples</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span></div>
+        <span class="n">samples</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thinning</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="n">samples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_unstandardize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">z</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_covariance_root</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_covariance_root</span> <span class="o">@</span> <span class="n">x</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mean</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mean</span>
+        <span class="k">return</span> <span class="n">x</span>
+
+    <span class="k">def</span> <span class="nf">_standardize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mean</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">z</span> <span class="o">=</span> <span class="n">z</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mean</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_covariance_root</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">z</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_covariance_root</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">z</span>
 
 <div class="viewcode-block" id="LinearEllipticalSliceSampler.step"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Take a step, return the new sample, update the internal state.</span>
@@ -150,23 +201,23 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            A `d x 1`-dim sample from the domain.</span>
 <span class="sd">        """</span>
-        <span class="n">nu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_base_rv</span><span class="p">()</span>
+        <span class="n">nu</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_z</span><span class="p">)</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_draw_angle</span><span class="p">(</span><span class="n">nu</span><span class="o">=</span><span class="n">nu</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_cart_coords</span><span class="p">(</span><span class="n">nu</span><span class="o">=</span><span class="n">nu</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span></div>
-
-    <span class="k">def</span> <span class="nf">_sample_base_rv</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample a base random variable from N(mean, covariance_matrix).</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            A `d x 1`-dim sample from the domain</span>
-<span class="sd">        """</span>
-        <span class="n">nu</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_covariance_root</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">nu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_covariance_root</span> <span class="o">@</span> <span class="n">nu</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mean</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">nu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mean</span> <span class="o">+</span> <span class="n">nu</span>
-        <span class="k">return</span> <span class="n">nu</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_cart_coords</span><span class="p">(</span><span class="n">nu</span><span class="o">=</span><span class="n">nu</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_z</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">z</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unstandardize</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lifetime_samples</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_feasibility</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_feasible</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_x</span><span class="p">)):</span>
+            <span class="n">Axmb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span>
+            <span class="n">violated_indices</span> <span class="o">=</span> <span class="n">Axmb</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">"Sampling resulted in infeasible point. </span><span class="se">\n\t</span><span class="s2">- Number "</span>
+                <span class="sa">f</span><span class="s2">"of violated constraints: </span><span class="si">{</span><span class="n">violated_indices</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2">."</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="se">\n\t</span><span class="s2">- Magnitude of violations: </span><span class="si">{</span><span class="n">Axmb</span><span class="p">[</span><span class="n">violated_indices</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+                <span class="s2">"</span><span class="se">\n\t</span><span class="s2">- If the error persists, please report this bug on GitHub."</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span></div>
 
     <span class="k">def</span> <span class="nf">_draw_angle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Draw the rotation angle.</span>
@@ -175,7 +226,7 @@
 <span class="sd">            nu: A `d x 1`-dim tensor (the "new" direction, drawn from N(0, I)).</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A</span>
+<span class="sd">            A `1`-dim Tensor containing the rotation angle (radians).</span>
 <span class="sd">        """</span>
         <span class="n">rot_angle</span><span class="p">,</span> <span class="n">rot_slices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_rotated_intersections</span><span class="p">(</span><span class="n">nu</span><span class="p">)</span>
         <span class="n">rot_lengths</span> <span class="o">=</span> <span class="n">rot_slices</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">rot_slices</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
@@ -185,7 +236,7 @@
             <span class="mi">1</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">cum_lengths</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">cum_lengths</span><span class="o">.</span><span class="n">dtype</span>
         <span class="p">)</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">cum_lengths</span><span class="p">,</span> <span class="n">rnd_angle</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
-        <span class="k">return</span> <span class="n">rot_slices</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">rnd_angle</span> <span class="o">-</span> <span class="n">cum_lengths</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">+</span> <span class="n">rot_angle</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">rot_slices</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">rnd_angle</span> <span class="o">+</span> <span class="n">rot_angle</span><span class="p">)</span> <span class="o">-</span> <span class="n">cum_lengths</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">_get_cart_coords</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Determine location on ellipsoid in cartesian coordinates.</span>
@@ -197,7 +248,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            A `d x k`-dim tensor of samples from the domain in cartesian coordinates.</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">+</span> <span class="n">nu</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_z</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">+</span> <span class="n">nu</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_find_rotated_intersections</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Finds rotated intersections.</span>
@@ -214,9 +265,16 @@
 <span class="sd">        """</span>
         <span class="n">slices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_active_intersections</span><span class="p">(</span><span class="n">nu</span><span class="p">)</span>
         <span class="n">rot_angle</span> <span class="o">=</span> <span class="n">slices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">slices</span> <span class="o">=</span> <span class="n">slices</span> <span class="o">-</span> <span class="n">rot_angle</span>
-        <span class="n">slices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">slices</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">slices</span> <span class="o">+</span> <span class="n">_twopi</span><span class="p">,</span> <span class="n">slices</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">rot_angle</span><span class="p">,</span> <span class="n">slices</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">slices</span> <span class="o">=</span> <span class="p">(</span><span class="n">slices</span> <span class="o">-</span> <span class="n">rot_angle</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="c1"># Ensuring that we don't sample within numerical precision of the boundaries</span>
+        <span class="c1"># due to resulting instabilities in the constraint satisfaction.</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-6</span> <span class="k">if</span> <span class="n">slices</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span> <span class="k">else</span> <span class="mf">1e-12</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">slices</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">slices</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="n">eps</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">slices</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span> <span class="o">/</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="n">slices</span> <span class="o">=</span> <span class="n">slices</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">eps</span><span class="p">,</span> <span class="o">-</span><span class="n">eps</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># NOTE: The remainder call relies on the epsilon contraction, since the</span>
+        <span class="c1"># remainder of_twopi divided by _twopi is zero, not _twopi.</span>
+        <span class="k">return</span> <span class="n">rot_angle</span><span class="p">,</span> <span class="n">slices</span><span class="o">.</span><span class="n">remainder</span><span class="p">(</span><span class="n">_twopi</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_find_active_intersections</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""</span>
@@ -235,23 +293,15 @@
 <span class="sd">            slice sampling.</span>
 <span class="sd">        """</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_intersection_angles</span><span class="p">(</span><span class="n">nu</span><span class="p">)</span>
-        <span class="n">active_directions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index_active</span><span class="p">(</span>
-            <span class="n">nu</span><span class="o">=</span><span class="n">nu</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">,</span> <span class="n">delta_theta</span><span class="o">=</span><span class="n">_delta_theta</span>
+        <span class="n">theta_active</span><span class="p">,</span> <span class="n">delta_active</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_theta_and_delta</span><span class="p">(</span>
+            <span class="n">nu</span><span class="o">=</span><span class="n">nu</span><span class="p">,</span>
+            <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">theta_active</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="n">active_directions</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()]</span>
-        <span class="n">delta_theta</span> <span class="o">=</span> <span class="n">_delta_theta</span>
-        <span class="k">while</span> <span class="n">theta_active</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="c1"># Almost tangential ellipses, reduce delta_theta</span>
-            <span class="n">delta_theta</span> <span class="o">/=</span> <span class="mi">10</span>
-            <span class="n">active_directions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index_active</span><span class="p">(</span>
-                <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">,</span> <span class="n">nu</span><span class="o">=</span><span class="n">nu</span><span class="p">,</span> <span class="n">delta_theta</span><span class="o">=</span><span class="n">delta_theta</span>
-            <span class="p">)</span>
-            <span class="n">theta_active</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="n">active_directions</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()]</span>
-
         <span class="k">if</span> <span class="n">theta_active</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">theta_active</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_angular_range</span>
-            <span class="c1"># TODO: What about `self.ellipse_in_domain = False` in the original code ??</span>
-        <span class="k">elif</span> <span class="n">active_directions</span><span class="p">[</span><span class="n">active_directions</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># TODO: What about `self.ellipse_in_domain = False` in the original code?</span>
+        <span class="k">elif</span> <span class="n">delta_active</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>  <span class="c1"># ensuring that the first interval is feasible</span>
+
             <span class="n">theta_active</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">theta_active</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">theta_active</span><span class="p">[:</span><span class="mi">1</span><span class="p">]))</span>
 
         <span class="k">return</span> <span class="n">theta_active</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
@@ -273,59 +323,75 @@
         <span class="c1"># Compared to the implementation in https://github.com/alpiges/LinConGauss</span>
         <span class="c1"># we need to flip the sign of A b/c the original algorithm considers</span>
         <span class="c1"># A @ x + b &gt;= 0 feasible, whereas we consider A @ x - b &lt;= 0 feasible.</span>
-        <span class="n">g1</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span>
-        <span class="n">g2</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">@</span> <span class="n">nu</span>
+        <span class="n">g1</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_Az</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_z</span>
+        <span class="n">g2</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_Az</span> <span class="o">@</span> <span class="n">nu</span>
         <span class="n">r</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">g1</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">g2</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
         <span class="n">phi</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">atan</span><span class="p">(</span><span class="n">g2</span> <span class="o">/</span> <span class="p">(</span><span class="n">r</span> <span class="o">+</span> <span class="n">g1</span><span class="p">))</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
 
-        <span class="n">arg</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">/</span> <span class="n">r</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+        <span class="n">arg</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bz</span> <span class="o">/</span> <span class="n">r</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
         <span class="c1"># Write NaNs if there is no intersection</span>
         <span class="n">arg</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">absolute</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nan</span><span class="p">)</span>
-
         <span class="c1"># Two solutions per linear constraint, shape of theta: (n_ineq_con, 2)</span>
         <span class="n">acos_arg</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arccos</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">((</span><span class="n">phi</span> <span class="o">+</span> <span class="n">acos_arg</span><span class="p">,</span> <span class="n">phi</span> <span class="o">-</span> <span class="n">acos_arg</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">theta</span><span class="p">)]</span>  <span class="c1"># shape: `n_ineq_con - num_not_finite`</span>
-        <span class="n">theta</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">theta</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">theta</span> <span class="o">+</span> <span class="n">_twopi</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>  <span class="c1"># [0, 2*pi]</span>
-
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">theta</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">theta</span> <span class="o">+</span> <span class="n">_twopi</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>  <span class="c1"># in [0, 2*pi]</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
 
-    <span class="k">def</span> <span class="nf">_index_active</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">delta_theta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_delta_theta</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">_active_theta_and_delta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Determine active indices.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            nu: A `d x 1`-dim tensor (the "new" direction, drawn from N(0, I)).</span>
-<span class="sd">            theta: An `M`-dim tensor of intersection angles.</span>
-<span class="sd">            delta_theta: A small perturbation to be used for determining whether</span>
-<span class="sd">                intersections are at the boundary of the integration domain.</span>
+<span class="sd">            theta: A sorted `M`-dim tensor of intersection angles in [0, 2pi].</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            An `M`-dim tensor with elements taking on values in {-1, 0, 1}.</span>
-<span class="sd">            A non-zero value indicates whether the associated intersection angle</span>
-<span class="sd">            is an active constraint. For active constraints, the sign indicates</span>
-<span class="sd">            the direction of the relevant domain (i.e. +1 (-1) means that</span>
-<span class="sd">            increasing (decreasing) the angle renders the sample feasible).</span>
+<span class="sd">            A tuple of Tensors of active constraint intersection angles `theta_active`,</span>
+<span class="sd">            and the change in the feasibility of the points on the ellipse on the left</span>
+<span class="sd">            and right of the active intersection angles `delta_active`. `delta_active`</span>
+<span class="sd">            is is negative if decreasing the angle renders the sample feasible, and</span>
+<span class="sd">            positive if increasing the angle renders the sample feasible.</span>
 <span class="sd">        """</span>
-        <span class="n">samples_pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_cart_coords</span><span class="p">(</span><span class="n">nu</span><span class="o">=</span><span class="n">nu</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span> <span class="o">+</span> <span class="n">delta_theta</span><span class="p">)</span>
-        <span class="n">samples_neg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_cart_coords</span><span class="p">(</span><span class="n">nu</span><span class="o">=</span><span class="n">nu</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span> <span class="o">-</span> <span class="n">delta_theta</span><span class="p">)</span>
-        <span class="n">pos_diffs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_feasible</span><span class="p">(</span><span class="n">samples_pos</span><span class="p">)</span>
-        <span class="n">neg_diffs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_feasible</span><span class="p">(</span><span class="n">samples_neg</span><span class="p">)</span>
-        <span class="c1"># We don't use bit-wise XOR here since we need the signs of the directions</span>
-        <span class="k">return</span> <span class="n">pos_diffs</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">nu</span><span class="p">)</span> <span class="o">-</span> <span class="n">neg_diffs</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">nu</span><span class="p">)</span>
+        <span class="c1"># In order to determine if an angle that gives rise to an intersection with a</span>
+        <span class="c1"># constraint boundary leads to a change in the feasibility of the solution,</span>
+        <span class="c1"># we evaluate the constraints on the midpoint of the intersection angles.</span>
+        <span class="c1"># This gets rid of the `delta_theta` parameter in the original implementation,</span>
+        <span class="c1"># which cannot be set universally since it can be both 1) too large, when</span>
+        <span class="c1"># the distance in adjacent intersection angles is small, and 2) too small,</span>
+        <span class="c1"># when it approaches the numerical precision limit.</span>
+        <span class="c1"># The implementation below solves both problems and gets rid of the parameter.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># if we have no or only a tangential intersection</span>
+            <span class="n">theta_active</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">theta</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">theta</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">delta_active</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">theta</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">theta_active</span><span class="p">,</span> <span class="n">delta_active</span>
+        <span class="n">theta_mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">theta</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># midpoints of intersection angles</span>
+        <span class="n">last_mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">theta</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">theta</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="n">_twopi</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">last_mid</span> <span class="o">=</span> <span class="n">last_mid</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">last_mid</span> <span class="o">&lt;</span> <span class="n">_twopi</span><span class="p">,</span> <span class="n">last_mid</span> <span class="o">-</span> <span class="n">_twopi</span><span class="p">)</span>
+        <span class="n">theta_mid</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">last_mid</span><span class="p">,</span> <span class="n">theta_mid</span><span class="p">,</span> <span class="n">last_mid</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">samples_mid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_cart_coords</span><span class="p">(</span><span class="n">nu</span><span class="o">=</span><span class="n">nu</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta_mid</span><span class="p">)</span>
+        <span class="n">delta_feasibility</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_is_feasible</span><span class="p">(</span><span class="n">samples_mid</span><span class="p">,</span> <span class="n">standardized</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span><span class="o">.</span><span class="n">diff</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">active_indices</span> <span class="o">=</span> <span class="n">delta_feasibility</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">theta</span><span class="p">[</span><span class="n">active_indices</span><span class="p">],</span> <span class="n">delta_feasibility</span><span class="p">[</span><span class="n">active_indices</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">_is_feasible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">points</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
+    <span class="k">def</span> <span class="nf">_is_feasible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">points</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">standardized</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Returns a Boolean tensor indicating whether the `points` are feasible,</span>
+<span class="sd">        i.e. they satisfy `A @ points &lt;= b`, where `(A, b)` are the tensors passed</span>
+<span class="sd">        as the `inequality_constraints` to the constructor of the sampler.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            points: A `M x d`-dim tensor of points.</span>
+<span class="sd">            points: A `d x M`-dim tensor of points.</span>
+<span class="sd">            standardized: Wether points are assumed to be standardized by a change of</span>
+<span class="sd">                basis, which means feasibility should be computed based on the</span>
+<span class="sd">                standardized constraint system (_A, _b), instead of (A, b).</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            An `M`-dim binary tensor where `True` indicates that the associated</span>
 <span class="sd">            point is feasible.</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">@</span> <span class="n">points</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+        <span class="n">A</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_Az</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bz</span><span class="p">)</span> <span class="k">if</span> <span class="n">standardized</span> <span class="k">else</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">A</span> <span class="o">@</span> <span class="n">points</span> <span class="o">&lt;=</span> <span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
 </pre></div>
 </div>
 </div>

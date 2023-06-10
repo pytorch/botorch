@@ -3790,15 +3790,15 @@ the following implementations based on the algorithm in <a class="reference inte
 <a class="reference external" href="https://github.com/wjmaddox/pytorch_ess">https://github.com/wjmaddox/pytorch_ess</a></p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.probability.lin_ess.</span></span><span class="sig-name descname"><span class="pre">LinearEllipticalSliceSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interior_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariance_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariance_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/probability/lin_ess.html#LinearEllipticalSliceSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.probability.lin_ess.</span></span><span class="sig-name descname"><span class="pre">LinearEllipticalSliceSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interior_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariance_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariance_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_feasibility</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">burnin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thinning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/probability/lin_ess.html#LinearEllipticalSliceSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PolytopeSampler</span></code></p>
 <p>Linear Elliptical Slice Sampler.</p>
 <p>TODOs:
 - clean up docstrings
+- Add batch support, broadcasting over parallel chains.
 - optimize computations (if possible)</p>
 <p>Maybe TODOs:
-- Support degenerate domains (with zero volume)?
-- Add batch support ?</p>
+- Support degenerate domains (with zero volume)?</p>
 <p>Initialize LinearEllipticalSliceSampler.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -3818,14 +3818,26 @@ boundary), otherwise the sampler will produce invalid samples.</p></li>
 <li><p><strong>mean</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – The <cite>d x 1</cite>-dim mean of the MVN distribution (if omitted, use zero).</p></li>
 <li><p><strong>covariance_matrix</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – The <cite>d x d</cite>-dim covariance matrix of the MVN
 distribution (if omitted, use the identity).</p></li>
-<li><p><strong>covariance_root</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>d x k</cite>-dim root of the covariance matrix such that
-covariance_root @ covariance_root.T = covariance_matrix.</p></li>
+<li><p><strong>covariance_root</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>d x d</cite>-dim root of the covariance matrix such that
+covariance_root @ covariance_root.T = covariance_matrix. NOTE: This
+matrix is assumed to be lower triangular.</p></li>
+<li><p><strong>check_feasibility</strong> (<em>bool</em>) – If True, raise an error if the sampling results in an
+infeasible sample. This creates some overhead and so is switched off
+by default.</p></li>
+<li><p><strong>burnin</strong> (<em>int</em>) – Number of samples to generate upon initialization to warm up the
+sampler.</p></li>
+<li><p><strong>thinning</strong> (<em>int</em>) – Number of samples to skip before returning a sample in <cite>draw</cite>.</p></li>
 </ul>
 </dd>
 </dl>
 <p>This sampler samples from a multivariante Normal <cite>N(mean, covariance_matrix)</cite>
 subject to linear domain constraints <cite>A x &lt;= b</cite> (intersected with box bounds,
 if provided).</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler.lifetime_samples">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">lifetime_samples</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler.lifetime_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>The total number of samples generated by the sampler during its lifetime.</p>
+</dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler.draw">
 <span class="sig-name descname"><span class="pre">draw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/probability/lin_ess.html#LinearEllipticalSliceSampler.draw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler.draw" title="Permalink to this definition">¶</a></dt>
