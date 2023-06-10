@@ -442,6 +442,11 @@ class qNoisyExpectedHypervolumeImprovement(
             cache_root: A boolean indicating whether to cache the root
                 decomposition over `X_baseline` and use low-rank updates.
         """
+        if len(ref_point) < 2:
+            raise ValueError(
+                "qNoisyExpectedHypervolumeImprovement supports m>=2 outcomes "
+                f"but ref_point has length {len(ref_point)}, which is smaller than 2."
+            )
         ref_point = torch.as_tensor(
             ref_point, dtype=X_baseline.dtype, device=X_baseline.device
         )
