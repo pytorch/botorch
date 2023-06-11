@@ -624,7 +624,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
         tkwargs = {"device": self.device}
         for dtype, m in product(
             (torch.float, torch.double),
-            (2, 3),
+            (1, 2, 3),
         ):
             tkwargs["dtype"] = dtype
             ref_point = self.ref_point[:m]
@@ -641,6 +641,19 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             X = torch.zeros(1, 1, **tkwargs)
             # basic test
             sampler = IIDNormalSampler(sample_shape=torch.Size([1]))
+
+            # test error is raised if m == 1
+            if m == 1:
+                with self.assertRaises(ValueError):
+                    acqf = qNoisyExpectedHypervolumeImprovement(
+                        model=mm,
+                        ref_point=ref_point,
+                        X_baseline=X_baseline,
+                        sampler=sampler,
+                        cache_root=False,
+                    )
+                continue
+
             acqf = qNoisyExpectedHypervolumeImprovement(
                 model=mm,
                 ref_point=ref_point,
