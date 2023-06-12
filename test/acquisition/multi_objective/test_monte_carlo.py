@@ -646,7 +646,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             if m == 1:
                 with self.assertRaisesRegex(
                     ValueError,
-                    "qNoisyExpectedHypervolumeImprovement supports m>=2 outcomes "
+                    "qNoisyExpectedHypervolumeImprovement supports m>=2 outcomes ",
                 ):
                     acqf = qNoisyExpectedHypervolumeImprovement(
                         model=mm,
