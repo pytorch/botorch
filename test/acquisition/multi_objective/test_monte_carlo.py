@@ -644,7 +644,10 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
 
             # test error is raised if m == 1
             if m == 1:
-                with self.assertRaises(ValueError):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "qNoisyExpectedHypervolumeImprovement supports m>=2 outcomes "
+                ):
                     acqf = qNoisyExpectedHypervolumeImprovement(
                         model=mm,
                         ref_point=ref_point,
