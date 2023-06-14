@@ -35,11 +35,14 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
-from botorch.models.gp_regression import MIN_INFERRED_NOISE_LEVEL
 from botorch.models.gpytorch import GPyTorchModel, MultiTaskGPyTorchModel
 from botorch.models.model import FantasizeMixin
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
+from botorch.models.utils.gpytorch_modules import (
+    get_matern_kernel_with_gamma_prior,
+    MIN_INFERRED_NOISE_LEVEL,
+)
 from botorch.posteriors.multitask import MultitaskGPPosterior
 from botorch.utils.datasets import SupervisedDataset
 from gpytorch.constraints import GreaterThan
@@ -50,7 +53,6 @@ from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.index_kernel import IndexKernel
 from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.multitask_kernel import MultitaskKernel
-from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.likelihoods.gaussian_likelihood import (
     FixedNoiseGaussianLikelihood,
     GaussianLikelihood,
@@ -183,13 +185,8 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         )
         self.mean_module = ConstantMean()
         if covar_module is None:
-            self.covar_module = ScaleKernel(
-                base_kernel=MaternKernel(
-                    nu=2.5,
-                    ard_num_dims=self.num_non_task_features,
-                    lengthscale_prior=GammaPrior(3.0, 6.0),
-                ),
-                outputscale_prior=GammaPrior(2.0, 0.15),
+            self.covar_module = get_matern_kernel_with_gamma_prior(
+                ard_num_dims=self.num_non_task_features
             )
         else:
             self.covar_module = covar_module

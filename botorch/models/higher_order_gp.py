@@ -25,15 +25,17 @@ from botorch.models.model import FantasizeMixin
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform, Standardize
 from botorch.models.utils import gpt_posterior_settings
+from botorch.models.utils.gpytorch_modules import (
+    get_gaussian_likelihood_with_gamma_prior,
+)
 from botorch.posteriors import (
     GPyTorchPosterior,
     HigherOrderGPPosterior,
     TransformedPosterior,
 )
-from gpytorch.constraints import GreaterThan
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import Kernel, MaternKernel
-from gpytorch.likelihoods import GaussianLikelihood, Likelihood
+from gpytorch.likelihoods import Likelihood
 from gpytorch.models import ExactGP
 from gpytorch.priors.torch_priors import GammaPrior, MultivariateNormalPrior
 from gpytorch.settings import fast_pred_var, skip_posterior_variances
@@ -47,9 +49,6 @@ from linear_operator.operators import (
 from linear_operator.settings import _fast_solves
 from torch import Tensor
 from torch.nn import ModuleList, Parameter, ParameterList
-
-
-MIN_INFERRED_NOISE_LEVEL = 1e-4
 
 
 class FlattenedStandardize(Standardize):
@@ -232,17 +231,8 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         self._input_batch_shape = batch_shape
 
         if likelihood is None:
-
-            noise_prior = GammaPrior(1.1, 0.05)
-            noise_prior_mode = (noise_prior.concentration - 1) / noise_prior.rate
-            likelihood = GaussianLikelihood(
-                noise_prior=noise_prior,
-                batch_shape=self._aug_batch_shape,
-                noise_constraint=GreaterThan(
-                    MIN_INFERRED_NOISE_LEVEL,
-                    transform=None,
-                    initial_value=noise_prior_mode,
-                ),
+            likelihood = get_gaussian_likelihood_with_gamma_prior(
+                batch_shape=self._aug_batch_shape
             )
         else:
             self._is_custom_likelihood = True

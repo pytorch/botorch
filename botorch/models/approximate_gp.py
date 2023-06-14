@@ -39,14 +39,17 @@ from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.models.utils import validate_input_scaling
+from botorch.models.utils.gpytorch_modules import (
+    get_gaussian_likelihood_with_gamma_prior,
+    get_matern_kernel_with_gamma_prior,
+)
 from botorch.models.utils.inducing_point_allocators import (
     GreedyVarianceReduction,
     InducingPointAllocator,
 )
 from botorch.posteriors.gpytorch import GPyTorchPosterior
-from gpytorch.constraints import GreaterThan
 from gpytorch.distributions import MultivariateNormal
-from gpytorch.kernels import Kernel, MaternKernel, ScaleKernel
+from gpytorch.kernels import Kernel
 from gpytorch.likelihoods import (
     GaussianLikelihood,
     Likelihood,
@@ -54,7 +57,6 @@ from gpytorch.likelihoods import (
 )
 from gpytorch.means import ConstantMean, Mean
 from gpytorch.models import ApproximateGP
-from gpytorch.priors import GammaPrior
 from gpytorch.utils.memoize import clear_cache_hook
 from gpytorch.variational import (
     _VariationalDistribution,
@@ -65,9 +67,6 @@ from gpytorch.variational import (
 )
 from torch import Tensor
 from torch.nn import Module
-
-
-MIN_INFERRED_NOISE_LEVEL = 1e-4
 
 
 TApproxModel = TypeVar("TApproxModel", bound="ApproximateGPyTorchModel")
@@ -218,15 +217,9 @@ class _SingleTaskVariationalGP(ApproximateGP):
         self._aug_batch_shape = aug_batch_shape
 
         if covar_module is None:
-            covar_module = ScaleKernel(
-                base_kernel=MaternKernel(
-                    nu=2.5,
-                    ard_num_dims=train_X.shape[-1],
-                    batch_shape=self._aug_batch_shape,
-                    lengthscale_prior=GammaPrior(3.0, 6.0),
-                ),
+            covar_module = get_matern_kernel_with_gamma_prior(
+                ard_num_dims=train_X.shape[-1],
                 batch_shape=self._aug_batch_shape,
-                outputscale_prior=GammaPrior(2.0, 0.15),
             ).to(train_X)
             self._subset_batch_dict = {
                 "mean_module.constant": -2,
@@ -385,16 +378,8 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
 
         if likelihood is None:
             if num_outputs == 1:
-                noise_prior = GammaPrior(1.1, 0.05)
-                noise_prior_mode = (noise_prior.concentration - 1) / noise_prior.rate
-                likelihood = GaussianLikelihood(
-                    noise_prior=noise_prior,
-                    batch_shape=self._aug_batch_shape,
-                    noise_constraint=GreaterThan(
-                        MIN_INFERRED_NOISE_LEVEL,
-                        transform=None,
-                        initial_value=noise_prior_mode,
-                    ),
+                likelihood = get_gaussian_likelihood_with_gamma_prior(
+                    batch_shape=self._aug_batch_shape
                 )
             else:
                 likelihood = MultitaskGaussianLikelihood(num_tasks=num_outputs)
