@@ -465,6 +465,11 @@
 <span class="sd">            cache_root: A boolean indicating whether to cache the root</span>
 <span class="sd">                decomposition over `X_baseline` and use low-rank updates.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ref_point</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"qNoisyExpectedHypervolumeImprovement supports m&gt;=2 outcomes "</span>
+                <span class="sa">f</span><span class="s2">"but ref_point has length </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ref_point</span><span class="p">)</span><span class="si">}</span><span class="s2">, which is smaller than 2."</span>
+            <span class="p">)</span>
         <span class="n">ref_point</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span>
             <span class="n">ref_point</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X_baseline</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X_baseline</span><span class="o">.</span><span class="n">device</span>
         <span class="p">)</span>
