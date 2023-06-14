@@ -39,11 +39,14 @@ from botorch.models.model import FantasizeMixin
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import Log, OutcomeTransform
 from botorch.models.utils import fantasize as fantasize_flag, validate_input_scaling
+from botorch.models.utils.gpytorch_modules import (
+    get_gaussian_likelihood_with_gamma_prior,
+    get_matern_kernel_with_gamma_prior,
+    MIN_INFERRED_NOISE_LEVEL,
+)
 from botorch.sampling.base import MCSampler
 from gpytorch.constraints.constraints import GreaterThan
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
-from gpytorch.kernels.matern_kernel import MaternKernel
-from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.likelihoods.gaussian_likelihood import (
     _GaussianLikelihoodBase,
     FixedNoiseGaussianLikelihood,
@@ -57,11 +60,7 @@ from gpytorch.mlls.noise_model_added_loss_term import NoiseModelAddedLossTerm
 from gpytorch.models.exact_gp import ExactGP
 from gpytorch.module import Module
 from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
-from gpytorch.priors.torch_priors import GammaPrior
 from torch import Tensor
-
-
-MIN_INFERRED_NOISE_LEVEL = 1e-4
 
 
 class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
@@ -127,16 +126,8 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         self._set_dimensions(train_X=train_X, train_Y=train_Y)
         train_X, train_Y, _ = self._transform_tensor_args(X=train_X, Y=train_Y)
         if likelihood is None:
-            noise_prior = GammaPrior(1.1, 0.05)
-            noise_prior_mode = (noise_prior.concentration - 1) / noise_prior.rate
-            likelihood = GaussianLikelihood(
-                noise_prior=noise_prior,
-                batch_shape=self._aug_batch_shape,
-                noise_constraint=GreaterThan(
-                    MIN_INFERRED_NOISE_LEVEL,
-                    transform=None,
-                    initial_value=noise_prior_mode,
-                ),
+            likelihood = get_gaussian_likelihood_with_gamma_prior(
+                batch_shape=self._aug_batch_shape
             )
         else:
             self._is_custom_likelihood = True
@@ -147,15 +138,9 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
             mean_module = ConstantMean(batch_shape=self._aug_batch_shape)
         self.mean_module = mean_module
         if covar_module is None:
-            covar_module = ScaleKernel(
-                MaternKernel(
-                    nu=2.5,
-                    ard_num_dims=transformed_X.shape[-1],
-                    batch_shape=self._aug_batch_shape,
-                    lengthscale_prior=GammaPrior(3.0, 6.0),
-                ),
+            covar_module = get_matern_kernel_with_gamma_prior(
+                ard_num_dims=transformed_X.shape[-1],
                 batch_shape=self._aug_batch_shape,
-                outputscale_prior=GammaPrior(2.0, 0.15),
             )
             self._subset_batch_dict = {
                 "likelihood.noise_covar.raw_noise": -2,
@@ -263,15 +248,9 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             mean_module = ConstantMean(batch_shape=self._aug_batch_shape)
         self.mean_module = mean_module
         if covar_module is None:
-            covar_module = ScaleKernel(
-                base_kernel=MaternKernel(
-                    nu=2.5,
-                    ard_num_dims=transformed_X.shape[-1],
-                    batch_shape=self._aug_batch_shape,
-                    lengthscale_prior=GammaPrior(3.0, 6.0),
-                ),
+            covar_module = get_matern_kernel_with_gamma_prior(
+                ard_num_dims=transformed_X.shape[-1],
                 batch_shape=self._aug_batch_shape,
-                outputscale_prior=GammaPrior(2.0, 0.15),
             )
             self._subset_batch_dict = {
                 "mean_module.raw_constant": -1,
