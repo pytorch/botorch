@@ -5278,6 +5278,42 @@ is <cite>input_batch_shape</cite> against <cite>batch_shape</cite>.</p>
 </dl>
 </dd></dl>
 </section>
+<section id="module-botorch.models.utils.gpytorch_modules">
+<span id="gpytorch-module-constructors"></span><h3>GPyTorch Module Constructors<a class="headerlink" href="#module-botorch.models.utils.gpytorch_modules" title="Permalink to this heading">¶</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.models.utils.gpytorch_modules.get_matern_kernel_with_gamma_prior">
+<span class="sig-prename descclassname"><span class="pre">botorch.models.utils.gpytorch_modules.</span></span><span class="sig-name descname"><span class="pre">get_matern_kernel_with_gamma_prior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ard_num_dims</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/utils/gpytorch_modules.html#get_matern_kernel_with_gamma_prior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.utils.gpytorch_modules.get_matern_kernel_with_gamma_prior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructs the Scale-Matern kernel that is used by default by
+several models. This uses a Gamma(3.0, 6.0) prior for the lengthscale
+and a Gamma(2.0, 0.15) prior for the output scale.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ard_num_dims</strong> (<em>int</em>) – </p></li>
+<li><p><strong>batch_shape</strong> (<em>Size</em><em> | </em><em>None</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>ScaleKernel</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.models.utils.gpytorch_modules.get_gaussian_likelihood_with_gamma_prior">
+<span class="sig-prename descclassname"><span class="pre">botorch.models.utils.gpytorch_modules.</span></span><span class="sig-name descname"><span class="pre">get_gaussian_likelihood_with_gamma_prior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/utils/gpytorch_modules.html#get_gaussian_likelihood_with_gamma_prior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.utils.gpytorch_modules.get_gaussian_likelihood_with_gamma_prior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructs the GaussianLikelihood that is used by default by
+several models. This uses a Gamma(1.1, 0.05) prior and constrains the
+noise level to be greater than MIN_INFERRED_NOISE_LEVEL (=1e-4).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>batch_shape</strong> (<em>Size</em><em> | </em><em>None</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>GaussianLikelihood</em></p>
+</dd>
+</dl>
+</dd></dl>
+</section>
 <section id="module-botorch.models.converter">
 <span id="model-conversion"></span><h3>Model Conversion<a class="headerlink" href="#module-botorch.models.converter" title="Permalink to this heading">¶</a></h3>
 <p>Utilities for converting between different models.</p>

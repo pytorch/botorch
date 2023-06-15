@@ -48,15 +48,17 @@
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span><span class="p">,</span> <span class="n">Standardize</span>
 <span class="kn">from</span> <span class="nn">botorch.models.utils</span> <span class="kn">import</span> <span class="n">gpt_posterior_settings</span>
+<span class="kn">from</span> <span class="nn">botorch.models.utils.gpytorch_modules</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_gaussian_likelihood_with_gamma_prior</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">GPyTorchPosterior</span><span class="p">,</span>
     <span class="n">HigherOrderGPPosterior</span><span class="p">,</span>
     <span class="n">TransformedPosterior</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">Kernel</span><span class="p">,</span> <span class="n">MaternKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.likelihoods</span> <span class="kn">import</span> <span class="n">GaussianLikelihood</span><span class="p">,</span> <span class="n">Likelihood</span>
+<span class="kn">from</span> <span class="nn">gpytorch.likelihoods</span> <span class="kn">import</span> <span class="n">Likelihood</span>
 <span class="kn">from</span> <span class="nn">gpytorch.models</span> <span class="kn">import</span> <span class="n">ExactGP</span>
 <span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span><span class="p">,</span> <span class="n">MultivariateNormalPrior</span>
 <span class="kn">from</span> <span class="nn">gpytorch.settings</span> <span class="kn">import</span> <span class="n">fast_pred_var</span><span class="p">,</span> <span class="n">skip_posterior_variances</span>
@@ -70,9 +72,6 @@
 <span class="kn">from</span> <span class="nn">linear_operator.settings</span> <span class="kn">import</span> <span class="n">_fast_solves</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">ModuleList</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">ParameterList</span>
-
-
-<span class="n">MIN_INFERRED_NOISE_LEVEL</span> <span class="o">=</span> <span class="mf">1e-4</span>
 
 
 <div class="viewcode-block" id="FlattenedStandardize"><a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.FlattenedStandardize">[docs]</a><span class="k">class</span> <span class="nc">FlattenedStandardize</span><span class="p">(</span><span class="n">Standardize</span><span class="p">):</span>
@@ -255,17 +254,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span> <span class="o">=</span> <span class="n">batch_shape</span>
 
         <span class="k">if</span> <span class="n">likelihood</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-
-            <span class="n">noise_prior</span> <span class="o">=</span> <span class="n">GammaPrior</span><span class="p">(</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
-            <span class="n">noise_prior_mode</span> <span class="o">=</span> <span class="p">(</span><span class="n">noise_prior</span><span class="o">.</span><span class="n">concentration</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">noise_prior</span><span class="o">.</span><span class="n">rate</span>
-            <span class="n">likelihood</span> <span class="o">=</span> <span class="n">GaussianLikelihood</span><span class="p">(</span>
-                <span class="n">noise_prior</span><span class="o">=</span><span class="n">noise_prior</span><span class="p">,</span>
-                <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
-                <span class="n">noise_constraint</span><span class="o">=</span><span class="n">GreaterThan</span><span class="p">(</span>
-                    <span class="n">MIN_INFERRED_NOISE_LEVEL</span><span class="p">,</span>
-                    <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                    <span class="n">initial_value</span><span class="o">=</span><span class="n">noise_prior_mode</span><span class="p">,</span>
-                <span class="p">),</span>
+            <span class="n">likelihood</span> <span class="o">=</span> <span class="n">get_gaussian_likelihood_with_gamma_prior</span><span class="p">(</span>
+                <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_is_custom_likelihood</span> <span class="o">=</span> <span class="kc">True</span>

@@ -62,11 +62,14 @@
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">Log</span><span class="p">,</span> <span class="n">OutcomeTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.utils</span> <span class="kn">import</span> <span class="n">fantasize</span> <span class="k">as</span> <span class="n">fantasize_flag</span><span class="p">,</span> <span class="n">validate_input_scaling</span>
+<span class="kn">from</span> <span class="nn">botorch.models.utils.gpytorch_modules</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_gaussian_likelihood_with_gamma_prior</span><span class="p">,</span>
+    <span class="n">get_matern_kernel_with_gamma_prior</span><span class="p">,</span>
+    <span class="n">MIN_INFERRED_NOISE_LEVEL</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
 <span class="kn">from</span> <span class="nn">gpytorch.constraints.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions.multivariate_normal</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels.matern_kernel</span> <span class="kn">import</span> <span class="n">MaternKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels.scale_kernel</span> <span class="kn">import</span> <span class="n">ScaleKernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.likelihoods.gaussian_likelihood</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">_GaussianLikelihoodBase</span><span class="p">,</span>
     <span class="n">FixedNoiseGaussianLikelihood</span><span class="p">,</span>
@@ -80,11 +83,7 @@
 <span class="kn">from</span> <span class="nn">gpytorch.models.exact_gp</span> <span class="kn">import</span> <span class="n">ExactGP</span>
 <span class="kn">from</span> <span class="nn">gpytorch.module</span> <span class="kn">import</span> <span class="n">Module</span>
 <span class="kn">from</span> <span class="nn">gpytorch.priors.smoothed_box_prior</span> <span class="kn">import</span> <span class="n">SmoothedBoxPrior</span>
-<span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-
-
-<span class="n">MIN_INFERRED_NOISE_LEVEL</span> <span class="o">=</span> <span class="mf">1e-4</span>
 
 
 <div class="viewcode-block" id="SingleTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression.SingleTaskGP">[docs]</a><span class="k">class</span> <span class="nc">SingleTaskGP</span><span class="p">(</span><span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">,</span> <span class="n">ExactGP</span><span class="p">,</span> <span class="n">FantasizeMixin</span><span class="p">):</span>
@@ -150,16 +149,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_dimensions</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
         <span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">likelihood</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">noise_prior</span> <span class="o">=</span> <span class="n">GammaPrior</span><span class="p">(</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
-            <span class="n">noise_prior_mode</span> <span class="o">=</span> <span class="p">(</span><span class="n">noise_prior</span><span class="o">.</span><span class="n">concentration</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">noise_prior</span><span class="o">.</span><span class="n">rate</span>
-            <span class="n">likelihood</span> <span class="o">=</span> <span class="n">GaussianLikelihood</span><span class="p">(</span>
-                <span class="n">noise_prior</span><span class="o">=</span><span class="n">noise_prior</span><span class="p">,</span>
-                <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
-                <span class="n">noise_constraint</span><span class="o">=</span><span class="n">GreaterThan</span><span class="p">(</span>
-                    <span class="n">MIN_INFERRED_NOISE_LEVEL</span><span class="p">,</span>
-                    <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                    <span class="n">initial_value</span><span class="o">=</span><span class="n">noise_prior_mode</span><span class="p">,</span>
-                <span class="p">),</span>
+            <span class="n">likelihood</span> <span class="o">=</span> <span class="n">get_gaussian_likelihood_with_gamma_prior</span><span class="p">(</span>
+                <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_is_custom_likelihood</span> <span class="o">=</span> <span class="kc">True</span>
@@ -170,15 +161,9 @@
             <span class="n">mean_module</span> <span class="o">=</span> <span class="n">ConstantMean</span><span class="p">(</span><span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span> <span class="o">=</span> <span class="n">mean_module</span>
         <span class="k">if</span> <span class="n">covar_module</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">covar_module</span> <span class="o">=</span> <span class="n">ScaleKernel</span><span class="p">(</span>
-                <span class="n">MaternKernel</span><span class="p">(</span>
-                    <span class="n">nu</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span>
-                    <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">transformed_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-                    <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
-                    <span class="n">lengthscale_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">),</span>
-                <span class="p">),</span>
+            <span class="n">covar_module</span> <span class="o">=</span> <span class="n">get_matern_kernel_with_gamma_prior</span><span class="p">(</span>
+                <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">transformed_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
                 <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
-                <span class="n">outputscale_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">),</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_subset_batch_dict</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">"likelihood.noise_covar.raw_noise"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
@@ -286,15 +271,9 @@
             <span class="n">mean_module</span> <span class="o">=</span> <span class="n">ConstantMean</span><span class="p">(</span><span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span> <span class="o">=</span> <span class="n">mean_module</span>
         <span class="k">if</span> <span class="n">covar_module</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">covar_module</span> <span class="o">=</span> <span class="n">ScaleKernel</span><span class="p">(</span>
-                <span class="n">base_kernel</span><span class="o">=</span><span class="n">MaternKernel</span><span class="p">(</span>
-                    <span class="n">nu</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span>
-                    <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">transformed_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-                    <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
-                    <span class="n">lengthscale_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">),</span>
-                <span class="p">),</span>
+            <span class="n">covar_module</span> <span class="o">=</span> <span class="n">get_matern_kernel_with_gamma_prior</span><span class="p">(</span>
+                <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">transformed_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
                 <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
-                <span class="n">outputscale_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">),</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_subset_batch_dict</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">"mean_module.raw_constant"</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>

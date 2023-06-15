@@ -62,14 +62,17 @@
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.utils</span> <span class="kn">import</span> <span class="n">validate_input_scaling</span>
+<span class="kn">from</span> <span class="nn">botorch.models.utils.gpytorch_modules</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_gaussian_likelihood_with_gamma_prior</span><span class="p">,</span>
+    <span class="n">get_matern_kernel_with_gamma_prior</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.models.utils.inducing_point_allocators</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">GreedyVarianceReduction</span><span class="p">,</span>
     <span class="n">InducingPointAllocator</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
-<span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">Kernel</span><span class="p">,</span> <span class="n">MaternKernel</span><span class="p">,</span> <span class="n">ScaleKernel</span>
+<span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">Kernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.likelihoods</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">GaussianLikelihood</span><span class="p">,</span>
     <span class="n">Likelihood</span><span class="p">,</span>
@@ -77,7 +80,6 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">gpytorch.means</span> <span class="kn">import</span> <span class="n">ConstantMean</span><span class="p">,</span> <span class="n">Mean</span>
 <span class="kn">from</span> <span class="nn">gpytorch.models</span> <span class="kn">import</span> <span class="n">ApproximateGP</span>
-<span class="kn">from</span> <span class="nn">gpytorch.priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span>
 <span class="kn">from</span> <span class="nn">gpytorch.utils.memoize</span> <span class="kn">import</span> <span class="n">clear_cache_hook</span>
 <span class="kn">from</span> <span class="nn">gpytorch.variational</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">_VariationalDistribution</span><span class="p">,</span>
@@ -88,9 +90,6 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
-
-
-<span class="n">MIN_INFERRED_NOISE_LEVEL</span> <span class="o">=</span> <span class="mf">1e-4</span>
 
 
 <span class="n">TApproxModel</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"TApproxModel"</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">"ApproximateGPyTorchModel"</span><span class="p">)</span>
@@ -241,15 +240,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span> <span class="o">=</span> <span class="n">aug_batch_shape</span>
 
         <span class="k">if</span> <span class="n">covar_module</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">covar_module</span> <span class="o">=</span> <span class="n">ScaleKernel</span><span class="p">(</span>
-                <span class="n">base_kernel</span><span class="o">=</span><span class="n">MaternKernel</span><span class="p">(</span>
-                    <span class="n">nu</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span>
-                    <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-                    <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
-                    <span class="n">lengthscale_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">),</span>
-                <span class="p">),</span>
+            <span class="n">covar_module</span> <span class="o">=</span> <span class="n">get_matern_kernel_with_gamma_prior</span><span class="p">(</span>
+                <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
                 <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
-                <span class="n">outputscale_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">),</span>
             <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_subset_batch_dict</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">"mean_module.constant"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
@@ -408,16 +401,8 @@
 
         <span class="k">if</span> <span class="n">likelihood</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">num_outputs</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">noise_prior</span> <span class="o">=</span> <span class="n">GammaPrior</span><span class="p">(</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
-                <span class="n">noise_prior_mode</span> <span class="o">=</span> <span class="p">(</span><span class="n">noise_prior</span><span class="o">.</span><span class="n">concentration</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">noise_prior</span><span class="o">.</span><span class="n">rate</span>
-                <span class="n">likelihood</span> <span class="o">=</span> <span class="n">GaussianLikelihood</span><span class="p">(</span>
-                    <span class="n">noise_prior</span><span class="o">=</span><span class="n">noise_prior</span><span class="p">,</span>
-                    <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
-                    <span class="n">noise_constraint</span><span class="o">=</span><span class="n">GreaterThan</span><span class="p">(</span>
-                        <span class="n">MIN_INFERRED_NOISE_LEVEL</span><span class="p">,</span>
-                        <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                        <span class="n">initial_value</span><span class="o">=</span><span class="n">noise_prior_mode</span><span class="p">,</span>
-                    <span class="p">),</span>
+                <span class="n">likelihood</span> <span class="o">=</span> <span class="n">get_gaussian_likelihood_with_gamma_prior</span><span class="p">(</span>
+                    <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span>
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">likelihood</span> <span class="o">=</span> <span class="n">MultitaskGaussianLikelihood</span><span class="p">(</span><span class="n">num_tasks</span><span class="o">=</span><span class="n">num_outputs</span><span class="p">)</span>
