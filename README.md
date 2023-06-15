@@ -153,7 +153,7 @@ For more details see our [Documentation](https://botorch.org/docs/introduction) 
   from botorch.fit import fit_gpytorch_mll
   from gpytorch.mlls import ExactMarginalLogLikelihood
 
-  train_X = torch.rand(10, 2)
+  train_X = torch.rand(10, 2, dtype=torch.double)
   Y = 1 - (train_X - 0.5).norm(dim=-1, keepdim=True)  # explicit output dimension
   Y += 0.1 * torch.rand_like(Y)
   train_Y = (Y - Y.mean()) / Y.std()
