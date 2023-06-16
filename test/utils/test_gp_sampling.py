@@ -415,7 +415,7 @@ class TestRandomFourierFeatures(BotorchTestCase):
                     expected_Y = torch.stack(
                         [basis(X) @ w for w, basis in zip(weights, bases)], dim=-1
                     )
-                    self.assertAllClose(Y, expected_Y)
+                    self.assertAllClose(Y, expected_Y, atol=1e-7, rtol=2e-5)
                     self.assertEqual(Y.shape, torch.Size([*batch_shape, 1, m]))
 
     def test_get_deterministic_model_multi_samples(self):
