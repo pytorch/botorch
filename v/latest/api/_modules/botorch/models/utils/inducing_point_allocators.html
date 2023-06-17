@@ -47,6 +47,7 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 
 <span class="kn">from</span> <span class="nn">botorch.utils.probability.utils</span> <span class="kn">import</span> <span class="n">ndtr</span> <span class="k">as</span> <span class="n">Phi</span><span class="p">,</span> <span class="n">phi</span>
@@ -97,10 +98,23 @@
         <span class="n">quality_function</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_quality_function</span><span class="p">()</span>
         <span class="n">covar_module</span> <span class="o">=</span> <span class="n">covar_module</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">inputs</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
 
-        <span class="n">train_train_kernel</span> <span class="o">=</span> <span class="n">covar_module</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate_kernel</span><span class="p">()</span>
+        <span class="c1"># We use 'no_grad' here because `inducing_points` are not</span>
+        <span class="c1"># auto-differentiable with respect to the kernel hyper-parameters,</span>
+        <span class="c1"># because `_pivoted_cholesky_init` does in-place operations.</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="c1"># Evaluate lazily because this may only be needed to figure out what</span>
+            <span class="c1"># case we are in</span>
+            <span class="n">possibly_lazy_kernel</span> <span class="o">=</span> <span class="n">covar_module</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
 
-        <span class="c1"># base case</span>
-        <span class="k">if</span> <span class="n">train_train_kernel</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">base_case</span> <span class="o">=</span> <span class="n">possibly_lazy_kernel</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span>
+        <span class="n">multi_task_case</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">possibly_lazy_kernel</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_batch_shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">base_case</span> <span class="ow">or</span> <span class="n">multi_task_case</span><span class="p">:</span>
+            <span class="n">train_train_kernel</span> <span class="o">=</span> <span class="n">possibly_lazy_kernel</span><span class="o">.</span><span class="n">evaluate_kernel</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">base_case</span><span class="p">:</span>
             <span class="n">quality_scores</span> <span class="o">=</span> <span class="n">quality_function</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
             <span class="n">inducing_points</span> <span class="o">=</span> <span class="n">_pivoted_cholesky_init</span><span class="p">(</span>
                 <span class="n">train_inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span>
@@ -108,8 +122,9 @@
                 <span class="n">max_length</span><span class="o">=</span><span class="n">num_inducing</span><span class="p">,</span>
                 <span class="n">quality_scores</span><span class="o">=</span><span class="n">quality_scores</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="c1"># multi-task case</span>
-        <span class="k">elif</span> <span class="n">train_train_kernel</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_batch_shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">inducing_points</span>
+
+        <span class="k">if</span> <span class="n">multi_task_case</span><span class="p">:</span>
             <span class="n">input_element</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">inputs</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span> <span class="k">else</span> <span class="n">inputs</span>
             <span class="n">kernel_element</span> <span class="o">=</span> <span class="n">train_train_kernel</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">quality_scores</span> <span class="o">=</span> <span class="n">quality_function</span><span class="p">(</span><span class="n">input_element</span><span class="p">)</span>
@@ -119,37 +134,42 @@
                 <span class="n">max_length</span><span class="o">=</span><span class="n">num_inducing</span><span class="p">,</span>
                 <span class="n">quality_scores</span><span class="o">=</span><span class="n">quality_scores</span><span class="p">,</span>
             <span class="p">)</span>
+            <span class="k">return</span> <span class="n">inducing_points</span>
+
         <span class="c1"># batched input cases</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">batched_inputs</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">inputs</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">input_batch_shape</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">inputs</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span>
-                <span class="k">else</span> <span class="n">inputs</span>
-            <span class="p">)</span>
-            <span class="n">reshaped_inputs</span> <span class="o">=</span> <span class="n">batched_inputs</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">end_dim</span><span class="o">=-</span><span class="mi">3</span><span class="p">)</span>
-            <span class="n">inducing_points</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">input_element</span> <span class="ow">in</span> <span class="n">reshaped_inputs</span><span class="p">:</span>
-                <span class="c1"># the extra kernel evals are a little wasteful but make it</span>
-                <span class="c1"># easier to infer the task batch size</span>
+        <span class="n">batched_inputs</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">inputs</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">input_batch_shape</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">inputs</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span>
+            <span class="k">else</span> <span class="n">inputs</span>
+        <span class="p">)</span>
+        <span class="n">reshaped_inputs</span> <span class="o">=</span> <span class="n">batched_inputs</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">end_dim</span><span class="o">=-</span><span class="mi">3</span><span class="p">)</span>
+        <span class="n">inducing_points</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">input_element</span> <span class="ow">in</span> <span class="n">reshaped_inputs</span><span class="p">:</span>
+            <span class="c1"># the extra kernel evals are a little wasteful but make it</span>
+            <span class="c1"># easier to infer the task batch size</span>
+            <span class="c1"># We use 'no_grad' here because `inducing_points` are not</span>
+            <span class="c1"># auto-differentiable with respect to the kernel hyper-parameters,</span>
+            <span class="c1"># because `_pivoted_cholesky_init` does in-place operations.</span>
+            <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
                 <span class="n">kernel_element</span> <span class="o">=</span> <span class="n">covar_module</span><span class="p">(</span><span class="n">input_element</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate_kernel</span><span class="p">()</span>
-                <span class="c1"># handle extra task batch dimension</span>
-                <span class="n">kernel_element</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="n">kernel_element</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-                    <span class="k">if</span> <span class="n">kernel_element</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span>
-                    <span class="k">else</span> <span class="n">kernel_element</span>
-                <span class="p">)</span>
-                <span class="n">quality_scores</span> <span class="o">=</span> <span class="n">quality_function</span><span class="p">(</span><span class="n">input_element</span><span class="p">)</span>
-                <span class="n">inducing_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="n">_pivoted_cholesky_init</span><span class="p">(</span>
-                        <span class="n">train_inputs</span><span class="o">=</span><span class="n">input_element</span><span class="p">,</span>
-                        <span class="n">kernel_matrix</span><span class="o">=</span><span class="n">kernel_element</span><span class="p">,</span>
-                        <span class="n">max_length</span><span class="o">=</span><span class="n">num_inducing</span><span class="p">,</span>
-                        <span class="n">quality_scores</span><span class="o">=</span><span class="n">quality_scores</span><span class="p">,</span>
-                    <span class="p">)</span>
-                <span class="p">)</span>
-            <span class="n">inducing_points</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">inducing_points</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
-                <span class="o">*</span><span class="n">input_batch_shape</span><span class="p">,</span> <span class="n">num_inducing</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="c1"># handle extra task batch dimension</span>
+            <span class="n">kernel_element</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">kernel_element</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">kernel_element</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span>
+                <span class="k">else</span> <span class="n">kernel_element</span>
             <span class="p">)</span>
+            <span class="n">quality_scores</span> <span class="o">=</span> <span class="n">quality_function</span><span class="p">(</span><span class="n">input_element</span><span class="p">)</span>
+            <span class="n">inducing_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">_pivoted_cholesky_init</span><span class="p">(</span>
+                    <span class="n">train_inputs</span><span class="o">=</span><span class="n">input_element</span><span class="p">,</span>
+                    <span class="n">kernel_matrix</span><span class="o">=</span><span class="n">kernel_element</span><span class="p">,</span>
+                    <span class="n">max_length</span><span class="o">=</span><span class="n">num_inducing</span><span class="p">,</span>
+                    <span class="n">quality_scores</span><span class="o">=</span><span class="n">quality_scores</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">inducing_points</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">inducing_points</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
+            <span class="o">*</span><span class="n">input_batch_shape</span><span class="p">,</span> <span class="n">num_inducing</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">inducing_points</span></div></div>
 
@@ -327,15 +347,20 @@
             <span class="s2">"_pivoted_cholesky_init requires a quality score for each of train_inputs"</span>
         <span class="p">)</span>
 
+    <span class="k">if</span> <span class="n">kernel_matrix</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+            <span class="s2">"`_pivoted_cholesky_init` does not support using a `kernel_matrix` "</span>
+            <span class="s2">"with `requires_grad=True`."</span>
+        <span class="p">)</span>
+
     <span class="n">item_size</span> <span class="o">=</span> <span class="n">kernel_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
     <span class="n">cis</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
         <span class="p">(</span><span class="n">max_length</span><span class="p">,</span> <span class="n">item_size</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">kernel_matrix</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">kernel_matrix</span><span class="o">.</span><span class="n">dtype</span>
     <span class="p">)</span>
     <span class="n">di2s</span> <span class="o">=</span> <span class="n">kernel_matrix</span><span class="o">.</span><span class="n">diagonal</span><span class="p">()</span>
     <span class="n">scores</span> <span class="o">=</span> <span class="n">di2s</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">quality_scores</span><span class="p">)</span>
-    <span class="n">selected_items</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">selected_item</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
-    <span class="n">selected_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">selected_item</span><span class="p">)</span>
+    <span class="n">selected_items</span> <span class="o">=</span> <span class="p">[</span><span class="n">selected_item</span><span class="p">]</span>
 
     <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">selected_items</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">max_length</span><span class="p">:</span>
         <span class="n">k</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">selected_items</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>

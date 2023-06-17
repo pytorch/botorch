@@ -24,7 +24,7 @@
 <span id="botorch-utils"></span><h1>botorch.utils<a class="headerlink" href="#module-botorch.utils" title="Permalink to this heading">¶</a></h1>
 <section id="module-botorch.utils.constraints">
 <span id="constraints"></span><h2>Constraints<a class="headerlink" href="#module-botorch.utils.constraints" title="Permalink to this heading">¶</a></h2>
-<p>Helpers for handling outcome constraints.</p>
+<p>Helpers for handling input or outcome constraints.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.constraints.get_outcome_constraint_transforms">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.constraints.</span></span><span class="sig-name descname"><span class="pre">get_outcome_constraint_transforms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outcome_constraints</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/constraints.html#get_outcome_constraint_transforms"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.constraints.get_outcome_constraint_transforms" title="Permalink to this definition">¶</a></dt>
@@ -52,6 +52,33 @@ Negative values imply feasibility. The callables support broadcasting
 <span class="gp">&gt;&gt;&gt; </span><span class="n">outcome_constraints</span> <span class="o">=</span> <span class="n">get_outcome_constraint_transforms</span><span class="p">((</span><span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span>
 </pre></div>
 </div>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.constraints.get_monotonicity_constraints">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.constraints.</span></span><span class="sig-name descname"><span class="pre">get_monotonicity_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">descending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/constraints.html#get_monotonicity_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.constraints.get_monotonicity_constraints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a system of linear inequalities <cite>(A, b)</cite> that generically encodes order
+constraints on the elements of a <cite>d</cite>-dimsensional space, i.e. <cite>A @ x &lt; b</cite> implies
+<cite>x[i] &lt; x[i + 1]</cite> for a <cite>d</cite>-dimensional vector <cite>x</cite>.</p>
+<p>Idea: Could encode <cite>A</cite> as sparse matrix, if it is supported well.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>d</strong> (<em>int</em>) – Dimensionality of the constraint space, i.e. number of monotonic parameters.</p></li>
+<li><p><strong>descending</strong> (<em>bool</em>) – If True, forces the elements of a vector to be monotonically de-
+creasing and be monotonically increasing otherwise.</p></li>
+<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>None</em>) – The dtype of the returned Tensors.</p></li>
+<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>) – The device of the returned Tensors.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple of Tensors <cite>(A, b)</cite> representing the monotonicity constraint as a system
+of linear inequalities <cite>A @ x &lt; b</cite>. <cite>A</cite> is <cite>(d - 1) x d</cite>-dimensional and <cite>b</cite> is
+<cite>(d - 1) x 1</cite>-dimensional.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>]</p>
+</dd>
+</dl>
 </dd></dl>
 </section>
 <section id="module-botorch.utils.containers">
@@ -3786,19 +3813,26 @@ linear domain constraints. AISTATS 2020.</p>
 </div>
 <p>This implementation is based (with multiple changes / optimiations) on
 the following implementations based on the algorithm in <a class="reference internal" href="#gessner2020" id="id27"><span>[Gessner2020]</span></a>:
-<a class="reference external" href="https://github.com/alpiges/LinConGauss">https://github.com/alpiges/LinConGauss</a>
-<a class="reference external" href="https://github.com/wjmaddox/pytorch_ess">https://github.com/wjmaddox/pytorch_ess</a></p>
+- <a class="reference external" href="https://github.com/alpiges/LinConGauss">https://github.com/alpiges/LinConGauss</a>
+- <a class="reference external" href="https://github.com/wjmaddox/pytorch_ess">https://github.com/wjmaddox/pytorch_ess</a></p>
+<p>The implementation here differentiates itself from the original implementations with:
+1) Support for fixed feature equality constraints.
+2) Support for non-standard Normal distributions.
+3) Numerical stability improvements, especially relevant for high-dimensional cases.</p>
+<p>Notably, this implementation does not rely on an adaptive <cite>delta_theta</cite> parameter in
+order to determine if two neighboring constraint intersection angles <cite>theta</cite> lead to a
+change in the feasibility of the sample. This both simplifies the implementation and
+makes it more robust to numerical imprecisions when two constraint intersection angles
+are close to each other.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.probability.lin_ess.</span></span><span class="sig-name descname"><span class="pre">LinearEllipticalSliceSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interior_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariance_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariance_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_feasibility</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">burnin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thinning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/probability/lin_ess.html#LinearEllipticalSliceSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.probability.lin_ess.</span></span><span class="sig-name descname"><span class="pre">LinearEllipticalSliceSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interior_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariance_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariance_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_feasibility</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">burnin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thinning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/probability/lin_ess.html#LinearEllipticalSliceSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PolytopeSampler</span></code></p>
 <p>Linear Elliptical Slice Sampler.</p>
-<p>TODOs:
-- clean up docstrings
+<p>Ideas:
 - Add batch support, broadcasting over parallel chains.
-- optimize computations (if possible)</p>
-<p>Maybe TODOs:
-- Support degenerate domains (with zero volume)?</p>
+- Optimize computations if possible, potentially with torch.compile.
+- Extend fixed features constraint to general linear equality constraints.</p>
 <p>Initialize LinearEllipticalSliceSampler.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -3815,6 +3849,10 @@ interior of the polytope. If omitted, an interior point is determined
 automatically by solving a Linear Program. Note: It is crucial that
 the point lie in the interior of the feasible set (rather than on the
 boundary), otherwise the sampler will produce invalid samples.</p></li>
+<li><p><strong>fixed_indices</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Integer list or <cite>d</cite>-dim Tensor representing the indices of
+dimensions that are constrained to be fixed to the values specified in
+the <cite>interior_point</cite>, which is required to be passed in conjunction with
+<cite>fixed_indices</cite>.</p></li>
 <li><p><strong>mean</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – The <cite>d x 1</cite>-dim mean of the MVN distribution (if omitted, use zero).</p></li>
 <li><p><strong>covariance_matrix</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – The <cite>d x d</cite>-dim covariance matrix of the MVN
 distribution (if omitted, use the identity).</p></li>
@@ -3867,6 +3905,27 @@ if provided).</p>
 </dd>
 </dl>
 </dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.probability.lin_ess.get_index_tensors">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.probability.lin_ess.</span></span><span class="sig-name descname"><span class="pre">get_index_tensors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/probability/lin_ess.html#get_index_tensors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.probability.lin_ess.get_index_tensors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts <cite>fixed_indices</cite> to a <cite>d</cite>-dim integral Tensor that is True at indices
+that are contained in <cite>fixed_indices</cite> and False otherwise.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fixed_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>Tensor</em>) – A list or Tensoro of integer indices to fix.</p></li>
+<li><p><strong>d</strong> (<em>int</em>) – The dimensionality of the Tensors to be indexed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A Tuple of integral Tensors partitioning [1, d] into indices that are fixed
+(first tensor) and non-fixed (second tensor).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>]</p>
+</dd>
+</dl>
 </dd></dl>
 </section>
 <section id="module-botorch.utils.probability.linalg">

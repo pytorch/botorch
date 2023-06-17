@@ -214,7 +214,7 @@
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: Training inputs (due to the ability of the SVGP to sub-sample</span>
 <span class="sd">                this does not have to be all of the training inputs).</span>
-<span class="sd">            train_Y: Training targets (optional).</span>
+<span class="sd">            train_Y: Not used.</span>
 <span class="sd">            num_outputs: Number of output responses per input.</span>
 <span class="sd">            covar_module: Kernel function. If omitted, uses a `MaternKernel`.</span>
 <span class="sd">            mean_module: Mean of GP model. If omitted, uses a `ConstantMean`.</span>
@@ -425,7 +425,6 @@
 
         <span class="n">model</span> <span class="o">=</span> <span class="n">_SingleTaskVariationalGP</span><span class="p">(</span>
             <span class="n">train_X</span><span class="o">=</span><span class="n">transformed_X</span><span class="p">,</span>
-            <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span>
             <span class="n">num_outputs</span><span class="o">=</span><span class="n">num_outputs</span><span class="p">,</span>
             <span class="n">learn_inducing_points</span><span class="o">=</span><span class="n">learn_inducing_points</span><span class="p">,</span>
             <span class="n">covar_module</span><span class="o">=</span><span class="n">covar_module</span><span class="p">,</span>
