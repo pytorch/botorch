@@ -191,7 +191,7 @@ class _SingleTaskVariationalGP(ApproximateGP):
         Args:
             train_X: Training inputs (due to the ability of the SVGP to sub-sample
                 this does not have to be all of the training inputs).
-            train_Y: Training targets (optional).
+            train_Y: Not used.
             num_outputs: Number of output responses per input.
             covar_module: Kernel function. If omitted, uses a `MaternKernel`.
             mean_module: Mean of GP model. If omitted, uses a `ConstantMean`.
@@ -402,7 +402,6 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
 
         model = _SingleTaskVariationalGP(
             train_X=transformed_X,
-            train_Y=train_Y,
             num_outputs=num_outputs,
             learn_inducing_points=learn_inducing_points,
             covar_module=covar_module,
