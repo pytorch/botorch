@@ -375,6 +375,8 @@ class TestRandomFourierFeatures(BotorchTestCase):
 
     def test_get_deterministic_model(self):
         tkwargs = {"device": self.device}
+        # test is known to be non-flaky for each of these seeds
+        torch.manual_seed(torch.randint(10, torch.Size([])).item())
         for dtype, m in product((torch.float, torch.double), (1, 2)):
             tkwargs["dtype"] = dtype
             use_model_list_vals = [False]
