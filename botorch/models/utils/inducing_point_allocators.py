@@ -24,6 +24,7 @@ from abc import ABC, abstractmethod
 from typing import Union
 
 import torch
+from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
 
 from botorch.utils.probability.utils import ndtr as Phi, phi
@@ -74,10 +75,23 @@ class InducingPointAllocator(ABC):
         quality_function = self._get_quality_function()
         covar_module = covar_module.to(inputs.device)
 
-        train_train_kernel = covar_module(inputs).evaluate_kernel()
+        # We use 'no_grad' here because `inducing_points` are not
+        # auto-differentiable with respect to the kernel hyper-parameters,
+        # because `_pivoted_cholesky_init` does in-place operations.
+        with torch.no_grad():
+            # Evaluate lazily because this may only be needed to figure out what
+            # case we are in
+            possibly_lazy_kernel = covar_module(inputs)
 
-        # base case
-        if train_train_kernel.ndimension() == 2:
+        base_case = possibly_lazy_kernel.ndimension() == 2
+        multi_task_case = (
+            possibly_lazy_kernel.ndimension() == 3 and len(input_batch_shape) == 0
+        )
+
+        if base_case or multi_task_case:
+            train_train_kernel = possibly_lazy_kernel.evaluate_kernel()
+
+        if base_case:
             quality_scores = quality_function(inputs)
             inducing_points = _pivoted_cholesky_init(
                 train_inputs=inputs,
@@ -85,8 +99,9 @@ class InducingPointAllocator(ABC):
                 max_length=num_inducing,
                 quality_scores=quality_scores,
             )
-        # multi-task case
-        elif train_train_kernel.ndimension() == 3 and len(input_batch_shape) == 0:
+            return inducing_points
+
+        if multi_task_case:
             input_element = inputs[0] if inputs.ndimension() == 3 else inputs
             kernel_element = train_train_kernel[0]
             quality_scores = quality_function(input_element)
@@ -96,37 +111,42 @@ class InducingPointAllocator(ABC):
                 max_length=num_inducing,
                 quality_scores=quality_scores,
             )
+            return inducing_points
+
         # batched input cases
-        else:
-            batched_inputs = (
-                inputs.expand(*input_batch_shape, -1, -1)
-                if inputs.ndimension() == 2
-                else inputs
-            )
-            reshaped_inputs = batched_inputs.flatten(end_dim=-3)
-            inducing_points = []
-            for input_element in reshaped_inputs:
-                # the extra kernel evals are a little wasteful but make it
-                # easier to infer the task batch size
+        batched_inputs = (
+            inputs.expand(*input_batch_shape, -1, -1)
+            if inputs.ndimension() == 2
+            else inputs
+        )
+        reshaped_inputs = batched_inputs.flatten(end_dim=-3)
+        inducing_points = []
+        for input_element in reshaped_inputs:
+            # the extra kernel evals are a little wasteful but make it
+            # easier to infer the task batch size
+            # We use 'no_grad' here because `inducing_points` are not
+            # auto-differentiable with respect to the kernel hyper-parameters,
+            # because `_pivoted_cholesky_init` does in-place operations.
+            with torch.no_grad():
                 kernel_element = covar_module(input_element).evaluate_kernel()
-                # handle extra task batch dimension
-                kernel_element = (
-                    kernel_element[0]
-                    if kernel_element.ndimension() == 3
-                    else kernel_element
-                )
-                quality_scores = quality_function(input_element)
-                inducing_points.append(
-                    _pivoted_cholesky_init(
-                        train_inputs=input_element,
-                        kernel_matrix=kernel_element,
-                        max_length=num_inducing,
-                        quality_scores=quality_scores,
-                    )
-                )
-            inducing_points = torch.stack(inducing_points).view(
-                *input_batch_shape, num_inducing, -1
+            # handle extra task batch dimension
+            kernel_element = (
+                kernel_element[0]
+                if kernel_element.ndimension() == 3
+                else kernel_element
             )
+            quality_scores = quality_function(input_element)
+            inducing_points.append(
+                _pivoted_cholesky_init(
+                    train_inputs=input_element,
+                    kernel_matrix=kernel_element,
+                    max_length=num_inducing,
+                    quality_scores=quality_scores,
+                )
+            )
+        inducing_points = torch.stack(inducing_points).view(
+            *input_batch_shape, num_inducing, -1
+        )
 
         return inducing_points
 
@@ -304,15 +324,20 @@ def _pivoted_cholesky_init(
             "_pivoted_cholesky_init requires a quality score for each of train_inputs"
         )
 
+    if kernel_matrix.requires_grad:
+        raise UnsupportedError(
+            "`_pivoted_cholesky_init` does not support using a `kernel_matrix` "
+            "with `requires_grad=True`."
+        )
+
     item_size = kernel_matrix.shape[-2]
     cis = torch.zeros(
         (max_length, item_size), device=kernel_matrix.device, dtype=kernel_matrix.dtype
     )
     di2s = kernel_matrix.diagonal()
     scores = di2s * torch.square(quality_scores)
-    selected_items = []
     selected_item = torch.argmax(scores)
-    selected_items.append(selected_item)
+    selected_items = [selected_item]
 
     while len(selected_items) < max_length:
         k = len(selected_items) - 1
