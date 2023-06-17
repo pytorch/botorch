@@ -14,6 +14,7 @@ from unittest.mock import patch
 
 import torch
 from botorch.exceptions.errors import BotorchError
+from botorch.utils.constraints import get_monotonicity_constraints
 from botorch.utils.probability.lin_ess import LinearEllipticalSliceSampler
 from botorch.utils.testing import BotorchTestCase
 from torch import Tensor
@@ -414,15 +415,9 @@ class TestLinearEllipticalSliceSampler(BotorchTestCase):
                 )
 
             # high dimensional test case
+            # Encodes order constraints on all d variables: Ax < b <-> x[i] < x[i + 1]
             d = 128
-            # this encodes order constraints on all d variables: Ax < b
-            # x[i] < x[i + 1]
-            A = torch.zeros(d - 1, d, **tkwargs)
-            for i in range(d - 1):
-                A[i, i] = 1
-                A[i, i + 1] = -1
-            b = torch.zeros(d - 1, 1, **tkwargs)
-
+            A, b = get_monotonicity_constraints(d=d, **tkwargs)
             interior_point = torch.arange(d, **tkwargs).unsqueeze(-1) / d - 1 / 2
             sampler = LinearEllipticalSliceSampler(
                 inequality_constraints=(A, b),
