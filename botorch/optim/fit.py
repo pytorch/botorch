@@ -369,13 +369,12 @@ def fit_gpytorch_torch(
         name_filter=None if exclude is None else get_name_filter(exclude),
     )
 
-    iterations: List[OptimizationResult] = []
-    stopping_criterion = ExpMAStoppingCriterion(**_stopping_options)
-
     optimizer = optimizer_cls(
         params=list(parameters.values()),
         **_filter_kwargs(optimizer_cls, **_optimizer_options),
     )
+    iterations: List[OptimizationResult] = []
+    stopping_criterion = ExpMAStoppingCriterion(**_stopping_options)
 
     def closure() -> Tuple[Tensor, Tuple[Tensor, ...]]:
         optimizer.zero_grad()
