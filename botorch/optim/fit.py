@@ -353,21 +353,28 @@ def fit_gpytorch_torch(
         "`torch_minimize` or its model fitting helper `fit_gpytorch_mll_torch`.",
         DeprecationWarning,
     )
-    _options = {"maxiter": 100, "disp": True, "lr": 0.05}
-    _options.update(options or {})
-    exclude = _options.pop("exclude", None)
+    _optimizer_options = {"lr": 0.05}
+    _stopping_options = {"maxiter": 100}
+
+    exclude = options.pop("exclude", None)
+    # It would be better to have different arguments 'optimizer_options' and
+    # 'stopping_options' and do these 'update's separately, but since this function is
+    # deprecated anyway it isn't worth the effort.
+    _optimizer_options.update(options or {})
+    _stopping_options.update(options or {})
+
     parameters = get_parameters(
         mll,
         requires_grad=True,
         name_filter=None if exclude is None else get_name_filter(exclude),
     )
 
-    optimizer = optimizer_cls(
-        params=list(parameters.values()), **_filter_kwargs(optimizer_cls, **_options)
-    )
     iterations: List[OptimizationResult] = []
-    stopping_criterion = ExpMAStoppingCriterion(
-        **_filter_kwargs(ExpMAStoppingCriterion, **_options)
+    stopping_criterion = ExpMAStoppingCriterion(**_stopping_options)
+
+    optimizer = optimizer_cls(
+        params=list(parameters.values()),
+        **_filter_kwargs(optimizer_cls, **_optimizer_options),
     )
 
     def closure() -> Tuple[Tensor, Tuple[Tensor, ...]]:

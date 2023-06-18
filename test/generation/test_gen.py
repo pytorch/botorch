@@ -105,9 +105,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 self.assertTrue(-EPS <= candidates <= 1 + EPS)
 
     def test_gen_candidates_torch(self):
-        self.test_gen_candidates(
-            gen_candidates=gen_candidates_torch, options={"disp": False}
-        )
+        self.test_gen_candidates(gen_candidates=gen_candidates_torch)
 
     def test_gen_candidates_with_none_fixed_features(
         self,
@@ -144,7 +142,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
 
     def test_gen_candidates_torch_with_none_fixed_features(self):
         self.test_gen_candidates_with_none_fixed_features(
-            gen_candidates=gen_candidates_torch, options={"disp": False}
+            gen_candidates=gen_candidates_torch
         )
 
     def test_gen_candidates_with_fixed_features(
@@ -184,21 +182,19 @@ class TestGenCandidates(TestBaseCandidateGeneration):
     def test_gen_candidates_with_fixed_features_and_timeout(self):
         with self.assertLogs("botorch", level="INFO") as logs:
             self.test_gen_candidates_with_fixed_features(
-                options={"disp": False},
                 timeout_sec=1e-4,
             )
         self.assertTrue(any("Optimization timed out" in o for o in logs.output))
 
     def test_gen_candidates_torch_with_fixed_features(self):
         self.test_gen_candidates_with_fixed_features(
-            gen_candidates=gen_candidates_torch, options={"disp": False}
+            gen_candidates=gen_candidates_torch
         )
 
     def test_gen_candidates_torch_with_fixed_features_and_timeout(self):
         with self.assertLogs("botorch", level="INFO") as logs:
             self.test_gen_candidates_with_fixed_features(
                 gen_candidates=gen_candidates_torch,
-                options={"disp": False},
                 timeout_sec=1e-4,
             )
         self.assertTrue(any("Optimization timed out" in o for o in logs.output))
@@ -335,23 +331,23 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                     acquisition_function=mock.Mock(),
                 )
 
-    def test_gen_candidates_without_grad(self):
+    def test_gen_candidates_without_grad(self) -> None:
+        """Test with `with_grad=False` (not supported for gen_candidates_torch)."""
 
-        for gen_candidates in (gen_candidates_scipy, gen_candidates_torch):
-            self.test_gen_candidates(
-                gen_candidates=gen_candidates,
-                options={"disp": False, "with_grad": False},
-            )
+        self.test_gen_candidates(
+            gen_candidates=gen_candidates_scipy,
+            options={"disp": False, "with_grad": False},
+        )
 
-            self.test_gen_candidates_with_fixed_features(
-                gen_candidates=gen_candidates,
-                options={"disp": False, "with_grad": False},
-            )
+        self.test_gen_candidates_with_fixed_features(
+            gen_candidates=gen_candidates_scipy,
+            options={"disp": False, "with_grad": False},
+        )
 
-            self.test_gen_candidates_with_none_fixed_features(
-                gen_candidates=gen_candidates,
-                options={"disp": False, "with_grad": False},
-            )
+        self.test_gen_candidates_with_none_fixed_features(
+            gen_candidates=gen_candidates_scipy,
+            options={"disp": False, "with_grad": False},
+        )
 
 
 class TestRandomRestartOptimization(TestBaseCandidateGeneration):

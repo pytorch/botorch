@@ -291,9 +291,12 @@ class TestOptimizeAcqf(BotorchTestCase):
                         4 * torch.ones(3, device=self.device, dtype=dtype),
                     ]
                 )
-                inequality_constraints = [
-                    (torch.tensor([2]), torch.tensor([4]), torch.tensor(5))
-                ]
+                # gen_candidates_torch does not support inequality constraints
+                inequality_constraints = (
+                    [(torch.tensor([2]), torch.tensor([4]), torch.tensor(5))]
+                    if mock_gen_candidates == mock_gen_candidates_scipy
+                    else None
+                )
                 mock_gen_candidates.reset_mock()
                 candidates, acq_value = optimize_acqf(
                     acq_function=mock_acq_function,
@@ -953,9 +956,8 @@ class TestOptimizeAcqf(BotorchTestCase):
                 if mock_gen_candidates == mock_gen_candidates_torch:
                     self.assertEqual(len(ws), 3)
                     message = (
-                        "Keyword arguments ['nonlinear_inequality_constraints',"
-                        " 'equality_constraints', 'inequality_constraints'] will"
-                        " be ignored because they are not allowed parameters for"
+                        "Keyword arguments ['nonlinear_inequality_constraints']"
+                        " will be ignored because they are not allowed parameters for"
                         " function gen_candidates. Allowed parameters are "
                         " ['initial_conditions', 'acquisition_function', "
                         "'lower_bounds', 'upper_bounds', 'optimizer', 'options',"

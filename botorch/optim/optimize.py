@@ -313,16 +313,15 @@ def _optimize_acqf_batch(
         if has_parameter_constraints:
             # only add parameter constraints to gen_kwargs if they are specified
             # to avoid unnecessary warnings in _filter_kwargs
-            gen_kwargs.update(
-                {
-                    "inequality_constraints": opt_inputs.inequality_constraints,
-                    "equality_constraints": opt_inputs.equality_constraints,
-                    # the line is too long
-                    "nonlinear_inequality_constraints": (
-                        opt_inputs.nonlinear_inequality_constraints
-                    ),
-                }
-            )
+            if opt_inputs.inequality_constraints is not None:
+                gen_kwargs["inequality_constraints"] = opt_inputs.inequality_constraints
+            if opt_inputs.equality_constraints is not None:
+                gen_kwargs["equality_constraints"] = opt_inputs.equality_constraints
+            if opt_inputs.nonlinear_inequality_constraints is not None:
+                gen_kwargs[
+                    "nonlinear_inequality_constraints"
+                ] = opt_inputs.nonlinear_inequality_constraints
+
         filtered_gen_kwargs = _filter_kwargs(opt_inputs.gen_candidates, **gen_kwargs)
 
         for i, batched_ics_ in enumerate(batched_ics):

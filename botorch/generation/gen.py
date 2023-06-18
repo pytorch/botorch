@@ -29,7 +29,7 @@ from botorch.optim.parameter_constraints import (
     NLC_TOL,
 )
 from botorch.optim.stopping import ExpMAStoppingCriterion
-from botorch.optim.utils import _filter_kwargs, columnwise_clamp, fix_features
+from botorch.optim.utils import columnwise_clamp, fix_features
 from botorch.optim.utils.timeout import minimize_with_timeout
 from scipy.optimize import OptimizeResult
 from torch import Tensor
@@ -367,9 +367,7 @@ def gen_candidates_torch(
 
     i = 0
     stop = False
-    stopping_criterion = ExpMAStoppingCriterion(
-        **_filter_kwargs(ExpMAStoppingCriterion, **options)
-    )
+    stopping_criterion = ExpMAStoppingCriterion(**options)
     while not stop:
         i += 1
         with torch.no_grad():

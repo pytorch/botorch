@@ -393,7 +393,7 @@ class TestFitGPyTorchTorch(BotorchTestCase):
                 self._test_fit_gpytorch_torch(mll.to(dtype=dtype))
 
     def _test_fit_gpytorch_torch(self, mll):
-        options = {"disp": False, "maxiter": 3}
+        options = {"maxiter": 3}
         ckpt = {
             k: TensorCheckpoint(v.detach().clone(), v.device, v.dtype)
             for k, v in mll.state_dict().items()

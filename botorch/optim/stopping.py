@@ -6,7 +6,6 @@
 
 from __future__ import annotations
 
-import typing  # noqa F401
 from abc import ABC, abstractmethod
 
 import torch
