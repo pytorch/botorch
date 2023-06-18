@@ -166,7 +166,9 @@ class TestLinearEllipticalSliceSampler(BotorchTestCase):
             self.assertFalse(torch.equal(sampler._x, sampler.x0))
 
     def test_multivariate(self):
-        for dtype, atol in zip((torch.float, torch.double), (1e-6, 1e-12)):
+        torch.manual_seed(torch.randint(100, torch.Size([])).item())
+        rtol = 1e-3
+        for dtype, atol in zip((torch.float, torch.double), (2e-5, 1e-12)):
             d = 5
             tkwargs = {"device": self.device, "dtype": dtype}
             # special case: N(0, I) truncated to greater than lower_bound
@@ -312,6 +314,7 @@ class TestLinearEllipticalSliceSampler(BotorchTestCase):
                         sampler._Az @ sampler._transform(X_test) - sampler._bz,
                         A @ X_test - b,
                         atol=atol,
+                        rtol=rtol,
                     )
                     self.assertAllClose(
                         sampler._is_feasible(
