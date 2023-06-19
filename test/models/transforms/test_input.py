@@ -7,6 +7,7 @@
 import itertools
 import warnings
 from copy import deepcopy
+from random import randint
 
 import torch
 from botorch import settings
@@ -142,7 +143,7 @@ class TestInputTransforms(BotorchTestCase):
 
     def test_normalize(self) -> None:
         # set seed to range where this is known to not be flaky
-        torch.manual_seed(torch.randint(1000, torch.Size([])).item())
+        torch.manual_seed(randint(0, 1000))
         for dtype in (torch.float, torch.double):
             # basic init, learned bounds
             nlz = Normalize(d=2)
@@ -531,7 +532,7 @@ class TestInputTransforms(BotorchTestCase):
         batch_shapes = (torch.Size(), torch.Size([2]))
         dtypes = (torch.float, torch.double)
         # set seed to range where this is known to not be flaky
-        torch.manual_seed(torch.randint(1000, torch.Size([])).item())
+        torch.manual_seed(randint(0, 1000))
 
         for d, batch_shape, dtype in itertools.product(ds, batch_shapes, dtypes):
             bounds = torch.tensor(
@@ -628,7 +629,7 @@ class TestInputTransforms(BotorchTestCase):
         int_idcs = [0, 4]
         categorical_feats = {2: 2, 5: 3}
         # set seed to range where this is known to not be flaky
-        torch.manual_seed(torch.randint(1000, torch.Size([])).item())
+        torch.manual_seed(randint(0, 1000))
         for dtype, batch_shape, approx, categorical_features in itertools.product(
             (torch.float, torch.double),
             (torch.Size(), torch.Size([3])),
@@ -777,7 +778,7 @@ class TestInputTransforms(BotorchTestCase):
 
     def test_log10_transform(self) -> None:
         # set seed to range where this is known to not be flaky
-        torch.manual_seed(torch.randint(1000, torch.Size([])).item())
+        torch.manual_seed(randint(0, 1000))
         for dtype in (torch.float, torch.double):
             # basic init
             indices = [0, 2]
@@ -833,7 +834,7 @@ class TestInputTransforms(BotorchTestCase):
 
     def test_warp_transform(self) -> None:
         # set seed to range where this is known to not be flaky
-        torch.manual_seed(torch.randint(1000, torch.Size([])).item())
+        torch.manual_seed(randint(0, 1000))
         for dtype, batch_shape, warp_batch_shape in itertools.product(
             (torch.float, torch.double),
             (torch.Size(), torch.Size([3])),
@@ -980,7 +981,7 @@ class TestInputTransforms(BotorchTestCase):
 
     def test_one_hot_to_numeric(self) -> None:
         # set seed to range where this is known to not be flaky
-        torch.manual_seed(torch.randint(1000, torch.Size([])).item())
+        torch.manual_seed(randint(0, 1000))
         dim = 8
         # test exception when categoricals are not the trailing dimensions
         categorical_features = {0: 2}
@@ -1068,7 +1069,7 @@ class TestAppendFeatures(BotorchTestCase):
             AppendFeatures(torch.ones(3, 4, 2))
 
         # set seed to range where this is known to not be flaky
-        torch.manual_seed(torch.randint(100, torch.Size([])).item())
+        torch.manual_seed(randint(0, 100))
 
         for dtype in (torch.float, torch.double):
             feature_set = (
@@ -1135,7 +1136,7 @@ class TestAppendFeatures(BotorchTestCase):
             return result.expand(*result.shape[:-2], n_f, -1)
 
         # set seed to range where this is known to not be flaky
-        torch.manual_seed(torch.randint(100, torch.Size([])).item())
+        torch.manual_seed(randint(0, 100))
 
         for dtype in [torch.float, torch.double]:
             tkwargs = {"device": self.device, "dtype": dtype}
@@ -1368,7 +1369,7 @@ class TestFilterFeatures(BotorchTestCase):
             FilterFeatures(torch.tensor([0, 1, 1], dtype=torch.long))
 
         # set seed to range where this is known to not be flaky
-        torch.manual_seed(torch.randint(100, torch.Size([])).item())
+        torch.manual_seed(randint(0, 100))
 
         for dtype in (torch.float, torch.double):
             feature_indices = torch.tensor(
