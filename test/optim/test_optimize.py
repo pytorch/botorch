@@ -292,9 +292,19 @@ class TestOptimizeAcqf(BotorchTestCase):
                         4 * torch.ones(3, device=self.device, dtype=dtype),
                     ]
                 )
-                inequality_constraints = [
-                    (torch.tensor([2]), torch.tensor([4]), torch.tensor(5))
-                ]
+                if mock_gen_candidates is mock_gen_candidates_scipy:
+                    # x[2] * 4 >= 5
+                    inequality_constraints = [
+                        (torch.tensor([2]), torch.tensor([4]), torch.tensor(5))
+                    ]
+                    equality_constraints = [
+                        (torch.tensor([0, 1]), torch.ones(2), torch.tensor(4.0))
+                    ]
+                # gen_candidates_torch does not support constraints
+                else:
+                    inequality_constraints = None
+                    equality_constraints = None
+
                 mock_gen_candidates.reset_mock()
                 candidates, acq_value = optimize_acqf(
                     acq_function=mock_acq_function,
@@ -304,6 +314,7 @@ class TestOptimizeAcqf(BotorchTestCase):
                     raw_samples=raw_samples,
                     options=options,
                     inequality_constraints=inequality_constraints,
+                    equality_constraints=equality_constraints,
                     post_processing_func=rounding_func if use_rounding else None,
                     sequential=True,
                     timeout_sec=timeout_sec,
@@ -1015,9 +1026,8 @@ class TestOptimizeAcqf(BotorchTestCase):
                 if mock_gen_candidates == mock_gen_candidates_torch:
                     self.assertEqual(len(ws), 3)
                     message = (
-                        "Keyword arguments ['nonlinear_inequality_constraints',"
-                        " 'equality_constraints', 'inequality_constraints'] will"
-                        " be ignored because they are not allowed parameters for"
+                        "Keyword arguments ['nonlinear_inequality_constraints']"
+                        " will be ignored because they are not allowed parameters for"
                         " function gen_candidates. Allowed parameters are "
                         " ['initial_conditions', 'acquisition_function', "
                         "'lower_bounds', 'upper_bounds', 'optimizer', 'options',"
