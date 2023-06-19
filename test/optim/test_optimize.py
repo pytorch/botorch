@@ -7,6 +7,7 @@
 import itertools
 import warnings
 from inspect import signature
+from itertools import product
 from unittest import mock
 
 import numpy as np
@@ -33,6 +34,7 @@ from botorch.optim.parameter_constraints import (
     _arrayify,
     _make_f_and_grad_nonlinear_inequality_constraints,
 )
+from botorch.optim.utils.timeout import minimize_with_timeout
 from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction
 from scipy.optimize import OptimizeResult
 from torch import Tensor
@@ -256,9 +258,8 @@ class TestOptimizeAcqf(BotorchTestCase):
         mock_gen_batch_initial_conditions,
         timeout_sec=None,
     ):
-        for mock_gen_candidates in (
-            mock_gen_candidates_scipy,
-            mock_gen_candidates_torch,
+        for mock_gen_candidates, timeout_sec in product(
+            [mock_gen_candidates_scipy, mock_gen_candidates_torch], [None, 1e-4]
         ):
             if mock_gen_candidates == mock_gen_candidates_torch:
                 mock_signature.return_value = signature(gen_candidates_torch)
@@ -367,8 +368,69 @@ class TestOptimizeAcqf(BotorchTestCase):
                     sequential=True,
                 )
 
-    def test_optimize_acqf_sequential_timeout(self):
-        self.test_optimize_acqf_sequential(timeout_sec=1e-4)
+    @mock.patch(
+        "botorch.generation.gen.minimize_with_timeout",
+        wraps=minimize_with_timeout,
+    )
+    @mock.patch("botorch.optim.utils.timeout.optimize.minimize")
+    def test_optimize_acqf_timeout(
+        self, mock_minimize, mock_minimize_with_timeout
+    ) -> None:
+        """
+        Check that the right value of `timeout_sec` is passed to `minimize_with_timeout`
+        """
+
+        num_restarts = 2
+        q = 3
+        dim = 4
+
+        for timeout_sec, sequential, expected_call_count, expected_timeout_arg in [
+            (1.0, True, num_restarts * q, 1.0 / (num_restarts * q)),
+            (0.0, True, num_restarts * q, 0.0),
+            (1.0, False, num_restarts, 1.0 / num_restarts),
+            (0.0, False, num_restarts, 0.0),
+        ]:
+            with self.subTest(
+                timeout_sec=timeout_sec,
+                sequential=sequential,
+                expected_call_count=expected_call_count,
+                expected_timeout_arg=expected_timeout_arg,
+            ):
+                mock_minimize.return_value = OptimizeResult(
+                    {
+                        "x": np.zeros(dim if sequential else dim * q),
+                        "success": True,
+                        "status": 0,
+                    },
+                )
+
+                optimize_acqf(
+                    timeout_sec=timeout_sec,
+                    q=q,
+                    sequential=sequential,
+                    num_restarts=num_restarts,
+                    acq_function=SinOneOverXAcqusitionFunction(),
+                    bounds=torch.stack([-1 * torch.ones(dim), torch.ones(dim)]),
+                    raw_samples=7,
+                    options={"batch_limit": 1},
+                )
+                self.assertEqual(
+                    mock_minimize_with_timeout.call_count, expected_call_count
+                )
+                timeout_times = torch.tensor(
+                    [
+                        elt.kwargs["timeout_sec"]
+                        for elt in mock_minimize_with_timeout.mock_calls
+                    ]
+                )
+                self.assertGreaterEqual(timeout_times.min(), 0)
+                self.assertAllClose(
+                    timeout_times,
+                    torch.full_like(timeout_times, expected_timeout_arg),
+                    rtol=float("inf"),
+                    atol=1e-8,
+                )
+                mock_minimize_with_timeout.reset_mock()
 
     def test_optimize_acqf_sequential_notimplemented(self):
         # Sequential acquisition function optimization only supported
