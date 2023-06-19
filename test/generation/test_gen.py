@@ -183,6 +183,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
         with self.assertLogs("botorch", level="INFO") as logs:
             self.test_gen_candidates_with_fixed_features(
                 timeout_sec=1e-4,
+                options={"disp": False},
             )
         self.assertTrue(any("Optimization timed out" in o for o in logs.output))
 
