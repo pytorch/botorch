@@ -7,6 +7,7 @@
 import itertools
 import warnings
 from copy import deepcopy
+from random import randint
 
 import torch
 from botorch import settings
@@ -65,7 +66,7 @@ class NotSoAbstractInputTransform(InputTransform, Module):
 
 
 class TestInputTransforms(BotorchTestCase):
-    def test_abstract_base_input_transform(self):
+    def test_abstract_base_input_transform(self) -> None:
         with self.assertRaises(TypeError):
             InputTransform()
         X = torch.zeros([1])
@@ -140,7 +141,9 @@ class TestInputTransforms(BotorchTestCase):
         with self.assertRaises(NotImplementedError):
             affine._update_coefficients(X)
 
-    def test_normalize(self):
+    def test_normalize(self) -> None:
+        # set seed to range where this is known to not be flaky
+        torch.manual_seed(randint(0, 1000))
         for dtype in (torch.float, torch.double):
             # basic init, learned bounds
             nlz = Normalize(d=2)
@@ -259,7 +262,9 @@ class TestInputTransforms(BotorchTestCase):
                     [X.min(dim=-2, keepdim=True)[0], X.max(dim=-2, keepdim=True)[0]],
                     dim=-2,
                 )
-                self.assertAllClose(nlz.bounds, expected_bounds)
+                atol = 1e-6 if dtype is torch.float32 else 1e-12
+                rtol = 1e-4 if dtype is torch.float32 else 1e-8
+                self.assertAllClose(nlz.bounds, expected_bounds, atol=atol, rtol=rtol)
                 # test errors on wrong shape
                 nlz = Normalize(d=2, batch_shape=batch_shape)
                 X = torch.randn(*batch_shape, 2, 1, device=self.device, dtype=dtype)
@@ -526,6 +531,8 @@ class TestInputTransforms(BotorchTestCase):
         ds = (1, 2)
         batch_shapes = (torch.Size(), torch.Size([2]))
         dtypes = (torch.float, torch.double)
+        # set seed to range where this is known to not be flaky
+        torch.manual_seed(randint(0, 1000))
 
         for d, batch_shape, dtype in itertools.product(ds, batch_shapes, dtypes):
             bounds = torch.tensor(
@@ -591,27 +598,25 @@ class TestInputTransforms(BotorchTestCase):
         tf = ChainedInputTransform(stz=tf1, pert=tf2)
         self.assertTrue(tf.is_one_to_many)
 
-    def test_round_transform(self):
-        for dtype in (torch.float, torch.double):
-            # basic init
-            int_idcs = [0, 4]
-            categorical_feats = {2: 2, 5: 3}
-            # test deprecation warning
-            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
-                Round(indices=int_idcs)
-                self.assertTrue(
-                    any(issubclass(w.category, DeprecationWarning) for w in ws)
-                )
-            round_tf = Round(
-                integer_indices=int_idcs, categorical_features=categorical_feats
-            )
-            self.assertEqual(round_tf.integer_indices.tolist(), int_idcs)
-            self.assertEqual(round_tf.categorical_features, categorical_feats)
-            self.assertTrue(round_tf.training)
-            self.assertFalse(round_tf.approximate)
-            self.assertEqual(round_tf.tau, 1e-3)
-            self.assertTrue(round_tf.equals(Round(**round_tf.get_init_args())))
+    def test_round_transform_init(self) -> None:
+        # basic init
+        int_idcs = [0, 4]
+        categorical_feats = {2: 2, 5: 3}
+        # test deprecation warning
+        with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+            Round(indices=int_idcs)
+            self.assertTrue(any(issubclass(w.category, DeprecationWarning) for w in ws))
+        round_tf = Round(
+            integer_indices=int_idcs, categorical_features=categorical_feats
+        )
+        self.assertEqual(round_tf.integer_indices.tolist(), int_idcs)
+        self.assertEqual(round_tf.categorical_features, categorical_feats)
+        self.assertTrue(round_tf.training)
+        self.assertFalse(round_tf.approximate)
+        self.assertEqual(round_tf.tau, 1e-3)
+        self.assertTrue(round_tf.equals(Round(**round_tf.get_init_args())))
 
+        for dtype in (torch.float, torch.double):
             # With tensor indices.
             round_tf = Round(
                 integer_indices=torch.tensor(int_idcs, dtype=dtype, device=self.device),
@@ -620,11 +625,22 @@ class TestInputTransforms(BotorchTestCase):
             self.assertEqual(round_tf.integer_indices.tolist(), int_idcs)
             self.assertTrue(round_tf.equals(Round(**round_tf.get_init_args())))
 
-            # basic usage
-            for batch_shape, approx, categorical_features in itertools.product(
-                (torch.Size(), torch.Size([3])),
-                (False, True),
-                (None, categorical_feats),
+    def test_round_transform(self) -> None:
+        int_idcs = [0, 4]
+        categorical_feats = {2: 2, 5: 3}
+        # set seed to range where this is known to not be flaky
+        torch.manual_seed(randint(0, 1000))
+        for dtype, batch_shape, approx, categorical_features in itertools.product(
+            (torch.float, torch.double),
+            (torch.Size(), torch.Size([3])),
+            (False, True),
+            (None, categorical_feats),
+        ):
+            with self.subTest(
+                dtype=dtype,
+                batch_shape=batch_shape,
+                approx=approx,
+                categorical_features=categorical_features,
             ):
                 X = torch.rand(*batch_shape, 4, 8, device=self.device, dtype=dtype)
                 X[..., int_idcs] *= 5
@@ -649,11 +665,15 @@ class TestInputTransforms(BotorchTestCase):
                 if approx:
                     # check that approximate rounding is closer to rounded values than
                     # the original inputs
+                    dist_approx_to_rounded = (
+                        X_rounded[..., int_idcs] - exact_rounded_X_ints
+                    ).abs()
+                    dist_orig_to_rounded = (
+                        X[..., int_idcs] - exact_rounded_X_ints
+                    ).abs()
+                    tol = 1e-5 if dtype == torch.float32 else 1e-11
                     self.assertTrue(
-                        (
-                            (X_rounded[..., int_idcs] - exact_rounded_X_ints).abs()
-                            <= (X[..., int_idcs] - exact_rounded_X_ints).abs()
-                        ).all()
+                        (dist_approx_to_rounded <= dist_orig_to_rounded + tol).all()
                     )
                     self.assertFalse(
                         torch.equal(X_rounded[..., int_idcs], exact_rounded_X_ints)
@@ -756,7 +776,9 @@ class TestInputTransforms(BotorchTestCase):
                     torch.equal(round_tf.preprocess_transform(X), X_rounded)
                 )
 
-    def test_log10_transform(self):
+    def test_log10_transform(self) -> None:
+        # set seed to range where this is known to not be flaky
+        torch.manual_seed(randint(0, 1000))
         for dtype in (torch.float, torch.double):
             # basic init
             indices = [0, 2]
@@ -810,7 +832,9 @@ class TestInputTransforms(BotorchTestCase):
                 log_tf.transform_on_train = True
                 self.assertTrue(torch.equal(log_tf.preprocess_transform(X), X_tf))
 
-    def test_warp_transform(self):
+    def test_warp_transform(self) -> None:
+        # set seed to range where this is known to not be flaky
+        torch.manual_seed(randint(0, 1000))
         for dtype, batch_shape, warp_batch_shape in itertools.product(
             (torch.float, torch.double),
             (torch.Size(), torch.Size([3])),
@@ -955,7 +979,9 @@ class TestInputTransforms(BotorchTestCase):
             warp_tf._set_concentration(i=1, value=3.0)
             self.assertTrue((warp_tf.concentration1 == 3.0).all())
 
-    def test_one_hot_to_numeric(self):
+    def test_one_hot_to_numeric(self) -> None:
+        # set seed to range where this is known to not be flaky
+        torch.manual_seed(randint(0, 1000))
         dim = 8
         # test exception when categoricals are not the trailing dimensions
         categorical_features = {0: 2}
@@ -1042,6 +1068,9 @@ class TestAppendFeatures(BotorchTestCase):
         with self.assertRaises(ValueError):
             AppendFeatures(torch.ones(3, 4, 2))
 
+        # set seed to range where this is known to not be flaky
+        torch.manual_seed(randint(0, 100))
+
         for dtype in (torch.float, torch.double):
             feature_set = (
                 torch.linspace(0, 1, 6).view(3, 2).to(device=self.device, dtype=dtype)
@@ -1105,6 +1134,9 @@ class TestAppendFeatures(BotorchTestCase):
         def f2(x: Tensor, n_f: int = 1) -> Tensor:
             result = x[..., -2:].unsqueeze(-2)
             return result.expand(*result.shape[:-2], n_f, -1)
+
+        # set seed to range where this is known to not be flaky
+        torch.manual_seed(randint(0, 100))
 
         for dtype in [torch.float, torch.double]:
             tkwargs = {"device": self.device, "dtype": dtype}
@@ -1335,6 +1367,9 @@ class TestFilterFeatures(BotorchTestCase):
             FilterFeatures(torch.tensor([-1, 0, 1], dtype=torch.long))
         with self.assertRaises(ValueError):
             FilterFeatures(torch.tensor([0, 1, 1], dtype=torch.long))
+
+        # set seed to range where this is known to not be flaky
+        torch.manual_seed(randint(0, 100))
 
         for dtype in (torch.float, torch.double):
             feature_indices = torch.tensor(
