@@ -35,7 +35,6 @@
 
 <span class="kn">import</span> <span class="nn">dataclasses</span>
 
-<span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
@@ -237,17 +236,19 @@
 
 
 <span class="k">def</span> <span class="nf">_optimize_acqf_sequential_q</span><span class="p">(</span>
-    <span class="n">opt_inputs</span><span class="p">:</span> <span class="n">OptimizeAcqfInputs</span><span class="p">,</span> <span class="n">timeout_sec</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">start_time</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">opt_inputs</span><span class="p">:</span> <span class="n">OptimizeAcqfInputs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Helper function for `optimize_acqf` when sequential=True and q &gt; 1.</span>
 <span class="sd">    """</span>
     <span class="n">_validate_sequential_inputs</span><span class="p">(</span><span class="n">opt_inputs</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">timeout_sec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># When using sequential optimization, we allocate the total timeout</span>
-        <span class="c1"># evenly across the individual acquisition optimizations.</span>
-        <span class="n">timeout_sec</span> <span class="o">=</span> <span class="p">(</span><span class="n">timeout_sec</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span> <span class="o">/</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">q</span>
-
+    <span class="c1"># When using sequential optimization, we allocate the total timeout</span>
+    <span class="c1"># evenly across the individual acquisition optimizations.</span>
+    <span class="n">timeout_sec</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">opt_inputs</span><span class="o">.</span><span class="n">timeout_sec</span> <span class="o">/</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">q</span>
+        <span class="k">if</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">timeout_sec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">else</span> <span class="kc">None</span>
+    <span class="p">)</span>
     <span class="n">candidate_list</span><span class="p">,</span> <span class="n">acq_value_list</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
     <span class="n">base_X_pending</span> <span class="o">=</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">acq_function</span><span class="o">.</span><span class="n">X_pending</span>
 
@@ -261,9 +262,7 @@
     <span class="p">)</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">opt_inputs</span><span class="o">.</span><span class="n">q</span><span class="p">):</span>
 
-        <span class="n">candidate</span><span class="p">,</span> <span class="n">acq_value</span> <span class="o">=</span> <span class="n">_optimize_acqf_batch</span><span class="p">(</span>
-            <span class="n">new_inputs</span><span class="p">,</span> <span class="n">start_time</span><span class="o">=</span><span class="n">start_time</span><span class="p">,</span> <span class="n">timeout_sec</span><span class="o">=</span><span class="n">timeout_sec</span>
-        <span class="p">)</span>
+        <span class="n">candidate</span><span class="p">,</span> <span class="n">acq_value</span> <span class="o">=</span> <span class="n">_optimize_acqf_batch</span><span class="p">(</span><span class="n">new_inputs</span><span class="p">)</span>
 
         <span class="n">candidate_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
         <span class="n">acq_value_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acq_value</span><span class="p">)</span>
@@ -278,9 +277,7 @@
     <span class="k">return</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">acq_value_list</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_optimize_acqf_batch</span><span class="p">(</span>
-    <span class="n">opt_inputs</span><span class="p">:</span> <span class="n">OptimizeAcqfInputs</span><span class="p">,</span> <span class="n">start_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">timeout_sec</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="k">def</span> <span class="nf">_optimize_acqf_batch</span><span class="p">(</span><span class="n">opt_inputs</span><span class="p">:</span> <span class="n">OptimizeAcqfInputs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
     <span class="n">options</span> <span class="o">=</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">options</span> <span class="ow">or</span> <span class="p">{}</span>
 
     <span class="n">initial_conditions_provided</span> <span class="o">=</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">batch_initial_conditions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -314,15 +311,16 @@
         <span class="ow">or</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">nonlinear_inequality_constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
     <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_optimize_batch_candidates</span><span class="p">(</span>
-        <span class="n">timeout_sec</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="ne">Warning</span><span class="p">]]:</span>
+    <span class="k">def</span> <span class="nf">_optimize_batch_candidates</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="ne">Warning</span><span class="p">]]:</span>
         <span class="n">batch_candidates_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">batch_acq_values_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">batched_ics</span> <span class="o">=</span> <span class="n">batch_initial_conditions</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">batch_limit</span><span class="p">)</span>
         <span class="n">opt_warnings</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">if</span> <span class="n">timeout_sec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">timeout_sec</span> <span class="o">=</span> <span class="p">(</span><span class="n">timeout_sec</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">batched_ics</span><span class="p">)</span>
+        <span class="n">timeout_sec</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">opt_inputs</span><span class="o">.</span><span class="n">timeout_sec</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">batched_ics</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">timeout_sec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
 
         <span class="n">bounds</span> <span class="o">=</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">bounds</span>
         <span class="n">gen_kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
@@ -334,13 +332,10 @@
         <span class="p">}</span>
 
         <span class="k">if</span> <span class="n">has_parameter_constraints</span><span class="p">:</span>
-            <span class="c1"># only add parameter constraints to gen_kwargs if they are specified</span>
-            <span class="c1"># to avoid unnecessary warnings in _filter_kwargs</span>
             <span class="n">gen_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
                 <span class="p">{</span>
                     <span class="s2">"inequality_constraints"</span><span class="p">:</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">inequality_constraints</span><span class="p">,</span>
                     <span class="s2">"equality_constraints"</span><span class="p">:</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">equality_constraints</span><span class="p">,</span>
-                    <span class="c1"># the line is too long</span>
                     <span class="s2">"nonlinear_inequality_constraints"</span><span class="p">:</span> <span class="p">(</span>
                         <span class="n">opt_inputs</span><span class="o">.</span><span class="n">nonlinear_inequality_constraints</span>
                     <span class="p">),</span>
@@ -371,7 +366,7 @@
             <span class="n">batch_acq_values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">batch_acq_values_list</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">batch_candidates</span><span class="p">,</span> <span class="n">batch_acq_values</span><span class="p">,</span> <span class="n">opt_warnings</span>
 
-    <span class="n">batch_candidates</span><span class="p">,</span> <span class="n">batch_acq_values</span><span class="p">,</span> <span class="n">ws</span> <span class="o">=</span> <span class="n">_optimize_batch_candidates</span><span class="p">(</span><span class="n">timeout_sec</span><span class="p">)</span>
+    <span class="n">batch_candidates</span><span class="p">,</span> <span class="n">batch_acq_values</span><span class="p">,</span> <span class="n">ws</span> <span class="o">=</span> <span class="n">_optimize_batch_candidates</span><span class="p">()</span>
 
     <span class="n">optimization_warning_raised</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
         <span class="p">(</span><span class="nb">issubclass</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">OptimizationWarning</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">ws</span><span class="p">)</span>
@@ -405,9 +400,7 @@
                 <span class="o">**</span><span class="n">opt_inputs</span><span class="o">.</span><span class="n">ic_gen_kwargs</span><span class="p">,</span>
             <span class="p">)</span>
 
-            <span class="n">batch_candidates</span><span class="p">,</span> <span class="n">batch_acq_values</span><span class="p">,</span> <span class="n">ws</span> <span class="o">=</span> <span class="n">_optimize_batch_candidates</span><span class="p">(</span>
-                <span class="n">timeout_sec</span>
-            <span class="p">)</span>
+            <span class="n">batch_candidates</span><span class="p">,</span> <span class="n">batch_acq_values</span><span class="p">,</span> <span class="n">ws</span> <span class="o">=</span> <span class="n">_optimize_batch_candidates</span><span class="p">()</span>
 
             <span class="n">optimization_warning_raised</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
                 <span class="p">(</span><span class="nb">issubclass</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">OptimizationWarning</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">ws</span><span class="p">)</span>
@@ -594,21 +587,12 @@
             <span class="n">acq_function</span><span class="o">=</span><span class="n">opt_inputs</span><span class="o">.</span><span class="n">acq_function</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="n">start_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span>
-    <span class="n">timeout_sec</span> <span class="o">=</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">timeout_sec</span>
-
     <span class="c1"># Perform sequential optimization via successive conditioning on pending points</span>
     <span class="k">if</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">sequential</span> <span class="ow">and</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">q</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">_optimize_acqf_sequential_q</span><span class="p">(</span>
-            <span class="n">opt_inputs</span><span class="o">=</span><span class="n">opt_inputs</span><span class="p">,</span>
-            <span class="n">timeout_sec</span><span class="o">=</span><span class="n">timeout_sec</span><span class="p">,</span>
-            <span class="n">start_time</span><span class="o">=</span><span class="n">start_time</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">_optimize_acqf_sequential_q</span><span class="p">(</span><span class="n">opt_inputs</span><span class="o">=</span><span class="n">opt_inputs</span><span class="p">)</span>
 
     <span class="c1"># Batch optimization (including the case q=1)</span>
-    <span class="k">return</span> <span class="n">_optimize_acqf_batch</span><span class="p">(</span>
-        <span class="n">opt_inputs</span><span class="o">=</span><span class="n">opt_inputs</span><span class="p">,</span> <span class="n">start_time</span><span class="o">=</span><span class="n">start_time</span><span class="p">,</span> <span class="n">timeout_sec</span><span class="o">=</span><span class="n">timeout_sec</span>
-    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">_optimize_acqf_batch</span><span class="p">(</span><span class="n">opt_inputs</span><span class="o">=</span><span class="n">opt_inputs</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="optimize_acqf_cyclic"><a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf_cyclic">[docs]</a><span class="k">def</span> <span class="nf">optimize_acqf_cyclic</span><span class="p">(</span>
