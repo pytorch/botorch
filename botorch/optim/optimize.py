@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import dataclasses
 
-import time
 import warnings
 
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
@@ -214,17 +213,19 @@ def _validate_sequential_inputs(opt_inputs: OptimizeAcqfInputs) -> None:
 
 
 def _optimize_acqf_sequential_q(
-    opt_inputs: OptimizeAcqfInputs, timeout_sec: Optional[float], start_time: float
+    opt_inputs: OptimizeAcqfInputs,
 ) -> Tuple[Tensor, Tensor]:
     """
     Helper function for `optimize_acqf` when sequential=True and q > 1.
     """
     _validate_sequential_inputs(opt_inputs)
-    if timeout_sec is not None:
-        # When using sequential optimization, we allocate the total timeout
-        # evenly across the individual acquisition optimizations.
-        timeout_sec = (timeout_sec - start_time) / opt_inputs.q
-
+    # When using sequential optimization, we allocate the total timeout
+    # evenly across the individual acquisition optimizations.
+    timeout_sec = (
+        opt_inputs.timeout_sec / opt_inputs.q
+        if opt_inputs.timeout_sec is not None
+        else None
+    )
     candidate_list, acq_value_list = [], []
     base_X_pending = opt_inputs.acq_function.X_pending
 
@@ -238,9 +239,7 @@ def _optimize_acqf_sequential_q(
     )
     for i in range(opt_inputs.q):
 
-        candidate, acq_value = _optimize_acqf_batch(
-            new_inputs, start_time=start_time, timeout_sec=timeout_sec
-        )
+        candidate, acq_value = _optimize_acqf_batch(new_inputs)
 
         candidate_list.append(candidate)
         acq_value_list.append(acq_value)
@@ -255,9 +254,7 @@ def _optimize_acqf_sequential_q(
     return candidates, torch.stack(acq_value_list)
 
 
-def _optimize_acqf_batch(
-    opt_inputs: OptimizeAcqfInputs, start_time: float, timeout_sec: Optional[float]
-) -> Tuple[Tensor, Tensor]:
+def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> Tuple[Tensor, Tensor]:
     options = opt_inputs.options or {}
 
     initial_conditions_provided = opt_inputs.batch_initial_conditions is not None
@@ -291,15 +288,16 @@ def _optimize_acqf_batch(
         or opt_inputs.nonlinear_inequality_constraints is not None
     )
 
-    def _optimize_batch_candidates(
-        timeout_sec: Optional[float],
-    ) -> Tuple[Tensor, Tensor, List[Warning]]:
+    def _optimize_batch_candidates() -> Tuple[Tensor, Tensor, List[Warning]]:
         batch_candidates_list: List[Tensor] = []
         batch_acq_values_list: List[Tensor] = []
         batched_ics = batch_initial_conditions.split(batch_limit)
         opt_warnings = []
-        if timeout_sec is not None:
-            timeout_sec = (timeout_sec - start_time) / len(batched_ics)
+        timeout_sec = (
+            opt_inputs.timeout_sec / len(batched_ics)
+            if opt_inputs.timeout_sec is not None
+            else None
+        )
 
         bounds = opt_inputs.bounds
         gen_kwargs: Dict[str, Any] = {
@@ -311,13 +309,10 @@ def _optimize_acqf_batch(
         }
 
         if has_parameter_constraints:
-            # only add parameter constraints to gen_kwargs if they are specified
-            # to avoid unnecessary warnings in _filter_kwargs
             gen_kwargs.update(
                 {
                     "inequality_constraints": opt_inputs.inequality_constraints,
                     "equality_constraints": opt_inputs.equality_constraints,
-                    # the line is too long
                     "nonlinear_inequality_constraints": (
                         opt_inputs.nonlinear_inequality_constraints
                     ),
@@ -348,7 +343,7 @@ def _optimize_acqf_batch(
             batch_acq_values = torch.cat(batch_acq_values_list).flatten()
         return batch_candidates, batch_acq_values, opt_warnings
 
-    batch_candidates, batch_acq_values, ws = _optimize_batch_candidates(timeout_sec)
+    batch_candidates, batch_acq_values, ws = _optimize_batch_candidates()
 
     optimization_warning_raised = any(
         (issubclass(w.category, OptimizationWarning) for w in ws)
@@ -382,9 +377,7 @@ def _optimize_acqf_batch(
                 **opt_inputs.ic_gen_kwargs,
             )
 
-            batch_candidates, batch_acq_values, ws = _optimize_batch_candidates(
-                timeout_sec
-            )
+            batch_candidates, batch_acq_values, ws = _optimize_batch_candidates()
 
             optimization_warning_raised = any(
                 (issubclass(w.category, OptimizationWarning) for w in ws)
@@ -571,21 +564,12 @@ def _optimize_acqf(opt_inputs: OptimizeAcqfInputs) -> Tuple[Tensor, Tensor]:
             acq_function=opt_inputs.acq_function,
         )
 
-    start_time: float = time.monotonic()
-    timeout_sec = opt_inputs.timeout_sec
-
     # Perform sequential optimization via successive conditioning on pending points
     if opt_inputs.sequential and opt_inputs.q > 1:
-        return _optimize_acqf_sequential_q(
-            opt_inputs=opt_inputs,
-            timeout_sec=timeout_sec,
-            start_time=start_time,
-        )
+        return _optimize_acqf_sequential_q(opt_inputs=opt_inputs)
 
     # Batch optimization (including the case q=1)
-    return _optimize_acqf_batch(
-        opt_inputs=opt_inputs, start_time=start_time, timeout_sec=timeout_sec
-    )
+    return _optimize_acqf_batch(opt_inputs=opt_inputs)
 
 
 def optimize_acqf_cyclic(
