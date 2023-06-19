@@ -261,8 +261,8 @@ class TestInputTransforms(BotorchTestCase):
                     [X.min(dim=-2, keepdim=True)[0], X.max(dim=-2, keepdim=True)[0]],
                     dim=-2,
                 )
-                atol = 1e-6 if dtype is torch.float32 else None
-                rtol = 1e-4 if dtype is torch.float32 else None
+                atol = 1e-6 if dtype is torch.float32 else 1e-12
+                rtol = 1e-4 if dtype is torch.float32 else 1e-8
                 self.assertAllClose(nlz.bounds, expected_bounds, atol=atol, rtol=rtol)
                 # test errors on wrong shape
                 nlz = Normalize(d=2, batch_shape=batch_shape)
@@ -597,7 +597,7 @@ class TestInputTransforms(BotorchTestCase):
         tf = ChainedInputTransform(stz=tf1, pert=tf2)
         self.assertTrue(tf.is_one_to_many)
 
-    def test_round_transform_init(self):
+    def test_round_transform_init(self) -> None:
         # basic init
         int_idcs = [0, 4]
         categorical_feats = {2: 2, 5: 3}
@@ -775,7 +775,7 @@ class TestInputTransforms(BotorchTestCase):
                     torch.equal(round_tf.preprocess_transform(X), X_rounded)
                 )
 
-    def test_log10_transform(self):
+    def test_log10_transform(self) -> None:
         # set seed to range where this is known to not be flaky
         torch.manual_seed(torch.randint(1000, torch.Size([])).item())
         for dtype in (torch.float, torch.double):
@@ -831,7 +831,7 @@ class TestInputTransforms(BotorchTestCase):
                 log_tf.transform_on_train = True
                 self.assertTrue(torch.equal(log_tf.preprocess_transform(X), X_tf))
 
-    def test_warp_transform(self):
+    def test_warp_transform(self) -> None:
         # set seed to range where this is known to not be flaky
         torch.manual_seed(torch.randint(1000, torch.Size([])).item())
         for dtype, batch_shape, warp_batch_shape in itertools.product(
@@ -978,7 +978,7 @@ class TestInputTransforms(BotorchTestCase):
             warp_tf._set_concentration(i=1, value=3.0)
             self.assertTrue((warp_tf.concentration1 == 3.0).all())
 
-    def test_one_hot_to_numeric(self):
+    def test_one_hot_to_numeric(self) -> None:
         # set seed to range where this is known to not be flaky
         torch.manual_seed(torch.randint(1000, torch.Size([])).item())
         dim = 8
