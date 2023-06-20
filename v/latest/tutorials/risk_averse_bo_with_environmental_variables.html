@@ -72,13 +72,13 @@
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Risk-averse-Bayesian-optimization-with-environmental-variables">Risk averse Bayesian optimization with environmental variables<a class="anchor-link" href="#Risk-averse-Bayesian-optimization-with-environmental-variables">¶</a></h1><p>This notebook considers risk averse Bayesian optimization of objectives $f(x, w)$, where $x$ denotes the design variable and $w$ denotes the environmental variable. 
+<h1 id="Risk-averse-Bayesian-optimization-with-environmental-variables">Risk averse Bayesian optimization with environmental variables<a class="anchor-link" href="#Risk-averse-Bayesian-optimization-with-environmental-variables">¶</a></h1><p>This notebook considers risk averse Bayesian optimization of objectives $f(x, w)$, where $x$ denotes the design variable and $w$ denotes the environmental variable.
 The design variable $x$ is fully controlled by the practitioner, however, the environmental variable $w$ is only controllable at the experimentation phase and is determined by the environment once the decision $x$ is implemented, according to some probability distribution.
 In this setting, with the $W$ denoting the random environmental variable, the objective we want to optimize becomes a random function, written as $f(x, W)$, whose value is determined only once the environmental variable $W$ is realized.
 This formulation is relevant whenever we need to make a decision to be implemented in an unknown future environment, and we can simulate the environment during the optimization phase.</p>
-<p>For this problem setting, [1] proposes to optimize a risk measure of the random function, written as $\rho[f(x, W)]$, where $\rho$ denotes a risk measure, which is a functional that maps a random variable (in this case $f(x, W)$ induced by $W$) to a real number. 
+<p>For this problem setting, [1] proposes to optimize a risk measure of the random function, written as $\rho[f(x, W)]$, where $\rho$ denotes a risk measure, which is a functional that maps a random variable (in this case $f(x, W)$ induced by $W$) to a real number.
 They propose the $\rho$KG acquisition function, which extends the well-known knowledge-gradient acquisition function, and requires access to posterior mean of the objective, i.e., $\mathbb{E}_n[\rho[f(x, W)]]$, where the expectation is taken over the sample paths of the GP model.
-Unlike the posterior mean of the function $f(x, w)$, the posterior mean of the risk measure is not available in closed-form and needs to be estimated via sampling. 
+Unlike the posterior mean of the function $f(x, w)$, the posterior mean of the risk measure is not available in closed-form and needs to be estimated via sampling.
 The procedure for estimating $\mathbb{E}_n[\rho[f(x, W)]]$ for a given $x$ is as follows:</p>
 <ul>
 <li>Draw a set of <code>n_w</code> samples of $W$ according to the probability distribution. Let's call this <code>w_set</code>.</li>
@@ -95,7 +95,7 @@ The procedure for estimating $\mathbb{E}_n[\rho[f(x, W)]]$ for a given $x$ is as
 <li>And use the samples of the risk measure in <code>qMultiFidelityKnowledgeGradient</code> to define the $\rho$KG acquisition function.</li>
 </ul>
 <p>We will use the (negated) Branin function as $f(x, w)$ with the first input dimension denoting $x$ and the second input dimension denoting $w$, and find the $x$ maximizing the CVaR risk measure at risk level $\alpha=0.7$. We will assume that $W$ has a uniform distribution over $[0, 1]$ and approximate the risk measure using $16$ (qMC) samples of $W$ at a given time.</p>
-<p>CVaR, the Conditional Value-at-Risk, is a risk measure that measures the expectation of the worst outcomes (small rewards or large losses) with a total probability of $1 - \alpha$. 
+<p>CVaR, the Conditional Value-at-Risk, is a risk measure that measures the expectation of the worst outcomes (small rewards or large losses) with a total probability of $1 - \alpha$.
 It is commonly defined as the conditional expectation of the reward function, with the condition that the reward is smaller than the corresponding $1 - \alpha$ quantile.</p>
 <p>Note: Risk measures are typically studied in the context of a minimization problem (including in [1]), since it makes more sense to minimize "risk", and treat the larger values as being undesirable. Since the default behavior in BoTorch is to maximize the objective, the <code>RiskMeasureMCObjective</code> (and its subclasses) is defined w.r.t. the lower tail of the random variable, i.e., by treating the smaller values as undesirable. With this implementation, all that is needed to minimize a risk measure (of the original objective) is to negate the objective, as is done in this notebook.</p>
 <p>[1] <a href="https://arxiv.org/abs/2007.05554">S. Cakmak, R. Astudillo, P. Frazier, and E. Zhou. Bayesian Optimization of Risk Measures. Advances in Neural Information Processing Systems 33, 2020.</a></p>
@@ -170,7 +170,7 @@ It is commonly defined as the conditional expectation of the reward function, wi
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Model-initialization">Model initialization<a class="anchor-link" href="#Model-initialization">¶</a></h3><p>We will initialize the <code>SingleTaskGP</code> model on $8$ Sobol points drawn from the $(x, w)$ space. 
+<h3 id="Model-initialization">Model initialization<a class="anchor-link" href="#Model-initialization">¶</a></h3><p>We will initialize the <code>SingleTaskGP</code> model on $8$ Sobol points drawn from the $(x, w)$ space.
 In doing so, we will also pass in the <code>AppendFeatures</code>. We will re-initialize <code>AppendFeatures</code> with a new <code>w_set</code> at every model training to ensure adequate coverage of the $W$ space.</p>
 </div>
 </div>

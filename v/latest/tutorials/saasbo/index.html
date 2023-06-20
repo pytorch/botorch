@@ -72,17 +72,17 @@
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="High-Dimensional-sample-efficient-Bayesian-Optimization-with-SAASBO">High-Dimensional sample-efficient Bayesian Optimization with SAASBO<a class="anchor-link" href="#High-Dimensional-sample-efficient-Bayesian-Optimization-with-SAASBO">¶</a></h2><p>This tutorial shows how to use the Sparse Axis-Aligned Subspace Bayesian Optimization (SAASBO) 
-method for high-dimensional Bayesian optimization [1]. SAASBO places strong priors on the 
-inverse lengthscales to avoid overfitting in high-dimensional spaces. Specifically, SAASBO 
-uses a hierarchical sparsity prior consisting of a global shrinkage parameter 
-$\tau \sim \mathcal{HC}(\beta)$ and inverse lengthscales $\rho_d \sim \mathcal{HC}(\tau)$ 
-for $d=1, \ldots, D$, where $\mathcal{HC}$ is the half-Cauchy distribution. 
-While half-Cauchy priors favor values near zero they also have heavy tails, which allows the 
-inverse lengthscales of the most important parameters to escape zero. To perform inference in the 
+<h2 id="High-Dimensional-sample-efficient-Bayesian-Optimization-with-SAASBO">High-Dimensional sample-efficient Bayesian Optimization with SAASBO<a class="anchor-link" href="#High-Dimensional-sample-efficient-Bayesian-Optimization-with-SAASBO">¶</a></h2><p>This tutorial shows how to use the Sparse Axis-Aligned Subspace Bayesian Optimization (SAASBO)
+method for high-dimensional Bayesian optimization [1]. SAASBO places strong priors on the
+inverse lengthscales to avoid overfitting in high-dimensional spaces. Specifically, SAASBO
+uses a hierarchical sparsity prior consisting of a global shrinkage parameter
+$\tau \sim \mathcal{HC}(\beta)$ and inverse lengthscales $\rho_d \sim \mathcal{HC}(\tau)$
+for $d=1, \ldots, D$, where $\mathcal{HC}$ is the half-Cauchy distribution.
+While half-Cauchy priors favor values near zero they also have heavy tails, which allows the
+inverse lengthscales of the most important parameters to escape zero. To perform inference in the
 SAAS model we use Hamiltonian Monte Carlo (HMC) as we found that to outperform MAP inference.</p>
-<p>We find that SAASBO performs well on problems with hundreds of dimensions. As we rely on HMC 
-and in particular the No-U-Turn-Sampler (NUTS) for inference, the overhead of SAASBO scales 
+<p>We find that SAASBO performs well on problems with hundreds of dimensions. As we rely on HMC
+and in particular the No-U-Turn-Sampler (NUTS) for inference, the overhead of SAASBO scales
 cubically with the number of datapoints. Depending on the problem, using more than a few hundred
 evaluations may not be feasible as SAASBO is designed for problems with a limited evaluation budget.</p>
 <p>In general, we recommend using <a href="https://ax.dev">Ax</a> for a simple BO setup like this one. See <a href="https://ax.dev/tutorials/saasbo.html">here</a> for a SAASBO tutorial in Ax, which uses the Noisy Expected Improvement acquisition function. To customize the acquisition function used with SAASBO in Ax, see the <a href="./custom_acquisition">custom acquisition tutorial</a>, where adding <code>\"surrogate\": Surrogate(SaasFullyBayesianSingleTaskGP),</code> to the <code>model_kwargs</code> of <code>BOTORCH_MODULAR</code> step is sufficient to enable the SAAS model.</p>
@@ -177,7 +177,7 @@ model sets all other lengthscales to large values.</p>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>By default, we infer the unknown noise variance in the data. You can also pass in a known 
+<p>By default, we infer the unknown noise variance in the data. You can also pass in a known
 noise variance (<code>train_Yvar</code>) for each observation, which may be useful in cases where you for example
 know that the problem is noise-free and can then set the noise variance to a small value such as <code>1e-6</code>.</p>
 <p>In this case you can construct a model as follows:</p>
@@ -243,7 +243,7 @@ know that the problem is noise-free and can then set the noise variance to a sma
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="Make-predictions-with-the-model">Make predictions with the model<a class="anchor-link" href="#Make-predictions-with-the-model">¶</a></h3><p>In the next cell we show how to make predictions with the SAAS model. You compute the mean
-and variance for test points just like for any other BoTorch posteriors. Note that the mean 
+and variance for test points just like for any other BoTorch posteriors. Note that the mean
 and posterior will have an extra batch dimension at -3 that corresponds to the number of MCMC
 samples (which is 8 in this tutorial).</p>
 </div>
@@ -314,7 +314,7 @@ Mixture mean:     tensor([0.7808, 0.8298, 0.1427, 0.7994, 0.2242], dtype=torch.f
 <h2 id="Optimize-Branin-embedded-in-a-30D-space">Optimize Branin embedded in a 30D space<a class="anchor-link" href="#Optimize-Branin-embedded-in-a-30D-space">¶</a></h2><p>We take the standard 2D Branin problem and embed it in a 30D space. In particular,
 we let dimensions 0 and 1 correspond to the true dimensions. We will show that
 SAASBO is able to identify the important dimensions and efficiently optimize this function.
-We work with the domain $[0, 1]^d$ and unnormalize the inputs to the true domain of Branin 
+We work with the domain $[0, 1]^d$ and unnormalize the inputs to the true domain of Branin
 before evaluating the function.</p>
 </div>
 </div>
@@ -367,7 +367,7 @@ before evaluating the function.</p>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Run-the-optimization">Run the optimization<a class="anchor-link" href="#Run-the-optimization">¶</a></h3><p>We use 10 initial Sobol points followed by 8 iterations of BO using a batch size of 5, 
+<h3 id="Run-the-optimization">Run the optimization<a class="anchor-link" href="#Run-the-optimization">¶</a></h3><p>We use 10 initial Sobol points followed by 8 iterations of BO using a batch size of 5,
 which results in a total of 50 function evaluations. As our goal is to minimize Branin, we flip
 the sign of the function values before fitting the SAAS model as the BoTorch acquisition
 functions assume maximization.</p>
@@ -487,7 +487,7 @@ functions assume maximization.</p>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Predict-on-some-test-points">Predict on some test points<a class="anchor-link" href="#Predict-on-some-test-points">¶</a></h2><p>We fit a model using the 50 datapoints collected by SAASBO and predict on 50 test 
+<h2 id="Predict-on-some-test-points">Predict on some test points<a class="anchor-link" href="#Predict-on-some-test-points">¶</a></h2><p>We fit a model using the 50 datapoints collected by SAASBO and predict on 50 test
 points in order to see how well the SAAS model predicts out-of-sample.
 The plot shows the mean and a 95% confidence interval for each test point.</p>
 </div>
@@ -583,9 +583,9 @@ The plot shows the mean and a 95% confidence interval for each test point.</p>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Look-a-the-lengthscales-from-the-final-model">Look a the lengthscales from the final model<a class="anchor-link" href="#Look-a-the-lengthscales-from-the-final-model">¶</a></h2><p>As SAASBO places strong priors on the inverse lengthscales, we only expect parameters 
+<h2 id="Look-a-the-lengthscales-from-the-final-model">Look a the lengthscales from the final model<a class="anchor-link" href="#Look-a-the-lengthscales-from-the-final-model">¶</a></h2><p>As SAASBO places strong priors on the inverse lengthscales, we only expect parameters
 0 and 1 to be identified as important by the model since the other parameters have no effect.
-We can confirm that this is the case below as the lengthscales of parameters 0 and 1 are 
+We can confirm that this is the case below as the lengthscales of parameters 0 and 1 are
 small with all other lengthscales being large.</p>
 </div>
 </div>

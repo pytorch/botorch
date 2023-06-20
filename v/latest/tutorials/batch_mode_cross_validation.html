@@ -73,7 +73,8 @@
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Application-of-batch-mode-regression-to-cross-validation">Application of batch-mode regression to cross-validation<a class="anchor-link" href="#Application-of-batch-mode-regression-to-cross-validation">¶</a></h2><p>botorch provides a helper function <code>gen_loo_cv_folds</code> to easily perform leave-one-out (LOO) cross-validation (CV) by taking advantage of batch-mode regression and evaluation in GPyTorch. This tutorial illustrates the process on a noisy sinusoidal function, similar to the example from the batch-mode GP regression <a href="https://github.com/cornellius-gp/gpytorch/blob/master/examples/01_Simple_GP_Regression/Simple_Batch_Mode_GP_Regression.ipynb">tutorial</a> from GPyTorch:</p>
-$$y = \sin(2\pi x) + \epsilon, ~\epsilon \sim \mathcal N(0, 0.2).$$<p>Note: this tutorial aims to introduce batch-mode regression and evaluation in GPyTorch with CV as an example application. For alternative, more user-friendly functions to perform CV in Ax, see <a href="https://github.com/facebook/Ax/blob/main/ax/modelbridge/cross_validation.py">ax.modelbridge.cross_validation</a>. However, for larger CV tasks, it may be useful to exploit GPyTorch batch-mode, as shown in this tutorial.</p>
+<p>$$y = \sin(2\pi x) + \epsilon, ~\epsilon \sim \mathcal N(0, 0.2).$$</p>
+<p>Note: this tutorial aims to introduce batch-mode regression and evaluation in GPyTorch with CV as an example application. For alternative, more user-friendly functions to perform CV in Ax, see <a href="https://github.com/facebook/Ax/blob/main/ax/modelbridge/cross_validation.py">ax.modelbridge.cross_validation</a>. However, for larger CV tasks, it may be useful to exploit GPyTorch batch-mode, as shown in this tutorial.</p>
 </div>
 </div>
 </div>

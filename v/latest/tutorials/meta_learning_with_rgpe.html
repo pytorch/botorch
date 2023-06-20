@@ -102,12 +102,12 @@
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="Toy-Problem">Toy Problem<a class="anchor-link" href="#Toy-Problem">¶</a></h3><ul>
-<li>We consider optimizing the following 1-D synthetic function</li>
-</ul>
-$$f(x, s_i) = \frac{1}{10}\bigg(x-1\bigg)\bigg(\sin(x+s_i)+\frac{1}{10}\bigg)$$<p>where
+<li><p>We consider optimizing the following 1-D synthetic function
+$$f(x, s_i) = \frac{1}{10}\bigg(x-1\bigg)\bigg(\sin(x+s_i)+\frac{1}{10}\bigg)$$
+where
 $$s_i = \frac{(i+9)\pi}{8}$$
 is a task-dependent shift parameter and $i$ is the task index $i \in [1, t]$.</p>
-<ul>
+</li>
 <li><p>In this tutorial, we will consider the scenario where we have collected data from 5 prior tasks (referred to as base tasks), which with a different task dependent shift parameter $s_i$.</p>
 </li>
 <li><p>The goal now is use meta-learning to improve sample efficiency when optimizing a 6th task.</p>

@@ -72,11 +72,11 @@
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Risk-averse-Bayesian-optimization-with-input-perturbations">Risk averse Bayesian optimization with input perturbations<a class="anchor-link" href="#Risk-averse-Bayesian-optimization-with-input-perturbations">¶</a></h1><p>This notebook considers risk averse Bayesian optimization of objectives $f(x + \Delta_x)$, where $x$ denotes the design variable and $\Delta_x$ denotes the perturbations to the inputs that are applied at the implementation phase, such as manufacturing errors. 
+<h1 id="Risk-averse-Bayesian-optimization-with-input-perturbations">Risk averse Bayesian optimization with input perturbations<a class="anchor-link" href="#Risk-averse-Bayesian-optimization-with-input-perturbations">¶</a></h1><p>This notebook considers risk averse Bayesian optimization of objectives $f(x + \Delta_x)$, where $x$ denotes the design variable and $\Delta_x$ denotes the perturbations to the inputs that are applied at the implementation phase, such as manufacturing errors.
 The design variable $x$ is fully controlled by the practitioner, however, the input perturbation $\Delta_x$ is only controllable at the experimentation phase and is determined by the environment once the decision $x$ is implemented, according to some probability distribution.
 This means that while optimizing the design, we can simulate $f(x)$ for any given $x$, however, once the optimization is done, the actual implemented solution becomes $x + \Delta_x$.</p>
-<p>In this setting, we want to find high-performing designs that are also robust to the effects of the input perturbations. 
-To do so, we will follow the Bayesian optimization of risk measures framework introduced in [1]. 
+<p>In this setting, we want to find high-performing designs that are also robust to the effects of the input perturbations.
+To do so, we will follow the Bayesian optimization of risk measures framework introduced in [1].
 Please refer to the <a href="https://botorch.org/tutorials/risk_averse_bo_with_environmental_variables">Risk averse Bayesian optimization with environmental variables</a> notebook for additional background on this.</p>
 <p>In this notebook, we will use the <code>qNoisyExpectedImprovement</code> acquisition function to optimize the VaR risk measure at risk level $\alpha=0.8$, computed w.r.t. the perturbations in the inputs. To do so, we will:</p>
 <ul>
@@ -85,9 +85,9 @@ Please refer to the <a href="https://botorch.org/tutorials/risk_averse_bo_with_e
 <li>Use the <code>RiskMeasureMCObjective</code> to convert these joint samples into samples of the risk measure;</li>
 <li>And use these risk measure samples to define the improvement in <code>qNoisyExpectedImprovement</code>.</li>
 </ul>
-<p>We will use the (negated) SixHumpCamel test function, and assume that the input perturbations follow a Gaussian distribution with standard deviation of 5% of the parameter space (truncated to the parameter bounds). 
+<p>We will use the (negated) SixHumpCamel test function, and assume that the input perturbations follow a Gaussian distribution with standard deviation of 5% of the parameter space (truncated to the parameter bounds).
 During optimization, we will use 16 (qMC) samples of $\Delta_x$ to approximate the VaR risk measure.</p>
-<p>VaR, the Value-at-Risk, is a risk measure that measures the worst possible outcome (small rewards or large losses) after excluding the worst outcomes with a total probability of $1 - \alpha$. 
+<p>VaR, the Value-at-Risk, is a risk measure that measures the worst possible outcome (small rewards or large losses) after excluding the worst outcomes with a total probability of $1 - \alpha$.
 It is commonly used in finance for risk management, and corresponds to the $1 - \alpha$ quantile of the random variable.</p>
 <p>Note: Risk measures are typically studied in the context of a minimization problem (including in [1]), since it makes more sense to minimize "risk", and treat the larger values as being undesirable. Since the default behavior in BoTorch is to maximize the objective, the <code>RiskMeasureMCObjective</code> (and its subclasses) is defined w.r.t. the lower tail of the random variable, i.e., by treating the smaller values as undesirable. With this implementation, all that is needed to minimize a risk measure (of the original objective) is to negate the objective, as is done in this notebook.</p>
 <p>[1] <a href="https://arxiv.org/abs/2007.05554">S. Cakmak, R. Astudillo, P. Frazier, and E. Zhou. Bayesian Optimization of Risk Measures. Advances in Neural Information Processing Systems 33, 2020.</a></p>
@@ -165,7 +165,7 @@ It is commonly used in finance for risk management, and corresponds to the $1 - 
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Model-initialization">Model initialization<a class="anchor-link" href="#Model-initialization">¶</a></h3><p>We will initialize the <code>SingleTaskGP</code> model on $8$ Sobol points. 
+<h3 id="Model-initialization">Model initialization<a class="anchor-link" href="#Model-initialization">¶</a></h3><p>We will initialize the <code>SingleTaskGP</code> model on $8$ Sobol points.
 In doing so, we will also pass in the <code>InputPerturbation</code>. We will re-initialize <code>InputPerturbation</code> with a new set <code>perturbation_set</code> at every model training to ensure adequate coverage of the perturbation space.</p>
 </div>
 </div>
@@ -382,7 +382,7 @@ Starting iteration 24, total time: 165.349 seconds.
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="Plotting-the-true-risk-measure-to-see-how-we-did">Plotting the true risk measure to see how we did<a class="anchor-link" href="#Plotting-the-true-risk-measure-to-see-how-we-did">¶</a></h3><p>We can use the input transform and the risk measure we previously defined to make this part easier!</p>
-<p>We plot both the response surface, $f(x)$, and the risk measure surface, $\rho[f(x + \Delta_x)]$, and mark the best risk averse solution found on both plots. 
+<p>We plot both the response surface, $f(x)$, and the risk measure surface, $\rho[f(x + \Delta_x)]$, and mark the best risk averse solution found on both plots.
 The plots are restricted to $[0.3, 0.7]^2$ to highlight more promising areas of the solution space.</p>
 </div>
 </div>

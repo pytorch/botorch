@@ -78,9 +78,10 @@ where the response surface function of the experiment $f_\mathrm{true}$ generate
 These preferences are encoded by a utility function $g_\mathrm{true}$ that is not known in closed form but can be estimated by
 asking the DM to express preferences over pairs of outcome vectors.</p>
 <p>In other words, with BOPE, we wish to solve the following optimization problem:</p>
-$$
+<p>$$
  \max_{x \in \mathcal{X}} g_\mathrm{true}(f_\mathrm{true}(x))
-$$<p>Unlike many other Bayesian optimization setups where multiple consecutive batches of experiments are performed,
+$$</p>
+<p>Unlike many other Bayesian optimization setups where multiple consecutive batches of experiments are performed,
 in BOPE, we alternate between two stages: <em>preference exploration</em> and <em>experimentation</em>.</p>
 <p>In the preference exploration stage, we use an acquisition function (i.e., a preference exploratoin strategy, or PE strategy)
 to adaptively generate pairs of hypothetical outcome and ask the decision-maker’s preference within each pair.
@@ -479,7 +480,7 @@ Random experiment utility: -1.244
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Plot-the-Results">Plot the Results<a class="anchor-link" href="#Plot-the-Results">¶</a></h2><p>We evaluate our results by creating two plots.</p>
-<p>In the first plot, we focus on comparing how $\text{EUBO}\mathrm{-}\zeta$ can efficiently identify the maximizer 
+<p>In the first plot, we focus on comparing how $\text{EUBO}\mathrm{-}\zeta$ can efficiently identify the maximizer
 of $g_\mathrm{true}(f_\mathrm{true}(x))$ within a preference exploration stage.
 We examine this by estimatig the maximum posterior mean after every 3 pairwise comparisons.</p>
 <p>Here, we plot the the max utility value identified using $\text{EUBO}\mathrm{-}\zeta$ and $\text{Random}\mathrm{-}f$

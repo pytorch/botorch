@@ -305,11 +305,6 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">nonlinear_inequality_constraints</span>
         <span class="k">else</span> <span class="mi">1</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">has_parameter_constraints</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">opt_inputs</span><span class="o">.</span><span class="n">inequality_constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-        <span class="ow">or</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">equality_constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-        <span class="ow">or</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">nonlinear_inequality_constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-    <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_optimize_batch_candidates</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="ne">Warning</span><span class="p">]]:</span>
         <span class="n">batch_candidates_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -331,16 +326,17 @@
             <span class="s2">"timeout_sec"</span><span class="p">:</span> <span class="n">timeout_sec</span><span class="p">,</span>
         <span class="p">}</span>
 
-        <span class="k">if</span> <span class="n">has_parameter_constraints</span><span class="p">:</span>
-            <span class="n">gen_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
-                <span class="p">{</span>
-                    <span class="s2">"inequality_constraints"</span><span class="p">:</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">inequality_constraints</span><span class="p">,</span>
-                    <span class="s2">"equality_constraints"</span><span class="p">:</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">equality_constraints</span><span class="p">,</span>
-                    <span class="s2">"nonlinear_inequality_constraints"</span><span class="p">:</span> <span class="p">(</span>
-                        <span class="n">opt_inputs</span><span class="o">.</span><span class="n">nonlinear_inequality_constraints</span>
-                    <span class="p">),</span>
-                <span class="p">}</span>
-            <span class="p">)</span>
+        <span class="c1"># only add parameter constraints to gen_kwargs if they are specified</span>
+        <span class="c1"># to avoid unnecessary warnings in _filter_kwargs</span>
+        <span class="k">if</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">inequality_constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">gen_kwargs</span><span class="p">[</span><span class="s2">"inequality_constraints"</span><span class="p">]</span> <span class="o">=</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">inequality_constraints</span>
+        <span class="k">if</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">equality_constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">gen_kwargs</span><span class="p">[</span><span class="s2">"equality_constraints"</span><span class="p">]</span> <span class="o">=</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">equality_constraints</span>
+        <span class="k">if</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">nonlinear_inequality_constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">gen_kwargs</span><span class="p">[</span>
+                <span class="s2">"nonlinear_inequality_constraints"</span>
+            <span class="p">]</span> <span class="o">=</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">nonlinear_inequality_constraints</span>
+
         <span class="n">filtered_gen_kwargs</span> <span class="o">=</span> <span class="n">_filter_kwargs</span><span class="p">(</span><span class="n">opt_inputs</span><span class="o">.</span><span class="n">gen_candidates</span><span class="p">,</span> <span class="o">**</span><span class="n">gen_kwargs</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">batched_ics_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">batched_ics</span><span class="p">):</span>

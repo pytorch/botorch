@@ -78,7 +78,8 @@
 <p>$$K_\text{cdf}(x) = 1 - (1-x^a)^b$$</p>
 <p>This enables maximum likelihood (or maximum a posteriori) estimation of the CDF hyperparameters using gradient methods to maximize the likelihood (or posterior probability) jointly with the GP hyperparameters. (Snoek et al. use a fully Bayesian treatment of the CDF parameters). Each input dimension is transformed using a separate warping function.</p>
 <p>We use the Noisy Expected Improvement (qNEI) acquisition function to optimize a synthetic Hartmann6 test function. The standard problem is</p>
-$$f(x) = -\sum_{i=1}^4 \alpha_i \exp \left( -\sum_{j=1}^6 A_{ij} (x_j - P_{ij})^2  \right)$$<p>over $x \in [0,1]^6$ (parameter values can be found in <code>botorch/test_functions/hartmann6.py</code>). For this demonstration,
+<p>$$f(x) = -\sum_{i=1}^4 \alpha_i \exp \left( -\sum_{j=1}^6 A_{ij} (x_j - P_{ij})^2  \right)$$</p>
+<p>over $x \in [0,1]^6$ (parameter values can be found in <code>botorch/test_functions/hartmann6.py</code>). For this demonstration,
 We first warp each input dimension through a different inverse Kumaraswamy CDF.</p>
 <p>Since botorch assumes a maximization problem, we will attempt to maximize $-f(x)$ to achieve $\max_{x} -f(x) = 3.32237$.</p>
 <p>[1] <a href="http://proceedings.mlr.press/v32/snoek14.pdf">J. Snoek, K. Swersky, R. S. Zemel, R. P. Adams. Input Warping for Bayesian Optimization of Non-Stationary Functions. Proceedings of the 31st International Conference on Machine Learning, PMLR 32(2):1674-1682, 2014.</a></p>

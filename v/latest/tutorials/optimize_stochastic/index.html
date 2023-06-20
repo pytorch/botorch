@@ -178,7 +178,8 @@ I1116 182000.167 _utils_internal.py:188] NCCL_DEBUG is INFO from /etc/nccl.conf
 <div class="text_cell_render border-box-sizing rendered_html">
 <h4 id="Choosing-initial-conditions-via-a-heuristic">Choosing initial conditions via a heuristic<a class="anchor-link" href="#Choosing-initial-conditions-via-a-heuristic">¶</a></h4><p>Using random initial conditions in conjunction with gradient-based optimizers can be problematic because qEI values and their corresponding gradients are often zero in large parts of the feature space. To mitigate this issue, BoTorch provides a heuristic for generating promising initial conditions (this dirty and not-so-little secret of Bayesian Optimization is actually very important for overall closed-loop performance).</p>
 <p>Given a set of <code>q</code>-batches $X'$ and associated acquisiton function values $Y'$, the <code>initialize_q_batch_nonneg</code> samples promising initial conditions $X$ (without replacement) from the multinomial distribution</p>
-$$ \mathbb{P}(X = X'_i) \sim \exp (\eta \tilde{Y}_i), \qquad \text{where} \;\; \tilde{Y}_i = \frac{Y'_i - \mu(Y)}{\sigma(Y)} \;\; \text{if} \;\; Y'_i &gt;0 $$<p>and $\mathbb{P}(X = X'_j) = 0$ for all $j$ such that $Y'_j = 0$.</p>
+<p>$$ \mathbb{P}(X = X'_i) \sim \exp (\eta \tilde{Y}_i), \qquad \text{where} \;\; \tilde{Y}_i = \frac{Y'_i - \mu(Y)}{\sigma(Y)} \;\; \text{if} \;\; Y'_i &gt;0 $$</p>
+<p>and $\mathbb{P}(X = X'_j) = 0$ for all $j$ such that $Y'_j = 0$.</p>
 <p>Fortunately, thanks to the high degree of parallelism in BoTorch, evaluating the acquisition function at a large number of randomly chosen points is quite cheap.</p>
 </div>
 </div>

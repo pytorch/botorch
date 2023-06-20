@@ -185,7 +185,7 @@
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>We use a simple test problem describing the concentration of pollutants after a chemical spill from <a href="https://proceedings.mlr.press/v97/astudillo19a.html">Astudillo &amp; Frazier, ICML, '19</a> defined over a $3 \times 4$ grid of values $s,t$ and we wish to optimize the parameters w.r.t. their true values, to estimate the true value of parameters, $x = [M, D, L, \tau].$ The function is given by 
+<p>We use a simple test problem describing the concentration of pollutants after a chemical spill from <a href="https://proceedings.mlr.press/v97/astudillo19a.html">Astudillo &amp; Frazier, ICML, '19</a> defined over a $3 \times 4$ grid of values $s,t$ and we wish to optimize the parameters w.r.t. their true values, to estimate the true value of parameters, $x = [M, D, L, \tau].$ The function is given by
 $$ f(s,t | M, D, L, \tau) := \frac{M}{\sqrt{4 \pi D t}}  \exp\{-\frac{s^2}{4Dt}\} + \frac{1_{t &gt; \tau} M}{\sqrt{4 \pi D(t - \tau)}} \exp\{- \frac{(s - L)^2}{4 D (t - \tau)}\}, $$
 with the cheap to evaluate, differentiable function given by $g(y):= \sum_{(s,t) \in S \times T} \left(c(s, t|x_{\text{true}}) - y\right)^2.$ As the objective function itself is going to be implemented in Pytorch, we will be able to differentiate through it, enabling the usage of gradient-based optimization to optimize the objectives with respect to the inputs.</p>
 </div>

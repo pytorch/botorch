@@ -52,7 +52,7 @@
     <span class="n">NLC_TOL</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.stopping</span> <span class="kn">import</span> <span class="n">ExpMAStoppingCriterion</span>
-<span class="kn">from</span> <span class="nn">botorch.optim.utils</span> <span class="kn">import</span> <span class="n">_filter_kwargs</span><span class="p">,</span> <span class="n">columnwise_clamp</span><span class="p">,</span> <span class="n">fix_features</span>
+<span class="kn">from</span> <span class="nn">botorch.optim.utils</span> <span class="kn">import</span> <span class="n">columnwise_clamp</span><span class="p">,</span> <span class="n">fix_features</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.utils.timeout</span> <span class="kn">import</span> <span class="n">minimize_with_timeout</span>
 <span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">OptimizeResult</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
@@ -390,9 +390,7 @@
 
     <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">stop</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="n">stopping_criterion</span> <span class="o">=</span> <span class="n">ExpMAStoppingCriterion</span><span class="p">(</span>
-        <span class="o">**</span><span class="n">_filter_kwargs</span><span class="p">(</span><span class="n">ExpMAStoppingCriterion</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
-    <span class="p">)</span>
+    <span class="n">stopping_criterion</span> <span class="o">=</span> <span class="n">ExpMAStoppingCriterion</span><span class="p">(</span><span class="o">**</span><span class="n">options</span><span class="p">)</span>
     <span class="k">while</span> <span class="ow">not</span> <span class="n">stop</span><span class="p">:</span>
         <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>

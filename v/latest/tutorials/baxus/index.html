@@ -183,7 +183,7 @@ The tutorial is purposefully similar to the <a href="https://botorch.org/tutoria
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Maintain-the-BAxUS-state">Maintain the BAxUS state<a class="anchor-link" href="#Maintain-the-BAxUS-state">¶</a></h2><p>BAxUS needs to maintain a state, which includes the length of the trust region, success and failure counters, success and failure tolerance, etc. 
+<h2 id="Maintain-the-BAxUS-state">Maintain the BAxUS state<a class="anchor-link" href="#Maintain-the-BAxUS-state">¶</a></h2><p>BAxUS needs to maintain a state, which includes the length of the trust region, success and failure counters, success and failure tolerance, etc.
 In contrast to TuRBO, the failure tolerance depends on the target dimensionality.</p>
 <p>In this tutorial we store the state in a dataclass and update the state of TuRBO after each batch evaluation.</p>
 <p><strong>Note</strong>: These settings assume that the domain has been scaled to $[-1, 1]^d$</p>
@@ -269,7 +269,7 @@ In contrast to TuRBO, the failure tolerance depends on the target dimensionality
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Create-a-BAxUS-embedding">Create a BAxUS embedding<a class="anchor-link" href="#Create-a-BAxUS-embedding">¶</a></h2><p>We now show how to create the BAxUS embedding. The essential idea is to assign input dimensions to target dimensions and to assign a sign $\in \pm 1$ to each input dimension, similar to the HeSBO embedding. 
+<h2 id="Create-a-BAxUS-embedding">Create a BAxUS embedding<a class="anchor-link" href="#Create-a-BAxUS-embedding">¶</a></h2><p>We now show how to create the BAxUS embedding. The essential idea is to assign input dimensions to target dimensions and to assign a sign $\in \pm 1$ to each input dimension, similar to the HeSBO embedding.
 We create the embedding matrix that is used to project points from the target to the input space. The matrix is sparse, each column has precisely one non-zero entry that is either 1 or -1.</p>
 </div>
 </div>

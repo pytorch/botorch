@@ -23,7 +23,6 @@ from botorch.acquisition.monte_carlo import qExpectedImprovement
 from botorch.acquisition.objective import GenericMCObjective
 from botorch.models import KroneckerMultiTaskGP, SingleTaskGP
 from botorch.optim import optimize_acqf
-from botorch.optim.fit import fit_gpytorch_torch
 from botorch.sampling.normal import IIDNormalSampler
 
 from botorch.test_functions import Hartmann
@@ -179,8 +178,18 @@ else:
 # In[9]:
 
 
+from botorch.optim.fit import fit_gpytorch_mll_torch
+from torch.optim.adam import Adam
+from functools import partial
+
+
+# In[10]:
+
+
 mtgp_trial_objectives = []
 batch_trial_objectives = []
+batch_trial_objectives_legacy = []
+
 rand_trial_objectives = []
 
 for trial in range(n_trials):
@@ -197,46 +206,54 @@ for trial in range(n_trials):
     best_value_mtgp = objective(init_y).max()
     best_value_batch = best_value_mtgp
     best_random = best_value_mtgp
+    
+    optimizer = partial(Adam, lr=0.01)
 
     for iteration in range(n_steps):
         # we empty the cache to clear memory out
         torch.cuda.empty_cache()
 
+        # MTGP
         mtgp_t0 = time.monotonic()
         mtgp = KroneckerMultiTaskGP(
             mtgp_train_x,
             mtgp_train_y,
         )
         mtgp_mll = ExactMarginalLogLikelihood(mtgp.likelihood, mtgp)
-        fit_gpytorch_torch(
-            mtgp_mll, options={"maxiter": 3000, "lr": 0.01, "disp": False}
+        fit_gpytorch_mll_torch(
+            mtgp_mll,
+            optimizer=optimizer,
+            step_limit=3000,
         )
+
         mtgp_acqf = construct_acqf(mtgp, objective, num_samples, best_value_mtgp)
         new_mtgp_x = optimize_acqf_and_get_candidate(mtgp_acqf, bounds, batch_size)
+        mtgp_train_x = torch.cat((mtgp_train_x, new_mtgp_x), dim=0)
+        mtgp_train_y = torch.cat((mtgp_train_y, problem(new_mtgp_x)), dim=0)
+        best_value_mtgp = objective(mtgp_train_y).max()
         mtgp_t1 = time.monotonic()
 
+        # Batch
         batch_t0 = time.monotonic()
         batchgp = SingleTaskGP(
             batch_train_x,
             batch_train_y,
         )
         batch_mll = ExactMarginalLogLikelihood(batchgp.likelihood, batchgp)
-        fit_gpytorch_torch(
-            batch_mll, options={"maxiter": 3000, "lr": 0.01, "disp": False}
+        fit_gpytorch_mll_torch(
+            batch_mll,
+            optimizer=optimizer,
+            step_limit=3000,
         )
         batch_acqf = construct_acqf(batchgp, objective, num_samples, best_value_batch)
         new_batch_x = optimize_acqf_and_get_candidate(batch_acqf, bounds, batch_size)
+        batch_train_x = torch.cat((batch_train_x, new_batch_x), dim=0)
+        batch_train_y = torch.cat((batch_train_y, problem(new_batch_x)), dim=0)
+        best_value_batch = objective(batch_train_y).max()
+        
         batch_t1 = time.monotonic()
 
-        mtgp_train_x = torch.cat((mtgp_train_x, new_mtgp_x), dim=0)
-        batch_train_x = torch.cat((batch_train_x, new_batch_x), dim=0)
-
-        mtgp_train_y = torch.cat((mtgp_train_y, problem(new_mtgp_x)), dim=0)
-        batch_train_y = torch.cat((batch_train_y, problem(new_batch_x)), dim=0)
-
-        best_value_mtgp = objective(mtgp_train_y).max()
-        best_value_batch = objective(batch_train_y).max()
-
+        # rand
         new_rand_x = (bounds[1] - bounds[0]) * torch.rand(
             batch_size, bounds.shape[1], **tkwargs
         ) + bounds[0]
@@ -261,7 +278,7 @@ for trial in range(n_trials):
 
 # ### Plot Results
 
-# In[10]:
+# In[11]:
 
 
 import matplotlib.pyplot as plt
@@ -271,7 +288,7 @@ import matplotlib.pyplot as plt
 # 
 # However, as demonstrated above, optimizing the acquisition function and fitting the MTGP tend to take a bit longer.
 
-# In[11]:
+# In[12]:
 
 
 mtgp_results = torch.stack(mtgp_trial_objectives)[:, n_init:].cummax(1).values
@@ -279,7 +296,7 @@ batch_results = torch.stack(batch_trial_objectives)[:, n_init:].cummax(1).values
 random_results = torch.stack(rand_trial_objectives)[:, n_init:].cummax(1).values
 
 
-# In[15]:
+# In[13]:
 
 
 plt.plot(mtgp_results.mean(0))
@@ -314,7 +331,7 @@ plt.xlabel("Number of Function Queries")
 plt.ylabel("Best Objective Achieved")
 
 
-# In[12]:
+# In[14]:
 
 
 plt.plot(mtgp_results.mean(0))
