@@ -446,7 +446,8 @@ def optimize_acqf(
         inequality_constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`. `indices` and
-            `coefficients` should be torch tensors. When q=1, or when
+            `coefficients` should be torch tensors. See the docstring of
+            `make_scipy_linear_constraints` for an example. When q=1, or when
             applying the same constraint to each candidate in the batch,
             `indices` should be a 1-d tensor. For inter-point constraints,
             `indices` must be a 2-d Tensor, where in each row `indices[i] =
@@ -455,7 +456,8 @@ def optimize_acqf(
             the `l_i`-th feature of that element.
         equality_constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an equality constraint of the form
-            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
+            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`. See the docstring of
+            `make_scipy_linear_constraints` for an example.
         nonlinear_inequality_constraints: A list of callables with that represent
             non-linear inequality constraints of the form `callable(x) >= 0`. Each
             callable is expected to take a `(num_restarts) x q x d`-dim tensor as an
