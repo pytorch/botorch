@@ -293,7 +293,8 @@ if <cite>batch_initial_conditions</cite> is not specified.</p></li>
 <li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite>. <cite>indices</cite> and
-<cite>coefficients</cite> should be torch tensors. When q=1, or when
+<cite>coefficients</cite> should be torch tensors. See the docstring of
+<cite>make_scipy_linear_constraints</cite> for an example. When q=1, or when
 applying the same constraint to each candidate in the batch,
 <cite>indices</cite> should be a 1-d tensor. For inter-point constraints,
 <cite>indices</cite> must be a 2-d Tensor, where in each row <cite>indices[i] =
@@ -302,7 +303,8 @@ element of the <cite>q</cite>-batch and the second index <cite>l_i</cite> corres
 the <cite>l_i</cite>-th feature of that element.</p></li>
 <li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an equality constraint of the form
-<cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite></p></li>
+<cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>. See the docstring of
+<cite>make_scipy_linear_constraints</cite> for an example.</p></li>
 <li><p><strong>nonlinear_inequality_constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>] </em><em>| </em><em>None</em>) – A list of callables with that represent
 non-linear inequality constraints of the form <cite>callable(x) &gt;= 0</cite>. Each
 callable is expected to take a <cite>(num_restarts) x q x d</cite>-dim tensor as an
