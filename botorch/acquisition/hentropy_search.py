@@ -23,6 +23,8 @@ specific loss function and action set).
     (NeurIPS 2022)
 """
 
+from __future__ import annotations
+
 from typing import Any, Dict, Optional
 
 import torch
@@ -37,6 +39,8 @@ from torch import Tensor
 
 
 class qHEntropySearch(MCAcquisitionFunction, OneShotAcquisitionFunction):
+    r"""H-Entropy Search using one-shot optimization."""
+
     def __init__(
         self,
         model: Model,
@@ -193,6 +197,8 @@ class qHEntropySearch(MCAcquisitionFunction, OneShotAcquisitionFunction):
 
 
 class qLossFunctionTopK(nn.Module):
+    r"""Batch loss function for the task of finding top-K."""
+
     def __init__(self, dist_weight=1.0, dist_threshold=0.5) -> None:
         r"""Batch loss function for the task of finding top-K.
 
@@ -241,6 +247,8 @@ class qLossFunctionTopK(nn.Module):
 
 
 class qLossFunctionMinMax(nn.Module):
+    r"""Batch loss function for the task of finding min and max."""
+
     def __init__(self) -> None:
         r"""Loss function for task of finding min and max.
 
