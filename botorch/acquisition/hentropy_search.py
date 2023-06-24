@@ -10,9 +10,9 @@ one-shot optimization as introduced in [Neiswanger2022]_.
 
 The authors adopt a generalized definition of entropy from past work
 in Bayesian decision theory, which proposes a family of decision-theoretic
- entropies parameterized by a problem-specific loss function and
- action set. Therefore, the method allow the development of a common
- acquisition optimization procedure, which applies generically
+entropies parameterized by a problem-specific loss function and
+action set. Therefore, the method allow the development of a common
+acquisition optimization procedure, which applies generically
 to many members of this family (where each member is induced by a
 specific loss function and action set).
 
@@ -23,7 +23,6 @@ specific loss function and action set).
     (NeurIPS 2022)
 """
 
-import copy
 from typing import Any, Dict, Optional, Type
 
 import torch
@@ -42,7 +41,7 @@ class qHEntropySearch(MCAcquisitionFunction, OneShotAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        loss_function_class: Type[MCAcquisitionObjective],
+        loss_function_class: nn.Module,
         loss_function_hyperparameters: Dict[str, Any],
         n_fantasy_at_design_pts: Optional[int] = 64,
         n_fantasy_at_action_pts: Optional[int] = 64,
@@ -58,9 +57,11 @@ class qHEntropySearch(MCAcquisitionFunction, OneShotAcquisitionFunction):
             loss_function_hyperparameters: The hyperparameters for the loss
                 function class.
             n_fantasy_at_design_pts: Number of fantasized outcomes for each
-                design point.
+                design point. Must match the sample shape of `design_sampler`
+                if specified.
             n_fantasy_at_action_pts: Number of fantasized outcomes for each
-                action point.
+                action point. Must match the sample shape of `action_sampler`
+                if specified.
             design_sampler: The sampler used to sample fantasized outcomes at each
                 design point. Optional if `n_fantasy_at_design_pts` is specified.
             action_sampler: The sampler used to sample fantasized outcomes at each
@@ -71,10 +72,10 @@ class qHEntropySearch(MCAcquisitionFunction, OneShotAcquisitionFunction):
 
         if design_sampler is None:
             if n_fantasy_at_design_pts is None:
-                raise ValueError((
+                raise ValueError(
                     "Must specify `n_fantasy_at_design_pts` if no `design_sampler` "
                     "is provided."
-                ))
+                )
             # base samples should be fixed for joint optimization over X, A
             design_sampler = SobolQMCNormalSampler(
                 sample_shape=n_fantasy_at_design_pts,
@@ -83,19 +84,19 @@ class qHEntropySearch(MCAcquisitionFunction, OneShotAcquisitionFunction):
             )
         elif n_fantasy_at_design_pts is not None:
             if design_sampler.sample_shape != torch.Size([n_fantasy_at_design_pts]):
-                raise ValueError((
+                raise ValueError(
                     "The design_sampler shape must match n_fantasy_at_design_pts="
                     f"{n_fantasy_at_design_pts}."
-                ))
+                )
         else:
             n_fantasy_at_design_pts = design_sampler.sample_shape[0]
 
         if action_sampler is None:
             if n_fantasy_at_action_pts is None:
-                raise ValueError((
+                raise ValueError(
                     "Must specify `n_fantasy_at_action_pts` if no `action_sampler` "
                     "is provided."
-                ))
+                )
             # base samples should be fixed for joint optimization over X, A
             action_sampler = SobolQMCNormalSampler(
                 sample_shape=n_fantasy_at_action_pts,
@@ -104,10 +105,10 @@ class qHEntropySearch(MCAcquisitionFunction, OneShotAcquisitionFunction):
             )
         elif n_fantasy_at_action_pts is not None:
             if action_sampler.sample_shape != torch.Size([n_fantasy_at_action_pts]):
-                raise ValueError((
+                raise ValueError(
                     "The sampler shape must match n_fantasy_at_action_pts="
                     f"{n_fantasy_at_action_pts}."
-                ))
+                )
         else:
             n_fantasy_at_action_pts = action_sampler.sample_shape[0]
 
@@ -116,7 +117,7 @@ class qHEntropySearch(MCAcquisitionFunction, OneShotAcquisitionFunction):
         self.n_fantasy_at_design_pts = n_fantasy_at_design_pts
         self.loss_function_hyperparameters = loss_function_hyperparameters
         self.loss_function = loss_function_class(
-            loss_function_hyperparameters=self.loss_function_hyperparameters,
+            **self.loss_function_hyperparameters,
         )
 
     @t_batch_mode_transform()
@@ -124,17 +125,16 @@ class qHEntropySearch(MCAcquisitionFunction, OneShotAcquisitionFunction):
         r"""Evaluate qHEntropySearch objective (q-HES) on the candidate set `X`.
 
         Args:
-            X: Design tensor of shape `batch x q x num_dim_design`.
-            A: Action tensor of shape `batch x n_fantasy_at_design_pts
+            X: Design tensor of shape `(batch) x q x num_dim_design`.
+            A: Action tensor of shape `(batch) x n_fantasy_at_design_pts
                 x num_actions x num_dim_action`.
 
         Returns:
-            A Tensor of shape `batch`.
+            A Tensor of shape `(batch)`.
         """
 
         # construct the fantasy model of shape `n_fantasy_at_design_pts x b`
-        model = copy.deepcopy(self.model)
-        fantasy_model = model.fantasize(
+        fantasy_model = self.model.fantasize(
             X=X, sampler=self.design_sampler, observation_noise=True
         )
 
@@ -159,37 +159,23 @@ class qHEntropySearch(MCAcquisitionFunction, OneShotAcquisitionFunction):
         return q + self.cfg.n_dim_action
 
     def extract_candidates(self, batch_as_full: Tensor) -> Tensor:
-        def _split_fantasy_points(
-            batch_as: torch.Tensor, n_actions: int, design_dim: int, action_dim: int
-        ):
-            assert len(batch_as.shape) == 2
-            n_restarts = batch_as.size(0)
-            split_sizes = [
-                batch_as.size(1) - n_actions * action_dim,
-                n_actions * action_dim,
-            ]
-            batch_xs, batch_as = torch.split(batch_as, split_sizes, dim=1)
-            batch_xs = batch_xs.reshape(n_restarts, -1, design_dim)
-            batch_as = batch_as.reshape(n_restarts, n_actions, action_dim)
-            return batch_xs, batch_as
-
-        batch_xs, _ = _split_fantasy_points(
-            batch_as=batch_as_full,
-            n_actions=self.cfg.n_actions,
-            design_dim=self.cfg.n_dim_design,
-            action_dim=self.cfg.n_dim_action,
+        assert len(batch_as_full.shape) == 2
+        n_restarts = batch_as_full.size(0)
+        split_sizes = [
+            batch_as_full.size(1) - self.cfg.n_actions * self.cfg.n_dim_action,
+            self.cfg.n_actions * self.cfg.n_dim_action,
+        ]
+        batch_xs, batch_as_full = torch.split(batch_as_full, split_sizes, dim=1)
+        batch_xs = batch_xs.reshape(n_restarts, -1, self.cfg.n_dim_design)
+        batch_as_full = batch_as_full.reshape(
+            n_restarts, self.cfg.n_actions, self.cfg.n_dim_action
         )
 
         return batch_xs
 
 
 class qLossFunctionTopK(nn.Module):
-    def __init__(
-        self,
-        loss_function_hyperparameters: Dict[str, Any] = dict(
-            dist_weight=1.0, dist_threshold=0.5
-        ),
-    ) -> None:
+    def __init__(self, dist_weight=1.0, dist_threshold=0.5) -> None:
         r"""Batch loss function for the task of finding top-K.
 
         Args:
@@ -197,12 +183,10 @@ class qLossFunctionTopK(nn.Module):
         """
 
         super().__init__()
-        self.register_buffer(
-            "dist_weight", torch.as_tensor(loss_function_hyperparameters["dist_weight"])
-        )
+        self.register_buffer("dist_weight", torch.as_tensor(dist_weight))
         self.register_buffer(
             "dist_threshold",
-            torch.as_tensor(loss_function_hyperparameters["dist_threshold"]),
+            torch.as_tensor(dist_threshold),
         )
 
     def forward(self, A: Tensor, Y: Tensor) -> Tensor:
@@ -225,13 +209,11 @@ class qLossFunctionTopK(nn.Module):
 
         dist_reward = 0
         if num_actions >= 2:
-            A_distance = torch.cdist(A.contiguous(), A.contiguous(), p=1.0)
-            A_distance_triu = torch.triu(A_distance)
-            # >>> n_fantasy_at_design_pts x batch_size x num_actions x num_actions
-
-            A_distance_triu[A_distance_triu > self.dist_threshold] = self.dist_threshold
+            dists = torch.nn.functional.pdist(A.contiguous(), p=1.0).clamp_min(
+                self.dist_threshold
+            )
             denominator = num_actions * (num_actions - 1) / 2.0
-            dist_reward = A_distance_triu.sum((-1, -2)) / denominator
+            dist_reward = dists.sum(-1) / denominator
             # >>> n_fantasy_at_design_pts x batch_size
 
         q_hes = Y + self.dist_weight * dist_reward
@@ -241,10 +223,7 @@ class qLossFunctionTopK(nn.Module):
 
 
 class qLossFunctionMinMax(nn.Module):
-    def __init__(
-        self,
-        loss_function_hyperparameters: Optional[Dict[str, Any]] = dict(),
-    ) -> None:
+    def __init__(self) -> None:
         r"""Loss function for task of finding min and max.
 
         Args:
@@ -265,11 +244,10 @@ class qLossFunctionMinMax(nn.Module):
             A Tensor of shape `n_fantasy_at_action_pts x batch`.
         """
 
-        assert A.shape[-2] == 2
+        if A.shape[-2] != 2:
+            raise RuntimeError("qLossFunctionMinMax only supports 2 actions.")
 
-        Y[:, :, :, 0] = -1 * Y[:, :, :, 0]
-
-        q_hes = Y.sum(dim=-1).mean(dim=0)
+        q_hes = (Y[..., 1:].sum(dim=-1) - Y[..., 0]).mean(dim=0)
         # >>> n_fantasy_at_design_pts x batch_size
 
         return q_hes
