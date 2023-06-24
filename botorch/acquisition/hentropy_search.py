@@ -23,11 +23,10 @@ specific loss function and action set).
     (NeurIPS 2022)
 """
 
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Optional
 
 import torch
 import torch.nn as nn
-from botorch.acquisition import MCAcquisitionObjective
 from botorch.acquisition.acquisition import OneShotAcquisitionFunction
 from botorch.acquisition.monte_carlo import MCAcquisitionFunction
 from botorch.models.model import Model
@@ -156,9 +155,28 @@ class qHEntropySearch(MCAcquisitionFunction, OneShotAcquisitionFunction):
         return values.mean(dim=0)
 
     def get_augmented_q_batch_size(self, q: int) -> int:
+        r"""Get augmented q batch size for optimization.
+
+        Args:
+            q: The number of candidates to consider jointly.
+
+        Returns:
+            The augmented size for optimization.
+        """
+
         return q + self.cfg.n_dim_action
 
     def extract_candidates(self, batch_as_full: Tensor) -> Tensor:
+        r"""We only return X as the set of candidates post-optimization.
+
+        Args:
+            batch_as_full: A `b x (q + num_fantasies) x d`-dim Tensor with `b`
+                t-batches of `q + num_fantasies` design points each.
+
+        Returns:
+            A `b x q x d`-dim Tensor with `b` t-batches of `q` design points each.
+        """
+
         assert len(batch_as_full.shape) == 2
         n_restarts = batch_as_full.size(0)
         split_sizes = [
