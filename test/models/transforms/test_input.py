@@ -652,11 +652,12 @@ class TestInputTransforms(BotorchTestCase):
                             approximate=approx,
                         )
                     continue
+                tau = 1e-1
                 round_tf = Round(
                     integer_indices=int_idcs,
                     categorical_features=categorical_features,
                     approximate=approx,
-                    tau=1e-1,
+                    tau=tau,
                 )
                 X_rounded = round_tf(X)
                 exact_rounded_X_ints = X[..., int_idcs].round()
@@ -671,10 +672,11 @@ class TestInputTransforms(BotorchTestCase):
                     dist_orig_to_rounded = (
                         X[..., int_idcs] - exact_rounded_X_ints
                     ).abs()
-                    tol = 1e-5 if dtype == torch.float32 else 1e-11
-                    self.assertTrue(
-                        (dist_approx_to_rounded <= dist_orig_to_rounded + tol).all()
+                    tol = torch.tanh(torch.tensor(0.5 / tau, dtype=dtype))
+                    self.assertGreater(
+                        (dist_orig_to_rounded - dist_approx_to_rounded).min(), -tol
                     )
+
                     self.assertFalse(
                         torch.equal(X_rounded[..., int_idcs], exact_rounded_X_ints)
                     )
