@@ -170,7 +170,7 @@ class SobolQMCNormalSampler(NormalMCSampler):
     r"""Sampler for quasi-MC N(0,1) base samples using Sobol sequences.
 
     Example:
-        >>> sampler = SobolQMCNormalSampler(1024, seed=1234)
+        >>> sampler = SobolQMCNormalSampler(torch.Size([1024]), seed=1234)
         >>> posterior = model.posterior(test_X)
         >>> samples = sampler(posterior)
     """
