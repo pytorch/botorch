@@ -695,6 +695,13 @@ class InputStandardize(AffineInputTransform):
 class Round(InputTransform, Module):
     r"""A discretization transformation for discrete inputs.
 
+    If `approximate=False` (the default), uses PyTorch's `round`.
+
+    If `approximate=True`, a differentiable approximate rounding function is
+    used, with a temperature parameter of `tau`. This method is a piecewise
+    approximation of a rounding function where each piece is a hyperbolic
+    tangent function.
+
     For integers, this will typically be used in conjunction
     with normalization as follows:
 
