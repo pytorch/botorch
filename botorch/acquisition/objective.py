@@ -425,7 +425,7 @@ class GenericMCObjective(MCAcquisitionObjective):
             self.objective = objective
 
     def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
-        r"""Evaluate the feasibility-weigthed objective on the samples.
+        r"""Evaluate the objective on the samples.
 
         Args:
             samples: A `sample_shape x batch_shape x q x m`-dim Tensors of
@@ -434,8 +434,7 @@ class GenericMCObjective(MCAcquisitionObjective):
                 the objective depends on the inputs explicitly.
 
         Returns:
-            A `sample_shape x batch_shape x q`-dim Tensor of objective values
-            weighted by feasibility (assuming maximization).
+            A `sample_shape x batch_shape x q`-dim Tensor of objective values.
         """
         return self.objective(samples, X=X)
 
@@ -462,6 +461,9 @@ class ConstrainedMCObjective(GenericMCObjective):
         >>> constrained_objective = ConstrainedMCObjective(objective, [constraint])
         >>> samples = sampler(posterior)
         >>> objective = constrained_objective(samples)
+
+    TODO: Deprecate this as default way to handle constraints with MC acquisition
+    functions once we have data on how well SampleReducingMCAcquisitionFunction works.
     """
 
     def __init__(

@@ -289,9 +289,8 @@ class TestConstrainedMCObjective(BotorchTestCase):
                 objective=generic_obj, constraints=[feasible_con]
             )
             samples = torch.randn(1, device=self.device, dtype=dtype)
-            constrained_obj = generic_obj(samples)
             constrained_obj = apply_constraints(
-                obj=constrained_obj,
+                obj=generic_obj(samples),
                 constraints=[feasible_con],
                 samples=samples,
                 infeasible_cost=0.0,
@@ -302,9 +301,8 @@ class TestConstrainedMCObjective(BotorchTestCase):
                 objective=generic_obj, constraints=[infeasible_con]
             )
             samples = torch.randn(2, device=self.device, dtype=dtype)
-            constrained_obj = generic_obj(samples)
             constrained_obj = apply_constraints(
-                obj=constrained_obj,
+                obj=generic_obj(samples),
                 constraints=[infeasible_con],
                 samples=samples,
                 infeasible_cost=0.0,
@@ -315,9 +313,8 @@ class TestConstrainedMCObjective(BotorchTestCase):
                 objective=generic_obj, constraints=[feasible_con, infeasible_con]
             )
             samples = torch.randn(2, 1, device=self.device, dtype=dtype)
-            constrained_obj = generic_obj(samples)
             constrained_obj = apply_constraints(
-                obj=constrained_obj,
+                obj=generic_obj(samples),
                 constraints=[feasible_con, infeasible_con],
                 samples=samples,
                 infeasible_cost=torch.tensor([0.0], device=self.device, dtype=dtype),
@@ -329,9 +326,8 @@ class TestConstrainedMCObjective(BotorchTestCase):
                 eta=torch.tensor([1, 10]),
             )
             samples = torch.randn(2, 1, device=self.device, dtype=dtype)
-            constrained_obj = generic_obj(samples)
             constrained_obj = apply_constraints(
-                obj=constrained_obj,
+                obj=generic_obj(samples),
                 constraints=[feasible_con, infeasible_con],
                 samples=samples,
                 eta=torch.tensor([1, 10]),
@@ -345,9 +341,8 @@ class TestConstrainedMCObjective(BotorchTestCase):
                 infeasible_cost=5.0,
             )
             samples = torch.randn(3, 2, device=self.device, dtype=dtype)
-            constrained_obj = generic_obj(samples)
             constrained_obj = apply_constraints(
-                obj=constrained_obj,
+                obj=generic_obj(samples),
                 constraints=[feasible_con, infeasible_con],
                 samples=samples,
                 infeasible_cost=5.0,
@@ -361,9 +356,8 @@ class TestConstrainedMCObjective(BotorchTestCase):
                 eta=torch.tensor([1, 10]),
             )
             samples = torch.randn(3, 2, device=self.device, dtype=dtype)
-            constrained_obj = generic_obj(samples)
             constrained_obj = apply_constraints(
-                obj=constrained_obj,
+                obj=generic_obj(samples),
                 constraints=[feasible_con, infeasible_con],
                 samples=samples,
                 infeasible_cost=5.0,
@@ -377,9 +371,8 @@ class TestConstrainedMCObjective(BotorchTestCase):
                 infeasible_cost=torch.tensor([5.0], device=self.device, dtype=dtype),
             )
             samples = torch.randn(4, 3, 2, device=self.device, dtype=dtype)
-            constrained_obj = generic_obj(samples)
             constrained_obj = apply_constraints(
-                obj=constrained_obj,
+                obj=generic_obj(samples),
                 constraints=[feasible_con, infeasible_con],
                 samples=samples,
                 infeasible_cost=5.0,

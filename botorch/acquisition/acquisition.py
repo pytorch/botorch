@@ -140,6 +140,14 @@ class MCSamplerMixin(ABC):
             )
         return self.sampler(posterior=posterior)
 
+    @property
+    def sample_shape(self) -> torch.Size:
+        return (
+            self.sampler.sample_shape
+            if self.sampler is not None
+            else self._default_sample_shape
+        )
+
 
 class MultiModelAcquisitionFunction(AcquisitionFunction, ABC):
     r"""Abstract base class for acquisition functions that require
