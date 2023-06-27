@@ -57,7 +57,7 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
 from botorch.utils.multi_objective.box_decompositions.utils import (
     _pad_batch_pareto_frontier,
 )
-from botorch.utils.objective import apply_constraints_nonnegative_soft
+from botorch.utils.objective import compute_smoothed_constraint_indicator
 from botorch.utils.torch import BufferDict
 from botorch.utils.transforms import (
     concatenate_pending_points,
@@ -279,15 +279,9 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
         obj = self.objective(samples, X=X)
         q = obj.shape[-2]
         if self.constraints is not None:
-            feas_weights = torch.ones(
-                obj.shape[:-1], device=obj.device, dtype=obj.dtype
-            )
-            feas_weights = apply_constraints_nonnegative_soft(
-                obj=feas_weights,
-                constraints=self.constraints,
-                samples=samples,
-                eta=self.eta,
-            )
+            feas_weights = compute_smoothed_constraint_indicator(
+                constraints=self.constraints, samples=samples, eta=self.eta
+            )  # `sample_shape x batch-shape x q`
         self._cache_q_subset_indices(q_out=q)
         batch_shape = obj.shape[:-2]
         # this is n_samples x input_batch_shape x
@@ -419,7 +413,8 @@ class qNoisyExpectedHypervolumeImprovement(
                 same eta is used for every constraint in constraints. In case of a
                 tensor the length of the tensor must match the number of provided
                 constraints. The i-th constraint is then estimated with the i-th
-                eta value.
+                eta value. For more details, on this parameter, see the docs of
+                `compute_smoothed_constraint_indicator`.
             prune_baseline: If True, remove points in `X_baseline` that are
                 highly unlikely to be the pareto optimal and better than the
                 reference point. This can significantly improve computation time and
