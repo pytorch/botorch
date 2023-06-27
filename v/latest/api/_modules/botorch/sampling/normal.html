@@ -193,7 +193,7 @@
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Sampler for quasi-MC N(0,1) base samples using Sobol sequences.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; sampler = SobolQMCNormalSampler(1024, seed=1234)</span>
+<span class="sd">        &gt;&gt;&gt; sampler = SobolQMCNormalSampler(torch.Size([1024]), seed=1234)</span>
 <span class="sd">        &gt;&gt;&gt; posterior = model.posterior(test_X)</span>
 <span class="sd">        &gt;&gt;&gt; samples = sampler(posterior)</span>
 <span class="sd">    """</span>

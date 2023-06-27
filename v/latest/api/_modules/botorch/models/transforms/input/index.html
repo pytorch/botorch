@@ -718,6 +718,13 @@
 <div class="viewcode-block" id="Round"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Round">[docs]</a><span class="k">class</span> <span class="nc">Round</span><span class="p">(</span><span class="n">InputTransform</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A discretization transformation for discrete inputs.</span>
 
+<span class="sd">    If `approximate=False` (the default), uses PyTorch's `round`.</span>
+
+<span class="sd">    If `approximate=True`, a differentiable approximate rounding function is</span>
+<span class="sd">    used, with a temperature parameter of `tau`. This method is a piecewise</span>
+<span class="sd">    approximation of a rounding function where each piece is a hyperbolic</span>
+<span class="sd">    tangent function.</span>
+
 <span class="sd">    For integers, this will typically be used in conjunction</span>
 <span class="sd">    with normalization as follows:</span>
 
