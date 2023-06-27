@@ -14,6 +14,7 @@ from typing import Callable
 import torch
 from botorch.utils import safe_math
 from botorch.utils.constants import get_constants_like
+from botorch.utils.safe_math import logmeanexp
 from botorch.utils.testing import BotorchTestCase
 from torch import finfo, Tensor
 
@@ -204,3 +205,31 @@ class TestSafeDiv(
                 else:
                     self.assertEqual(a.grad, 1 / b)
                     self.assertEqual(b.grad, -a * b**-2)
+
+
+class TestLogMeanExp(BotorchTestCase):
+    def test_log_mean_exp(self):
+        for dtype in (torch.float32, torch.float64):
+            X = torch.rand(3, 2, 5, dtype=dtype, device=self.device) + 0.1
+
+            # test single-dimension reduction
+            self.assertAllClose(logmeanexp(X.log(), dim=-1).exp(), X.mean(dim=-1))
+            self.assertAllClose(logmeanexp(X.log(), dim=-2).exp(), X.mean(dim=-2))
+            # test tuple of dimensions
+            self.assertAllClose(
+                logmeanexp(X.log(), dim=(0, -1)).exp(), X.mean(dim=(0, -1))
+            )
+
+            # with keepdim
+            self.assertAllClose(
+                logmeanexp(X.log(), dim=-1, keepdim=True).exp(),
+                X.mean(dim=-1, keepdim=True),
+            )
+            self.assertAllClose(
+                logmeanexp(X.log(), dim=-2, keepdim=True).exp(),
+                X.mean(dim=-2, keepdim=True),
+            )
+            self.assertAllClose(
+                logmeanexp(X.log(), dim=(0, -1), keepdim=True).exp(),
+                X.mean(dim=(0, -1), keepdim=True),
+            )

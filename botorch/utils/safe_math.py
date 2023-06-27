@@ -17,6 +17,8 @@ from __future__ import annotations
 
 import math
 
+from typing import Tuple, Union
+
 import torch
 from botorch.utils.constants import get_constants_like
 from torch import finfo, Tensor
@@ -88,14 +90,18 @@ def logdiffexp(log_a: Tensor, log_b: Tensor) -> Tensor:
     return log_b + log1mexp(log_a - log_b)
 
 
-def logmeanexp(X: Tensor, dim: int = -1) -> Tensor:
-    """Computes log(mean(exp(X), dim=dim)).
+def logmeanexp(
+    X: Tensor, dim: Union[int, Tuple[int, ...]], keepdim: bool = False
+) -> Tensor:
+    """Computes log(mean(exp(X), dim=dim, keepdim=keepdim)).
 
     Args:
-        X (Tensor): The logarithm of a, assumed to be less than log_b.
-        dim (int): The dimension over which to compute the mean. Default is -1.
+        X: Values of which to compute the logmeanexp.
+        dim: The dimension(s) over which to compute the mean.
+        keepdim: If True, keeps the reduced dimensions.
 
     Returns:
         A Tensor of values corresponding to log(mean(exp(X), dim=dim)).
     """
-    return torch.logsumexp(X, dim=dim) - math.log(X.shape[dim])
+    n = X.shape[dim] if isinstance(dim, int) else math.prod(X.shape[i] for i in dim)
+    return torch.logsumexp(X, dim=dim, keepdim=keepdim) - math.log(n)
