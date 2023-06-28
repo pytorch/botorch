@@ -80,7 +80,7 @@
 <span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.utils</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">_pad_batch_pareto_frontier</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.objective</span> <span class="kn">import</span> <span class="n">apply_constraints_nonnegative_soft</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.objective</span> <span class="kn">import</span> <span class="n">compute_smoothed_constraint_indicator</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.torch</span> <span class="kn">import</span> <span class="n">BufferDict</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">concatenate_pending_points</span><span class="p">,</span>
@@ -302,15 +302,9 @@
         <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
         <span class="n">q</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">feas_weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
-                <span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">dtype</span>
-            <span class="p">)</span>
-            <span class="n">feas_weights</span> <span class="o">=</span> <span class="n">apply_constraints_nonnegative_soft</span><span class="p">(</span>
-                <span class="n">obj</span><span class="o">=</span><span class="n">feas_weights</span><span class="p">,</span>
-                <span class="n">constraints</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">,</span>
-                <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span>
-                <span class="n">eta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">eta</span><span class="p">,</span>
-            <span class="p">)</span>
+            <span class="n">feas_weights</span> <span class="o">=</span> <span class="n">compute_smoothed_constraint_indicator</span><span class="p">(</span>
+                <span class="n">constraints</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">eta</span>
+            <span class="p">)</span>  <span class="c1"># `sample_shape x batch-shape x q`</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cache_q_subset_indices</span><span class="p">(</span><span class="n">q_out</span><span class="o">=</span><span class="n">q</span><span class="p">)</span>
         <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
         <span class="c1"># this is n_samples x input_batch_shape x</span>
@@ -442,7 +436,8 @@
 <span class="sd">                same eta is used for every constraint in constraints. In case of a</span>
 <span class="sd">                tensor the length of the tensor must match the number of provided</span>
 <span class="sd">                constraints. The i-th constraint is then estimated with the i-th</span>
-<span class="sd">                eta value.</span>
+<span class="sd">                eta value. For more details, on this parameter, see the docs of</span>
+<span class="sd">                `compute_smoothed_constraint_indicator`.</span>
 <span class="sd">            prune_baseline: If True, remove points in `X_baseline` that are</span>
 <span class="sd">                highly unlikely to be the pareto optimal and better than the</span>
 <span class="sd">                reference point. This can significantly improve computation time and</span>

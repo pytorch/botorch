@@ -448,7 +448,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">objective</span> <span class="o">=</span> <span class="n">objective</span>
 
 <div class="viewcode-block" id="GenericMCObjective.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.GenericMCObjective.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the feasibility-weigthed objective on the samples.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the objective on the samples.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            samples: A `sample_shape x batch_shape x q x m`-dim Tensors of</span>
@@ -457,8 +457,7 @@
 <span class="sd">                the objective depends on the inputs explicitly.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A `sample_shape x batch_shape x q`-dim Tensor of objective values</span>
-<span class="sd">            weighted by feasibility (assuming maximization).</span>
+<span class="sd">            A `sample_shape x batch_shape x q`-dim Tensor of objective values.</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span></div></div>
 
@@ -485,6 +484,9 @@
 <span class="sd">        &gt;&gt;&gt; constrained_objective = ConstrainedMCObjective(objective, [constraint])</span>
 <span class="sd">        &gt;&gt;&gt; samples = sampler(posterior)</span>
 <span class="sd">        &gt;&gt;&gt; objective = constrained_objective(samples)</span>
+
+<span class="sd">    TODO: Deprecate this as default way to handle constraints with MC acquisition</span>
+<span class="sd">    functions once we have data on how well SampleReducingMCAcquisitionFunction works.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>

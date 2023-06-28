@@ -1421,6 +1421,8 @@
 </li>
 <li><a href="utils.html#botorch.utils.multi_objective.hypervolume.Hypervolume.compute">compute() (botorch.utils.multi_objective.hypervolume.Hypervolume method)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.monte_carlo.qNoisyExpectedImprovement.compute_best_f">compute_best_f() (botorch.acquisition.monte_carlo.qNoisyExpectedImprovement method)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.sensitivity_analysis.Ishigami.compute_dgsm">compute_dgsm() (botorch.test_functions.sensitivity_analysis.Ishigami method)</a>
 </li>
 <li><a href="models.html#botorch.models.fully_bayesian.compute_dists">compute_dists() (in module botorch.models.fully_bayesian)</a>
@@ -1434,6 +1436,8 @@
 <li><a href="utils.html#botorch.utils.multi_objective.box_decompositions.utils.compute_non_dominated_hypercell_bounds_2d">compute_non_dominated_hypercell_bounds_2d() (in module botorch.utils.multi_objective.box_decompositions.utils)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.utils.compute_sample_box_decomposition">compute_sample_box_decomposition() (in module botorch.acquisition.multi_objective.utils)</a>
+</li>
+<li><a href="utils.html#botorch.utils.objective.compute_smoothed_constraint_indicator">compute_smoothed_constraint_indicator() (in module botorch.utils.objective)</a>
 </li>
 <li><a href="utils.html#botorch.utils.probability.linalg.PivotedCholesky.concat">concat() (botorch.utils.probability.linalg.PivotedCholesky method)</a>
 <ul>
@@ -1461,10 +1465,10 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.base.ConstrainedBaseTestProblem">ConstrainedBaseTestProblem (class in botorch.test_functions.base)</a>
 </li>
-<li><a href="test_functions.html#botorch.test_functions.multi_objective.ConstrainedBraninCurrin">ConstrainedBraninCurrin (class in botorch.test_functions.multi_objective)</a>
-</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.ConstrainedBraninCurrin">ConstrainedBraninCurrin (class in botorch.test_functions.multi_objective)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.analytic.ConstrainedExpectedImprovement">ConstrainedExpectedImprovement (class in botorch.acquisition.analytic)</a>
 </li>
 <li><a href="generation.html#botorch.generation.sampling.ConstrainedMaxPosteriorSampling">ConstrainedMaxPosteriorSampling (class in botorch.generation.sampling)</a>
@@ -2185,15 +2189,7 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.monte_carlo.MCAcquisitionFunction.forward">(botorch.acquisition.monte_carlo.MCAcquisitionFunction method)</a>
 </li>
-<li><a href="acquisition.html#botorch.acquisition.monte_carlo.qExpectedImprovement.forward">(botorch.acquisition.monte_carlo.qExpectedImprovement method)</a>
-</li>
-<li><a href="acquisition.html#botorch.acquisition.monte_carlo.qNoisyExpectedImprovement.forward">(botorch.acquisition.monte_carlo.qNoisyExpectedImprovement method)</a>
-</li>
-<li><a href="acquisition.html#botorch.acquisition.monte_carlo.qProbabilityOfImprovement.forward">(botorch.acquisition.monte_carlo.qProbabilityOfImprovement method)</a>
-</li>
-<li><a href="acquisition.html#botorch.acquisition.monte_carlo.qSimpleRegret.forward">(botorch.acquisition.monte_carlo.qSimpleRegret method)</a>
-</li>
-<li><a href="acquisition.html#botorch.acquisition.monte_carlo.qUpperConfidenceBound.forward">(botorch.acquisition.monte_carlo.qUpperConfidenceBound method)</a>
+<li><a href="acquisition.html#botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction.forward">(botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement.forward">(botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement method)</a>
 </li>
@@ -3008,6 +3004,8 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.monte_carlo.qUpperConfidenceBound.model">(botorch.acquisition.monte_carlo.qUpperConfidenceBound attribute)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction.model">(botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction attribute)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement.model">(botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement attribute)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch.model">(botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch attribute)</a>
@@ -3614,6 +3612,8 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.monte_carlo.qUpperConfidenceBound.objective">(botorch.acquisition.monte_carlo.qUpperConfidenceBound attribute)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction.objective">(botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction attribute)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.objective">(botorch.acquisition.multi_step_lookahead.qMultiStepLookahead attribute)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.preference.PairwiseBayesianActiveLearningByDisagreement.objective">(botorch.acquisition.preference.PairwiseBayesianActiveLearningByDisagreement attribute)</a>
@@ -3644,10 +3644,10 @@
 </li>
 <li><a href="optim.html#botorch.optim.optimize.optimize_acqf">optimize_acqf() (in module botorch.optim.optimize)</a>
 </li>
-<li><a href="optim.html#botorch.optim.optimize.optimize_acqf_cyclic">optimize_acqf_cyclic() (in module botorch.optim.optimize)</a>
-</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="optim.html#botorch.optim.optimize.optimize_acqf_cyclic">optimize_acqf_cyclic() (in module botorch.optim.optimize)</a>
+</li>
 <li><a href="optim.html#botorch.optim.optimize.optimize_acqf_discrete">optimize_acqf_discrete() (in module botorch.optim.optimize)</a>
 </li>
 <li><a href="optim.html#botorch.optim.optimize.optimize_acqf_discrete_local_search">optimize_acqf_discrete_local_search() (in module botorch.optim.optimize)</a>
@@ -4040,6 +4040,10 @@
 </li>
 <li><a href="utils.html#botorch.utils.probability.truncated_multivariate_normal.TruncatedMultivariateNormal.sampler">sampler (botorch.utils.probability.truncated_multivariate_normal.TruncatedMultivariateNormal property)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction">SampleReducingMCAcquisitionFunction (class in botorch.acquisition.monte_carlo)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.monte_carlo.SampleReductionProtocol">SampleReductionProtocol (class in botorch.acquisition.monte_carlo)</a>
+</li>
 <li><a href="exceptions.html#botorch.exceptions.warnings.SamplingWarning">SamplingWarning</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.objective.ScalarizedPosteriorTransform.scalarize">scalarize (botorch.acquisition.objective.ScalarizedPosteriorTransform attribute)</a>
@@ -4342,6 +4346,8 @@
 <li><a href="acquisition.html#botorch.acquisition.monte_carlo.qSimpleRegret.training">(botorch.acquisition.monte_carlo.qSimpleRegret attribute)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.monte_carlo.qUpperConfidenceBound.training">(botorch.acquisition.monte_carlo.qUpperConfidenceBound attribute)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction.training">(botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction attribute)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement.training">(botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement attribute)</a>
 </li>

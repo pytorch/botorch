@@ -110,20 +110,50 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        A `n_samples x b x q (x m')`-dim tensor of feasibility-weighted objectives.</span>
 <span class="sd">    """</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">compute_smoothed_constraint_indicator</span><span class="p">(</span>
+        <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="n">eta</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="n">samples</span><span class="o">.</span><span class="n">dim</span><span class="p">():</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># Need to unsqueeze to accommodate the outcome dimension.</span>
+    <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>  <span class="c1"># Enforce non-negativity of obj, apply constraints.</span></div>
+
+
+<div class="viewcode-block" id="compute_smoothed_constraint_indicator"><a class="viewcode-back" href="../../../utils.html#botorch.utils.objective.compute_smoothed_constraint_indicator">[docs]</a><span class="k">def</span> <span class="nf">compute_smoothed_constraint_indicator</span><span class="p">(</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span>
+    <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">eta</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes the feasibility indicator of a list of constraints given posterior</span>
+<span class="sd">    samples, using a sigmoid to smoothly approximate the feasibility indicator</span>
+<span class="sd">    of each individual constraint to ensure differentiability and high gradient signal.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        constraints: A list of callables, each mapping a Tensor of size `b x q x m`</span>
+<span class="sd">            to a Tensor of size `b x q`, where negative values imply feasibility.</span>
+<span class="sd">            This callable must support broadcasting. Only relevant for multi-</span>
+<span class="sd">            output models (`m` &gt; 1).</span>
+<span class="sd">        samples: A `n_samples x b x q x m` Tensor of samples drawn from the posterior.</span>
+<span class="sd">        eta: The temperature parameter for the sigmoid function. Can be either a float</span>
+<span class="sd">            or a 1-dim tensor. In case of a float the same eta is used for every</span>
+<span class="sd">            constraint in constraints. In case of a tensor the length of the tensor</span>
+<span class="sd">            must match the number of provided constraints. The i-th constraint is</span>
+<span class="sd">            then estimated with the i-th eta value.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `n_samples x b x q`-dim tensor of feasibility indicator values.</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span> <span class="o">!=</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">eta</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">constraints</span><span class="p">),),</span> <span class="n">eta</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">constraints</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="s2">"Number of provided constraints and number of provided etas do not match."</span>
         <span class="p">)</span>
-    <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Enforce non-negativity with constraints</span>
+    <span class="n">is_feasible</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">samples</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
     <span class="k">for</span> <span class="n">constraint</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">constraints</span><span class="p">,</span> <span class="n">eta</span><span class="p">):</span>
-        <span class="n">constraint_eval</span> <span class="o">=</span> <span class="n">soft_eval_constraint</span><span class="p">(</span><span class="n">constraint</span><span class="p">(</span><span class="n">samples</span><span class="p">),</span> <span class="n">eta</span><span class="o">=</span><span class="n">e</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="n">samples</span><span class="o">.</span><span class="n">dim</span><span class="p">():</span>
-            <span class="c1"># Need to unsqueeze to accommodate the outcome dimension.</span>
-            <span class="n">constraint_eval</span> <span class="o">=</span> <span class="n">constraint_eval</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">constraint_eval</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">obj</span></div>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">soft_eval_constraint</span><span class="p">(</span><span class="n">constraint</span><span class="p">(</span><span class="n">samples</span><span class="p">),</span> <span class="n">eta</span><span class="o">=</span><span class="n">e</span><span class="p">)</span>
+        <span class="n">is_feasible</span> <span class="o">=</span> <span class="n">is_feasible</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>  <span class="c1"># TODO: add log version.</span>
+
+    <span class="k">return</span> <span class="n">is_feasible</span></div>
 
 
 <div class="viewcode-block" id="soft_eval_constraint"><a class="viewcode-back" href="../../../utils.html#botorch.utils.objective.soft_eval_constraint">[docs]</a><span class="k">def</span> <span class="nf">soft_eval_constraint</span><span class="p">(</span><span class="n">lhs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -181,7 +211,10 @@
     <span class="c1"># obj has dimensions n_samples x b x q (x m')</span>
     <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">infeasible_cost</span><span class="p">)</span>  <span class="c1"># now it is nonnegative</span>
     <span class="n">obj</span> <span class="o">=</span> <span class="n">apply_constraints_nonnegative_soft</span><span class="p">(</span>
-        <span class="n">obj</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="n">eta</span>
+        <span class="n">obj</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span>
+        <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+        <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span>
+        <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="o">-</span><span class="n">infeasible_cost</span><span class="p">)</span></div>
 </pre></div>

@@ -990,9 +990,119 @@ The reparameterization trick for acquisition functions. ArXiv 2017.</p>
 </div>
 </div>
 <dl class="py class">
-<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qExpectedImprovement">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">qExpectedImprovement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#qExpectedImprovement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.qExpectedImprovement" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.SampleReductionProtocol">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">SampleReductionProtocol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#SampleReductionProtocol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.SampleReductionProtocol" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></p>
+<p>For static type check of SampleReducingMCAcquisitionFunction’s mc_reduction.</p>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">SampleReducingMCAcquisitionFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_reduction=&lt;built-in</span> <span class="pre">method</span> <span class="pre">mean</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_reduction=&lt;built-in</span> <span class="pre">method</span> <span class="pre">amax</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta=0.001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#SampleReducingMCAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.monte_carlo.MCAcquisitionFunction" title="botorch.acquisition.monte_carlo.MCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCAcquisitionFunction</span></code></a></p>
+<p>MC-based batch acquisition function that reduces across samples and implements
+a general treatment of outcome constraints.</p>
+<p>This class’s <cite>forward</cite> computes the - possibly constrained - acquisition value by
+(1) computing the unconstrained utility for each MC sample using <cite>_sample_forward</cite>,
+(2) weighing the utility values by the constraint indicator per MC sample, and
+(3) reducing (e.g. averaging) the weighted utility values over the MC dimension.</p>
+<p>NOTE: Do <em>NOT</em> override the <cite>forward</cite> method, unless you have thought about it well.</p>
+<p><cite>forward</cite> is implemented generically to incorporate constraints in a principled way,
+and takes care of reducing over the Monte Carlo and batch dimensions via the
+<cite>sample_reduction</cite> and <cite>q_reduction</cite> arguments, which default to <cite>torch.mean</cite> and
+<cite>torch.max</cite>, respectively.</p>
+<p>In order to implement a custom SampleReducingMCAcquisitionFunction, we only need to
+implement the <cite>_sample_forward(obj: Tensor) -&gt; Tensor</cite> method, which maps objective
+samples to acquisition utility values without reducing the Monte Carlo and batch
+(i.e. q) dimensions (see details in the docstring of <cite>_sample_forward</cite>).</p>
+<p>A note on design choices:</p>
+<p>The primary purpose of <cite>SampleReducingMCAcquisitionFunction`is to support outcome
+constraints. On the surface, designing a wrapper `ConstrainedMCAcquisitionFunction</cite>
+could be an elegant solution to this end, but it would still require the acquisition
+functions to implement a <cite>_sample_forward</cite> method to weigh acquisition utilities at
+the sample level. Further, <cite>qNoisyExpectedImprovement</cite> is a special case that is
+hard to encompass in this pattern, since it requires the computation of the best
+<em>feasible</em> objective, which requires access to the constraint functions. However,
+if the constraints are stored in a wrapper class, they will be inaccessible to the
+forward pass. These problems are circumvented by the design of this class.</p>
+<p>Constructor of SampleReducingMCAcquisitionFunction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted model.</p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. If not given,
+a sampler is generated using <cite>get_sampler</cite>.
+NOTE: For posteriors that do not support base samples,
+a sampler compatible with intended use case must be provided.
+See <cite>ForkedRNGSampler</cite> and <cite>StochasticSampler</cite> as examples.</p></li>
+<li><p><strong>objective</strong> (<em>Optional</em><em>[</em><em>MCAcquisitionObjective</em><em>]</em>) – The MCAcquisitionObjective under which the samples are
+evaluated. Defaults to <cite>IdentityMCObjective()</cite>.
+NOTE: <cite>ConstrainedMCObjective</cite> for outcome constraints is deprecated in
+favor of passing the <cite>constraints</cite> directly to this constructor.</p></li>
+<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – A <cite>PosteriorTransform</cite> (optional).</p></li>
+<li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape, m x d</cite>-dim Tensor of <cite>m</cite> design points
+that have points that have been submitted for function evaluation
+but have not yet been evaluated.</p></li>
+<li><p><strong>sample_reduction</strong> (<a class="reference internal" href="#botorch.acquisition.monte_carlo.SampleReductionProtocol" title="botorch.acquisition.monte_carlo.SampleReductionProtocol"><em>SampleReductionProtocol</em></a>) – A callable that takes in a <cite>sample_shape x batch_shape</cite>
+Tensor of acquisition utility values, a keyword-argument <cite>dim</cite> that
+specifies the sample dimensions to reduce over, and returns a
+<cite>batch_shape</cite>-dim Tensor of acquisition values.</p></li>
+<li><p><strong>q_reduction</strong> (<a class="reference internal" href="#botorch.acquisition.monte_carlo.SampleReductionProtocol" title="botorch.acquisition.monte_carlo.SampleReductionProtocol"><em>SampleReductionProtocol</em></a>) – A callable that takes in a <cite>sample_shape x batch_shape x q</cite>
+Tensor of acquisition utility values, a keyword-argument <cite>dim</cite> that
+specifies the q dimension to reduce over (i.e. -1), and returns a
+<cite>sample_shape x batch_shape</cite>-dim Tensor of acquisition values.</p></li>
+<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of constraint callables which map a Tensor of posterior
+samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
+<cite>sample_shape x batch-shape x q</cite>-dim Tensor. The associated constraints
+are considered satisfied if the output is less than zero.
+NOTE: Constraint-weighting is only compatible with non-negative
+acquistion utilities, e.g. all improvement-based acquisition functions.</p></li>
+<li><p><strong>eta</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – Temperature parameter(s) governing the smoothness of the sigmoid
+approximation to the constraint indicators. For more details, on this
+parameter, see the docs of <cite>compute_smoothed_constraint_indicator</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#SampleReducingMCAcquisitionFunction.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the acquisition value associated with the input <cite>X</cite>. Weighs the
+acquisition utility values by smoothed constraint indicators if <cite>constraints</cite>
+was passed to the constructor of the class. Applies <cite>self.sample_reduction</cite> and
+<cite>self.q_reduction</cite> to reduce over the Monte Carlo and batch (q) dimensions.</p>
+<p>NOTE: Do <em>NOT</em> override the <cite>forward</cite> method for a custom acquisition function.
+Instead, implement the <cite>_sample_forward</cite> method. See the docstring of this class
+for details.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x q x d</cite> Tensor of t-batches with <cite>q</cite> <cite>d</cite>-dim
+design points each.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A Tensor with shape <cite>batch_shape’</cite>, where <cite>batch_shape’</cite> is the broadcasted
+batch shape of model and input <cite>X</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction.objective">
+<span class="sig-name descname"><span class="pre">objective</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCAcquisitionObjective</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction.objective" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction.model">
+<span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><span class="pre">Model</span></a></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction.model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qExpectedImprovement">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">qExpectedImprovement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#qExpectedImprovement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.qExpectedImprovement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction" title="botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">SampleReducingMCAcquisitionFunction</span></code></a></p>
 <p>MC-based batch Expected Improvement.</p>
 <p>This computes qEI by
 (1) sampling the joint posterior over q points
@@ -1019,34 +1129,25 @@ specifies potentially different values for each element of the batch.</p></li>
 <li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. See <cite>MCAcquisitionFunction</cite>
 more details.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><em>MCAcquisitionObjective</em><em>]</em>) – The MCAcquisitionObjective under which the samples are evaluated.
-Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
+Defaults to <cite>IdentityMCObjective()</cite>.
+NOTE: <cite>ConstrainedMCObjective</cite> for outcome constraints is deprecated in
+favor of passing the <cite>constraints</cite> directly to this constructor.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – A PosteriorTransform (optional).</p></li>
 <li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have been
 submitted for function evaluation but have not yet been evaluated.
 Concatenated into X upon forward call. Copied and set to have no
 gradient.</p></li>
+<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of constraint callables which map a Tensor of posterior
+samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
+<cite>sample_shape x batch-shape x q</cite>-dim Tensor. The associated constraints
+are considered satisfied if the output is less than zero.</p></li>
+<li><p><strong>eta</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – Temperature parameter(s) governing the smoothness of the sigmoid
+approximation to the constraint indicators. For more details, on this
+parameter, see the docs of <cite>compute_smoothed_constraint_indicator</cite>.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qExpectedImprovement.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#qExpectedImprovement.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.qExpectedImprovement.forward" title="Permalink to this definition">¶</a></dt>
-<dd><p>Evaluate qExpectedImprovement on the candidate set <cite>X</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x q x d</cite>-dim Tensor of t-batches with <cite>q</cite> <cite>d</cite>-dim design
-points each.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A <cite>batch_shape’</cite>-dim Tensor of Expected Improvement values at the given
-design points <cite>X</cite>, where <cite>batch_shape’</cite> is the broadcasted batch shape of
-model and input <cite>X</cite>.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tensor</em></p>
-</dd>
-</dl>
-</dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qExpectedImprovement.training">
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qExpectedImprovement.training" title="Permalink to this definition">¶</a></dt>
@@ -1062,8 +1163,8 @@ model and input <cite>X</cite>.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qNoisyExpectedImprovement">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">qNoisyExpectedImprovement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_baseline</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_baseline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#qNoisyExpectedImprovement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.qNoisyExpectedImprovement" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.monte_carlo.MCAcquisitionFunction" title="botorch.acquisition.monte_carlo.MCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCAcquisitionFunction</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">CachedCholeskyMCAcquisitionFunction</span></code></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">qNoisyExpectedImprovement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_baseline</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_baseline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#qNoisyExpectedImprovement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.qNoisyExpectedImprovement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction" title="botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">SampleReducingMCAcquisitionFunction</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">CachedCholeskyMCAcquisitionFunction</span></code></p>
 <p>MC-based batch Noisy Expected Improvement.</p>
 <p>This function does not assume a <cite>best_f</cite> is known (which would require
 noiseless observations). Instead, it uses samples from the joint posterior
@@ -1089,7 +1190,9 @@ the potential best design point.</p></li>
 <li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. See <cite>MCAcquisitionFunction</cite>
 more details.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><em>MCAcquisitionObjective</em><em>]</em>) – The MCAcquisitionObjective under which the samples are
-evaluated. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
+evaluated. Defaults to <cite>IdentityMCObjective()</cite>.
+NOTE: <cite>ConstrainedMCObjective</cite> for outcome constraints is deprecated in
+favor of passing the <cite>constraints</cite> directly to this constructor.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – A PosteriorTransform (optional).</p></li>
 <li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape x m x d</cite>-dim Tensor of <cite>m</cite> design points
 that have points that have been submitted for function evaluation
@@ -1103,6 +1206,13 @@ customize pruning parameters, instead manually call
 before instantiating the acquisition function.</p></li>
 <li><p><strong>cache_root</strong> (<em>bool</em>) – A boolean indicating whether to cache the root
 decomposition over <cite>X_baseline</cite> and use low-rank updates.</p></li>
+<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of constraint callables which map a Tensor of posterior
+samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
+<cite>sample_shape x batch-shape x q</cite>-dim Tensor. The associated constraints
+are considered satisfied if the output is less than zero.</p></li>
+<li><p><strong>eta</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – Temperature parameter(s) governing the smoothness of the sigmoid
+approximation to the constraint indicators. For more details, on this
+parameter, see the docs of <cite>compute_smoothed_constraint_indicator</cite>.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -1112,18 +1222,15 @@ selection, we could incorporate pending points X_baseline and compute
 the incremental qNEI from the new point. This would greatly increase
 efficiency for large batches.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qNoisyExpectedImprovement.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#qNoisyExpectedImprovement.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.qNoisyExpectedImprovement.forward" title="Permalink to this definition">¶</a></dt>
-<dd><p>Evaluate qNoisyExpectedImprovement on the candidate set <cite>X</cite>.</p>
+<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qNoisyExpectedImprovement.compute_best_f">
+<span class="sig-name descname"><span class="pre">compute_best_f</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#qNoisyExpectedImprovement.compute_best_f"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.qNoisyExpectedImprovement.compute_best_f" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the best (feasible) noisy objective value.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x q x d</cite>-dim Tensor of t-batches with <cite>q</cite> <cite>d</cite>-dim design
-points each.</p>
+<dd class="field-odd"><p><strong>obj</strong> (<em>Tensor</em>) – <cite>sample_shape x batch_shape x q</cite>-dim Tensor of objectives in forward.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A <cite>batch_shape’</cite>-dim Tensor of Noisy Expected Improvement values at the
-given design points <cite>X</cite>, where <cite>batch_shape’</cite> is the broadcasted batch shape
-of model and input <cite>X</cite>.</p>
+<dd class="field-even"><p>A <cite>sample_shape x batch_shape x 1</cite>-dim Tensor of best feasible objectives.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Tensor</em></p>
@@ -1145,8 +1252,8 @@ of model and input <cite>X</cite>.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qProbabilityOfImprovement">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">qProbabilityOfImprovement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#qProbabilityOfImprovement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.qProbabilityOfImprovement" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.monte_carlo.MCAcquisitionFunction" title="botorch.acquisition.monte_carlo.MCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCAcquisitionFunction</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">qProbabilityOfImprovement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#qProbabilityOfImprovement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.qProbabilityOfImprovement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction" title="botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">SampleReducingMCAcquisitionFunction</span></code></a></p>
 <p>MC-based batch Probability of Improvement.</p>
 <p>Estimates the probability of improvement over the current best observed
 value by sampling from the joint posterior distribution of the q-batch.
@@ -1173,7 +1280,9 @@ specifies potentially different values for each element of the batch.</p></li>
 <li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. See <cite>MCAcquisitionFunction</cite>
 more details.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><em>MCAcquisitionObjective</em><em>]</em>) – The MCAcquisitionObjective under which the samples are
-evaluated. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
+evaluated. Defaults to <cite>IdentityMCObjective()</cite>.
+NOTE: <cite>ConstrainedMCObjective</cite> for outcome constraints is deprecated in
+favor of passing the <cite>constraints</cite> directly to this constructor.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – A PosteriorTransform (optional).</p></li>
 <li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have
 points that have been submitted for function evaluation
@@ -1183,28 +1292,15 @@ forward call.  Copied and set to have no gradient.</p></li>
 of the step function. Smaller values yield more accurate
 approximations of the function, but result in gradients
 estimates with higher variance.</p></li>
+<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of constraint callables which map posterior samples to
+a scalar. The associated constraint is considered satisfied if this
+scalar is less than zero.</p></li>
+<li><p><strong>eta</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – Temperature parameter(s) governing the smoothness of the sigmoid
+approximation to the constraint indicators. For more details, on this
+parameter, see the docs of <cite>compute_smoothed_constraint_indicator</cite>.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qProbabilityOfImprovement.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#qProbabilityOfImprovement.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.qProbabilityOfImprovement.forward" title="Permalink to this definition">¶</a></dt>
-<dd><p>Evaluate qProbabilityOfImprovement on the candidate set <cite>X</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x q x d</cite>-dim Tensor of t-batches with <cite>q</cite> <cite>d</cite>-dim design
-points each.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A <cite>batch_shape’</cite>-dim Tensor of Probability of Improvement values at the
-given design points <cite>X</cite>, where <cite>batch_shape’</cite> is the broadcasted batch shape
-of model and input <cite>X</cite>.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tensor</em></p>
-</dd>
-</dl>
-</dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qProbabilityOfImprovement.training">
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qProbabilityOfImprovement.training" title="Permalink to this definition">¶</a></dt>
@@ -1220,8 +1316,8 @@ of model and input <cite>X</cite>.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qSimpleRegret">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">qSimpleRegret</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#qSimpleRegret"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.qSimpleRegret" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.monte_carlo.MCAcquisitionFunction" title="botorch.acquisition.monte_carlo.MCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCAcquisitionFunction</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">qSimpleRegret</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_reduction=&lt;built-in</span> <span class="pre">method</span> <span class="pre">mean</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_reduction=&lt;built-in</span> <span class="pre">method</span> <span class="pre">amax</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta=0.001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#qSimpleRegret"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.qSimpleRegret" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction" title="botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">SampleReducingMCAcquisitionFunction</span></code></a></p>
 <p>MC-based batch Simple Regret.</p>
 <p>Samples from the joint posterior over the q-batch and computes the simple regret.</p>
 <p><cite>qSR(X) = E(max Y), Y ~ f(X), X = (x_1,…,x_q)</cite></p>
@@ -1232,6 +1328,7 @@ of model and input <cite>X</cite>.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">qsr</span> <span class="o">=</span> <span class="n">qSR</span><span class="p">(</span><span class="n">test_X</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>Constructor of SampleReducingMCAcquisitionFunction.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1242,33 +1339,33 @@ NOTE: For posteriors that do not support base samples,
 a sampler compatible with intended use case must be provided.
 See <cite>ForkedRNGSampler</cite> and <cite>StochasticSampler</cite> as examples.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><em>MCAcquisitionObjective</em><em>]</em>) – The MCAcquisitionObjective under which the samples are
-evaluated. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
-<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – A PosteriorTransform (optional).</p></li>
+evaluated. Defaults to <cite>IdentityMCObjective()</cite>.
+NOTE: <cite>ConstrainedMCObjective</cite> for outcome constraints is deprecated in
+favor of passing the <cite>constraints</cite> directly to this constructor.</p></li>
+<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – A <cite>PosteriorTransform</cite> (optional).</p></li>
 <li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape, m x d</cite>-dim Tensor of <cite>m</cite> design points
 that have points that have been submitted for function evaluation
 but have not yet been evaluated.</p></li>
+<li><p><strong>sample_reduction</strong> (<a class="reference internal" href="#botorch.acquisition.monte_carlo.SampleReductionProtocol" title="botorch.acquisition.monte_carlo.SampleReductionProtocol"><em>SampleReductionProtocol</em></a>) – A callable that takes in a <cite>sample_shape x batch_shape</cite>
+Tensor of acquisition utility values, a keyword-argument <cite>dim</cite> that
+specifies the sample dimensions to reduce over, and returns a
+<cite>batch_shape</cite>-dim Tensor of acquisition values.</p></li>
+<li><p><strong>q_reduction</strong> (<a class="reference internal" href="#botorch.acquisition.monte_carlo.SampleReductionProtocol" title="botorch.acquisition.monte_carlo.SampleReductionProtocol"><em>SampleReductionProtocol</em></a>) – A callable that takes in a <cite>sample_shape x batch_shape x q</cite>
+Tensor of acquisition utility values, a keyword-argument <cite>dim</cite> that
+specifies the q dimension to reduce over (i.e. -1), and returns a
+<cite>sample_shape x batch_shape</cite>-dim Tensor of acquisition values.</p></li>
+<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of constraint callables which map a Tensor of posterior
+samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
+<cite>sample_shape x batch-shape x q</cite>-dim Tensor. The associated constraints
+are considered satisfied if the output is less than zero.
+NOTE: Constraint-weighting is only compatible with non-negative
+acquistion utilities, e.g. all improvement-based acquisition functions.</p></li>
+<li><p><strong>eta</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – Temperature parameter(s) governing the smoothness of the sigmoid
+approximation to the constraint indicators. For more details, on this
+parameter, see the docs of <cite>compute_smoothed_constraint_indicator</cite>.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qSimpleRegret.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#qSimpleRegret.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.qSimpleRegret.forward" title="Permalink to this definition">¶</a></dt>
-<dd><p>Evaluate qSimpleRegret on the candidate set <cite>X</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x q x d</cite>-dim Tensor of t-batches with <cite>q</cite> <cite>d</cite>-dim design
-points each.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A <cite>batch_shape’</cite>-dim Tensor of Simple Regret values at the given design
-points <cite>X</cite>, where <cite>batch_shape’</cite> is the broadcasted batch shape of model
-and input <cite>X</cite>.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tensor</em></p>
-</dd>
-</dl>
-</dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qSimpleRegret.training">
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qSimpleRegret.training" title="Permalink to this definition">¶</a></dt>
@@ -1285,7 +1382,7 @@ and input <cite>X</cite>.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qUpperConfidenceBound">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">qUpperConfidenceBound</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#qUpperConfidenceBound"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.qUpperConfidenceBound" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.monte_carlo.MCAcquisitionFunction" title="botorch.acquisition.monte_carlo.MCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCAcquisitionFunction</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction" title="botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">SampleReducingMCAcquisitionFunction</span></code></a></p>
 <p>MC-based batch Upper Confidence Bound.</p>
 <p>Uses a reparameterization to extend UCB to qUCB for q &gt; 1 (See Appendix A
 of [Wilson2017reparam].)</p>
@@ -1316,25 +1413,6 @@ have no gradient.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qUpperConfidenceBound.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#qUpperConfidenceBound.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.qUpperConfidenceBound.forward" title="Permalink to this definition">¶</a></dt>
-<dd><p>Evaluate qUpperConfidenceBound on the candidate set <cite>X</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_sahpe x q x d</cite>-dim Tensor of t-batches with <cite>q</cite> <cite>d</cite>-dim design
-points each.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A <cite>batch_shape’</cite>-dim Tensor of Upper Confidence Bound values at the given
-design points <cite>X</cite>, where <cite>batch_shape’</cite> is the broadcasted batch shape of
-model and input <cite>X</cite>.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tensor</em></p>
-</dd>
-</dl>
-</dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qUpperConfidenceBound.training">
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qUpperConfidenceBound.training" title="Permalink to this definition">¶</a></dt>
@@ -1931,7 +2009,8 @@ differentiable approximation of the constraints. In case of a float the
 same eta is used for every constraint in constraints. In case of a
 tensor the length of the tensor must match the number of provided
 constraints. The i-th constraint is then estimated with the i-th
-eta value.</p></li>
+eta value. For more details, on this parameter, see the docs of
+<cite>compute_smoothed_constraint_indicator</cite>.</p></li>
 <li><p><strong>prune_baseline</strong> (<em>bool</em>) – If True, remove points in <cite>X_baseline</cite> that are
 highly unlikely to be the pareto optimal and better than the
 reference point. This can significantly improve computation time and
@@ -3890,7 +3969,7 @@ an optional <cite>batch-shape x q x d</cite>-dim Tensor <cite>X</cite> to a
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.objective.GenericMCObjective.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/objective.html#GenericMCObjective.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.objective.GenericMCObjective.forward" title="Permalink to this definition">¶</a></dt>
-<dd><p>Evaluate the feasibility-weigthed objective on the samples.</p>
+<dd><p>Evaluate the objective on the samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -3901,8 +3980,7 @@ the objective depends on the inputs explicitly.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A <cite>sample_shape x batch_shape x q</cite>-dim Tensor of objective values
-weighted by feasibility (assuming maximization).</p>
+<dd class="field-even"><p>A <cite>sample_shape x batch_shape x q</cite>-dim Tensor of objective values.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Tensor</em></p>
@@ -3935,6 +4013,8 @@ handling.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">objective</span> <span class="o">=</span> <span class="n">constrained_objective</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>TODO: Deprecate this as default way to handle constraints with MC acquisition
+functions once we have data on how well SampleReducingMCAcquisitionFunction works.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
