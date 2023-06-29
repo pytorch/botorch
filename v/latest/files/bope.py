@@ -26,7 +26,7 @@
 # 
 # [1] [Z.J. Lin, R. Astudillo, P.I. Frazier, and E. Bakshy, Preference Exploration for Efficient Bayesian Optimization with Multiple Outcomes. AISTATS, 2022.](https://arxiv.org/abs/2203.11382)
 
-# In[ ]:
+# In[1]:
 
 
 import os
@@ -71,7 +71,7 @@ SMOKE_TEST = os.environ.get("SMOKE_TEST")
 # For the utility function $g_\mathrm{true}$, we use the negative L1 distance from a Pareto-optimal point the outcome space:
 # $Y^* = f(X^*)$ where $X^* = [0.5, 0.5, 0.5, 0.5, 0.5]$. 
 
-# In[3]:
+# In[2]:
 
 
 def neg_l1_dist(Y):
@@ -105,7 +105,7 @@ util_func = neg_l1_dist
 
 # Here we define a collection of helper functions for BOPE:
 
-# In[4]:
+# In[3]:
 
 
 def fit_outcome_model(X, Y, X_bounds):
@@ -282,7 +282,7 @@ def find_max_posterior_mean(outcome_model, train_Y, train_comps, verbose=False):
 # This represents the performance upper bound of PE strategies.
 # For the second experiment canadidate generation strategy, we use random design points to generate new candidates.
 
-# In[5]:
+# In[4]:
 
 
 verbose = False
@@ -384,36 +384,26 @@ for i in range(n_reps):
 # with increasing number of pairwise comparisons.
 # As we can see in this plot, the preference model learned using $\text{EUBO}\mathrm{-}\zeta$ is able to identify the maximum utility more efficiently.
 
-# In[6]:
+# In[5]:
 
 
 # Prepare PE data for plots
-within_df = pd.DataFrame(within_session_results)
-within_df["pe_strategy"] = within_df["pe_strategy"].str.replace(
-    "EUBO-zeta", r"$EUBO-\zeta$"
-)
 within_df = (
-    within_df.groupby(["n_comps", "pe_strategy"])
-    .agg({"util": ["mean", "sem"]})
-    .droplevel(level=0, axis=1)
+     pd.DataFrame(within_session_results)
+    .groupby(["n_comps", "pe_strategy"])
+    .agg({"util": ["mean"]})
+    ['util']
     .reset_index()
 )
-within_df
 
 # Plotting
 plt.figure(figsize=(8, 6))
 for name, group in within_df.groupby("pe_strategy", sort=True):
-    yerr = 1.96 * group["sem"]
-    if np.any(np.isnan(yerr)):
-        yerr = None
     plt.errorbar(
         x=group["n_comps"],
         y=group["mean"],
-        yerr=yerr,
         label=name,
         linewidth=1.5,
-        capsize=3,
-        alpha=0.6,
     )
 plt.xlabel("Number of comparisons")
 plt.ylabel("Max value identified")
@@ -427,41 +417,36 @@ plt.legend(title="PE Strategy")
 # On the other hand, despite that $\text{Random}\mathrm{-}f$ is a relatively straightforward PE strategy,
 # it is still able to suggest experimental candidates with generally higher utility values than the random experiment baseline.
 
-# In[7]:
+# In[6]:
 
 
 # Prepare the 2nd experimentation batch data for plot
-exp_df = pd.DataFrame(exp_candidate_results)
-exp_df["strategy"] = exp_df["strategy"].str.replace("EUBO-zeta", r"$EUBO-\\zeta$")
-exp_df["strategy"] = pd.Categorical(
-    exp_df["strategy"],
-    ["True Utility", "$EUBO-\zeta$", "Random-f", "Random Experiment"],
-)
 exp_df = (
-    exp_df.groupby(["strategy"])
-    .agg({"util": ["mean", "sem"]})
-    .droplevel(level=0, axis=1)
+    pd.DataFrame(exp_candidate_results)
+    .groupby("strategy")
+    ["util"]
+    .mean()
     .reset_index()
 )
 
 # Plotting
 plt.figure(figsize=(8, 6))
-for name, group in exp_df.groupby("strategy", sort=True):
-    yerr = 1.96 * group["sem"]
-    if np.any(np.isnan(yerr)):
-        yerr = None
+for _, (name, mean) in exp_df.iterrows():
     plt.errorbar(
-        x=group["strategy"],
-        y=group["mean"],
-        yerr=yerr,
+        x=name,
+        y=mean,
         fmt="o",
         markersize=10,
         label=name,
-        linewidth=1.5,
-        capsize=3,
     )
 
 plt.xlabel("Experimentation Strategy")
 plt.ylabel("Utility achieved in the 2nd experiment stage")
 plt.legend(title="Experimentation Strategy")
+
+
+# In[ ]:
+
+
+
 
