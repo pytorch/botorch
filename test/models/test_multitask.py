@@ -38,6 +38,7 @@ from gpytorch.likelihoods import (
     MultitaskGaussianLikelihood,
 )
 from gpytorch.means import ConstantMean, MultitaskMean
+from gpytorch.means.linear_mean import LinearMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.priors import GammaPrior, LogNormalPrior, SmoothedBoxPrior
 from gpytorch.priors.lkj_prior import LKJCovariancePrior
@@ -376,6 +377,21 @@ class TestMultiTaskGP(BotorchTestCase):
             self.assertIsInstance(model.covar_module.lengthscale_prior, LogNormalPrior)
             self.assertAlmostEqual(model.covar_module.lengthscale_prior.loc, 0.0)
             self.assertAlmostEqual(model.covar_module.lengthscale_prior.scale, 1.0)
+
+    def test_custom_mean_and_likelihood(self):
+        tkwargs = {"device": self.device, "dtype": torch.double}
+        _, (train_X, train_Y) = _gen_datasets(**tkwargs)
+        mean_module = LinearMean(input_size=train_X.shape[-1])
+        likelihood = GaussianLikelihood(noise_prior=LogNormalPrior(0, 1))
+        model = MultiTaskGP(
+            train_X,
+            train_Y,
+            task_feature=0,
+            mean_module=mean_module,
+            likelihood=likelihood,
+        )
+        self.assertIs(model.mean_module, mean_module)
+        self.assertIs(model.likelihood, likelihood)
 
 
 class TestFixedNoiseMultiTaskGP(BotorchTestCase):
