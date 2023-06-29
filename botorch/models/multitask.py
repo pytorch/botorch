@@ -57,6 +57,7 @@ from gpytorch.likelihoods.gaussian_likelihood import (
     FixedNoiseGaussianLikelihood,
     GaussianLikelihood,
 )
+from gpytorch.likelihoods.likelihood import Likelihood
 from gpytorch.likelihoods.multitask_gaussian_likelihood import (
     MultitaskGaussianLikelihood,
 )
@@ -106,7 +107,9 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         train_Y: Tensor,
         task_feature: int,
         train_Yvar: Optional[Tensor] = None,
+        mean_module: Optional[Module] = None,
         covar_module: Optional[Module] = None,
+        likelihood: Optional[Likelihood] = None,
         task_covar_prior: Optional[Prior] = None,
         output_tasks: Optional[List[int]] = None,
         rank: Optional[int] = None,
@@ -121,10 +124,16 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
                 features (see `task_feature` argument).
             train_Y: A `n x 1` or `b x n x 1` (batch mode) tensor of training
                 observations.
+            task_feature: The index of the task feature (`-d <= task_feature <= d`).
             train_Yvar: An optional `n` or `b x n` (batch mode) tensor of observed
                 measurement noise. If None, we infer the noise.
                 Note that the inferred noise is common across all tasks.
-            task_feature: The index of the task feature (`-d <= task_feature <= d`).
+            mean_module: The mean function to be used. Defaults to `ConstantMean`.
+            covar_module: The module for computing the covariance matrix between
+                the non-task features. Defaults to `MaternKernel`.
+            likelihood: A likelihood. The default is selected based on `train_Yvar`.
+                If `train_Yvar` is None, a standard `GaussianLikelihood` with inferred
+                noise level is used. Otherwise, a FixedNoiseGaussianLikelihood is used.
             output_tasks: A list of task indices for which to compute model
                 outputs for. If omitted, return outputs for all task indices.
             rank: The rank to be used for the index kernel. If omitted, use a
@@ -170,10 +179,11 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         self._num_outputs = len(output_tasks)
 
         # TODO (T41270962): Support task-specific noise levels in likelihood
-        if train_Yvar is None:
-            likelihood = GaussianLikelihood(noise_prior=GammaPrior(1.1, 0.05))
-        else:
-            likelihood = FixedNoiseGaussianLikelihood(noise=train_Yvar.squeeze(-1))
+        if likelihood is None:
+            if train_Yvar is None:
+                likelihood = GaussianLikelihood(noise_prior=GammaPrior(1.1, 0.05))
+            else:
+                likelihood = FixedNoiseGaussianLikelihood(noise=train_Yvar.squeeze(-1))
 
         # construct indexer to be used in forward
         self._task_feature = task_feature
@@ -183,7 +193,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         super().__init__(
             train_inputs=train_X, train_targets=train_Y, likelihood=likelihood
         )
-        self.mean_module = ConstantMean()
+        self.mean_module = mean_module or ConstantMean()
         if covar_module is None:
             self.covar_module = get_matern_kernel_with_gamma_prior(
                 ard_num_dims=self.num_non_task_features
