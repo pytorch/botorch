@@ -862,6 +862,26 @@ class TestOptimizeAcqf(BotorchTestCase):
                 torch.allclose(acq_value, torch.tensor(2.45, **tkwargs), atol=1e-3)
             )
 
+            # test with fixed features
+            candidates, acq_value = optimize_acqf(
+                acq_function=mock_acq_function,
+                bounds=bounds,
+                q=1,
+                nonlinear_inequality_constraints=[nlc1, nlc2, nlc3, nlc4],
+                batch_initial_conditions=batch_initial_conditions,
+                num_restarts=num_restarts,
+                fixed_features={0: 2},
+            )
+            self.assertTrue(
+                torch.allclose(
+                    candidates,
+                    torch.tensor([[2, 1, 1]], **tkwargs),
+                )
+            )
+            self.assertTrue(
+                torch.allclose(acq_value, torch.tensor(2.45, **tkwargs), atol=1e-3)
+            )
+
             # Test that an ic_generator object with the same API as
             # gen_batch_initial_conditions returns candidates of the
             # required shape.
