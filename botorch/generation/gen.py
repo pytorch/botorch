@@ -114,15 +114,11 @@ def gen_candidates_scipy(
     # if there are fixed features we may optimize over a domain of lower dimension
     reduced_domain = False
     if fixed_features:
-        # TODO: We can support fixed features, see Max's comment on D33551393. We can
-        # consider adding this at a later point.
+        # if nonlinear constraints are present we opimize over the complete domain
         if nonlinear_inequality_constraints:
-            raise NotImplementedError(
-                "Fixed features are not supported when non-linear inequality "
-                "constraints are given."
-            )
-        # if there are no constraints things are straightforward
-        if not (inequality_constraints or equality_constraints):
+            reduced_domain = False
+        # if there are no constraints, things are straightforward
+        elif not (inequality_constraints or equality_constraints):
             reduced_domain = True
         # if there are we need to make sure features are fixed to specific values
         else:
