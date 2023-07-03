@@ -341,6 +341,7 @@ def gen_candidates_torch(
             upper_bounds=upper_bounds,
             inequality_constraints=None,
             equality_constraints=None,
+            nonlinear_inequality_constraints=None,
         )
 
         # call the routine with no fixed_features
