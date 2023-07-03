@@ -312,13 +312,48 @@ def _make_linear_constraints(
     return constraints
 
 
+def _generate_unfixed_nonlin_constraints(
+    constraints: Optional[List[Callable]],
+    fixed_features: Dict[int, float],
+    dimension: int,
+) -> Optional[List[Callable]]:
+    # If constraints is None or an empty list, then return itself
+    if not constraints:
+        return constraints
+
+    selector = []
+    idx_X, idx_f = 0, dimension - len(fixed_features)
+    for i in range(dimension):
+        if i in fixed_features.keys():
+            selector.append(idx_f)
+            idx_f += 1
+        else:
+            selector.append(idx_X)
+            idx_X += 1
+
+    values = torch.tensor([v for v in fixed_features.values()], dtype=torch.double)
+
+    new_constraints = []
+
+    def _wrap_nlc(nlc: Callable) -> Callable:
+        def new_nlc(X: Tensor) -> Tensor:
+            ivalues = values.to(X).expand(*X.shape[:-1], len(fixed_features))
+            X_perm = torch.cat([X, ivalues], dim=-1)
+            return nlc(X_perm[..., selector])
+
+        return new_nlc
+
+    for nlc in constraints:
+        new_constraints.append(_wrap_nlc(nlc=nlc))
+    return new_constraints
+
+
 def _generate_unfixed_lin_constraints(
     constraints: Optional[List[Tuple[Tensor, Tensor, float]]],
     fixed_features: Dict[int, float],
     dimension: int,
     eq: bool,
 ) -> Optional[List[Tuple[Tensor, Tensor, float]]]:
-
     # If constraints is None or an empty list, then return itself
     if not constraints:
         return constraints
