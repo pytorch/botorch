@@ -144,7 +144,7 @@ def gen_candidates_scipy(
             upper_bounds=_no_fixed_features.upper_bounds,
             inequality_constraints=_no_fixed_features.inequality_constraints,
             equality_constraints=_no_fixed_features.equality_constraints,
-            nonlinear_inequality_constraints=_no_fixed_features.nonlinear_inequality_constraints,
+            nonlinear_inequality_constraints=_no_fixed_features.nonlinear_inequality_constraints,  # noqa: E501
             options=options,
             fixed_features=None,
             timeout_sec=timeout_sec,
