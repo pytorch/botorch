@@ -394,7 +394,7 @@ class TestPairwiseGP(BotorchTestCase):
             # M is borderline PSD
             M = torch.ones((*batch_shape, 2, 2), **tkwargs)
             with self.assertRaises(torch._C._LinAlgError):
-                torch.cholesky(M)
+                torch.linalg.cholesky(M)
             # This should work fine
             _ensure_psd_with_jitter(M)
 
