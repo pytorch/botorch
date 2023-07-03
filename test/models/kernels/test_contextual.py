@@ -5,7 +5,13 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
-from botorch.models.kernels.contextual_lcea import LCEAKernel
+from botorch.models.kernels.contextual_lcea import (
+    get_order,
+    get_permutation,
+    is_contiguous,
+    LCEAKernel,
+)
+
 from botorch.models.kernels.contextual_sac import SACKernel
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels.matern_kernel import MaternKernel
@@ -36,19 +42,20 @@ class ContextualKernelTest(BotorchTestCase):
     def testLCEAKernel(self):
         decomposition = {"1": [0, 3], "2": [1, 2]}
         num_contexts = len(decomposition)
-
         kernel = LCEAKernel(decomposition=decomposition, batch_shape=torch.Size([]))
         # test init
         self.assertListEqual(kernel.context_list, ["1", "2"])
-        self.assertDictEqual(kernel.decomposition, decomposition)
 
         self.assertIsInstance(kernel.base_kernel, MaternKernel)
         self.assertIsInstance(kernel.task_covar_module, MaternKernel)
+        self.assertEqual(kernel.permutation, [0, 3, 1, 2])
 
         # test raise of ValueError
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(
+            ValueError, "The number of parameters needs to be same across all contexts."
+        ):
             LCEAKernel(
-                decomposition={"1": [0, 3], "2": [1]}, batch_shape=torch.Size([])
+                decomposition={"1": [0, 1], "2": [2]}, batch_shape=torch.Size([])
             )
 
         # test set_outputscale_list
@@ -181,3 +188,23 @@ class ContextualKernelTest(BotorchTestCase):
         self.assertEqual(
             context_covar6.shape, torch.Size([3, num_contexts, num_contexts])
         )
+
+    def test_get_permutation(self):
+        decomp = {"a": [0, 1], "b": [2, 3]}
+        permutation = get_permutation(decomp)
+        self.assertIsNone(permutation)
+        # order mismatch
+        decomp = {"a": [1, 0], "b": [2, 3]}
+        permutation = get_permutation(decomp)
+        self.assertEqual(permutation, [0, 1, 2, 3])
+        # non-contiguous
+        decomp = {"a": [0, 2], "b": [1, 3]}
+        permutation = get_permutation(decomp)
+        self.assertEqual(permutation, [0, 2, 1, 3])
+
+    def test_is_contiguous(self):
+        self.assertFalse(is_contiguous([0, 2]))
+        self.assertTrue(is_contiguous([0, 1]))
+
+    def test_get_order(self):
+        self.assertEqual(get_order([1, 10, 3]), [1, 1, 0])

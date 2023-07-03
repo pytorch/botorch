@@ -11,9 +11,76 @@ from gpytorch.constraints import Positive
 from gpytorch.kernels.kernel import Kernel
 from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.priors.torch_priors import GammaPrior
-from linear_operator.operators.sum_linear_operator import SumLinearOperator
+from linear_operator.operators import DiagLinearOperator
+from linear_operator.operators.dense_linear_operator import DenseLinearOperator
 from torch import Tensor
 from torch.nn import ModuleList
+
+
+def get_order(indices: List[int]) -> List[int]:
+    r"""Get the order indices as integers ranging from 0 to the number of indices.
+
+    Args:
+        indices: A list of parameter indices.
+
+    Returns:
+        A list of integers ranging from 0 to the number of indices.
+    """
+    return [i % len(indices) for i in indices]
+
+
+def is_contiguous(indices: List[int]) -> bool:
+    r"""Check if the list of integers is contiguous.
+
+    Args:
+        indices: A list of parameter indices.
+    Returns:
+        A boolean indicating whether the indices are contiguous.
+    """
+    min_idx = min(indices)
+    return set(indices) == set(range(min_idx, min_idx + len(indices)))
+
+
+def get_permutation(decomposition: Dict[str, List[int]]) -> Optional[List[int]]:
+    """Construct permutation to reorder the parameters such that:
+
+    1) the parameters for each context are contiguous.
+    2) The parameters for each context are in the same order
+
+    Args:
+        decomposition: A dictionary mapping context names to a list of
+            parameters.
+    Returns:
+        A permutation to reorder the parameters for (1) and (2).
+        Returning `None` means that ordering specified in `decomposition`
+        satisfies (1) and (2).
+    """
+    permutation = None
+    if not all(
+        is_contiguous(indices=active_parameters)
+        for active_parameters in decomposition.values()
+    ):
+        permutation = _create_new_permutation(decomposition=decomposition)
+    else:
+        same_order = True
+        expected_order = get_order(indices=next(iter(decomposition.values())))
+        for active_parameters in decomposition.values():
+            order = get_order(indices=active_parameters)
+            if order != expected_order:
+                same_order = False
+                break
+        if not same_order:
+            permutation = _create_new_permutation(decomposition=decomposition)
+    return permutation
+
+
+def _create_new_permutation(decomposition: Dict[str, List[int]]) -> List[int]:
+    # make contiguous and ordered
+    permutation = []
+    for active_parameters in decomposition.values():
+        sorted_indices = sorted(active_parameters)
+        permutation.extend(sorted_indices)
+    return permutation
 
 
 class LCEAKernel(Kernel):
@@ -40,8 +107,7 @@ class LCEAKernel(Kernel):
         r"""
         Args:
             decomposition: Keys index context names. Values are the indexes of
-                parameters belong to the context. The parameter indexes are in the same
-                order across contexts.
+                parameters belong to the context.
             batch_shape: Batch shape as usual for gpytorch kernels. Model does not
                 support batch training. When batch_shape is non-empty, it is used for
                 loading hyper-parameter values generated from MCMC sampling.
@@ -58,26 +124,25 @@ class LCEAKernel(Kernel):
             context_weight_dict: Known population weights of each context.
         """
         super().__init__(batch_shape=batch_shape)
-        self.decomposition = decomposition
         self.batch_shape = batch_shape
         self.train_embedding = train_embedding
         self._device = device
 
-        num_param = len(next(iter(decomposition.values())))
+        self.num_param = len(next(iter(decomposition.values())))
         self.context_list = list(decomposition.keys())
         self.num_contexts = len(self.context_list)
 
         # get parameter space decomposition
         for active_parameters in decomposition.values():
             # check number of parameters are same in each decomp
-            if len(active_parameters) != num_param:
+            if len(active_parameters) != self.num_param:
                 raise ValueError(
-                    "num of parameters needs to be same across all contexts"
+                    "The number of parameters needs to be same across all contexts."
                 )
-        self._indexers = {
-            context: torch.tensor(active_params, device=self.device)
-            for context, active_params in self.decomposition.items()
-        }
+        # reorder the parameter list based on decomposition such that
+        # parameters for each context are contiguous and in the same order for each
+        # context
+        self.permutation = get_permutation(decomposition=decomposition)
         # get context features and set emb dim
         self.context_cat_feature = None
         self.context_emb_feature = None
@@ -102,7 +167,7 @@ class LCEAKernel(Kernel):
         # base kernel
         self.base_kernel = MaternKernel(
             nu=2.5,
-            ard_num_dims=num_param,
+            ard_num_dims=self.num_param,
             batch_shape=batch_shape,
             lengthscale_prior=GammaPrior(3.0, 6.0),
         )
@@ -303,6 +368,11 @@ class LCEAKernel(Kernel):
             )
         return embeddings
 
+    def train(self, mode: bool = True) -> None:
+        super().train(mode=mode)
+        if not mode:
+            self.register_buffer("_context_covar", self._eval_context_covar())
+
     def forward(
         self,
         x1: Tensor,
@@ -315,35 +385,42 @@ class LCEAKernel(Kernel):
         covariance matrices together
         """
         # context covar matrix
-        context_covar = self._eval_context_covar()
+        if not self.training:
+            context_covar = self._context_covar
+        else:
+            context_covar = self._eval_context_covar()
+        if self.permutation is not None:
+            x1 = x1[..., self.permutation]
+            x2 = x2[..., self.permutation]
         # check input batch size if b x ns x n x d: expand context_covar to
         # b x ns x num_context x num_context
         if x1.dim() > context_covar.dim():
-            context_covar = context_covar.expand(*x1.shape[:1] + context_covar.shape)
-        covars = []
-        # TODO: speed computation of covariance matrix
-        for i in range(self.num_contexts):
-            for j in range(self.num_contexts):
-                context1 = self.context_list[i]
-                context2 = self.context_list[j]
-                active_params1 = self._indexers[context1]
-                active_params2 = self._indexers[context2]
-                covars.append(
-                    (
-                        context_covar.index_select(  # pyre-ignore
-                            -1, torch.tensor([j], device=self.device)
-                        ).index_select(
-                            -2, torch.tensor([i], device=self.device)
-                        )  # b x ns x 1 x 1
-                    )
-                    * self.base_kernel(
-                        x1=x1.index_select(-1, active_params1),
-                        x2=x2.index_select(-1, active_params2),
-                        diag=diag,
-                    )
-                )
+            context_covar = context_covar.expand(
+                x1.shape[:-1] + torch.Size([x2.shape[-2]]) + context_covar.shape
+            )
+        # turn last two dimensions of n x (k*d) into (n*k) x d.
+        x1_exp = x1.reshape(*x1.shape[:-2], -1, self.num_param)
+        x2_exp = x2.reshape(*x2.shape[:-2], -1, self.num_param)
+        # batch shape x n*k x n*k
+        base_covar = self.base_kernel(x1_exp, x2_exp)
+        # batch shape x n x n x k x k
+        view_shape = x1.shape[:-2] + torch.Size(
+            [
+                x1.shape[-2],
+                self.num_contexts,
+                x2.shape[-2],
+                self.num_contexts,
+            ]
+        )
+        base_covar_perm = (
+            base_covar.to_dense()
+            .view(view_shape)
+            .permute(*list(range(x1.ndim - 2)), -4, -2, -3, -1)
+        )
+        # then weight by the context kernel
+        # compute the base kernel on the d parameters
+        einsum_str = "...kk, ...nnkk -> ...n" if diag else "...kk, ...kk -> ..."
+        covar_dense = torch.einsum(einsum_str, context_covar, base_covar_perm)
         if diag:
-            res = sum(covars)
-        else:
-            res = SumLinearOperator(*covars)
-        return res
+            return DiagLinearOperator(covar_dense)
+        return DenseLinearOperator(covar_dense)

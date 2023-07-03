@@ -66,8 +66,7 @@ class LCEAGP(FixedNoiseGP):
             train_Y: (n x 1) Y training data.
             train_Yvar: (n x 1) Noise variance of Y.
             decomposition: Keys are context names. Values are the indexes of
-                parameters belong to the context. The parameter indexes are in the
-                same order across contexts.
+                parameters belong to the context.
             cat_feature_dict: Keys are context names and values are list of categorical
                 features i.e. {"context_name" : [cat_0, ..., cat_k]}, where k is the
                 number of categorical variables. If None, we use context names in the
