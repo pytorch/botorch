@@ -105,6 +105,7 @@ class TestGenerationUtils(BotorchTestCase):
                 upper_bounds=upper_bounds,
                 inequality_constraints=inequality_constraints,
                 equality_constraints=equality_constraints,
+                nonlinear_inequality_constraints=None,
             )
             self.assertIsInstance(
                 _no_ff.acquisition_function, FixedFeatureAcquisitionFunction
