@@ -879,22 +879,6 @@ class TestOptimizeAcqf(BotorchTestCase):
                 )
                 self.assertEqual(candidates.size(), torch.Size([1, 3]))
 
-            # Make sure fixed features aren't supported
-            with self.assertRaisesRegex(
-                NotImplementedError,
-                "Fixed features are not supported when non-linear inequality "
-                "constraints are given.",
-            ):
-                optimize_acqf(
-                    acq_function=mock_acq_function,
-                    bounds=bounds,
-                    q=1,
-                    nonlinear_inequality_constraints=[nlc1, nlc2, nlc3, nlc4],
-                    batch_initial_conditions=batch_initial_conditions,
-                    num_restarts=num_restarts,
-                    fixed_features={0: 0.1},
-                )
-
             # Constraints must be passed in as lists
             with self.assertRaisesRegex(
                 ValueError,
