@@ -875,7 +875,7 @@ class TestOptimizeAcqf(BotorchTestCase):
             self.assertTrue(
                 torch.allclose(
                     candidates,
-                    torch.tensor([[2, 1, 1]], **tkwargs),
+                    torch.tensor([[2.0, 1.0, 1.0]], **tkwargs),
                 )
             )
             self.assertTrue(
