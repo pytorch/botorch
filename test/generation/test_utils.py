@@ -86,16 +86,36 @@ class TestGenerationUtils(BotorchTestCase):
             else:
                 self.assertEqual(old_cons, new_cons)
 
+        def check_nlc(old_nlcs, new_nlcs):
+            complete_data = torch.tensor(
+                [[4.0, 1.0, 2.0, -1.0, 3.0]], device=self.device
+            )
+            reduced_data = torch.tensor([[4.0, 2.0, 3.0]], device=self.device)
+            if old_nlcs:
+                self.assertAllClose(
+                    old_nlcs[0](complete_data),
+                    new_nlcs[0](reduced_data),
+                )
+            else:
+                self.assertEqual(old_nlcs, new_nlcs)
+
+        def nlc(x):
+            return x[..., 2]
+
+        old_nlcs = [nlc]
+
         for (
             lower_bounds,
             upper_bounds,
             inequality_constraints,
             equality_constraints,
+            nonlinear_inequality_constraints,
         ) in product(
             [None, -1.0, tensor_lower_bounds],
             [None, 1.0, tensor_upper_bounds],
             [None, old_inequality_constraints],
             [None, old_equality_constraints],
+            [None, old_nlcs],
         ):
             _no_ff = _remove_fixed_features_from_optimization(
                 fixed_features=fixed_features,
@@ -105,7 +125,7 @@ class TestGenerationUtils(BotorchTestCase):
                 upper_bounds=upper_bounds,
                 inequality_constraints=inequality_constraints,
                 equality_constraints=equality_constraints,
-                nonlinear_inequality_constraints=None,
+                nonlinear_inequality_constraints=nonlinear_inequality_constraints,
             )
             self.assertIsInstance(
                 _no_ff.acquisition_function, FixedFeatureAcquisitionFunction
@@ -115,3 +135,7 @@ class TestGenerationUtils(BotorchTestCase):
             check_bounds_and_init(upper_bounds, _no_ff.upper_bounds)
             check_cons(inequality_constraints, _no_ff.inequality_constraints)
             check_cons(equality_constraints, _no_ff.equality_constraints)
+            check_nlc(
+                nonlinear_inequality_constraints,
+                _no_ff.nonlinear_inequality_constraints,
+            )
