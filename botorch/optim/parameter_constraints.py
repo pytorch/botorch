@@ -331,7 +331,7 @@ def _generate_unfixed_nonlin_constraints(
             selector.append(idx_X)
             idx_X += 1
 
-    values = torch.tensor([v for v in fixed_features.values()], dtype=torch.double)
+    values = torch.tensor(list(fixed_features.values()), dtype=torch.double)
 
     new_constraints = []
 
@@ -343,9 +343,7 @@ def _generate_unfixed_nonlin_constraints(
 
         return new_nlc
 
-    for nlc in constraints:
-        new_constraints.append(_wrap_nlc(nlc=nlc))
-    return new_constraints
+    return [_wrap_nlc(nlc=nlc) for nlc in constraints]
 
 
 def _generate_unfixed_lin_constraints(
