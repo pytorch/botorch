@@ -224,7 +224,7 @@ class TestParameterConstraints(BotorchTestCase):
             return x[..., 0] - 1
 
         # first test with one constraint
-        new_nlc1,  = _generate_unfixed_nonlin_constraints(
+        (new_nlc1,) = _generate_unfixed_nonlin_constraints(
             constraints=[nlc1], fixed_features={1: 2.0}, dimension=3
         )
         self.assertAllClose(
@@ -238,7 +238,7 @@ class TestParameterConstraints(BotorchTestCase):
         )
         for nlc, new_nlc in zip(constraints, new_constraints):
             self.assertAllClose(
-               nlc(torch.tensor([[4.0, 2.0, 2.0]], device=self.device)),
+                nlc(torch.tensor([[4.0, 2.0, 2.0]], device=self.device)),
                 new_nlc(torch.tensor([[4.0, 2.0]], device=self.device)),
             )
         # test with several constraints and two fixes
