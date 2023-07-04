@@ -34,9 +34,76 @@
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.kernel</span> <span class="kn">import</span> <span class="n">Kernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.matern_kernel</span> <span class="kn">import</span> <span class="n">MaternKernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span>
-<span class="kn">from</span> <span class="nn">linear_operator.operators.sum_linear_operator</span> <span class="kn">import</span> <span class="n">SumLinearOperator</span>
+<span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="n">DiagLinearOperator</span>
+<span class="kn">from</span> <span class="nn">linear_operator.operators.dense_linear_operator</span> <span class="kn">import</span> <span class="n">DenseLinearOperator</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">ModuleList</span>
+
+
+<span class="k">def</span> <span class="nf">get_order</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Get the order indices as integers ranging from 0 to the number of indices.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        indices: A list of parameter indices.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A list of integers ranging from 0 to the number of indices.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">i</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">is_contiguous</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Check if the list of integers is contiguous.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        indices: A list of parameter indices.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A boolean indicating whether the indices are contiguous.</span>
+<span class="sd">    """</span>
+    <span class="n">min_idx</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">min_idx</span><span class="p">,</span> <span class="n">min_idx</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)))</span>
+
+
+<span class="k">def</span> <span class="nf">get_permutation</span><span class="p">(</span><span class="n">decomposition</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Construct permutation to reorder the parameters such that:</span>
+
+<span class="sd">    1) the parameters for each context are contiguous.</span>
+<span class="sd">    2) The parameters for each context are in the same order</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        decomposition: A dictionary mapping context names to a list of</span>
+<span class="sd">            parameters.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A permutation to reorder the parameters for (1) and (2).</span>
+<span class="sd">        Returning `None` means that ordering specified in `decomposition`</span>
+<span class="sd">        satisfies (1) and (2).</span>
+<span class="sd">    """</span>
+    <span class="n">permutation</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span>
+        <span class="n">is_contiguous</span><span class="p">(</span><span class="n">indices</span><span class="o">=</span><span class="n">active_parameters</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">active_parameters</span> <span class="ow">in</span> <span class="n">decomposition</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+    <span class="p">):</span>
+        <span class="n">permutation</span> <span class="o">=</span> <span class="n">_create_new_permutation</span><span class="p">(</span><span class="n">decomposition</span><span class="o">=</span><span class="n">decomposition</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">same_order</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">expected_order</span> <span class="o">=</span> <span class="n">get_order</span><span class="p">(</span><span class="n">indices</span><span class="o">=</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">decomposition</span><span class="o">.</span><span class="n">values</span><span class="p">())))</span>
+        <span class="k">for</span> <span class="n">active_parameters</span> <span class="ow">in</span> <span class="n">decomposition</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">order</span> <span class="o">=</span> <span class="n">get_order</span><span class="p">(</span><span class="n">indices</span><span class="o">=</span><span class="n">active_parameters</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">order</span> <span class="o">!=</span> <span class="n">expected_order</span><span class="p">:</span>
+                <span class="n">same_order</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">break</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">same_order</span><span class="p">:</span>
+            <span class="n">permutation</span> <span class="o">=</span> <span class="n">_create_new_permutation</span><span class="p">(</span><span class="n">decomposition</span><span class="o">=</span><span class="n">decomposition</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">permutation</span>
+
+
+<span class="k">def</span> <span class="nf">_create_new_permutation</span><span class="p">(</span><span class="n">decomposition</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="c1"># make contiguous and ordered</span>
+    <span class="n">permutation</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">active_parameters</span> <span class="ow">in</span> <span class="n">decomposition</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">sorted_indices</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">active_parameters</span><span class="p">)</span>
+        <span class="n">permutation</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">sorted_indices</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">permutation</span>
 
 
 <div class="viewcode-block" id="LCEAKernel"><a class="viewcode-back" href="../../../../models.html#botorch.models.kernels.contextual_lcea.LCEAKernel">[docs]</a><span class="k">class</span> <span class="nc">LCEAKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">):</span>
@@ -63,8 +130,7 @@
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            decomposition: Keys index context names. Values are the indexes of</span>
-<span class="sd">                parameters belong to the context. The parameter indexes are in the same</span>
-<span class="sd">                order across contexts.</span>
+<span class="sd">                parameters belong to the context.</span>
 <span class="sd">            batch_shape: Batch shape as usual for gpytorch kernels. Model does not</span>
 <span class="sd">                support batch training. When batch_shape is non-empty, it is used for</span>
 <span class="sd">                loading hyper-parameter values generated from MCMC sampling.</span>
@@ -81,26 +147,25 @@
 <span class="sd">            context_weight_dict: Known population weights of each context.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">decomposition</span> <span class="o">=</span> <span class="n">decomposition</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">=</span> <span class="n">batch_shape</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">train_embedding</span> <span class="o">=</span> <span class="n">train_embedding</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_device</span> <span class="o">=</span> <span class="n">device</span>
 
-        <span class="n">num_param</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">decomposition</span><span class="o">.</span><span class="n">values</span><span class="p">())))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_param</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">decomposition</span><span class="o">.</span><span class="n">values</span><span class="p">())))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">context_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">decomposition</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_contexts</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context_list</span><span class="p">)</span>
 
         <span class="c1"># get parameter space decomposition</span>
         <span class="k">for</span> <span class="n">active_parameters</span> <span class="ow">in</span> <span class="n">decomposition</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="c1"># check number of parameters are same in each decomp</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">active_parameters</span><span class="p">)</span> <span class="o">!=</span> <span class="n">num_param</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">active_parameters</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_param</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">"num of parameters needs to be same across all contexts"</span>
+                    <span class="s2">"The number of parameters needs to be same across all contexts."</span>
                 <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_indexers</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">context</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">active_params</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">context</span><span class="p">,</span> <span class="n">active_params</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">decomposition</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-        <span class="p">}</span>
+        <span class="c1"># reorder the parameter list based on decomposition such that</span>
+        <span class="c1"># parameters for each context are contiguous and in the same order for each</span>
+        <span class="c1"># context</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">permutation</span> <span class="o">=</span> <span class="n">get_permutation</span><span class="p">(</span><span class="n">decomposition</span><span class="o">=</span><span class="n">decomposition</span><span class="p">)</span>
         <span class="c1"># get context features and set emb dim</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">context_cat_feature</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">context_emb_feature</span> <span class="o">=</span> <span class="kc">None</span>
@@ -125,7 +190,7 @@
         <span class="c1"># base kernel</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">base_kernel</span> <span class="o">=</span> <span class="n">MaternKernel</span><span class="p">(</span>
             <span class="n">nu</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span>
-            <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">num_param</span><span class="p">,</span>
+            <span class="n">ard_num_dims</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_param</span><span class="p">,</span>
             <span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span><span class="p">,</span>
             <span class="n">lengthscale_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">),</span>
         <span class="p">)</span>
@@ -326,6 +391,11 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">embeddings</span>
 
+    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">mode</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"_context_covar"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_context_covar</span><span class="p">())</span>
+
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">x1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -338,38 +408,45 @@
 <span class="sd">        covariance matrices together</span>
 <span class="sd">        """</span>
         <span class="c1"># context covar matrix</span>
-        <span class="n">context_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_context_covar</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
+            <span class="n">context_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context_covar</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">context_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_context_covar</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">permutation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">x1</span> <span class="o">=</span> <span class="n">x1</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">permutation</span><span class="p">]</span>
+            <span class="n">x2</span> <span class="o">=</span> <span class="n">x2</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">permutation</span><span class="p">]</span>
         <span class="c1"># check input batch size if b x ns x n x d: expand context_covar to</span>
         <span class="c1"># b x ns x num_context x num_context</span>
         <span class="k">if</span> <span class="n">x1</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">context_covar</span><span class="o">.</span><span class="n">dim</span><span class="p">():</span>
-            <span class="n">context_covar</span> <span class="o">=</span> <span class="n">context_covar</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">x1</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">context_covar</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-        <span class="n">covars</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="c1"># TODO: speed computation of covariance matrix</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_contexts</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_contexts</span><span class="p">):</span>
-                <span class="n">context1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">context_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-                <span class="n">context2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">context_list</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
-                <span class="n">active_params1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_indexers</span><span class="p">[</span><span class="n">context1</span><span class="p">]</span>
-                <span class="n">active_params2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_indexers</span><span class="p">[</span><span class="n">context2</span><span class="p">]</span>
-                <span class="n">covars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="p">(</span>
-                        <span class="n">context_covar</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span>  <span class="c1"># pyre-ignore</span>
-                            <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">j</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
-                        <span class="p">)</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span>
-                            <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">i</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
-                        <span class="p">)</span>  <span class="c1"># b x ns x 1 x 1</span>
-                    <span class="p">)</span>
-                    <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_kernel</span><span class="p">(</span>
-                        <span class="n">x1</span><span class="o">=</span><span class="n">x1</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">active_params1</span><span class="p">),</span>
-                        <span class="n">x2</span><span class="o">=</span><span class="n">x2</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">active_params2</span><span class="p">),</span>
-                        <span class="n">diag</span><span class="o">=</span><span class="n">diag</span><span class="p">,</span>
-                    <span class="p">)</span>
-                <span class="p">)</span>
+            <span class="n">context_covar</span> <span class="o">=</span> <span class="n">context_covar</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
+                <span class="n">x1</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">x2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]])</span> <span class="o">+</span> <span class="n">context_covar</span><span class="o">.</span><span class="n">shape</span>
+            <span class="p">)</span>
+        <span class="c1"># turn last two dimensions of n x (k*d) into (n*k) x d.</span>
+        <span class="n">x1_exp</span> <span class="o">=</span> <span class="n">x1</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">x1</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_param</span><span class="p">)</span>
+        <span class="n">x2_exp</span> <span class="o">=</span> <span class="n">x2</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">x2</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_param</span><span class="p">)</span>
+        <span class="c1"># batch shape x n*k x n*k</span>
+        <span class="n">base_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_kernel</span><span class="p">(</span><span class="n">x1_exp</span><span class="p">,</span> <span class="n">x2_exp</span><span class="p">)</span>
+        <span class="c1"># batch shape x n x n x k x k</span>
+        <span class="n">view_shape</span> <span class="o">=</span> <span class="n">x1</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">x1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">num_contexts</span><span class="p">,</span>
+                <span class="n">x2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">num_contexts</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">base_covar_perm</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">base_covar</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">view_shape</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="o">*</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">x1</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)),</span> <span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="c1"># then weight by the context kernel</span>
+        <span class="c1"># compute the base kernel on the d parameters</span>
+        <span class="n">einsum_str</span> <span class="o">=</span> <span class="s2">"...kk, ...nnkk -&gt; ...n"</span> <span class="k">if</span> <span class="n">diag</span> <span class="k">else</span> <span class="s2">"...kk, ...kk -&gt; ..."</span>
+        <span class="n">covar_dense</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="n">einsum_str</span><span class="p">,</span> <span class="n">context_covar</span><span class="p">,</span> <span class="n">base_covar_perm</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">diag</span><span class="p">:</span>
-            <span class="n">res</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">covars</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">res</span> <span class="o">=</span> <span class="n">SumLinearOperator</span><span class="p">(</span><span class="o">*</span><span class="n">covars</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">res</span></div>
+            <span class="k">return</span> <span class="n">DiagLinearOperator</span><span class="p">(</span><span class="n">covar_dense</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">DenseLinearOperator</span><span class="p">(</span><span class="n">covar_dense</span><span class="p">)</span></div>
 </pre></div>
 </div>
 </div>

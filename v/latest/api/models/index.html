@@ -2294,8 +2294,7 @@ data sets should have dim = 2.</p>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – (n x 1) Y training data.</p></li>
 <li><p><strong>train_Yvar</strong> (<em>Tensor</em>) – (n x 1) Noise variance of Y.</p></li>
 <li><p><strong>decomposition</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Keys are context names. Values are the indexes of
-parameters belong to the context. The parameter indexes are in the
-same order across contexts.</p></li>
+parameters belong to the context.</p></li>
 <li><p><strong>cat_feature_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Keys are context names and values are list of categorical
 features i.e. {“context_name” : [cat_0, …, cat_k]}, where k is the
 number of categorical variables. If None, we use context names in the
@@ -3491,8 +3490,7 @@ embeddings.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>decomposition</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Keys index context names. Values are the indexes of
-parameters belong to the context. The parameter indexes are in the same
-order across contexts.</p></li>
+parameters belong to the context.</p></li>
 <li><p><strong>batch_shape</strong> (<em>Size</em>) – Batch shape as usual for gpytorch kernels. Model does not
 support batch training. When batch_shape is non-empty, it is used for
 loading hyper-parameter values generated from MCMC sampling.</p></li>
