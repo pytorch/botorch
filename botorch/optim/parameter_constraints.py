@@ -333,8 +333,6 @@ def _generate_unfixed_nonlin_constraints(
 
     values = torch.tensor(list(fixed_features.values()), dtype=torch.double)
 
-    new_constraints = []
-
     def _wrap_nlc(nlc: Callable) -> Callable:
         def new_nlc(X: Tensor) -> Tensor:
             ivalues = values.to(X).expand(*X.shape[:-1], len(fixed_features))
