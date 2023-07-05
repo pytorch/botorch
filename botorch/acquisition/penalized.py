@@ -11,7 +11,7 @@ Modules to add regularization to acquisition functions.
 from __future__ import annotations
 
 import math
-from typing import Callable, List, Optional
+from typing import Any, Callable, List, Optional
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -137,6 +137,43 @@ class GroupLassoPenalty(torch.nn.Module):
             X=X.squeeze(-2) - self.init_point, groups=self.groups
         )
         return regularization_term
+
+
+def narrow_gaussian(X: Tensor, a: Tensor) -> Tensor:
+    return torch.exp(-0.5 * (X / a) ** 2)
+
+
+def nnz_approx(X: Tensor, target_point: Tensor, a: Tensor) -> Tensor:
+    r"""Differentiable relaxation of ||X - target_point||_0
+
+    Args:
+        X: An `n x d` tensor of inputs.
+        target_point: A tensor of size `n` corresponding to the target point.
+        a: A scalar tensor that controls the differentiable relaxation.
+    """
+    d = X.shape[-1]
+    if d != target_point.shape[-1]:
+        raise ValueError("X and target_point have different shapes.")
+    return d - narrow_gaussian(X - target_point, a).sum(dim=-1, keepdim=True)
+
+
+class L0Approximation(torch.nn.Module):
+    r"""Differentiable relaxation of the L0 norm using a Gaussian basis function."""
+
+    def __init__(self, target_point: Tensor, a: float = 1.0, **tkwargs: Any) -> None:
+        r"""Initializing L0 penalty with differentiable relaxation.
+
+        Args:
+            target_point: A tensor corresponding to the target point.
+            a: A hyperparameter that controls the differentiable relaxation.
+        """
+        super().__init__()
+        self.target_point = target_point
+        # hyperparameter to control the differentiable relaxation in L0 norm function.
+        self.register_buffer("a", torch.tensor(a, **tkwargs))
+
+    def __call__(self, X: Tensor) -> Tensor:
+        return nnz_approx(X=X, target_point=self.target_point, a=self.a)
 
 
 class PenalizedAcquisitionFunction(AcquisitionFunction):
