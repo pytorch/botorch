@@ -313,10 +313,10 @@ def _make_linear_constraints(
 
 
 def _generate_unfixed_nonlin_constraints(
-    constraints: Optional[List[Callable[[Tensor], Tensor]],
+    constraints: Optional[List[Callable[[Tensor], Tensor]]],
     fixed_features: Dict[int, float],
     dimension: int,
-) -> Optional[List[Callable[[Tensor], Tensor]]:
+) -> Optional[List[Callable[[Tensor], Tensor]]]:
     # If constraints is None or an empty list, then return itself
     if not constraints:
         return constraints
@@ -333,7 +333,9 @@ def _generate_unfixed_nonlin_constraints(
 
     values = torch.tensor(list(fixed_features.values()), dtype=torch.double)
 
-    def _wrap_nonlin_constraint(constraint: Callable[[Tensor], Tensor]) -> Callable[[Tensor], Tensor]:
+    def _wrap_nonlin_constraint(
+        constraint: Callable[[Tensor], Tensor]
+    ) -> Callable[[Tensor], Tensor]:
         def new_nonlin_constraint(X: Tensor) -> Tensor:
             ivalues = values.to(X).expand(*X.shape[:-1], len(fixed_features))
             X_perm = torch.cat([X, ivalues], dim=-1)
@@ -341,7 +343,9 @@ def _generate_unfixed_nonlin_constraints(
 
         return new_nonlin_constraint
 
-    return [_wrap_nonlin_constraint(constraint=constraint) for constraint in constraints]
+    return [
+        _wrap_nonlin_constraint(constraint=constraint) for constraint in constraints
+    ]
 
 
 def _generate_unfixed_lin_constraints(

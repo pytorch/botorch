@@ -66,7 +66,7 @@ class _NoFixedFeatures:
     upper_bounds: Optional[Union[float, Tensor]]
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]]
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]]
-    nonlinear_inequality_constraints: Optional[List[Callable[[Tensor], Tensor]
+    nonlinear_inequality_constraints: Optional[List[Callable[[Tensor], Tensor]]]
 
 
 def _remove_fixed_features_from_optimization(
@@ -77,7 +77,7 @@ def _remove_fixed_features_from_optimization(
     upper_bounds: Optional[Union[float, Tensor]],
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]],
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]],
-    nonlinear_inequality_constraints: Optional[List[Callable[[Tensor], Tensor],
+    nonlinear_inequality_constraints: Optional[List[Callable[[Tensor], Tensor]]],
 ) -> _NoFixedFeatures:
     """
     Given a set of non-empty fixed features, this function effectively reduces the
@@ -103,6 +103,11 @@ def _remove_fixed_features_from_optimization(
         equality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `sum_i (X[indices[i]] * coefficients[i]) = rhs`.
+        nonlinear_inequality_constraints: A list of callables with that represent
+            non-linear inequality constraints of the form `callable(x) >= 0`. Each
+            callable is expected to take a `(num_restarts) x q x d`-dim tensor as
+            an input and return a `(num_restarts) x q`-dim tensor with the
+            constraint values.
 
     Returns:
         _NoFixedFeatures dataclass object.
