@@ -411,13 +411,14 @@ class PairwiseGP(Model, GP, FantasizeMixin):
             utility = torch.tensor(utility, dtype=self.datapoints.dtype)
             prior_mean = prior_mean.cpu()
 
+        # NOTE: During the optimization, it can occur that b, p, and g_ are NaNs, though
+        # in the cases that occured during testing, the optimization routine escaped and
+        # terminated successfully without NaNs in the result.
         b = self.likelihood.negative_log_gradient_sum(utility=utility, D=D)
-
         # g_ = covar_inv x (utility - pred_prior)
         p = (utility - prior_mean).unsqueeze(-1).to(covar_chol)
         g_ = torch.cholesky_solve(p, covar_chol).squeeze(-1)
         g = g_ + b
-
         if ret_np:
             return g.cpu().numpy()
         else:
@@ -575,7 +576,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
             self._x0 = x.copy()  # save for warm-starting
             f = torch.tensor(x, dtype=datapoints.dtype, device=datapoints.device)
 
-        # To perform hyperparameter optimization, this need to be recalculated
+        # To perform hyperparameter optimization, this needs to be recalculated
         # when calling forward() in order to obtain correct gradients
         # self.likelihood_hess is updated here is for the rare case where we
         # do not want to call forward()

@@ -23,10 +23,12 @@ CaseNd = Tuple[Callable[[], BoolTensor], Callable[[BoolTensor], Tensor]]
 _log_2 = math.log(2)
 _sqrt_pi = math.sqrt(pi)
 _inv_sqrt_pi = 1 / _sqrt_pi
-_inv_sqrt_2pi = (2 * pi) ** -0.5
-_neg_inv_sqrt_2 = -(2**-0.5)
+_inv_sqrt_2pi = 1 / math.sqrt(2 * pi)
+_inv_sqrt_2 = 1 / math.sqrt(2)
+_neg_inv_sqrt_2 = -_inv_sqrt_2
 _log_sqrt_2pi = math.log(2 * pi) / 2
 STANDARDIZED_RANGE: Tuple[float, float] = (-1e6, 1e6)
+_log_two_inv_sqrt_2pi = _log_2 - _log_sqrt_2pi  # = log(2 / sqrt(2 * pi))
 
 
 def case_dispatcher(
@@ -188,6 +190,43 @@ def log_erfc(x: Tensor) -> Tensor:
         torch.log(torch.special.erfcx(x_pos)) - x_pos.square(),
         torch.log(torch.special.erfc(x_neg)),
     )
+
+
+def log_erfcx(x: Tensor) -> Tensor:
+    """Computes the logarithm of the complementary scaled error function in a
+    numerically stable manner. The GitHub issue tracks progress toward moving this
+    feature into PyTorch in C++: https://github.com/pytorch/pytorch/issues/31945.
+
+    Args:
+        x: An input tensor with dtype torch.float32 or torch.float64.
+
+    Returns:
+        A tensor of values of the same type and shape as x containing log(erfcx(x)).
+    """
+    is_pos = x > 0
+    x_pos = x.masked_fill(~is_pos, 0)
+    x_neg = x.masked_fill(is_pos, 0)
+    return torch.where(
+        is_pos,
+        torch.special.erfcx(x_pos).log(),
+        torch.special.erfc(x_neg).log() + x.square(),
+    )
+
+
+def standard_normal_log_hazard(x: Tensor) -> Tensor:
+    """Computes the logarithm of the hazard function of the standard normal
+    distribution, i.e. `log(phi(x) / Phi(-x))`.
+
+    Args:
+        x: A tensor of any shape, with either float32 or float64 dtypes.
+
+    Returns:
+        A Tensor of the same shape `x`, containing the values of the logarithm of the
+        hazard function evaluated at `x`.
+    """
+    # NOTE: using _inv_sqrt_2 instead of _neg_inv_sqrt_2 means we are computing Phi(-x).
+    a, b = get_constants_like((_log_two_inv_sqrt_2pi, _inv_sqrt_2), x)
+    return a - log_erfcx(b * x)
 
 
 def log_prob_normal_in(a: Tensor, b: Tensor) -> Tensor:
