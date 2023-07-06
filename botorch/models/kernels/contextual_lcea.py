@@ -385,19 +385,38 @@ class LCEAKernel(Kernel):
         covariance matrices together
         """
         # context covar matrix
-        if not self.training:
-            context_covar = self._context_covar
-        else:
-            context_covar = self._eval_context_covar()
+        context_covar = (
+            self._eval_context_covar() if self.training else self._context_covar
+        )
+        base_covar_perm = self._eval_base_covar_perm(x1, x2)
+        # expand context_covar to match base_covar_perm
+        if base_covar_perm.dim() > context_covar.dim():
+            context_covar = context_covar.expand(base_covar_perm.shape)
+        # then weight by the context kernel
+        # compute the base kernel on the d parameters
+        einsum_str = "...nnki, ...nnki -> ...n" if diag else "...ki, ...ki -> ..."
+        covar_dense = torch.einsum(einsum_str, context_covar, base_covar_perm)
+        if diag:
+            return DiagLinearOperator(covar_dense)
+        return DenseLinearOperator(covar_dense)
+
+    def _eval_base_covar_perm(self, x1: Tensor, x2: Tensor) -> Tensor:
+        """Computes the base covariance matrix on x1, x2, applying permutations and
+        reshaping the kernel matrix as required by `forward`.
+
+        NOTE: Using the notation n = num_observations, k = num_contexts, d = input_dim,
+        the input tensors have to have the following shapes.
+
+        Args:
+            x1: `batch_shape x n x (k*d)`-dim Tensor of kernel inputs.
+            x2: `batch_shape x n x (k*d)`-dim Tensor of kernel inputs.
+
+        Returns:
+            `batch_shape x n x n x k x k`-dim Tensor of base covariance values.
+        """
         if self.permutation is not None:
             x1 = x1[..., self.permutation]
             x2 = x2[..., self.permutation]
-        # check input batch size if b x ns x n x d: expand context_covar to
-        # b x ns x num_context x num_context
-        if x1.dim() > context_covar.dim():
-            context_covar = context_covar.expand(
-                x1.shape[:-1] + torch.Size([x2.shape[-2]]) + context_covar.shape
-            )
         # turn last two dimensions of n x (k*d) into (n*k) x d.
         x1_exp = x1.reshape(*x1.shape[:-2], -1, self.num_param)
         x2_exp = x2.reshape(*x2.shape[:-2], -1, self.num_param)
@@ -417,10 +436,4 @@ class LCEAKernel(Kernel):
             .view(view_shape)
             .permute(*list(range(x1.ndim - 2)), -4, -2, -3, -1)
         )
-        # then weight by the context kernel
-        # compute the base kernel on the d parameters
-        einsum_str = "...kk, ...nnkk -> ...n" if diag else "...kk, ...kk -> ..."
-        covar_dense = torch.einsum(einsum_str, context_covar, base_covar_perm)
-        if diag:
-            return DiagLinearOperator(covar_dense)
-        return DenseLinearOperator(covar_dense)
+        return base_covar_perm
