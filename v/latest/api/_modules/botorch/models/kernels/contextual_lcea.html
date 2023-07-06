@@ -408,19 +408,38 @@
 <span class="sd">        covariance matrices together</span>
 <span class="sd">        """</span>
         <span class="c1"># context covar matrix</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
-            <span class="n">context_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context_covar</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">context_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_context_covar</span><span class="p">()</span>
+        <span class="n">context_covar</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_eval_context_covar</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context_covar</span>
+        <span class="p">)</span>
+        <span class="n">base_covar_perm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_base_covar_perm</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">)</span>
+        <span class="c1"># expand context_covar to match base_covar_perm</span>
+        <span class="k">if</span> <span class="n">base_covar_perm</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">context_covar</span><span class="o">.</span><span class="n">dim</span><span class="p">():</span>
+            <span class="n">context_covar</span> <span class="o">=</span> <span class="n">context_covar</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">base_covar_perm</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="c1"># then weight by the context kernel</span>
+        <span class="c1"># compute the base kernel on the d parameters</span>
+        <span class="n">einsum_str</span> <span class="o">=</span> <span class="s2">"...nnki, ...nnki -&gt; ...n"</span> <span class="k">if</span> <span class="n">diag</span> <span class="k">else</span> <span class="s2">"...ki, ...ki -&gt; ..."</span>
+        <span class="n">covar_dense</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="n">einsum_str</span><span class="p">,</span> <span class="n">context_covar</span><span class="p">,</span> <span class="n">base_covar_perm</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">diag</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">DiagLinearOperator</span><span class="p">(</span><span class="n">covar_dense</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">DenseLinearOperator</span><span class="p">(</span><span class="n">covar_dense</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_eval_base_covar_perm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">x2</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Computes the base covariance matrix on x1, x2, applying permutations and</span>
+<span class="sd">        reshaping the kernel matrix as required by `forward`.</span>
+
+<span class="sd">        NOTE: Using the notation n = num_observations, k = num_contexts, d = input_dim,</span>
+<span class="sd">        the input tensors have to have the following shapes.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x1: `batch_shape x n x (k*d)`-dim Tensor of kernel inputs.</span>
+<span class="sd">            x2: `batch_shape x n x (k*d)`-dim Tensor of kernel inputs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            `batch_shape x n x n x k x k`-dim Tensor of base covariance values.</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">permutation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">x1</span> <span class="o">=</span> <span class="n">x1</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">permutation</span><span class="p">]</span>
             <span class="n">x2</span> <span class="o">=</span> <span class="n">x2</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">permutation</span><span class="p">]</span>
-        <span class="c1"># check input batch size if b x ns x n x d: expand context_covar to</span>
-        <span class="c1"># b x ns x num_context x num_context</span>
-        <span class="k">if</span> <span class="n">x1</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">context_covar</span><span class="o">.</span><span class="n">dim</span><span class="p">():</span>
-            <span class="n">context_covar</span> <span class="o">=</span> <span class="n">context_covar</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
-                <span class="n">x1</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">x2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]])</span> <span class="o">+</span> <span class="n">context_covar</span><span class="o">.</span><span class="n">shape</span>
-            <span class="p">)</span>
         <span class="c1"># turn last two dimensions of n x (k*d) into (n*k) x d.</span>
         <span class="n">x1_exp</span> <span class="o">=</span> <span class="n">x1</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">x1</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_param</span><span class="p">)</span>
         <span class="n">x2_exp</span> <span class="o">=</span> <span class="n">x2</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">x2</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_param</span><span class="p">)</span>
@@ -440,13 +459,7 @@
             <span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">view_shape</span><span class="p">)</span>
             <span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="o">*</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">x1</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)),</span> <span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="p">)</span>
-        <span class="c1"># then weight by the context kernel</span>
-        <span class="c1"># compute the base kernel on the d parameters</span>
-        <span class="n">einsum_str</span> <span class="o">=</span> <span class="s2">"...kk, ...nnkk -&gt; ...n"</span> <span class="k">if</span> <span class="n">diag</span> <span class="k">else</span> <span class="s2">"...kk, ...kk -&gt; ..."</span>
-        <span class="n">covar_dense</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="n">einsum_str</span><span class="p">,</span> <span class="n">context_covar</span><span class="p">,</span> <span class="n">base_covar_perm</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">diag</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">DiagLinearOperator</span><span class="p">(</span><span class="n">covar_dense</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">DenseLinearOperator</span><span class="p">(</span><span class="n">covar_dense</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">base_covar_perm</span></div>
 </pre></div>
 </div>
 </div>

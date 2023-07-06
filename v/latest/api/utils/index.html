@@ -4276,6 +4276,42 @@ tracks progress toward moving this feature into PyTorch in C++.</p>
 </dl>
 </dd></dl>
 <dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.probability.utils.log_erfcx">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.probability.utils.</span></span><span class="sig-name descname"><span class="pre">log_erfcx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/probability/utils.html#log_erfcx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.probability.utils.log_erfcx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the logarithm of the complementary scaled error function in a
+numerically stable manner. The GitHub issue tracks progress toward moving this
+feature into PyTorch in C++: <a class="reference external" href="https://github.com/pytorch/pytorch/issues/31945">https://github.com/pytorch/pytorch/issues/31945</a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – An input tensor with dtype torch.float32 or torch.float64.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tensor of values of the same type and shape as x containing log(erfcx(x)).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.probability.utils.standard_normal_log_hazard">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.probability.utils.</span></span><span class="sig-name descname"><span class="pre">standard_normal_log_hazard</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/probability/utils.html#standard_normal_log_hazard"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.probability.utils.standard_normal_log_hazard" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the logarithm of the hazard function of the standard normal
+distribution, i.e. <cite>log(phi(x) / Phi(-x))</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – A tensor of any shape, with either float32 or float64 dtypes.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A Tensor of the same shape <cite>x</cite>, containing the values of the logarithm of the
+hazard function evaluated at <cite>x</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.probability.utils.log_prob_normal_in">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.probability.utils.</span></span><span class="sig-name descname"><span class="pre">log_prob_normal_in</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/probability/utils.html#log_prob_normal_in"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.probability.utils.log_prob_normal_in" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the probability that a standard normal random variable takes a value

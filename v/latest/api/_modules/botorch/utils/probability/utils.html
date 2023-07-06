@@ -46,10 +46,12 @@
 <span class="n">_log_2</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">_sqrt_pi</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">pi</span><span class="p">)</span>
 <span class="n">_inv_sqrt_pi</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">_sqrt_pi</span>
-<span class="n">_inv_sqrt_2pi</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span><span class="p">)</span> <span class="o">**</span> <span class="o">-</span><span class="mf">0.5</span>
-<span class="n">_neg_inv_sqrt_2</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="mi">2</span><span class="o">**-</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">_inv_sqrt_2pi</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span><span class="p">)</span>
+<span class="n">_inv_sqrt_2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">_neg_inv_sqrt_2</span> <span class="o">=</span> <span class="o">-</span><span class="n">_inv_sqrt_2</span>
 <span class="n">_log_sqrt_2pi</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
 <span class="n">STANDARDIZED_RANGE</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">1e6</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">)</span>
+<span class="n">_log_two_inv_sqrt_2pi</span> <span class="o">=</span> <span class="n">_log_2</span> <span class="o">-</span> <span class="n">_log_sqrt_2pi</span>  <span class="c1"># = log(2 / sqrt(2 * pi))</span>
 
 
 <div class="viewcode-block" id="case_dispatcher"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.utils.case_dispatcher">[docs]</a><span class="k">def</span> <span class="nf">case_dispatcher</span><span class="p">(</span>
@@ -211,6 +213,43 @@
         <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">erfcx</span><span class="p">(</span><span class="n">x_pos</span><span class="p">))</span> <span class="o">-</span> <span class="n">x_pos</span><span class="o">.</span><span class="n">square</span><span class="p">(),</span>
         <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">erfc</span><span class="p">(</span><span class="n">x_neg</span><span class="p">)),</span>
     <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="log_erfcx"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.utils.log_erfcx">[docs]</a><span class="k">def</span> <span class="nf">log_erfcx</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Computes the logarithm of the complementary scaled error function in a</span>
+<span class="sd">    numerically stable manner. The GitHub issue tracks progress toward moving this</span>
+<span class="sd">    feature into PyTorch in C++: https://github.com/pytorch/pytorch/issues/31945.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x: An input tensor with dtype torch.float32 or torch.float64.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A tensor of values of the same type and shape as x containing log(erfcx(x)).</span>
+<span class="sd">    """</span>
+    <span class="n">is_pos</span> <span class="o">=</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="n">x_pos</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">masked_fill</span><span class="p">(</span><span class="o">~</span><span class="n">is_pos</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">x_neg</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">masked_fill</span><span class="p">(</span><span class="n">is_pos</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">is_pos</span><span class="p">,</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">erfcx</span><span class="p">(</span><span class="n">x_pos</span><span class="p">)</span><span class="o">.</span><span class="n">log</span><span class="p">(),</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">erfc</span><span class="p">(</span><span class="n">x_neg</span><span class="p">)</span><span class="o">.</span><span class="n">log</span><span class="p">()</span> <span class="o">+</span> <span class="n">x</span><span class="o">.</span><span class="n">square</span><span class="p">(),</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="standard_normal_log_hazard"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.utils.standard_normal_log_hazard">[docs]</a><span class="k">def</span> <span class="nf">standard_normal_log_hazard</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Computes the logarithm of the hazard function of the standard normal</span>
+<span class="sd">    distribution, i.e. `log(phi(x) / Phi(-x))`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x: A tensor of any shape, with either float32 or float64 dtypes.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A Tensor of the same shape `x`, containing the values of the logarithm of the</span>
+<span class="sd">        hazard function evaluated at `x`.</span>
+<span class="sd">    """</span>
+    <span class="c1"># NOTE: using _inv_sqrt_2 instead of _neg_inv_sqrt_2 means we are computing Phi(-x).</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">get_constants_like</span><span class="p">((</span><span class="n">_log_two_inv_sqrt_2pi</span><span class="p">,</span> <span class="n">_inv_sqrt_2</span><span class="p">),</span> <span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">a</span> <span class="o">-</span> <span class="n">log_erfcx</span><span class="p">(</span><span class="n">b</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="log_prob_normal_in"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.utils.log_prob_normal_in">[docs]</a><span class="k">def</span> <span class="nf">log_prob_normal_in</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
