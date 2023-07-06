@@ -114,15 +114,12 @@ def gen_candidates_scipy(
     # if there are fixed features we may optimize over a domain of lower dimension
     reduced_domain = False
     if fixed_features:
-        # TODO: We can support fixed features, see Max's comment on D33551393. We can
-        # consider adding this at a later point.
-        if nonlinear_inequality_constraints:
-            raise NotImplementedError(
-                "Fixed features are not supported when non-linear inequality "
-                "constraints are given."
-            )
-        # if there are no constraints things are straightforward
-        if not (inequality_constraints or equality_constraints):
+        # if there are no constraints, things are straightforward
+        if not (
+            inequality_constraints
+            or equality_constraints
+            or nonlinear_inequality_constraints
+        ):
             reduced_domain = True
         # if there are we need to make sure features are fixed to specific values
         else:
@@ -137,6 +134,7 @@ def gen_candidates_scipy(
             upper_bounds=upper_bounds,
             inequality_constraints=inequality_constraints,
             equality_constraints=equality_constraints,
+            nonlinear_inequality_constraints=nonlinear_inequality_constraints,
         )
         # call the routine with no fixed_features
         clamped_candidates, batch_acquisition = gen_candidates_scipy(
@@ -146,6 +144,7 @@ def gen_candidates_scipy(
             upper_bounds=_no_fixed_features.upper_bounds,
             inequality_constraints=_no_fixed_features.inequality_constraints,
             equality_constraints=_no_fixed_features.equality_constraints,
+            nonlinear_inequality_constraints=_no_fixed_features.nonlinear_inequality_constraints,  # noqa: E501
             options=options,
             fixed_features=None,
             timeout_sec=timeout_sec,
@@ -342,6 +341,7 @@ def gen_candidates_torch(
             upper_bounds=upper_bounds,
             inequality_constraints=None,
             equality_constraints=None,
+            nonlinear_inequality_constraints=None,
         )
 
         # call the routine with no fixed_features

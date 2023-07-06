@@ -862,6 +862,32 @@ class TestOptimizeAcqf(BotorchTestCase):
                 torch.allclose(acq_value, torch.tensor(2.45, **tkwargs), atol=1e-3)
             )
 
+            with torch.random.fork_rng():
+                torch.manual_seed(0)
+                batch_initial_conditions = torch.rand(num_restarts, 1, 3, **tkwargs)
+                batch_initial_conditions[..., 0] = 2
+
+            # test with fixed features
+            candidates, acq_value = optimize_acqf(
+                acq_function=mock_acq_function,
+                bounds=bounds,
+                q=1,
+                nonlinear_inequality_constraints=[nlc1, nlc2],
+                batch_initial_conditions=batch_initial_conditions,
+                num_restarts=num_restarts,
+                fixed_features={0: 2},
+            )
+            self.assertEqual(candidates[0, 0], 2.0)
+            self.assertTrue(
+                torch.allclose(
+                    torch.sort(candidates).values,
+                    torch.tensor([[0, 2, 2]], **tkwargs),
+                )
+            )
+            self.assertTrue(
+                torch.allclose(acq_value, torch.tensor(2.8284, **tkwargs), atol=1e-3)
+            )
+
             # Test that an ic_generator object with the same API as
             # gen_batch_initial_conditions returns candidates of the
             # required shape.
@@ -878,22 +904,6 @@ class TestOptimizeAcqf(BotorchTestCase):
                     ic_generator=ic_generator,
                 )
                 self.assertEqual(candidates.size(), torch.Size([1, 3]))
-
-            # Make sure fixed features aren't supported
-            with self.assertRaisesRegex(
-                NotImplementedError,
-                "Fixed features are not supported when non-linear inequality "
-                "constraints are given.",
-            ):
-                optimize_acqf(
-                    acq_function=mock_acq_function,
-                    bounds=bounds,
-                    q=1,
-                    nonlinear_inequality_constraints=[nlc1, nlc2, nlc3, nlc4],
-                    batch_initial_conditions=batch_initial_conditions,
-                    num_restarts=num_restarts,
-                    fixed_features={0: 0.1},
-                )
 
             # Constraints must be passed in as lists
             with self.assertRaisesRegex(
