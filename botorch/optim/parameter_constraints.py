@@ -317,7 +317,10 @@ def _generate_unfixed_nonlin_constraints(
     fixed_features: Dict[int, float],
     dimension: int,
 ) -> Optional[List[Callable[[Tensor], Tensor]]]:
-    # If constraints is None or an empty list, then return itself
+    """Given a dictionary of fixed features, returns a list of callables for
+    nonlinear inequality constraints expecting only a tensor with the non-fixed
+    features as input.
+    """
     if not constraints:
         return constraints
 
