@@ -66,7 +66,7 @@ class _NoFixedFeatures:
     upper_bounds: Optional[Union[float, Tensor]]
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]]
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]]
-    nonlinear_inequality_constraints: Optional[List[Callable]]
+    nonlinear_inequality_constraints: Optional[List[Callable[[Tensor], Tensor]
 
 
 def _remove_fixed_features_from_optimization(
@@ -77,7 +77,7 @@ def _remove_fixed_features_from_optimization(
     upper_bounds: Optional[Union[float, Tensor]],
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]],
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]],
-    nonlinear_inequality_constraints: Optional[List[Callable]],
+    nonlinear_inequality_constraints: Optional[List[Callable[[Tensor], Tensor],
 ) -> _NoFixedFeatures:
     """
     Given a set of non-empty fixed features, this function effectively reduces the
