@@ -61,6 +61,7 @@ from botorch.acquisition.preference import (
     AnalyticExpectedUtilityOfBestOption,
     PairwiseBayesianActiveLearningByDisagreement,
 )
+from botorch.acquisition.prior_guided import PriorGuidedAcquisitionFunction
 from botorch.acquisition.proximal import ProximalAcquisitionFunction
 from botorch.acquisition.utils import get_acquisition_function
 
@@ -78,6 +79,7 @@ __all__ = [
     "PairwiseBayesianActiveLearningByDisagreement",
     "PairwiseMCPosteriorVariance",
     "PosteriorMean",
+    "PriorGuidedAcquisitionFunction",
     "ProbabilityOfImprovement",
     "ProximalAcquisitionFunction",
     "UpperConfidenceBound",
