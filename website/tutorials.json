@@ -39,6 +39,10 @@
       "title": "High-dimensional Bayesian optimization with SAASBO"
     },
     {
+      "id": "cost_aware_bayesian_optimization",
+      "title": "Cost-aware Bayesian optimization"
+    },
+    {
       "id": "Multi_objective_multi_fidelity_BO",
       "title": "Multi-Objective-Multi-Fidelity optimization with MOMF"
     },
