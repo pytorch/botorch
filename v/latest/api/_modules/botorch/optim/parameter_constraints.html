@@ -335,13 +335,51 @@
     <span class="k">return</span> <span class="n">constraints</span>
 
 
+<span class="k">def</span> <span class="nf">_generate_unfixed_nonlin_constraints</span><span class="p">(</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]],</span>
+    <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">dimension</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">"""Given a dictionary of fixed features, returns a list of callables for</span>
+<span class="sd">    nonlinear inequality constraints expecting only a tensor with the non-fixed</span>
+<span class="sd">    features as input.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">constraints</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">constraints</span>
+
+    <span class="n">selector</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">idx_X</span><span class="p">,</span> <span class="n">idx_f</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dimension</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">fixed_features</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dimension</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">fixed_features</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">selector</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx_f</span><span class="p">)</span>
+            <span class="n">idx_f</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">selector</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx_X</span><span class="p">)</span>
+            <span class="n">idx_X</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="n">values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">fixed_features</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_wrap_nonlin_constraint</span><span class="p">(</span>
+        <span class="n">constraint</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]:</span>
+        <span class="k">def</span> <span class="nf">new_nonlin_constraint</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+            <span class="n">ivalues</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">fixed_features</span><span class="p">))</span>
+            <span class="n">X_perm</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">X</span><span class="p">,</span> <span class="n">ivalues</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">constraint</span><span class="p">(</span><span class="n">X_perm</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">selector</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">new_nonlin_constraint</span>
+
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">_wrap_nonlin_constraint</span><span class="p">(</span><span class="n">constraint</span><span class="o">=</span><span class="n">constraint</span><span class="p">)</span> <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="n">constraints</span>
+    <span class="p">]</span>
+
+
 <span class="k">def</span> <span class="nf">_generate_unfixed_lin_constraints</span><span class="p">(</span>
     <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]],</span>
     <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
     <span class="n">dimension</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">eq</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]:</span>
-
     <span class="c1"># If constraints is None or an empty list, then return itself</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">constraints</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">constraints</span>

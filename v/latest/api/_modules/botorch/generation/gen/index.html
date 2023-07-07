@@ -137,15 +137,12 @@
     <span class="c1"># if there are fixed features we may optimize over a domain of lower dimension</span>
     <span class="n">reduced_domain</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="k">if</span> <span class="n">fixed_features</span><span class="p">:</span>
-        <span class="c1"># TODO: We can support fixed features, see Max's comment on D33551393. We can</span>
-        <span class="c1"># consider adding this at a later point.</span>
-        <span class="k">if</span> <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                <span class="s2">"Fixed features are not supported when non-linear inequality "</span>
-                <span class="s2">"constraints are given."</span>
-            <span class="p">)</span>
-        <span class="c1"># if there are no constraints things are straightforward</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">inequality_constraints</span> <span class="ow">or</span> <span class="n">equality_constraints</span><span class="p">):</span>
+        <span class="c1"># if there are no constraints, things are straightforward</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="n">inequality_constraints</span>
+            <span class="ow">or</span> <span class="n">equality_constraints</span>
+            <span class="ow">or</span> <span class="n">nonlinear_inequality_constraints</span>
+        <span class="p">):</span>
             <span class="n">reduced_domain</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="c1"># if there are we need to make sure features are fixed to specific values</span>
         <span class="k">else</span><span class="p">:</span>
@@ -160,6 +157,7 @@
             <span class="n">upper_bounds</span><span class="o">=</span><span class="n">upper_bounds</span><span class="p">,</span>
             <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
             <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
+            <span class="n">nonlinear_inequality_constraints</span><span class="o">=</span><span class="n">nonlinear_inequality_constraints</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="c1"># call the routine with no fixed_features</span>
         <span class="n">clamped_candidates</span><span class="p">,</span> <span class="n">batch_acquisition</span> <span class="o">=</span> <span class="n">gen_candidates_scipy</span><span class="p">(</span>
@@ -169,6 +167,7 @@
             <span class="n">upper_bounds</span><span class="o">=</span><span class="n">_no_fixed_features</span><span class="o">.</span><span class="n">upper_bounds</span><span class="p">,</span>
             <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">_no_fixed_features</span><span class="o">.</span><span class="n">inequality_constraints</span><span class="p">,</span>
             <span class="n">equality_constraints</span><span class="o">=</span><span class="n">_no_fixed_features</span><span class="o">.</span><span class="n">equality_constraints</span><span class="p">,</span>
+            <span class="n">nonlinear_inequality_constraints</span><span class="o">=</span><span class="n">_no_fixed_features</span><span class="o">.</span><span class="n">nonlinear_inequality_constraints</span><span class="p">,</span>  <span class="c1"># noqa: E501</span>
             <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
             <span class="n">fixed_features</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="n">timeout_sec</span><span class="o">=</span><span class="n">timeout_sec</span><span class="p">,</span>
@@ -365,6 +364,7 @@
             <span class="n">upper_bounds</span><span class="o">=</span><span class="n">upper_bounds</span><span class="p">,</span>
             <span class="n">inequality_constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="n">equality_constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">nonlinear_inequality_constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># call the routine with no fixed_features</span>

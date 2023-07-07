@@ -6163,6 +6163,64 @@ with penalty added for each point.</p>
 </dd></dl>
 </dd></dl>
 </section>
+<section id="module-botorch.acquisition.prior_guided">
+<span id="prior-guided-acquisition-function-wrapper"></span><h3>Prior-Guided Acquisition Function Wrapper<a class="headerlink" href="#module-botorch.acquisition.prior_guided" title="Permalink to this heading">¶</a></h3>
+<p>Prior-Guided Acquisition Functions</p>
+<p>References</p>
+<div class="citation-list" role="list">
+<div class="citation" id="hvarfner2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Hvarfner2022<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a href="#id46" role="doc-backlink">1</a>,<a href="#id47" role="doc-backlink">2</a>)</span>
+<p>C. Hvarfner, D. Stoll, A. Souza, M. Lindauer, F. Hutter, L. Nardi. PiBO:
+Augmenting Acquisition Functions with User Beliefs for Bayesian Optimization.
+ICLR 2022.</p>
+</div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.prior_guided.PriorGuidedAcquisitionFunction">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.prior_guided.</span></span><span class="sig-name descname"><span class="pre">PriorGuidedAcquisitionFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_exponent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/prior_guided.html#PriorGuidedAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.prior_guided.PriorGuidedAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></p>
+<p>Class for weighting acquisition functions by a prior distribution.</p>
+<p>See <a class="reference internal" href="#hvarfner2022" id="id46"><span>[Hvarfner2022]</span></a> for details.</p>
+<p>Initialize the prior-guided acquisition function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>acq_function</strong> (<em>AcquisitionFunction</em>) – The base acquisition function.</p></li>
+<li><p><strong>prior_module</strong> (<em>Module</em>) – A Module that computes the probability
+(or log probability) for the provided inputs.</p></li>
+<li><p><strong>log</strong> (<em>bool</em>) – A boolean that should be true if the acquisition function emits a
+log-transformed value and the prior module emits a log probability.</p></li>
+<li><p><strong>prior_exponent</strong> (<em>float</em>) – The exponent applied to the prior. This can be used
+for example  to decay the effect the prior over time as in
+<a class="reference internal" href="#hvarfner2022" id="id47"><span>[Hvarfner2022]</span></a>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.acquisition.prior_guided.PriorGuidedAcquisitionFunction.X_pending">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">X_pending</span></span><a class="headerlink" href="#botorch.acquisition.prior_guided.PriorGuidedAcquisitionFunction.X_pending" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the <cite>X_pending</cite> of the base acquisition function.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.prior_guided.PriorGuidedAcquisitionFunction.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/prior_guided.html#PriorGuidedAcquisitionFunction.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.prior_guided.PriorGuidedAcquisitionFunction.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the acquisition function weighted by the prior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.prior_guided.PriorGuidedAcquisitionFunction.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.prior_guided.PriorGuidedAcquisitionFunction.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+</section>
 <section id="module-botorch.acquisition.proximal">
 <span id="proximal-acquisition-function-wrapper"></span><h3>Proximal Acquisition Function Wrapper<a class="headerlink" href="#module-botorch.acquisition.proximal" title="Permalink to this heading">¶</a></h3>
 <p>A wrapper around AcquisitionFunctions to add proximal weighting of the
