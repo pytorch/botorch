@@ -11,6 +11,7 @@ from botorch.acquisition.penalized import (
     GaussianPenalty,
     group_lasso_regularizer,
     GroupLassoPenalty,
+    L0Approximation,
     L1Penalty,
     L1PenaltyObjective,
     L2Penalty,
@@ -102,6 +103,53 @@ class TestGroupLassoPenalty(BotorchTestCase):
             sample_point_2 = torch.tensor([[1.0, 2.0, 3.0], [2.0, 3.0, 4.0]], **tkwargs)
             with self.assertRaises(NotImplementedError):
                 group_lasso_module(sample_point_2)
+
+
+class TestL0Approximation(BotorchTestCase):
+    def test_L0Approximation(self):
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            target_point = torch.zeros(2, **tkwargs)
+
+            # test init
+            l0 = L0Approximation(target_point=target_point, **tkwargs)
+            self.assertTrue(torch.equal(l0.target_point, target_point))
+            self.assertAllClose(l0.a.data, torch.tensor(1.0, **tkwargs))
+
+            # verify L0 norm
+            self.assertTrue(
+                torch.equal(
+                    l0(torch.zeros(2, **tkwargs)).data, torch.tensor([0], **tkwargs)
+                )
+            )
+            # check two-dim input tensors X
+            self.assertTrue(
+                torch.equal(
+                    l0(torch.zeros(3, 2, **tkwargs)).data, torch.zeros(3, 1, **tkwargs)
+                )
+            )
+
+            # test raise when X and target_point have mismatched shape
+            with self.assertRaises(ValueError):
+                l0(torch.zeros(3, **tkwargs))
+
+            # test init with different a
+            l0 = L0Approximation(target_point=target_point, a=2.0, **tkwargs)
+            self.assertAllClose(l0.a.data, torch.tensor(2.0, **tkwargs))
+            self.assertAllClose(
+                l0(torch.ones(2, **tkwargs)).data,
+                torch.tensor([0.2350], **tkwargs),
+                rtol=1e-04,
+            )
+
+            # reset a
+            l0.a.data.fill_(0.5)
+            self.assertTrue(torch.equal(l0.a.data, torch.tensor(0.5, **tkwargs)))
+            self.assertAllClose(
+                l0(torch.ones(2, **tkwargs)).data,
+                torch.tensor([1.7293], **tkwargs),
+                rtol=1e-04,
+            )
 
 
 class TestPenalizedAcquisitionFunction(BotorchTestCase):
