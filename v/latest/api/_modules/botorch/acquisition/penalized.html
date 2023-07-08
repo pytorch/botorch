@@ -34,7 +34,7 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
@@ -160,6 +160,43 @@
             <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_point</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">regularization_term</span></div></div>
+
+
+<div class="viewcode-block" id="narrow_gaussian"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.narrow_gaussian">[docs]</a><span class="k">def</span> <span class="nf">narrow_gaussian</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">X</span> <span class="o">/</span> <span class="n">a</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="nnz_approx"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.nnz_approx">[docs]</a><span class="k">def</span> <span class="nf">nnz_approx</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">target_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Differentiable relaxation of ||X - target_point||_0</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: An `n x d` tensor of inputs.</span>
+<span class="sd">        target_point: A tensor of size `n` corresponding to the target point.</span>
+<span class="sd">        a: A scalar tensor that controls the differentiable relaxation.</span>
+<span class="sd">    """</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">d</span> <span class="o">!=</span> <span class="n">target_point</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"X and target_point have different shapes."</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">d</span> <span class="o">-</span> <span class="n">narrow_gaussian</span><span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="n">target_point</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="L0Approximation"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.L0Approximation">[docs]</a><span class="k">class</span> <span class="nc">L0Approximation</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Differentiable relaxation of the L0 norm using a Gaussian basis function."""</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializing L0 penalty with differentiable relaxation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            target_point: A tensor corresponding to the target point.</span>
+<span class="sd">            a: A hyperparameter that controls the differentiable relaxation.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_point</span> <span class="o">=</span> <span class="n">target_point</span>
+        <span class="c1"># hyperparameter to control the differentiable relaxation in L0 norm function.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"a"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">nnz_approx</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">target_point</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_point</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="PenalizedAcquisitionFunction"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.PenalizedAcquisitionFunction">[docs]</a><span class="k">class</span> <span class="nc">PenalizedAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>

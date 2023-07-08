@@ -5985,6 +5985,58 @@ implemented yet.</p>
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.penalized.GroupLassoPenalty.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.acquisition.penalized.narrow_gaussian">
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.penalized.</span></span><span class="sig-name descname"><span class="pre">narrow_gaussian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#narrow_gaussian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.penalized.narrow_gaussian" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>a</strong> (<em>Tensor</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.acquisition.penalized.nnz_approx">
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.penalized.</span></span><span class="sig-name descname"><span class="pre">nnz_approx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#nnz_approx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.penalized.nnz_approx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Differentiable relaxation of ||X - target_point||_0</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – An <cite>n x d</cite> tensor of inputs.</p></li>
+<li><p><strong>target_point</strong> (<em>Tensor</em>) – A tensor of size <cite>n</cite> corresponding to the target point.</p></li>
+<li><p><strong>a</strong> (<em>Tensor</em>) – A scalar tensor that controls the differentiable relaxation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.penalized.L0Approximation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.penalized.</span></span><span class="sig-name descname"><span class="pre">L0Approximation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">tkwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#L0Approximation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.penalized.L0Approximation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Differentiable relaxation of the L0 norm using a Gaussian basis function.</p>
+<p>Initializing L0 penalty with differentiable relaxation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target_point</strong> (<em>Tensor</em>) – A tensor corresponding to the target point.</p></li>
+<li><p><strong>a</strong> (<em>float</em>) – A hyperparameter that controls the differentiable relaxation.</p></li>
+<li><p><strong>tkwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.penalized.L0Approximation.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.penalized.L0Approximation.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.penalized.PenalizedAcquisitionFunction">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.penalized.</span></span><span class="sig-name descname"><span class="pre">PenalizedAcquisitionFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw_acqf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalty_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization_parameter</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#PenalizedAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.penalized.PenalizedAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
