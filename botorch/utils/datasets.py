@@ -56,8 +56,8 @@ class SupervisedDatasetMeta(type):
                     value = DenseContainer(value, event_shape=value.shape[-1:])
                 elif not isinstance(value, BotorchContainer):
                     raise TypeError(
-                        f"Expected <BotorchContainer | Tensor> for field `{field.name}` "
-                        f"but was {type(value)}."
+                        "Expected <BotorchContainer | Tensor> for field "
+                        f"`{field.name}` but was {type(value)}."
                     )
             f_dict[field.name] = value
 
