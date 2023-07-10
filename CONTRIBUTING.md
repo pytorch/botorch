@@ -50,7 +50,7 @@ run `flake8` as above to check.
 
 #### Type Hints
 
-BoTorch is fully typed using python 3.8+
+BoTorch is fully typed using python 3.9+
 [type hints](https://www.python.org/dev/peps/pep-0484/).
 We expect any contributions to also use proper type annotations. While we
 currently do not enforce full consistency of these in our continuous integration
