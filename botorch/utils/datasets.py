@@ -37,28 +37,29 @@ class SupervisedDatasetMeta(type):
         r"""Converts Tensor-valued fields to DenseContainer under the assumption
         that said fields house collections of feature vectors."""
         hints = get_type_hints(cls)
-        f_iter = filter(lambda f: f.init, fields(cls))
+        fields_iter = (item for item in fields(cls) if item.init is not None)
         f_dict = {}
-        for obj, f in chain(
-            zip(args, f_iter), ((kwargs.pop(f.name, MISSING), f) for f in f_iter)
+        for value, field in chain(
+            zip(args, fields_iter),
+            ((kwargs.pop(field.name, MISSING), field) for field in fields_iter),
         ):
-            if obj is MISSING:
-                if f.default is not MISSING:
-                    obj = f.default
-                elif f.default_factory is not MISSING:
-                    obj = f.default_factory()
+            if value is MISSING:
+                if field.default is not MISSING:
+                    value = field.default
+                elif field.default_factory is not MISSING:
+                    value = field.default_factory()
                 else:
-                    raise RuntimeError(f"Missing required field `{f.name}`.")
+                    raise RuntimeError(f"Missing required field `{field.name}`.")
 
-            if issubclass(hints[f.name], BotorchContainer):
-                if isinstance(obj, Tensor):
-                    obj = DenseContainer(obj, event_shape=obj.shape[-1:])
-                elif not isinstance(obj, BotorchContainer):
+            if issubclass(hints[field.name], BotorchContainer):
+                if isinstance(value, Tensor):
+                    value = DenseContainer(value, event_shape=value.shape[-1:])
+                elif not isinstance(value, BotorchContainer):
                     raise TypeError(
-                        f"Expected <BotorchContainer | Tensor> for field `{f.name}` "
-                        f"but was {type(obj)}."
+                        f"Expected <BotorchContainer | Tensor> for field `{field.name}` "
+                        f"but was {type(value)}."
                     )
-            f_dict[f.name] = obj
+            f_dict[field.name] = value
 
         return super().__call__(**f_dict, **kwargs)
 
