@@ -255,10 +255,22 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
             A Tensor with shape `batch_shape'`, where `batch_shape'` is the broadcasted
             batch shape of model and input `X`.
         """
+        non_reduced_acqval = self._non_reduced_forward(X=X)
+        return self._sample_reduction(self._q_reduction(non_reduced_acqval))
+
+    def _non_reduced_forward(self, X: Tensor) -> Tensor:
+        """Compute the constrained acquisition values at the MC-sample, q level.
+
+        Args:
+            X: A `batch_shape x q x d` Tensor of t-batches with `q` `d`-dim
+                design points each.
+
+        Returns:
+            A Tensor with shape `sample_sample x batch_shape x q`.
+        """
         samples, obj = self._get_samples_and_objectives(X)
         acqval = self._sample_forward(obj)  # `sample_sample x batch_shape x q`
-        weighted_acqval = self._apply_constraints(acqval=acqval, samples=samples)
-        return self._sample_reduction(self._q_reduction(weighted_acqval))
+        return self._apply_constraints(acqval=acqval, samples=samples)
 
     @abstractmethod
     def _sample_forward(self, obj: Tensor) -> Tensor:
