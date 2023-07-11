@@ -36,6 +36,11 @@ Stopping Criteria
 .. automodule:: botorch.optim.stopping
     :members:
 
+Acquisition Function Optimization with Homotopy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.optim.optimize_homotopy
+    :members:
+
 Closures
 -------------------------------------------
 
@@ -86,4 +91,9 @@ Numpy - Torch Conversion Tools (OLD)
 Parameter Constraint Utilities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.optim.parameter_constraints
+    :members:
+
+Homotopy Utilities
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.optim.homotopy
     :members:
