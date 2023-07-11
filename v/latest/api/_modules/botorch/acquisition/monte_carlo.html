@@ -278,10 +278,22 @@
 <span class="sd">            A Tensor with shape `batch_shape'`, where `batch_shape'` is the broadcasted</span>
 <span class="sd">            batch shape of model and input `X`.</span>
 <span class="sd">        """</span>
+        <span class="n">non_reduced_acqval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_non_reduced_forward</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_reduction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_q_reduction</span><span class="p">(</span><span class="n">non_reduced_acqval</span><span class="p">))</span></div>
+
+    <span class="k">def</span> <span class="nf">_non_reduced_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Compute the constrained acquisition values at the MC-sample, q level.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x q x d` Tensor of t-batches with `q` `d`-dim</span>
+<span class="sd">                design points each.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A Tensor with shape `sample_sample x batch_shape x q`.</span>
+<span class="sd">        """</span>
         <span class="n">samples</span><span class="p">,</span> <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_samples_and_objectives</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="n">acqval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_forward</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>  <span class="c1"># `sample_sample x batch_shape x q`</span>
-        <span class="n">weighted_acqval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_constraints</span><span class="p">(</span><span class="n">acqval</span><span class="o">=</span><span class="n">acqval</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_reduction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_q_reduction</span><span class="p">(</span><span class="n">weighted_acqval</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_constraints</span><span class="p">(</span><span class="n">acqval</span><span class="o">=</span><span class="n">acqval</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">)</span>
 
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">_sample_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>

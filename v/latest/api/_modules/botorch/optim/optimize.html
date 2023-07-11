@@ -328,14 +328,13 @@
 
         <span class="c1"># only add parameter constraints to gen_kwargs if they are specified</span>
         <span class="c1"># to avoid unnecessary warnings in _filter_kwargs</span>
-        <span class="k">if</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">inequality_constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">gen_kwargs</span><span class="p">[</span><span class="s2">"inequality_constraints"</span><span class="p">]</span> <span class="o">=</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">inequality_constraints</span>
-        <span class="k">if</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">equality_constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">gen_kwargs</span><span class="p">[</span><span class="s2">"equality_constraints"</span><span class="p">]</span> <span class="o">=</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">equality_constraints</span>
-        <span class="k">if</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">nonlinear_inequality_constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">gen_kwargs</span><span class="p">[</span>
-                <span class="s2">"nonlinear_inequality_constraints"</span>
-            <span class="p">]</span> <span class="o">=</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">nonlinear_inequality_constraints</span>
+        <span class="k">for</span> <span class="n">constraint_name</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="s2">"inequality_constraints"</span><span class="p">,</span>
+            <span class="s2">"equality_constraints"</span><span class="p">,</span>
+            <span class="s2">"nonlinear_inequality_constraints"</span><span class="p">,</span>
+        <span class="p">]:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">constraint</span> <span class="o">:=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">opt_inputs</span><span class="p">,</span> <span class="n">constraint_name</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">gen_kwargs</span><span class="p">[</span><span class="n">constraint_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">constraint</span>
 
         <span class="n">filtered_gen_kwargs</span> <span class="o">=</span> <span class="n">_filter_kwargs</span><span class="p">(</span><span class="n">opt_inputs</span><span class="o">.</span><span class="n">gen_candidates</span><span class="p">,</span> <span class="o">**</span><span class="n">gen_kwargs</span><span class="p">)</span>
 

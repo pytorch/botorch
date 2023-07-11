@@ -741,8 +741,6 @@
 <li><a href="models.html#module-botorch.models.utils.parse_training_data">module</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.optim
 
@@ -750,6 +748,8 @@
 <li><a href="optim.html#module-botorch.optim">module</a>
 </li>
 </ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.optim.closures.core
 
@@ -779,6 +779,13 @@
 </li>
 </ul></li>
 <li>
+    botorch.optim.homotopy
+
+      <ul>
+<li><a href="optim.html#module-botorch.optim.homotopy">module</a>
+</li>
+</ul></li>
+<li>
     botorch.optim.initializers
 
       <ul>
@@ -797,6 +804,13 @@
 
       <ul>
 <li><a href="optim.html#module-botorch.optim.optimize">module</a>
+</li>
+</ul></li>
+<li>
+    botorch.optim.optimize_homotopy
+
+      <ul>
+<li><a href="optim.html#module-botorch.optim.optimize_homotopy">module</a>
 </li>
 </ul></li>
 <li>
@@ -2134,6 +2148,8 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction">FixedFeatureAcquisitionFunction (class in botorch.acquisition.fixed_feature)</a>
 </li>
+<li><a href="optim.html#botorch.optim.homotopy.FixedHomotopySchedule">FixedHomotopySchedule (class in botorch.optim.homotopy)</a>
+</li>
 <li><a href="utils.html#botorch.utils.datasets.FixedNoiseDataset">FixedNoiseDataset (class in botorch.utils.datasets)</a>
 </li>
 <li><a href="models.html#botorch.models.gp_regression.FixedNoiseGP">FixedNoiseGP (class in botorch.models.gp_regression)</a>
@@ -2611,13 +2627,19 @@
 </li>
 <li><a href="models.html#botorch.models.higher_order_gp.HigherOrderGP">HigherOrderGP (class in botorch.models.higher_order_gp)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="posteriors.html#botorch.posteriors.higher_order.HigherOrderGPPosterior">HigherOrderGPPosterior (class in botorch.posteriors.higher_order)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="utils.html#botorch.utils.sampling.HitAndRunPolytopeSampler">HitAndRunPolytopeSampler (class in botorch.utils.sampling)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.HolderTable">HolderTable (class in botorch.test_functions.synthetic)</a>
+</li>
+<li><a href="optim.html#botorch.optim.homotopy.Homotopy">Homotopy (class in botorch.optim.homotopy)</a>
+</li>
+<li><a href="optim.html#botorch.optim.homotopy.HomotopyParameter">HomotopyParameter (class in botorch.optim.homotopy)</a>
+</li>
+<li><a href="optim.html#botorch.optim.homotopy.HomotopySchedule">HomotopySchedule (class in botorch.optim.homotopy)</a>
 </li>
 <li><a href="utils.html#botorch.utils.multi_objective.hypervolume.Hypervolume">Hypervolume (class in botorch.utils.multi_objective.hypervolume)</a>
 </li>
@@ -2807,6 +2829,8 @@
 </li>
 <li><a href="utils.html#botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler">LinearEllipticalSliceSampler (class in botorch.utils.probability.lin_ess)</a>
 </li>
+<li><a href="optim.html#botorch.optim.homotopy.LinearHomotopySchedule">LinearHomotopySchedule (class in botorch.optim.homotopy)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.objective.LinearMCObjective">LinearMCObjective (class in botorch.acquisition.objective)</a>
 </li>
 <li><a href="models.html#botorch.models.kernels.linear_truncated_fidelity.LinearTruncatedFidelityKernel">LinearTruncatedFidelityKernel (class in botorch.models.kernels.linear_truncated_fidelity)</a>
@@ -2875,6 +2899,8 @@
 <li><a href="utils.html#botorch.utils.safe_math.logdiffexp">logdiffexp() (in module botorch.utils.safe_math)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.analytic.LogExpectedImprovement">LogExpectedImprovement (class in botorch.acquisition.analytic)</a>
+</li>
+<li><a href="optim.html#botorch.optim.homotopy.LogLinearHomotopySchedule">LogLinearHomotopySchedule (class in botorch.optim.homotopy)</a>
 </li>
 <li><a href="utils.html#botorch.utils.safe_math.logmeanexp">logmeanexp() (in module botorch.utils.safe_math)</a>
 </li>
@@ -3220,11 +3246,15 @@
 </li>
 <li><a href="optim.html#module-botorch.optim.fit">botorch.optim.fit</a>
 </li>
+<li><a href="optim.html#module-botorch.optim.homotopy">botorch.optim.homotopy</a>
+</li>
 <li><a href="optim.html#module-botorch.optim.initializers">botorch.optim.initializers</a>
 </li>
 <li><a href="optim.html#module-botorch.optim.numpy_converter">botorch.optim.numpy_converter</a>
 </li>
 <li><a href="optim.html#module-botorch.optim.optimize">botorch.optim.optimize</a>
+</li>
+<li><a href="optim.html#module-botorch.optim.optimize_homotopy">botorch.optim.optimize_homotopy</a>
 </li>
 <li><a href="optim.html#module-botorch.optim.parameter_constraints">botorch.optim.parameter_constraints</a>
 </li>
@@ -3526,8 +3556,6 @@
 <li><a href="models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.num_mcmc_samples">(botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP property)</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="test_functions.html#botorch.test_functions.base.MultiObjectiveTestProblem.num_objectives">num_objectives (botorch.test_functions.base.MultiObjectiveTestProblem attribute)</a>
 <ul>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.BNH.num_objectives">(botorch.test_functions.multi_objective.BNH attribute)</a>
@@ -3591,6 +3619,8 @@
 <li><a href="test_functions.html#botorch.test_functions.synthetic.SyntheticTestFunction.num_objectives">(botorch.test_functions.synthetic.SyntheticTestFunction attribute)</a>
 </li>
 </ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel.num_outputs">num_outputs (botorch.models.approximate_gp.ApproximateGPyTorchModel property)</a>
 <ul>
 <li><a href="models.html#botorch.models.model.Model.num_outputs">(botorch.models.model.Model property)</a>
@@ -3610,6 +3640,11 @@
 </ul></li>
 <li><a href="optim.html#botorch.optim.optimize.OptimizeAcqfInputs.num_restarts">num_restarts (botorch.optim.optimize.OptimizeAcqfInputs attribute)</a>
 </li>
+<li><a href="optim.html#botorch.optim.homotopy.FixedHomotopySchedule.num_steps">num_steps (botorch.optim.homotopy.FixedHomotopySchedule property)</a>
+<ul>
+<li><a href="optim.html#botorch.optim.homotopy.HomotopySchedule.num_steps">(botorch.optim.homotopy.HomotopySchedule property)</a>
+</li>
+</ul></li>
 </ul></td>
 </tr></table>
 <h2 id="O">O</h2>
@@ -3663,13 +3698,15 @@
 </li>
 <li><a href="optim.html#botorch.optim.optimize.optimize_acqf">optimize_acqf() (in module botorch.optim.optimize)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="optim.html#botorch.optim.optimize.optimize_acqf_cyclic">optimize_acqf_cyclic() (in module botorch.optim.optimize)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="optim.html#botorch.optim.optimize.optimize_acqf_discrete">optimize_acqf_discrete() (in module botorch.optim.optimize)</a>
 </li>
 <li><a href="optim.html#botorch.optim.optimize.optimize_acqf_discrete_local_search">optimize_acqf_discrete_local_search() (in module botorch.optim.optimize)</a>
+</li>
+<li><a href="optim.html#botorch.optim.optimize_homotopy.optimize_acqf_homotopy">optimize_acqf_homotopy() (in module botorch.optim.optimize_homotopy)</a>
 </li>
 <li><a href="optim.html#botorch.optim.optimize.optimize_acqf_list">optimize_acqf_list() (in module botorch.optim.optimize)</a>
 </li>
@@ -3742,6 +3779,8 @@
 <li><a href="models.html#botorch.models.likelihoods.pairwise.PairwiseProbitLikelihood">PairwiseProbitLikelihood (class in botorch.models.likelihoods.pairwise)</a>
 </li>
 <li><a href="sampling.html#botorch.sampling.pairwise_samplers.PairwiseSobolQMCNormalSampler">PairwiseSobolQMCNormalSampler (class in botorch.sampling.pairwise_samplers)</a>
+</li>
+<li><a href="optim.html#botorch.optim.homotopy.HomotopyParameter.parameter">parameter (botorch.optim.homotopy.HomotopyParameter attribute)</a>
 </li>
 <li><a href="utils.html#botorch.utils.context_managers.parameter_rollback_ctx">parameter_rollback_ctx() (in module botorch.utils.context_managers)</a>
 </li>
@@ -3839,6 +3878,8 @@
 <li><a href="settings.html#botorch.settings.propagate_grads">propagate_grads (class in botorch.settings)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.proximal.ProximalAcquisitionFunction">ProximalAcquisitionFunction (class in botorch.acquisition.proximal)</a>
+</li>
+<li><a href="optim.html#botorch.optim.optimize_homotopy.prune_candidates">prune_candidates() (in module botorch.optim.optimize_homotopy)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.utils.prune_inferior_points">prune_inferior_points() (in module botorch.acquisition.utils)</a>
 </li>
@@ -3938,8 +3979,17 @@
 </li>
 <li><a href="utils.html#botorch.utils.context_managers.requires_grad_ctx">requires_grad_ctx() (in module botorch.utils.context_managers)</a>
 </li>
+<li><a href="optim.html#botorch.optim.homotopy.Homotopy.reset">reset() (botorch.optim.homotopy.Homotopy method)</a>
+</li>
 <li><a href="models.html#botorch.models.fully_bayesian.reshape_and_detach">reshape_and_detach() (in module botorch.models.fully_bayesian)</a>
 </li>
+<li><a href="optim.html#botorch.optim.homotopy.FixedHomotopySchedule.restart">restart() (botorch.optim.homotopy.FixedHomotopySchedule method)</a>
+<ul>
+<li><a href="optim.html#botorch.optim.homotopy.Homotopy.restart">(botorch.optim.homotopy.Homotopy method)</a>
+</li>
+<li><a href="optim.html#botorch.optim.homotopy.HomotopySchedule.restart">(botorch.optim.homotopy.HomotopySchedule method)</a>
+</li>
+</ul></li>
 <li><a href="optim.html#botorch.optim.optimize.OptimizeAcqfInputs.retry_on_optimization_warning">retry_on_optimization_warning (botorch.optim.optimize.OptimizeAcqfInputs attribute)</a>
 </li>
 <li><a href="optim.html#botorch.optim.optimize.OptimizeAcqfInputs.return_best_only">return_best_only (botorch.optim.optimize.OptimizeAcqfInputs attribute)</a>
@@ -3955,10 +4005,10 @@
 <li><a href="models.html#botorch.models.transforms.input.Warp.reverse">(botorch.models.transforms.input.Warp attribute)</a>
 </li>
 </ul></li>
-<li><a href="test_functions.html#botorch.test_functions.synthetic.Rosenbrock">Rosenbrock (class in botorch.test_functions.synthetic)</a>
-</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.Rosenbrock">Rosenbrock (class in botorch.test_functions.synthetic)</a>
+</li>
 <li><a href="models.html#botorch.models.transforms.input.Round">Round (class in botorch.models.transforms.input)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.utils.round_nearest">round_nearest() (in module botorch.test_functions.utils)</a>
@@ -4079,6 +4129,8 @@
 </li>
 <li><a href="utils.html#botorch.utils.probability.unified_skew_normal.UnifiedSkewNormal.scale_tril">scale_tril (botorch.utils.probability.unified_skew_normal.UnifiedSkewNormal property)</a>
 </li>
+<li><a href="optim.html#botorch.optim.homotopy.HomotopyParameter.schedule">schedule (botorch.optim.homotopy.HomotopyParameter attribute)</a>
+</li>
 <li><a href="optim.html#botorch.optim.core.scipy_minimize">scipy_minimize() (in module botorch.optim.core)</a>
 </li>
 <li><a href="utils.html#botorch.utils.probability.mvnxpb.MVNXPB.select_pivot">select_pivot() (botorch.utils.probability.mvnxpb.MVNXPB method)</a>
@@ -4124,10 +4176,17 @@
 <li><a href="utils.html#botorch.utils.containers.SliceContainer.shape">(botorch.utils.containers.SliceContainer property)</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Shekel">Shekel (class in botorch.test_functions.synthetic)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="optim.html#botorch.optim.homotopy.FixedHomotopySchedule.should_stop">should_stop (botorch.optim.homotopy.FixedHomotopySchedule property)</a>
+<ul>
+<li><a href="optim.html#botorch.optim.homotopy.Homotopy.should_stop">(botorch.optim.homotopy.Homotopy property)</a>
+</li>
+<li><a href="optim.html#botorch.optim.homotopy.HomotopySchedule.should_stop">(botorch.optim.homotopy.HomotopySchedule property)</a>
+</li>
+</ul></li>
 <li><a href="sampling.html#botorch.sampling.pathwise.utils.SineCosineTransform">SineCosineTransform (class in botorch.sampling.pathwise.utils)</a>
 </li>
 <li><a href="models.html#botorch.models.gp_regression.SingleTaskGP">SingleTaskGP (class in botorch.models.gp_regression)</a>
@@ -4181,8 +4240,15 @@
 <li><a href="utils.html#botorch.utils.probability.mvnxpb.mvnxpbState.step">(botorch.utils.probability.mvnxpb.mvnxpbState attribute)</a>
 </li>
 </ul></li>
-<li><a href="utils.html#botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler.step">step() (botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler method)</a>
+<li><a href="optim.html#botorch.optim.homotopy.FixedHomotopySchedule.step">step() (botorch.optim.homotopy.FixedHomotopySchedule method)</a>
+<ul>
+<li><a href="optim.html#botorch.optim.homotopy.Homotopy.step">(botorch.optim.homotopy.Homotopy method)</a>
 </li>
+<li><a href="optim.html#botorch.optim.homotopy.HomotopySchedule.step">(botorch.optim.homotopy.HomotopySchedule method)</a>
+</li>
+<li><a href="utils.html#botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler.step">(botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler method)</a>
+</li>
+</ul></li>
 <li><a href="sampling.html#botorch.sampling.stochastic_samplers.StochasticSampler">StochasticSampler (class in botorch.sampling.stochastic_samplers)</a>
 </li>
 <li><a href="optim.html#botorch.optim.core.OptimizationStatus.STOPPED">STOPPED (botorch.optim.core.OptimizationStatus attribute)</a>
@@ -4775,6 +4841,11 @@
 </li>
 <li><a href="models.html#botorch.models.utils.assorted.validate_input_scaling">validate_input_scaling() (in module botorch.models.utils.assorted)</a>
 </li>
+<li><a href="optim.html#botorch.optim.homotopy.FixedHomotopySchedule.value">value (botorch.optim.homotopy.FixedHomotopySchedule property)</a>
+<ul>
+<li><a href="optim.html#botorch.optim.homotopy.HomotopySchedule.value">(botorch.optim.homotopy.HomotopySchedule property)</a>
+</li>
+</ul></li>
 <li><a href="utils.html#botorch.utils.containers.DenseContainer.values">values (botorch.utils.containers.DenseContainer attribute)</a>
 <ul>
 <li><a href="utils.html#botorch.utils.containers.SliceContainer.values">(botorch.utils.containers.SliceContainer attribute)</a>
@@ -4782,13 +4853,13 @@
 <li><a href="utils.html#botorch.utils.context_managers.TensorCheckpoint.values">(botorch.utils.context_managers.TensorCheckpoint attribute)</a>
 </li>
 </ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="sampling.html#botorch.sampling.pathwise.paths.PathDict.values">values() (botorch.sampling.pathwise.paths.PathDict method)</a>
 <ul>
 <li><a href="utils.html#botorch.utils.torch.BufferDict.values">(botorch.utils.torch.BufferDict method)</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="acquisition.html#botorch.acquisition.risk_measures.VaR">VaR (class in botorch.acquisition.risk_measures)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior.variance">variance (botorch.posteriors.deterministic.DeterministicPosterior property)</a>
@@ -4848,8 +4919,6 @@
 <li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient.X_pending">(botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient attribute)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.penalized.PenalizedAcquisitionFunction.X_pending">(botorch.acquisition.penalized.PenalizedAcquisitionFunction property)</a>
-</li>
-<li><a href="acquisition.html#botorch.acquisition.prior_guided.PriorGuidedAcquisitionFunction.X_pending">(botorch.acquisition.prior_guided.PriorGuidedAcquisitionFunction property)</a>
 </li>
 </ul></li>
 <li><a href="utils.html#botorch.utils.gp_sampling.GPDraw.Xs">Xs (botorch.utils.gp_sampling.GPDraw property)</a>

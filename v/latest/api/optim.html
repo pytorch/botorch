@@ -1380,6 +1380,62 @@ true for all elements.</p>
 </dd></dl>
 </dd></dl>
 </section>
+<section id="module-botorch.optim.optimize_homotopy">
+<span id="acquisition-function-optimization-with-homotopy"></span><h3>Acquisition Function Optimization with Homotopy<a class="headerlink" href="#module-botorch.optim.optimize_homotopy" title="Permalink to this heading">¶</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.optimize_homotopy.prune_candidates">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize_homotopy.</span></span><span class="sig-name descname"><span class="pre">prune_candidates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">candidates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acq_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_tolerance</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize_homotopy.html#prune_candidates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize_homotopy.prune_candidates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prune candidates based on their distance to other candidates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>candidates</strong> (<em>Tensor</em>) – An <cite>n x d</cite> tensor of candidates.</p></li>
+<li><p><strong>acq_values</strong> (<em>Tensor</em>) – An <cite>n</cite> tensor of candidate values.</p></li>
+<li><p><strong>prune_tolerance</strong> (<em>float</em>) – The minimum distance to prune candidates.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An <cite>m x d</cite> tensor of pruned candidates.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.optimize_homotopy.optimize_acqf_homotopy">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize_homotopy.</span></span><span class="sig-name descname"><span class="pre">optimize_acqf_homotopy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">homotopy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_restarts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_initial_conditions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_processing_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize_homotopy.html#optimize_acqf_homotopy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize_homotopy.optimize_acqf_homotopy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a set of candidates via multi-start optimization.</p>
+<p>TODO: Merge with <cite>optimize_acqf</cite> before moving to OSS.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>acq_function</strong> (<em>AcquisitionFunction</em>) – An AcquisitionFunction.</p></li>
+<li><p><strong>bounds</strong> (<em>Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
+<li><p><strong>q</strong> (<em>int</em>) – The number of candidates.</p></li>
+<li><p><strong>homotopy</strong> (<a class="reference internal" href="#botorch.optim.homotopy.Homotopy" title="botorch.optim.homotopy.Homotopy"><em>Homotopy</em></a>) – Homotopy object that will make the necessary modifications to the
+problem when calling <cite>step()</cite>.</p></li>
+<li><p><strong>num_restarts</strong> (<em>int</em>) – The number of starting points for multistart acquisition
+function optimization.</p></li>
+<li><p><strong>raw_samples</strong> (<em>int</em><em> | </em><em>None</em>) – The number of samples for initialization. This is required
+if <cite>batch_initial_conditions</cite> is not specified.</p></li>
+<li><p><strong>fixed_features</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – A map <cite>{feature_index: value}</cite> for features that
+should be fixed to a particular value during generation.</p></li>
+<li><p><strong>options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em> | </em><em>str</em><em>] </em><em>| </em><em>None</em>) – Options for candidate generation.</p></li>
+<li><p><strong>final_options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em> | </em><em>str</em><em>] </em><em>| </em><em>None</em>) – Options for candidate generation in the last homotopy step.</p></li>
+<li><p><strong>batch_initial_conditions</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A tensor to specify the initial conditions. Set
+this if you do not want to use default initialization strategy.</p></li>
+<li><p><strong>post_processing_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – Post processing function (such as roundingor clamping)
+that is applied before choosing the final candidate.</p></li>
+<li><p><strong>prune_tolerance</strong> (<em>float</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+</section>
 </section>
 <section id="closures">
 <h2>Closures<a class="headerlink" href="#closures" title="Permalink to this heading">¶</a></h2>
@@ -2062,6 +2118,209 @@ type (“eq”, “ineq”), as expected by <cite>scipy.minimize</cite>.</p>
 <dd class="field-odd"><p><em>List</em>[<em>Dict</em>]</p>
 </dd>
 </dl>
+</dd></dl>
+</section>
+<section id="module-botorch.optim.homotopy">
+<span id="homotopy-utilities"></span><h3>Homotopy Utilities<a class="headerlink" href="#module-botorch.optim.homotopy" title="Permalink to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.optim.homotopy.HomotopySchedule">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.optim.homotopy.</span></span><span class="sig-name descname"><span class="pre">HomotopySchedule</span></span><a class="reference internal" href="_modules/botorch/optim/homotopy.html#HomotopySchedule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.homotopy.HomotopySchedule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.optim.homotopy.HomotopySchedule.num_steps">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_steps</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#botorch.optim.homotopy.HomotopySchedule.num_steps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of steps in the schedule.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.optim.homotopy.HomotopySchedule.value">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">value</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><a class="headerlink" href="#botorch.optim.homotopy.HomotopySchedule.value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Current value in the schedule.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.optim.homotopy.HomotopySchedule.should_stop">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">should_stop</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.optim.homotopy.HomotopySchedule.should_stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return true if we have incremented past the end of the schedule.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.optim.homotopy.HomotopySchedule.restart">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">restart</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/homotopy.html#HomotopySchedule.restart"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.homotopy.HomotopySchedule.restart" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restart the schedule to start from the beginning.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.optim.homotopy.HomotopySchedule.step">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/homotopy.html#HomotopySchedule.step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.homotopy.HomotopySchedule.step" title="Permalink to this definition">¶</a></dt>
+<dd><p>Move to solving the next problem.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.optim.homotopy.FixedHomotopySchedule">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.optim.homotopy.</span></span><span class="sig-name descname"><span class="pre">FixedHomotopySchedule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/homotopy.html#FixedHomotopySchedule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.homotopy.FixedHomotopySchedule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.optim.homotopy.HomotopySchedule" title="botorch.optim.homotopy.HomotopySchedule"><code class="xref py py-class docutils literal notranslate"><span class="pre">HomotopySchedule</span></code></a></p>
+<p>Homotopy schedule with a fixed list of values.</p>
+<p>Initialize FixedHomotopySchedule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>values</strong> (<em>List</em><em>[</em><em>Any</em><em>]</em>) – A list of values used in homotopy</p>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.optim.homotopy.FixedHomotopySchedule.num_steps">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_steps</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#botorch.optim.homotopy.FixedHomotopySchedule.num_steps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of steps in the schedule.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.optim.homotopy.FixedHomotopySchedule.value">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">value</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><a class="headerlink" href="#botorch.optim.homotopy.FixedHomotopySchedule.value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Current value in the schedule.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.optim.homotopy.FixedHomotopySchedule.should_stop">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">should_stop</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.optim.homotopy.FixedHomotopySchedule.should_stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return true if we have incremented past the end of the schedule.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.optim.homotopy.FixedHomotopySchedule.restart">
+<span class="sig-name descname"><span class="pre">restart</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/homotopy.html#FixedHomotopySchedule.restart"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.homotopy.FixedHomotopySchedule.restart" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restart the schedule to start from the beginning.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.optim.homotopy.FixedHomotopySchedule.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/homotopy.html#FixedHomotopySchedule.step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.homotopy.FixedHomotopySchedule.step" title="Permalink to this definition">¶</a></dt>
+<dd><p>Move to solving the next problem.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.optim.homotopy.LinearHomotopySchedule">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.optim.homotopy.</span></span><span class="sig-name descname"><span class="pre">LinearHomotopySchedule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_steps</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/homotopy.html#LinearHomotopySchedule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.homotopy.LinearHomotopySchedule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.optim.homotopy.FixedHomotopySchedule" title="botorch.optim.homotopy.FixedHomotopySchedule"><code class="xref py py-class docutils literal notranslate"><span class="pre">FixedHomotopySchedule</span></code></a></p>
+<p>Linear homotopy schedule.</p>
+<p>Initialize LinearHomotopySchedule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start</strong> (<em>float</em>) – start value of homotopy</p></li>
+<li><p><strong>end</strong> (<em>float</em>) – end value of homotopy</p></li>
+<li><p><strong>num_steps</strong> (<em>int</em>) – number of steps in the homotopy schedule.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.optim.homotopy.LogLinearHomotopySchedule">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.optim.homotopy.</span></span><span class="sig-name descname"><span class="pre">LogLinearHomotopySchedule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_steps</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/homotopy.html#LogLinearHomotopySchedule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.homotopy.LogLinearHomotopySchedule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.optim.homotopy.FixedHomotopySchedule" title="botorch.optim.homotopy.FixedHomotopySchedule"><code class="xref py py-class docutils literal notranslate"><span class="pre">FixedHomotopySchedule</span></code></a></p>
+<p>Log-linear homotopy schedule.</p>
+<p>Initialize LogLinearHomotopySchedule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start</strong> (<em>float</em>) – start value of homotopy</p></li>
+<li><p><strong>end</strong> (<em>float</em>) – end value of homotopy</p></li>
+<li><p><strong>num_steps</strong> (<em>int</em>) – number of steps in the homotopy schedule.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.optim.homotopy.HomotopyParameter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.optim.homotopy.</span></span><span class="sig-name descname"><span class="pre">HomotopyParameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schedule</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/homotopy.html#HomotopyParameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.homotopy.HomotopyParameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Homotopy parameter.</p>
+<p>The parameter is expected to either be a torch parameter or a torch tensor which may
+correspond to a buffer of a module. The parameter has a corresponding schedule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parameter</strong> (<em>Parameter</em><em> | </em><em>Tensor</em>) – </p></li>
+<li><p><strong>schedule</strong> (<a class="reference internal" href="#botorch.optim.homotopy.HomotopySchedule" title="botorch.optim.homotopy.HomotopySchedule"><em>HomotopySchedule</em></a>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.optim.homotopy.HomotopyParameter.parameter">
+<span class="sig-name descname"><span class="pre">parameter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.optim.homotopy.HomotopyParameter.parameter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.optim.homotopy.HomotopyParameter.schedule">
+<span class="sig-name descname"><span class="pre">schedule</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#botorch.optim.homotopy.HomotopySchedule" title="botorch.optim.homotopy.HomotopySchedule"><span class="pre">HomotopySchedule</span></a></em><a class="headerlink" href="#botorch.optim.homotopy.HomotopyParameter.schedule" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.optim.homotopy.Homotopy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.optim.homotopy.</span></span><span class="sig-name descname"><span class="pre">Homotopy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">homotopy_parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/homotopy.html#Homotopy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.homotopy.Homotopy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Generic homotopy class.</p>
+<p>This class is designed to be used in <cite>optimize_acqf_homotopy</cite>. Given a set of
+homotopy parameters and corresponding schedules we step through the homotopies
+until we have solved the final problem. We additionally support passing in a list
+of callbacks that will be executed each time <cite>step</cite>, <cite>reset</cite>, and <cite>restart</cite> are
+called.</p>
+<p>Initialize the homotopy.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>homotopy_parameters</strong> (<em>List</em><em>[</em><a class="reference internal" href="#botorch.optim.homotopy.HomotopyParameter" title="botorch.optim.homotopy.HomotopyParameter"><em>HomotopyParameter</em></a><em>]</em>) – List of homotopy parameters</p></li>
+<li><p><strong>callbacks</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>]</em><em>]</em>) – Optional list of callbacks that are executed each time
+<cite>restart</cite>, <cite>reset</cite>, or <cite>step</cite> are called. These may be used to, e.g.,
+reinitialize the acquisition function which is needed when using qNEHVI.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.optim.homotopy.Homotopy.should_stop">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">should_stop</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.optim.homotopy.Homotopy.should_stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns true if all schedules have reached the end.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.optim.homotopy.Homotopy.restart">
+<span class="sig-name descname"><span class="pre">restart</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/homotopy.html#Homotopy.restart"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.homotopy.Homotopy.restart" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restart the homotopy to use the initial value in the schedule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.optim.homotopy.Homotopy.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/homotopy.html#Homotopy.reset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.homotopy.Homotopy.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset the homotopy parameter to their original values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.optim.homotopy.Homotopy.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/homotopy.html#Homotopy.step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.homotopy.Homotopy.step" title="Permalink to this definition">¶</a></dt>
+<dd><p>Take a step according to the schedules.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 </section>
 </section>

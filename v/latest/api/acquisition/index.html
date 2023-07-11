@@ -6230,9 +6230,11 @@ ICLR 2022.</p>
 </div>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.prior_guided.PriorGuidedAcquisitionFunction">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.prior_guided.</span></span><span class="sig-name descname"><span class="pre">PriorGuidedAcquisitionFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_exponent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/prior_guided.html#PriorGuidedAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.prior_guided.PriorGuidedAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.prior_guided.</span></span><span class="sig-name descname"><span class="pre">PriorGuidedAcquisitionFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_exponent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/prior_guided.html#PriorGuidedAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.prior_guided.PriorGuidedAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></p>
 <p>Class for weighting acquisition functions by a prior distribution.</p>
+<p>Supports MC and batch acquisition functions via
+SampleReducingAcquisitionFunction.</p>
 <p>See <a class="reference internal" href="#hvarfner2022" id="id46"><span>[Hvarfner2022]</span></a> for details.</p>
 <p>Initialize the prior-guided acquisition function.</p>
 <dl class="field-list simple">
@@ -6240,20 +6242,20 @@ ICLR 2022.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>acq_function</strong> (<em>AcquisitionFunction</em>) – The base acquisition function.</p></li>
 <li><p><strong>prior_module</strong> (<em>Module</em>) – A Module that computes the probability
-(or log probability) for the provided inputs.</p></li>
+(or log probability) for the provided inputs.
+<cite>prior_module.forward</cite> should take a <cite>batch_shape x q</cite>-dim
+tensor of inputs and return a <cite>batch_shape x q</cite>-dim tensor
+of probabilities.</p></li>
 <li><p><strong>log</strong> (<em>bool</em>) – A boolean that should be true if the acquisition function emits a
 log-transformed value and the prior module emits a log probability.</p></li>
 <li><p><strong>prior_exponent</strong> (<em>float</em>) – The exponent applied to the prior. This can be used
 for example  to decay the effect the prior over time as in
 <a class="reference internal" href="#hvarfner2022" id="id47"><span>[Hvarfner2022]</span></a>.</p></li>
+<li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – <cite>n x d</cite> Tensor with <cite>n</cite> <cite>d</cite>-dim design points that have
+been submitted for evaluation but have not yet been evaluated.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py property">
-<dt class="sig sig-object py" id="botorch.acquisition.prior_guided.PriorGuidedAcquisitionFunction.X_pending">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">X_pending</span></span><a class="headerlink" href="#botorch.acquisition.prior_guided.PriorGuidedAcquisitionFunction.X_pending" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the <cite>X_pending</cite> of the base acquisition function.</p>
-</dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.prior_guided.PriorGuidedAcquisitionFunction.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/prior_guided.html#PriorGuidedAcquisitionFunction.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.prior_guided.PriorGuidedAcquisitionFunction.forward" title="Permalink to this definition">¶</a></dt>
