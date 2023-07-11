@@ -183,11 +183,11 @@ class MVNXPB:
             inv_Lii = Lii.reciprocal()
             bounds_i = bounds[..., i, :].clone()
             if i != 0:
-                bounds_i = bounds_i - torch.einsum(
-                    "...i,...i", L[..., i, :i].clone(), y[..., :i].clone()
-                ).unsqueeze(-1)
+                bounds_i = bounds_i - torch.sum(
+                    L[..., i, :i].clone() * y[..., :i].clone(), dim=-1, keepdim=True
+                )
             lb, ub = (inv_Lii.unsqueeze(-1) * bounds_i).unbind(dim=-1)
-            
+
             # Initialize `i`-th plug-in value as univariate conditional expectation
             Phi_i = Phi(ub) - Phi(lb)
             small = Phi_i <= i * eps
