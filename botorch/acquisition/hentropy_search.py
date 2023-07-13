@@ -233,11 +233,14 @@ class qLossFunctionTopK(nn.Module):
 
         dist_reward = 0
         if num_actions >= 2:
-            dists = torch.nn.functional.pdist(A.contiguous(), p=1.0).clamp_min(
-                self.dist_threshold
-            )
+            A = A.contiguous()
+            A_distance = torch.cdist(A, A, p=1.0)
+            A_distance_triu = torch.triu(A_distance)
+            # >>> n_fantasy_at_design_pts x batch_size x num_actions x num_actions
+
+            A_distance_triu[A_distance_triu > self.dist_threshold] = self.dist_threshold
             denominator = num_actions * (num_actions - 1) / 2.0
-            dist_reward = dists.sum(-1) / denominator
+            dist_reward = A_distance_triu.sum((-1, -2)) / denominator
             # >>> n_fantasy_at_design_pts x batch_size
 
         q_hes = Y + self.dist_weight * dist_reward

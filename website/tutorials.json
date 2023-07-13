@@ -151,6 +151,10 @@
     {
       "id": "composite_mtbo",
       "title": "Composite Bayesian Optimization with Multi-Task Gaussian Processes"
+    },
+    {
+      "id": "hentropy_search",
+      "title": "Generalizing Bayesian Optimization with H-Entropy Search"
     }
   ]
 }
