@@ -27,7 +27,6 @@ from functools import partial
 from typing import Any, Callable, List, Optional, Protocol, Tuple, Union
 
 import torch
-from botorch import acquisition
 from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
 from botorch.acquisition.cached_cholesky import CachedCholeskyMCAcquisitionFunction
 from botorch.acquisition.objective import (
@@ -36,7 +35,10 @@ from botorch.acquisition.objective import (
     MCAcquisitionObjective,
     PosteriorTransform,
 )
-from botorch.acquisition.utils import prune_inferior_points
+from botorch.acquisition.utils import (
+    compute_best_feasible_objective,
+    prune_inferior_points,
+)
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
@@ -591,7 +593,8 @@ class qNoisyExpectedImprovement(
         return samples, obj
 
     def _compute_best_feasible_objective(self, samples: Tensor, obj: Tensor) -> Tensor:
-        """
+        r"""Computes best feasible objective value from samples.
+
         Args:
             samples: `sample_shape x batch_shape x q x m`-dim posterior samples.
             obj: A `sample_shape x batch_shape x q`-dim Tensor of MC objective values.
@@ -599,38 +602,15 @@ class qNoisyExpectedImprovement(
         Returns:
             A `sample_shape x batch_shape x 1`-dim Tensor of best feasible objectives.
         """
-        if self._constraints is not None:
-            # is_feasible is sample_shape x batch_shape x q
-            is_feasible = compute_smoothed_constraint_indicator(
-                constraints=self._constraints, samples=samples, eta=self._eta
-            )
-            is_feasible = is_feasible > 0.5  # due to smooth approximation
-            if is_feasible.any():
-                obj = torch.where(is_feasible, obj, -torch.inf)
-            else:  # if there are no feasible observations, estimate a lower
-                # bound on the objective by sampling convex combinations of X_baseline.
-                convex_weights = torch.rand(
-                    32,
-                    self.X_baseline.shape[-2],
-                    dtype=self.X_baseline.dtype,
-                    device=self.X_baseline.device,
-                )
-                weights_sum = convex_weights.sum(dim=0, keepdim=True)
-                convex_weights = convex_weights / weights_sum
-                # infeasible cost M is such that -M < min_x f(x), thus
-                # 0 < min_x f(x) - (-M), so we should take -M as a lower
-                # bound on the best feasible objective
-                return -acquisition.utils.get_infeasible_cost(
-                    X=convex_weights @ self.X_baseline,
-                    model=self.model,
-                    objective=self.objective,
-                    posterior_transform=self.posterior_transform,
-                ).expand(*obj.shape[:-1], 1)
-
-        # we don't need to differentiate through X_baseline for now, so taking
-        # the regular max over the n points to get best_f is fine
-        with torch.no_grad():
-            return obj.amax(dim=-1, keepdim=True)
+        return compute_best_feasible_objective(
+            samples=samples,
+            obj=obj,
+            constraints=self._constraints,
+            model=self.model,
+            objective=self.objective,
+            posterior_transform=self.posterior_transform,
+            X_baseline=self.X_baseline,
+        )
 
 
 class qProbabilityOfImprovement(SampleReducingMCAcquisitionFunction):
