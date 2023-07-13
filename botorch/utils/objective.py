@@ -95,14 +95,37 @@ def apply_constraints_nonnegative_soft(
     return obj.clamp_min(0).mul(w)  # Enforce non-negativity of obj, apply constraints.
 
 
+def compute_feasibility_indicator(
+    constraints: Optional[List[Callable[[Tensor], Tensor]]],
+    samples: Tensor,
+) -> Tensor:
+    r"""Computes the feasibility of a list of constraints given posterior samples.
+
+    Args:
+        constraints: A list of callables, each mapping a batch_shape x q x m`-dim Tensor
+            to a `batch_shape x q`-dim Tensor, where negative values imply feasibility.
+        samples: A batch_shape x q x m`-dim Tensor of posterior samples.
+
+    Returns:
+        A `batch_shape x q`-dim tensor of Boolean feasibility values.
+    """
+    ind = torch.ones(samples.shape[:-1], dtype=torch.bool, device=samples.device)
+    if constraints is not None:
+        for constraint in constraints:
+            ind = ind.logical_and(constraint(samples) < 0)
+    return ind
+
+
 def compute_smoothed_constraint_indicator(
     constraints: List[Callable[[Tensor], Tensor]],
     samples: Tensor,
     eta: Union[Tensor, float],
 ) -> Tensor:
-    r"""Computes the feasibility indicator of a list of constraints given posterior
-    samples, using a sigmoid to smoothly approximate the feasibility indicator
-    of each individual constraint to ensure differentiability and high gradient signal.
+    r"""Computes the smoothed feasibility indicator of a list of constraints.
+
+    Given posterior samples, using a sigmoid to smoothly approximate the feasibility
+    indicator of each individual constraint to ensure differentiability and high
+    gradient signal.
 
     Args:
         constraints: A list of callables, each mapping a Tensor of size `b x q x m`

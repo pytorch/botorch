@@ -19,6 +19,7 @@ from botorch.acquisition.objective import (
     ScalarizedPosteriorTransform,
 )
 from botorch.acquisition.utils import (
+    compute_best_feasible_objective,
     expand_trace_observations,
     get_acquisition_function,
     get_infeasible_cost,
@@ -575,7 +576,83 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             )
 
 
-class TestGetInfeasibleCost(BotorchTestCase):
+class TestConstraintUtils(BotorchTestCase):
+    def test_compute_best_feasible_objective(self):
+        for dtype in (torch.float, torch.double):
+            with self.subTest(dtype=dtype):
+                tkwargs = {"dtype": dtype, "device": self.device}
+                n = 5
+                X = torch.arange(n, **tkwargs).view(-1, 1)
+                means = torch.arange(n, **tkwargs).view(-1, 1)
+                samples = means
+                variances = torch.tensor(
+                    [0.09, 0.25, 0.36, 0.25, 0.09], **tkwargs
+                ).view(-1, 1)
+                mm = MockModel(
+                    MockPosterior(mean=means, variance=variances, samples=samples)
+                )
+
+                # testing all feasible points
+                obj = means.squeeze(-1)
+                constraints = [lambda samples: -torch.ones_like(samples[..., 0])]
+                best_f = compute_best_feasible_objective(
+                    samples=means, obj=obj, constraints=constraints
+                )
+                self.assertAllClose(best_f, obj.amax(dim=-1, keepdim=True))
+
+                # testing with some infeasible points
+                con_cutoff = 3.0
+                best_f = compute_best_feasible_objective(
+                    samples=means,
+                    obj=obj,
+                    constraints=[
+                        lambda samples: samples[..., 0] - (con_cutoff + 1 / 2)
+                    ],
+                )
+                # only first three points are feasible
+                self.assertAllClose(best_f, torch.tensor([con_cutoff], **tkwargs))
+
+                # testing with no feasible points and infeasible obj
+                infeasible_obj = torch.tensor(torch.pi, **tkwargs)
+                best_f = compute_best_feasible_objective(
+                    samples=means,
+                    obj=obj,
+                    constraints=[lambda X: torch.ones_like(X[..., 0])],
+                    infeasible_obj=infeasible_obj,
+                )
+                self.assertAllClose(best_f, infeasible_obj.unsqueeze(0))
+
+                # testing with no feasible points and not infeasible obj
+                def objective(Y, X):
+                    return Y.squeeze(-1) - 5.0
+
+                best_f = compute_best_feasible_objective(
+                    samples=means,
+                    obj=obj,
+                    constraints=[lambda X: torch.ones_like(X[..., 0])],
+                    model=mm,
+                    X_baseline=X,
+                    objective=objective,
+                )
+                self.assertAllClose(
+                    best_f, -get_infeasible_cost(X=X, model=mm, objective=objective)
+                )
+
+                with self.assertRaisesRegex(ValueError, "Must specify `model`"):
+                    best_f = compute_best_feasible_objective(
+                        samples=means,
+                        obj=obj,
+                        constraints=[lambda X: torch.ones_like(X[..., 0])],
+                        X_baseline=X,
+                    )
+                with self.assertRaisesRegex(ValueError, "Must specify `X_baseline`"):
+                    best_f = compute_best_feasible_objective(
+                        samples=means,
+                        obj=obj,
+                        constraints=[lambda X: torch.ones_like(X[..., 0])],
+                        model=mm,
+                    )
+
     def test_get_infeasible_cost(self):
         for dtype in (torch.float, torch.double):
             tkwargs = {"dtype": dtype, "device": self.device}
