@@ -87,7 +87,7 @@ def apply_constraints_nonnegative_soft(
     Returns:
         A `n_samples x b x q (x m')`-dim tensor of feasibility-weighted objectives.
     """
-    w = compute_smoothed_constraint_indicator(
+    w = compute_smoothed_feasibility_indicator(
         constraints=constraints, samples=samples, eta=eta
     )
     if obj.dim() == samples.dim():
@@ -116,7 +116,7 @@ def compute_feasibility_indicator(
     return ind
 
 
-def compute_smoothed_constraint_indicator(
+def compute_smoothed_feasibility_indicator(
     constraints: List[Callable[[Tensor], Tensor]],
     samples: Tensor,
     eta: Union[Tensor, float],
