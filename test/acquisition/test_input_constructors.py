@@ -139,13 +139,13 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
         best_f = get_best_f_mc(training_data=self.blockX_multiY, objective=obj)
 
         multi_Y = torch.cat([d.Y() for d in self.blockX_multiY.values()], dim=-1)
-        best_f_expected = (multi_Y @ obj.weights).max()
+        best_f_expected = (multi_Y @ obj.weights).amax(dim=-1, keepdim=True)
         self.assertEqual(best_f, best_f_expected)
         post_tf = ScalarizedPosteriorTransform(weights=torch.ones(2))
         best_f = get_best_f_mc(
             training_data=self.blockX_multiY, posterior_transform=post_tf
         )
-        best_f_expected = (multi_Y.sum(dim=-1)).max()
+        best_f_expected = (multi_Y.sum(dim=-1)).amax(dim=-1, keepdim=True)
         self.assertEqual(best_f, best_f_expected)
 
     @mock.patch("botorch.acquisition.input_constructors.optimize_acqf")
@@ -350,6 +350,9 @@ class TestMCAcquisitionFunctionInputConstructors(
         self.assertIsNone(kwargs["objective"])
         self.assertIsNone(kwargs["X_pending"])
         self.assertIsNone(kwargs["sampler"])
+        self.assertIsNone(kwargs["constraints"])
+        self.assertIsInstance(kwargs["eta"], float)
+        self.assertTrue(kwargs["eta"] < 1)
         X_pending = torch.rand(2, 2)
         objective = LinearMCObjective(torch.rand(2))
         kwargs = c(
@@ -362,6 +365,9 @@ class TestMCAcquisitionFunctionInputConstructors(
         self.assertTrue(torch.equal(kwargs["objective"].weights, objective.weights))
         self.assertTrue(torch.equal(kwargs["X_pending"], X_pending))
         self.assertIsNone(kwargs["sampler"])
+        self.assertIsNone(kwargs["constraints"])
+        self.assertIsInstance(kwargs["eta"], float)
+        self.assertTrue(kwargs["eta"] < 1)
         multi_Y = torch.cat([d.Y() for d in self.blockX_multiY.values()], dim=-1)
         best_f_expected = objective(multi_Y).max()
         self.assertEqual(kwargs["best_f"], best_f_expected)
@@ -386,6 +392,10 @@ class TestMCAcquisitionFunctionInputConstructors(
         self.assertIsNone(kwargs["sampler"])
         self.assertTrue(kwargs["prune_baseline"])
         self.assertTrue(torch.equal(kwargs["X_baseline"], self.blockX_blockY[0].X()))
+        self.assertIsNone(kwargs["constraints"])
+        self.assertIsInstance(kwargs["eta"], float)
+        self.assertTrue(kwargs["eta"] < 1)
+
         with self.assertRaisesRegex(ValueError, "Field `X` must be shared"):
             c(model=mock_model, training_data=self.multiX_multiY)
         X_baseline = torch.rand(2, 2)
@@ -401,6 +411,9 @@ class TestMCAcquisitionFunctionInputConstructors(
         self.assertIsNone(kwargs["sampler"])
         self.assertFalse(kwargs["prune_baseline"])
         self.assertTrue(torch.equal(kwargs["X_baseline"], X_baseline))
+        self.assertIsNone(kwargs["constraints"])
+        self.assertIsInstance(kwargs["eta"], float)
+        self.assertTrue(kwargs["eta"] < 1)
 
     def test_construct_inputs_qPI(self):
         c = get_acqf_input_constructor(qProbabilityOfImprovement)
@@ -411,6 +424,9 @@ class TestMCAcquisitionFunctionInputConstructors(
         self.assertIsNone(kwargs["X_pending"])
         self.assertIsNone(kwargs["sampler"])
         self.assertEqual(kwargs["tau"], 1e-3)
+        self.assertIsNone(kwargs["constraints"])
+        self.assertIsInstance(kwargs["eta"], float)
+        self.assertTrue(kwargs["eta"] < 1)
         X_pending = torch.rand(2, 2)
         objective = LinearMCObjective(torch.rand(2))
         kwargs = c(
@@ -425,6 +441,9 @@ class TestMCAcquisitionFunctionInputConstructors(
         self.assertTrue(torch.equal(kwargs["X_pending"], X_pending))
         self.assertIsNone(kwargs["sampler"])
         self.assertEqual(kwargs["tau"], 1e-2)
+        self.assertIsNone(kwargs["constraints"])
+        self.assertIsInstance(kwargs["eta"], float)
+        self.assertTrue(kwargs["eta"] < 1)
         multi_Y = torch.cat([d.Y() for d in self.blockX_multiY.values()], dim=-1)
         best_f_expected = objective(multi_Y).max()
         self.assertEqual(kwargs["best_f"], best_f_expected)

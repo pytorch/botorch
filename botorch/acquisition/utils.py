@@ -101,10 +101,19 @@ def get_acquisition_function(
         )
     # instantiate and return the requested acquisition function
     if acquisition_function_name in ("qEI", "qPI"):
-        obj = objective(
-            model.posterior(X_observed, posterior_transform=posterior_transform).mean
+        # Since these are the non-noisy variants, use the posterior mean at the observed
+        # inputs directly to compute the best feasible value without sampling.
+        Y = model.posterior(X_observed, posterior_transform=posterior_transform).mean
+        obj = objective(samples=Y, X=X_observed)
+        best_f = compute_best_feasible_objective(
+            samples=Y,
+            obj=obj,
+            constraints=constraints,
+            model=model,
+            objective=objective,
+            posterior_transform=posterior_transform,
+            X_baseline=X_observed,
         )
-        best_f = obj.max(dim=-1).values
     if acquisition_function_name == "qEI":
         return monte_carlo.qExpectedImprovement(
             model=model,
@@ -113,6 +122,8 @@ def get_acquisition_function(
             objective=objective,
             posterior_transform=posterior_transform,
             X_pending=X_pending,
+            constraints=constraints,
+            eta=eta,
         )
     elif acquisition_function_name == "qPI":
         return monte_carlo.qProbabilityOfImprovement(
@@ -123,6 +134,8 @@ def get_acquisition_function(
             posterior_transform=posterior_transform,
             X_pending=X_pending,
             tau=kwargs.get("tau", 1e-3),
+            constraints=constraints,
+            eta=eta,
         )
     elif acquisition_function_name == "qNEI":
         return monte_carlo.qNoisyExpectedImprovement(
@@ -135,6 +148,8 @@ def get_acquisition_function(
             prune_baseline=kwargs.get("prune_baseline", True),
             marginalize_dim=kwargs.get("marginalize_dim"),
             cache_root=kwargs.get("cache_root", True),
+            constraints=constraints,
+            eta=eta,
         )
     elif acquisition_function_name == "qSR":
         return monte_carlo.qSimpleRegret(

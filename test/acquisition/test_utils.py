@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
+import math
 from unittest import mock
 
 import torch
@@ -60,12 +61,15 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.qmc = True
         self.ref_point = [0.0, 0.0]
         self.mo_objective = DummyMCMultiOutputObjective()
-        self.Y = torch.tensor([[1.0, 2.0]])
+        self.Y = torch.tensor([[1.0, 2.0]])  # (2 x 1)-dim multi-objective outcomes
         self.seed = 1
 
     @mock.patch(f"{monte_carlo.__name__}.qExpectedImprovement")
     def test_GetQEI(self, mock_acqf):
-        self.model = MockModel(MockPosterior(mean=torch.zeros(1, 2)))
+        n = len(self.X_observed)
+        mean = torch.arange(n, dtype=torch.double).view(-1, 1)
+        var = torch.ones_like(mean)
+        self.model = MockModel(MockPosterior(mean=mean, variance=var))
         acqf = get_acquisition_function(
             acquisition_function_name="qEI",
             model=self.model,
@@ -85,6 +89,8 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             objective=self.objective,
             posterior_transform=None,
             X_pending=self.X_pending,
+            constraints=None,
+            eta=1e-3,
         )
         # test batched model
         self.model = MockModel(MockPosterior(mean=torch.zeros(1, 2, 1)))
@@ -125,10 +131,50 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         )
         self.assertEqual(mock_acqf.call_args[-1]["best_f"].item(), -1.0)
 
+        # with constraints
+        upper_bound = self.Y[0, 0] + 1 / 2  # = 1.5
+        constraints = [lambda samples: samples[..., 0] - upper_bound]
+        eta = math.pi * 1e-2  # testing non-standard eta
+
+        acqf = get_acquisition_function(
+            acquisition_function_name="qEI",
+            model=self.model,
+            objective=self.objective,
+            X_observed=self.X_observed,
+            X_pending=self.X_pending,
+            mc_samples=self.mc_samples,
+            seed=self.seed,
+            marginalize_dim=0,
+            constraints=constraints,
+            eta=eta,
+        )
+        self.assertEqual(acqf, mock_acqf.return_value)
+        best_feasible_f = compute_best_feasible_objective(
+            samples=mean,
+            obj=self.objective(mean),
+            constraints=constraints,
+            model=self.model,
+            objective=self.objective,
+            X_baseline=self.X_observed,
+        )
+        mock_acqf.assert_called_with(
+            model=self.model,
+            best_f=best_feasible_f,
+            sampler=mock.ANY,
+            objective=self.objective,
+            posterior_transform=None,
+            X_pending=self.X_pending,
+            constraints=constraints,
+            eta=eta,
+        )
+
     @mock.patch(f"{monte_carlo.__name__}.qProbabilityOfImprovement")
     def test_GetQPI(self, mock_acqf):
         # basic test
-        self.model = MockModel(MockPosterior(mean=torch.zeros(1, 2)))
+        n = len(self.X_observed)
+        mean = torch.arange(n, dtype=torch.double).view(-1, 1)
+        var = torch.ones_like(mean)
+        self.model = MockModel(MockPosterior(mean=mean, variance=var))
         acqf = get_acquisition_function(
             acquisition_function_name="qPI",
             model=self.model,
@@ -148,6 +194,8 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             posterior_transform=None,
             X_pending=self.X_pending,
             tau=1e-3,
+            constraints=None,
+            eta=1e-3,
         )
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
@@ -197,9 +245,54 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         )
         self.assertTrue(acqf == mock_acqf.return_value)
 
+        # with constraints
+        n = len(self.X_observed)
+        mean = torch.arange(n, dtype=torch.double).view(-1, 1)
+        var = torch.ones_like(mean)
+        self.model = MockModel(MockPosterior(mean=mean, variance=var))
+        upper_bound = self.Y[0, 0] + 1 / 2  # = 1.5
+        constraints = [lambda samples: samples[..., 0] - upper_bound]
+        eta = math.pi * 1e-2  # testing non-standard eta
+        acqf = get_acquisition_function(
+            acquisition_function_name="qPI",
+            model=self.model,
+            objective=self.objective,
+            X_observed=self.X_observed,
+            X_pending=self.X_pending,
+            mc_samples=self.mc_samples,
+            seed=self.seed,
+            marginalize_dim=0,
+            constraints=constraints,
+            eta=eta,
+        )
+        self.assertEqual(acqf, mock_acqf.return_value)
+        best_feasible_f = compute_best_feasible_objective(
+            samples=mean,
+            obj=self.objective(mean),
+            constraints=constraints,
+            model=self.model,
+            objective=self.objective,
+            X_baseline=self.X_observed,
+        )
+        mock_acqf.assert_called_with(
+            model=self.model,
+            best_f=best_feasible_f,
+            sampler=mock.ANY,
+            objective=self.objective,
+            posterior_transform=None,
+            X_pending=self.X_pending,
+            tau=1e-3,
+            constraints=constraints,
+            eta=eta,
+        )
+
     @mock.patch(f"{monte_carlo.__name__}.qNoisyExpectedImprovement")
     def test_GetQNEI(self, mock_acqf):
         # basic test
+        n = len(self.X_observed)
+        mean = torch.arange(n, dtype=torch.double).view(-1, 1)
+        var = torch.ones_like(mean)
+        self.model = MockModel(MockPosterior(mean=mean, variance=var))
         acqf = get_acquisition_function(
             acquisition_function_name="qNEI",
             model=self.model,
@@ -256,6 +349,38 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 2)
         self.assertTrue(torch.equal(kwargs["X_baseline"], self.X_observed))
+
+        # with constraints
+        upper_bound = self.Y[0, 0] + 1 / 2  # = 1.5
+        constraints = [lambda samples: samples[..., 0] - upper_bound]
+        eta = math.pi * 1e-2  # testing non-standard eta
+
+        acqf = get_acquisition_function(
+            acquisition_function_name="qNEI",
+            model=self.model,
+            objective=self.objective,
+            X_observed=self.X_observed,
+            X_pending=self.X_pending,
+            mc_samples=self.mc_samples,
+            seed=self.seed,
+            marginalize_dim=0,
+            constraints=constraints,
+            eta=eta,
+        )
+        self.assertEqual(acqf, mock_acqf.return_value)
+        mock_acqf.assert_called_with(
+            model=self.model,
+            X_baseline=self.X_observed,
+            sampler=mock.ANY,
+            objective=self.objective,
+            posterior_transform=None,
+            X_pending=self.X_pending,
+            prune_baseline=True,
+            marginalize_dim=0,
+            cache_root=True,
+            constraints=constraints,
+            eta=eta,
+        )
 
     @mock.patch(f"{monte_carlo.__name__}.qSimpleRegret")
     def test_GetQSR(self, mock_acqf):
