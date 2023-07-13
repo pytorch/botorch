@@ -482,7 +482,7 @@ def construct_inputs_qEI(
             are considered satisfied if the output is less than zero.
         eta: Temperature parameter(s) governing the smoothness of the sigmoid
             approximation to the constraint indicators. For more details, on this
-            parameter, see the docs of `compute_smoothed_constraint_indicator`.
+            parameter, see the docs of `compute_smoothed_feasibility_indicator`.
         ignored: Not used.
 
     Returns:
@@ -548,7 +548,7 @@ def construct_inputs_qNEI(
             are considered satisfied if the output is less than zero.
         eta: Temperature parameter(s) governing the smoothness of the sigmoid
             approximation to the constraint indicators. For more details, on this
-            parameter, see the docs of `compute_smoothed_constraint_indicator`.
+            parameter, see the docs of `compute_smoothed_feasibility_indicator`.
         ignored: Not used.
 
     Returns:
@@ -620,7 +620,7 @@ def construct_inputs_qPI(
             are considered satisfied if the output is less than zero.
         eta: Temperature parameter(s) governing the smoothness of the sigmoid
             approximation to the constraint indicators. For more details, on this
-            parameter, see the docs of `compute_smoothed_constraint_indicator`.
+            parameter, see the docs of `compute_smoothed_feasibility_indicator`.
         ignored: Not used.
 
     Returns:

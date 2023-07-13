@@ -42,7 +42,7 @@ from botorch.acquisition.utils import (
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
-from botorch.utils.objective import compute_smoothed_constraint_indicator
+from botorch.utils.objective import compute_smoothed_feasibility_indicator
 from botorch.utils.transforms import (
     concatenate_pending_points,
     match_batch_shape,
@@ -215,7 +215,7 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
                 acquistion utilities, e.g. all improvement-based acquisition functions.
             eta: Temperature parameter(s) governing the smoothness of the sigmoid
                 approximation to the constraint indicators. For more details, on this
-                parameter, see the docs of `compute_smoothed_constraint_indicator`.
+                parameter, see the docs of `compute_smoothed_feasibility_indicator`.
         """
         if constraints is not None and isinstance(objective, ConstrainedMCObjective):
             raise ValueError(
@@ -305,7 +305,7 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
                     "Constraint-weighting requires unconstrained "
                     "acquisition values to be non-negative."
                 )
-            acqval = acqval * compute_smoothed_constraint_indicator(
+            acqval = acqval * compute_smoothed_feasibility_indicator(
                 constraints=self._constraints, samples=samples, eta=self._eta
             )
         return acqval
@@ -366,7 +366,7 @@ class qExpectedImprovement(SampleReducingMCAcquisitionFunction):
                 are considered satisfied if the output is less than zero.
             eta: Temperature parameter(s) governing the smoothness of the sigmoid
                 approximation to the constraint indicators. For more details, on this
-                parameter, see the docs of `compute_smoothed_constraint_indicator`.
+                parameter, see the docs of `compute_smoothed_feasibility_indicator`.
         """
         super().__init__(
             model=model,
@@ -457,7 +457,7 @@ class qNoisyExpectedImprovement(
                 are considered satisfied if the output is less than zero.
             eta: Temperature parameter(s) governing the smoothness of the sigmoid
                 approximation to the constraint indicators. For more details, on this
-                parameter, see the docs of `compute_smoothed_constraint_indicator`.
+                parameter, see the docs of `compute_smoothed_feasibility_indicator`.
 
         TODO: similar to qNEHVI, when we are using sequential greedy candidate
         selection, we could incorporate pending points X_baseline and compute
@@ -671,7 +671,7 @@ class qProbabilityOfImprovement(SampleReducingMCAcquisitionFunction):
                 scalar is less than zero.
             eta: Temperature parameter(s) governing the smoothness of the sigmoid
                 approximation to the constraint indicators. For more details, on this
-                parameter, see the docs of `compute_smoothed_constraint_indicator`.
+                parameter, see the docs of `compute_smoothed_feasibility_indicator`.
         """
         super().__init__(
             model=model,

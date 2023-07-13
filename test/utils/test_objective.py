@@ -9,7 +9,7 @@ import torch
 from botorch.utils import apply_constraints, get_objective_weights_transform
 from botorch.utils.objective import (
     compute_feasibility_indicator,
-    compute_smoothed_constraint_indicator,
+    compute_smoothed_feasibility_indicator,
 )
 from botorch.utils.testing import BotorchTestCase
 from torch import Tensor
@@ -196,14 +196,14 @@ class TestApplyConstraints(BotorchTestCase):
         self.assertAllClose(ind, torch.zeros_like(ind))
         self.assertEqual(ind.dtype, torch.bool)
 
-        smoothed_ind = compute_smoothed_constraint_indicator(
+        smoothed_ind = compute_smoothed_feasibility_indicator(
             constraints=[zeros_f], samples=samples, eta=1e-3
         )
         self.assertAllClose(smoothed_ind, ones_f(samples) / 2)
 
         # two constraints
         samples = torch.randn(1)
-        smoothed_ind = compute_smoothed_constraint_indicator(
+        smoothed_ind = compute_smoothed_feasibility_indicator(
             constraints=[zeros_f, zeros_f],
             samples=samples,
             eta=1e-3,
@@ -218,13 +218,13 @@ class TestApplyConstraints(BotorchTestCase):
         )
         self.assertAllClose(ind, torch.ones_like(ind))
 
-        smoothed_ind = compute_smoothed_constraint_indicator(
+        smoothed_ind = compute_smoothed_feasibility_indicator(
             constraints=[minus_one_f], samples=samples, eta=1e-3
         )
         self.assertTrue((smoothed_ind > 3 / 4).all())
 
         with self.assertRaisesRegex(ValueError, "Number of provided constraints"):
-            compute_smoothed_constraint_indicator(
+            compute_smoothed_feasibility_indicator(
                 constraints=[zeros_f, zeros_f],
                 samples=samples,
                 eta=torch.tensor([0.1], device=self.device),
