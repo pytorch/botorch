@@ -6038,6 +6038,27 @@ implemented yet.</p>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.penalized.L0PenaltyApprox">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.penalized.</span></span><span class="sig-name descname"><span class="pre">L0PenaltyApprox</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">tkwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#L0PenaltyApprox"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.penalized.L0PenaltyApprox" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.penalized.L0Approximation" title="botorch.acquisition.penalized.L0Approximation"><code class="xref py py-class docutils literal notranslate"><span class="pre">L0Approximation</span></code></a></p>
+<p>Differentiable relaxation of the L0 norm to be added to any arbitrary
+acquisition function to construct a PenalizedAcquisitionFunction.</p>
+<p>Initializing L0 penalty with differentiable relaxation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target_point</strong> (<em>Tensor</em>) – A tensor corresponding to the target point.</p></li>
+<li><p><strong>a</strong> (<em>float</em>) – A hyperparameter that controls the differentiable relaxation.</p></li>
+<li><p><strong>tkwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.penalized.L0PenaltyApprox.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.penalized.L0PenaltyApprox.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.penalized.PenalizedAcquisitionFunction">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.penalized.</span></span><span class="sig-name descname"><span class="pre">PenalizedAcquisitionFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw_acqf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalty_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization_parameter</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#PenalizedAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.penalized.PenalizedAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></p>
@@ -6154,7 +6175,7 @@ The first dimension corresponds to the dimension of MC samples.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.penalized.PenalizedMCObjective">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.penalized.</span></span><span class="sig-name descname"><span class="pre">PenalizedMCObjective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objective</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalty_objective</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization_parameter</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#PenalizedMCObjective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.penalized.PenalizedMCObjective" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.penalized.</span></span><span class="sig-name descname"><span class="pre">PenalizedMCObjective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objective</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalty_objective</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization_parameter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expand_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#PenalizedMCObjective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.penalized.PenalizedMCObjective" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.objective.GenericMCObjective" title="botorch.acquisition.objective.GenericMCObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericMCObjective</span></code></a></p>
 <p>Penalized MC objective.</p>
 <p>Allows to construct a penaltized MC-objective by adding a penalty term to
@@ -6188,6 +6209,8 @@ an optional <cite>batch-shape x q x d</cite>-dim Tensor <cite>X</cite> to a
 <cite>batch-shape x q x d</cite>-dim Tensor <cite>X</cite> and outputs a
 <cite>1 x batch-shape x q</cite>-dim Tensor of penalty objective values.</p></li>
 <li><p><strong>regularization_parameter</strong> (<em>float</em>) – weight of the penalty (regularization) term</p></li>
+<li><p><strong>expand_dim</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – dim to expand penalty_objective to match with objective when
+fully bayesian model is used. If None, no expansion is performed.</p></li>
 </ul>
 </dd>
 </dl>
@@ -6213,6 +6236,28 @@ with penalty added for each point.</p>
 </dd>
 </dl>
 </dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.penalized.L0PenaltyApproxObjective">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.penalized.</span></span><span class="sig-name descname"><span class="pre">L0PenaltyApproxObjective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">tkwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#L0PenaltyApproxObjective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.penalized.L0PenaltyApproxObjective" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.penalized.L0Approximation" title="botorch.acquisition.penalized.L0Approximation"><code class="xref py py-class docutils literal notranslate"><span class="pre">L0Approximation</span></code></a></p>
+<p>Differentiable relaxation of the L0 norm penalty objective class.
+An instance of this class can be added to any arbitrary objective to
+construct a PenalizedMCObjective.</p>
+<p>Initializing L0 penalty with differentiable relaxation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target_point</strong> (<em>Tensor</em>) – A tensor corresponding to the target point.</p></li>
+<li><p><strong>a</strong> (<em>float</em>) – A hyperparameter that controls the differentiable relaxation.</p></li>
+<li><p><strong>tkwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.penalized.L0PenaltyApproxObjective.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.penalized.L0PenaltyApproxObjective.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.acquisition.prior_guided">
