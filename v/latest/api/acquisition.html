@@ -1058,7 +1058,7 @@ NOTE: Constraint-weighting is only compatible with non-negative
 acquistion utilities, e.g. all improvement-based acquisition functions.</p></li>
 <li><p><strong>eta</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – Temperature parameter(s) governing the smoothness of the sigmoid
 approximation to the constraint indicators. For more details, on this
-parameter, see the docs of <cite>compute_smoothed_constraint_indicator</cite>.</p></li>
+parameter, see the docs of <cite>compute_smoothed_feasibility_indicator</cite>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1143,7 +1143,7 @@ samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
 are considered satisfied if the output is less than zero.</p></li>
 <li><p><strong>eta</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – Temperature parameter(s) governing the smoothness of the sigmoid
 approximation to the constraint indicators. For more details, on this
-parameter, see the docs of <cite>compute_smoothed_constraint_indicator</cite>.</p></li>
+parameter, see the docs of <cite>compute_smoothed_feasibility_indicator</cite>.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -1212,7 +1212,7 @@ samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
 are considered satisfied if the output is less than zero.</p></li>
 <li><p><strong>eta</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – Temperature parameter(s) governing the smoothness of the sigmoid
 approximation to the constraint indicators. For more details, on this
-parameter, see the docs of <cite>compute_smoothed_constraint_indicator</cite>.</p></li>
+parameter, see the docs of <cite>compute_smoothed_feasibility_indicator</cite>.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -1297,7 +1297,7 @@ a scalar. The associated constraint is considered satisfied if this
 scalar is less than zero.</p></li>
 <li><p><strong>eta</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – Temperature parameter(s) governing the smoothness of the sigmoid
 approximation to the constraint indicators. For more details, on this
-parameter, see the docs of <cite>compute_smoothed_constraint_indicator</cite>.</p></li>
+parameter, see the docs of <cite>compute_smoothed_feasibility_indicator</cite>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1362,7 +1362,7 @@ NOTE: Constraint-weighting is only compatible with non-negative
 acquistion utilities, e.g. all improvement-based acquisition functions.</p></li>
 <li><p><strong>eta</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – Temperature parameter(s) governing the smoothness of the sigmoid
 approximation to the constraint indicators. For more details, on this
-parameter, see the docs of <cite>compute_smoothed_constraint_indicator</cite>.</p></li>
+parameter, see the docs of <cite>compute_smoothed_feasibility_indicator</cite>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -2010,7 +2010,7 @@ same eta is used for every constraint in constraints. In case of a
 tensor the length of the tensor must match the number of provided
 constraints. The i-th constraint is then estimated with the i-th
 eta value. For more details, on this parameter, see the docs of
-<cite>compute_smoothed_constraint_indicator</cite>.</p></li>
+<cite>compute_smoothed_feasibility_indicator</cite>.</p></li>
 <li><p><strong>prune_baseline</strong> (<em>bool</em>) – If True, remove points in <cite>X_baseline</cite> that are
 highly unlikely to be the pareto optimal and better than the
 reference point. This can significantly improve computation time and
@@ -5442,7 +5442,7 @@ the acquisition functions’s default sampler.</p></li>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.acquisition.input_constructors.construct_inputs_qEI">
-<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.input_constructors.</span></span><span class="sig-name descname"><span class="pre">construct_inputs_qEI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/input_constructors.html#construct_inputs_qEI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.input_constructors.construct_inputs_qEI" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.input_constructors.</span></span><span class="sig-name descname"><span class="pre">construct_inputs_qEI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">ignored</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/input_constructors.html#construct_inputs_qEI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.input_constructors.construct_inputs_qEI" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct kwargs for the <cite>qExpectedImprovement</cite> constructor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -5458,7 +5458,14 @@ Concatenated into X upon forward call.</p></li>
 <li><p><strong>sampler</strong> (<em>MCSampler</em><em> | </em><em>None</em>) – The sampler used to draw base samples. If omitted, uses
 the acquisition functions’s default sampler.</p></li>
 <li><p><strong>best_f</strong> (<em>Tensor</em><em> | </em><em>float</em><em> | </em><em>None</em>) – Threshold above (or below) which improvement is defined.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – Not used.</p></li>
+<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of constraint callables which map a Tensor of posterior
+samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
+<cite>sample_shape x batch-shape x q</cite>-dim Tensor. The associated constraints
+are considered satisfied if the output is less than zero.</p></li>
+<li><p><strong>eta</strong> (<em>Tensor</em><em> | </em><em>float</em>) – Temperature parameter(s) governing the smoothness of the sigmoid
+approximation to the constraint indicators. For more details, on this
+parameter, see the docs of <cite>compute_smoothed_feasibility_indicator</cite>.</p></li>
+<li><p><strong>ignored</strong> (<em>Any</em>) – Not used.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -5471,7 +5478,7 @@ the acquisition functions’s default sampler.</p></li>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.acquisition.input_constructors.construct_inputs_qNEI">
-<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.input_constructors.</span></span><span class="sig-name descname"><span class="pre">construct_inputs_qNEI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_baseline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_baseline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/input_constructors.html#construct_inputs_qNEI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.input_constructors.construct_inputs_qNEI" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.input_constructors.</span></span><span class="sig-name descname"><span class="pre">construct_inputs_qNEI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_baseline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_baseline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">ignored</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/input_constructors.html#construct_inputs_qNEI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.input_constructors.construct_inputs_qNEI" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct kwargs for the <cite>qNoisyExpectedImprovement</cite> constructor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -5493,7 +5500,14 @@ training_data have the same input features and take the first <cite>X</cite>.</p
 <li><p><strong>prune_baseline</strong> (<em>bool</em><em> | </em><em>None</em>) – If True, remove points in <cite>X_baseline</cite> that are
 highly unlikely to be the best point. This can significantly
 improve performance and is generally recommended.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – Not used.</p></li>
+<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of constraint callables which map a Tensor of posterior
+samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
+<cite>sample_shape x batch-shape x q</cite>-dim Tensor. The associated constraints
+are considered satisfied if the output is less than zero.</p></li>
+<li><p><strong>eta</strong> (<em>Tensor</em><em> | </em><em>float</em>) – Temperature parameter(s) governing the smoothness of the sigmoid
+approximation to the constraint indicators. For more details, on this
+parameter, see the docs of <cite>compute_smoothed_feasibility_indicator</cite>.</p></li>
+<li><p><strong>ignored</strong> (<em>Any</em>) – Not used.</p></li>
 <li><p><strong>cache_root</strong> (<em>bool</em><em> | </em><em>None</em>) – </p></li>
 </ul>
 </dd>
@@ -5507,7 +5521,7 @@ improve performance and is generally recommended.</p></li>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.acquisition.input_constructors.construct_inputs_qPI">
-<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.input_constructors.</span></span><span class="sig-name descname"><span class="pre">construct_inputs_qPI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/input_constructors.html#construct_inputs_qPI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.input_constructors.construct_inputs_qPI" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.input_constructors.</span></span><span class="sig-name descname"><span class="pre">construct_inputs_qPI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">ignored</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/input_constructors.html#construct_inputs_qPI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.input_constructors.construct_inputs_qPI" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct kwargs for the <cite>qProbabilityOfImprovement</cite> constructor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -5529,7 +5543,14 @@ estimates with higher variance.</p></li>
 <li><p><strong>best_f</strong> (<em>Tensor</em><em> | </em><em>float</em><em> | </em><em>None</em>) – The best objective value observed so far (assumed noiseless). Can
 be a <cite>batch_shape</cite>-shaped tensor, which in case of a batched model
 specifies potentially different values for each element of the batch.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – Not used.</p></li>
+<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of constraint callables which map a Tensor of posterior
+samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
+<cite>sample_shape x batch-shape x q</cite>-dim Tensor. The associated constraints
+are considered satisfied if the output is less than zero.</p></li>
+<li><p><strong>eta</strong> (<em>Tensor</em><em> | </em><em>float</em>) – Temperature parameter(s) governing the smoothness of the sigmoid
+approximation to the constraint indicators. For more details, on this
+parameter, see the docs of <cite>compute_smoothed_feasibility_indicator</cite>.</p></li>
+<li><p><strong>ignored</strong> (<em>Any</em>) – Not used.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -5542,7 +5563,7 @@ specifies potentially different values for each element of the batch.</p></li>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.acquisition.input_constructors.construct_inputs_qUCB">
-<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.input_constructors.</span></span><span class="sig-name descname"><span class="pre">construct_inputs_qUCB</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/input_constructors.html#construct_inputs_qUCB"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.input_constructors.construct_inputs_qUCB" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.input_constructors.</span></span><span class="sig-name descname"><span class="pre">construct_inputs_qUCB</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">ignored</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/input_constructors.html#construct_inputs_qUCB"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.input_constructors.construct_inputs_qUCB" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct kwargs for the <cite>qUpperConfidenceBound</cite> constructor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -5558,7 +5579,7 @@ Concatenated into X upon forward call.</p></li>
 <li><p><strong>sampler</strong> (<em>MCSampler</em><em> | </em><em>None</em>) – The sampler used to draw base samples. If omitted, uses
 the acquisition functions’s default sampler.</p></li>
 <li><p><strong>beta</strong> (<em>float</em>) – Controls tradeoff between mean and standard deviation in UCB.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – Not used.</p></li>
+<li><p><strong>ignored</strong> (<em>Any</em>) – Not used.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -5772,13 +5793,15 @@ the acquisition functions’s default sampler.</p></li>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.acquisition.input_constructors.get_best_f_mc">
-<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.input_constructors.</span></span><span class="sig-name descname"><span class="pre">get_best_f_mc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/input_constructors.html#get_best_f_mc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.input_constructors.get_best_f_mc" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.input_constructors.</span></span><span class="sig-name descname"><span class="pre">get_best_f_mc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/input_constructors.html#get_best_f_mc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.input_constructors.get_best_f_mc" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – </p></li>
 <li><p><strong>objective</strong> (<em>MCAcquisitionObjective</em><em> | </em><em>None</em>) – </p></li>
 <li><p><strong>posterior_transform</strong> (<em>PosteriorTransform</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a><em> | </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -6434,6 +6457,41 @@ function to optimize is fixed and not stochastic).</p></li>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">acqf</span> <span class="o">=</span> <span class="n">get_acquisition_function</span><span class="p">(</span><span class="s2">"qEI"</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">train_X</span><span class="p">)</span>
 </pre></div>
 </div>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.acquisition.utils.compute_best_feasible_objective">
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.utils.</span></span><span class="sig-name descname"><span class="pre">compute_best_feasible_objective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_baseline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">infeasible_obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/utils.html#compute_best_feasible_objective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.utils.compute_best_feasible_objective" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the largest <cite>obj</cite> value that is feasible under the <cite>constraints</cite>. If
+<cite>constraints</cite> is None, returns the best unconstrained objective value.</p>
+<p>When no feasible observations exist and <cite>infeasible_obj</cite> is not <cite>None</cite>, returns
+<cite>infeasible_obj</cite> (potentially reshaped). When no feasible observations exist and
+<cite>infeasible_obj</cite> is <cite>None</cite>, uses <cite>model</cite>, <cite>objective</cite>, <cite>posterior_transform</cite>, and
+<cite>X_baseline</cite> to infer and return an <cite>infeasible_obj</cite> <cite>M</cite> s.t. <cite>M &lt; min_x f(x)</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>samples</strong> (<em>Tensor</em>) – <cite>(sample_shape) x batch_shape x q x m</cite>-dim posterior samples.</p></li>
+<li><p><strong>obj</strong> (<em>Tensor</em>) – A <cite>(sample_shape) x batch_shape x q</cite>-dim Tensor of MC objective values.</p></li>
+<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of constraint callables which map posterior samples to
+a scalar. The associated constraint is considered satisfied if this
+scalar is less than zero.</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a><em> | </em><em>None</em>) – A Model, only required when there are no feasible observations.</p></li>
+<li><p><strong>objective</strong> (<em>MCAcquisitionObjective</em><em> | </em><em>None</em>) – An MCAcquisitionObjective, only optionally used when there are no
+feasible observations.</p></li>
+<li><p><strong>posterior_transform</strong> (<em>PosteriorTransform</em><em> | </em><em>None</em>) – A PosteriorTransform, only optionally used when there are
+no feasible observations.</p></li>
+<li><p><strong>X_baseline</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x d</cite>-dim Tensor of baseline points, only required
+when there are no feasible observations.</p></li>
+<li><p><strong>infeasible_obj</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A Tensor to be returned when no feasible points exist.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>(sample_shape) x batch_shape x 1</cite>-dim Tensor of best feasible objectives.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.acquisition.utils.get_infeasible_cost">

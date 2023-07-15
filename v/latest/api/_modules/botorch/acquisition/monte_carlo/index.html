@@ -50,7 +50,6 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">acquisition</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.cached_cholesky</span> <span class="kn">import</span> <span class="n">CachedCholeskyMCAcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="p">(</span>
@@ -59,11 +58,14 @@
     <span class="n">MCAcquisitionObjective</span><span class="p">,</span>
     <span class="n">PosteriorTransform</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.utils</span> <span class="kn">import</span> <span class="n">prune_inferior_points</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.utils</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">compute_best_feasible_objective</span><span class="p">,</span>
+    <span class="n">prune_inferior_points</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.objective</span> <span class="kn">import</span> <span class="n">compute_smoothed_constraint_indicator</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.objective</span> <span class="kn">import</span> <span class="n">compute_smoothed_feasibility_indicator</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">concatenate_pending_points</span><span class="p">,</span>
     <span class="n">match_batch_shape</span><span class="p">,</span>
@@ -236,7 +238,7 @@
 <span class="sd">                acquistion utilities, e.g. all improvement-based acquisition functions.</span>
 <span class="sd">            eta: Temperature parameter(s) governing the smoothness of the sigmoid</span>
 <span class="sd">                approximation to the constraint indicators. For more details, on this</span>
-<span class="sd">                parameter, see the docs of `compute_smoothed_constraint_indicator`.</span>
+<span class="sd">                parameter, see the docs of `compute_smoothed_feasibility_indicator`.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">ConstrainedMCObjective</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -326,7 +328,7 @@
                     <span class="s2">"Constraint-weighting requires unconstrained "</span>
                     <span class="s2">"acquisition values to be non-negative."</span>
                 <span class="p">)</span>
-            <span class="n">acqval</span> <span class="o">=</span> <span class="n">acqval</span> <span class="o">*</span> <span class="n">compute_smoothed_constraint_indicator</span><span class="p">(</span>
+            <span class="n">acqval</span> <span class="o">=</span> <span class="n">acqval</span> <span class="o">*</span> <span class="n">compute_smoothed_feasibility_indicator</span><span class="p">(</span>
                 <span class="n">constraints</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_eta</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">acqval</span></div>
@@ -387,7 +389,7 @@
 <span class="sd">                are considered satisfied if the output is less than zero.</span>
 <span class="sd">            eta: Temperature parameter(s) governing the smoothness of the sigmoid</span>
 <span class="sd">                approximation to the constraint indicators. For more details, on this</span>
-<span class="sd">                parameter, see the docs of `compute_smoothed_constraint_indicator`.</span>
+<span class="sd">                parameter, see the docs of `compute_smoothed_feasibility_indicator`.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
@@ -478,7 +480,7 @@
 <span class="sd">                are considered satisfied if the output is less than zero.</span>
 <span class="sd">            eta: Temperature parameter(s) governing the smoothness of the sigmoid</span>
 <span class="sd">                approximation to the constraint indicators. For more details, on this</span>
-<span class="sd">                parameter, see the docs of `compute_smoothed_constraint_indicator`.</span>
+<span class="sd">                parameter, see the docs of `compute_smoothed_feasibility_indicator`.</span>
 
 <span class="sd">        TODO: similar to qNEHVI, when we are using sequential greedy candidate</span>
 <span class="sd">        selection, we could incorporate pending points X_baseline and compute</span>
@@ -614,7 +616,8 @@
         <span class="k">return</span> <span class="n">samples</span><span class="p">,</span> <span class="n">obj</span>
 
     <span class="k">def</span> <span class="nf">_compute_best_feasible_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Computes best feasible objective value from samples.</span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            samples: `sample_shape x batch_shape x q x m`-dim posterior samples.</span>
 <span class="sd">            obj: A `sample_shape x batch_shape x q`-dim Tensor of MC objective values.</span>
@@ -622,38 +625,15 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            A `sample_shape x batch_shape x 1`-dim Tensor of best feasible objectives.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># is_feasible is sample_shape x batch_shape x q</span>
-            <span class="n">is_feasible</span> <span class="o">=</span> <span class="n">compute_smoothed_constraint_indicator</span><span class="p">(</span>
-                <span class="n">constraints</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_eta</span>
-            <span class="p">)</span>
-            <span class="n">is_feasible</span> <span class="o">=</span> <span class="n">is_feasible</span> <span class="o">&gt;</span> <span class="mf">0.5</span>  <span class="c1"># due to smooth approximation</span>
-            <span class="k">if</span> <span class="n">is_feasible</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-                <span class="n">obj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">is_feasible</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>  <span class="c1"># if there are no feasible observations, estimate a lower</span>
-                <span class="c1"># bound on the objective by sampling convex combinations of X_baseline.</span>
-                <span class="n">convex_weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span>
-                    <span class="mi">32</span><span class="p">,</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">X_baseline</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span>
-                    <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">X_baseline</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-                    <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">X_baseline</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="n">weights_sum</span> <span class="o">=</span> <span class="n">convex_weights</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                <span class="n">convex_weights</span> <span class="o">=</span> <span class="n">convex_weights</span> <span class="o">/</span> <span class="n">weights_sum</span>
-                <span class="c1"># infeasible cost M is such that -M &lt; min_x f(x), thus</span>
-                <span class="c1"># 0 &lt; min_x f(x) - (-M), so we should take -M as a lower</span>
-                <span class="c1"># bound on the best feasible objective</span>
-                <span class="k">return</span> <span class="o">-</span><span class="n">acquisition</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">get_infeasible_cost</span><span class="p">(</span>
-                    <span class="n">X</span><span class="o">=</span><span class="n">convex_weights</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">X_baseline</span><span class="p">,</span>
-                    <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
-                    <span class="n">objective</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
-                    <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span><span class="p">,</span>
-                <span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
-
-        <span class="c1"># we don't need to differentiate through X_baseline for now, so taking</span>
-        <span class="c1"># the regular max over the n points to get best_f is fine</span>
-        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-            <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">compute_best_feasible_objective</span><span class="p">(</span>
+            <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span>
+            <span class="n">obj</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">,</span>
+            <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span><span class="p">,</span>
+            <span class="n">X_baseline</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">X_baseline</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="qProbabilityOfImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qProbabilityOfImprovement">[docs]</a><span class="k">class</span> <span class="nc">qProbabilityOfImprovement</span><span class="p">(</span><span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">):</span>
@@ -714,7 +694,7 @@
 <span class="sd">                scalar is less than zero.</span>
 <span class="sd">            eta: Temperature parameter(s) governing the smoothness of the sigmoid</span>
 <span class="sd">                approximation to the constraint indicators. For more details, on this</span>
-<span class="sd">                parameter, see the docs of `compute_smoothed_constraint_indicator`.</span>
+<span class="sd">                parameter, see the docs of `compute_smoothed_feasibility_indicator`.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>

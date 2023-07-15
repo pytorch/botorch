@@ -676,11 +676,32 @@ then estimated with the i-th eta value.</p></li>
 </dl>
 </dd></dl>
 <dl class="py function">
-<dt class="sig sig-object py" id="botorch.utils.objective.compute_smoothed_constraint_indicator">
-<span class="sig-prename descclassname"><span class="pre">botorch.utils.objective.</span></span><span class="sig-name descname"><span class="pre">compute_smoothed_constraint_indicator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constraints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/objective.html#compute_smoothed_constraint_indicator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.objective.compute_smoothed_constraint_indicator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Computes the feasibility indicator of a list of constraints given posterior
-samples, using a sigmoid to smoothly approximate the feasibility indicator
-of each individual constraint to ensure differentiability and high gradient signal.</p>
+<dt class="sig sig-object py" id="botorch.utils.objective.compute_feasibility_indicator">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.objective.</span></span><span class="sig-name descname"><span class="pre">compute_feasibility_indicator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constraints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/objective.html#compute_feasibility_indicator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.objective.compute_feasibility_indicator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the feasibility of a list of constraints given posterior samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of callables, each mapping a batch_shape x q x m`-dim Tensor
+to a <cite>batch_shape x q</cite>-dim Tensor, where negative values imply feasibility.</p></li>
+<li><p><strong>samples</strong> (<em>Tensor</em>) – A batch_shape x q x m`-dim Tensor of posterior samples.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape x q</cite>-dim tensor of Boolean feasibility values.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.objective.compute_smoothed_feasibility_indicator">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.objective.</span></span><span class="sig-name descname"><span class="pre">compute_smoothed_feasibility_indicator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constraints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/objective.html#compute_smoothed_feasibility_indicator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.objective.compute_smoothed_feasibility_indicator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the smoothed feasibility indicator of a list of constraints.</p>
+<p>Given posterior samples, using a sigmoid to smoothly approximate the feasibility
+indicator of each individual constraint to ensure differentiability and high
+gradient signal.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

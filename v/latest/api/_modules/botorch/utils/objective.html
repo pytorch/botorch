@@ -110,7 +110,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        A `n_samples x b x q (x m')`-dim tensor of feasibility-weighted objectives.</span>
 <span class="sd">    """</span>
-    <span class="n">w</span> <span class="o">=</span> <span class="n">compute_smoothed_constraint_indicator</span><span class="p">(</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">compute_smoothed_feasibility_indicator</span><span class="p">(</span>
         <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="n">eta</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="n">samples</span><span class="o">.</span><span class="n">dim</span><span class="p">():</span>
@@ -118,14 +118,37 @@
     <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>  <span class="c1"># Enforce non-negativity of obj, apply constraints.</span></div>
 
 
-<div class="viewcode-block" id="compute_smoothed_constraint_indicator"><a class="viewcode-back" href="../../../utils.html#botorch.utils.objective.compute_smoothed_constraint_indicator">[docs]</a><span class="k">def</span> <span class="nf">compute_smoothed_constraint_indicator</span><span class="p">(</span>
+<div class="viewcode-block" id="compute_feasibility_indicator"><a class="viewcode-back" href="../../../utils.html#botorch.utils.objective.compute_feasibility_indicator">[docs]</a><span class="k">def</span> <span class="nf">compute_feasibility_indicator</span><span class="p">(</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]],</span>
+    <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes the feasibility of a list of constraints given posterior samples.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        constraints: A list of callables, each mapping a batch_shape x q x m`-dim Tensor</span>
+<span class="sd">            to a `batch_shape x q`-dim Tensor, where negative values imply feasibility.</span>
+<span class="sd">        samples: A batch_shape x q x m`-dim Tensor of posterior samples.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `batch_shape x q`-dim tensor of Boolean feasibility values.</span>
+<span class="sd">    """</span>
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">samples</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">:</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">ind</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">constraint</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ind</span></div>
+
+
+<div class="viewcode-block" id="compute_smoothed_feasibility_indicator"><a class="viewcode-back" href="../../../utils.html#botorch.utils.objective.compute_smoothed_feasibility_indicator">[docs]</a><span class="k">def</span> <span class="nf">compute_smoothed_feasibility_indicator</span><span class="p">(</span>
     <span class="n">constraints</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span>
     <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">eta</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes the feasibility indicator of a list of constraints given posterior</span>
-<span class="sd">    samples, using a sigmoid to smoothly approximate the feasibility indicator</span>
-<span class="sd">    of each individual constraint to ensure differentiability and high gradient signal.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes the smoothed feasibility indicator of a list of constraints.</span>
+
+<span class="sd">    Given posterior samples, using a sigmoid to smoothly approximate the feasibility</span>
+<span class="sd">    indicator of each individual constraint to ensure differentiability and high</span>
+<span class="sd">    gradient signal.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        constraints: A list of callables, each mapping a Tensor of size `b x q x m`</span>
