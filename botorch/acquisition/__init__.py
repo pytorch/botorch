@@ -16,6 +16,8 @@ from botorch.acquisition.analytic import (
     AnalyticAcquisitionFunction,
     ConstrainedExpectedImprovement,
     ExpectedImprovement,
+    LogExpectedImprovement,
+    LogNoisyExpectedImprovement,
     NoisyExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
@@ -32,6 +34,10 @@ from botorch.acquisition.knowledge_gradient import (
     qKnowledgeGradient,
     qMultiFidelityKnowledgeGradient,
 )
+from botorch.acquisition.logei import (
+    LogImprovementMCAcquisitionFunction,
+    qLogExpectedImprovement,
+)
 from botorch.acquisition.max_value_entropy_search import (
     MaxValueBase,
     qLowerBoundMaxValueEntropy,
@@ -46,6 +52,7 @@ from botorch.acquisition.monte_carlo import (
     qProbabilityOfImprovement,
     qSimpleRegret,
     qUpperConfidenceBound,
+    SampleReducingMCAcquisitionFunction,
 )
 from botorch.acquisition.multi_step_lookahead import qMultiStepLookahead
 from botorch.acquisition.objective import (
@@ -71,6 +78,8 @@ __all__ = [
     "AnalyticExpectedUtilityOfBestOption",
     "ConstrainedExpectedImprovement",
     "ExpectedImprovement",
+    "LogExpectedImprovement",
+    "LogNoisyExpectedImprovement",
     "FixedFeatureAcquisitionFunction",
     "GenericCostAwareUtility",
     "InverseCostWeightedUtility",
@@ -85,6 +94,8 @@ __all__ = [
     "UpperConfidenceBound",
     "qAnalyticProbabilityOfImprovement",
     "qExpectedImprovement",
+    "LogImprovementMCAcquisitionFunction",
+    "qLogExpectedImprovement",
     "qKnowledgeGradient",
     "MaxValueBase",
     "qMultiFidelityKnowledgeGradient",
@@ -104,6 +115,7 @@ __all__ = [
     "LearnedObjective",
     "LinearMCObjective",
     "MCAcquisitionFunction",
+    "SampleReducingMCAcquisitionFunction",
     "MCAcquisitionObjective",
     "ScalarizedPosteriorTransform",
     "get_acquisition_function",
