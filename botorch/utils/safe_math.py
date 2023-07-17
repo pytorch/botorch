@@ -257,3 +257,20 @@ def fatmoid(X: Tensor, tau: Union[float, Tensor] = 1.0) -> Tensor:
 def cauchy(x: Tensor) -> Tensor:
     """Computes a Lorentzian, i.e. an un-normalized Cauchy density function."""
     return 1 / (1 + x.square())
+
+
+def sigmoid(X: Tensor, log: bool = False, fat: bool = False) -> Tensor:
+    """A sigmoid function with an optional fat tail and evaluation in log space for
+    better numerical behavior. Notably, the fat-tailed sigmoid can be used to remedy
+    numerical underflow problems in the value and gradient of the canonical sigmoid.
+
+    Args:
+        X: The Tensor on which to evaluate the sigmoid.
+        log: Toggles the evaluation of the log sigmoid.
+        fat: Toggles the evaluation of the fat-tailed sigmoid.
+
+    Returns:
+        A Tensor of (log-)sigmoid values.
+    """
+    Y = log_fatmoid(X) if fat else logexpit(X)
+    return Y if log else Y.exp()

@@ -24,7 +24,9 @@ from botorch.utils.safe_math import (
     log_fatmoid,
     log_fatplus,
     log_softplus,
+    logexpit,
     logmeanexp,
+    sigmoid,
     smooth_amax,
 )
 from botorch.utils.testing import BotorchTestCase
@@ -394,6 +396,16 @@ class TestSmoothNonLinearities(BotorchTestCase):
                 fat=fat,
             )
             self.assertFalse((log_feas_vals.exp() > 1 / 2).item())
+
+            # testing sigmoid wrapper function
+            X = torch.randn(3, 4, 5, **tkwargs)
+            sigmoid_X = torch.sigmoid(X)
+            self.assertAllClose(sigmoid(X), sigmoid_X)
+            self.assertAllClose(sigmoid(X, log=True), logexpit(X))
+            self.assertAllClose(sigmoid(X, log=True).exp(), sigmoid_X)
+            fatmoid_X = fatmoid(X)
+            self.assertAllClose(sigmoid(X, fat=True), fatmoid_X)
+            self.assertAllClose(sigmoid(X, log=True, fat=True).exp(), fatmoid_X)
 
         with self.assertRaisesRegex(UnsupportedError, "Only dtypes"):
             log_softplus(torch.randn(2, dtype=torch.float16))
