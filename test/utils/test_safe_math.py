@@ -12,13 +12,38 @@ from itertools import combinations, product
 from typing import Callable
 
 import torch
+from botorch.exceptions import UnsupportedError
 from botorch.utils import safe_math
 from botorch.utils.constants import get_constants_like
-from botorch.utils.safe_math import logmeanexp
+from botorch.utils.objective import compute_smoothed_feasibility_indicator
+from botorch.utils.safe_math import (
+    cauchy,
+    fatmax,
+    fatmoid,
+    fatplus,
+    log_fatmoid,
+    log_fatplus,
+    log_softplus,
+    logmeanexp,
+    smooth_amax,
+)
 from botorch.utils.testing import BotorchTestCase
 from torch import finfo, Tensor
+from torch.nn.functional import softplus
 
 INF = float("inf")
+
+
+def sum_constraint(samples: Tensor) -> Tensor:
+    """Represents the constraint `samples.sum(dim=-1) > 0`.
+
+    Args:
+        samples: A `b x q x m`-dim Tensor.
+
+    Returns:
+        A `b x q`-dim Tensor representing constraint feasibility.
+    """
+    return -samples.sum(dim=-1)
 
 
 class UnaryOpTestMixin:
@@ -233,3 +258,142 @@ class TestLogMeanExp(BotorchTestCase):
                 logmeanexp(X.log(), dim=(0, -1), keepdim=True).exp(),
                 X.mean(dim=(0, -1), keepdim=True),
             )
+
+
+class TestSmoothNonLinearities(BotorchTestCase):
+    def test_smooth_non_linearities(self):
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"dtype": dtype, "device": self.device}
+            n = 17
+            X = torch.randn(n, **tkwargs)
+            self.assertAllClose(cauchy(X), 1 / (X.square() + 1))
+
+            # testing softplus and fatplus
+            tau = 1e-2
+            fatplus_X = fatplus(X, tau=tau)
+            self.assertAllClose(fatplus_X, X.clamp(0), atol=tau)
+            self.assertTrue((fatplus_X > 0).all())
+            self.assertAllClose(fatplus_X.log(), log_fatplus(X, tau=tau))
+            self.assertAllClose(
+                softplus(X, beta=1 / tau), log_softplus(X, tau=tau).exp()
+            )
+
+            # testing fatplus differentiability
+            X = torch.randn(n, **tkwargs)
+            X.requires_grad = True
+            log_fatplus(X, tau=tau).sum().backward()
+            self.assertFalse(X.grad.isinf().any())
+            self.assertFalse(X.grad.isnan().any())
+            # always increasing, could also test convexity (mathematically guaranteed)
+            self.assertTrue((X.grad > 0).all())
+
+            X_soft = X.detach().clone()
+            X_soft.requires_grad = True
+            log_softplus(X_soft, tau=tau).sum().backward()
+
+            # for positive values away from zero, log_softplus and log_fatplus are close
+            is_positive = X > 100 * tau  # i.e. 1 for tau = 1e-2
+            self.assertAllClose(X.grad[is_positive], 1 / X[is_positive], atol=tau)
+            self.assertAllClose(X_soft.grad[is_positive], 1 / X[is_positive], atol=tau)
+
+            is_negative = X < -100 * tau  # i.e. -1
+            # the softplus has very large gradients, which can saturate the smooth
+            # approximation to the maximum over the q-batch.
+            asym_val = torch.full_like(X_soft.grad[is_negative], 1 / tau)
+            self.assertAllClose(X_soft.grad[is_negative], asym_val, atol=tau, rtol=tau)
+            # the fatplus on the other hand has smaller, though non-vanishing gradients.
+            self.assertTrue((X_soft.grad[is_negative] > X.grad[is_negative]).all())
+
+            # testing smoothmax and fatmax
+            d = 3
+            X = torch.randn(n, d, **tkwargs)
+            fatmax_X = fatmax(X, dim=-1, tau=tau)
+            true_max = X.amax(dim=-1)
+            self.assertAllClose(fatmax_X, true_max, atol=tau)
+            self.assertAllClose(smooth_amax(X, dim=-1, tau=tau), true_max, atol=tau)
+
+            # special case for d = 1
+            d = 1
+            X = torch.randn(n, d, **tkwargs)
+            fatmax_X = fatmax(X, dim=-1, tau=tau)
+            self.assertAllClose(fatmax_X, X[..., 0])
+
+            # testing fatmax differentiability
+            X = torch.randn(n, **tkwargs)
+            X.requires_grad = True
+            fatmax(X, dim=-1, tau=tau).sum().backward()
+
+            self.assertFalse(X.grad.isinf().any())
+            self.assertFalse(X.grad.isnan().any())
+            self.assertTrue(X.grad.min() > 0)
+
+            # testing fatmoid
+            X = torch.randn(n, **tkwargs)
+            fatmoid_X = fatmoid(X, tau=tau)
+            # output is in [0, 1]
+            self.assertTrue((fatmoid_X > 0).all())
+            self.assertTrue((fatmoid_X < 1).all())
+            # skew symmetry
+            atol = 1e-6 if dtype == torch.float32 else 1e-12
+            self.assertAllClose(1 - fatmoid_X, fatmoid(-X, tau=tau), atol=atol)
+            zero = torch.tensor(0.0, **tkwargs)
+            half = torch.tensor(0.5, **tkwargs)
+            self.assertAllClose(fatmoid(zero), half, atol=atol)
+            self.assertAllClose(fatmoid_X.log(), log_fatmoid(X, tau=tau))
+
+            is_center = X.abs() < 100 * tau
+            self.assertAllClose(
+                fatmoid_X[~is_center], (X[~is_center] > 0).to(fatmoid_X), atol=1e-3
+            )
+
+            # testing differentiability
+            X.requires_grad = True
+            log_fatmoid(X, tau=tau).sum().backward()
+            self.assertFalse(X.grad.isinf().any())
+            self.assertFalse(X.grad.isnan().any())
+            self.assertTrue((X.grad > 0).all())
+
+            # testing constraint indicator
+            constraints = [sum_constraint]
+            b = 3
+            q = 4
+            m = 5
+            samples = torch.randn(b, q, m, **tkwargs)
+            eta = 1e-3
+            fat = True
+            log_feas_vals = compute_smoothed_feasibility_indicator(
+                constraints=constraints,
+                samples=samples,
+                eta=eta,
+                log=True,
+                fat=fat,
+            )
+            self.assertTrue(log_feas_vals.shape == torch.Size([b, q]))
+            expected_feas_vals = sum_constraint(samples) < 0
+            hard_feas_vals = log_feas_vals.exp() > 1 / 2
+            self.assertAllClose(hard_feas_vals, expected_feas_vals)
+
+            # with deterministic inputs:
+            samples = torch.ones(1, 1, m, **tkwargs)  # sum is greater than 0
+            log_feas_vals = compute_smoothed_feasibility_indicator(
+                constraints=constraints,
+                samples=samples,
+                eta=eta,
+                log=True,
+                fat=fat,
+            )
+            self.assertTrue((log_feas_vals.exp() > 1 / 2).item())
+
+            # with deterministic inputs:
+            samples = -torch.ones(1, 1, m, **tkwargs)  # sum is smaller than 0
+            log_feas_vals = compute_smoothed_feasibility_indicator(
+                constraints=constraints,
+                samples=samples,
+                eta=eta,
+                log=True,
+                fat=fat,
+            )
+            self.assertFalse((log_feas_vals.exp() > 1 / 2).item())
+
+        with self.assertRaisesRegex(UnsupportedError, "Only dtypes"):
+            log_softplus(torch.randn(2, dtype=torch.float16))

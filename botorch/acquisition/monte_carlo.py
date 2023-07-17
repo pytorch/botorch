@@ -170,6 +170,8 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
     forward pass. These problems are circumvented by the design of this class.
     """
 
+    _log: bool = False  # whether the acquisition utilities are in log-space
+
     def __init__(
         self,
         model: Model,
@@ -181,6 +183,7 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
         q_reduction: SampleReductionProtocol = torch.amax,
         constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
         eta: Union[Tensor, float] = 1e-3,
+        fat: bool = False,
     ):
         r"""Constructor of SampleReducingMCAcquisitionFunction.
 
@@ -216,6 +219,8 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
             eta: Temperature parameter(s) governing the smoothness of the sigmoid
                 approximation to the constraint indicators. For more details, on this
                 parameter, see the docs of `compute_smoothed_feasibility_indicator`.
+            fat: Wether to apply a fat-tailed smooth approximation to the feasibility
+                indicator or the canonical sigmoid approximation.
         """
         if constraints is not None and isinstance(objective, ConstrainedMCObjective):
             raise ValueError(
@@ -236,6 +241,7 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
         self._q_reduction = partial(q_reduction, dim=-1)
         self._constraints = constraints
         self._eta = eta
+        self._fat = fat
 
     @concatenate_pending_points
     @t_batch_mode_transform()
@@ -300,14 +306,19 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
                 multiplied by a smoothed constraint indicator per sample.
         """
         if self._constraints is not None:
-            if (acqval < 0).any():
+            if not self._log and (acqval < 0).any():
                 raise ValueError(
                     "Constraint-weighting requires unconstrained "
                     "acquisition values to be non-negative."
                 )
-            acqval = acqval * compute_smoothed_feasibility_indicator(
-                constraints=self._constraints, samples=samples, eta=self._eta
+            ind = compute_smoothed_feasibility_indicator(
+                constraints=self._constraints,
+                samples=samples,
+                eta=self._eta,
+                log=self._log,
+                fat=self._fat,
             )
+            acqval = acqval.add(ind) if self._log else acqval.mul(ind)
         return acqval
 
 
