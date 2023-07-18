@@ -493,7 +493,7 @@ class TestQLogNoisyExpectedImprovement(BotorchTestCase):
 
     def test_prune_baseline(self):
         no = "botorch.utils.testing.MockModel.num_outputs"
-        prune = "botorch.acquisition.logei.prune_inferior_points"
+        prune = "botorch.acquisition.monte_carlo.prune_inferior_points"
         for dtype in (torch.float, torch.double):
             X_baseline = torch.zeros(1, 1, device=self.device, dtype=dtype)
             X_pruned = torch.rand(1, 1, device=self.device, dtype=dtype)

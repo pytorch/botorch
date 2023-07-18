@@ -246,6 +246,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             )
             res = acqf(X)
             self.assertEqual(res.item(), 1.0)
+            self.assertEqual(sampler, acqf.sampler)
 
             # basic test
             sampler = IIDNormalSampler(sample_shape=torch.Size([2]), seed=12345)
@@ -556,7 +557,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             "prune_baseline": False,
             "cache_root": True,
             "posterior_transform": ScalarizedPosteriorTransform(weights=torch.ones(m)),
-            "sampler": SobolQMCNormalSampler(5),
+            "sampler": SobolQMCNormalSampler(sample_shape=torch.Size([5])),
         }
         acqf = qNoisyExpectedImprovement(**nei_args)
         X = torch.randn_like(X_baseline)
@@ -938,7 +939,6 @@ class TestMCAcquisitionFunctionWithConstraints(BotorchTestCase):
                     partial(qExpectedImprovement, model=mm, best_f=0.0),
                     # cache_root=True not supported by MockModel, see test_cache_root
                     partial(qNoisyExpectedImprovement, cache_root=False, **nei_args),
-                    partial(qNoisyExpectedImprovement, cache_root=True, **nei_args),
                 ]:
                     acqf = acqf_constructor()
                     mm._posterior._samples = (
