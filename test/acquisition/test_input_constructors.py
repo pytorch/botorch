@@ -31,6 +31,12 @@ from botorch.acquisition.knowledge_gradient import (
     qKnowledgeGradient,
     qMultiFidelityKnowledgeGradient,
 )
+from botorch.acquisition.logei import (
+    qLogExpectedImprovement,
+    qLogNoisyExpectedImprovement,
+    TAU_MAX,
+    TAU_RELU,
+)
 from botorch.acquisition.max_value_entropy_search import (
     qMaxValueEntropy,
     qMultiFidelityMaxValueEntropy,
@@ -382,6 +388,23 @@ class TestMCAcquisitionFunctionInputConstructors(
         )
         self.assertEqual(kwargs["best_f"], best_f_expected)
 
+        # testing qLogEI input constructor
+        log_constructor = get_acqf_input_constructor(qLogExpectedImprovement)
+        log_kwargs = log_constructor(
+            model=mock_model,
+            training_data=self.blockX_blockY,
+            objective=objective,
+            X_pending=X_pending,
+            best_f=best_f_expected,
+        )
+        # includes strict superset of kwargs tested above
+        self.assertTrue(kwargs.items() <= log_kwargs.items())
+        self.assertTrue("fat" in log_kwargs)
+        self.assertTrue("tau_max" in log_kwargs)
+        self.assertEqual(log_kwargs["tau_max"], TAU_MAX)
+        self.assertTrue("tau_relu" in log_kwargs)
+        self.assertEqual(log_kwargs["tau_relu"], TAU_RELU)
+
     def test_construct_inputs_qNEI(self):
         c = get_acqf_input_constructor(qNoisyExpectedImprovement)
         mock_model = mock.Mock()
@@ -414,6 +437,22 @@ class TestMCAcquisitionFunctionInputConstructors(
         self.assertIsNone(kwargs["constraints"])
         self.assertIsInstance(kwargs["eta"], float)
         self.assertTrue(kwargs["eta"] < 1)
+
+        # testing qLogNEI input constructor
+        log_constructor = get_acqf_input_constructor(qLogNoisyExpectedImprovement)
+        log_kwargs = log_constructor(
+            model=mock_model,
+            training_data=self.blockX_blockY,
+            X_baseline=X_baseline,
+            prune_baseline=False,
+        )
+        # includes strict superset of kwargs tested above
+        self.assertTrue(kwargs.items() <= log_kwargs.items())
+        self.assertTrue("fat" in log_kwargs)
+        self.assertTrue("tau_max" in log_kwargs)
+        self.assertEqual(log_kwargs["tau_max"], TAU_MAX)
+        self.assertTrue("tau_relu" in log_kwargs)
+        self.assertEqual(log_kwargs["tau_relu"], TAU_RELU)
 
     def test_construct_inputs_qPI(self):
         c = get_acqf_input_constructor(qProbabilityOfImprovement)
