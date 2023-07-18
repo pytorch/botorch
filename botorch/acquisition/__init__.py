@@ -37,6 +37,7 @@ from botorch.acquisition.knowledge_gradient import (
 from botorch.acquisition.logei import (
     LogImprovementMCAcquisitionFunction,
     qLogExpectedImprovement,
+    qLogNoisyExpectedImprovement,
 )
 from botorch.acquisition.max_value_entropy_search import (
     MaxValueBase,
@@ -96,6 +97,7 @@ __all__ = [
     "qExpectedImprovement",
     "LogImprovementMCAcquisitionFunction",
     "qLogExpectedImprovement",
+    "qLogNoisyExpectedImprovement",
     "qKnowledgeGradient",
     "MaxValueBase",
     "qMultiFidelityKnowledgeGradient",
