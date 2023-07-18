@@ -47,6 +47,7 @@ from botorch.acquisition.knowledge_gradient import (
     qKnowledgeGradient,
     qMultiFidelityKnowledgeGradient,
 )
+from botorch.acquisition.logei import qLogExpectedImprovement
 from botorch.acquisition.max_value_entropy_search import (
     qMaxValueEntropy,
     qMultiFidelityMaxValueEntropy,
@@ -449,7 +450,7 @@ def construct_inputs_qSimpleRegret(
     )
 
 
-@acqf_input_constructor(qExpectedImprovement)
+@acqf_input_constructor(qExpectedImprovement, qLogExpectedImprovement)
 def construct_inputs_qEI(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],

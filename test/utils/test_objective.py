@@ -10,6 +10,7 @@ from botorch.utils import apply_constraints, get_objective_weights_transform
 from botorch.utils.objective import (
     compute_feasibility_indicator,
     compute_smoothed_feasibility_indicator,
+    soft_eval_constraint,
 )
 from botorch.utils.testing import BotorchTestCase
 from torch import Tensor
@@ -65,7 +66,7 @@ class TestApplyConstraints(BotorchTestCase):
         # nonnegative objective, one constraint, eta = 0
         samples = torch.randn(1)
         obj = ones_f(samples)
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "eta must be positive."):
             apply_constraints(
                 obj=obj,
                 constraints=[zeros_f],
@@ -73,6 +74,15 @@ class TestApplyConstraints(BotorchTestCase):
                 infeasible_cost=0.0,
                 eta=0.0,
             )
+
+        # soft_eval_constraint is not in the path of apply_constraints, adding this test
+        # for coverage.
+        with self.assertRaisesRegex(ValueError, "eta must be positive."):
+            soft_eval_constraint(lhs=obj, eta=0.0)
+        ind = soft_eval_constraint(lhs=ones_f(samples), eta=1e-6)
+        self.assertAllClose(ind, torch.zeros_like(ind))
+        ind = soft_eval_constraint(lhs=-ones_f(samples), eta=1e-6)
+        self.assertAllClose(ind, torch.ones_like(ind))
 
     def test_apply_constraints_multi_output(self):
         # nonnegative objective, one constraint
