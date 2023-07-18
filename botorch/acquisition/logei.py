@@ -7,15 +7,17 @@ r"""
 Batch implementations of the LogEI family of improvements-based acquisition functions.
 """
 
-
 from __future__ import annotations
 
 from functools import partial
 
-from typing import Callable, List, Optional, TypeVar, Union
+from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union
 
 import torch
-from botorch.acquisition.monte_carlo import SampleReducingMCAcquisitionFunction
+from botorch.acquisition.monte_carlo import (
+    NoisyExpectedImprovementMixin,
+    SampleReducingMCAcquisitionFunction,
+)
 from botorch.acquisition.objective import (
     ConstrainedMCObjective,
     MCAcquisitionObjective,
@@ -217,6 +219,135 @@ class qLogExpectedImprovement(LogImprovementMCAcquisitionFunction):
             fat=self._fat,
         )
         return li
+
+
+class qLogNoisyExpectedImprovement(
+    LogImprovementMCAcquisitionFunction, NoisyExpectedImprovementMixin
+):
+    r"""MC-based batch Log Noisy Expected Improvement.
+
+    This function does not assume a `best_f` is known (which would require
+    noiseless observations). Instead, it uses samples from the joint posterior
+    over the `q` test points and previously observed points. A smooth approximation
+    to the canonical improvement over previously observed points is computed
+    for each sample and the logarithm of the average is returned.
+
+    `qLogNEI(X) ~ log(qNEI(X)) = Log E(max(max Y - max Y_baseline, 0))`, where
+    `(Y, Y_baseline) ~ f((X, X_baseline)), X = (x_1,...,x_q)`
+
+    Example:
+        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> sampler = SobolQMCNormalSampler(1024)
+        >>> qLogNEI = qLogNoisyExpectedImprovement(model, train_X, sampler)
+        >>> acqval = qLogNEI(test_X)
+    """
+
+    def __init__(
+        self,
+        model: Model,
+        X_baseline: Tensor,
+        sampler: Optional[MCSampler] = None,
+        objective: Optional[MCAcquisitionObjective] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
+        X_pending: Optional[Tensor] = None,
+        constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+        eta: Union[Tensor, float] = 1e-3,
+        fat: bool = True,
+        prune_baseline: bool = False,
+        cache_root: bool = True,
+        tau_max: float = TAU_MAX,
+        tau_relu: float = TAU_RELU,
+        **kwargs: Any,
+    ) -> None:
+        r"""q-Noisy Expected Improvement.
+
+        Args:
+            model: A fitted model.
+            X_baseline: A `batch_shape x r x d`-dim Tensor of `r` design points
+                that have already been observed. These points are considered as
+                the potential best design point.
+            sampler: The sampler used to draw base samples. See `MCAcquisitionFunction`
+                more details.
+            objective: The MCAcquisitionObjective under which the samples are
+                evaluated. Defaults to `IdentityMCObjective()`.
+            posterior_transform: A PosteriorTransform (optional).
+            X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points
+                that have points that have been submitted for function evaluation
+                but have not yet been evaluated. Concatenated into `X` upon
+                forward call. Copied and set to have no gradient.
+            constraints: A list of constraint callables which map a Tensor of posterior
+                samples of dimension `sample_shape x batch-shape x q x m`-dim to a
+                `sample_shape x batch-shape x q`-dim Tensor. The associated constraints
+                are satisfied if `constraint(samples) < 0`.
+            eta: Temperature parameter(s) governing the smoothness of the sigmoid
+                approximation to the constraint indicators. See the docs of
+                `compute_(log_)smoothed_constraint_indicator` for details.
+            fat: Toggles the logarithmic / linear asymptotic behavior of the smooth
+                approximation to the ReLU.
+            prune_baseline: If True, remove points in `X_baseline` that are
+                highly unlikely to be the best point. This can significantly
+                improve performance and is generally recommended. In order to
+                customize pruning parameters, instead manually call
+                `botorch.acquisition.utils.prune_inferior_points` on `X_baseline`
+                before instantiating the acquisition function.
+            cache_root: A boolean indicating whether to cache the root
+                decomposition over `X_baseline` and use low-rank updates.
+            tau_max: Temperature parameter controlling the sharpness of the smooth
+                approximations to max.
+            tau_relu: Temperature parameter controlling the sharpness of the smooth
+                approximations to ReLU.
+            kwargs: Here for qNEI for compatibility.
+
+        TODO: similar to qNEHVI, when we are using sequential greedy candidate
+        selection, we could incorporate pending points X_baseline and compute
+        the incremental q(Log)NEI from the new point. This would greatly increase
+        efficiency for large batches.
+        """
+        LogImprovementMCAcquisitionFunction.__init__(
+            self,
+            model=model,
+            sampler=sampler,
+            objective=objective,
+            posterior_transform=posterior_transform,
+            X_pending=X_pending,
+            constraints=constraints,
+            eta=eta,
+            fat=fat,
+            tau_max=tau_max,
+        )
+        self.tau_relu = tau_relu
+        NoisyExpectedImprovementMixin.__init__(
+            self,
+            model=model,
+            X_baseline=X_baseline,
+            sampler=sampler,
+            objective=objective,
+            posterior_transform=posterior_transform,
+            prune_baseline=prune_baseline,
+            cache_root=cache_root,
+            **kwargs,
+        )
+
+    def _sample_forward(self, obj: Tensor) -> Tensor:
+        r"""Evaluate qLogNoisyExpectedImprovement per sample on the candidate set `X`.
+
+        Args:
+            obj: `mc_shape x batch_shape x q`-dim Tensor of MC objective values.
+
+        Returns:
+            A `sample_shape x batch_shape x q`-dim Tensor of log noisy expected smoothed
+            improvement values.
+        """
+        return _log_improvement(
+            Y=obj,
+            best_f=self.compute_best_f(obj),
+            tau=self.tau_relu,
+            fat=self._fat,
+        )
+
+    def _get_samples_and_objectives(self, X: Tensor) -> Tuple[Tensor, Tensor]:
+        # Explicit, as both parent classes have this method, so no MRO magic required.
+        return NoisyExpectedImprovementMixin._get_samples_and_objectives(self, X)
 
 
 """
