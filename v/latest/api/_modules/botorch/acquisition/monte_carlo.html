@@ -193,6 +193,8 @@
 <span class="sd">    forward pass. These problems are circumvented by the design of this class.</span>
 <span class="sd">    """</span>
 
+    <span class="n">_log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># whether the acquisition utilities are in log-space</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
@@ -204,6 +206,7 @@
         <span class="n">q_reduction</span><span class="p">:</span> <span class="n">SampleReductionProtocol</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">amax</span><span class="p">,</span>
         <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">eta</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
+        <span class="n">fat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Constructor of SampleReducingMCAcquisitionFunction.</span>
 
@@ -239,6 +242,8 @@
 <span class="sd">            eta: Temperature parameter(s) governing the smoothness of the sigmoid</span>
 <span class="sd">                approximation to the constraint indicators. For more details, on this</span>
 <span class="sd">                parameter, see the docs of `compute_smoothed_feasibility_indicator`.</span>
+<span class="sd">            fat: Wether to apply a fat-tailed smooth approximation to the feasibility</span>
+<span class="sd">                indicator or the canonical sigmoid approximation.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">ConstrainedMCObjective</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -259,6 +264,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_q_reduction</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">q_reduction</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span> <span class="o">=</span> <span class="n">constraints</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span> <span class="o">=</span> <span class="n">eta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fat</span> <span class="o">=</span> <span class="n">fat</span>
 
 <div class="viewcode-block" id="SampleReducingMCAcquisitionFunction.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
@@ -323,14 +329,19 @@
 <span class="sd">                multiplied by a smoothed constraint indicator per sample.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">acqval</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log</span> <span class="ow">and</span> <span class="p">(</span><span class="n">acqval</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="s2">"Constraint-weighting requires unconstrained "</span>
                     <span class="s2">"acquisition values to be non-negative."</span>
                 <span class="p">)</span>
-            <span class="n">acqval</span> <span class="o">=</span> <span class="n">acqval</span> <span class="o">*</span> <span class="n">compute_smoothed_feasibility_indicator</span><span class="p">(</span>
-                <span class="n">constraints</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_eta</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">compute_smoothed_feasibility_indicator</span><span class="p">(</span>
+                <span class="n">constraints</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">,</span>
+                <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span>
+                <span class="n">eta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_eta</span><span class="p">,</span>
+                <span class="n">log</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">,</span>
+                <span class="n">fat</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_fat</span><span class="p">,</span>
             <span class="p">)</span>
+            <span class="n">acqval</span> <span class="o">=</span> <span class="n">acqval</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ind</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log</span> <span class="k">else</span> <span class="n">acqval</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">ind</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">acqval</span></div>
 
 

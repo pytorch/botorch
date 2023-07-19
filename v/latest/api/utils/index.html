@@ -697,11 +697,13 @@ to a <cite>batch_shape x q</cite>-dim Tensor, where negative values imply feasib
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.objective.compute_smoothed_feasibility_indicator">
-<span class="sig-prename descclassname"><span class="pre">botorch.utils.objective.</span></span><span class="sig-name descname"><span class="pre">compute_smoothed_feasibility_indicator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constraints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/objective.html#compute_smoothed_feasibility_indicator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.objective.compute_smoothed_feasibility_indicator" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.objective.</span></span><span class="sig-name descname"><span class="pre">compute_smoothed_feasibility_indicator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constraints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/objective.html#compute_smoothed_feasibility_indicator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.objective.compute_smoothed_feasibility_indicator" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the smoothed feasibility indicator of a list of constraints.</p>
 <p>Given posterior samples, using a sigmoid to smoothly approximate the feasibility
 indicator of each individual constraint to ensure differentiability and high
-gradient signal.</p>
+gradient signal. The <cite>fat</cite> and <cite>log</cite> options improve the numerical behavior of
+the smooth approximation.</p>
+<p>NOTE: <em>Negative</em> constraint values are associated with feasibility.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -715,6 +717,8 @@ or a 1-dim tensor. In case of a float the same eta is used for every
 constraint in constraints. In case of a tensor the length of the tensor
 must match the number of provided constraints. The i-th constraint is
 then estimated with the i-th eta value.</p></li>
+<li><p><strong>log</strong> (<em>bool</em>) – Toggles the computation of the log-feasibility indicator.</p></li>
+<li><p><strong>fat</strong> (<em>bool</em>) – Toggles the computation of the fat-tailed feasibility indicator.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2486,7 +2490,8 @@ the returned Tensors should not be modified in-place.</p>
 solve numerical issues of naive implementations.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="maechler2012accurate" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id4" role="doc-backlink">Maechler2012accurate</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span>Maechler2012accurate<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a href="#id4" role="doc-backlink">1</a>,<a href="#id5" role="doc-backlink">2</a>)</span>
 <ol class="upperalpha simple" start="13">
 <li><dl class="simple">
 <dt>Mächler. Accurately Computing log (1 - exp (-| a|))</dt><dd><p>Assessed by the Rmpfr package. Technical report, 2012.</p>
@@ -2595,6 +2600,33 @@ See <a class="reference internal" href="#maechler2012accurate" id="id4"><span>[M
 </dl>
 </dd></dl>
 <dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.log1pexp">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">log1pexp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#log1pexp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.log1pexp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Numerically accurate evaluation of log(1 + exp(x)).
+See <a class="reference internal" href="#maechler2012accurate" id="id5"><span>[Maechler2012accurate]</span></a> for details.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.logexpit">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">logexpit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#logexpit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.logexpit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the logarithm of the expit (a.k.a. sigmoid) function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.safe_math.logdiffexp">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">logdiffexp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_b</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#logdiffexp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.logdiffexp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes log(b - a) accurately given log(a) and log(b).
@@ -2617,7 +2649,7 @@ Assumes, log_b &gt; log_a, i.e. b &gt; a &gt; 0.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.safe_math.logmeanexp">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">logmeanexp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keepdim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#logmeanexp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.logmeanexp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Computes log(mean(exp(X), dim=dim, keepdim=keepdim)).</p>
+<dd><p>Computes <cite>log(mean(exp(X), dim=dim, keepdim=keepdim))</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -2627,7 +2659,197 @@ Assumes, log_b &gt; log_a, i.e. b &gt; a &gt; 0.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A Tensor of values corresponding to log(mean(exp(X), dim=dim)).</p>
+<dd class="field-even"><p>A Tensor of values corresponding to <cite>log(mean(exp(X), dim=dim))</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.log_softplus">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">log_softplus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#log_softplus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.log_softplus" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the logarithm of the softplus function with high numerical accuracy.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>Tensor</em>) – Input tensor, should have single or double precision floats.</p></li>
+<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – Decreasing tau increases the tightness of the
+approximation to ReLU. Non-negative and defaults to 1.0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tensor corresponding to <cite>log(softplus(x))</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.smooth_amax">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">smooth_amax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#smooth_amax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.smooth_amax" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes a smooth approximation to <cite>max(X, dim=dim)</cite>, i.e the maximum value of
+<cite>X</cite> over dimension <cite>dim</cite>, using the logarithm of the <cite>l_(1/tau)</cite> norm of <cite>exp(X)</cite>.
+Note that when <cite>X = log(U)</cite> is the <em>logarithm</em> of an acquisition utility <cite>U</cite>,</p>
+<p><cite>logsumexp(log(U) / tau) * tau = log(sum(U^(1/tau))^tau) = log(norm(U, ord=(1/tau))</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – A Tensor from which to compute the smoothed amax.</p></li>
+<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – Temperature parameter controlling the smooth approximation
+to max operator, becomes tighter as tau goes to 0. Needs to be positive.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A Tensor of smooth approximations to <cite>max(X, dim=dim)</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.check_dtype_float32_or_float64">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">check_dtype_float32_or_float64</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#check_dtype_float32_or_float64"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.check_dtype_float32_or_float64" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.log_fatplus">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">log_fatplus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#log_fatplus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.log_fatplus" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the logarithm of the fat-tailed softplus.</p>
+<p>NOTE: Separated out in case the complexity of the <cite>log</cite> implementation increases
+in the future.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.fatplus">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">fatplus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#fatplus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.fatplus" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes a fat-tailed approximation to <cite>ReLU(x) = max(x, 0)</cite> by linearly
+combining a regular softplus function and the density function of a Cauchy
+distribution. The coefficient <cite>alpha</cite> of the Cauchy density is chosen to guarantee
+monotonicity and convexity.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>Tensor</em>) – A Tensor on whose values to compute the smoothed function.</p></li>
+<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A Tensor of values of the fat-tailed softplus.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.fatmax">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">fatmax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#fatmax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.fatmax" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes a smooth approximation to amax(X, dim=dim) with a fat tail.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – A Tensor from which to compute the smoothed amax.</p></li>
+<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – Temperature parameter controlling the smooth approximation
+to max operator, becomes tighter as tau goes to 0. Needs to be positive.</p></li>
+<li><p><strong>standardize</strong> – Toggles the temperature standardization of the smoothed function.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A Tensor of smooth approximations to <cite>max(X, dim=dim)</cite> with a fat tail.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.log_fatmoid">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">log_fatmoid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#log_fatmoid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.log_fatmoid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the logarithm of the fatmoid. Separated out in case the implementation
+of the logarithm becomes more complex in the future to ensure numerical stability.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.fatmoid">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">fatmoid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#fatmoid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.fatmoid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes a twice continuously differentiable approximation to the Heaviside
+step function with a fat tail, i.e. <cite>O(1 / x^2)</cite> as <cite>x</cite> goes to -inf.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – A Tensor from which to compute the smoothed step function.</p></li>
+<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – Temperature parameter controlling the smoothness of the approximation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tensor of fat-tailed approximations to the Heaviside step function.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.cauchy">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">cauchy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#cauchy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.cauchy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes a Lorentzian, i.e. an un-normalized Cauchy density function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.sigmoid">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">sigmoid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#sigmoid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.sigmoid" title="Permalink to this definition">¶</a></dt>
+<dd><p>A sigmoid function with an optional fat tail and evaluation in log space for
+better numerical behavior. Notably, the fat-tailed sigmoid can be used to remedy
+numerical underflow problems in the value and gradient of the canonical sigmoid.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – The Tensor on which to evaluate the sigmoid.</p></li>
+<li><p><strong>log</strong> (<em>bool</em>) – Toggles the evaluation of the log sigmoid.</p></li>
+<li><p><strong>fat</strong> (<em>bool</em>) – Toggles the evaluation of the fat-tailed sigmoid.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A Tensor of (log-)sigmoid values.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Tensor</em></p>
@@ -2645,7 +2867,7 @@ Assumes, log_b &gt; log_a, i.e. b &gt; a &gt; 0.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="lacour17" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Lacour17<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id5" role="doc-backlink">1</a>,<a href="#id6" role="doc-backlink">2</a>,<a href="#id7" role="doc-backlink">3</a>,<a href="#id14" role="doc-backlink">4</a>,<a href="#id15" role="doc-backlink">5</a>)</span>
+<span class="backrefs">(<a href="#id6" role="doc-backlink">1</a>,<a href="#id7" role="doc-backlink">2</a>,<a href="#id8" role="doc-backlink">3</a>,<a href="#id15" role="doc-backlink">4</a>,<a href="#id16" role="doc-backlink">5</a>)</span>
 <p>R. Lacour, K. Klamroth, C. Fonseca. A box decomposition algorithm to
 compute the hypervolume indicator. Computers &amp; Operations Research,
 Volume 79, 2017.</p>
@@ -2761,7 +2983,7 @@ box_decomposition <cite>i</cite>.</p>
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.box_decompositions.utils.</span></span><span class="sig-name descname"><span class="pre">compute_local_upper_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">U</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/utils.html#compute_local_upper_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.utils.compute_local_upper_bounds" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute local upper bounds.</p>
 <p>Note: this assumes minimization.</p>
-<p>This uses the incremental algorithm (Alg. 1) from <a class="reference internal" href="#lacour17" id="id5"><span>[Lacour17]</span></a>.</p>
+<p>This uses the incremental algorithm (Alg. 1) from <a class="reference internal" href="#lacour17" id="id6"><span>[Lacour17]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -2786,7 +3008,7 @@ box_decomposition <cite>i</cite>.</p>
 <dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.utils.get_partition_bounds">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.box_decompositions.utils.</span></span><span class="sig-name descname"><span class="pre">get_partition_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">U</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/utils.html#get_partition_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.utils.get_partition_bounds" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the cell bounds given the local upper bounds and the defining points.</p>
-<p>This implements Equation 2 in <a class="reference internal" href="#lacour17" id="id6"><span>[Lacour17]</span></a>.</p>
+<p>This implements Equation 2 in <a class="reference internal" href="#lacour17" id="id7"><span>[Lacour17]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -2887,7 +3109,7 @@ that are sorted by the 0th dimension in increasing order.</p></li>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.box_decompositions.dominated.</span></span><span class="sig-name descname"><span class="pre">DominatedPartitioning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/dominated.html#DominatedPartitioning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.dominated.DominatedPartitioning" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">FastPartitioning</span></code></p>
 <p>Partition dominated space into axis-aligned hyperrectangles.</p>
-<p>This uses the Algorithm 1 from <a class="reference internal" href="#lacour17" id="id7"><span>[Lacour17]</span></a>.</p>
+<p>This uses the Algorithm 1 from <a class="reference internal" href="#lacour17" id="id8"><span>[Lacour17]</span></a>.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bd</span> <span class="o">=</span> <span class="n">DominatedPartitioning</span><span class="p">(</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
 </pre></div>
@@ -2913,13 +3135,13 @@ that are sorted by the 0th dimension in increasing order.</p></li>
 <div class="citation-list" role="list">
 <div class="citation" id="fonseca2006" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Fonseca2006<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id9" role="doc-backlink">1</a>,<a href="#id10" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id10" role="doc-backlink">1</a>,<a href="#id11" role="doc-backlink">2</a>)</span>
 <p>C. M. Fonseca, L. Paquete, and M. Lopez-Ibanez. An improved dimension-sweep
 algorithm for the hypervolume indicator. In IEEE Congress on Evolutionary
 Computation, pages 1157-1163, Vancouver, Canada, July 2006.</p>
 </div>
 <div class="citation" id="ishibuchi2011" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id8" role="doc-backlink">Ishibuchi2011</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id9" role="doc-backlink">Ishibuchi2011</a><span class="fn-bracket">]</span></span>
 <p>H. Ishibuchi, N. Akedo, and Y. Nojima. A many-objective test problem
 for visually examining diversity maintenance behavior in a decision
 space. Proc. 13th Annual Conf. Genetic Evol. Comput., 2011.</p>
@@ -2934,7 +3156,7 @@ when there is no <cite>pareto_Y</cite> that is better than <cite>max_ref_point</
 If there’s <cite>pareto_Y</cite> better than <cite>max_ref_point</cite>, the reference point
 will be set to <cite>max_ref_point - scale * range</cite> if <cite>scale_max_ref_point</cite>
 is true and to <cite>max_ref_point</cite> otherwise.</p>
-<p><a class="reference internal" href="#ishibuchi2011" id="id8"><span>[Ishibuchi2011]</span></a> find 0.1 to be a robust multiplier for scaling the
+<p><a class="reference internal" href="#ishibuchi2011" id="id9"><span>[Ishibuchi2011]</span></a> find 0.1 to be a robust multiplier for scaling the
 nadir point.</p>
 <p>Note: this assumes maximization of all objectives.</p>
 <dl class="field-list simple">
@@ -2963,9 +3185,9 @@ the max_ref_point based on the range of each objective.</p></li>
 <dt class="sig sig-object py" id="botorch.utils.multi_objective.hypervolume.Hypervolume">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.hypervolume.</span></span><span class="sig-name descname"><span class="pre">Hypervolume</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#Hypervolume"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.Hypervolume" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Hypervolume computation dimension sweep algorithm from <a class="reference internal" href="#fonseca2006" id="id9"><span>[Fonseca2006]</span></a>.</p>
+<p>Hypervolume computation dimension sweep algorithm from <a class="reference internal" href="#fonseca2006" id="id10"><span>[Fonseca2006]</span></a>.</p>
 <p>Adapted from Simon Wessing’s implementation of the algorithm
-(Variant 3, Version 1.2) in <a class="reference internal" href="#fonseca2006" id="id10"><span>[Fonseca2006]</span></a> in PyMOO:
+(Variant 3, Version 1.2) in <a class="reference internal" href="#fonseca2006" id="id11"><span>[Fonseca2006]</span></a> in PyMOO:
 <a class="reference external" href="https://github.com/msu-coinlab/pymoo/blob/master/pymoo/vendor/hv.py">https://github.com/msu-coinlab/pymoo/blob/master/pymoo/vendor/hv.py</a></p>
 <p>Maximization is assumed.</p>
 <p>TODO: write this in C++ for faster looping.</p>
@@ -3130,7 +3352,7 @@ nodes of the node that is reinserted are in the list.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="couckuyt2012" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Couckuyt2012<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id11" role="doc-backlink">1</a>,<a href="#id12" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id12" role="doc-backlink">1</a>,<a href="#id13" role="doc-backlink">2</a>)</span>
 <p>I. Couckuyt, D. Deschrijver and T. Dhaene, “Towards Efficient
 Multiobjective Optimization: Multiobjective statistical criterions,”
 2012 IEEE Congress on Evolutionary Computation, Brisbane, QLD, 2012,
@@ -3151,8 +3373,8 @@ decomposition of the non-dominated space for <cite>m&lt;5</cite> objectives (alp
 faster. The <cite>alpha</cite> is a fraction of the total hypervolume encapsuling the
 entire Pareto set. When a hypercell’s volume divided by the total hypervolume
 is less than <cite>alpha</cite>, we discard the hypercell. See Figure 2 in
-<a class="reference internal" href="#couckuyt2012" id="id11"><span>[Couckuyt2012]</span></a> for a visual representation.</p>
-<p>This PyTorch implementation of the binary partitioning algorithm (<a class="reference internal" href="#couckuyt2012" id="id12"><span>[Couckuyt2012]</span></a>)
+<a class="reference internal" href="#couckuyt2012" id="id12"><span>[Couckuyt2012]</span></a> for a visual representation.</p>
+<p>This PyTorch implementation of the binary partitioning algorithm (<a class="reference internal" href="#couckuyt2012" id="id13"><span>[Couckuyt2012]</span></a>)
 is adapted from numpy/tensorflow implementation at:
 <a class="reference external" href="https://github.com/GPflow/GPflowOpt/blob/master/gpflowopt/pareto.py">https://github.com/GPflow/GPflowOpt/blob/master/gpflowopt/pareto.py</a>.</p>
 <p>TODO: replace this with a more efficient decomposition. E.g.
@@ -3207,14 +3429,14 @@ the decomposition under minimization.</p>
 <p>This class is far more efficient than NondominatedPartitioning for exact box
 partitionings</p>
 <dl class="simple">
-<dt>This class uses the two-step approach similar to that in <a class="reference internal" href="acquisition.html#yang2019" id="id13"><span>[Yang2019]</span></a>, where:</dt><dd><ol class="loweralpha simple">
+<dt>This class uses the two-step approach similar to that in <a class="reference internal" href="acquisition.html#yang2019" id="id14"><span>[Yang2019]</span></a>, where:</dt><dd><ol class="loweralpha simple">
 <li><dl class="simple">
-<dt>first, Alg 1 from <a class="reference internal" href="#lacour17" id="id14"><span>[Lacour17]</span></a> is used to find the local lower bounds</dt><dd><p>for the maximization problem</p>
+<dt>first, Alg 1 from <a class="reference internal" href="#lacour17" id="id15"><span>[Lacour17]</span></a> is used to find the local lower bounds</dt><dd><p>for the maximization problem</p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt>second, the local lower bounds are used as the Pareto frontier for the</dt><dd><p>minimization problem, and <a class="reference internal" href="#lacour17" id="id15"><span>[Lacour17]</span></a> is applied again to partition
+<dt>second, the local lower bounds are used as the Pareto frontier for the</dt><dd><p>minimization problem, and <a class="reference internal" href="#lacour17" id="id16"><span>[Lacour17]</span></a> is applied again to partition
 the space dominated by that Pareto frontier.</p>
 </dd>
 </dl>
@@ -3278,7 +3500,7 @@ each point is non-dominated.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="knowles2005" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Knowles2005<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id16" role="doc-backlink">1</a>,<a href="#id18" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id17" role="doc-backlink">1</a>,<a href="#id19" role="doc-backlink">2</a>)</span>
 <p>J. Knowles, “ParEGO: a hybrid algorithm with on-line landscape approximation
 for expensive multiobjective optimization problems,” in IEEE Transactions
 on Evolutionary Computation, vol. 10, no. 1, pp. 50-66, Feb. 2006.</p>
@@ -3301,9 +3523,9 @@ g(y) (which should be minimized), and returns -g(y), which should be maximized.<
 weight for that objective. To make all w * y’s have the same sign
 such that they are comparable when computing max(w * y), outcomes of minimization
 objectives are shifted from [0,1] to [-1,0].</p>
-<p>See <a class="reference internal" href="#knowles2005" id="id16"><span>[Knowles2005]</span></a> for details.</p>
+<p>See <a class="reference internal" href="#knowles2005" id="id17"><span>[Knowles2005]</span></a> for details.</p>
 <p>This scalarization can be used with qExpectedImprovement to implement q-ParEGO
-as proposed in <a class="reference internal" href="acquisition.html#daulton2020qehvi" id="id17"><span>[Daulton2020qehvi]</span></a>.</p>
+as proposed in <a class="reference internal" href="acquisition.html#daulton2020qehvi" id="id18"><span>[Daulton2020qehvi]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -3313,7 +3535,7 @@ Positive for maximization and negative for minimization.</p></li>
 scaling the outcomes to [0,1] or [-1,0]. If <cite>n=0</cite>, then outcomes
 are left unnormalized.</p></li>
 <li><p><strong>alpha</strong> (<em>float</em>) – Parameter governing the influence of the weighted sum term. The
-default value comes from <a class="reference internal" href="#knowles2005" id="id18"><span>[Knowles2005]</span></a>.</p></li>
+default value comes from <a class="reference internal" href="#knowles2005" id="id19"><span>[Knowles2005]</span></a>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -3336,21 +3558,21 @@ default value comes from <a class="reference internal" href="#knowles2005" id="i
 <section id="module-botorch.utils.probability.mvnxpb">
 <span id="multivariate-gaussian-probabilities-via-bivariate-conditioning"></span><h2>Multivariate Gaussian Probabilities via Bivariate Conditioning<a class="headerlink" href="#module-botorch.utils.probability.mvnxpb" title="Permalink to this heading">¶</a></h2>
 <p>Bivariate conditioning algorithm for approximating Gaussian probabilities,
-see <a class="reference internal" href="#genz2016numerical" id="id19"><span>[Genz2016numerical]</span></a> and <a class="reference internal" href="#trinh2015bivariate" id="id20"><span>[Trinh2015bivariate]</span></a>.</p>
+see <a class="reference internal" href="#genz2016numerical" id="id20"><span>[Genz2016numerical]</span></a> and <a class="reference internal" href="#trinh2015bivariate" id="id21"><span>[Trinh2015bivariate]</span></a>.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="trinh2015bivariate" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Trinh2015bivariate<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id20" role="doc-backlink">1</a>,<a href="#id21" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id21" role="doc-backlink">1</a>,<a href="#id22" role="doc-backlink">2</a>)</span>
 <p>G. Trinh and A. Genz. Bivariate conditioning approximations for
 multivariate normal probabilities. Statistics and Computing, 2015.</p>
 </div>
 <div class="citation" id="genz2016numerical" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id19" role="doc-backlink">Genz2016numerical</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id20" role="doc-backlink">Genz2016numerical</a><span class="fn-bracket">]</span></span>
 <p>A. Genz and G. Tring. Numerical Computation of Multivariate Normal Probabilities
 using Bivariate Conditioning. Monte Carlo and Quasi-Monte Carlo Methods, 2016.</p>
 </div>
 <div class="citation" id="gibson1994monte" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id22" role="doc-backlink">Gibson1994monte</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id23" role="doc-backlink">Gibson1994monte</a><span class="fn-bracket">]</span></span>
 <p>GJ. Gibson, CA Galsbey, and DA Elston. Monte Carlo evaluation of multivariate normal
 integrals and sensitivity to variate ordering. Advances in Numerical Methods and
 Applications. 1994.</p>
@@ -3434,7 +3656,7 @@ variable. Used when integrating over an odd number of random variables.</p></li>
 <span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/probability/mvnxpb.html#MVNXPB.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.probability.mvnxpb.MVNXPB.solve" title="Permalink to this definition">¶</a></dt>
 <dd><p>Runs the MVNXPB solver instance for a fixed number of steps.</p>
 <p>Calculates a bivariate conditional approximation to P(X in bounds), where
-X ~ N(0, Σ). For details, see [Genz2016numerical] or <a class="reference internal" href="#trinh2015bivariate" id="id21"><span>[Trinh2015bivariate]</span></a>.</p>
+X ~ N(0, Σ). For details, see [Genz2016numerical] or <a class="reference internal" href="#trinh2015bivariate" id="id22"><span>[Trinh2015bivariate]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -3450,7 +3672,7 @@ X ~ N(0, Σ). For details, see [Genz2016numerical] or <a class="reference intern
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.utils.probability.mvnxpb.MVNXPB.select_pivot">
 <span class="sig-name descname"><span class="pre">select_pivot</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/probability/mvnxpb.html#MVNXPB.select_pivot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.probability.mvnxpb.MVNXPB.select_pivot" title="Permalink to this definition">¶</a></dt>
-<dd><p>GGE variable prioritization strategy from <a class="reference internal" href="#gibson1994monte" id="id22"><span>[Gibson1994monte]</span></a>.</p>
+<dd><p>GGE variable prioritization strategy from <a class="reference internal" href="#gibson1994monte" id="id23"><span>[Gibson1994monte]</span></a>.</p>
 <p>Returns the index of the random variable least likely to satisfy its bounds
 when conditioning on the previously integrated random variables <cite>X[:t - 1]</cite>
 attaining the values of plug-in estimators <cite>y[:t - 1]</cite>. Equivalently,
@@ -3750,12 +3972,12 @@ need to override <cite>.expand</cite>.</p></li>
 <div class="citation-list" role="list">
 <div class="citation" id="genz2004bvnt" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Genz2004bvnt<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id23" role="doc-backlink">1</a>,<a href="#id24" role="doc-backlink">2</a>,<a href="#id25" role="doc-backlink">3</a>)</span>
+<span class="backrefs">(<a href="#id24" role="doc-backlink">1</a>,<a href="#id25" role="doc-backlink">2</a>,<a href="#id26" role="doc-backlink">3</a>)</span>
 <p>A. Genz. Numerical computation of rectangular bivariate and trivariate normal and
 t probabilities. Statistics and Computing, 2004.</p>
 </div>
 <div class="citation" id="muthen1990moments" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id26" role="doc-backlink">Muthen1990moments</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id27" role="doc-backlink">Muthen1990moments</a><span class="fn-bracket">]</span></span>
 <p>B. Muthen. Moments of the censored and truncated bivariate normal distribution.
 British Journal of Mathematical and Statistical Psychology, 1990.</p>
 </div>
@@ -3765,7 +3987,7 @@ British Journal of Mathematical and Statistical Psychology, 1990.</p>
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.probability.bvn.</span></span><span class="sig-name descname"><span class="pre">bvn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yu</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/probability/bvn.html#bvn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.probability.bvn.bvn" title="Permalink to this definition">¶</a></dt>
 <dd><p>A function for computing bivariate normal probabilities.</p>
 <p>Calculates <cite>P(xl &lt; x &lt; xu, yl &lt; y &lt; yu)</cite> where <cite>x</cite> and <cite>y</cite> are bivariate normal with
-unit variance and correlation coefficient <cite>r</cite>. See Section 2.4 of <a class="reference internal" href="#genz2004bvnt" id="id23"><span>[Genz2004bvnt]</span></a>.</p>
+unit variance and correlation coefficient <cite>r</cite>. See Section 2.4 of <a class="reference internal" href="#genz2004bvnt" id="id24"><span>[Genz2004bvnt]</span></a>.</p>
 <p>This method uses a sign flip trick to improve numerical performance. Many of <cite>bvnu`s
 internal branches rely on evaluations `Phi(-bound)</cite>. For <cite>a &lt; b &lt; 0</cite>, the term
 <cite>Phi(-a) - Phi(-b)</cite> goes to zero faster than <cite>Phi(b) - Phi(a)</cite> because
@@ -3794,12 +4016,12 @@ otherwise be zero due to round-off error.</p>
 <dt class="sig sig-object py" id="botorch.utils.probability.bvn.bvnu">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.probability.bvn.</span></span><span class="sig-name descname"><span class="pre">bvnu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/probability/bvn.html#bvnu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.probability.bvn.bvnu" title="Permalink to this definition">¶</a></dt>
 <dd><p>Solves for <cite>P(x &gt; h, y &gt; k)</cite> where <cite>x</cite> and <cite>y</cite> are standard bivariate normal
-random variables with correlation coefficient <cite>r</cite>. In <a class="reference internal" href="#genz2004bvnt" id="id24"><span>[Genz2004bvnt]</span></a>, this is (1)</p>
+random variables with correlation coefficient <cite>r</cite>. In <a class="reference internal" href="#genz2004bvnt" id="id25"><span>[Genz2004bvnt]</span></a>, this is (1)</p>
 <blockquote>
 <div><p><cite>L(h, k, r) = P(x &lt; -h, y &lt; -k) = 1/(a 2pi) int_{h}^{infty} int_{k}^{infty} f(x, y, r) dy dx,</cite></p>
 </div></blockquote>
 <p>where <cite>f(x, y, r) = e^{-1/(2a^2) (x^2 - 2rxy + y^2)}</cite> and <cite>a = (1 - r^2)^{1/2}</cite>.</p>
-<p><a class="reference internal" href="#genz2004bvnt" id="id25"><span>[Genz2004bvnt]</span></a> report the following integation scheme incurs a maximum of 5e-16
+<p><a class="reference internal" href="#genz2004bvnt" id="id26"><span>[Genz2004bvnt]</span></a> report the following integation scheme incurs a maximum of 5e-16
 error when run in double precision: if <cite>|r| &gt;= 0.925</cite>, use a 20-point quadrature
 rule on a 5th order Taylor expansion; else, numerically integrate in polar
 coordinates using no more than 20 quadrature points.</p>
@@ -3825,7 +4047,7 @@ coordinates using no more than 20 quadrature points.</p>
 <dd><p>Computes the expected values of truncated, bivariate normal random variables.</p>
 <p>Let <cite>x</cite> and <cite>y</cite> be a pair of standard bivariate normal random variables having
 correlation <cite>r</cite>. This function computes <cite>E([x,y] | [xl,yl] &lt; [x,y] &lt; [xu,yu])</cite>.</p>
-<p>Following <a class="reference internal" href="#muthen1990moments" id="id26"><span>[Muthen1990moments]</span></a> equations (4) and (5), we have</p>
+<p>Following <a class="reference internal" href="#muthen1990moments" id="id27"><span>[Muthen1990moments]</span></a> equations (4) and (5), we have</p>
 <blockquote>
 <div><p><cite>E(x | [xl, yl] &lt; [x, y] &lt; [xu, yu]) = Z^{-1} phi(xl) P(yl &lt; y &lt; yu | x=xl) - phi(xu) P(yl &lt; y &lt; yu | x=xu),</cite></p>
 </div></blockquote>
@@ -3857,13 +4079,13 @@ correlation <cite>r</cite>. This function computes <cite>E([x,y] | [xl,yl] &lt; 
 <p>References</p>
 <div class="citation-list" role="list">
 <div class="citation" id="gessner2020" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id27" role="doc-backlink">Gessner2020</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id28" role="doc-backlink">Gessner2020</a><span class="fn-bracket">]</span></span>
 <p>A. Gessner, O. Kanjilal, and P. Hennig. Integrals over gaussians under
 linear domain constraints. AISTATS 2020.</p>
 </div>
 </div>
 <p>This implementation is based (with multiple changes / optimiations) on
-the following implementations based on the algorithm in <a class="reference internal" href="#gessner2020" id="id27"><span>[Gessner2020]</span></a>:
+the following implementations based on the algorithm in <a class="reference internal" href="#gessner2020" id="id28"><span>[Gessner2020]</span></a>:
 - <a class="reference external" href="https://github.com/alpiges/LinConGauss">https://github.com/alpiges/LinConGauss</a>
 - <a class="reference external" href="https://github.com/wjmaddox/pytorch_ess">https://github.com/wjmaddox/pytorch_ess</a></p>
 <p>The implementation here differentiates itself from the original implementations with:
