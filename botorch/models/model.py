@@ -576,14 +576,13 @@ class ModelList(Model):
             The constructed fantasy model.
         """
         if evaluation_mask is not None:
-            if (
-                evaluation_mask.ndim != 2
-                and evaluation_mask.shape[0] != X.shape[-2]
-                and evaluation_mask.shape[1] != self.num_outputs
+            if evaluation_mask.ndim != 2 or evaluation_mask.shape != torch.Size(
+                [X.shape[-2], self.num_outputs]
             ):
                 raise BotorchTensorDimensionError(
-                    f"Expected evaluation_mask of shape {X.shape[0]} "
-                    f"x {self.num_outputs}, but got {evaluation_mask.shape}."
+                    f"Expected evaluation_mask of shape `{X.shape[0]} "
+                    f"x {self.num_outputs}`, but got `"
+                    f"{' x '.join(str(i) for i in evaluation_mask.shape)}`."
                 )
             if not isinstance(sampler, ListSampler):
                 raise ValueError("Decoupled fantasization requires a list of samplers.")

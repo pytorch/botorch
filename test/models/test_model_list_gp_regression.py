@@ -555,7 +555,32 @@ class TestModelListGP(BotorchTestCase):
                     FixedNoiseGP(X, Y, yvar, outcome_transform=Standardize(m=1)),
                     FixedNoiseGP(X, Y2, yvar2, outcome_transform=Standardize(m=1)),
                 )
+                # test exceptions
+                eval_mask = torch.zeros(
+                    3, 2, 2, dtype=torch.bool, device=tkwargs["device"]
+                )
+                msg = (
+                    f"Expected evaluation_mask of shape `{X.shape[0]} x "
+                    f"{model.num_outputs}`, but got `"
+                    f"{' x '.join(str(i) for i in eval_mask.shape)}`."
+                )
+                with self.assertRaisesRegex(BotorchTensorDimensionError, msg):
 
+                    model.fantasize(
+                        X,
+                        evaluation_mask=eval_mask,
+                        sampler=ListSampler(
+                            IIDNormalSampler(n_fants, seed=0),
+                            IIDNormalSampler(n_fants, seed=0),
+                        ),
+                    )
+                msg = "Decoupled fantasization requires a list of samplers."
+                with self.assertRaisesRegex(ValueError, msg):
+                    model.fantasize(
+                        X,
+                        evaluation_mask=eval_mask[0],
+                        sampler=IIDNormalSampler(n_fants, seed=0),
+                    )
                 model.posterior(torch.zeros((1, 1), **tkwargs))
                 for decoupled in (False, True):
                     if decoupled:
