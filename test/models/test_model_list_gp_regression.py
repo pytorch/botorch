@@ -6,6 +6,7 @@
 
 import itertools
 import warnings
+from typing import Optional
 
 import torch
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
@@ -18,6 +19,8 @@ from botorch.models.multitask import MultiTaskGP
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import ChainedOutcomeTransform, Log, Standardize
 from botorch.posteriors import GPyTorchPosterior, PosteriorList, TransformedPosterior
+from botorch.sampling.base import MCSampler
+from botorch.sampling.list_sampler import ListSampler
 from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.testing import _get_random_data, BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
@@ -27,6 +30,7 @@ from gpytorch.means import ConstantMean
 from gpytorch.mlls import SumMarginalLogLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.priors import GammaPrior
+from torch import Tensor
 
 
 def _get_model(
@@ -386,6 +390,26 @@ class TestModelListGP(BotorchTestCase):
             self.assertEqual(fm_i.train_inputs[0].shape, torch.Size([2, 8, 2]))
             self.assertEqual(fm_i.train_targets.shape, torch.Size([2, 8]))
 
+        # test decoupled
+        sampler1 = IIDNormalSampler(2)
+        sampler2 = IIDNormalSampler(2)
+        eval_mask = torch.tensor(
+            [[1, 0], [0, 1], [1, 0]],
+            dtype=torch.bool,
+        )
+        fm = modellist.fantasize(
+            torch.rand(3, 2),
+            sampler=ListSampler(sampler1, sampler2),
+            evaluation_mask=eval_mask,
+        )
+        self.assertIsInstance(fm, ModelListGP)
+        for i in range(2):
+            fm_i = fm.models[i]
+            self.assertIsInstance(fm_i, SingleTaskGP)
+            num_points = 7 - i
+            self.assertEqual(fm_i.train_inputs[0].shape, torch.Size([2, num_points, 2]))
+            self.assertEqual(fm_i.train_targets.shape, torch.Size([2, num_points]))
+
     def test_fantasize_with_outcome_transform(self) -> None:
         """
         Check that fantasized posteriors from a `ModelListGP` with transforms
@@ -403,42 +427,108 @@ class TestModelListGP(BotorchTestCase):
             with self.subTest(dtype=dtype):
                 tkwargs = {"device": self.device, "dtype": dtype}
                 X = torch.linspace(0, 1, 20, **tkwargs)[:, None]
-                Y = 10 * torch.linspace(0, 1, 20, **tkwargs)[:, None]
+                Y1 = 10 * torch.linspace(0, 1, 20, **tkwargs)[:, None]
+                Y2 = 2 * Y1
+                Y = torch.cat([Y1, Y2], dim=-1)
                 target_x = torch.tensor([[0.5]], **tkwargs)
 
                 model_with_transform = ModelListGP(
-                    SingleTaskGP(X, Y, outcome_transform=Standardize(m=1))
+                    SingleTaskGP(X, Y1, outcome_transform=Standardize(m=1)),
+                    SingleTaskGP(X, Y2, outcome_transform=Standardize(m=1)),
                 )
-                y_standardized, _ = Standardize(m=1).forward(Y)
+                outcome_transform = Standardize(m=2)
+                y_standardized, _ = outcome_transform(Y)
+                outcome_transform.eval()
                 model_manually_transformed = ModelListGP(
-                    SingleTaskGP(X, y_standardized)
+                    SingleTaskGP(X, y_standardized[:, :1]),
+                    SingleTaskGP(X, y_standardized[:, 1:]),
                 )
 
-                def _get_fant_mean(model: ModelListGP) -> float:
+                def _get_fant_mean(
+                    model: ModelListGP,
+                    sampler: MCSampler,
+                    eval_mask: Optional[Tensor] = None,
+                ) -> float:
                     fant = model.fantasize(
-                        target_x, sampler=IIDNormalSampler(10, seed=0)
+                        target_x,
+                        sampler=sampler,
+                        evaluation_mask=eval_mask,
                     )
-                    return fant.posterior(target_x).mean.mean().item()
+                    return fant.posterior(target_x).mean.mean(dim=(-2, -3))
 
-                outcome_transform = model_with_transform.models[0].outcome_transform
                 # ~0
+                sampler = IIDNormalSampler(10, seed=0)
                 fant_mean_with_manual_transform = _get_fant_mean(
-                    model_manually_transformed
+                    model_manually_transformed, sampler=sampler
                 )
                 # Inexact since this is an MC test and we don't want it flaky
-                self.assertAlmostEqual(fant_mean_with_manual_transform, 0.0, delta=0.1)
-                manually_rescaled_mean, _ = outcome_transform.untransform(
+                self.assertLessEqual(
+                    (fant_mean_with_manual_transform - 0.0).abs().max().item(), 0.1
+                )
+                manually_rescaled_mean = outcome_transform.untransform(
                     fant_mean_with_manual_transform
+                )[0].view(-1)
+                fant_mean_with_native_transform = _get_fant_mean(
+                    model_with_transform, sampler=sampler
                 )
-                fant_mean_with_native_transform = _get_fant_mean(model_with_transform)
                 # Inexact since this is an MC test and we don't want it flaky
-                self.assertAlmostEqual(fant_mean_with_native_transform, 5.0, delta=0.5)
+                self.assertLessEqual(
+                    (
+                        fant_mean_with_native_transform
+                        - torch.tensor([5.0, 10.0], **tkwargs)
+                    )
+                    .abs()
+                    .max()
+                    .item(),
+                    0.5,
+                )
 
                 # tighter tolerance here since the models should use the same samples
-                self.assertAlmostEqual(
-                    manually_rescaled_mean.item(),
+                self.assertAllClose(
+                    manually_rescaled_mean,
                     fant_mean_with_native_transform,
-                    delta=1e-6,
+                )
+                # test decoupled
+                sampler = ListSampler(
+                    IIDNormalSampler(10, seed=0),
+                    IIDNormalSampler(10, seed=0),
+                )
+                fant_mean_with_manual_transform = _get_fant_mean(
+                    model_manually_transformed,
+                    sampler=sampler,
+                    eval_mask=torch.tensor(
+                        [[0, 1]], dtype=torch.bool, device=tkwargs["device"]
+                    ),
+                )
+                # Inexact since this is an MC test and we don't want it flaky
+                self.assertLessEqual(
+                    (fant_mean_with_manual_transform - 0.0).abs().max().item(), 0.1
+                )
+                manually_rescaled_mean = outcome_transform.untransform(
+                    fant_mean_with_manual_transform
+                )[0].view(-1)
+                fant_mean_with_native_transform = _get_fant_mean(
+                    model_with_transform,
+                    sampler=sampler,
+                    eval_mask=torch.tensor(
+                        [[0, 1]], dtype=torch.bool, device=tkwargs["device"]
+                    ),
+                )
+                # Inexact since this is an MC test and we don't want it flaky
+                self.assertLessEqual(
+                    (
+                        fant_mean_with_native_transform
+                        - torch.tensor([5.0, 10.0], **tkwargs)
+                    )
+                    .abs()
+                    .max()
+                    .item(),
+                    0.5,
+                )
+                # tighter tolerance here since the models should use the same samples
+                self.assertAllClose(
+                    manually_rescaled_mean,
+                    fant_mean_with_native_transform,
                 )
 
     def test_fantasize_with_outcome_transform_fixed_noise(self) -> None:
@@ -458,18 +548,53 @@ class TestModelListGP(BotorchTestCase):
                 tkwargs = {"device": self.device, "dtype": dtype}
                 X = torch.tensor([[0.0], [1.0]], **tkwargs)
                 Y = torch.tensor([[y_at_low_x], [y_at_high_x]], **tkwargs)
+                Y2 = 2 * Y
                 yvar = torch.full_like(Y, 1e-4)
+                yvar2 = 2 * yvar
                 model = ModelListGP(
-                    FixedNoiseGP(X, Y, yvar, outcome_transform=Standardize(m=1))
+                    FixedNoiseGP(X, Y, yvar, outcome_transform=Standardize(m=1)),
+                    FixedNoiseGP(X, Y2, yvar2, outcome_transform=Standardize(m=1)),
                 )
 
                 model.posterior(torch.zeros((1, 1), **tkwargs))
+                for decoupled in (False, True):
+                    if decoupled:
+                        kwargs = {
+                            "sampler": ListSampler(
+                                IIDNormalSampler(n_fants, seed=0),
+                                IIDNormalSampler(n_fants, seed=0),
+                            ),
+                            "evaluation_mask": torch.tensor(
+                                [[0, 1], [1, 0]],
+                                dtype=torch.bool,
+                                device=tkwargs["device"],
+                            ),
+                        }
+                    else:
+                        kwargs = {
+                            "sampler": IIDNormalSampler(n_fants, seed=0),
+                        }
+                    fant = model.fantasize(X, **kwargs)
 
-                fant = model.fantasize(
-                    X, sampler=IIDNormalSampler(n_fants, seed=0), noise=yvar
-                )
-
-                fant_mean = fant.posterior(X).mean.mean(0).flatten().tolist()
-                self.assertAlmostEqual(fant_mean[0], y_at_low_x, delta=1)
-                # delta=1 is a 1% error (since y_at_low_x = 100)
-                self.assertAlmostEqual(fant_mean[1], y_at_high_x, delta=1)
+                    fant_mean = fant.posterior(X).mean.mean(0)
+                    self.assertAlmostEqual(fant_mean[0, 0].item(), y_at_low_x, delta=1)
+                    self.assertAlmostEqual(
+                        fant_mean[0, 1].item(), 2 * y_at_low_x, delta=1
+                    )
+                    # delta=1 is a 1% error (since y_at_low_x = 100)
+                    self.assertAlmostEqual(fant_mean[1, 0].item(), y_at_high_x, delta=1)
+                    self.assertAlmostEqual(
+                        fant_mean[1, 1].item(), 2 * y_at_high_x, delta=1
+                    )
+                    for i, fm_i in enumerate(fant.models):
+                        n_points = 3 if decoupled else 4
+                        self.assertEqual(
+                            fm_i.train_inputs[0].shape, torch.Size([20, n_points, 1])
+                        )
+                        self.assertEqual(
+                            fm_i.train_targets.shape, torch.Size([20, n_points])
+                        )
+                        if decoupled:
+                            self.assertTrue(
+                                torch.equal(fm_i.train_inputs[0][0][-1], X[1 - i])
+                            )
