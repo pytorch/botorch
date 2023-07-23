@@ -49,6 +49,9 @@ linop_settings.cholesky_max_tries._global_value = 6
 linop_settings.max_cholesky_size._global_value = 4096
 gp_settings.max_eager_kernel_size._global_value = 4096
 
+# Add Ivy Transpilation Methods
+from .transpile import to_ivy, unify, to_jax, to_tensorflow, to_numpy, to_jax, to_paddle
+
 
 __all__ = [
     "acquisition",
@@ -66,4 +69,5 @@ __all__ = [
     "posteriors",
     "settings",
     "test_functions",
+    "transpile",
 ]
