@@ -32,6 +32,7 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     FastNondominatedPartitioning,
     NondominatedPartitioning,
 )
+from botorch.utils.objective import compute_feasibility_indicator
 from botorch.utils.sampling import optimize_posterior_samples
 from botorch.utils.transforms import is_fully_bayesian
 from torch import Tensor
@@ -100,10 +101,19 @@ def get_acquisition_function(
         )
     # instantiate and return the requested acquisition function
     if acquisition_function_name in ("qEI", "qPI"):
-        obj = objective(
-            model.posterior(X_observed, posterior_transform=posterior_transform).mean
+        # Since these are the non-noisy variants, use the posterior mean at the observed
+        # inputs directly to compute the best feasible value without sampling.
+        Y = model.posterior(X_observed, posterior_transform=posterior_transform).mean
+        obj = objective(samples=Y, X=X_observed)
+        best_f = compute_best_feasible_objective(
+            samples=Y,
+            obj=obj,
+            constraints=constraints,
+            model=model,
+            objective=objective,
+            posterior_transform=posterior_transform,
+            X_baseline=X_observed,
         )
-        best_f = obj.max(dim=-1).values
     if acquisition_function_name == "qEI":
         return monte_carlo.qExpectedImprovement(
             model=model,
@@ -112,6 +122,8 @@ def get_acquisition_function(
             objective=objective,
             posterior_transform=posterior_transform,
             X_pending=X_pending,
+            constraints=constraints,
+            eta=eta,
         )
     elif acquisition_function_name == "qPI":
         return monte_carlo.qProbabilityOfImprovement(
@@ -122,6 +134,8 @@ def get_acquisition_function(
             posterior_transform=posterior_transform,
             X_pending=X_pending,
             tau=kwargs.get("tau", 1e-3),
+            constraints=constraints,
+            eta=eta,
         )
     elif acquisition_function_name == "qNEI":
         return monte_carlo.qNoisyExpectedImprovement(
@@ -134,6 +148,8 @@ def get_acquisition_function(
             prune_baseline=kwargs.get("prune_baseline", True),
             marginalize_dim=kwargs.get("marginalize_dim"),
             cache_root=kwargs.get("cache_root", True),
+            constraints=constraints,
+            eta=eta,
         )
     elif acquisition_function_name == "qSR":
         return monte_carlo.qSimpleRegret(
@@ -210,6 +226,113 @@ def get_acquisition_function(
         )
     raise NotImplementedError(
         f"Unknown acquisition function {acquisition_function_name}"
+    )
+
+
+def compute_best_feasible_objective(
+    samples: Tensor,
+    obj: Tensor,
+    constraints: Optional[List[Callable[[Tensor], Tensor]]],
+    model: Optional[Model] = None,
+    objective: Optional[MCAcquisitionObjective] = None,
+    posterior_transform: Optional[PosteriorTransform] = None,
+    X_baseline: Optional[Tensor] = None,
+    infeasible_obj: Optional[Tensor] = None,
+) -> Tensor:
+    """Computes the largest `obj` value that is feasible under the `constraints`. If
+    `constraints` is None, returns the best unconstrained objective value.
+
+    When no feasible observations exist and `infeasible_obj` is not `None`, returns
+    `infeasible_obj` (potentially reshaped). When no feasible observations exist and
+    `infeasible_obj` is `None`, uses `model`, `objective`, `posterior_transform`, and
+    `X_baseline` to infer and return an `infeasible_obj` `M` s.t. `M < min_x f(x)`.
+
+    Args:
+        samples: `(sample_shape) x batch_shape x q x m`-dim posterior samples.
+        obj: A `(sample_shape) x batch_shape x q`-dim Tensor of MC objective values.
+        constraints: A list of constraint callables which map posterior samples to
+            a scalar. The associated constraint is considered satisfied if this
+            scalar is less than zero.
+        model: A Model, only required when there are no feasible observations.
+        objective: An MCAcquisitionObjective, only optionally used when there are no
+            feasible observations.
+        posterior_transform: A PosteriorTransform, only optionally used when there are
+            no feasible observations.
+        X_baseline: A `batch_shape x d`-dim Tensor of baseline points, only required
+            when there are no feasible observations.
+        infeasible_obj: A Tensor to be returned when no feasible points exist.
+
+    Returns:
+        A `(sample_shape) x batch_shape x 1`-dim Tensor of best feasible objectives.
+    """
+    if constraints is None:  # unconstrained case
+        # we don't need to differentiate through X_baseline for now, so taking
+        # the regular max over the n points to get best_f is fine
+        with torch.no_grad():
+            return obj.amax(dim=-1, keepdim=True)
+
+    is_feasible = compute_feasibility_indicator(
+        constraints=constraints, samples=samples
+    )  # sample_shape x batch_shape x q
+    if is_feasible.any():
+        obj = torch.where(is_feasible, obj, -torch.inf)
+        with torch.no_grad():
+            return obj.amax(dim=-1, keepdim=True)
+
+    elif infeasible_obj is not None:
+        return infeasible_obj.expand(*obj.shape[:-1], 1)
+
+    else:
+        if model is None:
+            raise ValueError(
+                "Must specify `model` when no feasible observation exists."
+            )
+        if X_baseline is None:
+            raise ValueError(
+                "Must specify `X_baseline` when no feasible observation exists."
+            )
+        return _estimate_objective_lower_bound(
+            model=model,
+            objective=objective,
+            posterior_transform=posterior_transform,
+            X=X_baseline,
+        ).expand(*obj.shape[:-1], 1)
+
+
+def _estimate_objective_lower_bound(
+    model: Model,
+    objective: Optional[MCAcquisitionObjective],
+    posterior_transform: Optional[PosteriorTransform],
+    X: Tensor,
+) -> Tensor:
+    """Estimates a lower bound on the objective values by evaluating the model at convex
+    combinations of `X`, returning the 6-sigma lower bound of the computed statistics.
+
+    Args:
+        model: A fitted model.
+        objective: An MCAcquisitionObjective with `m` outputs.
+        posterior_transform: A PosteriorTransform.
+        X: A `n x d`-dim Tensor of design points from which to draw convex combinations.
+
+    Returns:
+        A `m`-dimensional Tensor of lower bounds of the objectives.
+    """
+    convex_weights = torch.rand(
+        32,
+        X.shape[-2],
+        dtype=X.dtype,
+        device=X.device,
+    )
+    weights_sum = convex_weights.sum(dim=0, keepdim=True)
+    convex_weights = convex_weights / weights_sum
+    # infeasible cost M is such that -M < min_x f(x), thus
+    # 0 < min_x f(x) - (-M), so we should take -M as a lower
+    # bound on the best feasible objective
+    return -get_infeasible_cost(
+        X=convex_weights @ X,
+        model=model,
+        objective=objective,
+        posterior_transform=posterior_transform,
     )
 
 

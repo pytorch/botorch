@@ -30,14 +30,15 @@ class TestDatasets(BotorchTestCase):
     def test_supervised_meta(self):
         X = rand(3, 2)
         Y = rand(3, 1)
-        A = DenseContainer(rand(3, 5), event_shape=Size([5]))
+        t = rand(3, 5)
+        A = DenseContainer(t, event_shape=Size([5]))
         B = rand(2, 1)
 
         SupervisedDatasetWithDefaults = make_dataclass(
             cls_name="SupervisedDatasetWithDefaults",
             bases=(SupervisedDataset,),
             fields=[
-                ("default", DenseContainer, field(default=A)),
+                ("default", DenseContainer, field(default=t)),
                 ("factory", DenseContainer, field(default_factory=lambda: A)),
                 ("other", Tensor, field(default_factory=lambda: B)),
             ],
@@ -55,6 +56,7 @@ class TestDatasets(BotorchTestCase):
 
         # Check handling of default values and factories
         dataset = SupervisedDatasetWithDefaults(X=X, Y=Y)
+        self.assertIsInstance(dataset.default, DenseContainer)
         self.assertEqual(dataset.default, A)
         self.assertEqual(dataset.factory, A)
         self.assertTrue(dataset.other is B)

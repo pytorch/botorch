@@ -1763,3 +1763,23 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
             )
             self.assertEqual(len(X), 20)
             self.assertAllClose(torch.unique(X, dim=0), X)
+
+    def test_no_precision_loss_with_fixed_features(self) -> None:
+
+        acqf = SquaredAcquisitionFunction()
+
+        val = 1e-1
+        fixed_features_list = [{0: val}]
+
+        bounds = torch.stack(
+            [torch.zeros(2, dtype=torch.float64), torch.ones(2, dtype=torch.float64)]
+        )
+        candidate, _ = optimize_acqf_mixed(
+            acqf,
+            bounds=bounds,
+            q=1,
+            num_restarts=1,
+            raw_samples=1,
+            fixed_features_list=fixed_features_list,
+        )
+        self.assertEqual(candidate[0, 0].item(), val)

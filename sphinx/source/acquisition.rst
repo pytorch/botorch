@@ -60,6 +60,9 @@ Monte-Carlo Acquisition Functions
     :members:
     :exclude-members: MCAcquisitionFunction
 
+.. automodule:: botorch.acquisition.logei
+    :members:
+
 Multi-Objective Analytic Acquisition Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.multi_objective.analytic

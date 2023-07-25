@@ -20,6 +20,8 @@ from __future__ import annotations
 from typing import Optional
 
 from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.monte_carlo import SampleReducingMCAcquisitionFunction
+from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
 from torch import Tensor
 
 from torch.nn import Module
@@ -27,6 +29,9 @@ from torch.nn import Module
 
 class PriorGuidedAcquisitionFunction(AcquisitionFunction):
     r"""Class for weighting acquisition functions by a prior distribution.
+
+    Supports MC and batch acquisition functions via
+    SampleReducingAcquisitionFunction.
 
     See [Hvarfner2022]_ for details.
     """
@@ -37,6 +42,7 @@ class PriorGuidedAcquisitionFunction(AcquisitionFunction):
         prior_module: Module,
         log: bool = False,
         prior_exponent: float = 1.0,
+        X_pending: Optional[Tensor] = None,
     ) -> None:
         r"""Initialize the prior-guided acquisition function.
 
@@ -44,36 +50,50 @@ class PriorGuidedAcquisitionFunction(AcquisitionFunction):
             acq_function: The base acquisition function.
             prior_module: A Module that computes the probability
                 (or log probability) for the provided inputs.
+                `prior_module.forward` should take a `batch_shape x q`-dim
+                tensor of inputs and return a `batch_shape x q`-dim tensor
+                of probabilities.
             log: A boolean that should be true if the acquisition function emits a
                 log-transformed value and the prior module emits a log probability.
             prior_exponent: The exponent applied to the prior. This can be used
                 for example  to decay the effect the prior over time as in
                 [Hvarfner2022]_.
+            X_pending: `n x d` Tensor with `n` `d`-dim design points that have
+                been submitted for evaluation but have not yet been evaluated.
         """
-        Module.__init__(self)
+        super().__init__(model=acq_function.model)
         self.acq_func = acq_function
         self.prior_module = prior_module
         self._log = log
         self._prior_exponent = prior_exponent
+        self._is_sample_reducing_af = isinstance(
+            acq_function, SampleReducingMCAcquisitionFunction
+        )
+        self.set_X_pending(X_pending=X_pending)
 
-    @property
-    def X_pending(self):
-        r"""Return the `X_pending` of the base acquisition function."""
-        try:
-            return self.acq_func.X_pending
-        except (ValueError, AttributeError):
-            raise ValueError(
-                f"Base acquisition function {type(self.acq_func).__name__} "
-                "does not have an `X_pending` attribute."
-            )
-
-    @X_pending.setter
-    def X_pending(self, X_pending: Optional[Tensor]):
-        r"""Sets the `X_pending` of the base acquisition function."""
-        self.acq_func.X_pending = X_pending
-
+    @concatenate_pending_points
+    @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
         r"""Compute the acquisition function weighted by the prior."""
+        # batch_shape x q
+        prior = self.prior_module(X)
+        if self._is_sample_reducing_af:
+            # sample_shape x batch_shape x q
+            af_val = self.acq_func._non_reduced_forward(X)
+        else:
+            if prior.shape[-1] > 1:
+                raise NotImplementedError(
+                    "q-batches with q>1 are only supported using "
+                    "SampleReducingMCAcquisitionFunction."
+                )
+            # batch_shape x q
+            af_val = self.acq_func(X).unsqueeze(-1)
         if self._log:
-            return self.acq_func(X) + self.prior_module(X) * self._prior_exponent
-        return self.acq_func(X) * self.prior_module(X).pow(self._prior_exponent)
+            weighted_af_val = af_val + prior * self._prior_exponent
+        else:
+            weighted_af_val = af_val * prior.pow(self._prior_exponent)
+        if self._is_sample_reducing_af:
+            return self.acq_func._sample_reduction(
+                self.acq_func._q_reduction(weighted_af_val)
+            )
+        return weighted_af_val.squeeze(-1)  # squeeze q-dim
