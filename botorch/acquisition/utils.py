@@ -100,7 +100,7 @@ def get_acquisition_function(
             "acquisition functions."
         )
     # instantiate and return the requested acquisition function
-    if acquisition_function_name in ("qEI", "qPI"):
+    if acquisition_function_name in ("qEI", "qLogEI", "qPI"):
         # Since these are the non-noisy variants, use the posterior mean at the observed
         # inputs directly to compute the best feasible value without sampling.
         Y = model.posterior(X_observed, posterior_transform=posterior_transform).mean
@@ -125,6 +125,22 @@ def get_acquisition_function(
             constraints=constraints,
             eta=eta,
         )
+    if acquisition_function_name == "qLogEI":
+        # putting the import here to avoid circular imports
+        # ideally, the entire function should be moved out of this file,
+        # but since it is used for legacy code to be deprecated, we keep it here.
+        from botorch.acquisition.logei import qLogExpectedImprovement
+
+        return qLogExpectedImprovement(
+            model=model,
+            best_f=best_f,
+            sampler=sampler,
+            objective=objective,
+            posterior_transform=posterior_transform,
+            X_pending=X_pending,
+            constraints=constraints,
+            eta=eta,
+        )
     elif acquisition_function_name == "qPI":
         return monte_carlo.qProbabilityOfImprovement(
             model=model,
@@ -139,6 +155,22 @@ def get_acquisition_function(
         )
     elif acquisition_function_name == "qNEI":
         return monte_carlo.qNoisyExpectedImprovement(
+            model=model,
+            X_baseline=X_observed,
+            sampler=sampler,
+            objective=objective,
+            posterior_transform=posterior_transform,
+            X_pending=X_pending,
+            prune_baseline=kwargs.get("prune_baseline", True),
+            marginalize_dim=kwargs.get("marginalize_dim"),
+            cache_root=kwargs.get("cache_root", True),
+            constraints=constraints,
+            eta=eta,
+        )
+    elif acquisition_function_name == "qLogNEI":
+        from botorch.acquisition.logei import qLogNoisyExpectedImprovement
+
+        return qLogNoisyExpectedImprovement(
             model=model,
             X_baseline=X_observed,
             sampler=sampler,
