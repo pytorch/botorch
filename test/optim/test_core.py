@@ -83,6 +83,8 @@ class TestScipyMinimize(BotorchTestCase):
         # adding a small delay here to combat some timing issues on windows
         closure = partial(norm_squared, x, delay=1e-3)
         result = scipy_minimize(closure, {"x": x}, timeout_sec=1e-4)
+        print(f"{result=}")
+        print(f"{result.message=}")
         self.assertEqual(result.status, OptimizationStatus.STOPPED)
         self.assertTrue("Optimization timed out after" in result.message)
 
