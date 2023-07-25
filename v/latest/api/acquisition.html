@@ -5282,6 +5282,35 @@ instead of sampling from the model, these are used.</p></li>
 <span id="fixed-feature-acquisition-function"></span><h3>Fixed Feature Acquisition Function<a class="headerlink" href="#module-botorch.acquisition.fixed_feature" title="Permalink to this heading">¶</a></h3>
 <p>A wrapper around AquisitionFunctions to fix certain features for optimization.
 This is useful e.g. for performing contextual optimization.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.acquisition.fixed_feature.get_dtype_of_sequence">
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.fixed_feature.</span></span><span class="sig-name descname"><span class="pre">get_dtype_of_sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/fixed_feature.html#get_dtype_of_sequence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.fixed_feature.get_dtype_of_sequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return torch.float32 if everything is single-precision and torch.float64
+otherwise.</p>
+<p>Numbers (non-tensors) are double-precision.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>values</strong> (<em>Sequence</em><em>[</em><em>Tensor</em><em> | </em><em>float</em><em>]</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>dtype</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.acquisition.fixed_feature.get_device_of_sequence">
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.fixed_feature.</span></span><span class="sig-name descname"><span class="pre">get_device_of_sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/fixed_feature.html#get_device_of_sequence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.fixed_feature.get_device_of_sequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>CPU if everything is on the CPU; Cuda otherwise.</p>
+<p>Numbers (non-tensors) are considered to be on the CPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>values</strong> (<em>Sequence</em><em>[</em><em>Tensor</em><em> | </em><em>float</em><em>]</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>dtype</em></p>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.fixed_feature.</span></span><span class="sig-name descname"><span class="pre">FixedFeatureAcquisitionFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/fixed_feature.html#FixedFeatureAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
