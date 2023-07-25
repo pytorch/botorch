@@ -41,7 +41,7 @@ class TestMinimizeWithTimeout(BotorchTestCase):
             self.assertEqual(res.nit, 2)  # quadratic approx. is exact
 
         with self.subTest("test w/ binding timeout"):
-            res = minimize_with_timeout(**base_kwargs, args=(1e-3,), timeout_sec=1e-4)
+            res = minimize_with_timeout(**base_kwargs, args=(1e-2,), timeout_sec=1e-4)
             self.assertFalse(res.success)
             self.assertEqual(res.nit, 1)  # only one call to the callback is made
 

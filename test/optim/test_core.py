@@ -81,7 +81,7 @@ class TestScipyMinimize(BotorchTestCase):
     def test_timeout(self):
         x = Parameter(torch.tensor(1.0))
         # adding a small delay here to combat some timing issues on windows
-        closure = partial(norm_squared, x, delay=1e-3)
+        closure = partial(norm_squared, x, delay=1e-2)
         result = scipy_minimize(closure, {"x": x}, timeout_sec=1e-4)
         print(f"{result=}")
         print(f"{result.message=}")
