@@ -46,6 +46,7 @@ def minimize_with_timeout(
 
         def timeout_callback(xk: np.ndarray) -> bool:
             runtime = time.monotonic() - start_time
+            print(f"{runtime=}")
             callback_data["num_iterations"] += 1
             if runtime > timeout_sec:
                 raise OptimizationTimeoutError(current_x=xk, runtime=runtime)
