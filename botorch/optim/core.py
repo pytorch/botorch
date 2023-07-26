@@ -98,11 +98,9 @@ def scipy_minimize(
         call_counter = count(1)  # callbacks are typically made at the end of each iter
 
         def wrapped_callback(x: ndarray):
-            fval = float(wrapped_closure(x)[0])
-            print(f"{fval=}")
             result = OptimizationResult(
                 step=next(call_counter),
-                fval=fval,
+                fval=float(wrapped_closure(x)[0]),
                 status=OptimizationStatus.RUNNING,
                 runtime=monotonic() - start_time,
             )
@@ -118,8 +116,6 @@ def scipy_minimize(
         callback=wrapped_callback,
         timeout_sec=timeout_sec,
     )
-    print(f"{raw=}")
-    print(f"{raw.message=}")
 
     # Post-processing and outcome handling
     wrapped_closure.state = asarray(raw.x)  # set parameter state to optimal values
