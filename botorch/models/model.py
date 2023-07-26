@@ -33,6 +33,7 @@ import numpy as np
 import torch
 from botorch import settings
 from botorch.exceptions.errors import BotorchTensorDimensionError, InputDataError
+from botorch.logging import shape_to_str
 from botorch.models.utils.assorted import fantasize as fantasize_flag
 from botorch.posteriors import Posterior, PosteriorList
 from botorch.sampling.base import MCSampler
@@ -581,8 +582,8 @@ class ModelList(Model):
             ):
                 raise BotorchTensorDimensionError(
                     f"Expected evaluation_mask of shape `{X.shape[0]} "
-                    f"x {self.num_outputs}`, but got `"
-                    f"{' x '.join(str(i) for i in evaluation_mask.shape)}`."
+                    f"x {self.num_outputs}`, but got "
+                    f"{shape_to_str(evaluation_mask.shape)}."
                 )
             if not isinstance(sampler, ListSampler):
                 raise ValueError("Decoupled fantasization requires a list of samplers.")
