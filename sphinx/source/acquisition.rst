@@ -26,6 +26,11 @@ Cached Cholesky Acquisition Function API
 .. automodule:: botorch.acquisition.cached_cholesky
     :members:
 
+Decoupled Acquisition Function API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.decoupled
+    :members:
+
 Monte-Carlo Acquisition Function API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. currentmodule:: botorch.acquisition.monte_carlo
