@@ -13,13 +13,18 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Union
 
 import torch
 from botorch import settings
-from botorch.acquisition.objective import IdentityMCObjective, MCAcquisitionObjective
+from botorch.acquisition.objective import (
+    GenericMCObjective,
+    IdentityMCObjective,
+    MCAcquisitionObjective,
+)
 from botorch.exceptions.warnings import CostAwareWarning
-from botorch.models.model import Model
+from botorch.models.deterministic import DeterministicModel
+from botorch.models.gpytorch import GPyTorchModel
 from botorch.sampling.base import MCSampler
 from torch import Tensor
 from torch.nn import Module
@@ -94,7 +99,7 @@ class InverseCostWeightedUtility(CostAwareUtility):
 
     def __init__(
         self,
-        cost_model: Model,
+        cost_model: Union[DeterministicModel, GPyTorchModel],
         use_mean: bool = True,
         cost_objective: Optional[MCAcquisitionObjective] = None,
         min_cost: float = 1e-2,
@@ -102,7 +107,7 @@ class InverseCostWeightedUtility(CostAwareUtility):
         r"""Cost-aware utility that weights increase in utiltiy by inverse cost.
 
         Args:
-            cost_model: A Model modeling the cost of evaluating a candidate
+            cost_model: A model of the cost of evaluating a candidate
                 set `X`, where `X` are the same features as in the model for the
                 acquisition function this is to be used with. If no cost_objective
                 is specified, the outputs are required to be non-negative.
@@ -111,7 +116,9 @@ class InverseCostWeightedUtility(CostAwareUtility):
             cost_objective: If specified, transform the posterior mean / the
                 posterior samples from the cost model. This can be used e.g. to
                 un-transform predictions/samples of a cost model fit on the
-                log-transformed cost (often done to ensure non-negativity).
+                log-transformed cost (often done to ensure non-negativity). If the
+                cost model is multi-output, then by default this will sum the cost
+                across outputs.
             min_cost: A value used to clamp the cost samples so that they are not
                 too close to zero, which may cause numerical issues.
         Returns:
@@ -119,7 +126,12 @@ class InverseCostWeightedUtility(CostAwareUtility):
         """
         super().__init__()
         if cost_objective is None:
-            cost_objective = IdentityMCObjective()
+            if cost_model.num_outputs == 1:
+                cost_objective = IdentityMCObjective()
+            else:
+                # sum over outputs
+                cost_objective = GenericMCObjective(lambda Y, X: Y.sum(dim=-1))
+
         self.cost_model = cost_model
         self.cost_objective = cost_objective
         self._use_mean = use_mean
@@ -130,6 +142,7 @@ class InverseCostWeightedUtility(CostAwareUtility):
         X: Tensor,
         deltas: Tensor,
         sampler: Optional[MCSampler] = None,
+        X_evaluation_mask: Optional[Tensor] = None,
         **kwargs: Any,
     ) -> Tensor:
         r"""Evaluate the cost function on the candidates and improvements.
@@ -142,14 +155,33 @@ class InverseCostWeightedUtility(CostAwareUtility):
                 current state at `X` for each t-batch.
             sampler: A sampler used for sampling from the posterior of the cost
                 model (required if `use_mean=False`, ignored if `use_mean=True`).
+            X_evaluation_mask: A `q x m`-dim boolean tensor indicating which
+                outcomes should be evaluated for each design in the batch.
 
         Returns:
             A `num_fantasies x batch_shape`-dim Tensor of cost-weighted utilities.
         """
         if not self._use_mean and sampler is None:
             raise RuntimeError("Must provide `sampler` if `use_mean=False`")
-
-        cost_posterior = self.cost_model.posterior(X)
+        if X_evaluation_mask is not None:
+            # TODO: support different evaluation masks for each X. This requires
+            # either passing evaluation_mask to `cost_model.posterior`
+            # or assuming that evalauting `cost_model.posterior(X)` on all
+            # `q` points and then only selecting the costs for relevant points
+            # does not change the cost function for each point. This would not be
+            # true for instance if the incremental cost of evalauting an additional
+            # point decreased as the number of points increased.
+            if not all(
+                torch.equal(X_evaluation_mask[0], X_evaluation_mask[i])
+                for i in range(1, X_evaluation_mask.shape[0])
+            ):
+                raise NotImplementedError(
+                    "Currently, all candidates must be evaluated on the same outputs."
+                )
+            output_indices = X_evaluation_mask[0].nonzero().view(-1).tolist()
+        else:
+            output_indices = None
+        cost_posterior = self.cost_model.posterior(X, output_indices=output_indices)
         if self._use_mean:
             cost = cost_posterior.mean  # batch_shape x q x m'
         else:
