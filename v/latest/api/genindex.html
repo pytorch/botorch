@@ -259,6 +259,13 @@
 </li>
 </ul></li>
 <li>
+    botorch.acquisition.decoupled
+
+      <ul>
+<li><a href="acquisition.html#module-botorch.acquisition.decoupled">module</a>
+</li>
+</ul></li>
+<li>
     botorch.acquisition.fixed_feature
 
       <ul>
@@ -748,6 +755,8 @@
 <li><a href="models.html#module-botorch.models.utils.parse_training_data">module</a>
 </li>
 </ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.optim
 
@@ -755,8 +764,6 @@
 <li><a href="optim.html#module-botorch.optim">module</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.optim.closures.core
 
@@ -1518,6 +1525,8 @@
 </li>
 <li><a href="utils.html#botorch.utils.testing.ConstrainedTestProblemTestCaseMixin">ConstrainedTestProblemTestCaseMixin (class in botorch.utils.testing)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.decoupled.DecoupledAcquisitionFunction.construct_evaluation_mask">construct_evaluation_mask() (botorch.acquisition.decoupled.DecoupledAcquisitionFunction method)</a>
+</li>
 <li><a href="models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.construct_inputs">construct_inputs() (botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP class method)</a>
 <ul>
 <li><a href="models.html#botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP.construct_inputs">(botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP class method)</a>
@@ -1602,6 +1611,8 @@
 <li><a href="models.html#botorch.models.pairwise_gp.PairwiseGP.datapoints">datapoints (botorch.models.pairwise_gp.PairwiseGP property)</a>
 </li>
 <li><a href="settings.html#botorch.settings.debug">debug (class in botorch.settings)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.decoupled.DecoupledAcquisitionFunction">DecoupledAcquisitionFunction (class in botorch.acquisition.decoupled)</a>
 </li>
 <li><a href="utils.html#botorch.utils.types.DEFAULT">DEFAULT (class in botorch.utils.types)</a>
 </li>
@@ -3136,6 +3147,8 @@
 </li>
 <li><a href="acquisition.html#module-botorch.acquisition.cost_aware">botorch.acquisition.cost_aware</a>
 </li>
+<li><a href="acquisition.html#module-botorch.acquisition.decoupled">botorch.acquisition.decoupled</a>
+</li>
 <li><a href="acquisition.html#module-botorch.acquisition.fixed_feature">botorch.acquisition.fixed_feature</a>
 </li>
 <li><a href="acquisition.html#module-botorch.acquisition.input_constructors">botorch.acquisition.input_constructors</a>
@@ -4186,6 +4199,8 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.analytic.AnalyticAcquisitionFunction.set_X_pending">set_X_pending() (botorch.acquisition.analytic.AnalyticAcquisitionFunction method)</a>
 <ul>
+<li><a href="acquisition.html#botorch.acquisition.decoupled.DecoupledAcquisitionFunction.set_X_pending">(botorch.acquisition.decoupled.DecoupledAcquisitionFunction method)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.max_value_entropy_search.qMaxValueEntropy.set_X_pending">(botorch.acquisition.max_value_entropy_search.qMaxValueEntropy method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction.set_X_pending">(botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction method)</a>
@@ -4208,8 +4223,12 @@
 <li><a href="utils.html#botorch.utils.containers.SliceContainer.shape">(botorch.utils.containers.SliceContainer property)</a>
 </li>
 </ul></li>
+<li><a href="logging.html#botorch.logging.shape_to_str">shape_to_str() (in module botorch.logging)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Shekel">Shekel (class in botorch.test_functions.synthetic)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="optim.html#botorch.optim.homotopy.FixedHomotopySchedule.should_stop">should_stop (botorch.optim.homotopy.FixedHomotopySchedule property)</a>
 <ul>
 <li><a href="optim.html#botorch.optim.homotopy.Homotopy.should_stop">(botorch.optim.homotopy.Homotopy property)</a>
@@ -4217,8 +4236,6 @@
 <li><a href="optim.html#botorch.optim.homotopy.HomotopySchedule.should_stop">(botorch.optim.homotopy.HomotopySchedule property)</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="utils.html#botorch.utils.safe_math.sigmoid">sigmoid() (in module botorch.utils.safe_math)</a>
 </li>
 <li><a href="sampling.html#botorch.sampling.pathwise.utils.SineCosineTransform">SineCosineTransform (class in botorch.sampling.pathwise.utils)</a>
@@ -4439,6 +4456,8 @@
 <li><a href="acquisition.html#botorch.acquisition.cost_aware.GenericCostAwareUtility.training">(botorch.acquisition.cost_aware.GenericCostAwareUtility attribute)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.cost_aware.InverseCostWeightedUtility.training">(botorch.acquisition.cost_aware.InverseCostWeightedUtility attribute)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.decoupled.DecoupledAcquisitionFunction.training">(botorch.acquisition.decoupled.DecoupledAcquisitionFunction attribute)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction.training">(botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction attribute)</a>
 </li>
@@ -4942,6 +4961,8 @@
 </li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="acquisition.html#botorch.acquisition.decoupled.DecoupledAcquisitionFunction.X_evaluation_mask">X_evaluation_mask (botorch.acquisition.decoupled.DecoupledAcquisitionFunction property)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction.X_pending">X_pending (botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction property)</a>
 <ul>
 <li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient.X_pending">(botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient attribute)</a>

@@ -56,6 +56,7 @@
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span><span class="p">,</span> <span class="n">InputDataError</span>
+<span class="kn">from</span> <span class="nn">botorch.logging</span> <span class="kn">import</span> <span class="n">shape_to_str</span>
 <span class="kn">from</span> <span class="nn">botorch.models.utils.assorted</span> <span class="kn">import</span> <span class="n">fantasize</span> <span class="k">as</span> <span class="n">fantasize_flag</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors</span> <span class="kn">import</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">PosteriorList</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
@@ -604,8 +605,8 @@
             <span class="p">):</span>
                 <span class="k">raise</span> <span class="n">BotorchTensorDimensionError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"Expected evaluation_mask of shape `</span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> "</span>
-                    <span class="sa">f</span><span class="s2">"x </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span><span class="si">}</span><span class="s2">`, but got `"</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">' x '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">evaluation_mask</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s2">`."</span>
+                    <span class="sa">f</span><span class="s2">"x </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span><span class="si">}</span><span class="s2">`, but got "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">shape_to_str</span><span class="p">(</span><span class="n">evaluation_mask</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
                 <span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sampler</span><span class="p">,</span> <span class="n">ListSampler</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Decoupled fantasization requires a list of samplers."</span><span class="p">)</span>

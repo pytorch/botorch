@@ -51,7 +51,14 @@
 <span class="k">class</span> <span class="nc">abstractclassmethod</span><span class="p">(</span><span class="nb">classmethod</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A decorator indicating abstract classmethods.</span>
 
-<span class="sd">    Deprecated, use 'classmethod' with 'abstractmethod' instead.</span>
+<span class="sd">    Deprecated, use 'classmethod' with 'abstractmethod' instead:</span>
+
+<span class="sd">        class C(ABC):</span>
+<span class="sd">            @classmethod</span>
+<span class="sd">            @abstractmethod</span>
+<span class="sd">            def my_abstract_classmethod(cls, ...):</span>
+<span class="sd">                ...</span>
+
 <span class="sd">    """</span>
 
     <span class="n">__isabstractmethod__</span> <span class="o">=</span> <span class="kc">True</span>
@@ -64,7 +71,14 @@
 <span class="k">class</span> <span class="nc">abstractstaticmethod</span><span class="p">(</span><span class="nb">staticmethod</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A decorator indicating abstract staticmethods.</span>
 
-<span class="sd">    Deprecated, use 'staticmethod' with 'abstractmethod' instead.</span>
+<span class="sd">    Deprecated, use 'staticmethod' with 'abstractmethod' instead:</span>
+
+<span class="sd">        class C(ABC):</span>
+<span class="sd">            @staticmethod</span>
+<span class="sd">            @abstractmethod</span>
+<span class="sd">            def my_abstract_staticmethod(...):</span>
+<span class="sd">                ...</span>
+
 <span class="sd">    """</span>
 
     <span class="n">__isabstractmethod__</span> <span class="o">=</span> <span class="kc">True</span>
@@ -77,7 +91,14 @@
 <span class="k">class</span> <span class="nc">abstractproperty</span><span class="p">(</span><span class="nb">property</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A decorator indicating abstract properties.</span>
 
-<span class="sd">    Deprecated, use 'property' with 'abstractmethod' instead.</span>
+<span class="sd">    Deprecated, use 'property' with 'abstractmethod' instead:</span>
+
+<span class="sd">        class C(ABC):</span>
+<span class="sd">            @property</span>
+<span class="sd">            @abstractmethod</span>
+<span class="sd">            def my_abstract_property(self):</span>
+<span class="sd">                ...</span>
+
 <span class="sd">    """</span>
 
     <span class="n">__isabstractmethod__</span> <span class="o">=</span> <span class="kc">True</span>

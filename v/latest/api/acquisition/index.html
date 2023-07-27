@@ -94,6 +94,94 @@ produces a GPyTorchPosterior.</p>
 </dl>
 </dd></dl>
 </section>
+<section id="module-botorch.acquisition.decoupled">
+<span id="decoupled-acquisition-function-api"></span><h3>Decoupled Acquisition Function API<a class="headerlink" href="#module-botorch.acquisition.decoupled" title="Permalink to this heading">¶</a></h3>
+<p>Abstract base module for decoupled acquisition functions.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.decoupled.DecoupledAcquisitionFunction">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.decoupled.</span></span><span class="sig-name descname"><span class="pre">DecoupledAcquisitionFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_evaluation_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/decoupled.html#DecoupledAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.decoupled.DecoupledAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Abstract base class for decoupled acquisition functions.
+A decoupled acquisition function where one may intend to
+evaluate a design on only a subset of the outcomes.
+Typically this would be handled by fantasizing, where one
+would fantasize as to what the partial observation would
+be if one were to evaluate a design on the subset of
+outcomes (e.g. you only fantasize at those outcomes). The
+<cite>X_evaluation_mask</cite> specifies which outcomes should be
+evaluated for each design.  <cite>X_evaluation_mask</cite> is <cite>q x m</cite>,
+where there are q design points in the batch and m outcomes.
+In the asynchronous case, where there are n’ pending points,
+we need to track which outcomes each pending point should be
+evaluated on. In this case, we concatenate
+<cite>X_pending_evaluation_mask</cite> with <cite>X_evaluation_mask</cite> to obtain
+the full evaluation_mask.</p>
+<p>This abstract class handles generating and updating an evaluation mask,
+which is a boolean tensor indicating which outcomes a given design is
+being evaluated on. The evaluation mask has shape <cite>(n’ + q) x m</cite>, where
+n’ is the number of pending points and the q represents the new
+candidates to be generated.</p>
+<p>If <cite>X(_pending)_evaluation_mas`k is None, it is assumed that `X(_pending)</cite>
+will be evaluated on all outcomes.</p>
+<p>Initialize.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.ModelList" title="botorch.models.model.ModelList"><em>ModelList</em></a>) – A model</p></li>
+<li><p><strong>X_evaluation_mask</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>q x m</cite>-dim boolean tensor
+indicating which outcomes the decoupled acquisition
+function should generate new candidates for.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.acquisition.decoupled.DecoupledAcquisitionFunction.X_evaluation_mask">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">X_evaluation_mask</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.acquisition.decoupled.DecoupledAcquisitionFunction.X_evaluation_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the evaluation indices for the new candidate.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.decoupled.DecoupledAcquisitionFunction.set_X_pending">
+<span class="sig-name descname"><span class="pre">set_X_pending</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending_evaluation_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/decoupled.html#DecoupledAcquisitionFunction.set_X_pending"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.decoupled.DecoupledAcquisitionFunction.set_X_pending" title="Permalink to this definition">¶</a></dt>
+<dd><p>Informs the AF about pending design points for different outcomes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X_pending</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>n’ x d</cite> Tensor with <cite>n’</cite> <cite>d</cite>-dim design points that have
+been submitted for evaluation but have not yet been evaluated.</p></li>
+<li><p><strong>X_pending_evaluation_mask</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>n’ x m</cite>-dim tensor of booleans indicating
+for which outputs the pending point is being evaluated on. If
+<cite>X_pending_evaluation_mask</cite> is <cite>None</cite>, it is assumed that
+<cite>X_pending</cite> will be evaluated on all outcomes.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.decoupled.DecoupledAcquisitionFunction.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.decoupled.DecoupledAcquisitionFunction.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.decoupled.DecoupledAcquisitionFunction.construct_evaluation_mask">
+<span class="sig-name descname"><span class="pre">construct_evaluation_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/decoupled.html#DecoupledAcquisitionFunction.construct_evaluation_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.decoupled.DecoupledAcquisitionFunction.construct_evaluation_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct the boolean evaluation mask for X and X_pending</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of designs.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>n + n’ x m</cite>-dim tensor of booleans indicating
+which outputs should be evaluated.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em> | None</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</section>
 <section id="monte-carlo-acquisition-function-api">
 <h3>Monte-Carlo Acquisition Function API<a class="headerlink" href="#monte-carlo-acquisition-function-api" title="Permalink to this heading">¶</a></h3>
 <dl class="py class">

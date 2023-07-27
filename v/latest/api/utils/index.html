@@ -165,7 +165,7 @@ taken from the leading dimension of an n-dimensional source tensor.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.context_managers.TensorCheckpoint">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.context_managers.</span></span><span class="sig-name descname"><span class="pre">TensorCheckpoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/context_managers.html#TensorCheckpoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.context_managers.TensorCheckpoint" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">NamedTuple</span></code></p>
 <p>Create new instance of TensorCheckpoint(values, device, dtype)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -545,7 +545,7 @@ of registered methods to determine compatibility.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.utils.dispatcher.Dispatcher.encoder">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">encoder</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Type</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.utils.dispatcher.Dispatcher.encoder" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">encoder</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Type</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.utils.dispatcher.Dispatcher.encoder" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.utils.dispatcher.Dispatcher.name">
@@ -3580,8 +3580,8 @@ Applications. 1994.</p>
 </div>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.probability.mvnxpb.mvnxpbState">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.probability.mvnxpb.</span></span><span class="sig-name descname"><span class="pre">mvnxpbState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/probability/mvnxpb.html#mvnxpbState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.probability.mvnxpb.mvnxpbState" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.probability.mvnxpb.</span></span><span class="sig-name descname"><span class="pre">mvnxpbState</span></span><a class="reference internal" href="_modules/botorch/utils/probability/mvnxpb.html#mvnxpbState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.probability.mvnxpb.mvnxpbState" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TypedDict</span></code></p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.utils.probability.mvnxpb.mvnxpbState.step">
 <span class="sig-name descname"><span class="pre">step</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#botorch.utils.probability.mvnxpb.mvnxpbState.step" title="Permalink to this definition">¶</a></dt>

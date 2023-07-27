@@ -20,57 +20,88 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<section id="module-botorch.logging">
-<span id="botorch-logging"></span><h1>botorch.logging<a class="headerlink" href="#module-botorch.logging" title="Permalink to this heading">¶</a></h1>
-<dl class="py function">
-<dt class="sig sig-object py" id="botorch.logging.shape_to_str">
-<span class="sig-prename descclassname"><span class="pre">botorch.logging.</span></span><span class="sig-name descname"><span class="pre">shape_to_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shape</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/logging.html#shape_to_str"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.logging.shape_to_str" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>shape</strong> (<em>Size</em>) – </p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
-</dd>
-</dl>
-</dd></dl>
-</section>
+<h1>Source code for botorch.logging</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+
+<span class="n">LOG_LEVEL_DEFAULT</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">CRITICAL</span>
+
+
+<span class="k">def</span> <span class="nf">_get_logger</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"botorch"</span><span class="p">,</span> <span class="n">level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">LOG_LEVEL_DEFAULT</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Gets a default botorch logger</span>
+
+<span class="sd">    Logging level can be tuned via botorch.setting.log_level</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name: Name for logger instance</span>
+<span class="sd">        level: Logging threshhold for the given logger. Logs of greater or</span>
+<span class="sd">            equal severity will be printed to STDERR</span>
+<span class="sd">    """</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">level</span><span class="p">)</span>
+    <span class="c1"># Add timestamps to log messages.</span>
+    <span class="n">console</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">()</span>
+    <span class="n">formatter</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span>
+        <span class="n">fmt</span><span class="o">=</span><span class="s2">"[</span><span class="si">%(levelname)s</span><span class="s2"> </span><span class="si">%(asctime)s</span><span class="s2">] </span><span class="si">%(name)s</span><span class="s2">: </span><span class="si">%(message)s</span><span class="s2">"</span><span class="p">,</span>
+        <span class="n">datefmt</span><span class="o">=</span><span class="s2">"%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">console</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">formatter</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">console</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">propagate</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="n">logger</span>
+
+
+<div class="viewcode-block" id="shape_to_str"><a class="viewcode-back" href="../../logging.html#botorch.logging.shape_to_str">[docs]</a><span class="k">def</span> <span class="nf">shape_to_str</span><span class="p">(</span><span class="n">shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="s1">' x '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s2">`"</span></div>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">_get_logger</span><span class="p">()</span>
+</pre></div>
 </div>
 </div>
 </div>
 <div aria-label="main navigation" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="index.html">BoTorch</a></h1>
+<h1 class="logo"><a href="../../index.html">BoTorch</a></h1>
 <h3>Navigation</h3>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="acquisition.html">botorch.acquisition</a></li>
-<li class="toctree-l1"><a class="reference internal" href="models.html">botorch.models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="generation.html">botorch.generation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="posteriors.html">botorch.posteriors</a></li>
-<li class="toctree-l1"><a class="reference internal" href="optim.html">botorch.optim</a></li>
-<li class="toctree-l1"><a class="reference internal" href="fit.html">botorch.fit</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sampling.html">botorch.sampling</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cross_validation.html">botorch.cross_validation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="settings.html">botorch.settings</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">botorch.logging</a></li>
-<li class="toctree-l1"><a class="reference internal" href="test_functions.html">botorch.test_functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="exceptions.html">botorch.exceptions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="utils.html">botorch.utils</a></li>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../utils.html">botorch.utils</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
-<li><a href="index.html">Documentation overview</a><ul>
-<li>Previous: <a href="settings.html" title="previous chapter">botorch.settings</a></li>
-<li>Next: <a href="test_functions.html" title="next chapter">botorch.test_functions</a></li>
+<li><a href="../../index.html">Documentation overview</a><ul>
+<li><a href="../index.html">Module code</a><ul>
+</ul></li>
 </ul></li>
 </ul>
 </div>
 <div id="searchbox" role="search" style="display: none">
 <h3 id="searchlabel">Quick search</h3>
 <div class="searchformwrapper">
-<form action="search.html" class="search" method="get">
+<form action="../../search.html" class="search" method="get">
 <input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
 <input type="submit" value="Go"/>
 </form>

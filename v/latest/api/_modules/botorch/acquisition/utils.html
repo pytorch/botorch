@@ -123,7 +123,7 @@
             <span class="s2">"acquisition functions."</span>
         <span class="p">)</span>
     <span class="c1"># instantiate and return the requested acquisition function</span>
-    <span class="k">if</span> <span class="n">acquisition_function_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"qEI"</span><span class="p">,</span> <span class="s2">"qPI"</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">acquisition_function_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"qEI"</span><span class="p">,</span> <span class="s2">"qLogEI"</span><span class="p">,</span> <span class="s2">"qPI"</span><span class="p">):</span>
         <span class="c1"># Since these are the non-noisy variants, use the posterior mean at the observed</span>
         <span class="c1"># inputs directly to compute the best feasible value without sampling.</span>
         <span class="n">Y</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X_observed</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span>
@@ -148,6 +148,22 @@
             <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
             <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
         <span class="p">)</span>
+    <span class="k">if</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qLogEI"</span><span class="p">:</span>
+        <span class="c1"># putting the import here to avoid circular imports</span>
+        <span class="c1"># ideally, the entire function should be moved out of this file,</span>
+        <span class="c1"># but since it is used for legacy code to be deprecated, we keep it here.</span>
+        <span class="kn">from</span> <span class="nn">botorch.acquisition.logei</span> <span class="kn">import</span> <span class="n">qLogExpectedImprovement</span>
+
+        <span class="k">return</span> <span class="n">qLogExpectedImprovement</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">best_f</span><span class="o">=</span><span class="n">best_f</span><span class="p">,</span>
+            <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+            <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="k">elif</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qPI"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qProbabilityOfImprovement</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
@@ -162,6 +178,22 @@
         <span class="p">)</span>
     <span class="k">elif</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qNEI"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qNoisyExpectedImprovement</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">X_baseline</span><span class="o">=</span><span class="n">X_observed</span><span class="p">,</span>
+            <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+            <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
+            <span class="n">prune_baseline</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"prune_baseline"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+            <span class="n">marginalize_dim</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"marginalize_dim"</span><span class="p">),</span>
+            <span class="n">cache_root</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"cache_root"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qLogNEI"</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">botorch.acquisition.logei</span> <span class="kn">import</span> <span class="n">qLogNoisyExpectedImprovement</span>
+
+        <span class="k">return</span> <span class="n">qLogNoisyExpectedImprovement</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
             <span class="n">X_baseline</span><span class="o">=</span><span class="n">X_observed</span><span class="p">,</span>
             <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
