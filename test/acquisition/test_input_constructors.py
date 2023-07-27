@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+import math
+
 from typing import Callable
 from unittest import mock
 
@@ -72,8 +74,9 @@ from botorch.acquisition.utils import (
     project_to_target_fidelity,
 )
 from botorch.exceptions.errors import UnsupportedError
-from botorch.models import SingleTaskGP
+from botorch.models import MultiTaskGP, SingleTaskGP
 from botorch.models.deterministic import FixedSingleSampleModel
+from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.constraints import get_outcome_constraint_transforms
 from botorch.utils.datasets import SupervisedDataset
@@ -291,22 +294,36 @@ class TestAnalyticAcquisitionFunctionInputConstructors(
             c(model=mock_model, training_data=self.multiX_multiY)
 
     def test_construct_inputs_constrained_analytic_eubo(self):
+        # create dummy modellist gp
+        n = 10
+        X = torch.linspace(0, 0.95, n).unsqueeze(dim=-1)
+        Y1, Y2 = torch.sin(X * (2 * math.pi)), torch.cos(X * (2 * math.pi))
+        # 3 tasks
+        train_X = torch.cat(
+            [torch.nn.functional.pad(X, (1, 0), value=i) for i in range(3)]
+        )
+        train_Y = torch.cat([Y1, Y2])  # train_Y is a 1d tensor with shape (2n,)
+        # model list of 2, so model.num_outputs is 4
+        model = ModelListGP(
+            *[MultiTaskGP(train_X, train_Y, task_feature=0) for i in range(2)]
+        )
+        self.assertEqual(model.num_outputs, 6)
+
         c = get_acqf_input_constructor(AnalyticExpectedUtilityOfBestOption)
-        mock_model = mock.Mock()
-        mock_model.num_outputs = 3
-        mock_model.train_inputs = [None]
         mock_pref_model = mock.Mock()
+        # assume we only have a preference model with 2 outcomes
+        mock_pref_model.dim = 2
 
         # test basic construction
-        kwargs = c(model=mock_model, pref_model=mock_pref_model)
-        self.assertTrue(isinstance(kwargs["outcome_model"], FixedSingleSampleModel))
-        self.assertTrue(kwargs["pref_model"] is mock_pref_model)
-        self.assertTrue(kwargs["previous_winner"] is None)
+        kwargs = c(model=model, pref_model=mock_pref_model)
+        self.assertIsInstance(kwargs["outcome_model"], FixedSingleSampleModel)
+        self.assertIs(kwargs["pref_model"], mock_pref_model)
+        self.assertIsNone(kwargs["previous_winner"])
 
         # test previous_winner
-        previous_winner = torch.randn(3)
+        previous_winner = torch.randn(mock_pref_model.dim)
         kwargs = c(
-            model=mock_model,
+            model=model,
             pref_model=mock_pref_model,
             previous_winner=previous_winner,
         )
@@ -315,12 +332,14 @@ class TestAnalyticAcquisitionFunctionInputConstructors(
         # test sample_multiplier
         torch.manual_seed(123)
         kwargs = c(
-            model=mock_model,
+            model=model,
             pref_model=mock_pref_model,
             sample_multiplier=1e6,
         )
         # w by default is drawn from std normal and very unlikely to be > 10.0
         self.assertTrue((kwargs["outcome_model"].w.abs() > 10.0).all())
+        # Check w has the right dimension that agrees with the preference model
+        self.assertEqual(kwargs["outcome_model"].w.shape[-1], mock_pref_model.dim)
 
 
 class TestMCAcquisitionFunctionInputConstructors(

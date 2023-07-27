@@ -1235,7 +1235,9 @@ def construct_inputs_analytic_eubo(
     # construct a deterministic fixed single sample model from `model`
     # i.e., performing EUBO-zeta by default as described
     # in https://arxiv.org/abs/2203.11382
-    w = torch.randn(model.num_outputs) * sample_multiplier
+    # using pref_model.dim instead of model.num_outputs here as MTGP's
+    # num_outputs could be tied to the number of tasks
+    w = torch.randn(pref_model.dim) * sample_multiplier
     one_sample_outcome_model = FixedSingleSampleModel(model=model, w=w)
 
     return {
