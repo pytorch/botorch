@@ -28,6 +28,7 @@ from botorch.acquisition.cost_aware import (
     GenericCostAwareUtility,
     InverseCostWeightedUtility,
 )
+from botorch.acquisition.decoupled import DecoupledAcquisitionFunction
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
 from botorch.acquisition.input_constructors import get_acqf_input_constructor
 from botorch.acquisition.knowledge_gradient import (
@@ -78,6 +79,7 @@ __all__ = [
     "AnalyticAcquisitionFunction",
     "AnalyticExpectedUtilityOfBestOption",
     "ConstrainedExpectedImprovement",
+    "DecoupledAcquisitionFunction",
     "ExpectedImprovement",
     "LogExpectedImprovement",
     "LogNoisyExpectedImprovement",
