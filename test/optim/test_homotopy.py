@@ -7,6 +7,7 @@ import unittest.mock as mock
 
 import torch
 from botorch.acquisition import PosteriorMean
+from botorch.acquisition.monte_carlo import qExpectedImprovement
 from botorch.models import GenericDeterministicModel
 from botorch.optim.homotopy import (
     FixedHomotopySchedule,
@@ -141,6 +142,20 @@ class TestHomotopy(BotorchTestCase):
             fixed_features=fixed_features,
         )
         self.assertEqual(candidate[0, 0], torch.tensor(1, **tkwargs))
+
+        # With q > 1.
+        acqf = qExpectedImprovement(model=model, best_f=0.0)
+        candidate, acqf_val = optimize_acqf_homotopy(
+            q=3,
+            acq_function=acqf,
+            bounds=torch.tensor([[-10, -10], [5, 5]]).to(**tkwargs),
+            homotopy=Homotopy(homotopy_parameters=[hp]),
+            num_restarts=2,
+            raw_samples=16,
+            fixed_features=fixed_features,
+        )
+        self.assertEqual(candidate.shape, torch.Size([3, 2]))
+        self.assertEqual(acqf_val.shape, torch.Size([3]))
 
     def test_prune_candidates(self):
         tkwargs = {"device": self.device, "dtype": torch.double}

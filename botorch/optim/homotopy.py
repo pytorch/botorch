@@ -20,29 +20,24 @@ class HomotopySchedule(ABC):
     @abstractmethod
     def num_steps(self) -> int:
         """Number of steps in the schedule."""
-        pass
 
     @property
     @abstractmethod
     def value(self) -> Any:
         """Current value in the schedule."""
-        pass
 
     @property
     @abstractmethod
     def should_stop(self) -> bool:
         """Return true if we have incremented past the end of the schedule."""
-        pass
 
     @abstractmethod
     def restart(self) -> None:
         """Restart the schedule to start from the beginning."""
-        pass
 
     @abstractmethod
     def step(self) -> None:
         """Move to solving the next problem."""
-        pass
 
 
 class FixedHomotopySchedule(HomotopySchedule):
