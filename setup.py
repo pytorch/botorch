@@ -11,7 +11,7 @@ from setuptools import find_packages, setup
 
 # Minimum required python version
 REQUIRED_MAJOR = 3
-REQUIRED_MINOR = 8
+REQUIRED_MINOR = 9
 
 # Requirements for testing, formatting, and tutorials
 TEST_REQUIRES = ["pytest", "pytest-cov"]
@@ -96,7 +96,7 @@ setup(
     ],
     long_description=long_description,
     long_description_content_type="text/markdown",
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     packages=find_packages(exclude=["test", "test.*"]),
     install_requires=install_requires,
     extras_require={

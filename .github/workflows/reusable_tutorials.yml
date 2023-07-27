@@ -43,7 +43,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: "3.8"
+        python-version: "3.9"
     - name: Fetch all history for all tags and branches
       # We need to do this so setuptools_scm knows how to set the BoTorch version.
       run: git fetch --prune --unshallow

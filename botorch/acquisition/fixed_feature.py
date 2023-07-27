@@ -20,6 +20,35 @@ from torch import Tensor
 from torch.nn import Module
 
 
+def get_dtype_of_sequence(values: Sequence[Union[Tensor, float]]) -> torch.dtype:
+    """
+    Return torch.float32 if everything is single-precision and torch.float64
+    otherwise.
+
+    Numbers (non-tensors) are double-precision.
+    """
+
+    def _is_single(value: Union[Tensor, float]) -> bool:
+        return isinstance(value, Tensor) and value.dtype == torch.float32
+
+    all_single_precision = all(_is_single(value) for value in values)
+    return torch.float32 if all_single_precision else torch.float64
+
+
+def get_device_of_sequence(values: Sequence[Union[Tensor, float]]) -> torch.dtype:
+    """
+    CPU if everything is on the CPU; Cuda otherwise.
+
+    Numbers (non-tensors) are considered to be on the CPU.
+    """
+
+    def _is_cuda(value: Union[Tensor, float]) -> bool:
+        return hasattr(value, "device") and value.device == torch.device("cuda")
+
+    any_cuda = any(_is_cuda(value) for value in values)
+    return torch.device("cuda") if any_cuda else torch.device("cpu")
+
+
 class FixedFeatureAcquisitionFunction(AcquisitionFunction):
     """A wrapper around AquisitionFunctions to fix a subset of features.
 
@@ -58,27 +87,25 @@ class FixedFeatureAcquisitionFunction(AcquisitionFunction):
         """
         Module.__init__(self)
         self.acq_func = acq_function
-        dtype = torch.float
-        device = torch.device("cpu")
         self.d = d
+
         if isinstance(values, Tensor):
             new_values = values.detach().clone()
         else:
+
+            dtype = get_dtype_of_sequence(values)
+            device = get_device_of_sequence(values)
+
             new_values = []
             for value in values:
                 if isinstance(value, Number):
-                    new_values.append(torch.tensor([float(value)]))
+                    value = torch.tensor([value], dtype=dtype)
                 else:
-                    # if any value uses double, use double for all values
-                    # likewise if any value uses cuda, use cuda for all values
-                    dtype = value.dtype if value.dtype == torch.double else dtype
-                    device = value.device if value.device.type == "cuda" else device
                     if value.ndim == 0:  # since we can't broadcast with zero-d tensors
                         value = value.unsqueeze(0)
-                    new_values.append(value.detach().clone())
-            # move all values to same device
-            for i, val in enumerate(new_values):
-                new_values[i] = val.to(dtype=dtype, device=device)
+                    value = value.detach().clone()
+
+                new_values.append(value.to(dtype=dtype, device=device))
 
             # There are 3 cases for when `values` is a `Sequence`.
             # 1) `values` == list of floats as earlier.
