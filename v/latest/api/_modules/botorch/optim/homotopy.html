@@ -43,29 +43,24 @@
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">num_steps</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Number of steps in the schedule."""</span>
-        <span class="k">pass</span>
 
     <span class="nd">@property</span>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Current value in the schedule."""</span>
-        <span class="k">pass</span>
 
     <span class="nd">@property</span>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">should_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Return true if we have incremented past the end of the schedule."""</span>
-        <span class="k">pass</span>
 
 <div class="viewcode-block" id="HomotopySchedule.restart"><a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.HomotopySchedule.restart">[docs]</a>    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">restart</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Restart the schedule to start from the beginning."""</span>
-        <span class="k">pass</span></div>
+<span class="w">        </span><span class="sd">"""Restart the schedule to start from the beginning."""</span></div>
 
 <div class="viewcode-block" id="HomotopySchedule.step"><a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.HomotopySchedule.step">[docs]</a>    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Move to solving the next problem."""</span>
-        <span class="k">pass</span></div></div>
+<span class="w">        </span><span class="sd">"""Move to solving the next problem."""</span></div></div>
 
 
 <div class="viewcode-block" id="FixedHomotopySchedule"><a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.FixedHomotopySchedule">[docs]</a><span class="k">class</span> <span class="nc">FixedHomotopySchedule</span><span class="p">(</span><span class="n">HomotopySchedule</span><span class="p">):</span>

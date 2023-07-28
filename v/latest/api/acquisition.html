@@ -4666,7 +4666,7 @@ performs the inverse weighting on the sample level:
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>cost_model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A Model modeling the cost of evaluating a candidate
+<li><p><strong>cost_model</strong> (<em>Union</em><em>[</em><em>DeterministicModel</em><em>, </em><em>GPyTorchModel</em><em>]</em>) – A model of the cost of evaluating a candidate
 set <cite>X</cite>, where <cite>X</cite> are the same features as in the model for the
 acquisition function this is to be used with. If no cost_objective
 is specified, the outputs are required to be non-negative.</p></li>
@@ -4675,7 +4675,9 @@ samples from the cost model.</p></li>
 <li><p><strong>cost_objective</strong> (<em>Optional</em><em>[</em><em>MCAcquisitionObjective</em><em>]</em>) – If specified, transform the posterior mean / the
 posterior samples from the cost model. This can be used e.g. to
 un-transform predictions/samples of a cost model fit on the
-log-transformed cost (often done to ensure non-negativity).</p></li>
+log-transformed cost (often done to ensure non-negativity). If the
+cost model is multi-output, then by default this will sum the cost
+across outputs.</p></li>
 <li><p><strong>min_cost</strong> (<em>float</em>) – A value used to clamp the cost samples so that they are not
 too close to zero, which may cause numerical issues.</p></li>
 </ul>
@@ -4686,7 +4688,7 @@ too close to zero, which may cause numerical issues.</p></li>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.cost_aware.InverseCostWeightedUtility.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deltas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/cost_aware.html#InverseCostWeightedUtility.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.cost_aware.InverseCostWeightedUtility.forward" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deltas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_evaluation_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/cost_aware.html#InverseCostWeightedUtility.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.cost_aware.InverseCostWeightedUtility.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the cost function on the candidates and improvements.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -4698,6 +4700,8 @@ samples from the marginal improvement in utility over the
 current state at <cite>X</cite> for each t-batch.</p></li>
 <li><p><strong>sampler</strong> (<em>MCSampler</em><em> | </em><em>None</em>) – A sampler used for sampling from the posterior of the cost
 model (required if <cite>use_mean=False</cite>, ignored if <cite>use_mean=True</cite>).</p></li>
+<li><p><strong>X_evaluation_mask</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>q x m</cite>-dim boolean tensor indicating which
+outcomes should be evaluated for each design in the batch.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>

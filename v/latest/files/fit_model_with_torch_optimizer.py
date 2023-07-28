@@ -75,7 +75,7 @@ mll = mll.to(train_X)
 # We will use stochastic gradient descent (`torch.optim.SGD`) to optimize the kernel hyperparameters and the noise level. In this example, we will use a simple fixed learning rate of 0.1, but in practice the learning rate may need to be adjusted.
 # 
 # Notes:
-# - As the `GaussianLikelihood` module is a of child (submodule) of the `SingleTaskGP` moduel, `model.parameters()` will also include the noise level of the `GaussianLikelihood`. 
+# - As the `GaussianLikelihood` module is a of child (submodule) of the `SingleTaskGP` module, `model.parameters()` will also include the noise level of the `GaussianLikelihood`. 
 # - A subset of the parameters could be passed to the optimizer to tune those parameters, while leaving the other parameters fixed.
 
 # In[6]:
