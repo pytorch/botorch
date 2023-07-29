@@ -1258,7 +1258,9 @@
     <span class="c1"># construct a deterministic fixed single sample model from `model`</span>
     <span class="c1"># i.e., performing EUBO-zeta by default as described</span>
     <span class="c1"># in https://arxiv.org/abs/2203.11382</span>
-    <span class="n">w</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">num_outputs</span><span class="p">)</span> <span class="o">*</span> <span class="n">sample_multiplier</span>
+    <span class="c1"># using pref_model.dim instead of model.num_outputs here as MTGP's</span>
+    <span class="c1"># num_outputs could be tied to the number of tasks</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">pref_model</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span> <span class="o">*</span> <span class="n">sample_multiplier</span>
     <span class="n">one_sample_outcome_model</span> <span class="o">=</span> <span class="n">FixedSingleSampleModel</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="p">{</span>
