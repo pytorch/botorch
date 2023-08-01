@@ -62,8 +62,6 @@ def optimize_acqf_homotopy(
 ) -> Tuple[Tensor, Tensor]:
     r"""Generate a set of candidates via multi-start optimization.
 
-    TODO: Merge with `optimize_acqf` before moving to OSS.
-
     Args:
         acq_function: An AcquisitionFunction.
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
@@ -87,17 +85,10 @@ def optimize_acqf_homotopy(
     if q > 1:
         base_X_pending = acq_function.X_pending
 
-    # TODO: Another option would be to have the homotopy in the outer loop and
-    # optimize over q in the inner loop. May be interesting to benchmark.
     for _ in range(q):
-        # TODO: Do we want to generate new initial conditions after generating
-        # the first candidate?
         candidates = batch_initial_conditions
         homotopy.restart()
 
-        # TODO: Do we want to allow using a decreasing number of initial conditions?
-        # It may be advantageous to start with a large number and prune the least
-        # promising candidates as we step through the homotopies.
         while not homotopy.should_stop:
             candidates, acq_values = optimize_acqf(
                 q=1,
