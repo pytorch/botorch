@@ -175,7 +175,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        A `n_samples x b x q`-dim tensor of feasibility indicator values.</span>
 <span class="sd">    """</span>
-    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span> <span class="o">!=</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">eta</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">constraints</span><span class="p">),),</span> <span class="n">eta</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">constraints</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>

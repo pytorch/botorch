@@ -325,7 +325,7 @@
             <span class="k">if</span> <span class="n">_self</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">_other</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">continue</span>
 
-            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">_self</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">type</span><span class="p">(</span><span class="n">_other</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">_self</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="n">_other</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"Concatenation failed: `self.</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">` has type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">_self</span><span class="p">)</span><span class="si">}</span><span class="s2">, "</span>
                     <span class="sa">f</span><span class="s2">"but `other.</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">` is of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">_self</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>

@@ -85,8 +85,6 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Generate a set of candidates via multi-start optimization.</span>
 
-<span class="sd">    TODO: Merge with `optimize_acqf` before moving to OSS.</span>
-
 <span class="sd">    Args:</span>
 <span class="sd">        acq_function: An AcquisitionFunction.</span>
 <span class="sd">        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.</span>
@@ -110,17 +108,10 @@
     <span class="k">if</span> <span class="n">q</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">base_X_pending</span> <span class="o">=</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">X_pending</span>
 
-    <span class="c1"># TODO: Another option would be to have the homotopy in the outer loop and</span>
-    <span class="c1"># optimize over q in the inner loop. May be interesting to benchmark.</span>
     <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">q</span><span class="p">):</span>
-        <span class="c1"># TODO: Do we want to generate new initial conditions after generating</span>
-        <span class="c1"># the first candidate?</span>
         <span class="n">candidates</span> <span class="o">=</span> <span class="n">batch_initial_conditions</span>
         <span class="n">homotopy</span><span class="o">.</span><span class="n">restart</span><span class="p">()</span>
 
-        <span class="c1"># TODO: Do we want to allow using a decreasing number of initial conditions?</span>
-        <span class="c1"># It may be advantageous to start with a large number and prune the least</span>
-        <span class="c1"># promising candidates as we step through the homotopies.</span>
         <span class="k">while</span> <span class="ow">not</span> <span class="n">homotopy</span><span class="o">.</span><span class="n">should_stop</span><span class="p">:</span>
             <span class="n">candidates</span><span class="p">,</span> <span class="n">acq_values</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
                 <span class="n">q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>

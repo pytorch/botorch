@@ -141,7 +141,7 @@
 <span class="sd">        """</span>
         <span class="n">other_state_dict</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+            <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
             <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transform_on_train</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">transform_on_train</span><span class="p">)</span>
             <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transform_on_eval</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">transform_on_eval</span><span class="p">)</span>
             <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transform_on_fantasize</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">transform_on_fantasize</span><span class="p">)</span>
@@ -1570,7 +1570,7 @@
 <span class="sd">            A boolean indicating if the other transform is equivalent.</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+            <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
             <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transform_on_train</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">transform_on_train</span><span class="p">)</span>
             <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transform_on_eval</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">transform_on_eval</span><span class="p">)</span>
             <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transform_on_fantasize</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">transform_on_fantasize</span><span class="p">)</span>

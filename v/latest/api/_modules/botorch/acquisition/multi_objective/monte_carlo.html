@@ -159,7 +159,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">add_module</span><span class="p">(</span><span class="s2">"objective"</span><span class="p">,</span> <span class="n">objective</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span> <span class="o">=</span> <span class="n">constraints</span>
         <span class="k">if</span> <span class="n">constraints</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span> <span class="o">!=</span> <span class="n">Tensor</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Tensor</span><span class="p">:</span>
                 <span class="n">eta</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">constraints</span><span class="p">),),</span> <span class="n">eta</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"eta"</span><span class="p">,</span> <span class="n">eta</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">X_pending</span> <span class="o">=</span> <span class="kc">None</span>
