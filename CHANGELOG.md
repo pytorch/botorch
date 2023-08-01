@@ -6,6 +6,9 @@ The release log for BoTorch.
 
 #### Compatibility
 * Require Python >= 3.9.0 (#1924).
+* Require PyTorch >= 1.13.1 (#1960).
+* Require linear_operator == 0.5.0 (#1961).
+* Require GPyTorch == 1.11 (#1961).
 
 #### Highlights
 * Introduce `OrthogonalAdditiveKernel` (#1869).
@@ -25,7 +28,7 @@ The release log for BoTorch.
 * Enable batching in `PriorGuidedAcquisitionFunction` (#1925).
 
 #### Other changes
-* Deprecate `FixedNoiseMultiTaskGP`; allow `trainY_var` optionally in `MultiTaskGP` (#1818).
+* Deprecate `FixedNoiseMultiTaskGP`; allow `train_Yvar` optionally in `MultiTaskGP` (#1818).
 * Implement `load_state_dict` for SAAS multi-task GP (#1825).
 * Improvements to `LinearEllipticalSliceSampler` (#1859, #1878, #1879, #1883).
 * Allow passing in task features as part of X in MTGP.posterior (#1868).
@@ -43,6 +46,7 @@ The release log for BoTorch.
 * Make `FixedFeatureAcquisitionFunction` convert floats to double-precision tensors rather than single-precision (#1944).
 * Fix memory leak in `FullyBayesianPosterior` (#1951).
 * Make `AnalyticExpectedUtilityOfBestOption` input constructor work correctionly with multi-task GPs (#1955).
+
 
 ## [0.8.5] - May 8, 2023
 
