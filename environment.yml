@@ -5,8 +5,8 @@ channels:
   - conda-forge
 dependencies:
   - pytorch>=1.12
-  - gpytorch==1.10
-  - linear_operator==0.4.0
+  - gpytorch==1.11
+  - linear_operator==0.5.0
   - scipy
   - multipledispatch
   - pyro-ppl>=1.8.4
