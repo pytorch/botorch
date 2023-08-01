@@ -12,8 +12,7 @@ The release log for BoTorch.
 * Speed up LCE-A kernel by over an order of magnitude (#1910).
 * Introduce `optimize_acqf_homotopy`, for optimizing acquisition functions with homotopy (#1915).
 * Introduce `PriorGuidedAcquisitionFunction` (PiBO) (#1920).
-* Introduce `qLogExpectedImprovement`, which provides more accurate numerics 
-than `qExpectedImprovement` and can lead to significant optimization improvements (#1936).
+* Introduce `qLogExpectedImprovement`, which provides more accurate numerics than `qExpectedImprovement` and can lead to significant optimization improvements (#1936).
 * Similarly, introduce `qLogNoisyExpectedImprovement`, which is analogous to `qNoisyExpectedImprovement` (#1937).
 
 #### New Features
@@ -43,7 +42,7 @@ than `qExpectedImprovement` and can lead to significant optimization improvement
 * Properly whiten bounds in MVNXPB (#1933).
 * Make `FixedFeatureAcquisitionFunction` convert floats to double-precision tensors rather than single-precision (#1944).
 * Fix memory leak in `FullyBayesianPosterior` (#1951).
-* Make `AnalyticExpectedUtilityOfBestOption` input constructor work correctionly with multi-task GPs (#1955). 
+* Make `AnalyticExpectedUtilityOfBestOption` input constructor work correctionly with multi-task GPs (#1955).
 
 ## [0.8.5] - May 8, 2023
 
