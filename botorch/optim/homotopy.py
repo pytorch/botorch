@@ -139,7 +139,6 @@ class Homotopy:
                 `restart`, `reset`, or `step` are called. These may be used to, e.g.,
                 reinitialize the acquisition function which is needed when using qNEHVI.
         """
-        # TODO: Check inputs
         self._homotopy_parameters = homotopy_parameters
         self._callbacks = callbacks or []
         self._original_values = [

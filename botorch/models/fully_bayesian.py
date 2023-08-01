@@ -64,11 +64,11 @@ _sqrt5 = math.sqrt(5)
 
 
 def _handle_torch_linalg(exception: Exception) -> bool:
-    return type(exception) == torch.linalg.LinAlgError
+    return type(exception) is torch.linalg.LinAlgError
 
 
 def _handle_valerr_in_dist_init(exception: Exception) -> bool:
-    if not type(exception) == ValueError:
+    if type(exception) is not ValueError:
         return False
     return "satisfy the constraint PositiveDefinite()" in str(exception)
 

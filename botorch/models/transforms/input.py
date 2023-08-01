@@ -118,7 +118,7 @@ class InputTransform(ABC):
         """
         other_state_dict = other.state_dict()
         return (
-            type(self) == type(other)
+            type(self) is type(other)
             and (self.transform_on_train == other.transform_on_train)
             and (self.transform_on_eval == other.transform_on_eval)
             and (self.transform_on_fantasize == other.transform_on_fantasize)
@@ -1547,7 +1547,7 @@ class OneHotToNumeric(InputTransform, Module):
             A boolean indicating if the other transform is equivalent.
         """
         return (
-            type(self) == type(other)
+            type(self) is type(other)
             and (self.transform_on_train == other.transform_on_train)
             and (self.transform_on_eval == other.transform_on_eval)
             and (self.transform_on_fantasize == other.transform_on_fantasize)

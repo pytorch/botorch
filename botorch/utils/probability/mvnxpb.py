@@ -302,7 +302,7 @@ class MVNXPB:
             if _self is None and _other is None:
                 continue
 
-            if type(_self) != type(_other):
+            if type(_self) is not type(_other):
                 raise TypeError(
                     f"Concatenation failed: `self.{key}` has type {type(_self)}, "
                     f"but `other.{key}` is of type {type(_self)}."

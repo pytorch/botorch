@@ -152,7 +152,7 @@ def compute_smoothed_feasibility_indicator(
     Returns:
         A `n_samples x b x q`-dim tensor of feasibility indicator values.
     """
-    if type(eta) != Tensor:
+    if type(eta) is not Tensor:
         eta = torch.full((len(constraints),), eta)
     if len(eta) != len(constraints):
         raise ValueError(

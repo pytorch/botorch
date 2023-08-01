@@ -136,7 +136,7 @@ class MultiObjectiveMCAcquisitionFunction(AcquisitionFunction, MCSamplerMixin, A
         self.add_module("objective", objective)
         self.constraints = constraints
         if constraints:
-            if type(eta) != Tensor:
+            if type(eta) is not Tensor:
                 eta = torch.full((len(constraints),), eta)
             self.register_buffer("eta", eta)
         self.X_pending = None

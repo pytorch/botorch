@@ -702,7 +702,7 @@ class TestPyroCatchNumericalErrors(BotorchTestCase):
 
         # But once we register this specific error then it should
         def catch_runtime_error(e):
-            return type(e) == RuntimeError and "foo" in str(e)
+            return type(e) is RuntimeError and "foo" in str(e)
 
         register_exception_handler("foo_runtime", catch_runtime_error)
         _, val = potential_grad(potential_fn_rterr_foo, z)
