@@ -494,7 +494,7 @@ class ConstrainedMCObjective(GenericMCObjective):
         """
         super().__init__(objective=objective)
         self.constraints = constraints
-        if type(eta) != Tensor:
+        if type(eta) is not Tensor:
             eta = torch.full((len(constraints),), eta)
         self.register_buffer("eta", eta)
         self.register_buffer("infeasible_cost", torch.as_tensor(infeasible_cost))
