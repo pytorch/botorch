@@ -6,7 +6,7 @@ channels:
 dependencies:
   - pytorch>=1.13.1
   - gpytorch==1.11
-  - linear_operator==0.5.0
+  - linear_operator==0.5.1
   - scipy
   - multipledispatch
   - pyro-ppl>=1.8.4
