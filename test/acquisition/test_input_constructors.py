@@ -810,7 +810,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             X_pending=X_pending,
             eta=1e-2,
             prune_baseline=True,
-            alpha=0.1,
+            alpha=0.0,
             cache_pending=False,
             max_iep=1,
             incremental_nehvi=False,
@@ -831,7 +831,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         self.assertTrue(torch.equal(kwargs["X_pending"], X_pending))
         self.assertEqual(kwargs["eta"], 1e-2)
         self.assertTrue(kwargs["prune_baseline"])
-        self.assertEqual(kwargs["alpha"], 0.1)
+        self.assertEqual(kwargs["alpha"], 0.0)
         self.assertFalse(kwargs["cache_pending"])
         self.assertEqual(kwargs["max_iep"], 1)
         self.assertFalse(kwargs["incremental_nehvi"])
@@ -874,7 +874,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             training_data=self.blockX_blockY,
             objective_thresholds=objective_thresholds,
         )
-        self.assertEqual(kwargs["alpha"], 1e-3)
+        self.assertEqual(kwargs["alpha"], 0.0)
 
     def test_construct_inputs_kg(self):
         current_value = torch.tensor(1.23)

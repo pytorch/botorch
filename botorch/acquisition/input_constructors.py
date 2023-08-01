@@ -986,7 +986,6 @@ def construct_inputs_qNEHVI(
             first_only=True,
             assert_shared=True,
         )
-
     # This selects the objectives (a subset of the outcomes) and set each
     # objective threhsold to have the proper optimization direction.
     if objective is None:
@@ -1014,6 +1013,8 @@ def construct_inputs_qNEHVI(
     else:
         ref_point = objective(objective_thresholds)
 
+    num_objectives = objective_thresholds[~torch.isnan(objective_thresholds)].shape[0]
+
     return {
         "model": model,
         "ref_point": ref_point,
@@ -1024,7 +1025,7 @@ def construct_inputs_qNEHVI(
         "X_pending": kwargs.get("X_pending"),
         "eta": kwargs.get("eta", 1e-3),
         "prune_baseline": kwargs.get("prune_baseline", True),
-        "alpha": kwargs.get("alpha", get_default_partitioning_alpha(model.num_outputs)),
+        "alpha": kwargs.get("alpha", get_default_partitioning_alpha(num_objectives)),
         "cache_pending": kwargs.get("cache_pending", True),
         "max_iep": kwargs.get("max_iep", 0),
         "incremental_nehvi": kwargs.get("incremental_nehvi", True),
