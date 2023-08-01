@@ -2,7 +2,12 @@
 
 The release log for BoTorch.
 
-## [0.9.0] - July 31, 2023
+## [0.9.1] - Aug 1, 2023
+
+* Require linear_operator == 0.5.1 (#1963).
+
+
+## [0.9.0] - Aug 1, 2023
 
 #### Compatibility
 * Require Python >= 3.9.0 (#1924).
