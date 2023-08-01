@@ -65,13 +65,13 @@ def get_acquisition_function(
         constraints: A list of callables, each mapping a Tensor of dimension
             `sample_shape x batch-shape x q x m` to a Tensor of dimension
             `sample_shape x batch-shape x q`, where negative values imply
-            feasibility. Used only for qEHVI and qNEHVI.
+            feasibility. Used for all acquisition functions despite qSR and qUCB.
         eta: The temperature parameter for the sigmoid function used for the
             differentiable approximation of the constraints. In case of a float the
             same eta is used for every constraint in constraints. In case of a
             tensor the length of the tensor must match the number of provided
             constraints. The i-th constraint is then estimated with the i-th
-            eta value. Used only for qEHVI and qNEHVI.
+            eta value. Used for all acquisition functions despite qSR and qUCB.
         mc_samples: The number of samples to use for (q)MC evaluation of the
             acquisition function.
         seed: If provided, perform deterministic optimization (i.e. the
