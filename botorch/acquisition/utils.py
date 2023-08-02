@@ -65,7 +65,7 @@ def get_acquisition_function(
         constraints: A list of callables, each mapping a Tensor of dimension
             `sample_shape x batch-shape x q x m` to a Tensor of dimension
             `sample_shape x batch-shape x q`, where negative values imply
-            feasibility. Used for all acquisition functions despite qSR and qUCB.
+            feasibility. Used for all acquisition functions except qSR and qUCB.
         eta: The temperature parameter for the sigmoid function used for the
             differentiable approximation of the constraints. In case of a float the
             same eta is used for every constraint in constraints. In case of a
