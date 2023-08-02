@@ -71,7 +71,7 @@ def get_acquisition_function(
             same eta is used for every constraint in constraints. In case of a
             tensor the length of the tensor must match the number of provided
             constraints. The i-th constraint is then estimated with the i-th
-            eta value. Used for all acquisition functions despite qSR and qUCB.
+            eta value. Used for all acquisition functions except qSR and qUCB.
         mc_samples: The number of samples to use for (q)MC evaluation of the
             acquisition function.
         seed: If provided, perform deterministic optimization (i.e. the
