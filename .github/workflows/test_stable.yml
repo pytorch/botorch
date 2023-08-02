@@ -70,10 +70,15 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
+      env:
+        PYTHON_VERSION: ${{ matrix.python-version }}
+        OS: ${{ matrix.os }}
       run: |
         python setup.py egg_info
         req_txt="botorch.egg-info/requires.txt"
         min_torch_version=$(grep '\btorch[>=]=' ${req_txt} | sed 's/[^0-9.]//g')
+        # HACK around the fact that pytorch does not offer a mac binary for 1.13.1 for py3.11 - TODO: Remove when bumping torch to 2.0.1
+        min_torch_version=$(if [[ "${min_torch_version}"=="1.13.1" ]] && [[ "${PYTHON_VERSION}"=="3.11" ]] && [[ "${OS}"=="macos-latest" ]]; then echo "2.0.1"; else echo "${min_torch_version}"; fi)
         min_gpytorch_version=$(grep '\bgpytorch[>=]=' ${req_txt} | sed 's/[^0-9.]//g')
         min_linear_operator_version=$(grep '\blinear_operator[>=]=' ${req_txt} | sed 's/[^0-9.]//g')
         pip install "torch==${min_torch_version}" "gpytorch==${min_gpytorch_version}" "linear_operator==${min_linear_operator_version}"
