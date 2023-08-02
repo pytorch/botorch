@@ -1,11 +1,8 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
-              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-              ga('create', 'G-CXN3PGE3CC', 'auto');
-              ga('send', 'pageview');
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-CXN3PGE3CC"></script><script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments); }
+              gtag('js', new Date());
+              gtag('config', 'G-CXN3PGE3CC');
             </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
@@ -32,7 +29,32 @@
 
 <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">Synthetic functions for optimization benchmarks.</span>
-<span class="sd">Reference: https://www.sfu.ca/~ssurjano/optimization.html</span>
+
+<span class="sd">Most test functions (if not indicated otherwise) are taken from</span>
+<span class="sd">[Bingham2013virtual]_.</span>
+
+
+<span class="sd">References:</span>
+
+<span class="sd">.. [Bingham2013virtual]</span>
+<span class="sd">    D. Bingham, S. Surjanovic. Virtual Library of Simulation Experiments.</span>
+<span class="sd">    https://www.sfu.ca/~ssurjano/optimization.html</span>
+
+<span class="sd">.. [CoelloCoello2002constraint]</span>
+<span class="sd">    C. A. Coello Coello and E. Mezura Montes. Constraint-handling in genetic</span>
+<span class="sd">    algorithms through the use of dominance-based tournament selection.</span>
+<span class="sd">    Advanced Engineering Informatics, 16(3):193–203, 2002.</span>
+
+<span class="sd">.. [Hedar2006derivfree]</span>
+<span class="sd">    A.-R. Hedar and M. Fukushima. Derivative-free filter simulated annealing</span>
+<span class="sd">    method for constrained continuous global optimization. Journal of Global</span>
+<span class="sd">    Optimization, 35(4):521–549, 2006.</span>
+
+<span class="sd">.. [Lemonge2010constrained]</span>
+<span class="sd">    A. C. C. Lemonge, H. J. C. Barbosa, C. C. H. Borges, and F. B. dos Santos</span>
+<span class="sd">    Silva. Constrained optimization problems in mechanical engineering design</span>
+<span class="sd">    using a real-coded steady-state genetic algorithm. Mecánica Computacional,</span>
+<span class="sd">    XXIX:9287–9303, 2010.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
@@ -41,7 +63,8 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.test_functions.base</span> <span class="kn">import</span> <span class="n">BaseTestProblem</span>
+<span class="kn">from</span> <span class="nn">botorch.test_functions.base</span> <span class="kn">import</span> <span class="n">BaseTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span>
+<span class="kn">from</span> <span class="nn">botorch.test_functions.utils</span> <span class="kn">import</span> <span class="n">round_nearest</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
@@ -787,6 +810,185 @@
 <div class="viewcode-block" id="ThreeHumpCamel.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.ThreeHumpCamel.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
         <span class="k">return</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">x1</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">1.05</span> <span class="o">*</span> <span class="n">x1</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> <span class="n">x1</span><span class="o">**</span><span class="mi">6</span> <span class="o">/</span> <span class="mf">6.0</span> <span class="o">+</span> <span class="n">x1</span> <span class="o">*</span> <span class="n">x2</span> <span class="o">+</span> <span class="n">x2</span><span class="o">**</span><span class="mi">2</span></div></div>
+
+
+<span class="c1">#  ------------ Constrained synthetic test functions ----------- #</span>
+
+
+<div class="viewcode-block" id="PressureVessel"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.PressureVessel">[docs]</a><span class="k">class</span> <span class="nc">PressureVessel</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Pressure vessel design problem with constraints.</span>
+
+<span class="sd">    The four-dimensional pressure vessel design problem with four black-box</span>
+<span class="sd">    constraints from [CoelloCoello2002constraint]_.</span>
+<span class="sd">    """</span>
+
+    <span class="n">dim</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">num_constraints</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">50.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">150.0</span><span class="p">,</span> <span class="mf">200.0</span><span class="p">)]</span>
+
+<div class="viewcode-block" id="PressureVessel.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.PressureVessel.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">x3</span><span class="p">,</span> <span class="n">x4</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">x1</span> <span class="o">=</span> <span class="n">round_nearest</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">increment</span><span class="o">=</span><span class="mf">0.0625</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">x2</span> <span class="o">=</span> <span class="n">round_nearest</span><span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">increment</span><span class="o">=</span><span class="mf">0.0625</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="mf">0.6224</span> <span class="o">*</span> <span class="n">x1</span> <span class="o">*</span> <span class="n">x3</span> <span class="o">*</span> <span class="n">x4</span>
+            <span class="o">+</span> <span class="mf">1.7781</span> <span class="o">*</span> <span class="n">x2</span> <span class="o">*</span> <span class="p">(</span><span class="n">x3</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+            <span class="o">+</span> <span class="mf">3.1661</span> <span class="o">*</span> <span class="p">(</span><span class="n">x1</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x4</span>
+            <span class="o">+</span> <span class="mf">19.84</span> <span class="o">*</span> <span class="p">(</span><span class="n">x1</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x3</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="PressureVessel.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.PressureVessel.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">x3</span><span class="p">,</span> <span class="n">x4</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="o">-</span><span class="n">x1</span> <span class="o">+</span> <span class="mf">0.0193</span> <span class="o">*</span> <span class="n">x3</span><span class="p">,</span>
+                <span class="o">-</span><span class="n">x2</span> <span class="o">+</span> <span class="mf">0.00954</span> <span class="o">*</span> <span class="n">x3</span><span class="p">,</span>
+                <span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="n">x3</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x4</span> <span class="o">-</span> <span class="p">(</span><span class="mi">4</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="n">x3</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1296000.0</span><span class="p">,</span>
+                <span class="n">x4</span> <span class="o">-</span> <span class="mf">240.0</span><span class="p">,</span>
+            <span class="p">],</span>
+            <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="WeldedBeamSO"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.WeldedBeamSO">[docs]</a><span class="k">class</span> <span class="nc">WeldedBeamSO</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Welded beam design problem with constraints (single-outcome).</span>
+
+<span class="sd">    The four-dimensional welded beam design proble problem with six</span>
+<span class="sd">    black-box constraints from [CoelloCoello2002constraint]_.</span>
+
+<span class="sd">    For a (somewhat modified) multi-objective version, see</span>
+<span class="sd">    `botorch.test_functions.multi_objective.WeldedBeam`.</span>
+<span class="sd">    """</span>
+
+    <span class="n">dim</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">num_constraints</span> <span class="o">=</span> <span class="mi">6</span>
+    <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.125</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">)]</span>
+
+<div class="viewcode-block" id="WeldedBeamSO.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.WeldedBeamSO.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">x3</span><span class="p">,</span> <span class="n">x4</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mf">1.10471</span> <span class="o">*</span> <span class="p">(</span><span class="n">x1</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x2</span> <span class="o">+</span> <span class="mf">0.04811</span> <span class="o">*</span> <span class="n">x3</span> <span class="o">*</span> <span class="n">x4</span> <span class="o">*</span> <span class="p">(</span><span class="mf">14.0</span> <span class="o">+</span> <span class="n">x2</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WeldedBeamSO.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.WeldedBeamSO.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">x3</span><span class="p">,</span> <span class="n">x4</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="mf">6000.0</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="mf">14.0</span>
+        <span class="n">E</span> <span class="o">=</span> <span class="mf">30e6</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="mf">12e6</span>
+        <span class="n">t_max</span> <span class="o">=</span> <span class="mf">13600.0</span>
+        <span class="n">s_max</span> <span class="o">=</span> <span class="mf">30000.0</span>
+        <span class="n">d_max</span> <span class="o">=</span> <span class="mf">0.25</span>
+
+        <span class="n">M</span> <span class="o">=</span> <span class="n">P</span> <span class="o">*</span> <span class="p">(</span><span class="n">L</span> <span class="o">+</span> <span class="n">x2</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">0.25</span> <span class="o">*</span> <span class="p">(</span><span class="n">x2</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">x1</span> <span class="o">+</span> <span class="n">x3</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="n">J</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x1</span> <span class="o">*</span> <span class="n">x2</span> <span class="o">*</span> <span class="p">(</span><span class="n">x2</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="mi">12</span> <span class="o">+</span> <span class="mf">0.25</span> <span class="o">*</span> <span class="p">(</span><span class="n">x1</span> <span class="o">+</span> <span class="n">x3</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">P_c</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="mf">4.013</span>
+            <span class="o">*</span> <span class="n">E</span>
+            <span class="o">*</span> <span class="n">x3</span>
+            <span class="o">*</span> <span class="p">(</span><span class="n">x4</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
+            <span class="o">*</span> <span class="mi">6</span>
+            <span class="o">/</span> <span class="p">(</span><span class="n">L</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+            <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mf">0.25</span> <span class="o">*</span> <span class="n">x3</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">E</span> <span class="o">/</span> <span class="n">G</span><span class="p">)</span> <span class="o">/</span> <span class="n">L</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">t1</span> <span class="o">=</span> <span class="n">P</span> <span class="o">/</span> <span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x1</span> <span class="o">*</span> <span class="n">x2</span><span class="p">)</span>
+        <span class="n">t2</span> <span class="o">=</span> <span class="n">M</span> <span class="o">*</span> <span class="n">R</span> <span class="o">/</span> <span class="n">J</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">t1</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">t1</span> <span class="o">*</span> <span class="n">t2</span> <span class="o">*</span> <span class="n">x2</span> <span class="o">/</span> <span class="n">R</span> <span class="o">+</span> <span class="n">t2</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="mi">6</span> <span class="o">*</span> <span class="n">P</span> <span class="o">*</span> <span class="n">L</span> <span class="o">/</span> <span class="p">(</span><span class="n">x4</span> <span class="o">*</span> <span class="n">x3</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">P</span> <span class="o">*</span> <span class="n">L</span><span class="o">**</span><span class="mi">3</span> <span class="o">/</span> <span class="p">(</span><span class="n">E</span> <span class="o">*</span> <span class="n">x3</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">x4</span><span class="p">)</span>
+
+        <span class="n">g1</span> <span class="o">=</span> <span class="n">t</span> <span class="o">-</span> <span class="n">t_max</span>
+        <span class="n">g2</span> <span class="o">=</span> <span class="n">s</span> <span class="o">-</span> <span class="n">s_max</span>
+        <span class="n">g3</span> <span class="o">=</span> <span class="n">x1</span> <span class="o">-</span> <span class="n">x4</span>
+        <span class="n">g4</span> <span class="o">=</span> <span class="mf">0.10471</span> <span class="o">*</span> <span class="n">x1</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">0.04811</span> <span class="o">*</span> <span class="n">x3</span> <span class="o">*</span> <span class="n">x4</span> <span class="o">*</span> <span class="p">(</span><span class="mf">14.0</span> <span class="o">+</span> <span class="n">x2</span><span class="p">)</span> <span class="o">-</span> <span class="mf">5.0</span>
+        <span class="n">g5</span> <span class="o">=</span> <span class="n">d</span> <span class="o">-</span> <span class="n">d_max</span>
+        <span class="n">g6</span> <span class="o">=</span> <span class="n">P</span> <span class="o">-</span> <span class="n">P_c</span>
+
+        <span class="k">return</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">,</span> <span class="n">g3</span><span class="p">,</span> <span class="n">g4</span><span class="p">,</span> <span class="n">g5</span><span class="p">,</span> <span class="n">g6</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="TensionCompressionString"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.TensionCompressionString">[docs]</a><span class="k">class</span> <span class="nc">TensionCompressionString</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Tension compression string optimization problem with constraints.</span>
+
+<span class="sd">    The three-dimensional tension compression string optimization problem with</span>
+<span class="sd">    four black-box constraints from [Hedar2006derivfree]_.</span>
+<span class="sd">    """</span>
+
+    <span class="n">dim</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">num_constraints</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">)]</span>
+
+<div class="viewcode-block" id="TensionCompressionString.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.TensionCompressionString.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">x3</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">x1</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x2</span> <span class="o">*</span> <span class="p">(</span><span class="n">x3</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TensionCompressionString.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.TensionCompressionString.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">x3</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">x2</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="n">x3</span> <span class="o">/</span> <span class="p">(</span><span class="mi">71785</span> <span class="o">*</span> <span class="p">(</span><span class="n">x1</span><span class="o">**</span><span class="mi">4</span><span class="p">)),</span>
+                <span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="p">(</span><span class="n">x2</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">x1</span> <span class="o">*</span> <span class="n">x2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">12566</span> <span class="o">*</span> <span class="p">(</span><span class="n">x1</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">x2</span> <span class="o">-</span> <span class="n">x1</span><span class="p">))</span>
+                <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">5108</span> <span class="o">*</span> <span class="p">(</span><span class="n">x1</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+                <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="mi">1</span> <span class="o">-</span> <span class="mf">140.45</span> <span class="o">*</span> <span class="n">x1</span> <span class="o">/</span> <span class="p">(</span><span class="n">x3</span> <span class="o">*</span> <span class="p">(</span><span class="n">x2</span><span class="o">**</span><span class="mi">2</span><span class="p">)),</span>
+                <span class="p">(</span><span class="n">x1</span> <span class="o">+</span> <span class="n">x2</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1.5</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="p">],</span>
+            <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">constraints</span><span class="o">.</span><span class="n">clamp_max</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SpeedReducer"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.SpeedReducer">[docs]</a><span class="k">class</span> <span class="nc">SpeedReducer</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Speed Reducer design problem with constraints.</span>
+
+<span class="sd">    The seven-dimensional speed reducer design problem with eleven black-box</span>
+<span class="sd">    constraints from [Lemonge2010constrained]_.</span>
+<span class="sd">    """</span>
+
+    <span class="n">dim</span> <span class="o">=</span> <span class="mi">7</span>
+    <span class="n">num_constraints</span> <span class="o">=</span> <span class="mi">11</span>
+    <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">2.6</span><span class="p">,</span> <span class="mf">3.6</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">17.0</span><span class="p">,</span> <span class="mf">28.0</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">7.3</span><span class="p">,</span> <span class="mf">8.3</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">7.8</span><span class="p">,</span> <span class="mf">8.3</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">2.9</span><span class="p">,</span> <span class="mf">3.9</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">5.5</span><span class="p">),</span>
+    <span class="p">]</span>
+
+<div class="viewcode-block" id="SpeedReducer.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.SpeedReducer.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">x3</span><span class="p">,</span> <span class="n">x4</span><span class="p">,</span> <span class="n">x5</span><span class="p">,</span> <span class="n">x6</span><span class="p">,</span> <span class="n">x7</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="mf">0.7854</span> <span class="o">*</span> <span class="n">x1</span> <span class="o">*</span> <span class="p">(</span><span class="n">x2</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">3.3333</span> <span class="o">*</span> <span class="p">(</span><span class="n">x3</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mf">14.9334</span> <span class="o">*</span> <span class="n">x3</span> <span class="o">-</span> <span class="mf">43.0934</span><span class="p">)</span>
+            <span class="o">+</span> <span class="o">-</span><span class="mf">1.508</span> <span class="o">*</span> <span class="n">x1</span> <span class="o">*</span> <span class="p">(</span><span class="n">x6</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x7</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+            <span class="o">+</span> <span class="mf">7.4777</span> <span class="o">*</span> <span class="p">(</span><span class="n">x6</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> <span class="n">x7</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
+            <span class="o">+</span> <span class="mf">0.7854</span> <span class="o">*</span> <span class="p">(</span><span class="n">x4</span> <span class="o">*</span> <span class="p">(</span><span class="n">x6</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">x5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x7</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="SpeedReducer.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.SpeedReducer.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">x3</span><span class="p">,</span> <span class="n">x4</span><span class="p">,</span> <span class="n">x5</span><span class="p">,</span> <span class="n">x6</span><span class="p">,</span> <span class="n">x7</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="mf">27.0</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">x1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">x2</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">x3</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="mf">397.5</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">x1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">x2</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">x3</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="mf">1.93</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">x2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">x3</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">x4</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">x6</span><span class="o">**</span><span class="mi">4</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="mf">1.93</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">x2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">x3</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">x5</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">x7</span><span class="o">**</span><span class="mi">4</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="mi">1</span>
+                <span class="o">/</span> <span class="p">(</span><span class="mf">0.1</span> <span class="o">*</span> <span class="p">(</span><span class="n">x6</span><span class="o">**</span><span class="mi">3</span><span class="p">))</span>
+                <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="mi">745</span> <span class="o">*</span> <span class="n">x4</span> <span class="o">/</span> <span class="p">(</span><span class="n">x2</span> <span class="o">*</span> <span class="n">x3</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="mf">16.9</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">)</span>
+                <span class="o">-</span> <span class="mi">1100</span><span class="p">,</span>
+                <span class="mi">1</span>
+                <span class="o">/</span> <span class="p">(</span><span class="mf">0.1</span> <span class="o">*</span> <span class="p">(</span><span class="n">x7</span><span class="o">**</span><span class="mi">3</span><span class="p">))</span>
+                <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="mi">745</span> <span class="o">*</span> <span class="n">x5</span> <span class="o">/</span> <span class="p">(</span><span class="n">x2</span> <span class="o">*</span> <span class="n">x3</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="mf">157.5</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">)</span>
+                <span class="o">-</span> <span class="mi">850</span><span class="p">,</span>
+                <span class="n">x2</span> <span class="o">*</span> <span class="n">x3</span> <span class="o">-</span> <span class="mi">40</span><span class="p">,</span>
+                <span class="mi">5</span> <span class="o">-</span> <span class="n">x1</span> <span class="o">/</span> <span class="n">x2</span><span class="p">,</span>
+                <span class="n">x1</span> <span class="o">/</span> <span class="n">x2</span> <span class="o">-</span> <span class="mi">12</span><span class="p">,</span>
+                <span class="p">(</span><span class="mf">1.5</span> <span class="o">*</span> <span class="n">x6</span> <span class="o">+</span> <span class="mf">1.9</span><span class="p">)</span> <span class="o">/</span> <span class="n">x4</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="p">(</span><span class="mf">1.1</span> <span class="o">*</span> <span class="n">x7</span> <span class="o">+</span> <span class="mf">1.9</span><span class="p">)</span> <span class="o">/</span> <span class="n">x5</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="p">],</span>
+            <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span></div></div>
 </pre></div>
 </div>
 </div>

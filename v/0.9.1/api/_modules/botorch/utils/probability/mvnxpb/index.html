@@ -1,0 +1,509 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/0.9.1/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/v/0.9.1/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/0.9.1/img/botorch.png"/><link rel="shortcut icon" href="/v/0.9.1/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-CXN3PGE3CC"></script><script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments); }
+              gtag('js', new Date());
+              gtag('config', 'G-CXN3PGE3CC');
+            </script><link rel="stylesheet" href="/v/0.9.1/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/0.9.1/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/0.9.1/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/0.9.1/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/0.9.1/css/main.css"/><script src="/v/0.9.1/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/0.9.1/"><img class="logo" src="/v/0.9.1/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/0.9.1/versions"><h3>0.9.1</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/0.9.1/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/0.9.1/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/0.9.1/api/" target="_self">API Reference</a></li><li class=""><a href="/v/0.9.1/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for botorch.utils.probability.mvnxpb</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
+
+<span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">Bivariate conditioning algorithm for approximating Gaussian probabilities,</span>
+<span class="sd">see [Genz2016numerical]_ and [Trinh2015bivariate]_.</span>
+
+<span class="sd">.. [Trinh2015bivariate]</span>
+<span class="sd">    G. Trinh and A. Genz. Bivariate conditioning approximations for</span>
+<span class="sd">    multivariate normal probabilities. Statistics and Computing, 2015.</span>
+
+<span class="sd">.. [Genz2016numerical]</span>
+<span class="sd">    A. Genz and G. Tring. Numerical Computation of Multivariate Normal Probabilities</span>
+<span class="sd">    using Bivariate Conditioning. Monte Carlo and Quasi-Monte Carlo Methods, 2016.</span>
+
+<span class="sd">.. [Gibson1994monte]</span>
+<span class="sd">    GJ. Gibson, CA Galsbey, and DA Elston. Monte Carlo evaluation of multivariate normal</span>
+<span class="sd">    integrals and sensitivity to variate ordering. Advances in Numerical Methods and</span>
+<span class="sd">    Applications. 1994.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TypedDict</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.probability.bvn</span> <span class="kn">import</span> <span class="n">bvn</span><span class="p">,</span> <span class="n">bvnmom</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.probability.linalg</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">augment_cholesky</span><span class="p">,</span>
+    <span class="n">block_matrix_concat</span><span class="p">,</span>
+    <span class="n">PivotedCholesky</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.probability.utils</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">case_dispatcher</span><span class="p">,</span>
+    <span class="n">get_constants_like</span><span class="p">,</span>
+    <span class="n">ndtr</span> <span class="k">as</span> <span class="n">Phi</span><span class="p">,</span>
+    <span class="n">phi</span><span class="p">,</span>
+    <span class="n">STANDARDIZED_RANGE</span><span class="p">,</span>
+    <span class="n">swap_along_dim_</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.safe_math</span> <span class="kn">import</span> <span class="n">log</span> <span class="k">as</span> <span class="n">safe_log</span><span class="p">,</span> <span class="n">mul</span> <span class="k">as</span> <span class="n">safe_mul</span>
+<span class="kn">from</span> <span class="nn">linear_operator.utils.cholesky</span> <span class="kn">import</span> <span class="n">psd_safe_cholesky</span>
+<span class="kn">from</span> <span class="nn">linear_operator.utils.errors</span> <span class="kn">import</span> <span class="n">NotPSDError</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">LongTensor</span><span class="p">,</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.nn.functional</span> <span class="kn">import</span> <span class="n">pad</span>
+
+
+<div class="viewcode-block" id="mvnxpbState"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.mvnxpb.mvnxpbState">[docs]</a><span class="k">class</span> <span class="nc">mvnxpbState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
+    <span class="n">step</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">perm</span><span class="p">:</span> <span class="n">LongTensor</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="n">piv_chol</span><span class="p">:</span> <span class="n">PivotedCholesky</span>
+    <span class="n">plug_ins</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="n">log_prob</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="n">log_prob_extra</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="MVNXPB"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.mvnxpb.MVNXPB">[docs]</a><span class="k">class</span> <span class="nc">MVNXPB</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""An algorithm for approximating Gaussian probabilities `P(X \in bounds)`, where</span>
+<span class="sd">    `X ~ N(0, covariance_matrix)`.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">covariance_matrix</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializes an MVNXPB instance.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            covariance_matrix: Covariance matrices of shape `batch_shape x [n, n]`.</span>
+<span class="sd">            bounds: Tensor of lower and upper bounds, `batch_shape x [n, 2]`. These</span>
+<span class="sd">                bounds are standardized internally and clipped to STANDARDIZED_RANGE.</span>
+<span class="sd">        """</span>
+        <span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">covariance_matrix</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">covariance_matrix</span><span class="o">.</span><span class="n">device</span>
+        <span class="n">dtype</span> <span class="o">=</span> <span class="n">covariance_matrix</span><span class="o">.</span><span class="n">dtype</span>
+        <span class="n">perm</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>
+
+        <span class="c1"># Standardize covariance matrices and bounds</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="n">covariance_matrix</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">dim1</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">dim2</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">std</span> <span class="o">=</span> <span class="n">var</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span>
+        <span class="n">istd</span> <span class="o">=</span> <span class="n">var</span><span class="o">.</span><span class="n">rsqrt</span><span class="p">()</span>
+        <span class="n">matrix</span> <span class="o">=</span> <span class="n">istd</span> <span class="o">*</span> <span class="n">covariance_matrix</span> <span class="o">*</span> <span class="n">istd</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># Clip first to avoid differentiating through `istd * inf`</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="n">istd</span> <span class="o">*</span> <span class="n">bounds</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">std</span> <span class="o">*</span> <span class="n">lim</span> <span class="k">for</span> <span class="n">lim</span> <span class="ow">in</span> <span class="n">STANDARDIZED_RANGE</span><span class="p">))</span>
+
+        <span class="c1"># Initialize partial pivoted Cholesky</span>
+        <span class="n">piv_chol</span> <span class="o">=</span> <span class="n">PivotedCholesky</span><span class="p">(</span>
+            <span class="n">step</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">perm</span><span class="o">=</span><span class="n">perm</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span>
+            <span class="n">diag</span><span class="o">=</span><span class="n">std</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span>
+            <span class="n">tril</span><span class="o">=</span><span class="n">matrix</span><span class="o">.</span><span class="n">tril</span><span class="p">(),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">step</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">perm</span> <span class="o">=</span> <span class="n">perm</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">piv_chol</span> <span class="o">=</span> <span class="n">piv_chol</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plug_ins</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">(</span>
+            <span class="n">batch_shape</span> <span class="o">+</span> <span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_prob_extra</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="MVNXPB.build"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.mvnxpb.MVNXPB.build">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">step</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">perm</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">piv_chol</span><span class="p">:</span> <span class="n">PivotedCholesky</span><span class="p">,</span>
+        <span class="n">plug_ins</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">log_prob</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">log_prob_extra</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MVNXPB</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Creates an MVNXPB instance from raw arguments. Unlike MVNXPB.__init__,</span>
+<span class="sd">        this methods does not preprocess or copy terms.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            step: Integer used to track the solver's progress.</span>
+<span class="sd">            bounds: Tensor of lower and upper bounds, `batch_shape x [n, 2]`.</span>
+<span class="sd">            piv_chol: A PivotedCholesky instance for the system.</span>
+<span class="sd">            plug_ins: Tensor of plug-in estimators used to update lower and upper bounds</span>
+<span class="sd">                on random variables that have yet to be integrated out.</span>
+<span class="sd">            log_prob: Tensor of log probabilities.</span>
+<span class="sd">            log_prob_extra: Tensor of conditional log probabilities for the next random</span>
+<span class="sd">                variable. Used when integrating over an odd number of random variables.</span>
+<span class="sd">        """</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">step</span> <span class="o">=</span> <span class="n">step</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">perm</span> <span class="o">=</span> <span class="n">perm</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">piv_chol</span> <span class="o">=</span> <span class="n">piv_chol</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">plug_ins</span> <span class="o">=</span> <span class="n">plug_ins</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">log_prob</span> <span class="o">=</span> <span class="n">log_prob</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">log_prob_extra</span> <span class="o">=</span> <span class="n">log_prob_extra</span>
+        <span class="k">return</span> <span class="n">new</span></div>
+
+<div class="viewcode-block" id="MVNXPB.solve"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.mvnxpb.MVNXPB.solve">[docs]</a>    <span class="k">def</span> <span class="nf">solve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Runs the MVNXPB solver instance for a fixed number of steps.</span>
+
+<span class="sd">        Calculates a bivariate conditional approximation to P(X \in bounds), where</span>
+<span class="sd">        X ~ N(0, Σ). For details, see [Genz2016numerical] or [Trinh2015bivariate]_.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">piv_chol</span><span class="o">.</span><span class="n">step</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid state: solver ran ahead of matrix decomposition."</span><span class="p">)</span>
+
+        <span class="c1"># Unpack some terms</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span>
+        <span class="n">piv_chol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">piv_chol</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="n">piv_chol</span><span class="o">.</span><span class="n">tril</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plug_ins</span>
+
+        <span class="c1"># Subtract marginal log probability of final term from previous result if</span>
+        <span class="c1"># it did not fit in a block.</span>
+        <span class="n">ndim</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">ndim</span> <span class="o">&gt;</span> <span class="n">start</span> <span class="ow">and</span> <span class="n">start</span> <span class="o">%</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prob_extra</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_prob_extra</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Iteratively compute bivariate conditional approximation</span>
+        <span class="n">zero</span> <span class="o">=</span> <span class="n">get_constants_like</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">L</span><span class="p">)</span>  <span class="c1"># needed when calling `torch.where` below</span>
+        <span class="n">num_steps</span> <span class="o">=</span> <span class="n">num_steps</span> <span class="ow">or</span> <span class="n">ndim</span> <span class="o">-</span> <span class="n">start</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">start</span> <span class="o">+</span> <span class="n">num_steps</span><span class="p">):</span>
+            <span class="n">should_update_chol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span> <span class="o">==</span> <span class="n">piv_chol</span><span class="o">.</span><span class="n">step</span>
+
+            <span class="c1"># Determine next pivot element</span>
+            <span class="k">if</span> <span class="n">should_update_chol</span><span class="p">:</span>
+                <span class="n">pivot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">select_pivot</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># pivot using order specified by precomputed pivoted Cholesky step</span>
+                <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">perm</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">:]</span> <span class="o">==</span> <span class="n">piv_chol</span><span class="o">.</span><span class="n">perm</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="n">pivot</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">as_tuple</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">pivot</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">torch</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pivot</span> <span class="o">&gt;</span> <span class="n">i</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pivot_</span><span class="p">(</span><span class="n">pivot</span><span class="o">=</span><span class="n">pivot</span><span class="p">)</span>
+
+            <span class="c1"># Compute whitened bounds conditional on preceding plug-ins</span>
+            <span class="n">Lii</span> <span class="o">=</span> <span class="n">L</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">should_update_chol</span><span class="p">:</span>
+                <span class="n">Lii</span> <span class="o">=</span> <span class="n">Lii</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span>  <span class="c1"># conditional stddev</span>
+            <span class="n">inv_Lii</span> <span class="o">=</span> <span class="n">Lii</span><span class="o">.</span><span class="n">reciprocal</span><span class="p">()</span>
+            <span class="n">bounds_i</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">bounds_i</span> <span class="o">=</span> <span class="n">bounds_i</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+                    <span class="n">L</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="p">:</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span>
+                <span class="p">)</span>
+            <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span> <span class="o">=</span> <span class="p">(</span><span class="n">inv_Lii</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">bounds_i</span><span class="p">)</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+            <span class="c1"># Initialize `i`-th plug-in value as univariate conditional expectation</span>
+            <span class="n">Phi_i</span> <span class="o">=</span> <span class="n">Phi</span><span class="p">(</span><span class="n">ub</span><span class="p">)</span> <span class="o">-</span> <span class="n">Phi</span><span class="p">(</span><span class="n">lb</span><span class="p">)</span>
+            <span class="n">small</span> <span class="o">=</span> <span class="n">Phi_i</span> <span class="o">&lt;=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">eps</span>
+            <span class="n">y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">case_dispatcher</span><span class="p">(</span>  <span class="c1"># used to select next pivot</span>
+                <span class="n">out</span><span class="o">=</span><span class="p">(</span><span class="n">phi</span><span class="p">(</span><span class="n">lb</span><span class="p">)</span> <span class="o">-</span> <span class="n">phi</span><span class="p">(</span><span class="n">ub</span><span class="p">))</span> <span class="o">/</span> <span class="n">Phi_i</span><span class="p">,</span>
+                <span class="n">cases</span><span class="o">=</span><span class="p">(</span>  <span class="c1"># fallback cases for enhanced numerical stability</span>
+                    <span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">small</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">lb</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">9</span><span class="p">),</span> <span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">ub</span><span class="p">[</span><span class="n">m</span><span class="p">]),</span>
+                    <span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">small</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">lb</span> <span class="o">&gt;</span> <span class="mi">9</span><span class="p">),</span> <span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">lb</span><span class="p">[</span><span class="n">m</span><span class="p">]),</span>
+                    <span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">small</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">lb</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">+</span> <span class="n">ub</span><span class="p">[</span><span class="n">m</span><span class="p">])),</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Maybe finalize the current block</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">h</span> <span class="o">=</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="n">blk</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">Lhh</span> <span class="o">=</span> <span class="n">L</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">h</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+                <span class="n">Lih</span> <span class="o">=</span> <span class="n">L</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">h</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+
+                <span class="n">std_i</span> <span class="o">=</span> <span class="p">(</span><span class="n">Lii</span><span class="o">.</span><span class="n">square</span><span class="p">()</span> <span class="o">+</span> <span class="n">Lih</span><span class="o">.</span><span class="n">square</span><span class="p">())</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span>
+                <span class="n">istds</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">Lhh</span><span class="p">,</span> <span class="n">std_i</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">blk_bounds</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">blk</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">blk_bounds</span> <span class="o">=</span> <span class="n">blk_bounds</span> <span class="o">-</span> <span class="p">(</span>
+                        <span class="n">L</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">blk</span><span class="p">,</span> <span class="p">:</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span> <span class="o">@</span> <span class="n">y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+                    <span class="p">)</span>
+
+                <span class="n">blk_lower</span><span class="p">,</span> <span class="n">blk_upper</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">pair</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># pair of bounds for `yh` and `yi`</span>
+                    <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="n">safe_mul</span><span class="p">(</span><span class="n">istds</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">blk_bounds</span><span class="p">)</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">blk_corr</span> <span class="o">=</span> <span class="n">Lhh</span> <span class="o">*</span> <span class="n">Lih</span> <span class="o">*</span> <span class="n">istds</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">blk_prob</span> <span class="o">=</span> <span class="n">bvn</span><span class="p">(</span><span class="n">blk_corr</span><span class="p">,</span> <span class="o">*</span><span class="n">blk_lower</span><span class="p">,</span> <span class="o">*</span><span class="n">blk_upper</span><span class="p">)</span>
+                <span class="n">zh</span><span class="p">,</span> <span class="n">zi</span> <span class="o">=</span> <span class="n">bvnmom</span><span class="p">(</span><span class="n">blk_corr</span><span class="p">,</span> <span class="o">*</span><span class="n">blk_lower</span><span class="p">,</span> <span class="o">*</span><span class="n">blk_upper</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">blk_prob</span><span class="p">)</span>
+
+                <span class="c1"># Replace 1D expectations with 2D ones `L[blk, blk]^{-1} y[..., blk]`</span>
+                <span class="n">mask</span> <span class="o">=</span> <span class="n">blk_prob</span> <span class="o">&gt;</span> <span class="n">zero</span>
+                <span class="n">y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">zh</span><span class="p">,</span> <span class="n">zero</span><span class="p">)</span>
+                <span class="n">y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">inv_Lii</span> <span class="o">*</span> <span class="p">(</span><span class="n">std_i</span> <span class="o">*</span> <span class="n">zi</span> <span class="o">-</span> <span class="n">Lih</span> <span class="o">*</span> <span class="n">zh</span><span class="p">),</span> <span class="n">zero</span><span class="p">)</span>
+
+                <span class="c1"># Update running approximation to log probability</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span> <span class="o">+</span> <span class="n">safe_log</span><span class="p">(</span><span class="n">blk_prob</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">step</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">should_update_chol</span><span class="p">:</span>
+                <span class="n">piv_chol</span><span class="o">.</span><span class="n">update_</span><span class="p">(</span><span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">)</span>
+
+        <span class="c1"># Factor in univariate probability if final term fell outside of a block.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span> <span class="o">%</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_prob_extra</span> <span class="o">=</span> <span class="n">safe_log</span><span class="p">(</span><span class="n">Phi_i</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prob_extra</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span></div>
+
+<div class="viewcode-block" id="MVNXPB.select_pivot"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.mvnxpb.MVNXPB.select_pivot">[docs]</a>    <span class="k">def</span> <span class="nf">select_pivot</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">LongTensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""GGE variable prioritization strategy from [Gibson1994monte]_.</span>
+
+<span class="sd">        Returns the index of the random variable least likely to satisfy its bounds</span>
+<span class="sd">        when conditioning on the previously integrated random variables `X[:t - 1]`</span>
+<span class="sd">        attaining the values of plug-in estimators `y[:t - 1]`. Equivalently,</span>
+<span class="sd">        ```</span>
+<span class="sd">        argmin_{i = t, ..., n} P(X[i] \in bounds[i] | X[:t-1] = y[:t -1]),</span>
+<span class="sd">        ```</span>
+<span class="sd">        where `t` denotes the current step."""</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">piv_chol</span><span class="o">.</span><span class="n">step</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">piv_chol</span><span class="o">.</span><span class="n">tril</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span>
+        <span class="k">if</span> <span class="n">i</span><span class="p">:</span>
+            <span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">:,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">L</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">:,</span> <span class="p">:</span><span class="n">i</span><span class="p">]</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">plug_ins</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">i</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+
+        <span class="n">inv_stddev</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">dim1</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">dim2</span><span class="o">=-</span><span class="mi">1</span><span class="p">)[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">:]</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">rsqrt</span><span class="p">()</span>
+        <span class="n">probs_1d</span> <span class="o">=</span> <span class="n">Phi</span><span class="p">(</span><span class="n">inv_stddev</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">bounds</span><span class="p">)</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">i</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">probs_1d</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MVNXPB.pivot_"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.mvnxpb.MVNXPB.pivot_">[docs]</a>    <span class="k">def</span> <span class="nf">pivot_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pivot</span><span class="p">:</span> <span class="n">LongTensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Swap random variables at `pivot` and `step` positions."""</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">piv_chol</span><span class="o">.</span><span class="n">step</span> <span class="o">==</span> <span class="n">step</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">piv_chol</span><span class="o">.</span><span class="n">pivot_</span><span class="p">(</span><span class="n">pivot</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">piv_chol</span><span class="o">.</span><span class="n">step</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span>
+
+        <span class="k">for</span> <span class="n">tnsr</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">perm</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">):</span>
+            <span class="n">swap_along_dim_</span><span class="p">(</span><span class="n">tnsr</span><span class="p">,</span> <span class="n">i</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">j</span><span class="o">=</span><span class="n">pivot</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">pivot</span><span class="o">.</span><span class="n">ndim</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MVNXPB</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+            <span class="n">step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">,</span>
+            <span class="n">perm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">perm</span><span class="p">[</span><span class="n">key</span><span class="p">],</span>
+            <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="n">key</span><span class="p">],</span>
+            <span class="n">piv_chol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">piv_chol</span><span class="p">[</span><span class="n">key</span><span class="p">],</span>
+            <span class="n">plug_ins</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">plug_ins</span><span class="p">[</span><span class="n">key</span><span class="p">],</span>
+            <span class="n">log_prob</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span><span class="p">[</span><span class="n">key</span><span class="p">],</span>
+            <span class="n">log_prob_extra</span><span class="o">=</span><span class="p">(</span>
+                <span class="kc">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prob_extra</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prob_extra</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="MVNXPB.concat"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.mvnxpb.MVNXPB.concat">[docs]</a>    <span class="k">def</span> <span class="nf">concat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">MVNXPB</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MVNXPB</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">MVNXPB</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Expected `other` to be </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="si">}</span><span class="s2"> typed but was </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span>
+
+        <span class="n">batch_ndim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span><span class="o">.</span><span class="n">ndim</span>
+        <span class="k">if</span> <span class="n">dim</span> <span class="o">&gt;</span> <span class="n">batch_ndim</span> <span class="ow">or</span> <span class="n">dim</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">batch_ndim</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"`dim=</span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2">` is not a valid batch dimension."</span><span class="p">)</span>
+
+        <span class="n">state_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">asdict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">_other</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">asdict</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">_self</span> <span class="o">=</span> <span class="n">state_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">_self</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">_other</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">_self</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="n">_other</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Concatenation failed: `self.</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">` has type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">_self</span><span class="p">)</span><span class="si">}</span><span class="s2">, "</span>
+                    <span class="sa">f</span><span class="s2">"but `other.</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">` is of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">_self</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_self</span><span class="p">,</span> <span class="n">PivotedCholesky</span><span class="p">):</span>
+                <span class="n">state_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">_self</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">_other</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_self</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
+                <span class="n">state_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">concat</span><span class="p">((</span><span class="n">_self</span><span class="p">,</span> <span class="n">_other</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">_self</span> <span class="o">!=</span> <span class="n">_other</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Concatenation failed: `self.</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">` does not equal `other.</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">`."</span>
+                <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="o">**</span><span class="n">state_dict</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MVNXPB.expand"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.mvnxpb.MVNXPB.expand">[docs]</a>    <span class="k">def</span> <span class="nf">expand</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">sizes</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MVNXPB</span><span class="p">:</span>
+        <span class="n">state_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">asdict</span><span class="p">()</span>
+        <span class="n">state_dict</span><span class="p">[</span><span class="s2">"piv_chol"</span><span class="p">]</span> <span class="o">=</span> <span class="n">state_dict</span><span class="p">[</span><span class="s2">"piv_chol"</span><span class="p">]</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">sizes</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">ndim</span> <span class="ow">in</span> <span class="p">{</span>
+            <span class="s2">"bounds"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s2">"perm"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s2">"plug_ins"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s2">"log_prob"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">"log_prob_extra"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="p">}</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">src</span> <span class="o">=</span> <span class="n">state_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
+                <span class="n">state_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
+                    <span class="n">sizes</span> <span class="o">+</span> <span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="n">ndim</span><span class="p">:]</span> <span class="k">if</span> <span class="n">ndim</span> <span class="k">else</span> <span class="n">sizes</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="o">**</span><span class="n">state_dict</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MVNXPB.augment"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.mvnxpb.MVNXPB.augment">[docs]</a>    <span class="k">def</span> <span class="nf">augment</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">covariance_matrix</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">cross_covariance_matrix</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">disable_pivoting</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">jitter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">max_tries</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MVNXPB</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Augment an `n`-dimensional MVNXPB instance to include `m` additional random</span>
+<span class="sd">        variables.</span>
+<span class="sd">        """</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">perm</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">covariance_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">piv_chol</span><span class="o">.</span><span class="n">step</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"Augmentation of incomplete solutions not implemented yet."</span>
+            <span class="p">)</span>
+
+        <span class="n">var</span> <span class="o">=</span> <span class="n">covariance_matrix</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">dim1</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">dim2</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">std</span> <span class="o">=</span> <span class="n">var</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span>
+        <span class="n">istd</span> <span class="o">=</span> <span class="n">var</span><span class="o">.</span><span class="n">rsqrt</span><span class="p">()</span>
+        <span class="n">Kmn</span> <span class="o">=</span> <span class="n">istd</span> <span class="o">*</span> <span class="n">cross_covariance_matrix</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">piv_chol</span><span class="o">.</span><span class="n">diag</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">diag</span> <span class="o">=</span> <span class="n">pad</span><span class="p">(</span><span class="n">std</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="n">cross_covariance_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">Kmn</span> <span class="o">=</span> <span class="n">Kmn</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">piv_chol</span><span class="o">.</span><span class="n">diag</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">diag</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">piv_chol</span><span class="o">.</span><span class="n">diag</span><span class="p">,</span> <span class="n">std</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Augment partial pivoted Cholesky factor</span>
+        <span class="n">Kmm</span> <span class="o">=</span> <span class="n">istd</span> <span class="o">*</span> <span class="n">covariance_matrix</span> <span class="o">*</span> <span class="n">istd</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">Lnn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">piv_chol</span><span class="o">.</span><span class="n">tril</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">L</span> <span class="o">=</span> <span class="n">augment_cholesky</span><span class="p">(</span><span class="n">Laa</span><span class="o">=</span><span class="n">Lnn</span><span class="p">,</span> <span class="n">Kba</span><span class="o">=</span><span class="n">Kmn</span><span class="p">,</span> <span class="n">Kbb</span><span class="o">=</span><span class="n">Kmm</span><span class="p">,</span> <span class="n">jitter</span><span class="o">=</span><span class="n">jitter</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">NotPSDError</span><span class="p">:</span>
+            <span class="n">warn</span><span class="p">(</span><span class="s2">"Joint covariance matrix not positive definite, attempting recovery."</span><span class="p">)</span>
+            <span class="n">Knn</span> <span class="o">=</span> <span class="n">Lnn</span> <span class="o">@</span> <span class="n">Lnn</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">Knm</span> <span class="o">=</span> <span class="n">Kmn</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">K</span> <span class="o">=</span> <span class="n">block_matrix_concat</span><span class="p">(</span><span class="n">blocks</span><span class="o">=</span><span class="p">((</span><span class="n">Knn</span><span class="p">,</span> <span class="n">Knm</span><span class="p">),</span> <span class="p">(</span><span class="n">Kmn</span><span class="p">,</span> <span class="n">Kmm</span><span class="p">)))</span>
+            <span class="n">L</span> <span class="o">=</span> <span class="n">psd_safe_cholesky</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">jitter</span><span class="o">=</span><span class="n">jitter</span><span class="p">,</span> <span class="n">max_tries</span><span class="o">=</span><span class="n">max_tries</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">disable_pivoting</span><span class="p">:</span>
+            <span class="n">Lmm</span> <span class="o">=</span> <span class="n">L</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">n</span><span class="p">:,</span> <span class="n">n</span><span class="p">:]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+            <span class="n">L</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">n</span><span class="p">:,</span> <span class="n">n</span><span class="p">:]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Lmm</span> <span class="o">@</span> <span class="n">Lmm</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">tril</span><span class="p">()</span>
+
+        <span class="n">_bounds</span> <span class="o">=</span> <span class="n">istd</span> <span class="o">*</span> <span class="n">bounds</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">std</span> <span class="o">*</span> <span class="n">lim</span> <span class="k">for</span> <span class="n">lim</span> <span class="ow">in</span> <span class="n">STANDARDIZED_RANGE</span><span class="p">))</span>
+        <span class="n">_perm</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="n">m</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">perm</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">perm</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">_perm</span> <span class="o">=</span> <span class="n">_perm</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">covariance_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">m</span><span class="p">,))</span>
+
+        <span class="n">piv_chol</span> <span class="o">=</span> <span class="n">PivotedCholesky</span><span class="p">(</span>
+            <span class="n">step</span><span class="o">=</span><span class="n">n</span> <span class="o">+</span> <span class="n">m</span> <span class="k">if</span> <span class="n">disable_pivoting</span> <span class="k">else</span> <span class="n">n</span><span class="p">,</span>
+            <span class="n">tril</span><span class="o">=</span><span class="n">L</span><span class="o">.</span><span class="n">contiguous</span><span class="p">(),</span>
+            <span class="n">perm</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">piv_chol</span><span class="o">.</span><span class="n">perm</span><span class="p">,</span> <span class="n">_perm</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">contiguous</span><span class="p">(),</span>
+            <span class="n">diag</span><span class="o">=</span><span class="n">diag</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+            <span class="n">step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">,</span>
+            <span class="n">perm</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">perm</span><span class="p">,</span> <span class="n">_perm</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">bounds</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">_bounds</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">),</span>
+            <span class="n">piv_chol</span><span class="o">=</span><span class="n">piv_chol</span><span class="p">,</span>
+            <span class="n">plug_ins</span><span class="o">=</span><span class="n">pad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plug_ins</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">m</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">)),</span>
+            <span class="n">log_prob</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span><span class="p">,</span>
+            <span class="n">log_prob_extra</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">log_prob_extra</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MVNXPB.detach"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.mvnxpb.MVNXPB.detach">[docs]</a>    <span class="k">def</span> <span class="nf">detach</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MVNXPB</span><span class="p">:</span>
+        <span class="n">state_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">asdict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="n">PivotedCholesky</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)):</span>
+                <span class="n">state_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="o">**</span><span class="n">state_dict</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MVNXPB.clone"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.mvnxpb.MVNXPB.clone">[docs]</a>    <span class="k">def</span> <span class="nf">clone</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MVNXPB</span><span class="p">:</span>
+        <span class="n">state_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">asdict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="n">PivotedCholesky</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)):</span>
+                <span class="n">state_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="o">**</span><span class="n">state_dict</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MVNXPB.asdict"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.mvnxpb.MVNXPB.asdict">[docs]</a>    <span class="k">def</span> <span class="nf">asdict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mvnxpbState</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">mvnxpbState</span><span class="p">(</span>
+            <span class="n">step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">,</span>
+            <span class="n">perm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">perm</span><span class="p">,</span>
+            <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span>
+            <span class="n">piv_chol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">piv_chol</span><span class="p">,</span>
+            <span class="n">plug_ins</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">plug_ins</span><span class="p">,</span>
+            <span class="n">log_prob</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span><span class="p">,</span>
+            <span class="n">log_prob_extra</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">log_prob_extra</span><span class="p">,</span>
+        <span class="p">)</span></div></div>
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">BoTorch</a></h1>
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../../../index.html">Documentation overview</a><ul>
+<li><a href="../../../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="../../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/0.9.1/" class="nav-home"><img src="/v/0.9.1/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/0.9.1/docs/introduction">Introduction</a><a href="/v/0.9.1/docs/getting_started">Getting Started</a><a href="/v/0.9.1/tutorials/">Tutorials</a><a href="/v/0.9.1/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/0.9.1/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/0.9.1/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>

@@ -1,11 +1,8 @@
-<!DOCTYPE html><html lang=""><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
-              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-              ga('create', 'G-CXN3PGE3CC', 'auto');
-              ga('send', 'pageview');
+<!DOCTYPE html><html lang=""><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-CXN3PGE3CC"></script><script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments); }
+              gtag('js', new Date());
+              gtag('config', 'G-CXN3PGE3CC');
             </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
@@ -90,7 +87,8 @@
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Notation">Notation<a class="anchor-link" href="#Notation">¶</a></h2><p>We consider the problem of maximizing a function $f: \mathbb{X} \rightarrow \mathbb{R}^M$. In the single-objective setting ($M=1$), the maximum is defined as usual with respect to the total ordering over the real numbers. In the multi-objective setting ($M&gt;1$), the maximum is defined with respect to the Pareto partial ordering over vectors. By an abuse in notation, we denote the optimal set of inputs and outputs by</p>
-$$\mathbb{X}^* = \text{arg}\max_{\mathbf{x} \in \mathbb{X}} f(\mathbf{x}) \subseteq \mathbb{X} \quad \text{and} \quad \mathbb{Y}^* = f(\mathbb{X}^*) = \max_{\mathbf{x} \in \mathbb{X}} f(\mathbf{x}) \subset \mathbb{R}^M,$$<p>respectively for both the single and multi-objective setting. We denote the collection of optimal input-output pairs by $(\mathbb{X}^*, \mathbb{Y}^*)$.</p>
+<p>$$\mathbb{X}^* = \text{arg}\max_{\mathbf{x} \in \mathbb{X}} f(\mathbf{x}) \subseteq \mathbb{X} \quad \text{and} \quad \mathbb{Y}^* = f(\mathbb{X}^*) = \max_{\mathbf{x} \in \mathbb{X}} f(\mathbf{x}) \subset \mathbb{R}^M,$$</p>
+<p>respectively for both the single and multi-objective setting. We denote the collection of optimal input-output pairs by $(\mathbb{X}^*, \mathbb{Y}^*)$.</p>
 </div>
 </div>
 </div>
@@ -98,11 +96,12 @@ $$\mathbb{X}^* = \text{arg}\max_{\mathbf{x} \in \mathbb{X}} f(\mathbf{x}) \subse
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Information-theoretic-acquisition-functions">Information-theoretic acquisition functions<a class="anchor-link" href="#Information-theoretic-acquisition-functions">¶</a></h2><p>Information-theoretic (IT) acquisition functions work by quantifying the utility of an input $\mathbf{x} \in \mathbb{X}$ based on how "informative" the corresponding observation $\mathbf{y} \in \mathbb{R}^M$ will be in learning more about the distribution of some statistic of the function $S(f)$. Here, we define the notion of information via the mutual information ($\text{MI}$):</p>
-\begin{equation}
+<p>\begin{equation}
     \alpha^{\text{IT}}(\mathbf{x}|D_n) 
     = \text{MI}(\mathbf{y}; S(f)| \mathbf{x}, D_n) 
     = H[p(\mathbf{y}|D_n)] - \mathbb{E}_{p(S(f)|D_n)}[H[p(\mathbf{y}| \mathbf{x}, D_n, S(f)]],
-\end{equation}<p>where $D_n = \{(\mathbf{x}_t, \mathbf{y}_t)\}_{t=1,\dots,n}$ denotes the data set of sampled inputs and observations and the function $H$ denotes the differential entropy $H[p(\mathbf{x})] = - \int p(\mathbf{x}) \log(p(\mathbf{x})) d\mathbf{x}$. The main difference between existing information-theoretic acquisition functions in the literature is the choice of statistic $S$ and the modelling assumptions that are made in order to estimate the resulting acquisition function. In this notebook, we focus on three particular cases of information-theoretic acquisition functions:</p>
+\end{equation}</p>
+<p>where $D_n = \{(\mathbf{x}_t, \mathbf{y}_t)\}_{t=1,\dots,n}$ denotes the data set of sampled inputs and observations and the function $H$ denotes the differential entropy $H[p(\mathbf{x})] = - \int p(\mathbf{x}) \log(p(\mathbf{x})) d\mathbf{x}$. The main difference between existing information-theoretic acquisition functions in the literature is the choice of statistic $S$ and the modelling assumptions that are made in order to estimate the resulting acquisition function. In this notebook, we focus on three particular cases of information-theoretic acquisition functions:</p>
 </div>
 </div>
 </div>
@@ -110,11 +109,11 @@ $$\mathbb{X}^* = \text{arg}\max_{\mathbf{x} \in \mathbb{X}} f(\mathbf{x}) \subse
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="Predictive-Entropy-Search-(PES)">Predictive Entropy Search (PES)<a class="anchor-link" href="#Predictive-Entropy-Search-(PES)">¶</a></h3><p>The PES acquisition function [1] considers the problem of learning more about the distribution of the optimal inputs: $S(f) = \mathbb{X}^*$.</p>
-\begin{equation}
+<p>\begin{equation}
 \alpha^{\text{PES}}(\mathbf{x}|D_n) 
 = \text{MI}(\mathbf{y}; \mathbb{X}^*| \mathbf{x}, D_n) 
 = H[p(\mathbf{y}|D_n)] - \mathbb{E}_{p(\mathbb{X}^*|D_n)}[H[p(\mathbf{y}| \mathbf{x}, D_n, \mathbb{X}^*)]].
-\end{equation}
+\end{equation}</p>
 </div>
 </div>
 </div>
@@ -122,11 +121,11 @@ $$\mathbb{X}^* = \text{arg}\max_{\mathbf{x} \in \mathbb{X}} f(\mathbf{x}) \subse
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="Max-value-Entropy-Search-(MES)">Max-value Entropy Search (MES)<a class="anchor-link" href="#Max-value-Entropy-Search-(MES)">¶</a></h3><p>The MES acquisition function [2] considers the problem of learning more about the distribution of the optimal outputs: $S(f) = \mathbb{Y}^*$.</p>
-\begin{equation}
+<p>\begin{equation}
 \alpha^{\text{MES}}(\mathbf{x}|D_n) 
 = \text{MI}(\mathbf{y}; \mathbb{Y}^*| \mathbf{x}, D_n) 
 = H[p(\mathbf{y}|D_n)] - \mathbb{E}_{p(\mathbb{Y}^*|D_n)}[H[p(\mathbf{y}| \mathbf{x}, D_n, \mathbb{Y}^*)]].
-\end{equation}
+\end{equation}</p>
 </div>
 </div>
 </div>
@@ -134,11 +133,11 @@ $$\mathbb{X}^* = \text{arg}\max_{\mathbf{x} \in \mathbb{X}} f(\mathbf{x}) \subse
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="Joint-Entropy-Search-(JES)">Joint Entropy Search (JES)<a class="anchor-link" href="#Joint-Entropy-Search-(JES)">¶</a></h3><p>The JES acquisition function [3] considers the problem of learning more about the distribution of the optimal inputs and outputs: $S(f) = (\mathbb{X}^*, \mathbb{Y}^*)$.</p>
-\begin{equation}
+<p>\begin{equation}
 \alpha^{\text{JES}}(\mathbf{x}|D_n) 
 = \text{MI}(\mathbf{y}; (\mathbb{X}^*, \mathbb{Y}^*)| \mathbf{x}, D_n) 
 = H[p(\mathbf{y}|D_n)] - \mathbb{E}_{p((\mathbb{X}^*, \mathbb{Y}^*)|D_n)}[H[p(\mathbf{y}| \mathbf{x}, D_n, (\mathbb{X}^*, \mathbb{Y}^*))]].
-\end{equation}
+\end{equation}</p>
 </div>
 </div>
 </div>
@@ -158,16 +157,17 @@ $$\mathbb{X}^* = \text{arg}\max_{\mathbf{x} \in \mathbb{X}} f(\mathbf{x}) \subse
 <h3 id="Second-term">Second term<a class="anchor-link" href="#Second-term">¶</a></h3><p>The second term in each of the acquisition functions is an expectation of an entropy over an intractable distribution. The expectation can be estimated using Monte Carlo, whilst the entropy has to be approximated using different strategies such as moment-matching.</p>
 <p><strong>Monte Carlo.</strong> To sample from the distribution over the optimal points, we can first (approximately) sample a collection of posterior paths $f_j \sim p(f|D_n)$ and then optimize them to obtain the sample of optimal points $(\mathbb{X}^*_j, \mathbb{Y}^*_j)$ for $j=1,\dots,J$.</p>
 <p><strong>PES entropy estimate.</strong> In <code>qPredictiveEntropySearch</code> and <code>qMultiObjectivePredictiveEntropySearch</code>, we approximate the entropy term arising in PES using the expectation propagation strategy described in [4]. In particular, we first relax the global optimality condition:</p>
-\begin{align}
+<p>\begin{align}
     H[p(\mathbf{y}| \mathbf{x}, D_n, \mathbb{X}^*)]
     &amp;\overset{(1)}{=} H[p(\mathbf{y}| \mathbf{x}, D_n, f(\mathbb{X}) \preceq f(\mathbb{X}^*))]
     \\\\
     &amp;\overset{(2)}{\leq} H[p(\mathbf{y}| \mathbf{x}, D_n, f(X_n \cup \{\mathbf{x}\}) \preceq f(\mathbb{X}^*))].
-\end{align}<p>(1) This statement follows from the observation that conditioning on the optimal points $\mathbb{X}^*$ is equivalent to knowing that all points lie below the objective values at the optimal inputs: $f(\mathbb{X}) \preceq f(\mathbb{X}^*)$.</p>
+\end{align}</p>
+<p>(1) This statement follows from the observation that conditioning on the optimal points $\mathbb{X}^*$ is equivalent to knowing that all points lie below the objective values at the optimal inputs: $f(\mathbb{X}) \preceq f(\mathbb{X}^*)$.</p>
 <p>(2) We replace the global optimality condition with the local optimality condition: $f(X_n \cup \{\mathbf{x}\}) \preceq f(\mathbb{X}^*)$, where $X_n = \{\mathbf{x}_t\}_{t=1,\dots,n}$. . The upper bound follows from the standard result that conditioning on more information only decreases the entropy: $H(A|B) \leq H(A)$ for any random variables $A$ and $B$.</p>
 <p>We then estimate the resulting lower bound of the PES acquisition function by approximating the intractable distribution $p(\mathbf{y}| \mathbf{x}, D_n, f(X_n \cup \{\mathbf{x}\}) \preceq f(\mathbb{X}^*))$ with a product of Gaussian random variables, which is fitted via an iterative moment-matching procedure known as expectation propagation. The entropy of this resulting distribution can then be computed analytically.</p>
 <p><strong>MES and JES entropy estimate.</strong> In <code>qLowerBoundMultiObjectiveMaxValueEntropySearch</code>, <code>qLowerBoundJointEntropySearch</code> and <code>qLowerBoundMultiObjectiveJointEntropySearch</code>, we approximate the entropy term arising in MES and JES using the strategies described in [3]. These estimates rely on different upper bounds of the entropy term, which results in different lower bounds for the mutual information. These estimates are motivated by the following chain inequalities for the entropy in the JES expression:</p>
-\begin{align}
+<p>\begin{align}
     H[p(\mathbf{y}| \mathbf{x}, D_n, (\mathbb{X}^*, \mathbb{Y}^*))]
     &amp;\overset{(1)}{=} H[p(\mathbf{y}| \mathbf{x}, D_n \cup (\mathbb{X}^*, \mathbb{Y}^*), f(\mathbb{X}) \preceq \mathbb{Y}^*)]
     \\\\
@@ -176,12 +176,15 @@ $$\mathbb{X}^* = \text{arg}\max_{\mathbf{x} \in \mathbb{X}} f(\mathbf{x}) \subse
     &amp;\overset{(3)}{\leq} H[\mathcal{N}(\mathbf{y}| \mathbf{m}_{(\mathbf{x}, (\mathbb{X}^*, \mathbb{Y}^*))}, \mathbf{V}_{(\mathbf{x}, (\mathbb{X}^*, \mathbb{Y}^*))})]
     \\\\
     &amp;\overset{(4)}{\leq} H[\mathcal{N}(\mathbf{y}| \mathbf{m}_{(\mathbf{x}, (\mathbb{X}^*, \mathbb{Y}^*))}, \text{diag}(\mathbf{V}_{(\mathbf{x}, (\mathbb{X}^*, \mathbb{Y}^*))}))],
-\end{align}<p>where</p>
-\begin{align}
+\end{align}</p>
+<p>where</p>
+<p>\begin{align}
     \mathbf{m}_{(\mathbf{x}, (\mathbb{X}^*, \mathbb{Y}^*))} = \mathbb{E}[p(\mathbf{y}| \mathbf{x}, D_n \cup (\mathbb{X}^*, \mathbb{Y}^*), f(\mathbf{x}) \preceq \mathbb{Y}^*)]
-\end{align}\begin{align}
+\end{align}</p>
+<p>\begin{align}
     \mathbf{V}_{(\mathbf{x}, (\mathbb{X}^*, \mathbb{Y}^*))} = \mathbb{C}\text{ov}[p(\mathbf{y}| \mathbf{x}, D_n \cup (\mathbb{X}^*, \mathbb{Y}^*), f(\mathbf{x}) \preceq \mathbb{Y}^*)].
-\end{align}<p>(1) This statement follows from the observation that conditioning on the optimal points $(\mathbb{X}^*, \mathbb{Y}^*)$ is equivalent to knowing that $\mathbb{X}^*$ maps to $\mathbb{Y}^*$ and that all points lie below the Pareto front, $f(\mathbb{X}) \preceq f(\mathbb{X}^*) = \mathbb{Y}^*$.</p>
+\end{align}</p>
+<p>(1) This statement follows from the observation that conditioning on the optimal points $(\mathbb{X}^*, \mathbb{Y}^*)$ is equivalent to knowing that $\mathbb{X}^*$ maps to $\mathbb{Y}^*$ and that all points lie below the Pareto front, $f(\mathbb{X}) \preceq f(\mathbb{X}^*) = \mathbb{Y}^*$.</p>
 <p>(2) We replace the global optimality condition with the local optimality condition: $f(\mathbf{x}) \preceq \mathbb{Y}^*$. The upper bound follows from the standard result that conditioning on more information only decreases the entropy: $H(A|B) \leq H(A)$ for any random variables $A$ and $B$.</p>
 <p>(3) We upper bound the entropy using the standard result that the multivariate Gaussian distribution has the maximum entropy over all distributions supported on $\mathbb{R}^M$ with the same first two moments.</p>
 <p>(4) We upper bound the entropy by again using the standard result that conditioning on more information only decreases the entropy.</p>
@@ -198,15 +201,17 @@ $$\mathbb{X}^* = \text{arg}\max_{\mathbf{x} \in \mathbb{X}} f(\mathbf{x}) \subse
 <h3 id="Batch">Batch<a class="anchor-link" href="#Batch">¶</a></h3><p>For the batch setting, the first term is again analytically tractable. The second term can be estimated using Monte Carlo, whilst the entropy term again has to be estimated.</p>
 <p><strong>PES entropy estimate.</strong> In <code>qPredictiveEntropySearch</code> and <code>qMultiObjectivePredictiveEntropySearch</code>, the entropy term is again approximated using expectation propagation. In particular, we approximate $p(Y| X, D_n, f(X_n \cup X) \preceq f(\mathbb{X}^*))$ with a product of Gaussian random variables.</p>
 <p><strong>MES and JES entropy estimate</strong> In <code>qLowerBoundMultiObjectiveMaxValueEntropySearch</code>, <code>qLowerBoundJointEntropySearch</code> and <code>qLowerBoundMultiObjectiveJointEntropySearch</code>, we approximate a lower bound to the MES and JES acquisition function:</p>
-\begin{equation}
+<p>\begin{equation}
 \alpha^{\text{LB-MES}}(X|D_n) 
 = \text{MI}(Y; \mathbb{Y}^*| X, D_n) 
 = H[p(Y|D_n)] - \sum_{\mathbf{x} \in X} \mathbb{E}_{p(\mathbb{Y}^*|D_n)}[H[p(\mathbf{y}| \mathbf{x}, D_n, \mathbb{Y}^*)]],
-\end{equation}\begin{equation}
+\end{equation}</p>
+<p>\begin{equation}
 \alpha^{\text{LB-JES}}(X|D_n) 
 = \text{MI}(Y; (\mathbb{X}^*, \mathbb{Y}^*)| X, D_n) 
 = H[p(Y|D_n)] - \sum_{\mathbf{x} \in X} \mathbb{E}_{p((\mathbb{X}^*, \mathbb{Y}^*)|D_n)}[H[p(\mathbf{y}| \mathbf{x}, D_n, (\mathbb{X}^*, \mathbb{Y}^*))]].
-\end{equation}<p>The advantage of these expressions is that it allows us to take advantage of the existing entropy estimates for the sequential setting.</p>
+\end{equation}</p>
+<p>The advantage of these expressions is that it allows us to take advantage of the existing entropy estimates for the sequential setting.</p>
 </div>
 </div>
 </div>

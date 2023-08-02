@@ -1,11 +1,8 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
-              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-              ga('create', 'G-CXN3PGE3CC', 'auto');
-              ga('send', 'pageview');
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-CXN3PGE3CC"></script><script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments); }
+              gtag('js', new Date());
+              gtag('config', 'G-CXN3PGE3CC');
             </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
@@ -216,8 +213,37 @@ between a provided point and the closest point on the true pareto front.</p>
 </section>
 <section id="module-botorch.test_functions.synthetic">
 <span id="synthetic-test-functions"></span><h2>Synthetic Test Functions<a class="headerlink" href="#module-botorch.test_functions.synthetic" title="Permalink to this heading">¶</a></h2>
-<p>Synthetic functions for optimization benchmarks.
-Reference: <a class="reference external" href="https://www.sfu.ca/~ssurjano/optimization.html">https://www.sfu.ca/~ssurjano/optimization.html</a></p>
+<p>Synthetic functions for optimization benchmarks.</p>
+<p>Most test functions (if not indicated otherwise) are taken from
+<a class="reference internal" href="#bingham2013virtual" id="id1"><span>[Bingham2013virtual]</span></a>.</p>
+<p>References:</p>
+<div class="citation-list" role="list">
+<div class="citation" id="bingham2013virtual" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a href="#id1" role="doc-backlink">Bingham2013virtual</a><span class="fn-bracket">]</span></span>
+<p>D. Bingham, S. Surjanovic. Virtual Library of Simulation Experiments.
+<a class="reference external" href="https://www.sfu.ca/~ssurjano/optimization.html">https://www.sfu.ca/~ssurjano/optimization.html</a></p>
+</div>
+<div class="citation" id="coellocoello2002constraint" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>CoelloCoello2002constraint<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a href="#id2" role="doc-backlink">1</a>,<a href="#id3" role="doc-backlink">2</a>)</span>
+<p>C. A. Coello Coello and E. Mezura Montes. Constraint-handling in genetic
+algorithms through the use of dominance-based tournament selection.
+Advanced Engineering Informatics, 16(3):193–203, 2002.</p>
+</div>
+<div class="citation" id="hedar2006derivfree" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a href="#id4" role="doc-backlink">Hedar2006derivfree</a><span class="fn-bracket">]</span></span>
+<p>A.-R. Hedar and M. Fukushima. Derivative-free filter simulated annealing
+method for constrained continuous global optimization. Journal of Global
+Optimization, 35(4):521–549, 2006.</p>
+</div>
+<div class="citation" id="lemonge2010constrained" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a href="#id5" role="doc-backlink">Lemonge2010constrained</a><span class="fn-bracket">]</span></span>
+<p>A. C. C. Lemonge, H. J. C. Barbosa, C. C. H. Borges, and F. B. dos Santos
+Silva. Constrained optimization problems in mechanical engineering design
+using a real-coded steady-state genetic algorithm. Mecánica Computacional,
+XXIX:9287–9303, 2010.</p>
+</div>
+</div>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.test_functions.synthetic.SyntheticTestFunction">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">SyntheticTestFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#SyntheticTestFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="Permalink to this definition">¶</a></dt>
@@ -1042,6 +1068,260 @@ z_4 = ( 8.05502, -9.66459)</p>
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.test_functions.synthetic.ThreeHumpCamel.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.PressureVessel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">PressureVessel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#PressureVessel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.PressureVessel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="botorch.test_functions.synthetic.SyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">SyntheticTestFunction</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedBaseTestProblem</span></code></a></p>
+<p>Pressure vessel design problem with constraints.</p>
+<p>The four-dimensional pressure vessel design problem with four black-box
+constraints from <a class="reference internal" href="#coellocoello2002constraint" id="id2"><span>[CoelloCoello2002constraint]</span></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.PressureVessel.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></em><a class="headerlink" href="#botorch.test_functions.synthetic.PressureVessel.dim" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.PressureVessel.num_constraints">
+<span class="sig-name descname"><span class="pre">num_constraints</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></em><a class="headerlink" href="#botorch.test_functions.synthetic.PressureVessel.num_constraints" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.PressureVessel.evaluate_true">
+<span class="sig-name descname"><span class="pre">evaluate_true</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#PressureVessel.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.PressureVessel.evaluate_true" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.PressureVessel.evaluate_slack_true">
+<span class="sig-name descname"><span class="pre">evaluate_slack_true</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#PressureVessel.evaluate_slack_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.PressureVessel.evaluate_slack_true" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the constraint slack (w/o observation noise) on a set of points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
+constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>A <cite>batch_shape x n_c</cite>-dim tensor of constraint slack (where positive slack</dt><dd><p>corresponds to the constraint being feasible).</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.PressureVessel.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.test_functions.synthetic.PressureVessel.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.WeldedBeamSO">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">WeldedBeamSO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#WeldedBeamSO"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.WeldedBeamSO" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="botorch.test_functions.synthetic.SyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">SyntheticTestFunction</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedBaseTestProblem</span></code></a></p>
+<p>Welded beam design problem with constraints (single-outcome).</p>
+<p>The four-dimensional welded beam design proble problem with six
+black-box constraints from <a class="reference internal" href="#coellocoello2002constraint" id="id3"><span>[CoelloCoello2002constraint]</span></a>.</p>
+<p>For a (somewhat modified) multi-objective version, see
+<cite>botorch.test_functions.multi_objective.WeldedBeam</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.WeldedBeamSO.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></em><a class="headerlink" href="#botorch.test_functions.synthetic.WeldedBeamSO.dim" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.WeldedBeamSO.num_constraints">
+<span class="sig-name descname"><span class="pre">num_constraints</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">6</span></em><a class="headerlink" href="#botorch.test_functions.synthetic.WeldedBeamSO.num_constraints" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.WeldedBeamSO.evaluate_true">
+<span class="sig-name descname"><span class="pre">evaluate_true</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#WeldedBeamSO.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.WeldedBeamSO.evaluate_true" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.WeldedBeamSO.evaluate_slack_true">
+<span class="sig-name descname"><span class="pre">evaluate_slack_true</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#WeldedBeamSO.evaluate_slack_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.WeldedBeamSO.evaluate_slack_true" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the constraint slack (w/o observation noise) on a set of points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
+constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>A <cite>batch_shape x n_c</cite>-dim tensor of constraint slack (where positive slack</dt><dd><p>corresponds to the constraint being feasible).</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.WeldedBeamSO.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.test_functions.synthetic.WeldedBeamSO.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.TensionCompressionString">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">TensionCompressionString</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#TensionCompressionString"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.TensionCompressionString" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="botorch.test_functions.synthetic.SyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">SyntheticTestFunction</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedBaseTestProblem</span></code></a></p>
+<p>Tension compression string optimization problem with constraints.</p>
+<p>The three-dimensional tension compression string optimization problem with
+four black-box constraints from <a class="reference internal" href="#hedar2006derivfree" id="id4"><span>[Hedar2006derivfree]</span></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.TensionCompressionString.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em><a class="headerlink" href="#botorch.test_functions.synthetic.TensionCompressionString.dim" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.TensionCompressionString.num_constraints">
+<span class="sig-name descname"><span class="pre">num_constraints</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></em><a class="headerlink" href="#botorch.test_functions.synthetic.TensionCompressionString.num_constraints" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.TensionCompressionString.evaluate_true">
+<span class="sig-name descname"><span class="pre">evaluate_true</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#TensionCompressionString.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.TensionCompressionString.evaluate_true" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.TensionCompressionString.evaluate_slack_true">
+<span class="sig-name descname"><span class="pre">evaluate_slack_true</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#TensionCompressionString.evaluate_slack_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.TensionCompressionString.evaluate_slack_true" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the constraint slack (w/o observation noise) on a set of points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
+constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>A <cite>batch_shape x n_c</cite>-dim tensor of constraint slack (where positive slack</dt><dd><p>corresponds to the constraint being feasible).</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.TensionCompressionString.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.test_functions.synthetic.TensionCompressionString.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.SpeedReducer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">SpeedReducer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#SpeedReducer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.SpeedReducer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="botorch.test_functions.synthetic.SyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">SyntheticTestFunction</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedBaseTestProblem</span></code></a></p>
+<p>Speed Reducer design problem with constraints.</p>
+<p>The seven-dimensional speed reducer design problem with eleven black-box
+constraints from <a class="reference internal" href="#lemonge2010constrained" id="id5"><span>[Lemonge2010constrained]</span></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.SpeedReducer.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">7</span></em><a class="headerlink" href="#botorch.test_functions.synthetic.SpeedReducer.dim" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.SpeedReducer.num_constraints">
+<span class="sig-name descname"><span class="pre">num_constraints</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">11</span></em><a class="headerlink" href="#botorch.test_functions.synthetic.SpeedReducer.num_constraints" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.SpeedReducer.evaluate_true">
+<span class="sig-name descname"><span class="pre">evaluate_true</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#SpeedReducer.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.SpeedReducer.evaluate_true" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.SpeedReducer.evaluate_slack_true">
+<span class="sig-name descname"><span class="pre">evaluate_slack_true</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#SpeedReducer.evaluate_slack_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.SpeedReducer.evaluate_slack_true" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the constraint slack (w/o observation noise) on a set of points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
+constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>A <cite>batch_shape x n_c</cite>-dim tensor of constraint slack (where positive slack</dt><dd><p>corresponds to the constraint being feasible).</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.SpeedReducer.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.test_functions.synthetic.SpeedReducer.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
 </section>
 <section id="module-botorch.test_functions.multi_fidelity">
 <span id="multi-fidelity-synthetic-test-functions"></span><h2>Multi-Fidelity Synthetic Test Functions<a class="headerlink" href="#module-botorch.test_functions.multi_fidelity" title="Permalink to this heading">¶</a></h2>
@@ -1194,13 +1474,13 @@ where the last two dimensions are the fidelity parameters:</p>
 <div class="citation-list" role="list">
 <div class="citation" id="daulton2022" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Daulton2022<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id6" role="doc-backlink">1</a>,<a href="#id8" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id11" role="doc-backlink">1</a>,<a href="#id13" role="doc-backlink">2</a>)</span>
 <p>S. Daulton, S. Cakmak, M. Balandat, M. A. Osborne, E. Zhou, and E. Bakshy.
 Robust Multi-Objective Bayesian Optimization Under Input Noise.
 Proceedings of the 39th International Conference on Machine Learning, 2022.</p>
 </div>
 <div class="citation" id="deb2005dtlz" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id3" role="doc-backlink">Deb2005dtlz</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id8" role="doc-backlink">Deb2005dtlz</a><span class="fn-bracket">]</span></span>
 <p>K. Deb, L. Thiele, M. Laumanns, E. Zitzler, A. Abraham, L. Jain, and
 R. Goldberg. Scalable test problems for evolutionary multi-objective
 optimization. Evolutionary Multiobjective Optimization, Springer-Verlag,
@@ -1208,13 +1488,13 @@ pp. 105-145, 2005.</p>
 </div>
 <div class="citation" id="deb2005robust" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Deb2005robust<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id1" role="doc-backlink">1</a>,<a href="#id2" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id6" role="doc-backlink">1</a>,<a href="#id7" role="doc-backlink">2</a>)</span>
 <p>K. Deb and H. Gupta. Searching for Robust Pareto-Optimal Solutions in
 Multi-objective Optimization. Evolutionary Multi-Criterion Optimization,
 Springer-Berlin, pp. 150-164, 2005.</p>
 </div>
 <div class="citation" id="frohlich2020" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id5" role="doc-backlink">Frohlich2020</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id10" role="doc-backlink">Frohlich2020</a><span class="fn-bracket">]</span></span>
 <p>L. Frohlich, E. Klenske, J. Vinogradska, C. Daniel, and M. Zeilinger.
 Noisy-Input Entropy Search for Efficient Robust Bayesian Optimization.
 Proceedings of the Twenty Third International Conference on Artificial
@@ -1222,50 +1502,50 @@ Intelligence and Statistics, PMLR 108:2262-2272, 2020.</p>
 </div>
 <div class="citation" id="garridomerchan2020" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>GarridoMerchan2020<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id19" role="doc-backlink">1</a>,<a href="#id20" role="doc-backlink">2</a>,<a href="#id25" role="doc-backlink">3</a>)</span>
+<span class="backrefs">(<a href="#id24" role="doc-backlink">1</a>,<a href="#id25" role="doc-backlink">2</a>,<a href="#id30" role="doc-backlink">3</a>)</span>
 <p>E. C. Garrido-Merch ́an and D. Hern ́andez-Lobato. Parallel Predictive Entropy
 Search for Multi-objective Bayesian Optimization with Constraints.
 arXiv e-prints, arXiv:2004.00601, Apr. 2020.</p>
 </div>
 <div class="citation" id="gelbart2014" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id21" role="doc-backlink">Gelbart2014</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id26" role="doc-backlink">Gelbart2014</a><span class="fn-bracket">]</span></span>
 <p>Michael A. Gelbart, Jasper Snoek, and Ryan P. Adams. 2014. Bayesian
 optimization with unknown constraints. In Proceedings of the Thirtieth
 Conference on Uncertainty in Artificial Intelligence (UAI’14).
 AUAI Press, Arlington, Virginia, USA, 250–259.</p>
 </div>
 <div class="citation" id="liang2021" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id7" role="doc-backlink">Liang2021</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id12" role="doc-backlink">Liang2021</a><span class="fn-bracket">]</span></span>
 <p>Q. Liang and L. Lai, Scalable Bayesian Optimization Accelerates Process
 Optimization of Penicillin Production. NeurIPS 2021 AI for Science Workshop, 2021.</p>
 </div>
 <div class="citation" id="ma2019" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id23" role="doc-backlink">Ma2019</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id28" role="doc-backlink">Ma2019</a><span class="fn-bracket">]</span></span>
 <p>Z. Ma and Y. Wang. Evolutionary Constrained Multiobjective Optimization:
 Test Suite Construction and Performance Comparisons. IEEE Transactions
 on Evolutionary Computation, 23(6):972–986, December 2019.</p>
 </div>
 <div class="citation" id="oszycka1995" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id24" role="doc-backlink">Oszycka1995</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id29" role="doc-backlink">Oszycka1995</a><span class="fn-bracket">]</span></span>
 <p>A. Osyczka and S. Kundu. A new method to solve generalized
 multicriteria optimization problems using the simple genetic algorithm.
 In Structural Optimization 10. 94–99, 1995.</p>
 </div>
 <div class="citation" id="tanabe2020" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Tanabe2020<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id9" role="doc-backlink">1</a>,<a href="#id10" role="doc-backlink">2</a>,<a href="#id11" role="doc-backlink">3</a>,<a href="#id16" role="doc-backlink">4</a>,<a href="#id17" role="doc-backlink">5</a>,<a href="#id18" role="doc-backlink">6</a>,<a href="#id22" role="doc-backlink">7</a>)</span>
+<span class="backrefs">(<a href="#id14" role="doc-backlink">1</a>,<a href="#id15" role="doc-backlink">2</a>,<a href="#id16" role="doc-backlink">3</a>,<a href="#id21" role="doc-backlink">4</a>,<a href="#id22" role="doc-backlink">5</a>,<a href="#id23" role="doc-backlink">6</a>,<a href="#id27" role="doc-backlink">7</a>)</span>
 <p>Ryoji Tanabe and Hisao Ishibuchi. An easy-to-use real-world multi-objective
 optimization problem suite, Applied Soft Computing,Volume 89, 2020.</p>
 </div>
 <div class="citation" id="yang2019a" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Yang2019a<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id13" role="doc-backlink">1</a>,<a href="#id14" role="doc-backlink">2</a>,<a href="#id15" role="doc-backlink">3</a>)</span>
+<span class="backrefs">(<a href="#id18" role="doc-backlink">1</a>,<a href="#id19" role="doc-backlink">2</a>,<a href="#id20" role="doc-backlink">3</a>)</span>
 <p>K. Yang, M. Emmerich, A. Deutz, and T. Bäck. Multi-Objective Bayesian
 Global Optimization using expected hypervolume improvement gradient.
 Swarm and evolutionary computation 44, pp. 945–956, 2019.</p>
 </div>
 <div class="citation" id="zitzler2000" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id12" role="doc-backlink">Zitzler2000</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id17" role="doc-backlink">Zitzler2000</a><span class="fn-bracket">]</span></span>
 <p>E. Zitzler, K. Deb, and L. Thiele. Comparison of multiobjective
 evolutionary algorithms: Empirical results. Evolutionary Computation, vol.
 8, no. 2,pp. 173–195, 2000.</p>
@@ -1328,7 +1608,7 @@ evolutionary algorithms: Empirical results. Evolutionary Computation, vol.
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">DH</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#DH"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.DH" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveTestProblem</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 <p>Base class for DH problems for robust multi-objective optimization.</p>
-<p>In their paper, <a class="reference internal" href="#deb2005robust" id="id1"><span>[Deb2005robust]</span></a> consider these problems under a mean-robustness
+<p>In their paper, <a class="reference internal" href="#deb2005robust" id="id6"><span>[Deb2005robust]</span></a> consider these problems under a mean-robustness
 setting, and use uniformly distributed input perturbations from the box with
 edge lengths <cite>delta_0 = delta</cite>, <cite>delta_i = 2 * delta, i &gt; 0</cite>, with <cite>delta</cite> ranging
 up to <cite>0.01</cite> for DH1 and DH2, and <cite>delta = 0.03</cite> for DH3 and DH4.</p>
@@ -1338,7 +1618,7 @@ up to <cite>0.01</cite> for DH1 and DH2, and <cite>delta = 0.03</cite> for DH3 a
 f_1(x) = h(x) + g(x) * S(x) for DH1 and DH2
 f_1(x) = h(x) * (g(x) + S(x)) for DH3 and DH4</p>
 </div></blockquote>
-<p>The goal is to minimize both objectives. See <a class="reference internal" href="#deb2005robust" id="id2"><span>[Deb2005robust]</span></a> for more details
+<p>The goal is to minimize both objectives. See <a class="reference internal" href="#deb2005robust" id="id7"><span>[Deb2005robust]</span></a> for more details
 on DH. The reference points were set using <cite>infer_reference_point</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1522,7 +1802,7 @@ near <cite>x_0 + x_1 = 0.35</cite> and the global one near <cite>x_0 + x_1 = 0.8
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">DTLZ</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_objectives</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#DTLZ"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.DTLZ" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveTestProblem</span></code></a></p>
 <p>Base class for DTLZ problems.</p>
-<p>See <a class="reference internal" href="#deb2005dtlz" id="id3"><span>[Deb2005dtlz]</span></a> for more details on DTLZ.</p>
+<p>See <a class="reference internal" href="#deb2005dtlz" id="id8"><span>[Deb2005dtlz]</span></a> for more details on DTLZ.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1561,7 +1841,7 @@ k + (x_i - 0.5)^2 - cos(20 * pi * (x_i - 0.5))
 </div></blockquote>
 <p>where k = d - m + 1.</p>
 <p>The pareto front is given by the line (or hyperplane) sum_i f_i(x) = 0.5.
-The goal is to minimize both objectives. The reference point comes from <a class="reference internal" href="acquisition.html#yang2019" id="id4"><span>[Yang2019]</span></a>.</p>
+The goal is to minimize both objectives. The reference point comes from <a class="reference internal" href="acquisition.html#yang2019" id="id9"><span>[Yang2019]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1857,10 +2137,10 @@ M - sum_{i=0}^{M-2} f_i(x)/(1+g(x)) * (1 + sin(3 * pi * f_i(x)))</p>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveTestProblem</span></code></a></p>
 <p>A test problem where each objective is a Gaussian mixture model.</p>
 <p>This implementation is adapted from the single objective version (proposed by
-<a class="reference internal" href="#frohlich2020" id="id5"><span>[Frohlich2020]</span></a>) at
+<a class="reference internal" href="#frohlich2020" id="id10"><span>[Frohlich2020]</span></a>) at
 <a class="reference external" href="https://github.com/boschresearch/NoisyInputEntropySearch/blob/master/">https://github.com/boschresearch/NoisyInputEntropySearch/blob/master/</a>
 core/util/objectives.py.</p>
-<p>See <a class="reference internal" href="#daulton2022" id="id6"><span>[Daulton2022]</span></a> for details on this multi-objective problem.</p>
+<p>See <a class="reference internal" href="#daulton2022" id="id11"><span>[Daulton2022]</span></a> for details on this multi-objective problem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1900,7 +2180,7 @@ core/util/objectives.py.</p>
 <dt class="sig sig-object py" id="botorch.test_functions.multi_objective.Penicillin">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">Penicillin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#Penicillin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.Penicillin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveTestProblem</span></code></a></p>
-<p>A penicillin production simulator from <a class="reference internal" href="#liang2021" id="id7"><span>[Liang2021]</span></a>.</p>
+<p>A penicillin production simulator from <a class="reference internal" href="#liang2021" id="id12"><span>[Liang2021]</span></a>.</p>
 <p>This implementation is adapted from
 <a class="reference external" href="https://github.com/HarryQL/TuRBO-Penicillin">https://github.com/HarryQL/TuRBO-Penicillin</a>.</p>
 <p>The goal is to maximize the penicillin yield while minimizing
@@ -2063,7 +2343,7 @@ rate, substrate feed concentration, and H+ concentration.</p>
 sensitive to input noise. The first objective is a mixture of a linear
 function and a sinusoidal function, and the second objective is a modified
 Levy function, where the second parameter is fixed.</p>
-<p>This function comes from <a class="reference internal" href="#daulton2022" id="id8"><span>[Daulton2022]</span></a>.</p>
+<p>This function comes from <a class="reference internal" href="#daulton2022" id="id13"><span>[Daulton2022]</span></a>.</p>
 <p>The reference point was set using the <cite>infer_reference_point</cite>
 heuristic on the Pareto frontier over a large discrete set of
 random designs.</p>
@@ -2135,11 +2415,11 @@ random designs.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">VehicleSafety</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#VehicleSafety"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.VehicleSafety" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveTestProblem</span></code></a></p>
 <p>Optimize Vehicle crash-worthiness.</p>
-<p>See <a class="reference internal" href="#tanabe2020" id="id9"><span>[Tanabe2020]</span></a> for details.</p>
+<p>See <a class="reference internal" href="#tanabe2020" id="id14"><span>[Tanabe2020]</span></a> for details.</p>
 <p>The reference point is 1.1 * the nadir point from
-approximate front provided by <a class="reference internal" href="#tanabe2020" id="id10"><span>[Tanabe2020]</span></a>.</p>
+approximate front provided by <a class="reference internal" href="#tanabe2020" id="id15"><span>[Tanabe2020]</span></a>.</p>
 <p>The maximum hypervolume is computed using the approximate
-pareto front from <a class="reference internal" href="#tanabe2020" id="id11"><span>[Tanabe2020]</span></a>.</p>
+pareto front from <a class="reference internal" href="#tanabe2020" id="id16"><span>[Tanabe2020]</span></a>.</p>
 <p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2180,7 +2460,7 @@ pareto front from <a class="reference internal" href="#tanabe2020" id="id11"><sp
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">ZDT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_objectives</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#ZDT"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.ZDT" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveTestProblem</span></code></a></p>
 <p>Base class for ZDT problems.</p>
-<p>See <a class="reference internal" href="#zitzler2000" id="id12"><span>[Zitzler2000]</span></a> for more details on ZDT.</p>
+<p>See <a class="reference internal" href="#zitzler2000" id="id17"><span>[Zitzler2000]</span></a> for more details on ZDT.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -2215,7 +2495,7 @@ pareto front from <a class="reference internal" href="#tanabe2020" id="id11"><sp
 f_1(x) = g(x) * (1 - sqrt(x_0 / g(x))
 g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 </div></blockquote>
-<p>The reference point comes from <a class="reference internal" href="#yang2019a" id="id13"><span>[Yang2019a]</span></a>.</p>
+<p>The reference point comes from <a class="reference internal" href="#yang2019a" id="id18"><span>[Yang2019a]</span></a>.</p>
 <p>The pareto front is convex.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2277,7 +2557,7 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 f_1(x) = g(x) * (1 - (x_0 / g(x))^2)
 g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 </div></blockquote>
-<p>The reference point comes from <a class="reference internal" href="#yang2019a" id="id14"><span>[Yang2019a]</span></a>.</p>
+<p>The reference point comes from <a class="reference internal" href="#yang2019a" id="id19"><span>[Yang2019a]</span></a>.</p>
 <p>The pareto front is concave.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2339,7 +2619,7 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 f_1(x) = 1 - sqrt(x_0 / g(x)) - x_0 / g * sin(10 * pi * x_0)
 g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 </div></blockquote>
-<p>The reference point comes from <a class="reference internal" href="#yang2019a" id="id15"><span>[Yang2019a]</span></a>.</p>
+<p>The reference point comes from <a class="reference internal" href="#yang2019a" id="id20"><span>[Yang2019a]</span></a>.</p>
 <p>The pareto front consists of several discontinuous convex parts.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2395,11 +2675,11 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">CarSideImpact</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#CarSideImpact"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.CarSideImpact" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveTestProblem</span></code></a></p>
 <p>Car side impact problem.</p>
-<p>See <a class="reference internal" href="#tanabe2020" id="id16"><span>[Tanabe2020]</span></a> for details.</p>
+<p>See <a class="reference internal" href="#tanabe2020" id="id21"><span>[Tanabe2020]</span></a> for details.</p>
 <p>The reference point is <cite>nadir + 0.1 * (ideal - nadir)</cite>
 where the ideal and nadir points come from the approximate
-Pareto frontier from <a class="reference internal" href="#tanabe2020" id="id17"><span>[Tanabe2020]</span></a>. The max_hv was computed
-based on the approximate Pareto frontier from <a class="reference internal" href="#tanabe2020" id="id18"><span>[Tanabe2020]</span></a>.</p>
+Pareto frontier from <a class="reference internal" href="#tanabe2020" id="id22"><span>[Tanabe2020]</span></a>. The max_hv was computed
+based on the approximate Pareto frontier from <a class="reference internal" href="#tanabe2020" id="id23"><span>[Tanabe2020]</span></a>.</p>
 <p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2436,7 +2716,7 @@ based on the approximate Pareto frontier from <a class="reference internal" href
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">BNH</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#BNH"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.BNH" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveTestProblem</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedBaseTestProblem</span></code></a></p>
 <p>The constrained BNH problem.</p>
-<p>See <a class="reference internal" href="#garridomerchan2020" id="id19"><span>[GarridoMerchan2020]</span></a> for more details on this problem. Note that this is a
+<p>See <a class="reference internal" href="#garridomerchan2020" id="id24"><span>[GarridoMerchan2020]</span></a> for more details on this problem. Note that this is a
 minimization problem.</p>
 <p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
@@ -2503,7 +2783,7 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">CONSTR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#CONSTR"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.CONSTR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveTestProblem</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedBaseTestProblem</span></code></a></p>
 <p>The constrained CONSTR problem.</p>
-<p>See <a class="reference internal" href="#garridomerchan2020" id="id20"><span>[GarridoMerchan2020]</span></a> for more details on this problem. Note that this is a
+<p>See <a class="reference internal" href="#garridomerchan2020" id="id25"><span>[GarridoMerchan2020]</span></a> for more details on this problem. Note that this is a
 minimization problem.</p>
 <p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
@@ -2570,7 +2850,7 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">ConstrainedBraninCurrin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#ConstrainedBraninCurrin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.ConstrainedBraninCurrin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.multi_objective.BraninCurrin" title="botorch.test_functions.multi_objective.BraninCurrin"><code class="xref py py-class docutils literal notranslate"><span class="pre">BraninCurrin</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedBaseTestProblem</span></code></a></p>
 <p>Constrained Branin Currin Function.</p>
-<p>This uses the disk constraint from <a class="reference internal" href="#gelbart2014" id="id21"><span>[Gelbart2014]</span></a>.</p>
+<p>This uses the disk constraint from <a class="reference internal" href="#gelbart2014" id="id26"><span>[Gelbart2014]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -2676,7 +2956,7 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <p>The Disc Brake problem.</p>
 <p>There are 2 objectives and 4 constraints.</p>
 <p>Both objectives should be minimized.</p>
-<p>See <a class="reference internal" href="#tanabe2020" id="id22"><span>[Tanabe2020]</span></a> for details.</p>
+<p>See <a class="reference internal" href="#tanabe2020" id="id27"><span>[Tanabe2020]</span></a> for details.</p>
 <p>The reference point was set using the <cite>infer_reference_point</cite>
 heuristic on the Pareto frontier over a large discrete set of
 random designs.</p>
@@ -2746,7 +3026,7 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveTestProblem</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedBaseTestProblem</span></code></a></p>
 <p>The MW7 problem.</p>
 <p>This problem has 2 objectives, 2 constraints, and a disconnected Pareto
-frontier. It supports arbitrary input dimension &gt; 1. See <a class="reference internal" href="#ma2019" id="id23"><span>[Ma2019]</span></a> for details.</p>
+frontier. It supports arbitrary input dimension &gt; 1. See <a class="reference internal" href="#ma2019" id="id28"><span>[Ma2019]</span></a> for details.</p>
 <p>This implementation is adapted from:
 <a class="reference external" href="https://github.com/anyoptimization/pymoo/blob/master/pymoo/problems/multi/mw.py">https://github.com/anyoptimization/pymoo/blob/master/pymoo/problems/multi/mw.py</a></p>
 <dl class="field-list simple">
@@ -2817,7 +3097,7 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <dt class="sig sig-object py" id="botorch.test_functions.multi_objective.OSY">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">OSY</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#OSY"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.OSY" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveTestProblem</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedBaseTestProblem</span></code></a></p>
-<p>The OSY test problem from <a class="reference internal" href="#oszycka1995" id="id24"><span>[Oszycka1995]</span></a>.
+<p>The OSY test problem from <a class="reference internal" href="#oszycka1995" id="id29"><span>[Oszycka1995]</span></a>.
 Implementation from
 <a class="reference external" href="https://github.com/msu-coinlab/pymoo/blob/master/pymoo/problems/multi/osy.py">https://github.com/msu-coinlab/pymoo/blob/master/pymoo/problems/multi/osy.py</a>
 Note that this implementation assumes minimization, so please choose negate=True.</p>
@@ -2886,7 +3166,7 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">SRN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#SRN"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.SRN" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveTestProblem</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedBaseTestProblem</span></code></a></p>
 <p>The constrained SRN problem.</p>
-<p>See <a class="reference internal" href="#garridomerchan2020" id="id25"><span>[GarridoMerchan2020]</span></a> for more details on this problem. Note that this is a
+<p>See <a class="reference internal" href="#garridomerchan2020" id="id30"><span>[GarridoMerchan2020]</span></a> for more details on this problem. Note that this is a
 minimization problem.</p>
 <p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
@@ -2952,8 +3232,10 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <dt class="sig sig-object py" id="botorch.test_functions.multi_objective.WeldedBeam">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">WeldedBeam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#WeldedBeam"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.WeldedBeam" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveTestProblem</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedBaseTestProblem</span></code></a></p>
-<p>The Welded Beam test problem.
-Implementation from
+<p>The Welded Beam multi-objective test problem. Similar to <cite>WeldedBeamSO</cite> in
+<cite>botorch.test_function.synthetic</cite>, but with an additional output, somewhat
+modified constraints, and a different domain.</p>
+<p>Implementation from
 <a class="reference external" href="https://github.com/msu-coinlab/pymoo/blob/master/pymoo/problems/multi/welded_beam.py">https://github.com/msu-coinlab/pymoo/blob/master/pymoo/problems/multi/welded_beam.py</a>
 Note that this implementation assumes minimization, so please choose negate=True.</p>
 <p>Base constructor for multi-objective test functions.</p>
@@ -3024,7 +3306,7 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="irshad2021" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Irshad2021<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id26" role="doc-backlink">1</a>,<a href="#id27" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id31" role="doc-backlink">1</a>,<a href="#id32" role="doc-backlink">2</a>)</span>
 <p>F. Irshad, S. Karsch, and A. Döpp. Expected hypervolume improvement for
 simultaneous multi-objective and multi-fidelity optimization.
 arXiv preprint arXiv:2112.13901, 2021.</p>
@@ -3037,7 +3319,7 @@ arXiv preprint arXiv:2112.13901, 2021.</p>
 <p>Branin-Currin problem for multi-objective-multi-fidelity optimization.</p>
 <p>(2+1)-dimensional function with domain <cite>[0,1]^3</cite> where the last dimension
 is the fidelity parameter <cite>s</cite>.
-Both functions assume minimization. See <a class="reference internal" href="#irshad2021" id="id26"><span>[Irshad2021]</span></a> for more details.</p>
+Both functions assume minimization. See <a class="reference internal" href="#irshad2021" id="id31"><span>[Irshad2021]</span></a> for more details.</p>
 <p>Modified Branin function:</p>
 <blockquote>
 <div><p>B(x,s) = 21-((
@@ -3098,7 +3380,7 @@ Both functions assume minimization. See <a class="reference internal" href="#irs
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveTestProblem</span></code></a></p>
 <p>Modified Park test functions for multi-objective multi-fidelity optimization.</p>
 <p>(4+1)-dimensional function with domain <cite>[0,1]^5</cite> where the last dimension
-is the fidelity parameter <cite>s</cite>. See <a class="reference internal" href="#irshad2021" id="id27"><span>[Irshad2021]</span></a> for more details.</p>
+is the fidelity parameter <cite>s</cite>. See <a class="reference internal" href="#irshad2021" id="id32"><span>[Irshad2021]</span></a> for more details.</p>
 <p>The first modified Park function is</p>
 <blockquote>
 <div><p>P1(x, s)=A*(T1(x,s)+T2(x,s)-B)/22-0.8</p>
@@ -3309,6 +3591,31 @@ V= Prod_{i=1}^{d} (1+V_i) - 1</p>
 </dd>
 </dl>
 </dd></dl>
+</dd></dl>
+</section>
+<section id="module-botorch.test_functions.utils">
+<span id="utilities-for-test-functions"></span><h2>Utilities For Test Functions<a class="headerlink" href="#module-botorch.test_functions.utils" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.test_functions.utils.round_nearest">
+<span class="sig-prename descclassname"><span class="pre">botorch.test_functions.utils.</span></span><span class="sig-name descname"><span class="pre">round_nearest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">increment</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/utils.html#round_nearest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.utils.round_nearest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rounds the input tensor to the nearest multiple of <cite>increment</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – The input to be rounded.</p></li>
+<li><p><strong>increment</strong> (<em>float</em>) – The increment to round to.</p></li>
+<li><p><strong>bounds</strong> (<em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – An optional tuple of two floats representing the lower and upper
+bounds on <cite>X</cite>. If provided, this will round to the nearest multiple
+of <cite>increment</cite> that lies within the bounds.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The rounded input.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
 </dd></dl>
 </section>
 </section>

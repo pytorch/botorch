@@ -1,11 +1,8 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Constraints · BoTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="BoTorch supports two distinct types of constraints: Parameter constraints"/><meta name="docsearch:version" content="stable"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Constraints · BoTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="BoTorch supports two distinct types of constraints: Parameter constraints"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
-              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-              ga('create', 'G-CXN3PGE3CC', 'auto');
-              ga('send', 'pageview');
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Constraints · BoTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="BoTorch supports two distinct types of constraints: Parameter constraints"/><meta name="docsearch:version" content="stable"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Constraints · BoTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="BoTorch supports two distinct types of constraints: Parameter constraints"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-CXN3PGE3CC"></script><script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments); }
+              gtag('js', new Date());
+              gtag('config', 'G-CXN3PGE3CC');
             </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
@@ -85,13 +82,19 @@ have a model that is fit on points that do not satisfy a certain set of paramete
 constraints, but still generate candidates subject to those constraints.</p>
 <h3><a class="anchor" aria-hidden="true" id="outcome-constraints"></a><a href="#outcome-constraints" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Outcome Constraints</h3>
 <p>In the context of Bayesian Optimization, outcome constraints usually mean
-constraints on some (black-box) outcome that needs to be modeled, just like
+constraints on a (black-box) outcome that needs to be modeled, just like
 the objective function is modeled by a surrogate model. Various approaches
-for handling these types of constraints have been proposed, a popular one that
-is also adopted by BoTorch (and available in the form of <code>ConstrainedMCObjective</code>)
-is to use variant of expected improvement in which the improvement in the objective
-is weighted by the probability of feasibility under the (modeled) outcome
-constraint (<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>, <sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup>).</p>
+for handling these types of constraints have been proposed. A popular one that
+is also adopted by BoTorch for Monte Carlo acquistion functions is to multiply
+the acquisition utility by the feasibility indicator of the modeled outcome
+(<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>, <sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup>). The approach can be utilized by passing
+<code>constraints</code> to the constructors of compatible acquisition functions,
+e.g. any <code>SampleReducingMCAcqquisitionFunction</code> with a positive acquisition utility,
+like expected improvement.
+Notably, if the constraint and objective models are statistically independent,
+the constrained expected improvement variant is mathematically equivalent to the
+unconstrained expected improvement of the objective, multiplied by the probability of
+feasibility under the modeled outcome constraint.</p>
 <p>See the <a href="../tutorials/closed_loop_botorch_only">Closed-Loop Optimization</a>
 tutorial for an example of using outcome constraints in BoTorch.</p>
 <hr class="footnotes-sep">

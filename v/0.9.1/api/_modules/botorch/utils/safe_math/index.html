@@ -1,0 +1,357 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/0.9.1/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/v/0.9.1/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/0.9.1/img/botorch.png"/><link rel="shortcut icon" href="/v/0.9.1/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-CXN3PGE3CC"></script><script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments); }
+              gtag('js', new Date());
+              gtag('config', 'G-CXN3PGE3CC');
+            </script><link rel="stylesheet" href="/v/0.9.1/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/0.9.1/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/0.9.1/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/0.9.1/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/0.9.1/css/main.css"/><script src="/v/0.9.1/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/0.9.1/"><img class="logo" src="/v/0.9.1/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/0.9.1/versions"><h3>0.9.1</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/0.9.1/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/0.9.1/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/0.9.1/api/" target="_self">API Reference</a></li><li class=""><a href="/v/0.9.1/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for botorch.utils.safe_math</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
+
+<span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">Special implementations of mathematical functions that</span>
+<span class="sd">solve numerical issues of naive implementations.</span>
+
+<span class="sd">.. [Maechler2012accurate]</span>
+<span class="sd">    M. Mächler. Accurately Computing log (1 - exp (-| a|))</span>
+<span class="sd">        Assessed by the Rmpfr package. Technical report, 2012.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">math</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.constants</span> <span class="kn">import</span> <span class="n">get_constants_like</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">finfo</span><span class="p">,</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.nn.functional</span> <span class="kn">import</span> <span class="n">softplus</span>
+
+<span class="n">_log2</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">_inv_sqrt_3</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span>
+
+
+<span class="c1"># Unary ops</span>
+<div class="viewcode-block" id="exp"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.exp">[docs]</a><span class="k">def</span> <span class="nf">exp</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="n">finfo</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">maxexp</span> <span class="o">=</span> <span class="n">get_constants_like</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">max</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1e-4</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="nb">max</span><span class="o">=</span><span class="n">maxexp</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="log"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.log">[docs]</a><span class="k">def</span> <span class="nf">log</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="n">finfo</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="n">info</span><span class="o">.</span><span class="n">tiny</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<span class="c1"># Binary ops</span>
+<div class="viewcode-block" id="add"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.add">[docs]</a><span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="n">_0</span> <span class="o">=</span> <span class="n">get_constants_like</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+    <span class="n">case</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">isinf</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">b</span><span class="o">.</span><span class="n">isinf</span><span class="p">()</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">a</span> <span class="o">!=</span> <span class="n">b</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">case</span><span class="p">,</span> <span class="n">_0</span><span class="p">,</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="sub"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.sub">[docs]</a><span class="k">def</span> <span class="nf">sub</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="n">_0</span> <span class="o">=</span> <span class="n">get_constants_like</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+    <span class="n">case</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">isinf</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">b</span><span class="o">.</span><span class="n">isinf</span><span class="p">())</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">a</span> <span class="o">==</span> <span class="n">b</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">case</span><span class="p">,</span> <span class="n">_0</span><span class="p">,</span> <span class="n">a</span> <span class="o">-</span> <span class="n">b</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="div"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.div">[docs]</a><span class="k">def</span> <span class="nf">div</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="n">_0</span><span class="p">,</span> <span class="n">_1</span> <span class="o">=</span> <span class="n">get_constants_like</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">ref</span><span class="o">=</span><span class="n">a</span><span class="p">)</span>
+    <span class="n">case</span> <span class="o">=</span> <span class="p">((</span><span class="n">a</span> <span class="o">==</span> <span class="n">_0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">b</span> <span class="o">==</span> <span class="n">_0</span><span class="p">))</span> <span class="o">|</span> <span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">isinf</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">a</span><span class="o">.</span><span class="n">isinf</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">case</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">a</span> <span class="o">!=</span> <span class="n">b</span><span class="p">,</span> <span class="o">-</span><span class="n">_1</span><span class="p">,</span> <span class="n">_1</span><span class="p">),</span> <span class="n">a</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">case</span><span class="p">,</span> <span class="n">_1</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="mul"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.mul">[docs]</a><span class="k">def</span> <span class="nf">mul</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="n">_0</span> <span class="o">=</span> <span class="n">get_constants_like</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">a</span><span class="p">)</span>
+    <span class="n">case</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">isinf</span><span class="p">()</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">b</span> <span class="o">==</span> <span class="n">_0</span><span class="p">))</span> <span class="o">|</span> <span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">isinf</span><span class="p">()</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">a</span> <span class="o">==</span> <span class="n">_0</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">case</span><span class="p">,</span> <span class="n">_0</span><span class="p">,</span> <span class="n">a</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">case</span><span class="p">,</span> <span class="n">_0</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="log1mexp"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.log1mexp">[docs]</a><span class="k">def</span> <span class="nf">log1mexp</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Numerically accurate evaluation of log(1 - exp(x)) for x &lt; 0.</span>
+<span class="sd">    See [Maechler2012accurate]_ for details.</span>
+<span class="sd">    """</span>
+    <span class="n">log2</span> <span class="o">=</span> <span class="n">get_constants_like</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">_log2</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">is_small</span> <span class="o">=</span> <span class="o">-</span><span class="n">log2</span> <span class="o">&lt;</span> <span class="n">x</span>  <span class="c1"># x &lt; 0</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">is_small</span><span class="p">,</span>
+        <span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="o">.</span><span class="n">expm1</span><span class="p">())</span><span class="o">.</span><span class="n">log</span><span class="p">(),</span>
+        <span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="o">.</span><span class="n">exp</span><span class="p">())</span><span class="o">.</span><span class="n">log1p</span><span class="p">(),</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="log1pexp"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.log1pexp">[docs]</a><span class="k">def</span> <span class="nf">log1pexp</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Numerically accurate evaluation of log(1 + exp(x)).</span>
+<span class="sd">    See [Maechler2012accurate]_ for details.</span>
+<span class="sd">    """</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">x</span> <span class="o">&lt;=</span> <span class="mi">18</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">mask</span><span class="p">,</span>
+        <span class="p">(</span><span class="k">lambda</span> <span class="n">z</span><span class="p">:</span> <span class="n">z</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span><span class="o">.</span><span class="n">log1p</span><span class="p">())(</span><span class="n">x</span><span class="o">.</span><span class="n">masked_fill</span><span class="p">(</span><span class="o">~</span><span class="n">mask</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
+        <span class="p">(</span><span class="k">lambda</span> <span class="n">z</span><span class="p">:</span> <span class="n">z</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="n">z</span><span class="p">)</span><span class="o">.</span><span class="n">exp</span><span class="p">())(</span><span class="n">x</span><span class="o">.</span><span class="n">masked_fill</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="logexpit"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.logexpit">[docs]</a><span class="k">def</span> <span class="nf">logexpit</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Computes the logarithm of the expit (a.k.a. sigmoid) function."""</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">log1pexp</span><span class="p">(</span><span class="o">-</span><span class="n">X</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="logdiffexp"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.logdiffexp">[docs]</a><span class="k">def</span> <span class="nf">logdiffexp</span><span class="p">(</span><span class="n">log_a</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">log_b</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Computes log(b - a) accurately given log(a) and log(b).</span>
+<span class="sd">    Assumes, log_b &gt; log_a, i.e. b &gt; a &gt; 0.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        log_a (Tensor): The logarithm of a, assumed to be less than log_b.</span>
+<span class="sd">        log_b (Tensor): The logarithm of b, assumed to be larger than log_a.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A Tensor of values corresponding to log(b - a).</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">log_b</span> <span class="o">+</span> <span class="n">log1mexp</span><span class="p">(</span><span class="n">log_a</span> <span class="o">-</span> <span class="n">log_b</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="logmeanexp"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.logmeanexp">[docs]</a><span class="k">def</span> <span class="nf">logmeanexp</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]],</span> <span class="n">keepdim</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Computes `log(mean(exp(X), dim=dim, keepdim=keepdim))`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: Values of which to compute the logmeanexp.</span>
+<span class="sd">        dim: The dimension(s) over which to compute the mean.</span>
+<span class="sd">        keepdim: If True, keeps the reduced dimensions.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A Tensor of values corresponding to `log(mean(exp(X), dim=dim))`.</span>
+<span class="sd">    """</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">else</span> <span class="n">math</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">dim</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">logsumexp</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="n">keepdim</span><span class="p">)</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">n</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="log_softplus"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.log_softplus">[docs]</a><span class="k">def</span> <span class="nf">log_softplus</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">tau</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Computes the logarithm of the softplus function with high numerical accuracy.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x: Input tensor, should have single or double precision floats.</span>
+<span class="sd">        tau: Decreasing tau increases the tightness of the</span>
+<span class="sd">            approximation to ReLU. Non-negative and defaults to 1.0.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tensor corresponding to `log(softplus(x))`.</span>
+<span class="sd">    """</span>
+    <span class="n">check_dtype_float32_or_float64</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">tau</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">tau</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+    <span class="c1"># cutoff chosen to achieve accuracy to machine epsilon</span>
+    <span class="n">upper</span> <span class="o">=</span> <span class="mi">16</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span> <span class="k">else</span> <span class="mi">32</span>
+    <span class="n">lower</span> <span class="o">=</span> <span class="o">-</span><span class="mi">15</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span> <span class="k">else</span> <span class="o">-</span><span class="mi">35</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">x</span> <span class="o">/</span> <span class="n">tau</span> <span class="o">&gt;</span> <span class="n">lower</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">mask</span><span class="p">,</span>
+        <span class="n">softplus</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">masked_fill</span><span class="p">(</span><span class="o">~</span><span class="n">mask</span><span class="p">,</span> <span class="n">lower</span><span class="p">),</span> <span class="n">beta</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">tau</span><span class="p">),</span> <span class="n">threshold</span><span class="o">=</span><span class="n">upper</span><span class="p">)</span><span class="o">.</span><span class="n">log</span><span class="p">(),</span>
+        <span class="n">x</span> <span class="o">/</span> <span class="n">tau</span> <span class="o">+</span> <span class="n">tau</span><span class="o">.</span><span class="n">log</span><span class="p">(),</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="smooth_amax"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.smooth_amax">[docs]</a><span class="k">def</span> <span class="nf">smooth_amax</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">tau</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Computes a smooth approximation to `max(X, dim=dim)`, i.e the maximum value of</span>
+<span class="sd">    `X` over dimension `dim`, using the logarithm of the `l_(1/tau)` norm of `exp(X)`.</span>
+<span class="sd">    Note that when `X = log(U)` is the *logarithm* of an acquisition utility `U`,</span>
+
+<span class="sd">    `logsumexp(log(U) / tau) * tau = log(sum(U^(1/tau))^tau) = log(norm(U, ord=(1/tau))`</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: A Tensor from which to compute the smoothed amax.</span>
+<span class="sd">        tau: Temperature parameter controlling the smooth approximation</span>
+<span class="sd">            to max operator, becomes tighter as tau goes to 0. Needs to be positive.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A Tensor of smooth approximations to `max(X, dim=dim)`.</span>
+<span class="sd">    """</span>
+    <span class="c1"># consider normalizing by log_n = math.log(X.shape[dim]) to reduce error</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">logsumexp</span><span class="p">(</span><span class="n">X</span> <span class="o">/</span> <span class="n">tau</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">)</span> <span class="o">*</span> <span class="n">tau</span>  <span class="c1"># ~ X.amax(dim=dim)</span></div>
+
+
+<div class="viewcode-block" id="check_dtype_float32_or_float64"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.check_dtype_float32_or_float64">[docs]</a><span class="k">def</span> <span class="nf">check_dtype_float32_or_float64</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span> <span class="ow">and</span> <span class="n">X</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Only dtypes float32 and float64 are supported, but received </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">."</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="log_fatplus"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.log_fatplus">[docs]</a><span class="k">def</span> <span class="nf">log_fatplus</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">tau</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Computes the logarithm of the fat-tailed softplus.</span>
+
+<span class="sd">    NOTE: Separated out in case the complexity of the `log` implementation increases</span>
+<span class="sd">    in the future.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">fatplus</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="n">tau</span><span class="p">)</span><span class="o">.</span><span class="n">log</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="fatplus"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.fatplus">[docs]</a><span class="k">def</span> <span class="nf">fatplus</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">tau</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Computes a fat-tailed approximation to `ReLU(x) = max(x, 0)` by linearly</span>
+<span class="sd">    combining a regular softplus function and the density function of a Cauchy</span>
+<span class="sd">    distribution. The coefficient `alpha` of the Cauchy density is chosen to guarantee</span>
+<span class="sd">    monotonicity and convexity.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x: A Tensor on whose values to compute the smoothed function.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A Tensor of values of the fat-tailed softplus.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="nf">_fatplus</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="mf">1e-1</span>  <span class="c1"># guarantees monotonicity and convexity (TODO: ref + Lemma 4)</span>
+        <span class="k">return</span> <span class="n">softplus</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">cauchy</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">tau</span> <span class="o">*</span> <span class="n">_fatplus</span><span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="n">tau</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="fatmax"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.fatmax">[docs]</a><span class="k">def</span> <span class="nf">fatmax</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">tau</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Computes a smooth approximation to amax(X, dim=dim) with a fat tail.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: A Tensor from which to compute the smoothed amax.</span>
+<span class="sd">        tau: Temperature parameter controlling the smooth approximation</span>
+<span class="sd">            to max operator, becomes tighter as tau goes to 0. Needs to be positive.</span>
+<span class="sd">        standardize: Toggles the temperature standardization of the smoothed function.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A Tensor of smooth approximations to `max(X, dim=dim)` with a fat tail.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">X</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+
+    <span class="n">M</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">Y</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="n">M</span><span class="p">)</span> <span class="o">/</span> <span class="n">tau</span>  <span class="c1"># NOTE: this would cause NaNs when X has Infs.</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">M</span> <span class="o">+</span> <span class="n">tau</span> <span class="o">*</span> <span class="n">cauchy</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">)</span><span class="o">.</span><span class="n">log</span><span class="p">()</span>  <span class="c1"># could change to mean</span></div>
+
+
+<div class="viewcode-block" id="log_fatmoid"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.log_fatmoid">[docs]</a><span class="k">def</span> <span class="nf">log_fatmoid</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">tau</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Computes the logarithm of the fatmoid. Separated out in case the implementation</span>
+<span class="sd">    of the logarithm becomes more complex in the future to ensure numerical stability.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">fatmoid</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="n">tau</span><span class="p">)</span><span class="o">.</span><span class="n">log</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="fatmoid"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.fatmoid">[docs]</a><span class="k">def</span> <span class="nf">fatmoid</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">tau</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Computes a twice continuously differentiable approximation to the Heaviside</span>
+<span class="sd">    step function with a fat tail, i.e. `O(1 / x^2)` as `x` goes to -inf.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: A Tensor from which to compute the smoothed step function.</span>
+<span class="sd">        tau: Temperature parameter controlling the smoothness of the approximation.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A tensor of fat-tailed approximations to the Heaviside step function.</span>
+<span class="sd">    """</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">X</span> <span class="o">/</span> <span class="n">tau</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">_inv_sqrt_3</span>  <span class="c1"># this defines the inflection point</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">X</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="mi">2</span> <span class="o">/</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">cauchy</span><span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="n">m</span><span class="p">),</span>
+        <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">/</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">cauchy</span><span class="p">(</span><span class="n">X</span> <span class="o">+</span> <span class="n">m</span><span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="cauchy"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.cauchy">[docs]</a><span class="k">def</span> <span class="nf">cauchy</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Computes a Lorentzian, i.e. an un-normalized Cauchy density function."""</span>
+    <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">x</span><span class="o">.</span><span class="n">square</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="sigmoid"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.sigmoid">[docs]</a><span class="k">def</span> <span class="nf">sigmoid</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">fat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A sigmoid function with an optional fat tail and evaluation in log space for</span>
+<span class="sd">    better numerical behavior. Notably, the fat-tailed sigmoid can be used to remedy</span>
+<span class="sd">    numerical underflow problems in the value and gradient of the canonical sigmoid.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: The Tensor on which to evaluate the sigmoid.</span>
+<span class="sd">        log: Toggles the evaluation of the log sigmoid.</span>
+<span class="sd">        fat: Toggles the evaluation of the fat-tailed sigmoid.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A Tensor of (log-)sigmoid values.</span>
+<span class="sd">    """</span>
+    <span class="n">Y</span> <span class="o">=</span> <span class="n">log_fatmoid</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="k">if</span> <span class="n">fat</span> <span class="k">else</span> <span class="n">logexpit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Y</span> <span class="k">if</span> <span class="n">log</span> <span class="k">else</span> <span class="n">Y</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span></div>
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../../index.html">Documentation overview</a><ul>
+<li><a href="../../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/0.9.1/" class="nav-home"><img src="/v/0.9.1/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/0.9.1/docs/introduction">Introduction</a><a href="/v/0.9.1/docs/getting_started">Getting Started</a><a href="/v/0.9.1/tutorials/">Tutorials</a><a href="/v/0.9.1/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/0.9.1/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/0.9.1/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>

@@ -1,0 +1,318 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/0.9.1/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/v/0.9.1/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/0.9.1/img/botorch.png"/><link rel="shortcut icon" href="/v/0.9.1/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-CXN3PGE3CC"></script><script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments); }
+              gtag('js', new Date());
+              gtag('config', 'G-CXN3PGE3CC');
+            </script><link rel="stylesheet" href="/v/0.9.1/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/0.9.1/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/0.9.1/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/0.9.1/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/0.9.1/css/main.css"/><script src="/v/0.9.1/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/0.9.1/"><img class="logo" src="/v/0.9.1/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/0.9.1/versions"><h3>0.9.1</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/0.9.1/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/0.9.1/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/0.9.1/api/" target="_self">API Reference</a></li><li class=""><a href="/v/0.9.1/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for botorch.optim.core</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
+
+<span class="sa">r</span><span class="sd">"""Core abstractions and generic optimizers."""</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">replace</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">auto</span><span class="p">,</span> <span class="n">Enum</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">count</span>
+<span class="kn">from</span> <span class="nn">sys</span> <span class="kn">import</span> <span class="n">maxsize</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">monotonic</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span> <span class="nn">botorch.optim.closures</span> <span class="kn">import</span> <span class="n">NdarrayOptimizationClosure</span>
+<span class="kn">from</span> <span class="nn">botorch.optim.utils.numpy_utils</span> <span class="kn">import</span> <span class="n">get_bounds_as_ndarray</span>
+<span class="kn">from</span> <span class="nn">botorch.optim.utils.timeout</span> <span class="kn">import</span> <span class="n">minimize_with_timeout</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">asarray</span><span class="p">,</span> <span class="n">float64</span> <span class="k">as</span> <span class="n">np_float64</span><span class="p">,</span> <span class="n">ndarray</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.optim.adam</span> <span class="kn">import</span> <span class="n">Adam</span>
+<span class="kn">from</span> <span class="nn">torch.optim.optimizer</span> <span class="kn">import</span> <span class="n">Optimizer</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">torch.optim.lr_scheduler</span> <span class="kn">import</span> <span class="n">LRScheduler</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+    <span class="kn">from</span> <span class="nn">torch.optim.lr_scheduler</span> <span class="kn">import</span> <span class="n">_LRScheduler</span> <span class="k">as</span> <span class="n">LRScheduler</span>  <span class="c1"># pragma: no cover</span>
+
+
+<span class="n">_LBFGSB_MAXITER_MAXFUN_REGEX</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>  <span class="c1"># regex for maxiter and maxfun messages</span>
+    <span class="s2">"TOTAL NO. of (ITERATIONS REACHED LIMIT|f AND g EVALUATIONS EXCEEDS LIMIT)"</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="OptimizationStatus"><a class="viewcode-back" href="../../../optim.html#botorch.optim.core.OptimizationStatus">[docs]</a><span class="k">class</span> <span class="nc">OptimizationStatus</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+    <span class="n">RUNNING</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>  <span class="c1"># incomplete</span>
+    <span class="n">SUCCESS</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>  <span class="c1"># optimizer converged</span>
+    <span class="n">FAILURE</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>  <span class="c1"># terminated abnormally</span>
+    <span class="n">STOPPED</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>  <span class="c1"># stopped due to user provided criterion</span></div>
+
+
+<div class="viewcode-block" id="OptimizationResult"><a class="viewcode-back" href="../../../optim.html#botorch.optim.core.OptimizationResult">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">OptimizationResult</span><span class="p">:</span>
+    <span class="n">step</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">fval</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+    <span class="n">status</span><span class="p">:</span> <span class="n">OptimizationStatus</span>
+    <span class="n">runtime</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">message</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="scipy_minimize"><a class="viewcode-back" href="../../../optim.html#botorch.optim.core.scipy_minimize">[docs]</a><span class="k">def</span> <span class="nf">scipy_minimize</span><span class="p">(</span>
+    <span class="n">closure</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+        <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]]],</span>
+        <span class="n">NdarrayOptimizationClosure</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="n">parameters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">callback</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">OptimizationResult</span><span class="p">],</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">x0</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"L-BFGS-B"</span><span class="p">,</span>
+    <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">timeout_sec</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Generic scipy.optimize.minimize-based optimization routine.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        closure: Callable that returns a tensor and an iterable of gradient tensors or</span>
+<span class="sd">            NdarrayOptimizationClosure instance.</span>
+<span class="sd">        parameters: A dictionary of tensors to be optimized.</span>
+<span class="sd">        bounds: A dictionary mapping parameter names to lower and upper bounds.</span>
+<span class="sd">        callback: A callable taking `parameters` and an OptimizationResult as arguments.</span>
+<span class="sd">        x0: An optional initialization vector passed to scipy.optimize.minimize.</span>
+<span class="sd">        method: Solver type, passed along to scipy.minimize.</span>
+<span class="sd">        options: Dictionary of solver options, passed along to scipy.minimize.</span>
+<span class="sd">        timeout_sec: Timeout in seconds to wait before aborting the optimization loop</span>
+<span class="sd">            if not converged (will return the best found solution thus far).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        An OptimizationResult summarizing the final state of the run.</span>
+<span class="sd">    """</span>
+    <span class="n">start_time</span> <span class="o">=</span> <span class="n">monotonic</span><span class="p">()</span>
+    <span class="n">wrapped_closure</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">closure</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">closure</span><span class="p">,</span> <span class="n">NdarrayOptimizationClosure</span><span class="p">)</span>
+        <span class="k">else</span> <span class="n">NdarrayOptimizationClosure</span><span class="p">(</span><span class="n">closure</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">bounds_np</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">bounds_np</span> <span class="o">=</span> <span class="n">get_bounds_as_ndarray</span><span class="p">(</span><span class="n">parameters</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">callback</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">wrapped_callback</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">call_counter</span> <span class="o">=</span> <span class="n">count</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># callbacks are typically made at the end of each iter</span>
+
+        <span class="k">def</span> <span class="nf">wrapped_callback</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">OptimizationResult</span><span class="p">(</span>
+                <span class="n">step</span><span class="o">=</span><span class="nb">next</span><span class="p">(</span><span class="n">call_counter</span><span class="p">),</span>
+                <span class="n">fval</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">wrapped_closure</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]),</span>
+                <span class="n">status</span><span class="o">=</span><span class="n">OptimizationStatus</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">,</span>
+                <span class="n">runtime</span><span class="o">=</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">callback</span><span class="p">(</span><span class="n">parameters</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>  <span class="c1"># pyre-ignore [29]</span>
+
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">minimize_with_timeout</span><span class="p">(</span>
+        <span class="n">wrapped_closure</span><span class="p">,</span>
+        <span class="n">wrapped_closure</span><span class="o">.</span><span class="n">state</span> <span class="k">if</span> <span class="n">x0</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">x0</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np_float64</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+        <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">bounds_np</span><span class="p">,</span>
+        <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+        <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
+        <span class="n">callback</span><span class="o">=</span><span class="n">wrapped_callback</span><span class="p">,</span>
+        <span class="n">timeout_sec</span><span class="o">=</span><span class="n">timeout_sec</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Post-processing and outcome handling</span>
+    <span class="n">wrapped_closure</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">asarray</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># set parameter state to optimal values</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">message</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">message</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">raw</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"ascii"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">raw</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="n">OptimizationStatus</span><span class="o">.</span><span class="n">SUCCESS</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="p">(</span>  <span class="c1"># Check whether we stopped due to reaching maxfun or maxiter</span>
+            <span class="n">OptimizationStatus</span><span class="o">.</span><span class="n">STOPPED</span>
+            <span class="k">if</span> <span class="n">_LBFGSB_MAXITER_MAXFUN_REGEX</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="s2">"Optimization timed out after"</span> <span class="ow">in</span> <span class="n">msg</span>
+            <span class="k">else</span> <span class="n">OptimizationStatus</span><span class="o">.</span><span class="n">FAILURE</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">OptimizationResult</span><span class="p">(</span>
+        <span class="n">fval</span><span class="o">=</span><span class="n">raw</span><span class="o">.</span><span class="n">fun</span><span class="p">,</span>
+        <span class="n">step</span><span class="o">=</span><span class="n">raw</span><span class="o">.</span><span class="n">nit</span><span class="p">,</span>
+        <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="n">msg</span><span class="p">,</span>
+        <span class="n">runtime</span><span class="o">=</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="torch_minimize"><a class="viewcode-back" href="../../../optim.html#botorch.optim.core.torch_minimize">[docs]</a><span class="k">def</span> <span class="nf">torch_minimize</span><span class="p">(</span>
+    <span class="n">closure</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]]],</span>
+    <span class="n">parameters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">callback</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">OptimizationResult</span><span class="p">],</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">optimizer</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Optimizer</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]],</span> <span class="n">Optimizer</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Adam</span><span class="p">,</span>
+    <span class="n">scheduler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">LRScheduler</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Optimizer</span><span class="p">],</span> <span class="n">LRScheduler</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">step_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">timeout_sec</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">stopping_criterion</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Generic torch.optim-based optimization routine.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        closure: Callable that returns a tensor and an iterable of gradient tensors.</span>
+<span class="sd">            Responsible for setting relevant parameters' `grad` attributes.</span>
+<span class="sd">        parameters: A dictionary of tensors to be optimized.</span>
+<span class="sd">        bounds: An optional dictionary of bounds for elements of `parameters`.</span>
+<span class="sd">        callback: A callable taking `parameters` and an OptimizationResult as arguments.</span>
+<span class="sd">        optimizer: A `torch.optim.Optimizer` instance or a factory that takes</span>
+<span class="sd">            a list of parameters and returns an `Optimizer` instance.</span>
+<span class="sd">        scheduler: A `torch.optim.lr_scheduler._LRScheduler` instance or a factory</span>
+<span class="sd">            that takes a `Optimizer` instance and returns a `_LRSchedule` instance.</span>
+<span class="sd">        step_limit: Integer specifying a maximum number of optimization steps.</span>
+<span class="sd">            One of `step_limit`, `stopping_criterion`, or `timeout_sec` must be passed.</span>
+<span class="sd">        timeout_sec: Timeout in seconds before terminating the optimization loop.</span>
+<span class="sd">            One of `step_limit`, `stopping_criterion`, or `timeout_sec` must be passed.</span>
+<span class="sd">        stopping_criterion: A StoppingCriterion for the optimization loop.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        An OptimizationResult summarizing the final state of the run.</span>
+<span class="sd">    """</span>
+    <span class="n">result</span><span class="p">:</span> <span class="n">OptimizationResult</span>
+    <span class="n">start_time</span> <span class="o">=</span> <span class="n">monotonic</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">step_limit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">stopping_criterion</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">timeout_sec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"No termination conditions were given."</span><span class="p">)</span>
+        <span class="n">step_limit</span> <span class="o">=</span> <span class="n">maxsize</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">Optimizer</span><span class="p">):</span>
+        <span class="n">optimizer</span> <span class="o">=</span> <span class="n">optimizer</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">parameters</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">scheduler</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">scheduler</span><span class="p">,</span> <span class="n">LRScheduler</span><span class="p">)):</span>
+        <span class="n">scheduler</span> <span class="o">=</span> <span class="n">scheduler</span><span class="p">(</span><span class="n">optimizer</span><span class="p">)</span>
+
+    <span class="n">_bounds</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="k">else</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">limits</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">limits</span> <span class="ow">in</span> <span class="n">bounds</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">parameters</span><span class="p">}</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">step_limit</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">fval</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">closure</span><span class="p">()</span>
+        <span class="n">runtime</span> <span class="o">=</span> <span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">OptimizationResult</span><span class="p">(</span>
+            <span class="n">step</span><span class="o">=</span><span class="n">step</span><span class="p">,</span>
+            <span class="n">fval</span><span class="o">=</span><span class="n">fval</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+            <span class="n">status</span><span class="o">=</span><span class="n">OptimizationStatus</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">,</span>
+            <span class="n">runtime</span><span class="o">=</span><span class="n">runtime</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># TODO: Update stopping_criterion API to return a message.</span>
+        <span class="k">if</span> <span class="n">stopping_criterion</span> <span class="ow">and</span> <span class="n">stopping_criterion</span><span class="p">(</span><span class="n">fval</span><span class="p">):</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">OptimizationStatus</span><span class="o">.</span><span class="n">STOPPED</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="s2">"`torch_minimize` stopped due to `stopping_criterion`."</span>
+
+        <span class="k">if</span> <span class="n">timeout_sec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">runtime</span> <span class="o">&gt;=</span> <span class="n">timeout_sec</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">OptimizationStatus</span><span class="o">.</span><span class="n">STOPPED</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"`torch_minimize` stopped due to timeout after </span><span class="si">{</span><span class="n">runtime</span><span class="si">}</span><span class="s2"> seconds."</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">callback</span><span class="p">:</span>
+            <span class="n">callback</span><span class="p">(</span><span class="n">parameters</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="n">OptimizationStatus</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">:</span>
+            <span class="k">break</span>
+
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_bounds</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">parameters</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">parameters</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="n">lower</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">upper</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">scheduler</span><span class="p">:</span>
+            <span class="n">scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="n">OptimizationStatus</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">replace</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">runtime</span><span class="o">=</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span>
+
+    <span class="c1"># Account for final parameter update when stopping due to step_limit</span>
+    <span class="k">return</span> <span class="n">OptimizationResult</span><span class="p">(</span>
+        <span class="n">step</span><span class="o">=</span><span class="n">step</span><span class="p">,</span>
+        <span class="n">fval</span><span class="o">=</span><span class="n">closure</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+        <span class="n">status</span><span class="o">=</span><span class="n">OptimizationStatus</span><span class="o">.</span><span class="n">STOPPED</span><span class="p">,</span>
+        <span class="n">runtime</span><span class="o">=</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">"`torch_minimize` stopped after reaching step_limit=</span><span class="si">{</span><span class="n">step_limit</span><span class="si">}</span><span class="s2">."</span><span class="p">,</span>
+    <span class="p">)</span></div>
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../../index.html">Documentation overview</a><ul>
+<li><a href="../../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/0.9.1/" class="nav-home"><img src="/v/0.9.1/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/0.9.1/docs/introduction">Introduction</a><a href="/v/0.9.1/docs/getting_started">Getting Started</a><a href="/v/0.9.1/tutorials/">Tutorials</a><a href="/v/0.9.1/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/0.9.1/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/0.9.1/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>

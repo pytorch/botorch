@@ -1,11 +1,8 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
-              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-              ga('create', 'G-CXN3PGE3CC', 'auto');
-              ga('send', 'pageview');
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-CXN3PGE3CC"></script><script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments); }
+              gtag('js', new Date());
+              gtag('config', 'G-CXN3PGE3CC');
             </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
@@ -58,6 +55,7 @@
     <span class="n">FastNondominatedPartitioning</span><span class="p">,</span>
     <span class="n">NondominatedPartitioning</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.objective</span> <span class="kn">import</span> <span class="n">compute_feasibility_indicator</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">optimize_posterior_samples</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">is_fully_bayesian</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
@@ -125,11 +123,20 @@
             <span class="s2">"acquisition functions."</span>
         <span class="p">)</span>
     <span class="c1"># instantiate and return the requested acquisition function</span>
-    <span class="k">if</span> <span class="n">acquisition_function_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"qEI"</span><span class="p">,</span> <span class="s2">"qPI"</span><span class="p">):</span>
-        <span class="n">obj</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span>
-            <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X_observed</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span>
+    <span class="k">if</span> <span class="n">acquisition_function_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"qEI"</span><span class="p">,</span> <span class="s2">"qLogEI"</span><span class="p">,</span> <span class="s2">"qPI"</span><span class="p">):</span>
+        <span class="c1"># Since these are the non-noisy variants, use the posterior mean at the observed</span>
+        <span class="c1"># inputs directly to compute the best feasible value without sampling.</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X_observed</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X_observed</span><span class="p">)</span>
+        <span class="n">best_f</span> <span class="o">=</span> <span class="n">compute_best_feasible_objective</span><span class="p">(</span>
+            <span class="n">samples</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span>
+            <span class="n">obj</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+            <span class="n">X_baseline</span><span class="o">=</span><span class="n">X_observed</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">best_f</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
     <span class="k">if</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qEI"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qExpectedImprovement</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
@@ -138,6 +145,24 @@
             <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
             <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
             <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qLogEI"</span><span class="p">:</span>
+        <span class="c1"># putting the import here to avoid circular imports</span>
+        <span class="c1"># ideally, the entire function should be moved out of this file,</span>
+        <span class="c1"># but since it is used for legacy code to be deprecated, we keep it here.</span>
+        <span class="kn">from</span> <span class="nn">botorch.acquisition.logei</span> <span class="kn">import</span> <span class="n">qLogExpectedImprovement</span>
+
+        <span class="k">return</span> <span class="n">qLogExpectedImprovement</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">best_f</span><span class="o">=</span><span class="n">best_f</span><span class="p">,</span>
+            <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+            <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">elif</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qPI"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qProbabilityOfImprovement</span><span class="p">(</span>
@@ -148,6 +173,8 @@
             <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
             <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
             <span class="n">tau</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tau"</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">),</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">elif</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qNEI"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qNoisyExpectedImprovement</span><span class="p">(</span>
@@ -160,6 +187,24 @@
             <span class="n">prune_baseline</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"prune_baseline"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
             <span class="n">marginalize_dim</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"marginalize_dim"</span><span class="p">),</span>
             <span class="n">cache_root</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"cache_root"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qLogNEI"</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">botorch.acquisition.logei</span> <span class="kn">import</span> <span class="n">qLogNoisyExpectedImprovement</span>
+
+        <span class="k">return</span> <span class="n">qLogNoisyExpectedImprovement</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">X_baseline</span><span class="o">=</span><span class="n">X_observed</span><span class="p">,</span>
+            <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+            <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
+            <span class="n">prune_baseline</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"prune_baseline"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+            <span class="n">marginalize_dim</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"marginalize_dim"</span><span class="p">),</span>
+            <span class="n">cache_root</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"cache_root"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">elif</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qSR"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qSimpleRegret</span><span class="p">(</span>
@@ -237,6 +282,113 @@
     <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
         <span class="sa">f</span><span class="s2">"Unknown acquisition function </span><span class="si">{</span><span class="n">acquisition_function_name</span><span class="si">}</span><span class="s2">"</span>
     <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="compute_best_feasible_objective"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.compute_best_feasible_objective">[docs]</a><span class="k">def</span> <span class="nf">compute_best_feasible_objective</span><span class="p">(</span>
+    <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]],</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Model</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">X_baseline</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">infeasible_obj</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Computes the largest `obj` value that is feasible under the `constraints`. If</span>
+<span class="sd">    `constraints` is None, returns the best unconstrained objective value.</span>
+
+<span class="sd">    When no feasible observations exist and `infeasible_obj` is not `None`, returns</span>
+<span class="sd">    `infeasible_obj` (potentially reshaped). When no feasible observations exist and</span>
+<span class="sd">    `infeasible_obj` is `None`, uses `model`, `objective`, `posterior_transform`, and</span>
+<span class="sd">    `X_baseline` to infer and return an `infeasible_obj` `M` s.t. `M &lt; min_x f(x)`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        samples: `(sample_shape) x batch_shape x q x m`-dim posterior samples.</span>
+<span class="sd">        obj: A `(sample_shape) x batch_shape x q`-dim Tensor of MC objective values.</span>
+<span class="sd">        constraints: A list of constraint callables which map posterior samples to</span>
+<span class="sd">            a scalar. The associated constraint is considered satisfied if this</span>
+<span class="sd">            scalar is less than zero.</span>
+<span class="sd">        model: A Model, only required when there are no feasible observations.</span>
+<span class="sd">        objective: An MCAcquisitionObjective, only optionally used when there are no</span>
+<span class="sd">            feasible observations.</span>
+<span class="sd">        posterior_transform: A PosteriorTransform, only optionally used when there are</span>
+<span class="sd">            no feasible observations.</span>
+<span class="sd">        X_baseline: A `batch_shape x d`-dim Tensor of baseline points, only required</span>
+<span class="sd">            when there are no feasible observations.</span>
+<span class="sd">        infeasible_obj: A Tensor to be returned when no feasible points exist.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `(sample_shape) x batch_shape x 1`-dim Tensor of best feasible objectives.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">constraints</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># unconstrained case</span>
+        <span class="c1"># we don't need to differentiate through X_baseline for now, so taking</span>
+        <span class="c1"># the regular max over the n points to get best_f is fine</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">is_feasible</span> <span class="o">=</span> <span class="n">compute_feasibility_indicator</span><span class="p">(</span>
+        <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="n">samples</span>
+    <span class="p">)</span>  <span class="c1"># sample_shape x batch_shape x q</span>
+    <span class="k">if</span> <span class="n">is_feasible</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">is_feasible</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">infeasible_obj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">infeasible_obj</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"Must specify `model` when no feasible observation exists."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">X_baseline</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"Must specify `X_baseline` when no feasible observation exists."</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">_estimate_objective_lower_bound</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">X_baseline</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_estimate_objective_lower_bound</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">],</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">],</span>
+    <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Estimates a lower bound on the objective values by evaluating the model at convex</span>
+<span class="sd">    combinations of `X`, returning the 6-sigma lower bound of the computed statistics.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model: A fitted model.</span>
+<span class="sd">        objective: An MCAcquisitionObjective with `m` outputs.</span>
+<span class="sd">        posterior_transform: A PosteriorTransform.</span>
+<span class="sd">        X: A `n x d`-dim Tensor of design points from which to draw convex combinations.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `m`-dimensional Tensor of lower bounds of the objectives.</span>
+<span class="sd">    """</span>
+    <span class="n">convex_weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span>
+        <span class="mi">32</span><span class="p">,</span>
+        <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+        <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">weights_sum</span> <span class="o">=</span> <span class="n">convex_weights</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">convex_weights</span> <span class="o">=</span> <span class="n">convex_weights</span> <span class="o">/</span> <span class="n">weights_sum</span>
+    <span class="c1"># infeasible cost M is such that -M &lt; min_x f(x), thus</span>
+    <span class="c1"># 0 &lt; min_x f(x) - (-M), so we should take -M as a lower</span>
+    <span class="c1"># bound on the best feasible objective</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">get_infeasible_cost</span><span class="p">(</span>
+        <span class="n">X</span><span class="o">=</span><span class="n">convex_weights</span> <span class="o">@</span> <span class="n">X</span><span class="p">,</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+    <span class="p">)</span>
 
 
 <div class="viewcode-block" id="get_infeasible_cost"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.get_infeasible_cost">[docs]</a><span class="k">def</span> <span class="nf">get_infeasible_cost</span><span class="p">(</span>

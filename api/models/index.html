@@ -1,11 +1,8 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
-              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-              ga('create', 'G-CXN3PGE3CC', 'auto');
-              ga('send', 'pageview');
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-CXN3PGE3CC"></script><script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments); }
+              gtag('js', new Date());
+              gtag('config', 'G-CXN3PGE3CC');
             </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
@@ -367,7 +364,11 @@ which to compute the posterior (if the model is multi-output).
 Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
 computes the posterior over all model outputs.</p></li>
-<li><p><strong>observation_noise</strong> (<em>bool</em>) – If True, add observation noise to the posterior.</p></li>
+<li><p><strong>observation_noise</strong> (<em>bool</em><em> | </em><em>Tensor</em>) – If True, add the observation noise from the
+respective likelihoods to the posterior. If a Tensor of shape
+<cite>(batch_shape) x q x m</cite>, use it directly as the observation
+noise (with <cite>observation_noise[…,i]</cite> added to the posterior
+of the <cite>i</cite>-th model).</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="posteriors.html#botorch.posteriors.posterior_list.PosteriorList" title="botorch.posteriors.posterior_list.PosteriorList"><em>PosteriorList</em></a><em>]</em><em>, </em><em>Posterior</em><em>] </em><em>| </em><em>None</em>) – An optional PosteriorTransform.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
@@ -452,6 +453,40 @@ the model `m1</cite> subset to its second output.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.model.ModelList.fantasize">
+<span class="sig-name descname"><span class="pre">fantasize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#ModelList.fantasize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.ModelList.fantasize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a fantasy model.</p>
+<p>Constructs a fantasy model in the following fashion:
+(1) compute the model posterior at <cite>X</cite> (including observation noise if
+<cite>observation_noise=True</cite>).
+(2) sample from this posterior (using <cite>sampler</cite>) to generate “fake”
+observations.
+(3) condition the model on the new fake observations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x n’ x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
+the feature space, <cite>n’</cite> is the number of points per batch, and
+<cite>batch_shape</cite> is the batch shape (must be compatible with the
+batch shape of the model).</p></li>
+<li><p><strong>sampler</strong> (<em>MCSampler</em>) – The sampler used for sampling from the posterior at <cite>X</cite>. If
+evaluation_mask is not None, this must be a <cite>ListSampler</cite>.</p></li>
+<li><p><strong>observation_noise</strong> (<em>bool</em>) – If True, include observation noise.</p></li>
+<li><p><strong>evaluation_mask</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>n’ x m</cite>-dim tensor of booleans indicating which
+outputs should be fantasized for a given design. This uses the same
+evaluation mask for all batches.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The constructed fantasy model.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1389,31 +1424,44 @@ been added and all test-time caches have been updated.</p>
 <p>Multi-Task GP models.</p>
 <p>References</p>
 <div class="citation-list" role="list">
+<div class="citation" id="bonilla2007mtgp" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a href="#id4" role="doc-backlink">Bonilla2007MTGP</a><span class="fn-bracket">]</span></span>
+<p>E. Bonilla, K. Chai and C. Williams. Multi-task Gaussian Process Prediction.
+Advances in Neural Information Processing Systems 20, NeurIPS 2007.</p>
+</div>
+<div class="citation" id="swersky2013mtbo" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a href="#id5" role="doc-backlink">Swersky2013MTBO</a><span class="fn-bracket">]</span></span>
+<p>K. Swersky, J. Snoek and R. Adams. Multi-Task Bayesian Optimization.
+Advances in Neural Information Processing Systems 26, NeurIPS 2013.</p>
+</div>
 <div class="citation" id="doucet2010sampl" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id5" role="doc-backlink">Doucet2010sampl</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id7" role="doc-backlink">Doucet2010sampl</a><span class="fn-bracket">]</span></span>
 <p>A. Doucet. A Note on Efficient Conditional Simulation of Gaussian Distributions.
 <a class="reference external" href="http://www.stats.ox.ac.uk/~doucet/doucet_simulationconditionalgaussian.pdf">http://www.stats.ox.ac.uk/~doucet/doucet_simulationconditionalgaussian.pdf</a>,
 Apr 2010.</p>
 </div>
 <div class="citation" id="maddox2021bohdo" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id6" role="doc-backlink">Maddox2021bohdo</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id8" role="doc-backlink">Maddox2021bohdo</a><span class="fn-bracket">]</span></span>
 <p>W. Maddox, M. Balandat, A. Wilson, and E. Bakshy. Bayesian Optimization with
 High-Dimensional Outputs. <a class="reference external" href="https://arxiv.org/abs/2106.12997">https://arxiv.org/abs/2106.12997</a>, Jun 2021.</p>
 </div>
 </div>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.multitask.MultiTaskGP">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.multitask.</span></span><span class="sig-name descname"><span class="pre">MultiTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_covar_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#MultiTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.multitask.</span></span><span class="sig-name descname"><span class="pre">MultiTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_covar_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#MultiTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ExactGP</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">MultiTaskGPyTorchModel</span></code>, <a class="reference internal" href="#botorch.models.model.FantasizeMixin" title="botorch.models.model.FantasizeMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">FantasizeMixin</span></code></a></p>
-<p>Multi-Task GP model using an ICM kernel, inferring observation noise.</p>
-<p>Multi-task exact GP that uses a simple ICM kernel. Can be single-output or
-multi-output. This model uses relatively strong priors on the base Kernel
-hyperparameters, which work best when covariates are normalized to the unit
-cube and outcomes are standardized (zero mean, unit variance).</p>
-<p>This model infers the noise level. WARNING: It currently does not support
-different noise levels for the different tasks. If you have known observation
-noise, please use <cite>FixedNoiseMultiTaskGP</cite> instead.</p>
-<p>Multi-Task GP model using an ICM kernel, inferring observation noise.</p>
+<p>Multi-Task exact GP model using an ICM (intrinsic co-regionalization model)
+kernel. See <a class="reference internal" href="#bonilla2007mtgp" id="id4"><span>[Bonilla2007MTGP]</span></a> and <a class="reference internal" href="#swersky2013mtbo" id="id5"><span>[Swersky2013MTBO]</span></a> for a reference on the
+model and its use in Bayesian optimization.</p>
+<p>The model can be single-output or multi-output, determined by the <cite>output_tasks</cite>.
+This model uses relatively strong priors on the base Kernel hyperparameters, which
+work best when covariates are normalized to the unit cube and outcomes are
+standardized (zero mean, unit variance).</p>
+<p>If the <cite>train_Yvar</cite> is None, this model infers the noise level. If you have
+known observation noise, you can set <cite>train_Yvar</cite> to a tensor containing
+the noise variance measurements. WARNING: This currently does not support
+different noise levels for the different tasks.</p>
+<p>Multi-Task GP model using an ICM kernel.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1423,6 +1471,15 @@ features (see <cite>task_feature</cite> argument).</p></li>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – A <cite>n x 1</cite> or <cite>b x n x 1</cite> (batch mode) tensor of training
 observations.</p></li>
 <li><p><strong>task_feature</strong> (<em>int</em>) – The index of the task feature (<cite>-d &lt;= task_feature &lt;= d</cite>).</p></li>
+<li><p><strong>train_Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – An optional <cite>n</cite> or <cite>b x n</cite> (batch mode) tensor of observed
+measurement noise. If None, we infer the noise.
+Note that the inferred noise is common across all tasks.</p></li>
+<li><p><strong>mean_module</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>) – The mean function to be used. Defaults to <cite>ConstantMean</cite>.</p></li>
+<li><p><strong>covar_module</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>) – The module for computing the covariance matrix between
+the non-task features. Defaults to <cite>MaternKernel</cite>.</p></li>
+<li><p><strong>likelihood</strong> (<em>Optional</em><em>[</em><em>Likelihood</em><em>]</em>) – A likelihood. The default is selected based on <cite>train_Yvar</cite>.
+If <cite>train_Yvar</cite> is None, a standard <cite>GaussianLikelihood</cite> with inferred
+noise level is used. Otherwise, a FixedNoiseGaussianLikelihood is used.</p></li>
 <li><p><strong>output_tasks</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of task indices for which to compute model
 outputs for. If omitted, return outputs for all task indices.</p></li>
 <li><p><strong>rank</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The rank to be used for the index kernel. If omitted, use a
@@ -1435,7 +1492,6 @@ forward pass.</p></li>
 training data during instantiation and to the posterior during
 inference (that is, the <cite>Posterior</cite> obtained by calling
 <cite>.posterior</cite> on the model will be on the original scale).</p></li>
-<li><p><strong>covar_module</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -1521,13 +1577,7 @@ contain <cite>use_LKJ_prior</cite> indicator and should contain float value <cit
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.multitask.</span></span><span class="sig-name descname"><span class="pre">FixedNoiseMultiTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_covar_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#FixedNoiseMultiTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.multitask.FixedNoiseMultiTaskGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.multitask.MultiTaskGP" title="botorch.models.multitask.MultiTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiTaskGP</span></code></a></p>
 <p>Multi-Task GP model using an ICM kernel, with known observation noise.</p>
-<p>This is the fixed-noise version of <cite>MultiTaskGP</cite> -– that is,
-<cite>FixedNoiseMultiTaskGP</cite> is to <cite>MultiTaskGP</cite> as <cite>FixedNoiseGP</cite> is to
-<cite>SingleTaskGP</cite>. It can be single-output or
-multi-output. This model uses relatively strong priors on the base Kernel
-hyperparameters, which work best when covariates are normalized to the unit
-cube and outcomes are standardized (zero mean, unit variance).</p>
-<p>This model requires observation noise data (specified in <cite>train_Yvar</cite>).</p>
+<p>DEPRECATED: Please use <cite>MultiTaskGP</cite> with <cite>train_Yvar</cite> instead.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1536,8 +1586,8 @@ of training data. One of the columns should contain the task
 features (see <cite>task_feature</cite> argument).</p></li>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – A <cite>n x 1</cite> or <cite>b x n x 1</cite> (batch mode) tensor of training
 observations.</p></li>
-<li><p><strong>train_Yvar</strong> (<em>Tensor</em>) – A <cite>n</cite> or <cite>b x n</cite> (batch mode) tensor of observation
-noise standard errors.</p></li>
+<li><p><strong>train_Yvar</strong> (<em>Tensor</em>) – A <cite>n</cite> or <cite>b x n</cite> (batch mode) tensor of observed measurement
+noise.</p></li>
 <li><p><strong>task_feature</strong> (<em>int</em>) – The index of the task feature (<cite>-d &lt;= task_feature &lt;= d</cite>).</p></li>
 <li><p><strong>task_covar_prior</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>) – A Prior on the task covariance matrix. Must operate
 on p.s.d. matrices. A common prior for this is the <cite>LKJ</cite> prior.</p></li>
@@ -1714,7 +1764,7 @@ If <cite>False</cite>, model is put in <cite>eval</cite> mode.</p>
 <p>References</p>
 <div class="citation-list" role="list">
 <div class="citation" id="zhe2019hogp" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id4" role="doc-backlink">Zhe2019hogp</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id6" role="doc-backlink">Zhe2019hogp</a><span class="fn-bracket">]</span></span>
 <p>S. Zhe, W. Xing, and R. M. Kirby. Scalable high-order gaussian process regression.
 Proceedings of Machine Learning Research, volume 89, Apr 2019.</p>
 </div>
@@ -1816,12 +1866,12 @@ noises associated with the targets (if applicable).</p></li>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.higher_order_gp.</span></span><span class="sig-name descname"><span class="pre">HigherOrderGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_modules</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_latent_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learn_latent_pars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latent_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#HigherOrderGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.higher_order_gp.HigherOrderGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BatchedMultiOutputGPyTorchModel</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ExactGP</span></code>, <a class="reference internal" href="#botorch.models.model.FantasizeMixin" title="botorch.models.model.FantasizeMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">FantasizeMixin</span></code></a></p>
 <p>A model for high-dimensional output regression.</p>
-<p>As described in <a class="reference internal" href="#zhe2019hogp" id="id4"><span>[Zhe2019hogp]</span></a>. “Higher-order” means that the predictions
+<p>As described in <a class="reference internal" href="#zhe2019hogp" id="id6"><span>[Zhe2019hogp]</span></a>. “Higher-order” means that the predictions
 are matrices (tensors) with at least two dimensions, such as images or
 grids of images, or measurements taken from a region of at least two
 dimensions.
-The posterior uses Matheron’s rule <a class="reference internal" href="#doucet2010sampl" id="id5"><span>[Doucet2010sampl]</span></a>
-as described in <a class="reference internal" href="#maddox2021bohdo" id="id6"><span>[Maddox2021bohdo]</span></a>.</p>
+The posterior uses Matheron’s rule <a class="reference internal" href="#doucet2010sampl" id="id7"><span>[Doucet2010sampl]</span></a>
+as described in <a class="reference internal" href="#maddox2021bohdo" id="id8"><span>[Maddox2021bohdo]</span></a>.</p>
 <p><cite>HigherOrderGP</cite> differs from a “vector” multi-output model in that it uses
 Kronecker algebra to obtain parsimonious covariance matrices for these
 outputs (see <cite>KroneckerMultiTaskGP</cite> for more information). For example,
@@ -1995,12 +2045,12 @@ the joint covariance across all data points.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="chu2005preference" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Chu2005preference<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id7" role="doc-backlink">1</a>,<a href="#id9" role="doc-backlink">2</a>,<a href="#id10" role="doc-backlink">3</a>)</span>
+<span class="backrefs">(<a href="#id9" role="doc-backlink">1</a>,<a href="#id11" role="doc-backlink">2</a>,<a href="#id12" role="doc-backlink">3</a>)</span>
 <p>Wei Chu, and Zoubin Ghahramani. Preference learning with Gaussian processes.
 Proceedings of the 22nd international conference on Machine learning. 2005.</p>
 </div>
 <div class="citation" id="brochu2010tutorial" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id8" role="doc-backlink">Brochu2010tutorial</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id10" role="doc-backlink">Brochu2010tutorial</a><span class="fn-bracket">]</span></span>
 <p>Eric Brochu, Vlad M. Cora, and Nando De Freitas.
 A tutorial on Bayesian optimization of expensive cost functions,
 with application to active user modeling and hierarchical reinforcement learning.
@@ -2015,9 +2065,9 @@ arXiv preprint arXiv:1012.2599 (2010).</p>
 <p>A probit-likelihood GP that learns via pairwise comparison data, using a
 Laplace approximation of the posterior of the estimated utility values. By
 default it uses a scaled RBF kernel.</p>
-<p>Implementation is based on <a class="reference internal" href="#chu2005preference" id="id7"><span>[Chu2005preference]</span></a>.
-Also see <a class="reference internal" href="#brochu2010tutorial" id="id8"><span>[Brochu2010tutorial]</span></a> for additional reference.</p>
-<p>Note that in <a class="reference internal" href="#chu2005preference" id="id9"><span>[Chu2005preference]</span></a> the likelihood of a pairwise comparison
+<p>Implementation is based on <a class="reference internal" href="#chu2005preference" id="id9"><span>[Chu2005preference]</span></a>.
+Also see <a class="reference internal" href="#brochu2010tutorial" id="id10"><span>[Brochu2010tutorial]</span></a> for additional reference.</p>
+<p>Note that in <a class="reference internal" href="#chu2005preference" id="id11"><span>[Chu2005preference]</span></a> the likelihood of a pairwise comparison
 is <span class="math notranslate nohighlight">\(\left(\frac{f(x_1) - f(x_2)}{\sqrt{2}\sigma}\right)\)</span>, i.e. a scale is
 used in the denominator. To maintain consistency with usage of kernels
 elsewhere in BoTorch, we instead do not include <span class="math notranslate nohighlight">\(\sigma\)</span> in the code
@@ -2207,7 +2257,7 @@ original model conditioned on the new observations <cite>(X, Y)</cite>.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.pairwise_gp.</span></span><span class="sig-name descname"><span class="pre">PairwiseLaplaceMarginalLogLikelihood</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">likelihood</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseLaplaceMarginalLogLikelihood"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MarginalLogLikelihood</span></code></p>
 <p>Laplace-approximated marginal log likelihood/evidence for PairwiseGP</p>
-<p>See (12) from <a class="reference internal" href="#chu2005preference" id="id10"><span>[Chu2005preference]</span></a>.</p>
+<p>See (12) from <a class="reference internal" href="#chu2005preference" id="id12"><span>[Chu2005preference]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -2278,8 +2328,7 @@ data sets should have dim = 2.</p>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – (n x 1) Y training data.</p></li>
 <li><p><strong>train_Yvar</strong> (<em>Tensor</em>) – (n x 1) Noise variance of Y.</p></li>
 <li><p><strong>decomposition</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Keys are context names. Values are the indexes of
-parameters belong to the context. The parameter indexes are in the
-same order across contexts.</p></li>
+parameters belong to the context.</p></li>
 <li><p><strong>cat_feature_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Keys are context names and values are list of categorical
 features i.e. {“context_name” : [cat_0, …, cat_k]}, where k is the
 number of categorical variables. If None, we use context names in the
@@ -2412,21 +2461,21 @@ outputs for. If omitted, return outputs for all task indices.</p></li>
 <div class="citation-list" role="list">
 <div class="citation" id="burt2020svgp" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>burt2020svgp<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id12" role="doc-backlink">1</a>,<a href="#id21" role="doc-backlink">2</a>,<a href="#id23" role="doc-backlink">3</a>,<a href="#id25" role="doc-backlink">4</a>)</span>
+<span class="backrefs">(<a href="#id14" role="doc-backlink">1</a>,<a href="#id24" role="doc-backlink">2</a>,<a href="#id26" role="doc-backlink">3</a>,<a href="#id28" role="doc-backlink">4</a>)</span>
 <p>David R. Burt and Carl Edward Rasmussen and Mark van der Wilk,
 Convergence of Sparse Variational Inference in Gaussian Process Regression,
 Journal of Machine Learning Research, 2020,
 <a class="reference external" href="http://jmlr.org/papers/v21/19-1015.html">http://jmlr.org/papers/v21/19-1015.html</a>.</p>
 </div>
 <div class="citation" id="hensman2013svgp" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id11" role="doc-backlink">hensman2013svgp</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id13" role="doc-backlink">hensman2013svgp</a><span class="fn-bracket">]</span></span>
 <p>James Hensman and Nicolo Fusi and Neil D. Lawrence, Gaussian Processes
 for Big Data, Proceedings of the 29th Conference on Uncertainty in
 Artificial Intelligence, 2013, <a class="reference external" href="https://arxiv.org/abs/1309.6835">https://arxiv.org/abs/1309.6835</a>.</p>
 </div>
 <div class="citation" id="moss2023ipa" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>moss2023ipa<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id13" role="doc-backlink">1</a>,<a href="#id22" role="doc-backlink">2</a>,<a href="#id24" role="doc-backlink">3</a>,<a href="#id28" role="doc-backlink">4</a>)</span>
+<span class="backrefs">(<a href="#id15" role="doc-backlink">1</a>,<a href="#id25" role="doc-backlink">2</a>,<a href="#id27" role="doc-backlink">3</a>,<a href="#id31" role="doc-backlink">4</a>)</span>
 <p>Henry B. Moss and Sebastian W. Ober and Victor Picheny,
 Inducing Point Allocation for Sparse Gaussian Processes
 in High-Throughput Bayesian Optimization,Proceedings of
@@ -2466,6 +2515,36 @@ either a <cite>GaussianLikelihood</cite> (if <cite>num_outputs=1</cite>) or a
 <dt class="sig sig-object py" id="botorch.models.approximate_gp.ApproximateGPyTorchModel.num_outputs">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_outputs</span></span><a class="headerlink" href="#botorch.models.approximate_gp.ApproximateGPyTorchModel.num_outputs" title="Permalink to this definition">¶</a></dt>
 <dd><p>The number of outputs of the model.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.approximate_gp.ApproximateGPyTorchModel.eval">
+<span class="sig-name descname"><span class="pre">eval</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/approximate_gp.html#ApproximateGPyTorchModel.eval"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.approximate_gp.ApproximateGPyTorchModel.eval" title="Permalink to this definition">¶</a></dt>
+<dd><p>Puts the model in <cite>eval</cite> mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>self</strong> (<em>TApproxModel</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>TApproxModel</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.approximate_gp.ApproximateGPyTorchModel.train">
+<span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/approximate_gp.html#ApproximateGPyTorchModel.train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.approximate_gp.ApproximateGPyTorchModel.train" title="Permalink to this definition">¶</a></dt>
+<dd><p>Put the model in <cite>train</cite> mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mode</strong> (<em>bool</em>) – A boolean denoting whether to put in <cite>train</cite> or <cite>eval</cite> mode.
+If <cite>False</cite>, model is put in <cite>eval</cite> mode.</p></li>
+<li><p><strong>self</strong> (<em>TApproxModel</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>TApproxModel</em></p>
+</dd>
+</dl>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.approximate_gp.ApproximateGPyTorchModel.posterior">
@@ -2516,12 +2595,12 @@ registered hooks while the latter silently ignores them.</p>
 <dt class="sig sig-object py" id="botorch.models.approximate_gp.SingleTaskVariationalGP">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.approximate_gp.</span></span><span class="sig-name descname"><span class="pre">SingleTaskVariationalGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_outputs=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learn_inducing_points=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_module=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variational_distribution=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variational_strategy=&lt;class</span> <span class="pre">'gpytorch.variational.variational_strategy.VariationalStrategy'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inducing_points=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inducing_point_allocator=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/approximate_gp.html#SingleTaskVariationalGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.approximate_gp.SingleTaskVariationalGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.approximate_gp.ApproximateGPyTorchModel" title="botorch.models.approximate_gp.ApproximateGPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">ApproximateGPyTorchModel</span></code></a></p>
-<p>A single-task variational GP model following <a class="reference internal" href="#hensman2013svgp" id="id11"><span>[hensman2013svgp]</span></a>.</p>
+<p>A single-task variational GP model following <a class="reference internal" href="#hensman2013svgp" id="id13"><span>[hensman2013svgp]</span></a>.</p>
 <p>By default, the inducing points are initialized though the
-<cite>GreedyVarianceReduction</cite> of <a class="reference internal" href="#burt2020svgp" id="id12"><span>[burt2020svgp]</span></a>, which is known to be
+<cite>GreedyVarianceReduction</cite> of <a class="reference internal" href="#burt2020svgp" id="id14"><span>[burt2020svgp]</span></a>, which is known to be
 effective for building globally accurate models. However, custom
 inducing point allocators designed for specific down-stream tasks can also be
-provided (see <a class="reference internal" href="#moss2023ipa" id="id13"><span>[moss2023ipa]</span></a> for details), e.g. <cite>GreedyImprovementReduction</cite>
+provided (see <a class="reference internal" href="#moss2023ipa" id="id15"><span>[moss2023ipa]</span></a> for details), e.g. <cite>GreedyImprovementReduction</cite>
 when the goal is to build a model suitable for standard BO.</p>
 <p>A single-task variational GP using relatively strong priors on the Kernel
 hyperparameters, which work best when covariates are normalized to the unit
@@ -2633,7 +2712,7 @@ after fitting.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="eriksson2021saasbo" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Eriksson2021saasbo<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id14" role="doc-backlink">1</a>,<a href="#id15" role="doc-backlink">2</a>,<a href="#id16" role="doc-backlink">3</a>)</span>
+<span class="backrefs">(<a href="#id16" role="doc-backlink">1</a>,<a href="#id17" role="doc-backlink">2</a>,<a href="#id18" role="doc-backlink">3</a>)</span>
 <p>D. Eriksson, M. Jankowiak. High-Dimensional Bayesian Optimization
 with Sparse Axis-Aligned Subspaces. Proceedings of the Thirty-
 Seventh Conference on Uncertainty in Artificial Intelligence, 2021.</p>
@@ -2694,7 +2773,7 @@ Seventh Conference on Uncertainty in Artificial Intelligence, 2021.</p>
 <p>Implementation of the sparse axis-aligned subspace priors (SAAS) model.</p>
 <p>The SAAS model uses sparsity-inducing priors to identify the most important
 parameters. This model is suitable for high-dimensional BO with potentially
-hundreds of tunable parameters. See <a class="reference internal" href="#eriksson2021saasbo" id="id14"><span>[Eriksson2021saasbo]</span></a> for more details.</p>
+hundreds of tunable parameters. See <a class="reference internal" href="#eriksson2021saasbo" id="id16"><span>[Eriksson2021saasbo]</span></a> for more details.</p>
 <p><cite>SaasPyroModel</cite> is not a standard BoTorch model; instead, it is used as
 an input to <cite>SaasFullyBayesianSingleTaskGP</cite>. It is used as a default keyword
 argument, and end users are not likely to need to instantiate or modify a
@@ -2823,7 +2902,7 @@ tausq (global shrinkage).</p>
 <p>This model assumes that the inputs have been normalized to [0, 1]^d and that
 the output has been standardized to have zero mean and unit variance. You can
 either normalize and standardize the data before constructing the model or use
-an <cite>input_transform</cite> and <cite>outcome_transform</cite>. The SAAS model <a class="reference internal" href="#eriksson2021saasbo" id="id15"><span>[Eriksson2021saasbo]</span></a>
+an <cite>input_transform</cite> and <cite>outcome_transform</cite>. The SAAS model <a class="reference internal" href="#eriksson2021saasbo" id="id17"><span>[Eriksson2021saasbo]</span></a>
 with a Matern-5/2 kernel is used by default.</p>
 <p>You are expected to use <cite>fit_fully_bayesian_model_nuts</cite> to fit this model as it
 isn’t compatible with <cite>fit_gpytorch_model</cite>.</p>
@@ -3044,11 +3123,11 @@ to the SAAS prior.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.fully_bayesian_multitask.</span></span><span class="sig-name descname"><span class="pre">SaasFullyBayesianMultiTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyro_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#SaasFullyBayesianMultiTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.models.multitask.FixedNoiseMultiTaskGP" title="botorch.models.multitask.FixedNoiseMultiTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">FixedNoiseMultiTaskGP</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.multitask.MultiTaskGP" title="botorch.models.multitask.MultiTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiTaskGP</span></code></a></p>
 <p>A fully Bayesian multi-task GP model with the SAAS prior.</p>
 <p>This model assumes that the inputs have been normalized to [0, 1]^d and that the
 output has been stratified standardized to have zero mean and unit variance for
-each task.The SAAS model <a class="reference internal" href="#eriksson2021saasbo" id="id16"><span>[Eriksson2021saasbo]</span></a> with a Matern-5/2 is used as data
+each task.The SAAS model <a class="reference internal" href="#eriksson2021saasbo" id="id18"><span>[Eriksson2021saasbo]</span></a> with a Matern-5/2 is used as data
 kernel by default.</p>
 <p>You are expected to use <cite>fit_fully_bayesian_model_nuts</cite> to fit this model as it
 isn’t compatible with <cite>fit_gpytorch_model</cite>.</p>
@@ -3076,12 +3155,17 @@ isn’t compatible with <cite>fit_gpytorch_model</cite>.</p>
 <li><p><strong>train_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – Observed noise variance (n x 1). If None, we infer the noise.
 Note that the inferred noise is common across all tasks.</p></li>
 <li><p><strong>task_feature</strong> (<em>int</em>) – The index of the task feature (<cite>-d &lt;= task_feature &lt;= d</cite>).</p></li>
+<li><p><strong>output_tasks</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of task indices for which to compute model
+outputs for. If omitted, return outputs for all task indices.</p></li>
 <li><p><strong>rank</strong> (<em>int</em><em> | </em><em>None</em>) – The num of learned task embeddings to be used in the task kernel.
 If omitted, set it to be 1.</p></li>
-<li><p><strong>output_tasks</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>outcome_transform</strong> (<em>OutcomeTransform</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>input_transform</strong> (<em>InputTransform</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>pyro_model</strong> (<em>PyroModel</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>outcome_transform</strong> (<em>OutcomeTransform</em><em> | </em><em>None</em>) – An outcome transform that is applied to the
+training data during instantiation and to the posterior during
+inference (that is, the <cite>Posterior</cite> obtained by calling
+<cite>.posterior</cite> on the model will be on the original scale).</p></li>
+<li><p><strong>input_transform</strong> (<em>InputTransform</em><em> | </em><em>None</em>) – An input transform that is applied to the inputs <cite>X</cite>
+in the model’s forward pass.</p></li>
+<li><p><strong>pyro_model</strong> (<em>PyroModel</em><em> | </em><em>None</em>) – Optional <cite>PyroModel</cite>, defaults to <cite>MultitaskSaasPyroModel</cite>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -3223,6 +3307,29 @@ see <cite>parse_training_data</cite>.</p></li>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.load_state_dict">
+<span class="sig-name descname"><span class="pre">load_state_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#SaasFullyBayesianMultiTaskGP.load_state_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.load_state_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Custom logic for loading the state dict.</p>
+<p>The standard approach of calling <cite>load_state_dict</cite> currently doesn’t play well
+with the <cite>SaasFullyBayesianMultiTaskGP</cite> since the <cite>mean_module</cite>, <cite>covar_module</cite>
+and <cite>likelihood</cite> aren’t initialized until the model has been fitted. The reason
+for this is that we don’t know the number of MCMC samples until NUTS is called.
+Given the state dict, we can initialize a new model with some dummy samples and
+then load the state dict into this model. This currently only works for a
+<cite>MultitaskSaasPyroModel</cite> and supporting more Pyro models likely requires moving
+the model construction logic into the Pyro model itself.</p>
+<p>TODO: If this were to inherif from <cite>SaasFullyBayesianSingleTaskGP</cite>, we could
+simplify this method and eliminate some others.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>state_dict</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – </p></li>
+<li><p><strong>strict</strong> (<em>bool</em>) – </p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -3417,8 +3524,7 @@ embeddings.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>decomposition</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Keys index context names. Values are the indexes of
-parameters belong to the context. The parameter indexes are in the same
-order across contexts.</p></li>
+parameters belong to the context.</p></li>
 <li><p><strong>batch_shape</strong> (<em>Size</em>) – Batch shape as usual for gpytorch kernels. Model does not
 support batch training. When batch_shape is non-empty, it is used for
 loading hyper-parameter values generated from MCMC sampling.</p></li>
@@ -3467,6 +3573,38 @@ belong to the context. The parameter indexes are in the same order
 across contexts.</p></li>
 <li><p><strong>batch_shape</strong> (<em>Size</em>) – Batch shape as usual for gpytorch kernels.</p></li>
 <li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>) – The torch device.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+<span class="target" id="module-botorch.models.kernels.orthogonal_additive_kernel"></span><dl class="py class">
+<dt class="sig sig-object py" id="botorch.models.kernels.orthogonal_additive_kernel.OrthogonalAdditiveKernel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.kernels.orthogonal_additive_kernel.</span></span><span class="sig-name descname"><span class="pre">OrthogonalAdditiveKernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quad_deg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">second_order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coeff_constraint</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Positive()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/kernels/orthogonal_additive_kernel.html#OrthogonalAdditiveKernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.kernels.orthogonal_additive_kernel.OrthogonalAdditiveKernel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Kernel</span></code></p>
+<p>Orthogonal Additive Kernels (OAKs) were introduced in <a class="reference internal" href="#lu2022additive" id="id19"><span>[Lu2022additive]</span></a>, though
+only for the case of Gaussian base kernels with a Gaussian input data distribution.</p>
+<p>The implementation here generalizes OAKs to arbitrary base kernels by using a
+Gauss-Legendre quadrature approximation to the required one-dimensional integrals
+involving the base kernels.</p>
+<div class="citation-list" role="list">
+<div class="citation" id="lu2022additive" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a href="#id19" role="doc-backlink">Lu2022additive</a><span class="fn-bracket">]</span></span>
+<p>X. Lu, A. Boukouvalas, and J. Hensman. Additive Gaussian processes revisited.
+Proceedings of the 39th International Conference on Machine Learning. Jul 2022.</p>
+</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base_kernel</strong> (<em>Kernel</em>) – The kernel which to orthogonalize and evaluate in <cite>forward</cite>.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – Input dimensionality of the kernel.</p></li>
+<li><p><strong>quad_deg</strong> (<em>int</em>) – Number of integration nodes for orthogonalization.</p></li>
+<li><p><strong>second_order</strong> (<em>bool</em>) – Toggles second order interactions. If true, both the time and
+space complexity of evaluating the kernel are quadratic in <cite>dim</cite>.</p></li>
+<li><p><strong>batch_shape</strong> (<em>Size</em><em> | </em><em>None</em>) – Optional batch shape for the kernel and its parameters.</p></li>
+<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>None</em>) – Initialization dtype for required Tensors.</p></li>
+<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>) – Initialization device for required Tensors.</p></li>
+<li><p><strong>coeff_constraint</strong> (<em>Interval</em>) – Constraint on the coefficients of the additive kernel.</p></li>
 </ul>
 </dd>
 </dl>
@@ -3680,7 +3818,7 @@ the model posterior back to the original space.</p>
 <p>References</p>
 <div class="citation-list" role="list">
 <div class="citation" id="eriksson2021scalable" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id17" role="doc-backlink">eriksson2021scalable</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id20" role="doc-backlink">eriksson2021scalable</a><span class="fn-bracket">]</span></span>
 <p>D. Eriksson, M. Poloczek. Scalable Constrained Bayesian Optimization.
 International Conference on Artificial Intelligence and Statistics. PMLR, 2021,
 <a class="reference external" href="http://proceedings.mlr.press/v130/eriksson21a.html">http://proceedings.mlr.press/v130/eriksson21a.html</a></p>
@@ -3803,6 +3941,22 @@ standardization (if lower, only de-mean the data).</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.transforms.outcome.Standardize.load_state_dict">
+<span class="sig-name descname"><span class="pre">load_state_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Standardize.load_state_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Standardize.load_state_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Custom logic for loading the state dict.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>state_dict</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – </p></li>
+<li><p><strong>strict</strong> (<em>bool</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.outcome.Standardize.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Standardize.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Standardize.forward" title="Permalink to this definition">¶</a></dt>
@@ -4103,7 +4257,7 @@ observation noises associated with the training targets
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.outcome.</span></span><span class="sig-name descname"><span class="pre">Bilog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Bilog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Bilog" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OutcomeTransform</span></code></p>
 <p>Bilog-transform outcomes.</p>
-<p>The Bilog transform <a class="reference internal" href="#eriksson2021scalable" id="id17"><span>[eriksson2021scalable]</span></a> is useful for modeling outcome
+<p>The Bilog transform <a class="reference internal" href="#eriksson2021scalable" id="id20"><span>[eriksson2021scalable]</span></a> is useful for modeling outcome
 constraints as it magnifies values near zero and flattens extreme values.</p>
 <p>Bilog-transform outcomes.</p>
 <dl class="field-list simple">
@@ -4327,7 +4481,7 @@ current module state.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>d</strong> (<em>int</em>) – The dimension of the input space.</p></li>
-<li><p><strong>indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – The indices of the inputs to normalize. If omitted,
+<li><p><strong>indices</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – The indices of the inputs to normalize. If omitted,
 take all dimensions of the inputs into account.</p></li>
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – If provided, use these bounds to normalize the inputs. If
 omitted, learn the bounds in train mode.</p></li>
@@ -4394,7 +4548,7 @@ simply applies the standardization using the current module state.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>d</strong> (<em>int</em>) – The dimension of the input space.</p></li>
-<li><p><strong>indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – The indices of the inputs to standardize. If omitted,
+<li><p><strong>indices</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – The indices of the inputs to standardize. If omitted,
 take all dimensions of the inputs into account.</p></li>
 <li><p><strong>batch_shape</strong> (<em>torch.Size</em>) – The batch shape of the inputs (asssuming input tensors
 of shape <cite>batch_shape x n x d</cite>). If provided, perform individual
@@ -4429,6 +4583,11 @@ division by zero errors.</p></li>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.input.</span></span><span class="sig-name descname"><span class="pre">Round</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integer_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">categorical_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_eval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_fantasize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approximate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Round"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.Round" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">InputTransform</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
 <p>A discretization transformation for discrete inputs.</p>
+<p>If <cite>approximate=False</cite> (the default), uses PyTorch’s <cite>round</cite>.</p>
+<p>If <cite>approximate=True</cite>, a differentiable approximate rounding function is
+used, with a temperature parameter of <cite>tau</cite>. This method is a piecewise
+approximation of a rounding function where each piece is a hyperbolic
+tangent function.</p>
 <p>For integers, this will typically be used in conjunction
 with normalization as follows:</p>
 <p>In eval() mode (i.e. after training), the inputs pass
@@ -4443,7 +4602,7 @@ are unnormalized before rounding. In the case of (b) transform_on_train
 should be set to False, so that the raw inputs are rounded and then
 normalized to the unit cube.</p>
 <p>By default, the straight through estimators are used for the gradients as
-proposed in <a class="reference internal" href="utils.html#daulton2022bopr" id="id18"><span>[Daulton2022bopr]</span></a>. This transformation supports differentiable
+proposed in <a class="reference internal" href="utils.html#daulton2022bopr" id="id21"><span>[Daulton2022bopr]</span></a>. This transformation supports differentiable
 approximate rounding (currently only for integers). The rounding function
 is approximated with a piece-wise function where each piece is a hyperbolic
 tangent function.</p>
@@ -4615,8 +4774,8 @@ of the Kumaraswamy distribution.</p></li>
 provided beforehand or generated on the fly via a callable.</p>
 <p>As an example, the predefined set of features can be used with
 <cite>RiskMeasureMCObjective</cite> to optimize risk measures as described in
-<a class="reference internal" href="acquisition.html#cakmak2020risk" id="id19"><span>[Cakmak2020risk]</span></a>. A tutorial notebook implementing the rhoKG acqusition
-function introduced in <a class="reference internal" href="acquisition.html#cakmak2020risk" id="id20"><span>[Cakmak2020risk]</span></a> can be found at
+<a class="reference internal" href="acquisition.html#cakmak2020risk" id="id22"><span>[Cakmak2020risk]</span></a>. A tutorial notebook implementing the rhoKG acqusition
+function introduced in <a class="reference internal" href="acquisition.html#cakmak2020risk" id="id23"><span>[Cakmak2020risk]</span></a> can be found at
 <a class="reference external" href="https://botorch.org/tutorials/risk_averse_bo_with_environmental_variables">https://botorch.org/tutorials/risk_averse_bo_with_environmental_variables</a>.</p>
 <p>The steps for using this to obtain samples of a risk measure are as follows:</p>
 <ul class="simple">
@@ -5161,6 +5320,42 @@ is <cite>input_batch_shape</cite> against <cite>batch_shape</cite>.</p>
 </dl>
 </dd></dl>
 </section>
+<section id="module-botorch.models.utils.gpytorch_modules">
+<span id="gpytorch-module-constructors"></span><h3>GPyTorch Module Constructors<a class="headerlink" href="#module-botorch.models.utils.gpytorch_modules" title="Permalink to this heading">¶</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.models.utils.gpytorch_modules.get_matern_kernel_with_gamma_prior">
+<span class="sig-prename descclassname"><span class="pre">botorch.models.utils.gpytorch_modules.</span></span><span class="sig-name descname"><span class="pre">get_matern_kernel_with_gamma_prior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ard_num_dims</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/utils/gpytorch_modules.html#get_matern_kernel_with_gamma_prior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.utils.gpytorch_modules.get_matern_kernel_with_gamma_prior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructs the Scale-Matern kernel that is used by default by
+several models. This uses a Gamma(3.0, 6.0) prior for the lengthscale
+and a Gamma(2.0, 0.15) prior for the output scale.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ard_num_dims</strong> (<em>int</em>) – </p></li>
+<li><p><strong>batch_shape</strong> (<em>Size</em><em> | </em><em>None</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>ScaleKernel</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.models.utils.gpytorch_modules.get_gaussian_likelihood_with_gamma_prior">
+<span class="sig-prename descclassname"><span class="pre">botorch.models.utils.gpytorch_modules.</span></span><span class="sig-name descname"><span class="pre">get_gaussian_likelihood_with_gamma_prior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/utils/gpytorch_modules.html#get_gaussian_likelihood_with_gamma_prior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.utils.gpytorch_modules.get_gaussian_likelihood_with_gamma_prior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructs the GaussianLikelihood that is used by default by
+several models. This uses a Gamma(1.1, 0.05) prior and constrains the
+noise level to be greater than MIN_INFERRED_NOISE_LEVEL (=1e-4).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>batch_shape</strong> (<em>Size</em><em> | </em><em>None</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>GaussianLikelihood</em></p>
+</dd>
+</dl>
+</dd></dl>
+</section>
 <section id="module-botorch.models.converter">
 <span id="model-conversion"></span><h3>Model Conversion<a class="headerlink" href="#module-botorch.models.converter" title="Permalink to this heading">¶</a></h3>
 <p>Utilities for converting between different models.</p>
@@ -5285,7 +5480,7 @@ process models.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="chen2018dpp" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>chen2018dpp<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id26" role="doc-backlink">1</a>,<a href="#id27" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id29" role="doc-backlink">1</a>,<a href="#id30" role="doc-backlink">2</a>)</span>
 <p>Laming Chen and Guoxin Zhang and Hanning Zhou, Fast greedy MAP inference
 for determinantal point process to improve recommendation diversity,
 Proceedings of the 32nd International Conference on Neural Information
@@ -5335,7 +5530,7 @@ to a specific criterion.</p>
 <p>A function returning ones for each element. Using this quality function
 for inducing point allocation corresponds to allocating inducing points
 with the sole aim of minimizing predictive variance, i.e. the approach
-of <a class="reference internal" href="#burt2020svgp" id="id21"><span>[burt2020svgp]</span></a>.</p>
+of <a class="reference internal" href="#burt2020svgp" id="id24"><span>[burt2020svgp]</span></a>.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.utils.inducing_point_allocators.ExpectedImprovementQualityFunction">
@@ -5343,7 +5538,7 @@ of <a class="reference internal" href="#burt2020svgp" id="id21"><span>[burt2020s
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.utils.inducing_point_allocators.QualityFunction" title="botorch.models.utils.inducing_point_allocators.QualityFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">QualityFunction</span></code></a></p>
 <p>A function measuring the quality of input points as their expected
 improvement with respect to a conservative baseline. Expectations
-are according to the model from the previous BO step. See <a class="reference internal" href="#moss2023ipa" id="id22"><span>[moss2023ipa]</span></a>
+are according to the model from the previous BO step. See <a class="reference internal" href="#moss2023ipa" id="id25"><span>[moss2023ipa]</span></a>
 for details and justification.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -5360,7 +5555,7 @@ set False.</p></li>
 <dt class="sig sig-object py" id="botorch.models.utils.inducing_point_allocators.GreedyVarianceReduction">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.utils.inducing_point_allocators.</span></span><span class="sig-name descname"><span class="pre">GreedyVarianceReduction</span></span><a class="reference internal" href="_modules/botorch/models/utils/inducing_point_allocators.html#GreedyVarianceReduction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.utils.inducing_point_allocators.GreedyVarianceReduction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.utils.inducing_point_allocators.InducingPointAllocator" title="botorch.models.utils.inducing_point_allocators.InducingPointAllocator"><code class="xref py py-class docutils literal notranslate"><span class="pre">InducingPointAllocator</span></code></a></p>
-<p>The inducing point allocator proposed by <a class="reference internal" href="#burt2020svgp" id="id23"><span>[burt2020svgp]</span></a>, that
+<p>The inducing point allocator proposed by <a class="reference internal" href="#burt2020svgp" id="id26"><span>[burt2020svgp]</span></a>, that
 greedily chooses inducing point locations with maximal (conditional)
 predictive variance.</p>
 </dd></dl>
@@ -5370,7 +5565,7 @@ predictive variance.</p>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.utils.inducing_point_allocators.InducingPointAllocator" title="botorch.models.utils.inducing_point_allocators.InducingPointAllocator"><code class="xref py py-class docutils literal notranslate"><span class="pre">InducingPointAllocator</span></code></a></p>
 <p>An inducing point allocator that greedily chooses inducing points with large
 predictive variance and that are in promising regions of the search
-space (according to the model form the previous BO step), see <a class="reference internal" href="#moss2023ipa" id="id24"><span>[moss2023ipa]</span></a>.</p>
+space (according to the model form the previous BO step), see <a class="reference internal" href="#moss2023ipa" id="id27"><span>[moss2023ipa]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -5385,11 +5580,11 @@ set False.</p></li>
 <dt class="sig sig-object py" id="botorch.models.utils.inducing_point_allocators._pivoted_cholesky_init">
 <span class="sig-prename descclassname"><span class="pre">botorch.models.utils.inducing_point_allocators.</span></span><span class="sig-name descname"><span class="pre">_pivoted_cholesky_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quality_scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/utils/inducing_point_allocators.html#_pivoted_cholesky_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.utils.inducing_point_allocators._pivoted_cholesky_init" title="Permalink to this definition">¶</a></dt>
 <dd><p>A pivoted Cholesky initialization method for the inducing points,
-originally proposed in <a class="reference internal" href="#burt2020svgp" id="id25"><span>[burt2020svgp]</span></a> with the algorithm itself coming from
-<a class="reference internal" href="#chen2018dpp" id="id26"><span>[chen2018dpp]</span></a>. Code is a PyTorch version from <a class="reference internal" href="#chen2018dpp" id="id27"><span>[chen2018dpp]</span></a>, based on
+originally proposed in <a class="reference internal" href="#burt2020svgp" id="id28"><span>[burt2020svgp]</span></a> with the algorithm itself coming from
+<a class="reference internal" href="#chen2018dpp" id="id29"><span>[chen2018dpp]</span></a>. Code is a PyTorch version from <a class="reference internal" href="#chen2018dpp" id="id30"><span>[chen2018dpp]</span></a>, based on
 <a class="reference external" href="https://github.com/laming-chen/fast-map-dpp/blob/master/dpp.py">https://github.com/laming-chen/fast-map-dpp/blob/master/dpp.py</a> but with a small
 modification to allow the underlying DPP to be defined through its diversity-quality
-decomposition,as discussed by <a class="reference internal" href="#moss2023ipa" id="id28"><span>[moss2023ipa]</span></a>. This method returns a greedy
+decomposition,as discussed by <a class="reference internal" href="#moss2023ipa" id="id31"><span>[moss2023ipa]</span></a>. This method returns a greedy
 approximation of the MAP estimate of the specified DPP, i.e. its returns a
 set of points that are highly diverse (according to the provided kernel_matrix)
 and have high quality (according to the provided quality_scores).</p>
