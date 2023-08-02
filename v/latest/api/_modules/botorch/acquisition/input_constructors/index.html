@@ -1009,7 +1009,6 @@
             <span class="n">first_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">assert_shared</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
-
     <span class="c1"># This selects the objectives (a subset of the outcomes) and set each</span>
     <span class="c1"># objective threhsold to have the proper optimization direction.</span>
     <span class="k">if</span> <span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1037,6 +1036,8 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">ref_point</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">objective_thresholds</span><span class="p">)</span>
 
+    <span class="n">num_objectives</span> <span class="o">=</span> <span class="n">objective_thresholds</span><span class="p">[</span><span class="o">~</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">objective_thresholds</span><span class="p">)]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">"model"</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span>
         <span class="s2">"ref_point"</span><span class="p">:</span> <span class="n">ref_point</span><span class="p">,</span>
@@ -1047,7 +1048,7 @@
         <span class="s2">"X_pending"</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"X_pending"</span><span class="p">),</span>
         <span class="s2">"eta"</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"eta"</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">),</span>
         <span class="s2">"prune_baseline"</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"prune_baseline"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
-        <span class="s2">"alpha"</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"alpha"</span><span class="p">,</span> <span class="n">get_default_partitioning_alpha</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">num_outputs</span><span class="p">)),</span>
+        <span class="s2">"alpha"</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"alpha"</span><span class="p">,</span> <span class="n">get_default_partitioning_alpha</span><span class="p">(</span><span class="n">num_objectives</span><span class="p">)),</span>
         <span class="s2">"cache_pending"</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"cache_pending"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
         <span class="s2">"max_iep"</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"max_iep"</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
         <span class="s2">"incremental_nehvi"</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"incremental_nehvi"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
