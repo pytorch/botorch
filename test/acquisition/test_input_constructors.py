@@ -140,8 +140,8 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
         best_f = get_best_f_mc(training_data=self.blockX_blockY)
         self.assertEqual(best_f, get_best_f_mc(self.blockX_blockY[0]))
 
-        best_f_expected = self.blockX_blockY[0].Y().squeeze().max()
-        self.assertEqual(best_f, best_f_expected)
+        best_f_expected = self.blockX_blockY[0].Y().max(dim=0).values
+        self.assertAllClose(best_f, best_f_expected)
         with self.assertRaisesRegex(UnsupportedError, "require an objective"):
             get_best_f_mc(training_data=self.blockX_multiY)
         obj = LinearMCObjective(weights=torch.rand(2))
@@ -149,13 +149,13 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
 
         multi_Y = torch.cat([d.Y() for d in self.blockX_multiY.values()], dim=-1)
         best_f_expected = (multi_Y @ obj.weights).amax(dim=-1, keepdim=True)
-        self.assertEqual(best_f, best_f_expected)
+        self.assertAllClose(best_f, best_f_expected)
         post_tf = ScalarizedPosteriorTransform(weights=torch.ones(2))
         best_f = get_best_f_mc(
             training_data=self.blockX_multiY, posterior_transform=post_tf
         )
         best_f_expected = (multi_Y.sum(dim=-1)).amax(dim=-1, keepdim=True)
-        self.assertEqual(best_f, best_f_expected)
+        self.assertAllClose(best_f, best_f_expected)
 
     @mock.patch("botorch.acquisition.input_constructors.optimize_acqf")
     def test_optimize_objective(self, mock_optimize_acqf):
