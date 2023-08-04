@@ -165,30 +165,6 @@ def optimize_qnehvi_and_get_observation(model, train_x, train_obj, train_con, sa
     return new_x, new_obj, new_con
 
 
-# #### Define a helper function for creating constrained objectives for $q$ParEGO
-# The helper function below initializes a ConstrainedMCObjective for $q$ParEGO. It creates the `objective` which fetches the outcomes required for the scalarized objective and applies the scalarization and the constraints, which are modeled outcomes.
-# 
-
-# In[5]:
-
-
-from botorch.acquisition.objective import ConstrainedMCObjective
-
-
-def get_constrained_mc_objective(train_obj, train_con, scalarization):
-    """Initialize a ConstrainedMCObjective for qParEGO"""
-    n_obj = train_obj.shape[-1]
-    # assume first outcomes of the model are the objectives, the rest constraints
-    def objective(Z):
-        return scalarization(Z[..., :n_obj])
-
-    constrained_obj = ConstrainedMCObjective(
-        objective=objective,
-        constraints=[lambda Z: Z[..., -1]],  # index the constraint
-    )
-    return constrained_obj
-
-
 # #### Define a helper function that performs the essential BO step for $q$ParEGO
 # The helper function below similarly initializes $q$ParEGO, optimizes it, and returns the batch $\{x_1, x_2, \ldots x_q\}$ along with the observed function values. 
 # 
@@ -196,10 +172,11 @@ def get_constrained_mc_objective(train_obj, train_con, scalarization):
 # 
 # To do this, we create a list of `qExpectedImprovement` acquisition functions, each with different random scalarization weights. The `optimize_acqf_list` method sequentially generates one candidate per acquisition function and conditions the next candidate (and acquisition function) on the previously selected pending candidates.
 
-# In[6]:
+# In[5]:
 
 
 from botorch.acquisition.monte_carlo import qExpectedImprovement
+from botorch.acquisition.objective import GenericMCObjective
 
 
 def optimize_qparego_and_get_observation(model, train_obj, train_con, sampler):
@@ -211,17 +188,17 @@ def optimize_qparego_and_get_observation(model, train_obj, train_con, sampler):
         weights = sample_simplex(problem.num_objectives, **tkwargs).squeeze()
         # construct augmented Chebyshev scalarization
         scalarization = get_chebyshev_scalarization(weights=weights, Y=train_obj)
-        # initialize ConstrainedMCObjective
-        constrained_objective = get_constrained_mc_objective(
-            train_obj=train_obj,
-            train_con=train_con,
-            scalarization=scalarization,
+        # initialize the scalarized objective (w/o constraints)
+        scalarized_objective = GenericMCObjective(
+            # the last element of the model outputs is the constraint
+            lambda Z, X: scalarization(Z[..., :-1]),
         )
         train_y = torch.cat([train_obj, train_con], dim=-1)
         acq_func = qExpectedImprovement(  # pyre-ignore: [28]
             model=model,
-            objective=constrained_objective,
-            best_f=constrained_objective(train_y).max(),
+            objective=scalarized_objective,
+            best_f=scalarized_objective(train_y).max(),
+            constraints=[lambda Z: Z[..., -1]],
             sampler=sampler,
         )
         acq_func_list.append(acq_func)
@@ -252,7 +229,7 @@ def optimize_qparego_and_get_observation(model, train_obj, train_con, sampler):
 # 
 # *Note*: Running this may take a little while.
 
-# In[7]:
+# In[6]:
 
 
 import time
@@ -397,7 +374,7 @@ for iteration in range(1, N_BATCH + 1):
 # 
 # The plot show that $q$NEHVI vastly outperforms the $q$ParEGO and Sobol baselines.
 
-# In[8]:
+# In[7]:
 
 
 import numpy as np
@@ -445,15 +422,16 @@ ax.legend(loc="lower right")
 # 
 # To examine optimization process from another perspective, we plot the collected observations under each algorithm where the color corresponds to the BO iteration at which the point was collected. The plot on the right for $q$NEHVI shows that the $q$NEHVI quickly identifies the pareto front and most of its evaluations are very close to the pareto front. $q$ParEGO also identifies has many observations close to the pareto front, but relies on optimizing random scalarizations, which is a less principled way of optimizing the pareto front compared to $q$NEHVI, which explicitly attempts focuses on improving the pareto front. Sobol generates random points and has few points close to the pareto front
 
-# In[9]:
+# In[8]:
 
 
 from matplotlib.cm import ScalarMappable
+import matplotlib
 
 
 fig, axes = plt.subplots(1, 3, figsize=(17, 5))
 algos = ["Sobol", "qParEGO", "qNEHVI"]
-cm = plt.cm.get_cmap("viridis")
+cm = matplotlib.colormaps["viridis"]
 
 batch_number = torch.cat(
     [
