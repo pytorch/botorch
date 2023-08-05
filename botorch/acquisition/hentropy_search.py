@@ -11,7 +11,9 @@ one-shot optimization as introduced in [Neiswanger2022]_.
 The authors adopt a generalized definition of entropy from past work
 in Bayesian decision theory, which proposes a family of decision-theoretic
 entropies parameterized by a problem-specific loss function and
-action set. Therefore, the method allow the development of a common
+action set. The each action is typically a set of points in the input
+space which represents what we would like to do after gathering information
+about the blackbox function. The method allow the development of a common
 acquisition optimization procedure, which applies generically
 to many members of this family (where each member is induced by a
 specific loss function and action set).
@@ -118,6 +120,7 @@ class qHEntropySearch(MCAcquisitionFunction, OneShotAcquisitionFunction):
         self.design_sampler = design_sampler
         self.action_sampler = action_sampler
         self.n_fantasy_at_design_pts = n_fantasy_at_design_pts
+        self.n_fantasy_at_action_pts = n_fantasy_at_action_pts
         self.loss_function_hyperparameters = loss_function_hyperparameters
         self.loss_function = loss_function_class(
             **self.loss_function_hyperparameters,
@@ -168,62 +171,48 @@ class qHEntropySearch(MCAcquisitionFunction, OneShotAcquisitionFunction):
             The augmented size for optimization.
         """
 
-        return q + self.cfg.n_dim_action
+        return q + self.n_fantasy_at_design_pts
 
-    def extract_candidates(self, batch_as_full: Tensor) -> Tensor:
+    def extract_candidates(self, X_full: Tensor) -> Tensor:
         r"""We only return X as the set of candidates post-optimization.
 
         Args:
-            batch_as_full: A `b x (q + num_fantasies) x d`-dim Tensor with `b`
+            X_full: A `b x (q + num_fantasies) x d`-dim Tensor with `b`
                 t-batches of `q + num_fantasies` design points each.
 
         Returns:
             A `b x q x d`-dim Tensor with `b` t-batches of `q` design points each.
         """
-
-        assert len(batch_as_full.shape) == 2
-        n_restarts = batch_as_full.size(0)
-        split_sizes = [
-            batch_as_full.size(1) - self.cfg.n_actions * self.cfg.n_dim_action,
-            self.cfg.n_actions * self.cfg.n_dim_action,
-        ]
-        batch_xs, batch_as_full = torch.split(batch_as_full, split_sizes, dim=1)
-        batch_xs = batch_xs.reshape(n_restarts, -1, self.cfg.n_dim_design)
-        batch_as_full = batch_as_full.reshape(
-            n_restarts, self.cfg.n_actions, self.cfg.n_dim_action
-        )
-
-        return batch_xs
+        return X_full[..., : -self.n_fantasy_at_design_pts, :]
 
 
 class qLossFunctionTopK(nn.Module):
-    r"""Batch loss function for the task of finding top-K."""
+    r"""Batch loss function for the task of finding top-K
+    relative to the values of the objective function."""
 
     def __init__(self, dist_weight=1.0, dist_threshold=0.5) -> None:
-        r"""Batch loss function for the task of finding top-K.
+        r"""Batch loss function for the task of finding top-K
+        relative to the values of the objective function.
 
         Args:
             loss_function_hyperparameters: hyperparameters for the loss function class.
         """
 
         super().__init__()
-        self.register_buffer("dist_weight", torch.as_tensor(dist_weight))
-        self.register_buffer(
-            "dist_threshold",
-            torch.as_tensor(dist_threshold),
-        )
+        self.dist_weight = dist_weight
+        self.dist_threshold = dist_threshold
 
     def forward(self, A: Tensor, Y: Tensor) -> Tensor:
         r"""Evaluate batch loss function on a tensor of actions.
 
         Args:
-            A: Actor tensor with shape `batch_size x n_fantasy_at_design_pts
+            A: Actor tensor with shape `n_fantasy_at_design_pts x batch_size
                 x num_actions x action_dim`.
             Y: Fantasized sample with shape `n_fantasy_at_action_pts x
                 n_fantasy_at_design_pts x batch_size x num_actions`.
 
         Returns:
-            A Tensor of shape `n_fantasy_at_action_pts x batch`.
+            A Tensor of shape `n_fantasy_at_action_pts x batch_size`.
         """
 
         Y = Y.sum(dim=-1).mean(dim=0)
@@ -234,12 +223,19 @@ class qLossFunctionTopK(nn.Module):
         dist_reward = 0
         if num_actions >= 2:
             A = A.contiguous()
+            # >>> n_fantasy_at_design_pts x batch_size x num_actions x action_dim
+
             A_distance = torch.cdist(A, A, p=1.0)
+            # >>> n_fantasy_at_design_pts x batch_size x num_actions x num_actions
+
             A_distance_triu = torch.triu(A_distance)
             # >>> n_fantasy_at_design_pts x batch_size x num_actions x num_actions
 
             A_distance_triu[A_distance_triu > self.dist_threshold] = self.dist_threshold
+            # >>> n_fantasy_at_design_pts x batch_size x num_actions x num_actions
+
             denominator = num_actions * (num_actions - 1) / 2.0
+
             dist_reward = A_distance_triu.sum((-1, -2)) / denominator
             # >>> n_fantasy_at_design_pts x batch_size
 
@@ -250,21 +246,20 @@ class qLossFunctionTopK(nn.Module):
 
 
 class qLossFunctionMinMax(nn.Module):
-    r"""Batch loss function for the task of finding min and max."""
+    r"""Batch loss function for the task of finding min and max
+    relative to the values of the objective function."""
 
     def __init__(self) -> None:
-        r"""Loss function for task of finding min and max.
+        r"""Loss function for task of finding min and max
+        relative to the values of the objective function."""
 
-        Args:
-            loss_function_hyperparameters: hyperparameters for the loss function class
-        """
         super().__init__()
 
     def forward(self, A: Tensor, Y: Tensor) -> Tensor:
         r"""Evaluate batch loss function on a tensor of actions.
 
         Args:
-            A: Actor tensor with shape `batch_size x n_fantasy_at_design_pts
+            A: Actor tensor with shape `n_fantasy_at_design_pts x batch_size
                 x num_actions x action_dim`.
             Y: Fantasized sample with shape `n_fantasy_at_action_pts x
                 n_fantasy_at_design_pts x batch_size x num_actions`.
