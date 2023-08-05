@@ -431,7 +431,7 @@ import matplotlib
 
 fig, axes = plt.subplots(1, 3, figsize=(17, 5))
 algos = ["Sobol", "qParEGO", "qNEHVI"]
-cm = matplotlib.colormaps["viridis"]
+cm = plt.cm.get_cmap("viridis")
 
 batch_number = torch.cat(
     [
