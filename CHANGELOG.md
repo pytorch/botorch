@@ -2,6 +2,57 @@
 
 The release log for BoTorch.
 
+## [0.9.1] - Aug 1, 2023
+
+* Require linear_operator == 0.5.1 (#1963).
+
+
+## [0.9.0] - Aug 1, 2023
+
+#### Compatibility
+* Require Python >= 3.9.0 (#1924).
+* Require PyTorch >= 1.13.1 (#1960).
+* Require linear_operator == 0.5.0 (#1961).
+* Require GPyTorch == 1.11 (#1961).
+
+#### Highlights
+* Introduce `OrthogonalAdditiveKernel` (#1869).
+* Speed up LCE-A kernel by over an order of magnitude (#1910).
+* Introduce `optimize_acqf_homotopy`, for optimizing acquisition functions with homotopy (#1915).
+* Introduce `PriorGuidedAcquisitionFunction` (PiBO) (#1920).
+* Introduce `qLogExpectedImprovement`, which provides more accurate numerics than `qExpectedImprovement` and can lead to significant optimization improvements (#1936).
+* Similarly, introduce `qLogNoisyExpectedImprovement`, which is analogous to `qNoisyExpectedImprovement` (#1937).
+
+#### New Features
+* Add constrained synthetic test functions `PressureVesselDesign`, `WeldedBeam`, `SpeedReducer`, and `TensionCompressionString` (#1832).
+* Support decoupled fantasization (#1853) and decoupled evaluations in cost-aware utilities (#1949).
+* Add `PairwiseBayesianActiveLearningByDisagreement`, an active learning acquisition function for PBO and BOPE (#1855).
+* Support custom mean and likelihood in `MultiTaskGP` (#1909).
+* Enable candidate generation (via `optimize_acqf`) with both `non_linear_constraints` and `fixed_features` (#1912).
+* Introduce `L0PenaltyApproxObjective` to support L0 regularization (#1916).
+* Enable batching in `PriorGuidedAcquisitionFunction` (#1925).
+
+#### Other changes
+* Deprecate `FixedNoiseMultiTaskGP`; allow `train_Yvar` optionally in `MultiTaskGP` (#1818).
+* Implement `load_state_dict` for SAAS multi-task GP (#1825).
+* Improvements to `LinearEllipticalSliceSampler` (#1859, #1878, #1879, #1883).
+* Allow passing in task features as part of X in MTGP.posterior (#1868).
+* Improve numerical stability of log densities in pairwise GPs (#1919).
+* Python 3.11 compliance (#1927).
+* Enable using constraints with `SampleReducingMCAcquisitionFunction`s when using `input_constructor`s and `get_acquisition_function` (#1932).
+* Enable use of `qLogExpectedImprovement` and `qLogNoisyExpectedImprovement` with Ax (#1941).
+
+#### Bug Fixes
+* Enable pathwise sampling modules to be converted to GPU  (#1821).
+* Allow `Standardize` modules to be loaded once trained (#1874).
+* Fix memory leak in Inducing Point Allocators (#1890).
+* Correct einsum computation in `LCEAKernel` (#1918).
+* Properly whiten bounds in MVNXPB (#1933).
+* Make `FixedFeatureAcquisitionFunction` convert floats to double-precision tensors rather than single-precision (#1944).
+* Fix memory leak in `FullyBayesianPosterior` (#1951).
+* Make `AnalyticExpectedUtilityOfBestOption` input constructor work correctionly with multi-task GPs (#1955).
+
+
 ## [0.8.5] - May 8, 2023
 
 #### New Features

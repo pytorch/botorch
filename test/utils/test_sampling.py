@@ -348,6 +348,29 @@ class PolytopeSamplerTestBase:
                 self.assertTrue((more_samples <= bounds[1]).all())
                 self.assertTrue((more_samples >= bounds[0]).all())
 
+    def test_sample_polytope_with_seed(self):
+        for dtype in (torch.float, torch.double):
+            A = self.A.to(dtype)
+            b = self.b.to(dtype)
+            x0 = self.x0.to(dtype)
+            bounds = self.bounds.to(dtype)
+            for interior_point in [x0, None]:
+                sampler1 = self.sampler_class(
+                    inequality_constraints=(A, b),
+                    bounds=bounds,
+                    interior_point=interior_point,
+                    **self.sampler_kwargs,
+                )
+                sampler2 = self.sampler_class(
+                    inequality_constraints=(A, b),
+                    bounds=bounds,
+                    interior_point=interior_point,
+                    **self.sampler_kwargs,
+                )
+                samples1 = sampler1.draw(n=10, seed=42)
+                samples2 = sampler2.draw(n=10, seed=42)
+                self.assertTrue(torch.allclose(samples1, samples2))
+
     def test_sample_polytope_with_eq_constraints(self):
         for dtype in (torch.float, torch.double):
             A = self.A.to(dtype)
