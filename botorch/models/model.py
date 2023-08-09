@@ -38,7 +38,7 @@ from botorch.models.utils.assorted import fantasize as fantasize_flag
 from botorch.posteriors import Posterior, PosteriorList
 from botorch.sampling.base import MCSampler
 from botorch.sampling.list_sampler import ListSampler
-from botorch.utils.datasets import BotorchDataset
+from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.transforms import is_fully_bayesian
 from torch import Tensor
 from torch.nn import Module, ModuleDict, ModuleList
@@ -169,10 +169,10 @@ class Model(Module, ABC):
     @classmethod
     def construct_inputs(
         cls,
-        training_data: Union[BotorchDataset, Dict[Hashable, BotorchDataset]],
+        training_data: Union[SupervisedDataset, Dict[Hashable, SupervisedDataset]],
         **kwargs: Any,
     ) -> Dict[str, Any]:
-        r"""Construct `Model` keyword arguments from a dict of `BotorchDataset`."""
+        r"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`."""
         from botorch.models.utils.parse_training_data import parse_training_data
 
         return parse_training_data(cls, training_data, **kwargs)

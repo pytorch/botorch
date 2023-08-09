@@ -8,67 +8,24 @@ r"""Representations for different kinds of datasets."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, fields, MISSING
-from itertools import chain, count, repeat
+import warnings
+from itertools import count, repeat
 from typing import Any, Dict, Hashable, Iterable, Optional, TypeVar, Union
 
 from botorch.utils.containers import BotorchContainer, DenseContainer, SliceContainer
 from torch import long, ones, Tensor
-from typing_extensions import get_type_hints
 
 T = TypeVar("T")
 ContainerLike = Union[BotorchContainer, Tensor]
 MaybeIterable = Union[T, Iterable[T]]
 
 
-@dataclass
-class BotorchDataset:
-    # TODO: Once v3.10 becomes standard, expose `validate_init` as a kw_only InitVar
-    def __post_init__(self, validate_init: bool = True) -> None:
-        if validate_init:
-            self._validate()
+class SupervisedDataset:
+    r"""Base class for datasets consisting of labelled pairs `(X, Y)`
+    and an optional `Yvar` that stipulates observations variances so
+    that `Y[i] ~ N(f(X[i]), Yvar[i])`.
 
-    def _validate(self) -> None:
-        pass
-
-
-class SupervisedDatasetMeta(type):
-    def __call__(cls, *args: Any, **kwargs: Any):
-        r"""Converts Tensor-valued fields to DenseContainer under the assumption
-        that said fields house collections of feature vectors."""
-        hints = get_type_hints(cls)
-        fields_iter = (item for item in fields(cls) if item.init is not None)
-        f_dict = {}
-        for value, field in chain(
-            zip(args, fields_iter),
-            ((kwargs.pop(field.name, MISSING), field) for field in fields_iter),
-        ):
-            if value is MISSING:
-                if field.default is not MISSING:
-                    value = field.default
-                elif field.default_factory is not MISSING:
-                    value = field.default_factory()
-                else:
-                    raise RuntimeError(f"Missing required field `{field.name}`.")
-
-            if issubclass(hints[field.name], BotorchContainer):
-                if isinstance(value, Tensor):
-                    value = DenseContainer(value, event_shape=value.shape[-1:])
-                elif not isinstance(value, BotorchContainer):
-                    raise TypeError(
-                        "Expected <BotorchContainer | Tensor> for field "
-                        f"`{field.name}` but was {type(value)}."
-                    )
-            f_dict[field.name] = value
-
-        return super().__call__(**f_dict, **kwargs)
-
-
-@dataclass
-class SupervisedDataset(BotorchDataset, metaclass=SupervisedDatasetMeta):
-    r"""Base class for datasets consisting of labelled pairs `(x, y)`.
-
-    This class object's `__call__` method converts Tensors `src` to
+    This class object's `__init__` method converts Tensors `src` to
     DenseContainers under the assumption that `event_shape=src.shape[-1:]`.
 
     Example:
@@ -87,6 +44,29 @@ class SupervisedDataset(BotorchDataset, metaclass=SupervisedDatasetMeta):
 
     X: BotorchContainer
     Y: BotorchContainer
+    Yvar: Optional[BotorchContainer]
+
+    def __init__(
+        self,
+        X: ContainerLike,
+        Y: ContainerLike,
+        Yvar: Optional[ContainerLike] = None,
+        validate_init: bool = True,
+    ) -> None:
+        r"""Constructs a `SupervisedDataset`.
+
+        Args:
+            X: A `Tensor` or `BotorchContainer` representing the input features.
+            Y: A `Tensor` or `BotorchContainer` representing the outcomes.
+            Yvar: An optional `Tensor` or `BotorchContainer` representing
+                the observation noise.
+            validate_init: If `True`, validates the input shapes.
+        """
+        self.X = _containerize(X)
+        self.Y = _containerize(Y)
+        self.Yvar = None if Yvar is None else _containerize(Yvar)
+        if validate_init:
+            self._validate()
 
     def _validate(self) -> None:
         shape_X = self.X.shape
@@ -95,33 +75,8 @@ class SupervisedDataset(BotorchDataset, metaclass=SupervisedDatasetMeta):
         shape_Y = shape_Y[: len(shape_Y) - len(self.Y.event_shape)]
         if shape_X != shape_Y:
             raise ValueError("Batch dimensions of `X` and `Y` are incompatible.")
-
-    @classmethod
-    def dict_from_iter(
-        cls,
-        X: MaybeIterable[ContainerLike],
-        Y: MaybeIterable[ContainerLike],
-        *,
-        keys: Optional[Iterable[Hashable]] = None,
-    ) -> Dict[Hashable, SupervisedDataset]:
-        r"""Returns a dictionary of `SupervisedDataset` from iterables."""
-        single_X = isinstance(X, (Tensor, BotorchContainer))
-        single_Y = isinstance(Y, (Tensor, BotorchContainer))
-        if single_X:
-            X = (X,) if single_Y else repeat(X)
-        if single_Y:
-            Y = (Y,) if single_X else repeat(Y)
-        return {key: cls(x, y) for key, x, y in zip(keys or count(), X, Y)}
-
-
-@dataclass
-class FixedNoiseDataset(SupervisedDataset):
-    r"""A SupervisedDataset with an additional field `Yvar` that stipulates
-    observations variances so that `Y[i] ~ N(f(X[i]), Yvar[i])`."""
-
-    X: BotorchContainer
-    Y: BotorchContainer
-    Yvar: BotorchContainer
+        if self.Yvar is not None and self.Yvar.shape != self.Y.shape:
+            raise ValueError("Shapes of `Y` and `Yvar` are incompatible.")
 
     @classmethod
     def dict_from_iter(
@@ -132,19 +87,53 @@ class FixedNoiseDataset(SupervisedDataset):
         *,
         keys: Optional[Iterable[Hashable]] = None,
     ) -> Dict[Hashable, SupervisedDataset]:
-        r"""Returns a dictionary of `FixedNoiseDataset` from iterables."""
+        r"""Returns a dictionary of `SupervisedDataset` from iterables."""
         single_X = isinstance(X, (Tensor, BotorchContainer))
         single_Y = isinstance(Y, (Tensor, BotorchContainer))
         if single_X:
             X = (X,) if single_Y else repeat(X)
         if single_Y:
             Y = (Y,) if single_X else repeat(Y)
-
         Yvar = repeat(Yvar) if isinstance(Yvar, (Tensor, BotorchContainer)) else Yvar
-        return {key: cls(x, y, c) for key, x, y, c in zip(keys or count(), X, Y, Yvar)}
+
+        # Pass in Yvar only if it is not None.
+        iterables = (X, Y) if Yvar is None else (X, Y, Yvar)
+        return {
+            elements[0]: cls(*elements[1:])
+            for elements in zip(keys or count(), *iterables)
+        }
+
+    def __eq__(self, other: Any) -> bool:
+        return (
+            type(other) is type(self)
+            and self.X == other.X
+            and self.Y == other.Y
+            and self.Yvar == other.Yvar
+        )
 
 
-@dataclass
+class FixedNoiseDataset(SupervisedDataset):
+    r"""A SupervisedDataset with an additional field `Yvar` that stipulates
+    observations variances so that `Y[i] ~ N(f(X[i]), Yvar[i])`.
+
+    NOTE: This is deprecated. Use `SupervisedDataset` instead.
+    """
+
+    def __init__(
+        self,
+        X: ContainerLike,
+        Y: ContainerLike,
+        Yvar: ContainerLike,
+        validate_init: bool = True,
+    ) -> None:
+        r"""Initialize a `FixedNoiseDataset` -- deprecated!"""
+        warnings.warn(
+            "`FixedNoiseDataset` is deprecated. Use `SupervisedDataset` instead.",
+            DeprecationWarning,
+        )
+        super().__init__(X=X, Y=Y, Yvar=Yvar, validate_init=validate_init)
+
+
 class RankingDataset(SupervisedDataset):
     r"""A SupervisedDataset whose labelled pairs `(x, y)` consist of m-ary combinations
     `x ∈ Z^{m}` of elements from a ground set `Z = (z_1, ...)` and ranking vectors
@@ -172,6 +161,18 @@ class RankingDataset(SupervisedDataset):
 
     X: SliceContainer
     Y: BotorchContainer
+
+    def __init__(
+        self, X: SliceContainer, Y: ContainerLike, validate_init: bool = True
+    ) -> None:
+        r"""Construct a `RankingDataset`.
+
+        Args:
+            X: A `SliceContainer` representing the input features being ranked.
+            Y: A `Tensor` or `BotorchContainer` representing the rankings.
+            validate_init: If `True`, validates the input shapes.
+        """
+        super().__init__(X=X, Y=Y, Yvar=None, validate_init=validate_init)
 
     def _validate(self) -> None:
         super()._validate()
@@ -201,3 +202,13 @@ class RankingDataset(SupervisedDataset):
 
             # Same as: torch.where(y_diff == 0, y_incr + 1, 1)
             y_incr = y_incr - y_diff + 1
+
+
+def _containerize(value: ContainerLike) -> BotorchContainer:
+    r"""Converts Tensor-valued arguments to DenseContainer under the assumption
+    that said arguments house collections of feature vectors.
+    """
+    if isinstance(value, Tensor):
+        return DenseContainer(value, event_shape=value.shape[-1:])
+    else:
+        return value
