@@ -18,7 +18,7 @@
 # Unlike many other Bayesian optimization setups where multiple consecutive batches of experiments are performed,
 # in BOPE, we alternate between two stages: *preference exploration* and *experimentation*.
 # 
-# In the preference exploration stage, we use an acquisition function (i.e., a preference exploratoin strategy, or PE strategy)
+# In the preference exploration stage, we use an acquisition function (i.e., a preference exploration strategy, or PE strategy)
 # to adaptively generate pairs of hypothetical outcome and ask the decision-maker’s preference within each pair.
 # In the experimentation stage, we use a batch version of noisy expected improvement that integrates over our uncertainty in the
 # utility function called $\text{qNEIUU}$ to generate experimental candidates for evaluation.
@@ -262,19 +262,18 @@ def find_max_posterior_mean(outcome_model, train_Y, train_comps, verbose=False):
 # In BOPE, we use two probablistic models (in this case, two Gaussian processes) $f$ and $g$
 # to model $f_\mathrm{true}$ and $g_\mathrm{true}$ respectively.
 # 
-# We start by initializing the outcome model $f$ with 16 quasi-random points (the initial experimentation stage).
+# We start by initializing the outcome model $f$ with 8 quasi-random points (the initial experimentation stage).
 # 
 # Next, we enter the preference exploration (PE) stage.
-# A straightforward strategy of performing PE is to present the decision-maker with comparisons using outcomes estimated
-# by sampling from the outcome model using random design points. We refer this method as $\text{Random}\mathrm{-}f$.
+# A straightforward strategy of performing PE is to present the decision-maker with comparisons using outcomes sampled from the outcome model at random design points. We refer this method as $\text{Random}\mathrm{-}f$.
 # 
 # Alternatively, we could initialize the preference model with $\text{Random}\mathrm{-}f$,
 # then perform PE using the $\text{EUBO}\mathrm{-}\zeta$ acquisition function as proposed in [1].
 # <!-- \tilde{f} somehow is not rendering --> 
 # 
 # In this tutorial, we examine both strategies by starting with initializating the preference model with 3 comparisons using $\text{Random}\mathrm{-}f$.
-# After that, we perform 3 * 4 = 12 pairwise comparisons using either $\text{EUBO}\mathrm{-}\zeta$ or $\text{Random}\mathrm{-}f$.
-# Then we move on to the 2nd experimentation stage by generating a candidate using qNEIUU by
+# After that, we perform 3 * 5 = 15 pairwise comparisons using either $\text{EUBO}\mathrm{-}\zeta$ or $\text{Random}\mathrm{-}f$.
+# Then we move on to the second experimentation stage by generating a candidate using qNEIUU by
 # leveraging both the outcome model and the learned preference model.
 # 
 # We additionally examine two other experimental canadidate generation strategies:
@@ -290,6 +289,7 @@ verbose = False
 every_n_comps = 3
 # Total number of checking the maximum posterior mean
 n_check_post_mean = 5
+n_outcome_model_initialization_points = 8
 n_reps = 1
 within_session_results = []
 exp_candidate_results = []
@@ -299,7 +299,7 @@ for i in range(n_reps):
     # Experimentation stage: initial exploration batch
     torch.manual_seed(i)
     np.random.seed(i)
-    X, Y = generate_random_exp_data(problem, 8)
+    X, Y = generate_random_exp_data(problem, n_outcome_model_initialization_points)
     outcome_model = fit_outcome_model(X, Y, problem.bounds)
 
     # Preference exploration stage: initialize the preference model with comparsions
