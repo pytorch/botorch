@@ -4,85 +4,19 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from dataclasses import field, make_dataclass
-from unittest.mock import patch
-
 from botorch.utils.containers import DenseContainer, SliceContainer
-from botorch.utils.datasets import (
-    BotorchDataset,
-    FixedNoiseDataset,
-    RankingDataset,
-    SupervisedDataset,
-)
+from botorch.utils.datasets import FixedNoiseDataset, RankingDataset, SupervisedDataset
 from botorch.utils.testing import BotorchTestCase
-from torch import rand, randperm, Size, stack, tensor, Tensor
+from torch import rand, randperm, Size, stack, tensor
 
 
 class TestDatasets(BotorchTestCase):
-    def test_base(self):
-        with patch.object(BotorchDataset, "_validate", new=lambda self: 1 / 0):
-            with self.assertRaises(ZeroDivisionError):
-                BotorchDataset()
-
-        dataset = BotorchDataset()
-        self.assertTrue(dataset._validate() is None)
-
-    def test_supervised_meta(self):
-        X = rand(3, 2)
-        Y = rand(3, 1)
-        t = rand(3, 5)
-        A = DenseContainer(t, event_shape=Size([5]))
-        B = rand(2, 1)
-
-        SupervisedDatasetWithDefaults = make_dataclass(
-            cls_name="SupervisedDatasetWithDefaults",
-            bases=(SupervisedDataset,),
-            fields=[
-                ("default", DenseContainer, field(default=t)),
-                ("factory", DenseContainer, field(default_factory=lambda: A)),
-                ("other", Tensor, field(default_factory=lambda: B)),
-            ],
-        )
-
-        # Check that call signature is property enforced
-        with self.assertRaisesRegex(RuntimeError, "Missing .* `X`"):
-            SupervisedDatasetWithDefaults(Y=Y)
-
-        with self.assertRaisesRegex(RuntimeError, "Missing .* `Y`"):
-            SupervisedDatasetWithDefaults(X=X)
-
-        with self.assertRaisesRegex(TypeError, "Expected <BotorchContainer | Tensor>"):
-            SupervisedDatasetWithDefaults(X=X, Y=Y.tolist())
-
-        # Check handling of default values and factories
-        dataset = SupervisedDatasetWithDefaults(X=X, Y=Y)
-        self.assertIsInstance(dataset.default, DenseContainer)
-        self.assertEqual(dataset.default, A)
-        self.assertEqual(dataset.factory, A)
-        self.assertTrue(dataset.other is B)
-
-        # Check type coercion
-        dataset = SupervisedDatasetWithDefaults(X=X, Y=Y, default=X, factory=Y, other=B)
-        self.assertIsInstance(dataset.X, DenseContainer)
-        self.assertIsInstance(dataset.Y, DenseContainer)
-        self.assertEqual(dataset.default, dataset.X)
-        self.assertEqual(dataset.factory, dataset.Y)
-        self.assertTrue(dataset.other is B)
-
-        # Check handling of positional arguments
-        dataset = SupervisedDatasetWithDefaults(X, Y, X, Y, X)
-        self.assertIsInstance(dataset.X, DenseContainer)
-        self.assertIsInstance(dataset.Y, DenseContainer)
-        self.assertEqual(dataset.default, dataset.X)
-        self.assertEqual(dataset.factory, dataset.Y)
-        self.assertTrue(dataset.other is X)
-
     def test_supervised(self):
         # Generate some data
         Xs = rand(4, 3, 2)
         Ys = rand(4, 3, 1)
 
-        # Test `__post_init__`
+        # Test `__init__`
         dataset = SupervisedDataset(X=Xs[0], Y=Ys[0])
         for name in ("X", "Y"):
             field = getattr(dataset, name)
@@ -132,6 +66,11 @@ class TestDatasets(BotorchTestCase):
         for dataset in datasets.values():
             self.assertTrue(Xs[0].equal(dataset.X()))
             self.assertTrue(Ys[1].equal(dataset.Y()))
+
+        with self.assertRaisesRegex(
+            ValueError, "`Y` and `Yvar`"
+        ), self.assertWarnsRegex(DeprecationWarning, "SupervisedDataset"):
+            FixedNoiseDataset(X=Xs, Y=Ys, Yvar=Ys_var[0])
 
     def test_ranking(self):
         # Test `_validate`

@@ -67,9 +67,9 @@ class TestParseTrainingData(BotorchTestCase):
         with self.assertRaisesRegex(UnsupportedError, "multiple datasets to single"):
             parse_training_data(Model, datasets)
 
+        _datasets = datasets.copy()
+        _datasets[m] = SupervisedDataset(rand(n, 2), rand(n, 1), rand(n, 1))
         with self.assertRaisesRegex(UnsupportedError, "Cannot combine .* hetero"):
-            _datasets = datasets.copy()
-            _datasets[m] = FixedNoiseDataset(rand(n, 2), rand(n, 1), rand(n, 1))
             parse_training_data(MultiTaskGP, _datasets)
 
         with self.assertRaisesRegex(ValueError, "Missing required term"):

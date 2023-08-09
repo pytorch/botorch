@@ -99,7 +99,7 @@ from botorch.sampling.base import MCSampler
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.constraints import get_outcome_constraint_transforms
 from botorch.utils.containers import BotorchContainer
-from botorch.utils.datasets import BotorchDataset, SupervisedDataset
+from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     FastNondominatedPartitioning,
     NondominatedPartitioning,
@@ -114,7 +114,7 @@ MaybeDict = Union[T, Dict[Hashable, T]]
 
 
 def _field_is_shared(
-    datasets: Union[Iterable[BotorchDataset], Dict[Hashable, BotorchDataset]],
+    datasets: Union[Iterable[SupervisedDataset], Dict[Hashable, SupervisedDataset]],
     fieldname: Hashable,
 ) -> bool:
     r"""Determines whether or not a given field is shared by all datasets."""
@@ -136,7 +136,7 @@ def _field_is_shared(
 
 
 def _get_dataset_field(
-    dataset: MaybeDict[BotorchDataset],
+    dataset: MaybeDict[SupervisedDataset],
     fieldname: str,
     transform: Optional[Callable[[BotorchContainer], Any]] = None,
     join_rule: Optional[Callable[[Sequence[Any]], Any]] = None,

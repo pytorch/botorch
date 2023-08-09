@@ -47,7 +47,7 @@ from botorch.models.fully_bayesian import (
 from botorch.models.transforms import Normalize, Standardize
 from botorch.posteriors.fully_bayesian import batched_bisect, FullyBayesianPosterior
 from botorch.sampling.get_sampler import get_sampler
-from botorch.utils.datasets import FixedNoiseDataset, SupervisedDataset
+from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
@@ -550,10 +550,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             X, Y, Yvar, model = self._get_data_and_model(
                 infer_noise=infer_noise, **tkwargs
             )
-            if infer_noise:
-                training_data = SupervisedDataset(X, Y)
-            else:
-                training_data = FixedNoiseDataset(X, Y, Yvar)
+            training_data = SupervisedDataset(X, Y, Yvar)
 
             data_dict = model.construct_inputs(training_data)
             self.assertTrue(X.equal(data_dict["train_X"]))

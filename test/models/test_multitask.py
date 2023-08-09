@@ -22,7 +22,7 @@ from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.posteriors.transformed import TransformedPosterior
-from botorch.utils.datasets import FixedNoiseDataset, SupervisedDataset
+from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.kernels import (
@@ -59,7 +59,7 @@ def _gen_datasets(yvar: Optional[float] = None, **tkwargs):
     Yvar1 = torch.full_like(Y1, yvar)
     Yvar2 = torch.full_like(Y2, yvar)
     train_Yvar = torch.cat([Yvar1, Yvar2])
-    datasets = {0: FixedNoiseDataset(X, Y1, Yvar1), 1: FixedNoiseDataset(X, Y2, Yvar2)}
+    datasets = {0: SupervisedDataset(X, Y1, Yvar1), 1: SupervisedDataset(X, Y2, Yvar2)}
     return datasets, (train_X, train_Y, train_Yvar)
 
 
