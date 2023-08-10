@@ -97,7 +97,6 @@ from botorch.models.model import Model
 from botorch.optim.optimize import optimize_acqf
 from botorch.sampling.base import MCSampler
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
-from botorch.utils.constraints import get_outcome_constraint_transforms
 from botorch.utils.containers import BotorchContainer
 from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
@@ -718,7 +717,7 @@ def construct_inputs_qLogNEI(
             X_baseline=X_baseline,
             prune_baseline=prune_baseline,
             cache_root=cache_root,
-            constraint=constraints,
+            constraints=constraints,
             eta=eta,
         ),
         "fat": fat,
@@ -853,11 +852,12 @@ def construct_inputs_EHVI(
     training_data: MaybeDict[SupervisedDataset],
     objective_thresholds: Tensor,
     objective: Optional[AnalyticMultiOutputObjective] = None,
+    constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     **kwargs: Any,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for `ExpectedHypervolumeImprovement` constructor."""
     num_objectives = objective_thresholds.shape[0]
-    if kwargs.get("outcome_constraints") is not None:
+    if constraints is not None:
         raise NotImplementedError("EHVI does not yet support outcome constraints.")
 
     X = _get_dataset_field(
@@ -914,6 +914,7 @@ def construct_inputs_qEHVI(
     training_data: MaybeDict[SupervisedDataset],
     objective_thresholds: Tensor,
     objective: Optional[MCMultiOutputObjective] = None,
+    constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     **kwargs: Any,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for `qExpectedHypervolumeImprovement` constructor."""
@@ -928,15 +929,10 @@ def construct_inputs_qEHVI(
     # compute posterior mean (for ref point computation ref pareto frontier)
     with torch.no_grad():
         Y_pmean = model.posterior(X).mean
-
-    outcome_constraints = kwargs.pop("outcome_constraints", None)
     # For HV-based acquisition functions we pass the constraint transform directly
-    if outcome_constraints is None:
-        cons_tfs = None
-    else:
-        cons_tfs = get_outcome_constraint_transforms(outcome_constraints)
+    if constraints is not None:
         # Adjust `Y_pmean` to contrain feasible points only.
-        feas = torch.stack([c(Y_pmean) <= 0 for c in cons_tfs], dim=-1).all(dim=-1)
+        feas = torch.stack([c(Y_pmean) <= 0 for c in constraints], dim=-1).all(dim=-1)
         Y_pmean = Y_pmean[feas]
 
     if objective is None:
@@ -962,7 +958,7 @@ def construct_inputs_qEHVI(
     add_qehvi_kwargs = {
         "sampler": sampler,
         "X_pending": kwargs.get("X_pending"),
-        "constraints": cons_tfs,
+        "constraints": constraints,
         "eta": kwargs.get("eta", 1e-3),
     }
     return {**ehvi_kwargs, **add_qehvi_kwargs}
@@ -975,6 +971,7 @@ def construct_inputs_qNEHVI(
     objective_thresholds: Tensor,
     objective: Optional[MCMultiOutputObjective] = None,
     X_baseline: Optional[Tensor] = None,
+    constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     **kwargs: Any,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for `qNoisyExpectedHypervolumeImprovement` constructor."""
@@ -991,16 +988,12 @@ def construct_inputs_qNEHVI(
     if objective is None:
         objective = IdentityMCMultiOutputObjective()
 
-    outcome_constraints = kwargs.pop("outcome_constraints", None)
-    if outcome_constraints is None:
-        cons_tfs = None
-    else:
+    if constraints is not None:
         if isinstance(objective, RiskMeasureMCObjective):
             raise UnsupportedError(
                 "Outcome constraints are not supported with risk measures. "
                 "Use a feasibility-weighted risk measure instead."
             )
-        cons_tfs = get_outcome_constraint_transforms(outcome_constraints)
 
     sampler = kwargs.get("sampler")
     if sampler is None and isinstance(model, GPyTorchModel):
@@ -1021,7 +1014,7 @@ def construct_inputs_qNEHVI(
         "X_baseline": X_baseline,
         "sampler": sampler,
         "objective": objective,
-        "constraints": cons_tfs,
+        "constraints": constraints,
         "X_pending": kwargs.get("X_pending"),
         "eta": kwargs.get("eta", 1e-3),
         "prune_baseline": kwargs.get("prune_baseline", True),

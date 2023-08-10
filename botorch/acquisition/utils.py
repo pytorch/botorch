@@ -306,13 +306,12 @@ def compute_best_feasible_objective(
     is_feasible = compute_feasibility_indicator(
         constraints=constraints, samples=samples
     )  # sample_shape x batch_shape x q
-    if is_feasible.any():
-        obj = torch.where(is_feasible, obj, -torch.inf)
-        with torch.no_grad():
-            return obj.amax(dim=-1, keepdim=True)
+
+    if is_feasible.any(dim=-1).all():
+        infeasible_value = -torch.inf
 
     elif infeasible_obj is not None:
-        return infeasible_obj.expand(*obj.shape[:-1], 1)
+        infeasible_value = infeasible_obj.item()
 
     else:
         if model is None:
@@ -323,12 +322,16 @@ def compute_best_feasible_objective(
             raise ValueError(
                 "Must specify `X_baseline` when no feasible observation exists."
             )
-        return _estimate_objective_lower_bound(
+        infeasible_value = _estimate_objective_lower_bound(
             model=model,
             objective=objective,
             posterior_transform=posterior_transform,
             X=X_baseline,
-        ).expand(*obj.shape[:-1], 1)
+        ).item()
+
+    obj = torch.where(is_feasible, obj, infeasible_value)
+    with torch.no_grad():
+        return obj.amax(dim=-1, keepdim=True)
 
 
 def _estimate_objective_lower_bound(
