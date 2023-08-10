@@ -2,6 +2,21 @@
 
 The release log for BoTorch.
 
+## [0.9.2] - Aug 10, 2023
+
+#### Bug fixes
+* Hot fix (#1973) for a few issues:
+  * A naming mismatch between Ax's modular `BotorchModel` and the BoTorch's acquisition input constructors, leading to outcome constraints in Ax not being used with single-objective acquisition functions in Ax's modular `BotorchModel`. The naming has been updated in Ax and consistent naming is now used in input constructors for single and multi-objective acquisition functions in BoTorch.
+  * A naming mismatch in the acquisition input constructor `constraints` in `qNoisyLogExpectedImprovement`, which kept constraints from being used.
+  * A bug in `compute_best_feasible_objective` that could lead to `-inf` incumbent values.
+* Fix setting seed in `get_polytope_samples` (#1968)
+
+#### Other changes
+* Merge `SupervisedDataset` and `FixedNoiseDataset` (#1945).
+* Constrained tutorial updates (#1967, #1970)
+* Resolve issues with missing pytorch binaries with py3.11 on Mac (#1966)
+
+
 ## [0.9.1] - Aug 1, 2023
 
 * Require linear_operator == 0.5.1 (#1963).
