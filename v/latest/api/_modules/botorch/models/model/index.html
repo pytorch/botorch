@@ -61,7 +61,7 @@
 <span class="kn">from</span> <span class="nn">botorch.posteriors</span> <span class="kn">import</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">PosteriorList</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.list_sampler</span> <span class="kn">import</span> <span class="n">ListSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">BotorchDataset</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">SupervisedDataset</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">is_fully_bayesian</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span><span class="p">,</span> <span class="n">ModuleDict</span><span class="p">,</span> <span class="n">ModuleList</span>
@@ -192,10 +192,10 @@
 <div class="viewcode-block" id="Model.construct_inputs"><a class="viewcode-back" href="../../../models.html#botorch.models.model.Model.construct_inputs">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
-        <span class="n">training_data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchDataset</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">BotorchDataset</span><span class="p">]],</span>
+        <span class="n">training_data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">SupervisedDataset</span><span class="p">]],</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct `Model` keyword arguments from a dict of `BotorchDataset`."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`."""</span>
         <span class="kn">from</span> <span class="nn">botorch.models.utils.parse_training_data</span> <span class="kn">import</span> <span class="n">parse_training_data</span>
 
         <span class="k">return</span> <span class="n">parse_training_data</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">training_data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>

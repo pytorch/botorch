@@ -122,7 +122,7 @@
 <span class="kn">from</span> <span class="nn">botorch.sampling.normal</span> <span class="kn">import</span> <span class="n">IIDNormalSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.constraints</span> <span class="kn">import</span> <span class="n">get_outcome_constraint_transforms</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.containers</span> <span class="kn">import</span> <span class="n">BotorchContainer</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">BotorchDataset</span><span class="p">,</span> <span class="n">SupervisedDataset</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">SupervisedDataset</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">FastNondominatedPartitioning</span><span class="p">,</span>
     <span class="n">NondominatedPartitioning</span><span class="p">,</span>
@@ -137,7 +137,7 @@
 
 
 <span class="k">def</span> <span class="nf">_field_is_shared</span><span class="p">(</span>
-    <span class="n">datasets</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">BotorchDataset</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">BotorchDataset</span><span class="p">]],</span>
+    <span class="n">datasets</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">SupervisedDataset</span><span class="p">]],</span>
     <span class="n">fieldname</span><span class="p">:</span> <span class="n">Hashable</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Determines whether or not a given field is shared by all datasets."""</span>
@@ -159,7 +159,7 @@
 
 
 <span class="k">def</span> <span class="nf">_get_dataset_field</span><span class="p">(</span>
-    <span class="n">dataset</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">BotorchDataset</span><span class="p">],</span>
+    <span class="n">dataset</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">fieldname</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">BotorchContainer</span><span class="p">],</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">join_rule</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">]],</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>

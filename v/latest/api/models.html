@@ -157,11 +157,11 @@ observations passed in via kwargs).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.model.Model.construct_inputs">
 <em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#Model.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.Model.construct_inputs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Construct <cite>Model</cite> keyword arguments from a dict of <cite>BotorchDataset</cite>.</p>
+<dd><p>Construct <cite>Model</cite> keyword arguments from a dict of <cite>SupervisedDataset</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.BotorchDataset" title="botorch.utils.datasets.BotorchDataset"><em>BotorchDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.BotorchDataset" title="botorch.utils.datasets.BotorchDataset"><em>BotorchDataset</em></a><em>]</em>) – </p></li>
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – </p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -1313,7 +1313,7 @@ and pass in the already transformed input.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.gp_regression_mixed.MixedSingleTaskGP.construct_inputs">
 <em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">categorical_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression_mixed.html#MixedSingleTaskGP.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression_mixed.MixedSingleTaskGP.construct_inputs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Construct <cite>Model</cite> keyword arguments from a dict of <cite>BotorchDataset</cite>.</p>
+<dd><p>Construct <cite>Model</cite> keyword arguments from a dict of <cite>SupervisedDataset</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -5305,9 +5305,9 @@ is <cite>input_batch_shape</cite> against <cite>batch_shape</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>training_datas</strong> – A BoTorchDataset or dictionary thereof.</p></li>
+<li><p><strong>training_datas</strong> – A SupervisedDataset or dictionary thereof.</p></li>
 <li><p><strong>consumer</strong> (<em>Any</em>) – The object that will consume the parsed data, or type thereof.</p></li>
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.BotorchDataset" title="botorch.utils.datasets.BotorchDataset"><em>BotorchDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.BotorchDataset" title="botorch.utils.datasets.BotorchDataset"><em>BotorchDataset</em></a><em>]</em>) – </p></li>
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – </p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>

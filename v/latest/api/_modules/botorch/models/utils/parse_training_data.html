@@ -39,12 +39,7 @@
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.models.multitask</span> <span class="kn">import</span> <span class="n">FixedNoiseMultiTaskGP</span><span class="p">,</span> <span class="n">MultiTaskGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.pairwise_gp</span> <span class="kn">import</span> <span class="n">PairwiseGP</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">BotorchDataset</span><span class="p">,</span>
-    <span class="n">FixedNoiseDataset</span><span class="p">,</span>
-    <span class="n">RankingDataset</span><span class="p">,</span>
-    <span class="n">SupervisedDataset</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">RankingDataset</span><span class="p">,</span> <span class="n">SupervisedDataset</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.dispatcher</span> <span class="kn">import</span> <span class="n">Dispatcher</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">cat</span><span class="p">,</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn.functional</span> <span class="kn">import</span> <span class="n">pad</span>
@@ -60,13 +55,13 @@
 
 <div class="viewcode-block" id="parse_training_data"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.parse_training_data.parse_training_data">[docs]</a><span class="k">def</span> <span class="nf">parse_training_data</span><span class="p">(</span>
     <span class="n">consumer</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="n">training_data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchDataset</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">BotorchDataset</span><span class="p">]],</span>
+    <span class="n">training_data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">SupervisedDataset</span><span class="p">]],</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Prepares a (collection of) datasets for consumption by a given object.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        training_datas: A BoTorchDataset or dictionary thereof.</span>
+<span class="sd">        training_datas: A SupervisedDataset or dictionary thereof.</span>
 <span class="sd">        consumer: The object that will consume the parsed data, or type thereof.</span>
 
 <span class="sd">    Returns:</span>
@@ -79,18 +74,10 @@
 <span class="k">def</span> <span class="nf">_parse_model_supervised</span><span class="p">(</span>
     <span class="n">consumer</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">SupervisedDataset</span><span class="p">,</span> <span class="o">**</span><span class="n">ignore</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">"train_X"</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">X</span><span class="p">(),</span> <span class="s2">"train_Y"</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">Y</span><span class="p">()}</span>
-
-
-<span class="nd">@dispatcher</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="n">FixedNoiseDataset</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_parse_model_fixedNoise</span><span class="p">(</span>
-    <span class="n">consumer</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">FixedNoiseDataset</span><span class="p">,</span> <span class="o">**</span><span class="n">ignore</span><span class="p">:</span> <span class="n">Any</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"train_X"</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">X</span><span class="p">(),</span>
-        <span class="s2">"train_Y"</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">Y</span><span class="p">(),</span>
-        <span class="s2">"train_Yvar"</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">Yvar</span><span class="p">(),</span>
-    <span class="p">}</span>
+    <span class="n">parsed_data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"train_X"</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">X</span><span class="p">(),</span> <span class="s2">"train_Y"</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">Y</span><span class="p">()}</span>
+    <span class="k">if</span> <span class="n">dataset</span><span class="o">.</span><span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">parsed_data</span><span class="p">[</span><span class="s2">"train_Yvar"</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">Yvar</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">parsed_data</span>
 
 
 <span class="nd">@dispatcher</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">PairwiseGP</span><span class="p">,</span> <span class="n">RankingDataset</span><span class="p">)</span>
@@ -111,7 +98,7 @@
 <span class="nd">@dispatcher</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">_parse_model_dict</span><span class="p">(</span>
     <span class="n">consumer</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
-    <span class="n">training_data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">BotorchDataset</span><span class="p">],</span>
+    <span class="n">training_data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">training_data</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
@@ -125,7 +112,7 @@
 <span class="nd">@dispatcher</span><span class="o">.</span><span class="n">register</span><span class="p">((</span><span class="n">MultiTaskGP</span><span class="p">,</span> <span class="n">FixedNoiseMultiTaskGP</span><span class="p">),</span> <span class="nb">dict</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">_parse_multitask_dict</span><span class="p">(</span>
     <span class="n">consumer</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
-    <span class="n">training_data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">BotorchDataset</span><span class="p">],</span>
+    <span class="n">training_data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">task_feature</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="n">task_feature_container</span><span class="p">:</span> <span class="n">Hashable</span> <span class="o">=</span> <span class="s2">"train_X"</span><span class="p">,</span>
