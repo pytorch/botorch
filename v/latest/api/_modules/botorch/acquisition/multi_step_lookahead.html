@@ -345,7 +345,7 @@
     <span class="n">valfunc_argfacs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">TAcqfArgConstructor</span><span class="p">]],</span>
     <span class="n">inner_samplers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]],</span>
     <span class="n">objective</span><span class="p">:</span> <span class="n">MCAcquisitionObjective</span><span class="p">,</span>
-    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">PosteriorTransform</span><span class="p">,</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">],</span>
     <span class="n">running_val</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sample_weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">step_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
@@ -450,7 +450,7 @@
     <span class="n">valfunc_cls</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">AcquisitionFunction</span><span class="p">]],</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">objective</span><span class="p">:</span> <span class="n">MCAcquisitionObjective</span><span class="p">,</span>
-    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">PosteriorTransform</span><span class="p">,</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">],</span>
     <span class="n">inner_sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">arg_fac</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TAcqfArgConstructor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
