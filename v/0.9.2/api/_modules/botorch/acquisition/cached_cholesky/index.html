@@ -1,0 +1,264 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/0.9.2/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/v/0.9.2/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/0.9.2/img/botorch.png"/><link rel="shortcut icon" href="/v/0.9.2/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-CXN3PGE3CC"></script><script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments); }
+              gtag('js', new Date());
+              gtag('config', 'G-CXN3PGE3CC');
+            </script><link rel="stylesheet" href="/v/0.9.2/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/0.9.2/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/0.9.2/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/0.9.2/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/0.9.2/css/main.css"/><script src="/v/0.9.2/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/0.9.2/"><img class="logo" src="/v/0.9.2/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/0.9.2/versions"><h3>0.9.2</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/0.9.2/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/0.9.2/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/0.9.2/api/" target="_self">API Reference</a></li><li class=""><a href="/v/0.9.2/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for botorch.acquisition.cached_cholesky</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
+
+<span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">Abstract class for acquisition functions leveraging a cached Cholesky</span>
+<span class="sd">decomposition of the posterior covaiance over f(X_baseline).</span>
+<span class="sd">"""</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">BotorchWarning</span>
+<span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span>
+<span class="kn">from</span> <span class="nn">botorch.models.higher_order_gp</span> <span class="kn">import</span> <span class="n">HigherOrderGP</span>
+<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">botorch.models.model_list_gp_regression</span> <span class="kn">import</span> <span class="n">ModelListGP</span>
+<span class="kn">from</span> <span class="nn">botorch.models.multitask</span> <span class="kn">import</span> <span class="n">KroneckerMultiTaskGP</span><span class="p">,</span> <span class="n">MultiTaskGP</span>
+<span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
+<span class="kn">from</span> <span class="nn">botorch.posteriors.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.low_rank</span> <span class="kn">import</span> <span class="n">extract_batch_covar</span><span class="p">,</span> <span class="n">sample_cached_cholesky</span>
+<span class="kn">from</span> <span class="nn">gpytorch.distributions.multitask_multivariate_normal</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MultitaskMultivariateNormal</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">linear_operator.utils.errors</span> <span class="kn">import</span> <span class="n">NanError</span><span class="p">,</span> <span class="n">NotPSDError</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+
+
+<div class="viewcode-block" id="supports_cache_root"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cached_cholesky.supports_cache_root">[docs]</a><span class="k">def</span> <span class="nf">supports_cache_root</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Checks if a model supports the cache_root functionality.</span>
+<span class="sd">    The two criteria are that the model is not multi-task and the model</span>
+<span class="sd">    produces a GPyTorchPosterior.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ModelListGP</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">supports_cache_root</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">models</span><span class="p">)</span>
+    <span class="c1"># Multi task models and non-GPyTorch models are not supported.</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
+        <span class="n">model</span><span class="p">,</span> <span class="p">(</span><span class="n">MultiTaskGP</span><span class="p">,</span> <span class="n">KroneckerMultiTaskGP</span><span class="p">,</span> <span class="n">HigherOrderGP</span><span class="p">)</span>
+    <span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">GPyTorchModel</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="c1"># Models that return a TransformedPosterior are not supported.</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">model</span><span class="o">.</span><span class="n">outcome_transform</span><span class="o">.</span><span class="n">_is_linear</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<span class="k">def</span> <span class="nf">_get_cache_root_not_supported_message</span><span class="p">(</span><span class="n">model_cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"`cache_root` is only supported for GPyTorchModels that "</span>
+        <span class="s2">"are not MultiTask models and don't produce a "</span>
+        <span class="sa">f</span><span class="s2">"TransformedPosterior. Got a model of type </span><span class="si">{</span><span class="n">model_cls</span><span class="si">}</span><span class="s2">. Setting "</span>
+        <span class="s2">"`cache_root = False`."</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">msg</span>
+
+
+<span class="k">class</span> <span class="nc">CachedCholeskyMCAcquisitionFunction</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Abstract class for acquisition functions using a cached Cholesky.</span>
+
+<span class="sd">    Specifically, this is for acquisition functions that require sampling from</span>
+<span class="sd">    the posterior P(f(X_baseline, X) | D). The Cholesky of the posterior</span>
+<span class="sd">    covariance over f(X_baseline) is cached.</span>
+
+<span class="sd">    :meta private:</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="nf">_setup</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">cache_root</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Set class attributes and perform compatibility checks.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model: A model.</span>
+<span class="sd">            cache_root: A boolean indicating whether to cache the Cholesky.</span>
+<span class="sd">                This might be overridden in the model is not compatible.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">cache_root</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">supports_cache_root</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="n">_get_cache_root_not_supported_message</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)),</span>
+                <span class="ne">RuntimeWarning</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">cache_root</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache_root</span> <span class="o">=</span> <span class="n">cache_root</span>
+
+    <span class="k">def</span> <span class="nf">_compute_root_decomposition</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Cache Cholesky of the posterior covariance over f(X_baseline).</span>
+
+<span class="sd">        Because `LinearOperator.root_decomposition` is decorated with LinearOperator's</span>
+<span class="sd">        @cached decorator, this function is doing a lot implicitly:</span>
+
+<span class="sd">        1) Check if a root decomposition has already been cached to `lazy_covar`.</span>
+<span class="sd">          Note that it will not have been if `posterior.mvn` is a</span>
+<span class="sd">          `MultitaskMultivariateNormal`, since we construct `lazy_covar` in that</span>
+<span class="sd">          case.</span>
+<span class="sd">        2) If the root decomposition has not been found in the cache, compute it.</span>
+<span class="sd">        3) Write it to the cache of `lazy_covar`. Note that this will become inacessible</span>
+<span class="sd">          if `posterior.mvn` is a `MultitaskMultivariateNormal`, since in that case</span>
+<span class="sd">          `lazy_covar`'s scope is only this function.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            posterior: The posterior over f(X_baseline).</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">distribution</span><span class="p">,</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">):</span>
+            <span class="n">lazy_covar</span> <span class="o">=</span> <span class="n">extract_batch_covar</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">distribution</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">lazy_covar</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">lazy_covariance_matrix</span>
+        <span class="n">lazy_covar_root</span> <span class="o">=</span> <span class="n">lazy_covar</span><span class="o">.</span><span class="n">root_decomposition</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">lazy_covar_root</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_get_f_X_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span><span class="p">,</span> <span class="n">q_in</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Get posterior samples at the `q_in` new points from the joint posterior.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            posterior: The joint posterior is over (X_baseline, X).</span>
+<span class="sd">            q_in: The number of new points in the posterior. See `_set_sampler` for</span>
+<span class="sd">                more information.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `sample_shape x batch_shape x q x m`-dim tensor of posterior</span>
+<span class="sd">                samples at the new points.</span>
+<span class="sd">        """</span>
+        <span class="c1"># Technically we should make sure that we add a consistent nugget to the</span>
+        <span class="c1"># cached covariance (and box decompositions) and the new block.</span>
+        <span class="c1"># But recomputing box decompositions every time the jitter changes would</span>
+        <span class="c1"># be quite slow.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache_root</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_baseline_L"</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">sample_cached_cholesky</span><span class="p">(</span>
+                    <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span>
+                    <span class="n">baseline_L</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_baseline_L</span><span class="p">,</span>
+                    <span class="n">q</span><span class="o">=</span><span class="n">q_in</span><span class="p">,</span>
+                    <span class="n">base_samples</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">base_samples</span><span class="p">,</span>
+                    <span class="n">sample_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">sample_shape</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="n">NanError</span><span class="p">,</span> <span class="n">NotPSDError</span><span class="p">):</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="s2">"Low-rank cholesky updates failed due NaNs or due to an "</span>
+                    <span class="s2">"ill-conditioned covariance matrix. "</span>
+                    <span class="s2">"Falling back to standard sampling."</span><span class="p">,</span>
+                    <span class="n">BotorchWarning</span><span class="p">,</span>
+                <span class="p">)</span>
+
+        <span class="c1"># TODO: improve efficiency for multi-task models</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_posterior_samples</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">HigherOrderGP</span><span class="p">):</span>
+            <span class="c1"># Select the correct q-batch dimension for HOGP.</span>
+            <span class="n">q_dim</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_num_dimensions</span>
+            <span class="n">q_idcs</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="n">q_in</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">samples</span><span class="o">.</span><span class="n">device</span><span class="p">)</span> <span class="o">+</span> <span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">q_dim</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">samples</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="n">q_dim</span><span class="p">,</span> <span class="n">q_idcs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">samples</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="n">q_in</span><span class="p">:,</span> <span class="p">:]</span>
+
+    <span class="k">def</span> <span class="nf">_set_sampler</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">q_in</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Update the sampler to use the original base samples for X_baseline.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            q_in: The effective input batch size. This is typically equal to the</span>
+<span class="sd">                q-batch size of `X`. However, if using a one-to-many input transform,</span>
+<span class="sd">                e.g., `InputPerturbation` with `n_w` perturbations, the posterior will</span>
+<span class="sd">                have `n_w` points on the q-batch for each point on the q-batch of `X`.</span>
+<span class="sd">                In which case, `q_in = q * n_w` is used.</span>
+<span class="sd">            posterior: The posterior.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_in</span> <span class="o">!=</span> <span class="n">q_in</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_sampler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">_update_base_samples</span><span class="p">(</span>
+                <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span> <span class="n">base_sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_sampler</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">q_in</span> <span class="o">=</span> <span class="n">q_in</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../../index.html">Documentation overview</a><ul>
+<li><a href="../../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/0.9.2/" class="nav-home"><img src="/v/0.9.2/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/0.9.2/docs/introduction">Introduction</a><a href="/v/0.9.2/docs/getting_started">Getting Started</a><a href="/v/0.9.2/tutorials/">Tutorials</a><a href="/v/0.9.2/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/0.9.2/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/0.9.2/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>

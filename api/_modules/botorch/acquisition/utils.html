@@ -88,13 +88,13 @@
 <span class="sd">        constraints: A list of callables, each mapping a Tensor of dimension</span>
 <span class="sd">            `sample_shape x batch-shape x q x m` to a Tensor of dimension</span>
 <span class="sd">            `sample_shape x batch-shape x q`, where negative values imply</span>
-<span class="sd">            feasibility. Used only for qEHVI and qNEHVI.</span>
+<span class="sd">            feasibility. Used for all acquisition functions except qSR and qUCB.</span>
 <span class="sd">        eta: The temperature parameter for the sigmoid function used for the</span>
 <span class="sd">            differentiable approximation of the constraints. In case of a float the</span>
 <span class="sd">            same eta is used for every constraint in constraints. In case of a</span>
 <span class="sd">            tensor the length of the tensor must match the number of provided</span>
 <span class="sd">            constraints. The i-th constraint is then estimated with the i-th</span>
-<span class="sd">            eta value. Used only for qEHVI and qNEHVI.</span>
+<span class="sd">            eta value. Used for all acquisition functions except qSR and qUCB.</span>
 <span class="sd">        mc_samples: The number of samples to use for (q)MC evaluation of the</span>
 <span class="sd">            acquisition function.</span>
 <span class="sd">        seed: If provided, perform deterministic optimization (i.e. the</span>
@@ -329,13 +329,12 @@
     <span class="n">is_feasible</span> <span class="o">=</span> <span class="n">compute_feasibility_indicator</span><span class="p">(</span>
         <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="n">samples</span>
     <span class="p">)</span>  <span class="c1"># sample_shape x batch_shape x q</span>
-    <span class="k">if</span> <span class="n">is_feasible</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-        <span class="n">obj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">is_feasible</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
-        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-            <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">is_feasible</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+        <span class="n">infeasible_value</span> <span class="o">=</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">inf</span>
 
     <span class="k">elif</span> <span class="n">infeasible_obj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">infeasible_obj</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">infeasible_value</span> <span class="o">=</span> <span class="n">infeasible_obj</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
 
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -346,12 +345,16 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">"Must specify `X_baseline` when no feasible observation exists."</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">_estimate_objective_lower_bound</span><span class="p">(</span>
+        <span class="n">infeasible_value</span> <span class="o">=</span> <span class="n">_estimate_objective_lower_bound</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
             <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
             <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
             <span class="n">X</span><span class="o">=</span><span class="n">X_baseline</span><span class="p">,</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span></div>
+        <span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+    <span class="n">obj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">is_feasible</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">infeasible_value</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 
 <span class="k">def</span> <span class="nf">_estimate_objective_lower_bound</span><span class="p">(</span>

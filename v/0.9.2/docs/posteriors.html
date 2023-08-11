@@ -1,0 +1,98 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Posteriors · BoTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="A BoTorch `Posterior` object is a layer of"/><meta name="docsearch:version" content="0.9.2"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Posteriors · BoTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/0.9.2/"/><meta property="og:description" content="A BoTorch `Posterior` object is a layer of"/><meta property="og:image" content="https://botorch.org/v/0.9.2/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/0.9.2/img/botorch.png"/><link rel="shortcut icon" href="/v/0.9.2/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-CXN3PGE3CC"></script><script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments); }
+              gtag('js', new Date());
+              gtag('config', 'G-CXN3PGE3CC');
+            </script><link rel="stylesheet" href="/v/0.9.2/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/0.9.2/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/0.9.2/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/0.9.2/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/0.9.2/css/main.css"/><script src="/v/0.9.2/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/0.9.2/"><img class="logo" src="/v/0.9.2/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/0.9.2/versions"><h3>0.9.2</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/v/0.9.2/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/0.9.2/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/0.9.2/api/" target="_self">API Reference</a></li><li class=""><a href="/v/0.9.2/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Basic Concepts</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">About</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.9.2/docs/introduction">Introduction</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/docs/design_philosophy">Design Philosophy</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/docs/botorch_and_ax">Using BoTorch with Ax</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/docs/papers">Papers using BoTorch</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">General</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.9.2/docs/getting_started">Getting Started</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Basic Concepts</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.9.2/docs/overview">Overview</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/docs/models">Models</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/v/0.9.2/docs/posteriors">Posteriors</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/docs/acquisition">Acquisition Functions</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/docs/optimization">Optimization</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Advanced Topics</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.9.2/docs/constraints">Constraints</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/docs/objectives">Objectives</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/docs/batching">Batching</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/docs/samplers">Monte Carlo Samplers</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Multi-Objective Optimization</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.9.2/docs/multi_objective">Multi-Objective Bayesian Optimization</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><a class="edit-page-link button" href="https://github.com/pytorch/botorch/edit/main/docs/posteriors.md" target="_blank" rel="noreferrer noopener">Edit</a><h1 id="__docusaurus" class="postHeaderTitle">Posteriors</h1></header><article><div><span><p>A BoTorch <code>Posterior</code> object is a layer of
+abstraction that separates the specific model used from the evaluation (and
+subsequent optimization) of acquisition functions.
+In the simplest case, a posterior is a lightweight wrapper around an explicit
+distribution object from <code>torch.distributions</code> (or <code>gpytorch.distributions</code>).
+However, a BoTorch <code>Posterior</code> can be any distribution (even an implicit one),
+so long as one can sample from that distribution. For example, a posterior could
+be represented implicitly by some base distribution mapped through a neural network.</p>
+<p>While the analytic acquisition functions assume that the posterior is a
+multivariate Gaussian, the Monte-Carlo (MC) based acquisition functions do not make any
+assumptions about the underlying distribution. Rather, the MC-based acquisition
+functions only require that the posterior can generate samples through an <code>rsample</code>
+method. As long as the posterior implements the <a href="../api/posteriors.html#posterior"><code>Posterior</code></a>
+interface, it can be used with an MC-based acquisition function. In addition, note that
+gradient-based acquisition function optimization requires the ability to back-propagate
+gradients through the MC samples.</p>
+<p>For GP models based on GPyTorch for which the posterior distribution is a
+multivariate Gaussian,
+<a href="../api/posteriors.html#gpytorchposterior"><code>GPyTorchPosterior</code></a> should be used.</p>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/v/0.9.2/docs/models"><span class="arrow-prev">← </span><span>Models</span></a><a class="docs-next button" href="/v/0.9.2/docs/acquisition"><span>Acquisition Functions</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/0.9.2/" class="nav-home"><img src="/v/0.9.2/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/0.9.2/docs/introduction">Introduction</a><a href="/v/0.9.2/docs/getting_started">Getting Started</a><a href="/v/0.9.2/tutorials/">Tutorials</a><a href="/v/0.9.2/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/0.9.2/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/0.9.2/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>

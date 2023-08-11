@@ -1,0 +1,656 @@
+<!DOCTYPE html><html lang=""><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/0.9.2/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/v/0.9.2/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/0.9.2/img/botorch.png"/><link rel="shortcut icon" href="/v/0.9.2/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-CXN3PGE3CC"></script><script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments); }
+              gtag('js', new Date());
+              gtag('config', 'G-CXN3PGE3CC');
+            </script><link rel="stylesheet" href="/v/0.9.2/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/0.9.2/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/0.9.2/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/0.9.2/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/0.9.2/css/main.css"/><script src="/v/0.9.2/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/0.9.2/"><img class="logo" src="/v/0.9.2/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/0.9.2/versions"><h3>0.9.2</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/0.9.2/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/0.9.2/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/0.9.2/api/" target="_self">API Reference</a></li><li class=""><a href="/v/0.9.2/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span></span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Tutorials</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/">Overview</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Using BoTorch with Ax</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/custom_botorch_model_in_ax">Using a custom BoTorch model</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/custom_acquisition">Writing a custom acquisition function</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Full Optimization Loops</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/closed_loop_botorch_only">q-Noisy Constrained EI</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/preference_bo">Bayesian optimization with pairwise comparison data</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/bope">Bayesian optimization with preference exploration (BOPE)</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/turbo_1">Trust Region Bayesian Optimization (TuRBO)</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/baxus">Bayesian optimization with adaptively expanding subspaces (BAxUS)</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/scalable_constrained_bo">Scalable Constrained Bayesian Optimization (SCBO)</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/saasbo">High-dimensional Bayesian optimization with SAASBO</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/Multi_objective_multi_fidelity_BO">Multi-Objective-Multi-Fidelity optimization with MOMF</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/bo_with_warped_gp">Bayesian optimization with input warping</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/thompson_sampling">Bayesian optimization with large-scale Thompson sampling</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Multi-Objective Bayesian Optimization</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/multi_objective_bo">Multi-objective optimization with qEHVI, qNEHVI, and qNParEGO</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/constrained_multi_objective_bo">Constrained multi-objective optimization with qNEHVI and qParEGO</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/robust_multi_objective_bo">Robust multi-objective Bayesian optimization under input noise</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Bite-Sized Tutorials</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/fit_model_with_torch_optimizer">Fitting a model using torch.optim</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/compare_mc_analytic_acquisition">Comparing analytic and MC Expected Improvement</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/optimize_with_cmaes">Acquisition function optimization with CMA-ES</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/optimize_stochastic">Acquisition function optimization with torch.optim</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/batch_mode_cross_validation">Using batch evaluation for fast cross-validation</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/one_shot_kg">The one-shot Knowledge Gradient acquisition function</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/max_value_entropy">The max-value entropy search acquisition function</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/GIBBON_for_efficient_batch_entropy_search">The GIBBON acquisition function for efficient batch entropy search</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/risk_averse_bo_with_environmental_variables">Risk averse Bayesian optimization with environmental variables</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/risk_averse_bo_with_input_perturbations">Risk averse Bayesian optimization with input perturbations</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/constraint_active_search">Constraint Active Search for Multiobjective Experimental Design</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/information_theoretic_acquisition_functions">Information-theoretic acquisition functions</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Advanced Usage</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/meta_learning_with_rgpe">Meta-learning with RGPE</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/vae_mnist">High-dimensional optimization with VAEs</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/multi_fidelity_bo">Multi-fidelity Bayesian optimization using KG</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/discrete_multi_fidelity_bo">Multi-fidelity Bayesian optimization with discrete fidelities using KG</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/v/0.9.2/tutorials/composite_bo_with_hogp">Composite Bayesian optimization with the High Order Gaussian Process</a></li><li class="navListItem"><a class="navItem" href="/v/0.9.2/tutorials/composite_mtbo">Composite Bayesian Optimization with Multi-Task Gaussian Processes</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="tutorialBody">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<div class="notebook">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Composite-Bayesian-Optimization-with-the-High-Order-Gaussian-Process">Composite Bayesian Optimization with the High Order Gaussian Process<a class="anchor-link" href="#Composite-Bayesian-Optimization-with-the-High-Order-Gaussian-Process">¶</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In this tutorial, we're going to explore composite Bayesian optimization <a href="https://proceedings.mlr.press/v97/astudillo19a.html">Astudillo &amp; Frazier, ICML, '19</a> with the High Order Gaussian Process (HOGP) model of <a href="http://proceedings.mlr.press/v89/zhe19a.html">Zhe et al, AISTATS, '19</a>. The setup for composite Bayesian optimization is that we have an unknown (black box) function mapping input parameters to several outputs, and a second, known function describing the quality of the functional output. We wish to find input parameters that maximize the output metric function. We wish to find input parameters that maximize the output metric function in a black-box manner.</p>
+<p>Specifically, this can be described as $\max_{x \in \mathcal{X}} g(f(x)),$ where $f$ is unknown and $g$ is known. As in traditional Bayesian optimization, we are going to construct a Gaussian process surrogate model over the expensive to evaluate function $f(.),$ and will use a HOGP to model this function.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="HOGP-model-description">HOGP model description<a class="anchor-link" href="#HOGP-model-description">¶</a></h3><p>The <a href="https://proceedings.mlr.press/v89/zhe19a.html">High Order Gaussian Process (HOGP) model</a> is a Gaussian process model designed specifically to operate over tensors or multi-dimensional arrays and exploits structure in the tensor to be able to operate efficiently. Specifically, the HOGP takes as inputs $y \in \mathbb{R}^{N \times d_2 \times \cdots \times d_M}$ and assumes that $\text{vec}(y) \sim \mathcal{N}(0, \otimes_{i=1}^M K_i + \sigma^2 I),$ where $K_1 = K_{XX}.$ Each dimension of the tensor has its own kernel function, $K_i,$ as well as a set of $d_i$ latent parameters that can be optimized over.</p>
+<p>Recently, <a href="https://arxiv.org/abs/2106.12997">Maddox et al, '21</a> proposed a method for computing posterior samples from the HOGP by exploiting structure in the posterior distribution, thereby enabling its usage in BO settings. While they show that this approach allows to use composite BO on problems with tens or thousands of outputs, for scalability we consider a much smaller example here (that does not require GPU acceleration).</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [5]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+<span class="kn">import</span> <span class="nn">gpytorch.settings</span> <span class="k">as</span> <span class="nn">gpt_settings</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">qExpectedImprovement</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">GenericMCObjective</span>
+<span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">HigherOrderGP</span><span class="p">,</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span> <span class="nn">botorch.models.higher_order_gp</span> <span class="kn">import</span> <span class="n">FlattenedStandardize</span>
+<span class="kn">from</span> <span class="nn">botorch.models.transforms</span> <span class="kn">import</span> <span class="n">Normalize</span><span class="p">,</span> <span class="n">Standardize</span>
+<span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
+<span class="kn">from</span> <span class="nn">botorch.optim.fit</span> <span class="kn">import</span> <span class="n">fit_gpytorch_mll_torch</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.normal</span> <span class="kn">import</span> <span class="n">IIDNormalSampler</span>
+<span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
+<span class="kn">from</span> <span class="nn">linear_operator.settings</span> <span class="kn">import</span> <span class="n">_fast_solves</span>
+<span class="kn">from</span> <span class="nn">torch.optim</span> <span class="kn">import</span> <span class="n">Adam</span>
+
+<span class="o">%</span><span class="k">matplotlib</span> inline
+
+<span class="n">SMOKE_TEST</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"SMOKE_TEST"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Set-Device-and-dtype">Set Device and dtype<a class="anchor-link" href="#Set-Device-and-dtype">¶</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [6]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">device</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"cpu"</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"cuda:4"</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Using "</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Using  cpu
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [7]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">models_used</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"rnd"</span><span class="p">,</span>
+    <span class="s2">"ei"</span><span class="p">,</span>
+    <span class="s2">"ei_hogp_cf"</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Problem-Description">Problem Description<a class="anchor-link" href="#Problem-Description">¶</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We use a simple test problem describing the concentration of pollutants after a chemical spill from <a href="https://proceedings.mlr.press/v97/astudillo19a.html">Astudillo &amp; Frazier, ICML, '19</a> defined over a $3 \times 4$ grid of values $s,t$ and we wish to optimize the parameters w.r.t. their true values, to estimate the true value of parameters, $x = [M, D, L, \tau].$ The function is given by
+$$ f(s,t | M, D, L, \tau) := \frac{M}{\sqrt{4 \pi D t}}  \exp\{-\frac{s^2}{4Dt}\} + \frac{1_{t &gt; \tau} M}{\sqrt{4 \pi D(t - \tau)}} \exp\{- \frac{(s - L)^2}{4 D (t - \tau)}\}, $$
+with the cheap to evaluate, differentiable function given by $g(y):= \sum_{(s,t) \in S \times T} \left(c(s, t|x_{\text{true}}) - y\right)^2.$ As the objective function itself is going to be implemented in Pytorch, we will be able to differentiate through it, enabling the usage of gradient-based optimization to optimize the objectives with respect to the inputs.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [8]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">env_cfun</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">tau</span><span class="p">):</span>
+    <span class="n">c1</span> <span class="o">=</span> <span class="n">M</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">D</span> <span class="o">*</span> <span class="n">t</span><span class="p">)</span>
+    <span class="n">exp1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">s</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">4</span> <span class="o">/</span> <span class="n">D</span> <span class="o">/</span> <span class="n">t</span><span class="p">)</span>
+    <span class="n">term1</span> <span class="o">=</span> <span class="n">c1</span> <span class="o">*</span> <span class="n">exp1</span>
+    <span class="n">c2</span> <span class="o">=</span> <span class="n">M</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">D</span> <span class="o">*</span> <span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="n">tau</span><span class="p">))</span>
+    <span class="n">exp2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">((</span><span class="n">s</span> <span class="o">-</span> <span class="n">L</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">4</span> <span class="o">/</span> <span class="n">D</span> <span class="o">/</span> <span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="n">tau</span><span class="p">))</span>
+    <span class="n">term2</span> <span class="o">=</span> <span class="n">c2</span> <span class="o">*</span> <span class="n">exp2</span>
+    <span class="n">term2</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">term2</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">return</span> <span class="n">term1</span> <span class="o">+</span> <span class="n">term2</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Helper-Functions">Helper Functions<a class="anchor-link" href="#Helper-Functions">¶</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>These are helper functions for us to maximize the acquisition function and to get random points.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [9]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">gen_rand_points</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
+    <span class="n">points_nlzd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">num_samples</span><span class="p">,</span> <span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">points_nlzd</span>
+
+
+<span class="k">def</span> <span class="nf">optimize_ei</span><span class="p">(</span><span class="n">qEI</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+    <span class="n">cands_nlzd</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span><span class="n">qEI</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cands_nlzd</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Below is a wrapped function to help us define bounds on the parameter space, we can also vary the size of the grid if we'd like to.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [10]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">prepare_data</span><span class="p">(</span><span class="n">s_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">t_size</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"---- Running the environmental problem with "</span><span class="p">,</span> <span class="n">s_size</span><span class="p">,</span> <span class="n">t_size</span><span class="p">,</span> <span class="s2">" ----"</span><span class="p">)</span>
+    <span class="c1"># X = [M, D, L, tau]</span>
+    <span class="n">bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+        <span class="p">[[</span><span class="mf">7.0</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span> <span class="mf">30.010</span><span class="p">],</span> <span class="p">[</span><span class="mf">13.0</span><span class="p">,</span> <span class="mf">0.12</span><span class="p">,</span> <span class="mf">3.00</span><span class="p">,</span> <span class="mf">30.295</span><span class="p">]],</span>
+        <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">M0</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">D0</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.07</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">L0</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">1.505</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">tau0</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">30.1525</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="c1"># we can vectorize everything, no need for loops</span>
+    <span class="k">if</span> <span class="n">s_size</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">S</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">S</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="n">s_size</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">t_size</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="n">T</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">15.0</span><span class="p">,</span> <span class="mf">30.0</span><span class="p">,</span> <span class="mf">45.0</span><span class="p">,</span> <span class="mf">60.0</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">T</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">15.0</span><span class="p">,</span> <span class="mf">60.0</span><span class="p">,</span> <span class="n">t_size</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="n">Sgrid</span><span class="p">,</span> <span class="n">Tgrid</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">T</span><span class="p">)</span>
+
+    <span class="c1"># X = [M, D, L, tau]</span>
+    <span class="k">def</span> <span class="nf">c_batched</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">env_cfun</span><span class="p">(</span><span class="n">Sgrid</span><span class="p">,</span> <span class="n">Tgrid</span><span class="p">,</span> <span class="o">*</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">X</span><span class="p">])</span>
+
+    <span class="n">c_true</span> <span class="o">=</span> <span class="n">env_cfun</span><span class="p">(</span><span class="n">Sgrid</span><span class="p">,</span> <span class="n">Tgrid</span><span class="p">,</span> <span class="n">M0</span><span class="p">,</span> <span class="n">D0</span><span class="p">,</span> <span class="n">L0</span><span class="p">,</span> <span class="n">tau0</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">neq_sum_quared_diff</span><span class="p">(</span><span class="n">samples</span><span class="p">):</span>
+        <span class="c1"># unsqueeze</span>
+        <span class="k">if</span> <span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="p">(</span><span class="n">s_size</span> <span class="o">*</span> <span class="n">t_size</span><span class="p">):</span>
+            <span class="n">samples</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">s_size</span><span class="p">,</span> <span class="n">t_size</span><span class="p">)</span>
+
+        <span class="n">sq_diffs</span> <span class="o">=</span> <span class="p">(</span><span class="n">samples</span> <span class="o">-</span> <span class="n">c_true</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">sq_diffs</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">)</span>
+
+    <span class="n">objective</span> <span class="o">=</span> <span class="n">GenericMCObjective</span><span class="p">(</span><span class="n">neq_sum_quared_diff</span><span class="p">)</span>
+    <span class="n">num_samples</span> <span class="o">=</span> <span class="mi">32</span>
+
+    <span class="k">return</span> <span class="n">c_batched</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">num_samples</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In the above, we construct a <code>GenericMCObjective</code> instance to codify the objective function (which is minimizing the MSE of the output tensors and the outputs corresponding to the "true" parameter values). Note that the objective function is encoded in PyTorch and is differentiable (although it technically doesn't have to be). Ultimately, we backpropagate through the objective with respect to the input parameters (and through the HOGP as well).</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="BO-Loop">BO Loop<a class="anchor-link" href="#BO-Loop">¶</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Finally, we run the BO loop for 10 iterations, generating 3 candidates in each iteration. This loop might take a while.</p>
+<p>We will be comparing to both random selection and batch expected improvement on the aggregated metric.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [11]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">n_init</span> <span class="o">=</span> <span class="mi">20</span>
+
+<span class="k">if</span> <span class="n">SMOKE_TEST</span><span class="p">:</span>
+    <span class="n">n_batches</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">n_batches</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">3</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>As a word of caution, we've found that when fitting the HOGP model, using first-order optimizers (e.g. Adam) as is used in <code>fit_gpytorch_torch</code> tends to outperform second-order optimizers such as L-BFGS-B due to the large number of free parameters in the HOGP. L-BFGS-B tends to overfit in practice here.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [12]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">with</span> <span class="n">gpt_settings</span><span class="o">.</span><span class="n">cholesky_jitter</span><span class="p">(</span><span class="mf">1e-4</span><span class="p">):</span>
+    <span class="n">c_batched</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">num_samples</span> <span class="o">=</span> <span class="n">prepare_data</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="n">train_X_init</span> <span class="o">=</span> <span class="n">gen_rand_points</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">n_init</span><span class="p">)</span>
+    <span class="n">train_Y_init</span> <span class="o">=</span> <span class="n">c_batched</span><span class="p">(</span><span class="n">train_X_init</span><span class="p">)</span>
+
+    <span class="c1"># these will keep track of the points explored</span>
+    <span class="n">train_X</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">train_X_init</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">models_used</span><span class="p">}</span>
+    <span class="n">train_Y</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">train_Y_init</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">train_X</span><span class="p">}</span>
+
+    <span class="c1"># run the BO loop</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_batches</span><span class="p">):</span>
+        <span class="n">tic</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span>
+
+        <span class="c1"># get best observations, log status</span>
+        <span class="n">best_f</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">objective</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"It </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">:</span><span class="s2">&gt;2</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">n_batches</span><span class="si">}</span><span class="s2">, best obs.: "</span>
+            <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">best_f</span><span class="o">.</span><span class="n">items</span><span class="p">()])</span>
+        <span class="p">)</span>
+
+        <span class="c1"># generate random candidates</span>
+        <span class="n">cands</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">cands</span><span class="p">[</span><span class="s2">"rnd"</span><span class="p">]</span> <span class="o">=</span> <span class="n">gen_rand_points</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
+
+        <span class="n">optimize_acqf_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"q"</span><span class="p">:</span> <span class="n">batch_size</span><span class="p">,</span>
+            <span class="s2">"num_restarts"</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+            <span class="s2">"raw_samples"</span><span class="p">:</span> <span class="mi">512</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">sampler</span> <span class="o">=</span> <span class="n">IIDNormalSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">128</span><span class="p">]))</span>
+
+        <span class="n">train_Y_ei</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">train_Y</span><span class="p">[</span><span class="s2">"ei"</span><span class="p">])</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">model_ei</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span>
+            <span class="n">train_X</span><span class="p">[</span><span class="s2">"ei"</span><span class="p">],</span>
+            <span class="n">train_Y_ei</span><span class="p">,</span>
+            <span class="n">input_transform</span><span class="o">=</span><span class="n">Normalize</span><span class="p">(</span><span class="n">train_X</span><span class="p">[</span><span class="s2">"ei"</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="n">outcome_transform</span><span class="o">=</span><span class="n">Standardize</span><span class="p">(</span><span class="n">train_Y_ei</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>
+        <span class="p">)</span>
+
+        <span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">model_ei</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model_ei</span><span class="p">)</span>
+        <span class="n">fit_gpytorch_mll_torch</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">step_limit</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">partial</span><span class="p">(</span><span class="n">Adam</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">))</span>
+
+        <span class="c1"># generate qEI candidate (single output modeling)</span>
+        <span class="n">qEI</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span><span class="n">model_ei</span><span class="p">,</span> <span class="n">best_f</span><span class="o">=</span><span class="n">best_f</span><span class="p">[</span><span class="s2">"ei"</span><span class="p">],</span> <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">)</span>
+        <span class="n">cands</span><span class="p">[</span><span class="s2">"ei"</span><span class="p">]</span> <span class="o">=</span> <span class="n">optimize_ei</span><span class="p">(</span><span class="n">qEI</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="o">**</span><span class="n">optimize_acqf_kwargs</span><span class="p">)</span>
+
+        <span class="n">model_ei_hogp_cf</span> <span class="o">=</span> <span class="n">HigherOrderGP</span><span class="p">(</span>
+            <span class="n">train_X</span><span class="p">[</span><span class="s2">"ei_hogp_cf"</span><span class="p">],</span>
+            <span class="n">train_Y</span><span class="p">[</span><span class="s2">"ei_hogp_cf"</span><span class="p">],</span>
+            <span class="n">outcome_transform</span><span class="o">=</span><span class="n">FlattenedStandardize</span><span class="p">(</span><span class="n">train_Y</span><span class="p">[</span><span class="s2">"ei_hogp_cf"</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]),</span>
+            <span class="n">input_transform</span><span class="o">=</span><span class="n">Normalize</span><span class="p">(</span><span class="n">train_X</span><span class="p">[</span><span class="s2">"ei_hogp_cf"</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="n">latent_init</span><span class="o">=</span><span class="s2">"gp"</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">model_ei_hogp_cf</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model_ei_hogp_cf</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">_fast_solves</span><span class="p">(</span><span class="kc">True</span><span class="p">):</span>
+            <span class="n">fit_gpytorch_mll_torch</span><span class="p">(</span>
+                <span class="n">mll</span><span class="p">,</span> <span class="n">step_limit</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">partial</span><span class="p">(</span><span class="n">Adam</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="c1"># generate qEI candidate (multi-output modeling)</span>
+        <span class="n">qEI_hogp_cf</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span>
+            <span class="n">model_ei_hogp_cf</span><span class="p">,</span>
+            <span class="n">best_f</span><span class="o">=</span><span class="n">best_f</span><span class="p">[</span><span class="s2">"ei_hogp_cf"</span><span class="p">],</span>
+            <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">cands</span><span class="p">[</span><span class="s2">"ei_hogp_cf"</span><span class="p">]</span> <span class="o">=</span> <span class="n">optimize_ei</span><span class="p">(</span><span class="n">qEI_hogp_cf</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="o">**</span><span class="n">optimize_acqf_kwargs</span><span class="p">)</span>
+
+        <span class="c1"># make observations and update data</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">Xold</span> <span class="ow">in</span> <span class="n">train_X</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">Xnew</span> <span class="o">=</span> <span class="n">cands</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">Xnew</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">train_X</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">Xold</span><span class="p">,</span> <span class="n">Xnew</span><span class="p">])</span>
+                <span class="n">train_Y</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">train_Y</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">c_batched</span><span class="p">(</span><span class="n">Xnew</span><span class="p">)])</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Wall time: </span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">tic</span><span class="si">:</span><span class="s2">1f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="n">objective_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">objective</span><span class="p">(</span><span class="n">train_Y</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">train_Y</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>---- Running the environmental problem with  3 4  ----
+rnd: -0.666It  1/10, best obs.: , ei: -0.666It  1/10, best obs.: , ei_hogp_cf: -0.666
+Wall time: 134.161644
+rnd: -0.666It  2/10, best obs.: , ei: -0.310It  2/10, best obs.: , ei_hogp_cf: -0.035
+</pre>
+</div>
+</div>
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>/mnt/xarfuse/uid-352651/f0049b32-seed-nspid4026531836_cgpid22290725-ns-4026531840/botorch/optim/initializers.py:224: BadInitialCandidatesWarning: Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
+  warnings.warn(
+</pre>
+</div>
+</div>
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Wall time: 29.255836
+rnd: -0.666It  3/10, best obs.: , ei: -0.138It  3/10, best obs.: , ei_hogp_cf: -0.035
+Wall time: 23.268413
+rnd: -0.071It  4/10, best obs.: , ei: -0.090It  4/10, best obs.: , ei_hogp_cf: -0.001
+</pre>
+</div>
+</div>
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>/mnt/xarfuse/uid-352651/f0049b32-seed-nspid4026531836_cgpid22290725-ns-4026531840/botorch/optim/initializers.py:224: BadInitialCandidatesWarning: Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
+  warnings.warn(
+</pre>
+</div>
+</div>
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Wall time: 36.353696
+rnd: -0.071It  5/10, best obs.: , ei: -0.090It  5/10, best obs.: , ei_hogp_cf: -0.001
+</pre>
+</div>
+</div>
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>/mnt/xarfuse/uid-352651/f0049b32-seed-nspid4026531836_cgpid22290725-ns-4026531840/botorch/optim/initializers.py:224: BadInitialCandidatesWarning: Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
+  warnings.warn(
+</pre>
+</div>
+</div>
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Wall time: 35.707903
+rnd: -0.071It  6/10, best obs.: , ei: -0.031It  6/10, best obs.: , ei_hogp_cf: -0.001
+</pre>
+</div>
+</div>
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>/mnt/xarfuse/uid-352651/f0049b32-seed-nspid4026531836_cgpid22290725-ns-4026531840/botorch/optim/initializers.py:224: BadInitialCandidatesWarning: Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
+  warnings.warn(
+</pre>
+</div>
+</div>
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Wall time: 39.173810
+rnd: -0.071It  7/10, best obs.: , ei: -0.031It  7/10, best obs.: , ei_hogp_cf: -0.001
+</pre>
+</div>
+</div>
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>/mnt/xarfuse/uid-352651/f0049b32-seed-nspid4026531836_cgpid22290725-ns-4026531840/botorch/optim/initializers.py:224: BadInitialCandidatesWarning: Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
+  warnings.warn(
+</pre>
+</div>
+</div>
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Wall time: 43.314868
+rnd: -0.071It  8/10, best obs.: , ei: -0.031It  8/10, best obs.: , ei_hogp_cf: -0.001
+</pre>
+</div>
+</div>
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>/mnt/xarfuse/uid-352651/f0049b32-seed-nspid4026531836_cgpid22290725-ns-4026531840/botorch/optim/initializers.py:224: BadInitialCandidatesWarning: Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
+  warnings.warn(
+</pre>
+</div>
+</div>
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Wall time: 45.516227
+rnd: -0.071It  9/10, best obs.: , ei: -0.031It  9/10, best obs.: , ei_hogp_cf: -0.001
+</pre>
+</div>
+</div>
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>/mnt/xarfuse/uid-352651/f0049b32-seed-nspid4026531836_cgpid22290725-ns-4026531840/botorch/optim/initializers.py:224: BadInitialCandidatesWarning: Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
+  warnings.warn(
+</pre>
+</div>
+</div>
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Wall time: 48.426901
+rnd: -0.071It 10/10, best obs.: , ei: -0.031It 10/10, best obs.: , ei_hogp_cf: -0.001
+</pre>
+</div>
+</div>
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>/mnt/xarfuse/uid-352651/f0049b32-seed-nspid4026531836_cgpid22290725-ns-4026531840/botorch/optim/initializers.py:224: BadInitialCandidatesWarning: Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
+  warnings.warn(
+</pre>
+</div>
+</div>
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Wall time: 55.951945
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [13]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">methods_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">objective_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">cummax</span><span class="p">(</span><span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">models_used</span><span class="p">}</span>
+<span class="n">mean_results</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="o">-</span><span class="n">methods_dict</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">n_init</span><span class="p">:]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">models_used</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Finally, we plot the results, showing that the HOGP performs well on this task, and converges to a closer parameter value than a batch GP on the composite metric itself.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [14]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">labels_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"rnd"</span><span class="p">:</span> <span class="s2">"Random"</span><span class="p">,</span> <span class="s2">"ei"</span><span class="p">:</span> <span class="s2">"EI"</span><span class="p">,</span> <span class="s2">"ei_hogp_cf"</span><span class="p">:</span> <span class="s2">"Composite EI"</span><span class="p">}</span>
+<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">models_used</span><span class="p">:</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_batches</span> <span class="o">*</span> <span class="n">batch_size</span><span class="p">),</span>
+        <span class="n">mean_results</span><span class="p">[</span><span class="n">k</span><span class="p">],</span>
+        <span class="n">label</span><span class="o">=</span><span class="n">labels_dict</span><span class="p">[</span><span class="n">k</span><span class="p">],</span>
+    <span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">semilogy</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Number of Function Queries"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Difference from True Parameter"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt output_prompt">Out[14]:</div>
+<div class="output_text output_subarea output_execute_result">
+<pre>Text(0, 0.5, 'Difference from True Parameter')</pre>
+</div>
+</div>
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_png output_subarea">
+<img alt="No description has been provided for this image" src="data:image/png;base64,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
+"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div><div class="tutorialButtonWrapper buttonWrapper"><a class="tutorialButton button" download="" href="/v/0.9.2/files/composite_bo_with_hogp.ipynb" target="_blank"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="file-download" class="svg-inline--fa fa-file-download fa-w-12" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path fill="currentColor" d="M224 136V0H24C10.7 0 0 10.7 0 24v464c0 13.3 10.7 24 24 24h336c13.3 0 24-10.7 24-24V160H248c-13.2 0-24-10.8-24-24zm76.45 211.36l-96.42 95.7c-6.65 6.61-17.39 6.61-24.04 0l-96.42-95.7C73.42 337.29 80.54 320 94.82 320H160v-80c0-8.84 7.16-16 16-16h32c8.84 0 16 7.16 16 16v80h65.18c14.28 0 21.4 17.29 11.27 27.36zM377 105L279.1 7c-4.5-4.5-10.6-7-17-7H256v128h128v-6.1c0-6.3-2.5-12.4-7-16.9z"></path></svg>Download Tutorial Jupyter Notebook</a></div><div class="tutorialButtonWrapper buttonWrapper"><a class="tutorialButton button" download="" href="/v/0.9.2/files/composite_bo_with_hogp.py" target="_blank"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="file-download" class="svg-inline--fa fa-file-download fa-w-12" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path fill="currentColor" d="M224 136V0H24C10.7 0 0 10.7 0 24v464c0 13.3 10.7 24 24 24h336c13.3 0 24-10.7 24-24V160H248c-13.2 0-24-10.8-24-24zm76.45 211.36l-96.42 95.7c-6.65 6.61-17.39 6.61-24.04 0l-96.42-95.7C73.42 337.29 80.54 320 94.82 320H160v-80c0-8.84 7.16-16 16-16h32c8.84 0 16 7.16 16 16v80h65.18c14.28 0 21.4 17.29 11.27 27.36zM377 105L279.1 7c-4.5-4.5-10.6-7-17-7H256v128h128v-6.1c0-6.3-2.5-12.4-7-16.9z"></path></svg>Download Tutorial Source Code</a></div></div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/0.9.2/" class="nav-home"><img src="/v/0.9.2/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/0.9.2/docs/introduction">Introduction</a><a href="/v/0.9.2/docs/getting_started">Getting Started</a><a href="/v/0.9.2/tutorials/">Tutorials</a><a href="/v/0.9.2/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/0.9.2/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/0.9.2/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>
