@@ -193,8 +193,8 @@ def check_standardization(
         Ymean, Ystd = torch.mean(Y, dim=-2), torch.std(Y, dim=-2)
         if torch.abs(Ymean).max() > atol_mean or torch.abs(Ystd - 1).max() > atol_std:
             msg = (
-                "Input data is not standardized. Please consider scaling the "
-                "input to zero mean and unit variance."
+                f"Input data is not standardized (mean = {Ymean}, std = {Ystd}). "
+                "Please consider scaling the input to zero mean and unit variance."
             )
             if raise_on_fail:
                 raise InputDataError(msg)

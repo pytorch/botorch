@@ -16,12 +16,7 @@ from botorch.exceptions import UnsupportedError
 from botorch.models.model import Model
 from botorch.models.multitask import FixedNoiseMultiTaskGP, MultiTaskGP
 from botorch.models.pairwise_gp import PairwiseGP
-from botorch.utils.datasets import (
-    BotorchDataset,
-    FixedNoiseDataset,
-    RankingDataset,
-    SupervisedDataset,
-)
+from botorch.utils.datasets import RankingDataset, SupervisedDataset
 from botorch.utils.dispatcher import Dispatcher
 from torch import cat, Tensor
 from torch.nn.functional import pad
@@ -37,13 +32,13 @@ dispatcher = Dispatcher("parse_training_data", encoder=_encoder)
 
 def parse_training_data(
     consumer: Any,
-    training_data: Union[BotorchDataset, Dict[Hashable, BotorchDataset]],
+    training_data: Union[SupervisedDataset, Dict[Hashable, SupervisedDataset]],
     **kwargs: Any,
 ) -> Dict[Hashable, Tensor]:
     r"""Prepares a (collection of) datasets for consumption by a given object.
 
     Args:
-        training_datas: A BoTorchDataset or dictionary thereof.
+        training_datas: A SupervisedDataset or dictionary thereof.
         consumer: The object that will consume the parsed data, or type thereof.
 
     Returns:
@@ -56,18 +51,10 @@ def parse_training_data(
 def _parse_model_supervised(
     consumer: Model, dataset: SupervisedDataset, **ignore: Any
 ) -> Dict[Hashable, Tensor]:
-    return {"train_X": dataset.X(), "train_Y": dataset.Y()}
-
-
-@dispatcher.register(Model, FixedNoiseDataset)
-def _parse_model_fixedNoise(
-    consumer: Model, dataset: FixedNoiseDataset, **ignore: Any
-) -> Dict[Hashable, Tensor]:
-    return {
-        "train_X": dataset.X(),
-        "train_Y": dataset.Y(),
-        "train_Yvar": dataset.Yvar(),
-    }
+    parsed_data = {"train_X": dataset.X(), "train_Y": dataset.Y()}
+    if dataset.Yvar is not None:
+        parsed_data["train_Yvar"] = dataset.Yvar()
+    return parsed_data
 
 
 @dispatcher.register(PairwiseGP, RankingDataset)
@@ -88,7 +75,7 @@ def _parse_pairwiseGP_ranking(
 @dispatcher.register(Model, dict)
 def _parse_model_dict(
     consumer: Model,
-    training_data: Dict[Hashable, BotorchDataset],
+    training_data: Dict[Hashable, SupervisedDataset],
     **kwargs: Any,
 ) -> Dict[Hashable, Tensor]:
     if len(training_data) != 1:
@@ -102,7 +89,7 @@ def _parse_model_dict(
 @dispatcher.register((MultiTaskGP, FixedNoiseMultiTaskGP), dict)
 def _parse_multitask_dict(
     consumer: Model,
-    training_data: Dict[Hashable, BotorchDataset],
+    training_data: Dict[Hashable, SupervisedDataset],
     *,
     task_feature: int = 0,
     task_feature_container: Hashable = "train_X",

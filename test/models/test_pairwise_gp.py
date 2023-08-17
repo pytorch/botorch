@@ -6,15 +6,18 @@
 
 import itertools
 import warnings
+from typing import Dict, Tuple, Union
 
 import torch
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions import OptimizationWarning, UnsupportedError
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.likelihoods.pairwise import (
+    PairwiseLikelihood,
     PairwiseLogitLikelihood,
     PairwiseProbitLikelihood,
 )
+from botorch.models.model import Model
 from botorch.models.pairwise_gp import (
     _ensure_psd_with_jitter,
     PairwiseGP,
@@ -29,17 +32,22 @@ from gpytorch.kernels.linear_kernel import LinearKernel
 from gpytorch.means import ConstantMean
 from gpytorch.priors import GammaPrior, SmoothedBoxPrior
 from linear_operator.utils.errors import NotPSDError
+from torch import Tensor
 
 
 class TestPairwiseGP(BotorchTestCase):
-    def _make_rand_mini_data(self, batch_shape, X_dim=2, **tkwargs):
+    def _make_rand_mini_data(
+        self, batch_shape, X_dim=2, **tkwargs
+    ) -> Tuple[Tensor, Tensor, Tensor]:
         train_X = torch.rand(*batch_shape, 2, X_dim, **tkwargs)
         train_Y = train_X.sum(dim=-1, keepdim=True)
         train_comp = torch.topk(train_Y, k=2, dim=-2).indices.transpose(-1, -2)
 
         return train_X, train_Y, train_comp
 
-    def _get_model_and_data(self, batch_shape, X_dim=2, likelihood_cls=None, **tkwargs):
+    def _get_model_and_data(
+        self, batch_shape, X_dim=2, likelihood_cls=None, **tkwargs
+    ) -> Tuple[Model, Dict[str, Union[Tensor, PairwiseLikelihood]]]:
         train_X, train_Y, train_comp = self._make_rand_mini_data(
             batch_shape=batch_shape, X_dim=X_dim, **tkwargs
         )
@@ -52,7 +60,7 @@ class TestPairwiseGP(BotorchTestCase):
         model = PairwiseGP(**model_kwargs)
         return model, model_kwargs
 
-    def test_pairwise_gp(self):
+    def test_pairwise_gp(self) -> None:
         for batch_shape, dtype, likelihood_cls in itertools.product(
             (torch.Size(), torch.Size([2])),
             (torch.float, torch.double),
@@ -180,7 +188,7 @@ class TestPairwiseGP(BotorchTestCase):
             with self.assertRaises(RuntimeError):
                 model.set_train_data(train_X, changed_train_comp, strict=True)
 
-    def test_consolidation(self):
+    def test_consolidation(self) -> None:
         for batch_shape, dtype, likelihood_cls in itertools.product(
             (torch.Size(), torch.Size([2])),
             (torch.float, torch.double),
@@ -240,7 +248,7 @@ class TestPairwiseGP(BotorchTestCase):
             # Pass the original comparisons through mll should work
             mll(pred, dup_comp)
 
-    def test_condition_on_observations(self):
+    def test_condition_on_observations(self) -> None:
         for batch_shape, dtype, likelihood_cls in itertools.product(
             (torch.Size(), torch.Size([2])),
             (torch.float, torch.double),
@@ -345,7 +353,7 @@ class TestPairwiseGP(BotorchTestCase):
                         )
                     )
 
-    def test_fantasize(self):
+    def test_fantasize(self) -> None:
         for batch_shape, dtype, likelihood_cls in itertools.product(
             (torch.Size(), torch.Size([2])),
             (torch.float, torch.double),
@@ -371,7 +379,7 @@ class TestPairwiseGP(BotorchTestCase):
             fm = model.fantasize(X=X_f, sampler=sampler, observation_noise=False)
             self.assertIsInstance(fm, model.__class__)
 
-    def test_load_state_dict(self):
+    def test_load_state_dict(self) -> None:
         model, _ = self._get_model_and_data(batch_shape=[])
         sd = model.state_dict()
         with self.assertRaises(UnsupportedError):
@@ -386,7 +394,7 @@ class TestPairwiseGP(BotorchTestCase):
         for buffer_name in model._buffer_names:
             self.assertIsNone(model.get_buffer(buffer_name))
 
-    def test_helper_functions(self):
+    def test_helper_functions(self) -> None:
         for batch_shape, dtype in itertools.product(
             (torch.Size(), torch.Size([2])), (torch.float, torch.double)
         ):

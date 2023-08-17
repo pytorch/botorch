@@ -12,6 +12,7 @@ from botorch.exceptions.errors import CandidateGenerationError, UnsupportedError
 from botorch.optim.parameter_constraints import (
     _arrayify,
     _generate_unfixed_lin_constraints,
+    _generate_unfixed_nonlin_constraints,
     _make_linear_constraints,
     eval_lin_constraint,
     lin_constraint_jac,
@@ -213,6 +214,42 @@ class TestParameterConstraints(BotorchTestCase):
                 shapeX=shapeX,
                 inequality_constraints=[(indices, coefficients, 1.0)],
                 equality_constraints=[(indices, coefficients, 1.0)],
+            )
+
+    def test_generate_unfixed_nonlin_constraints(self):
+        def nlc1(x):
+            return 4 - x.sum(dim=-1)
+
+        def nlc2(x):
+            return x[..., 0] - 1
+
+        # first test with one constraint
+        (new_nlc1,) = _generate_unfixed_nonlin_constraints(
+            constraints=[nlc1], fixed_features={1: 2.0}, dimension=3
+        )
+        self.assertAllClose(
+            nlc1(torch.tensor([[4.0, 2.0, 2.0]], device=self.device)),
+            new_nlc1(torch.tensor([[4.0, 2.0]], device=self.device)),
+        )
+        # test with several constraints
+        constraints = [nlc1, nlc2]
+        new_constraints = _generate_unfixed_nonlin_constraints(
+            constraints=constraints, fixed_features={1: 2.0}, dimension=3
+        )
+        for nlc, new_nlc in zip(constraints, new_constraints):
+            self.assertAllClose(
+                nlc(torch.tensor([[4.0, 2.0, 2.0]], device=self.device)),
+                new_nlc(torch.tensor([[4.0, 2.0]], device=self.device)),
+            )
+        # test with several constraints and two fixes
+        constraints = [nlc1, nlc2]
+        new_constraints = _generate_unfixed_nonlin_constraints(
+            constraints=constraints, fixed_features={1: 2.0, 2: 1.0}, dimension=3
+        )
+        for nlc, new_nlc in zip(constraints, new_constraints):
+            self.assertAllClose(
+                nlc(torch.tensor([[4.0, 2.0, 1.0]], device=self.device)),
+                new_nlc(torch.tensor([[4.0]], device=self.device)),
             )
 
     def test_generate_unfixed_lin_constraints(self):

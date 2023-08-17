@@ -7,11 +7,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 from botorch.acquisition import AcquisitionFunction, FixedFeatureAcquisitionFunction
-from botorch.optim.parameter_constraints import _generate_unfixed_lin_constraints
+from botorch.optim.parameter_constraints import (
+    _generate_unfixed_lin_constraints,
+    _generate_unfixed_nonlin_constraints,
+)
 from torch import Tensor
 
 
@@ -63,6 +66,7 @@ class _NoFixedFeatures:
     upper_bounds: Optional[Union[float, Tensor]]
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]]
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]]
+    nonlinear_inequality_constraints: Optional[List[Callable[[Tensor], Tensor]]]
 
 
 def _remove_fixed_features_from_optimization(
@@ -73,6 +77,7 @@ def _remove_fixed_features_from_optimization(
     upper_bounds: Optional[Union[float, Tensor]],
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]],
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]],
+    nonlinear_inequality_constraints: Optional[List[Callable[[Tensor], Tensor]]],
 ) -> _NoFixedFeatures:
     """
     Given a set of non-empty fixed features, this function effectively reduces the
@@ -98,6 +103,11 @@ def _remove_fixed_features_from_optimization(
         equality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `sum_i (X[indices[i]] * coefficients[i]) = rhs`.
+        nonlinear_inequality_constraints: A list of callables with that represent
+            non-linear inequality constraints of the form `callable(x) >= 0`. Each
+            callable is expected to take a `(num_restarts) x q x d`-dim tensor as
+            an input and return a `(num_restarts) x q`-dim tensor with the
+            constraint values.
 
     Returns:
         _NoFixedFeatures dataclass object.
@@ -140,6 +150,11 @@ def _remove_fixed_features_from_optimization(
         dimension=d,
         eq=True,
     )
+    nonlinear_inequality_constraints = _generate_unfixed_nonlin_constraints(
+        constraints=nonlinear_inequality_constraints,
+        fixed_features=fixed_features,
+        dimension=d,
+    )
     return _NoFixedFeatures(
         acquisition_function=acquisition_function,
         initial_conditions=initial_conditions,
@@ -147,4 +162,5 @@ def _remove_fixed_features_from_optimization(
         upper_bounds=upper_bounds,
         inequality_constraints=inequality_constraints,
         equality_constraints=equality_constraints,
+        nonlinear_inequality_constraints=nonlinear_inequality_constraints,
     )

@@ -185,7 +185,7 @@ class MixedSingleTaskGP(SingleTaskGP):
         likelihood: Optional[Likelihood] = None,
         **kwargs: Any,
     ) -> Dict[str, Any]:
-        r"""Construct `Model` keyword arguments from a dict of `BotorchDataset`.
+        r"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`.
 
         Args:
             training_data: A `SupervisedDataset` containing the training data.

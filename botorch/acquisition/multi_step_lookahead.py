@@ -322,7 +322,7 @@ def _step(
     valfunc_argfacs: List[Optional[TAcqfArgConstructor]],
     inner_samplers: List[Optional[MCSampler]],
     objective: MCAcquisitionObjective,
-    posterior_transform: PosteriorTransform,
+    posterior_transform: Optional[PosteriorTransform],
     running_val: Optional[Tensor] = None,
     sample_weights: Optional[Tensor] = None,
     step_index: int = 0,
@@ -427,7 +427,7 @@ def _compute_stage_value(
     valfunc_cls: Optional[Type[AcquisitionFunction]],
     X: Tensor,
     objective: MCAcquisitionObjective,
-    posterior_transform: PosteriorTransform,
+    posterior_transform: Optional[PosteriorTransform],
     inner_sampler: Optional[MCSampler] = None,
     arg_fac: Optional[TAcqfArgConstructor] = None,
 ) -> Optional[Tensor]:

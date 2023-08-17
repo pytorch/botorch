@@ -11,7 +11,7 @@ Modules to add regularization to acquisition functions.
 from __future__ import annotations
 
 import math
-from typing import Callable, List, Optional
+from typing import Any, Callable, List, Optional
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -139,6 +139,66 @@ class GroupLassoPenalty(torch.nn.Module):
         return regularization_term
 
 
+def narrow_gaussian(X: Tensor, a: Tensor) -> Tensor:
+    return torch.exp(-0.5 * (X / a) ** 2)
+
+
+def nnz_approx(X: Tensor, target_point: Tensor, a: Tensor) -> Tensor:
+    r"""Differentiable relaxation of ||X - target_point||_0
+
+    Args:
+        X: An `n x d` tensor of inputs.
+        target_point: A tensor of size `n` corresponding to the target point.
+        a: A scalar tensor that controls the differentiable relaxation.
+    """
+    d = X.shape[-1]
+    if d != target_point.shape[-1]:
+        raise ValueError("X and target_point have different shapes.")
+    return d - narrow_gaussian(X - target_point, a).sum(dim=-1, keepdim=True)
+
+
+class L0Approximation(torch.nn.Module):
+    r"""Differentiable relaxation of the L0 norm using a Gaussian basis function."""
+
+    def __init__(self, target_point: Tensor, a: float = 1.0, **tkwargs: Any) -> None:
+        r"""Initializing L0 penalty with differentiable relaxation.
+
+        Args:
+            target_point: A tensor corresponding to the target point.
+            a: A hyperparameter that controls the differentiable relaxation.
+        """
+        super().__init__()
+        self.target_point = target_point
+        # hyperparameter to control the differentiable relaxation in L0 norm function.
+        self.register_buffer("a", torch.tensor(a, **tkwargs))
+
+    def __call__(self, X: Tensor) -> Tensor:
+        return nnz_approx(X=X, target_point=self.target_point, a=self.a)
+
+
+class L0PenaltyApprox(L0Approximation):
+    r"""Differentiable relaxation of the L0 norm to be added to any arbitrary
+    acquisition function to construct a PenalizedAcquisitionFunction."""
+
+    def __init__(self, target_point: Tensor, a: float = 1.0, **tkwargs: Any) -> None:
+        r"""Initializing L0 penalty with differentiable relaxation.
+
+        Args:
+            target_point: A tensor corresponding to the target point.
+            a: A hyperparameter that controls the differentiable relaxation.
+        """
+        super().__init__(target_point=target_point, a=a, **tkwargs)
+
+    def __call__(self, X: Tensor) -> Tensor:
+        r"""
+        Args:
+            X: A "batch_shape x q x dim" representing the points to be evaluated.
+        Returns:
+            A tensor of size "batch_shape" representing the acqfn for each q-batch.
+        """
+        return super().__call__(X=X).squeeze(dim=-1).min(dim=-1).values
+
+
 class PenalizedAcquisitionFunction(AcquisitionFunction):
     r"""Single-outcome acquisition function regularized by the given penalty.
 
@@ -260,6 +320,7 @@ class PenalizedMCObjective(GenericMCObjective):
         objective: Callable[[Tensor, Optional[Tensor]], Tensor],
         penalty_objective: torch.nn.Module,
         regularization_parameter: float,
+        expand_dim: Optional[int] = None,
     ) -> None:
         r"""Penalized MC objective.
 
@@ -272,10 +333,13 @@ class PenalizedMCObjective(GenericMCObjective):
                 `batch-shape x q x d`-dim Tensor `X` and outputs a
                 `1 x batch-shape x q`-dim Tensor of penalty objective values.
             regularization_parameter: weight of the penalty (regularization) term
+            expand_dim: dim to expand penalty_objective to match with objective when
+                fully bayesian model is used. If None, no expansion is performed.
         """
         super().__init__(objective=objective)
         self.penalty_objective = penalty_objective
         self.regularization_parameter = regularization_parameter
+        self.expand_dim = expand_dim
 
     def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         r"""Evaluate the penalized objective on the samples.
@@ -292,4 +356,36 @@ class PenalizedMCObjective(GenericMCObjective):
         """
         obj = super().forward(samples=samples, X=X)
         penalty_obj = self.penalty_objective(X)
+        # when fully bayesian model is used, we pass unmarginalize_dim to match the
+        # shape between obj `sample_shape x batch-shape x mcmc_samples x q` and
+        # penalty_obj `1 x batch-shape x q`
+        if self.expand_dim is not None:
+            # reshape penalty_obj to match the dim
+            penalty_obj = penalty_obj.unsqueeze(self.expand_dim)
         return obj - self.regularization_parameter * penalty_obj
+
+
+class L0PenaltyApproxObjective(L0Approximation):
+    r"""Differentiable relaxation of the L0 norm penalty objective class.
+    An instance of this class can be added to any arbitrary objective to
+    construct a PenalizedMCObjective.
+    """
+
+    def __init__(self, target_point: Tensor, a: float = 1.0, **tkwargs: Any) -> None:
+        r"""Initializing L0 penalty with differentiable relaxation.
+
+        Args:
+            target_point: A tensor corresponding to the target point.
+            a: A hyperparameter that controls the differentiable relaxation.
+        """
+        super().__init__(target_point=target_point, a=a, **tkwargs)
+
+    def __call__(self, X: Tensor) -> Tensor:
+        r"""
+        Args:
+            X: A "batch_shape x q x dim" representing the points to be evaluated.
+        Returns:
+            A "1 x batch_shape x q" tensor representing the penalty for each point.
+            The first dimension corresponds to the dimension of MC samples.
+        """
+        return super().__call__(X=X).squeeze(dim=-1).unsqueeze(dim=0)

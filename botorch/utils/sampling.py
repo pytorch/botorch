@@ -249,7 +249,9 @@ def sample_polytope(
     # pre-sample samples from hypersphere
     d = x0.size(0)
     # uniform samples from unit ball in d dims
-    Rs = sample_hypersphere(d=d, n=n_tot, dtype=A.dtype, device=A.device).unsqueeze(-1)
+    Rs = sample_hypersphere(
+        d=d, n=n_tot, dtype=A.dtype, device=A.device, seed=seed
+    ).unsqueeze(-1)
 
     # compute matprods in batch
     ARs = (A @ Rs).squeeze(-1)

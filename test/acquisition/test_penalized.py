@@ -11,6 +11,9 @@ from botorch.acquisition.penalized import (
     GaussianPenalty,
     group_lasso_regularizer,
     GroupLassoPenalty,
+    L0Approximation,
+    L0PenaltyApprox,
+    L0PenaltyApproxObjective,
     L1Penalty,
     L1PenaltyObjective,
     L2Penalty,
@@ -104,6 +107,105 @@ class TestGroupLassoPenalty(BotorchTestCase):
                 group_lasso_module(sample_point_2)
 
 
+class TestL0Approximation(BotorchTestCase):
+    def test_L0Approximation(self):
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            target_point = torch.zeros(2, **tkwargs)
+
+            # test init
+            l0 = L0Approximation(target_point=target_point, **tkwargs)
+            self.assertTrue(torch.equal(l0.target_point, target_point))
+            self.assertAllClose(l0.a.data, torch.tensor(1.0, **tkwargs))
+
+            # verify L0 norm
+            self.assertTrue(
+                torch.equal(
+                    l0(torch.zeros(2, **tkwargs)).data, torch.tensor([0], **tkwargs)
+                )
+            )
+            # check two-dim input tensors X
+            self.assertTrue(
+                torch.equal(
+                    l0(torch.zeros(3, 2, **tkwargs)).data, torch.zeros(3, 1, **tkwargs)
+                )
+            )
+
+            # test raise when X and target_point have mismatched shape
+            with self.assertRaises(ValueError):
+                l0(torch.zeros(3, **tkwargs))
+
+            # test init with different a
+            l0 = L0Approximation(target_point=target_point, a=2.0, **tkwargs)
+            self.assertAllClose(l0.a.data, torch.tensor(2.0, **tkwargs))
+            self.assertAllClose(
+                l0(torch.ones(2, **tkwargs)).data,
+                torch.tensor([0.2350], **tkwargs),
+                rtol=1e-04,
+            )
+
+            # reset a
+            l0.a.data.fill_(0.5)
+            self.assertTrue(torch.equal(l0.a.data, torch.tensor(0.5, **tkwargs)))
+            self.assertAllClose(
+                l0(torch.ones(2, **tkwargs)).data,
+                torch.tensor([1.7293], **tkwargs),
+                rtol=1e-04,
+            )
+
+    def test_L0PenaltyApproxObjective(self):
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            target_point = torch.zeros(2, **tkwargs)
+
+            # test init
+            l0_obj = L0PenaltyApproxObjective(target_point=target_point, **tkwargs)
+            self.assertTrue(torch.equal(l0_obj.target_point, target_point))
+            self.assertAllClose(l0_obj.a.data, torch.tensor(1.0, **tkwargs))
+
+            # check two-dim input tensors X
+            self.assertTrue(
+                torch.equal(
+                    l0_obj(torch.zeros(3, 2, **tkwargs)).data,
+                    torch.zeros(1, 3, **tkwargs),
+                )
+            )
+            # check "batch_shape x q x dim" input tensors X
+            batch_shape = 16
+            self.assertTrue(
+                torch.equal(
+                    l0_obj(torch.zeros(batch_shape, 3, 2, **tkwargs)).data,
+                    torch.zeros(1, batch_shape, 3, **tkwargs),
+                )
+            )
+
+    def test_L0PenaltyApprox(self):
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            target_point = torch.zeros(2, **tkwargs)
+
+            # test init
+            l0_acqf = L0PenaltyApprox(target_point=target_point, **tkwargs)
+            self.assertTrue(torch.equal(l0_acqf.target_point, target_point))
+            self.assertAllClose(l0_acqf.a.data, torch.tensor(1.0, **tkwargs))
+
+            # check two-dim input tensors X
+            self.assertTrue(
+                torch.equal(
+                    l0_acqf(torch.zeros(3, 2, **tkwargs)).data,
+                    torch.tensor(0, **tkwargs),
+                )
+            )
+            # check "batch_shape x q x dim" input tensors X
+            batch_shape = 16
+            self.assertTrue(
+                torch.equal(
+                    l0_acqf(torch.zeros(batch_shape, 3, 2, **tkwargs)).data,
+                    torch.zeros(batch_shape, **tkwargs),
+                )
+            )
+
+
 class TestPenalizedAcquisitionFunction(BotorchTestCase):
     def test_penalized_acquisition_function(self):
         for dtype in (torch.float, torch.double):
@@ -183,6 +285,8 @@ class TestPenalizedMCObjective(BotorchTestCase):
                 penalty_objective=l1_penalty_obj,
                 regularization_parameter=0.1,
             )
+            # test self.expand_dim
+            self.assertIsNone(obj.expand_dim)
             # test 'd' Tensor X
             samples = torch.randn(4, 3, device=self.device, dtype=dtype)
             X = torch.randn(4, 5, device=self.device, dtype=dtype)
@@ -198,3 +302,42 @@ class TestPenalizedMCObjective(BotorchTestCase):
             X = torch.randn(3, 2, 5, device=self.device, dtype=dtype)
             penalized_obj = generic_obj(samples) - 0.1 * l1_penalty_obj(X)
             self.assertTrue(torch.equal(obj(samples, X), penalized_obj))
+
+            # test passing expand_dim
+            expand_dim = -2
+            obj2 = PenalizedMCObjective(
+                objective=generic_obj,
+                penalty_objective=l1_penalty_obj,
+                regularization_parameter=0.1,
+                expand_dim=expand_dim,
+            )
+            self.assertEqual(obj2.expand_dim, -2)
+            # test 'd' Tensor X
+            mcmc_samples = 8
+            # MCMC_dim = -3
+            samples = torch.randn(mcmc_samples, 4, 3, device=self.device, dtype=dtype)
+            X = torch.randn(4, 5, device=self.device, dtype=dtype)
+            penalized_obj = generic_obj(samples) - 0.1 * l1_penalty_obj(X).unsqueeze(
+                expand_dim
+            )
+            self.assertTrue(torch.equal(obj2(samples, X), penalized_obj))
+            # test 'q x d' Tensor X
+            # MCMC_dim = -3
+            samples = torch.randn(
+                4, mcmc_samples, 2, 3, device=self.device, dtype=dtype
+            )
+            X = torch.randn(2, 5, device=self.device, dtype=dtype)
+            penalized_obj = generic_obj(samples) - 0.1 * l1_penalty_obj(X).unsqueeze(
+                expand_dim
+            )
+            self.assertTrue(torch.equal(obj2(samples, X), penalized_obj))
+            # test 'batch-shape x q x d' Tensor X
+            # MCMC_dim = -3
+            samples = torch.randn(
+                4, 3, mcmc_samples, 2, 3, device=self.device, dtype=dtype
+            )
+            X = torch.randn(3, 2, 5, device=self.device, dtype=dtype)
+            penalized_obj = generic_obj(samples) - 0.1 * l1_penalty_obj(X).unsqueeze(
+                expand_dim
+            )
+            self.assertTrue(torch.equal(obj2(samples, X), penalized_obj))

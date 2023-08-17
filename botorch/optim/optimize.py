@@ -305,14 +305,13 @@ def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> Tuple[Tensor, Tensor
 
         # only add parameter constraints to gen_kwargs if they are specified
         # to avoid unnecessary warnings in _filter_kwargs
-        if opt_inputs.inequality_constraints is not None:
-            gen_kwargs["inequality_constraints"] = opt_inputs.inequality_constraints
-        if opt_inputs.equality_constraints is not None:
-            gen_kwargs["equality_constraints"] = opt_inputs.equality_constraints
-        if opt_inputs.nonlinear_inequality_constraints is not None:
-            gen_kwargs[
-                "nonlinear_inequality_constraints"
-            ] = opt_inputs.nonlinear_inequality_constraints
+        for constraint_name in [
+            "inequality_constraints",
+            "equality_constraints",
+            "nonlinear_inequality_constraints",
+        ]:
+            if (constraint := getattr(opt_inputs, constraint_name)) is not None:
+                gen_kwargs[constraint_name] = constraint
 
         filtered_gen_kwargs = _filter_kwargs(opt_inputs.gen_candidates, **gen_kwargs)
 

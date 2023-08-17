@@ -27,7 +27,6 @@ from functools import partial
 from typing import Any, Callable, List, Optional, Protocol, Tuple, Union
 
 import torch
-from botorch import acquisition
 from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
 from botorch.acquisition.cached_cholesky import CachedCholeskyMCAcquisitionFunction
 from botorch.acquisition.objective import (
@@ -36,11 +35,14 @@ from botorch.acquisition.objective import (
     MCAcquisitionObjective,
     PosteriorTransform,
 )
-from botorch.acquisition.utils import prune_inferior_points
+from botorch.acquisition.utils import (
+    compute_best_feasible_objective,
+    prune_inferior_points,
+)
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
-from botorch.utils.objective import compute_smoothed_constraint_indicator
+from botorch.utils.objective import compute_smoothed_feasibility_indicator
 from botorch.utils.transforms import (
     concatenate_pending_points,
     match_batch_shape,
@@ -168,6 +170,8 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
     forward pass. These problems are circumvented by the design of this class.
     """
 
+    _log: bool = False  # whether the acquisition utilities are in log-space
+
     def __init__(
         self,
         model: Model,
@@ -179,6 +183,7 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
         q_reduction: SampleReductionProtocol = torch.amax,
         constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
         eta: Union[Tensor, float] = 1e-3,
+        fat: bool = False,
     ):
         r"""Constructor of SampleReducingMCAcquisitionFunction.
 
@@ -213,7 +218,9 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
                 acquistion utilities, e.g. all improvement-based acquisition functions.
             eta: Temperature parameter(s) governing the smoothness of the sigmoid
                 approximation to the constraint indicators. For more details, on this
-                parameter, see the docs of `compute_smoothed_constraint_indicator`.
+                parameter, see the docs of `compute_smoothed_feasibility_indicator`.
+            fat: Wether to apply a fat-tailed smooth approximation to the feasibility
+                indicator or the canonical sigmoid approximation.
         """
         if constraints is not None and isinstance(objective, ConstrainedMCObjective):
             raise ValueError(
@@ -234,6 +241,7 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
         self._q_reduction = partial(q_reduction, dim=-1)
         self._constraints = constraints
         self._eta = eta
+        self._fat = fat
 
     @concatenate_pending_points
     @t_batch_mode_transform()
@@ -255,10 +263,22 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
             A Tensor with shape `batch_shape'`, where `batch_shape'` is the broadcasted
             batch shape of model and input `X`.
         """
+        non_reduced_acqval = self._non_reduced_forward(X=X)
+        return self._sample_reduction(self._q_reduction(non_reduced_acqval))
+
+    def _non_reduced_forward(self, X: Tensor) -> Tensor:
+        """Compute the constrained acquisition values at the MC-sample, q level.
+
+        Args:
+            X: A `batch_shape x q x d` Tensor of t-batches with `q` `d`-dim
+                design points each.
+
+        Returns:
+            A Tensor with shape `sample_sample x batch_shape x q`.
+        """
         samples, obj = self._get_samples_and_objectives(X)
         acqval = self._sample_forward(obj)  # `sample_sample x batch_shape x q`
-        weighted_acqval = self._apply_constraints(acqval=acqval, samples=samples)
-        return self._sample_reduction(self._q_reduction(weighted_acqval))
+        return self._apply_constraints(acqval=acqval, samples=samples)
 
     @abstractmethod
     def _sample_forward(self, obj: Tensor) -> Tensor:
@@ -286,14 +306,19 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
                 multiplied by a smoothed constraint indicator per sample.
         """
         if self._constraints is not None:
-            if (acqval < 0).any():
+            if not self._log and (acqval < 0).any():
                 raise ValueError(
                     "Constraint-weighting requires unconstrained "
                     "acquisition values to be non-negative."
                 )
-            acqval = acqval * compute_smoothed_constraint_indicator(
-                constraints=self._constraints, samples=samples, eta=self._eta
+            ind = compute_smoothed_feasibility_indicator(
+                constraints=self._constraints,
+                samples=samples,
+                eta=self._eta,
+                log=self._log,
+                fat=self._fat,
             )
+            acqval = acqval.add(ind) if self._log else acqval.mul(ind)
         return acqval
 
 
@@ -352,7 +377,7 @@ class qExpectedImprovement(SampleReducingMCAcquisitionFunction):
                 are considered satisfied if the output is less than zero.
             eta: Temperature parameter(s) governing the smoothness of the sigmoid
                 approximation to the constraint indicators. For more details, on this
-                parameter, see the docs of `compute_smoothed_constraint_indicator`.
+                parameter, see the docs of `compute_smoothed_feasibility_indicator`.
         """
         super().__init__(
             model=model,
@@ -443,7 +468,7 @@ class qNoisyExpectedImprovement(
                 are considered satisfied if the output is less than zero.
             eta: Temperature parameter(s) governing the smoothness of the sigmoid
                 approximation to the constraint indicators. For more details, on this
-                parameter, see the docs of `compute_smoothed_constraint_indicator`.
+                parameter, see the docs of `compute_smoothed_feasibility_indicator`.
 
         TODO: similar to qNEHVI, when we are using sequential greedy candidate
         selection, we could incorporate pending points X_baseline and compute
@@ -579,7 +604,8 @@ class qNoisyExpectedImprovement(
         return samples, obj
 
     def _compute_best_feasible_objective(self, samples: Tensor, obj: Tensor) -> Tensor:
-        """
+        r"""Computes best feasible objective value from samples.
+
         Args:
             samples: `sample_shape x batch_shape x q x m`-dim posterior samples.
             obj: A `sample_shape x batch_shape x q`-dim Tensor of MC objective values.
@@ -587,38 +613,15 @@ class qNoisyExpectedImprovement(
         Returns:
             A `sample_shape x batch_shape x 1`-dim Tensor of best feasible objectives.
         """
-        if self._constraints is not None:
-            # is_feasible is sample_shape x batch_shape x q
-            is_feasible = compute_smoothed_constraint_indicator(
-                constraints=self._constraints, samples=samples, eta=self._eta
-            )
-            is_feasible = is_feasible > 0.5  # due to smooth approximation
-            if is_feasible.any():
-                obj = torch.where(is_feasible, obj, -torch.inf)
-            else:  # if there are no feasible observations, estimate a lower
-                # bound on the objective by sampling convex combinations of X_baseline.
-                convex_weights = torch.rand(
-                    32,
-                    self.X_baseline.shape[-2],
-                    dtype=self.X_baseline.dtype,
-                    device=self.X_baseline.device,
-                )
-                weights_sum = convex_weights.sum(dim=0, keepdim=True)
-                convex_weights = convex_weights / weights_sum
-                # infeasible cost M is such that -M < min_x f(x), thus
-                # 0 < min_x f(x) - (-M), so we should take -M as a lower
-                # bound on the best feasible objective
-                return -acquisition.utils.get_infeasible_cost(
-                    X=convex_weights @ self.X_baseline,
-                    model=self.model,
-                    objective=self.objective,
-                    posterior_transform=self.posterior_transform,
-                ).expand(*obj.shape[:-1], 1)
-
-        # we don't need to differentiate through X_baseline for now, so taking
-        # the regular max over the n points to get best_f is fine
-        with torch.no_grad():
-            return obj.amax(dim=-1, keepdim=True)
+        return compute_best_feasible_objective(
+            samples=samples,
+            obj=obj,
+            constraints=self._constraints,
+            model=self.model,
+            objective=self.objective,
+            posterior_transform=self.posterior_transform,
+            X_baseline=self.X_baseline,
+        )
 
 
 class qProbabilityOfImprovement(SampleReducingMCAcquisitionFunction):
@@ -679,7 +682,7 @@ class qProbabilityOfImprovement(SampleReducingMCAcquisitionFunction):
                 scalar is less than zero.
             eta: Temperature parameter(s) governing the smoothness of the sigmoid
                 approximation to the constraint indicators. For more details, on this
-                parameter, see the docs of `compute_smoothed_constraint_indicator`.
+                parameter, see the docs of `compute_smoothed_feasibility_indicator`.
         """
         super().__init__(
             model=model,

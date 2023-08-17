@@ -5,10 +5,11 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
+import math
 from unittest import mock
 
 import torch
-from botorch.acquisition import monte_carlo
+from botorch.acquisition import logei, monte_carlo
 from botorch.acquisition.multi_objective import (
     MCMultiOutputObjective,
     monte_carlo as moo_monte_carlo,
@@ -19,6 +20,7 @@ from botorch.acquisition.objective import (
     ScalarizedPosteriorTransform,
 )
 from botorch.acquisition.utils import (
+    compute_best_feasible_objective,
     expand_trace_observations,
     get_acquisition_function,
     get_infeasible_cost,
@@ -59,23 +61,29 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.qmc = True
         self.ref_point = [0.0, 0.0]
         self.mo_objective = DummyMCMultiOutputObjective()
-        self.Y = torch.tensor([[1.0, 2.0]])
+        self.Y = torch.tensor([[1.0, 2.0]])  # (2 x 1)-dim multi-objective outcomes
         self.seed = 1
 
     @mock.patch(f"{monte_carlo.__name__}.qExpectedImprovement")
     def test_GetQEI(self, mock_acqf):
-        self.model = MockModel(MockPosterior(mean=torch.zeros(1, 2)))
+        n = len(self.X_observed)
+        mean = torch.arange(n, dtype=torch.double).view(-1, 1)
+        var = torch.ones_like(mean)
+        self.model = MockModel(MockPosterior(mean=mean, variance=var))
+        common_kwargs = {
+            "model": self.model,
+            "objective": self.objective,
+            "X_observed": self.X_observed,
+            "X_pending": self.X_pending,
+            "mc_samples": self.mc_samples,
+            "seed": self.seed,
+        }
         acqf = get_acquisition_function(
             acquisition_function_name="qEI",
-            model=self.model,
-            objective=self.objective,
-            X_observed=self.X_observed,
-            X_pending=self.X_pending,
-            mc_samples=self.mc_samples,
-            seed=self.seed,
+            **common_kwargs,
             marginalize_dim=0,
         )
-        self.assertTrue(acqf == mock_acqf.return_value)
+        self.assertEqual(acqf, mock_acqf.return_value)
         best_f = self.objective(self.model.posterior(self.X_observed).mean).max().item()
         mock_acqf.assert_called_once_with(
             model=self.model,
@@ -84,19 +92,16 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             objective=self.objective,
             posterior_transform=None,
             X_pending=self.X_pending,
+            constraints=None,
+            eta=1e-3,
         )
         # test batched model
         self.model = MockModel(MockPosterior(mean=torch.zeros(1, 2, 1)))
+        common_kwargs.update({"model": self.model})
         acqf = get_acquisition_function(
-            acquisition_function_name="qEI",
-            model=self.model,
-            objective=self.objective,
-            X_observed=self.X_observed,
-            X_pending=self.X_pending,
-            mc_samples=self.mc_samples,
-            seed=self.seed,
+            acquisition_function_name="qEI", **common_kwargs
         )
-        self.assertTrue(acqf == mock_acqf.return_value)
+        self.assertEqual(acqf, mock_acqf.return_value)
         # test batched model without marginalize dim
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
@@ -110,24 +115,148 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         mvn = MultivariateNormal(pm, torch.eye(2))
         self.model._posterior.distribution = mvn
         self.model._posterior._mean = pm.unsqueeze(-1)
+        common_kwargs.update({"model": self.model})
         pt = ScalarizedPosteriorTransform(weights=torch.tensor([-1]))
         acqf = get_acquisition_function(
             acquisition_function_name="qEI",
-            model=self.model,
-            objective=self.objective,
-            X_observed=self.X_observed,
+            **common_kwargs,
             posterior_transform=pt,
-            X_pending=self.X_pending,
-            mc_samples=self.mc_samples,
-            seed=self.seed,
             marginalize_dim=0,
         )
         self.assertEqual(mock_acqf.call_args[-1]["best_f"].item(), -1.0)
 
+        # with constraints
+        upper_bound = self.Y[0, 0] + 1 / 2  # = 1.5
+        constraints = [lambda samples: samples[..., 0] - upper_bound]
+        eta = math.pi * 1e-2  # testing non-standard eta
+
+        acqf = get_acquisition_function(
+            acquisition_function_name="qEI",
+            **common_kwargs,
+            marginalize_dim=0,
+            constraints=constraints,
+            eta=eta,
+        )
+        self.assertEqual(acqf, mock_acqf.return_value)
+        best_feasible_f = compute_best_feasible_objective(
+            samples=mean,
+            obj=self.objective(mean),
+            constraints=constraints,
+            model=self.model,
+            objective=self.objective,
+            X_baseline=self.X_observed,
+        )
+        mock_acqf.assert_called_with(
+            model=self.model,
+            best_f=best_feasible_f,
+            sampler=mock.ANY,
+            objective=self.objective,
+            posterior_transform=None,
+            X_pending=self.X_pending,
+            constraints=constraints,
+            eta=eta,
+        )
+
+    @mock.patch(f"{logei.__name__}.qLogExpectedImprovement")
+    def test_GetQLogEI(self, mock_acqf):
+        n = len(self.X_observed)
+        mean = torch.arange(n, dtype=torch.double).view(-1, 1)
+        var = torch.ones_like(mean)
+        self.model = MockModel(MockPosterior(mean=mean, variance=var))
+        common_kwargs = {
+            "model": self.model,
+            "objective": self.objective,
+            "X_observed": self.X_observed,
+            "X_pending": self.X_pending,
+            "mc_samples": self.mc_samples,
+            "seed": self.seed,
+        }
+        acqf = get_acquisition_function(
+            acquisition_function_name="qLogEI",
+            **common_kwargs,
+            marginalize_dim=0,
+        )
+        self.assertEqual(acqf, mock_acqf.return_value)
+        best_f = self.objective(self.model.posterior(self.X_observed).mean).max().item()
+        mock_acqf.assert_called_once_with(
+            model=self.model,
+            best_f=best_f,
+            sampler=mock.ANY,
+            objective=self.objective,
+            posterior_transform=None,
+            X_pending=self.X_pending,
+            constraints=None,
+            eta=1e-3,
+        )
+        # test batched model
+        self.model = MockModel(MockPosterior(mean=torch.zeros(1, 2, 1)))
+        common_kwargs.update({"model": self.model})
+        acqf = get_acquisition_function(
+            acquisition_function_name="qLogEI", **common_kwargs
+        )
+        self.assertEqual(acqf, mock_acqf.return_value)
+        # test batched model without marginalize dim
+        args, kwargs = mock_acqf.call_args
+        self.assertEqual(args, ())
+        sampler = kwargs["sampler"]
+        self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
+        self.assertEqual(sampler.seed, 1)
+        self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
+
+        # test w/ posterior transform
+        pm = torch.tensor([1.0, 2.0])
+        mvn = MultivariateNormal(pm, torch.eye(2))
+        self.model._posterior.distribution = mvn
+        self.model._posterior._mean = pm.unsqueeze(-1)
+        common_kwargs.update({"model": self.model})
+        pt = ScalarizedPosteriorTransform(weights=torch.tensor([-1]))
+        acqf = get_acquisition_function(
+            acquisition_function_name="qLogEI",
+            **common_kwargs,
+            posterior_transform=pt,
+            marginalize_dim=0,
+        )
+        self.assertEqual(mock_acqf.call_args[-1]["best_f"].item(), -1.0)
+
+        # with constraints
+        upper_bound = self.Y[0, 0] + 1 / 2  # = 1.5
+        constraints = [lambda samples: samples[..., 0] - upper_bound]
+        eta = math.pi * 1e-2  # testing non-standard eta
+
+        acqf = get_acquisition_function(
+            acquisition_function_name="qLogEI",
+            **common_kwargs,
+            marginalize_dim=0,
+            constraints=constraints,
+            eta=eta,
+        )
+        self.assertEqual(acqf, mock_acqf.return_value)
+        best_feasible_f = compute_best_feasible_objective(
+            samples=mean,
+            obj=self.objective(mean),
+            constraints=constraints,
+            model=self.model,
+            objective=self.objective,
+            X_baseline=self.X_observed,
+        )
+        mock_acqf.assert_called_with(
+            model=self.model,
+            best_f=best_feasible_f,
+            sampler=mock.ANY,
+            objective=self.objective,
+            posterior_transform=None,
+            X_pending=self.X_pending,
+            constraints=constraints,
+            eta=eta,
+        )
+
     @mock.patch(f"{monte_carlo.__name__}.qProbabilityOfImprovement")
     def test_GetQPI(self, mock_acqf):
         # basic test
-        self.model = MockModel(MockPosterior(mean=torch.zeros(1, 2)))
+        n = len(self.X_observed)
+        mean = torch.arange(n, dtype=torch.double).view(-1, 1)
+        var = torch.ones_like(mean)
+        self.model = MockModel(MockPosterior(mean=mean, variance=var))
         acqf = get_acquisition_function(
             acquisition_function_name="qPI",
             model=self.model,
@@ -137,7 +266,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             mc_samples=self.mc_samples,
             seed=self.seed,
         )
-        self.assertTrue(acqf == mock_acqf.return_value)
+        self.assertEqual(acqf, mock_acqf.return_value)
         best_f = self.objective(self.model.posterior(self.X_observed).mean).max().item()
         mock_acqf.assert_called_once_with(
             model=self.model,
@@ -147,6 +276,8 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             posterior_transform=None,
             X_pending=self.X_pending,
             tau=1e-3,
+            constraints=None,
+            eta=1e-3,
         )
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
@@ -165,7 +296,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             seed=2,
             tau=1.0,
         )
-        self.assertTrue(mock_acqf.call_count, 2)
+        self.assertEqual(mock_acqf.call_count, 2)
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
         self.assertEqual(kwargs["tau"], 1.0)
@@ -194,13 +325,18 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             mc_samples=self.mc_samples,
             seed=self.seed,
         )
-        self.assertTrue(acqf == mock_acqf.return_value)
+        self.assertEqual(acqf, mock_acqf.return_value)
 
-    @mock.patch(f"{monte_carlo.__name__}.qNoisyExpectedImprovement")
-    def test_GetQNEI(self, mock_acqf):
-        # basic test
+        # with constraints
+        n = len(self.X_observed)
+        mean = torch.arange(n, dtype=torch.double).view(-1, 1)
+        var = torch.ones_like(mean)
+        self.model = MockModel(MockPosterior(mean=mean, variance=var))
+        upper_bound = self.Y[0, 0] + 1 / 2  # = 1.5
+        constraints = [lambda samples: samples[..., 0] - upper_bound]
+        eta = math.pi * 1e-2  # testing non-standard eta
         acqf = get_acquisition_function(
-            acquisition_function_name="qNEI",
+            acquisition_function_name="qPI",
             model=self.model,
             objective=self.objective,
             X_observed=self.X_observed,
@@ -208,9 +344,52 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             mc_samples=self.mc_samples,
             seed=self.seed,
             marginalize_dim=0,
+            constraints=constraints,
+            eta=eta,
         )
-        self.assertTrue(acqf == mock_acqf.return_value)
-        self.assertTrue(mock_acqf.call_count, 1)
+        self.assertEqual(acqf, mock_acqf.return_value)
+        best_feasible_f = compute_best_feasible_objective(
+            samples=mean,
+            obj=self.objective(mean),
+            constraints=constraints,
+            model=self.model,
+            objective=self.objective,
+            X_baseline=self.X_observed,
+        )
+        mock_acqf.assert_called_with(
+            model=self.model,
+            best_f=best_feasible_f,
+            sampler=mock.ANY,
+            objective=self.objective,
+            posterior_transform=None,
+            X_pending=self.X_pending,
+            tau=1e-3,
+            constraints=constraints,
+            eta=eta,
+        )
+
+    @mock.patch(f"{monte_carlo.__name__}.qNoisyExpectedImprovement")
+    def test_GetQNEI(self, mock_acqf):
+        # basic test
+        n = len(self.X_observed)
+        mean = torch.arange(n, dtype=torch.double).view(-1, 1)
+        var = torch.ones_like(mean)
+        self.model = MockModel(MockPosterior(mean=mean, variance=var))
+        common_kwargs = {
+            "model": self.model,
+            "objective": self.objective,
+            "X_observed": self.X_observed,
+            "X_pending": self.X_pending,
+            "mc_samples": self.mc_samples,
+            "seed": self.seed,
+        }
+        acqf = get_acquisition_function(
+            acquisition_function_name="qNEI",
+            **common_kwargs,
+            marginalize_dim=0,
+        )
+        self.assertEqual(acqf, mock_acqf.return_value)
+        self.assertEqual(mock_acqf.call_count, 1)
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
         self.assertTrue(torch.equal(kwargs["X_baseline"], self.X_observed))
@@ -223,38 +402,141 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         # test with cache_root = False
         acqf = get_acquisition_function(
             acquisition_function_name="qNEI",
-            model=self.model,
-            objective=self.objective,
-            X_observed=self.X_observed,
-            X_pending=self.X_pending,
-            mc_samples=self.mc_samples,
-            seed=self.seed,
+            **common_kwargs,
             marginalize_dim=0,
             cache_root=False,
         )
-        self.assertTrue(acqf == mock_acqf.return_value)
-        self.assertTrue(mock_acqf.call_count, 1)
+        self.assertEqual(acqf, mock_acqf.return_value)
+        self.assertEqual(mock_acqf.call_count, 2)
         args, kwargs = mock_acqf.call_args
         self.assertEqual(kwargs["cache_root"], False)
         # test with non-qmc, no X_pending
+        common_kwargs.update({"X_pending": None})
         acqf = get_acquisition_function(
             acquisition_function_name="qNEI",
-            model=self.model,
-            objective=self.objective,
-            X_observed=self.X_observed,
-            X_pending=None,
-            mc_samples=self.mc_samples,
-            seed=2,
+            **common_kwargs,
         )
-        self.assertTrue(mock_acqf.call_count, 2)
+        self.assertEqual(mock_acqf.call_count, 3)
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
         self.assertTrue(torch.equal(kwargs["X_baseline"], self.X_observed))
         self.assertEqual(kwargs["X_pending"], None)
         sampler = kwargs["sampler"]
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
-        self.assertEqual(sampler.seed, 2)
+        self.assertEqual(sampler.seed, 1)
         self.assertTrue(torch.equal(kwargs["X_baseline"], self.X_observed))
+
+        # with constraints
+        upper_bound = self.Y[0, 0] + 1 / 2  # = 1.5
+        constraints = [lambda samples: samples[..., 0] - upper_bound]
+        eta = math.pi * 1e-2  # testing non-standard eta
+        common_kwargs.update({"X_pending": self.X_pending})
+        acqf = get_acquisition_function(
+            acquisition_function_name="qNEI",
+            **common_kwargs,
+            marginalize_dim=0,
+            constraints=constraints,
+            eta=eta,
+        )
+        self.assertEqual(acqf, mock_acqf.return_value)
+        mock_acqf.assert_called_with(
+            model=self.model,
+            X_baseline=self.X_observed,
+            sampler=mock.ANY,
+            objective=self.objective,
+            posterior_transform=None,
+            X_pending=self.X_pending,
+            prune_baseline=True,
+            marginalize_dim=0,
+            cache_root=True,
+            constraints=constraints,
+            eta=eta,
+        )
+
+    @mock.patch(f"{logei.__name__}.qLogNoisyExpectedImprovement")
+    def test_GetQLogNEI(self, mock_acqf):
+        # basic test
+        n = len(self.X_observed)
+        mean = torch.arange(n, dtype=torch.double).view(-1, 1)
+        var = torch.ones_like(mean)
+        self.model = MockModel(MockPosterior(mean=mean, variance=var))
+        common_kwargs = {
+            "model": self.model,
+            "objective": self.objective,
+            "X_observed": self.X_observed,
+            "X_pending": self.X_pending,
+            "mc_samples": self.mc_samples,
+            "seed": self.seed,
+        }
+        acqf = get_acquisition_function(
+            acquisition_function_name="qLogNEI",
+            **common_kwargs,
+            marginalize_dim=0,
+        )
+        self.assertEqual(acqf, mock_acqf.return_value)
+        self.assertEqual(mock_acqf.call_count, 1)
+        args, kwargs = mock_acqf.call_args
+        self.assertEqual(args, ())
+        self.assertTrue(torch.equal(kwargs["X_baseline"], self.X_observed))
+        self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
+        sampler = kwargs["sampler"]
+        self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
+        self.assertEqual(sampler.seed, 1)
+        self.assertEqual(kwargs["marginalize_dim"], 0)
+        self.assertEqual(kwargs["cache_root"], True)
+        # test with cache_root = False
+        acqf = get_acquisition_function(
+            acquisition_function_name="qLogNEI",
+            **common_kwargs,
+            marginalize_dim=0,
+            cache_root=False,
+        )
+        self.assertEqual(acqf, mock_acqf.return_value)
+        self.assertEqual(mock_acqf.call_count, 2)
+        args, kwargs = mock_acqf.call_args
+        self.assertEqual(kwargs["cache_root"], False)
+        # test with non-qmc, no X_pending
+        common_kwargs.update({"X_pending": None})
+        acqf = get_acquisition_function(
+            acquisition_function_name="qLogNEI",
+            **common_kwargs,
+        )
+        self.assertEqual(mock_acqf.call_count, 3)
+        args, kwargs = mock_acqf.call_args
+        self.assertEqual(args, ())
+        self.assertTrue(torch.equal(kwargs["X_baseline"], self.X_observed))
+        self.assertEqual(kwargs["X_pending"], None)
+        sampler = kwargs["sampler"]
+        self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
+        self.assertEqual(sampler.seed, 1)
+        self.assertTrue(torch.equal(kwargs["X_baseline"], self.X_observed))
+
+        # with constraints
+        upper_bound = self.Y[0, 0] + 1 / 2  # = 1.5
+        constraints = [lambda samples: samples[..., 0] - upper_bound]
+        eta = math.pi * 1e-2  # testing non-standard eta
+        common_kwargs.update({"X_pending": self.X_pending})
+        acqf = get_acquisition_function(
+            acquisition_function_name="qLogNEI",
+            **common_kwargs,
+            marginalize_dim=0,
+            constraints=constraints,
+            eta=eta,
+        )
+        self.assertEqual(acqf, mock_acqf.return_value)
+        mock_acqf.assert_called_with(
+            model=self.model,
+            X_baseline=self.X_observed,
+            sampler=mock.ANY,
+            objective=self.objective,
+            posterior_transform=None,
+            X_pending=self.X_pending,
+            prune_baseline=True,
+            marginalize_dim=0,
+            cache_root=True,
+            constraints=constraints,
+            eta=eta,
+        )
 
     @mock.patch(f"{monte_carlo.__name__}.qSimpleRegret")
     def test_GetQSR(self, mock_acqf):
@@ -268,7 +550,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             mc_samples=self.mc_samples,
             seed=self.seed,
         )
-        self.assertTrue(acqf == mock_acqf.return_value)
+        self.assertEqual(acqf, mock_acqf.return_value)
         mock_acqf.assert_called_once_with(
             model=self.model,
             sampler=mock.ANY,
@@ -292,7 +574,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             mc_samples=self.mc_samples,
             seed=2,
         )
-        self.assertTrue(mock_acqf.call_count, 2)
+        self.assertEqual(mock_acqf.call_count, 2)
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
         sampler = kwargs["sampler"]
@@ -323,7 +605,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             seed=self.seed,
             beta=0.3,
         )
-        self.assertTrue(acqf == mock_acqf.return_value)
+        self.assertEqual(acqf, mock_acqf.return_value)
         mock_acqf.assert_called_once_with(
             model=self.model,
             beta=0.3,
@@ -349,7 +631,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             seed=2,
             beta=0.2,
         )
-        self.assertTrue(mock_acqf.call_count, 2)
+        self.assertEqual(mock_acqf.call_count, 2)
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
         self.assertEqual(kwargs["beta"], 0.2)
@@ -408,7 +690,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             ref_point=self.ref_point,
             Y=self.Y,
         )
-        self.assertTrue(acqf == mock_acqf.return_value)
+        self.assertEqual(acqf, mock_acqf.return_value)
         mock_acqf.assert_called_once_with(
             constraints=None,
             eta=1e-3,
@@ -436,7 +718,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             ref_point=self.ref_point,
             Y=self.Y,
         )
-        self.assertTrue(mock_acqf.call_count, 2)
+        self.assertEqual(mock_acqf.call_count, 2)
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
         self.assertEqual(kwargs["ref_point"], self.ref_point)
@@ -505,7 +787,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             seed=self.seed,
             ref_point=self.ref_point,
         )
-        self.assertTrue(acqf == mock_acqf.return_value)
+        self.assertEqual(acqf, mock_acqf.return_value)
         mock_acqf.assert_called_once_with(
             constraints=None,
             eta=1e-3,
@@ -536,7 +818,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             seed=2,
             ref_point=self.ref_point,
         )
-        self.assertTrue(mock_acqf.call_count, 2)
+        self.assertEqual(mock_acqf.call_count, 2)
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
         self.assertEqual(kwargs["ref_point"], self.ref_point)
@@ -558,7 +840,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             ref_point=self.ref_point,
             alpha=0.01,
         )
-        self.assertTrue(mock_acqf.call_count, 3)
+        self.assertEqual(mock_acqf.call_count, 3)
         args, kwargs = mock_acqf.call_args
         self.assertEqual(kwargs["alpha"], 0.01)
 
@@ -575,7 +857,142 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             )
 
 
-class TestGetInfeasibleCost(BotorchTestCase):
+class TestConstraintUtils(BotorchTestCase):
+    def test_compute_best_feasible_objective(self):
+        for dtype in (torch.float, torch.double):
+            with self.subTest(dtype=dtype):
+                tkwargs = {"dtype": dtype, "device": self.device}
+                n = 5
+                X = torch.arange(n, **tkwargs).view(-1, 1)
+                for batch_shape, sample_shape in itertools.product(
+                    (torch.Size([]), torch.Size([2])),
+                    (torch.Size([1]), torch.Size([3])),
+                ):
+                    means = torch.arange(n, **tkwargs).view(-1, 1)
+                    if len(batch_shape) > 0:
+                        view_means = means.view(1, *means.shape)
+                        means = view_means.expand(batch_shape + means.shape)
+                    if sample_shape[0] == 1:
+                        samples = means.unsqueeze(0)
+                    else:
+                        samples = torch.stack([means, means + 1, means + 4], dim=0)
+                    variances = torch.tensor(
+                        [0.09, 0.25, 0.36, 0.25, 0.09], **tkwargs
+                    ).view(-1, 1)
+                    mm = MockModel(MockPosterior(mean=means, variance=variances))
+
+                    # testing all feasible points
+                    obj = samples.squeeze(-1)
+                    constraints = [lambda samples: -torch.ones_like(samples[..., 0])]
+                    best_f = compute_best_feasible_objective(
+                        samples=samples, obj=obj, constraints=constraints
+                    )
+                    self.assertAllClose(best_f, obj.amax(dim=-1, keepdim=True))
+
+                    # testing with some infeasible points
+                    con_cutoff = 3.0
+                    best_f = compute_best_feasible_objective(
+                        samples=samples,
+                        obj=obj,
+                        constraints=[
+                            lambda samples: samples[..., 0] - (con_cutoff + 1 / 2)
+                        ],
+                        model=mm,
+                        X_baseline=X,
+                    )
+
+                    if sample_shape[0] == 3:
+                        # under some samples, all baseline points are infeasible, so
+                        # the best_f is set to the negative infeasible cost for
+                        # for samples where no point is feasible
+                        expected_best_f = torch.tensor(
+                            [
+                                3.0,
+                                3.0,
+                                -get_infeasible_cost(
+                                    X=X,
+                                    model=mm,
+                                ).item(),
+                            ],
+                            **tkwargs,
+                        ).view(-1, 1)
+                        if len(batch_shape) > 0:
+                            expected_best_f = expected_best_f.unsqueeze(1)
+                            expected_best_f = expected_best_f.expand(
+                                *sample_shape, *batch_shape, 1
+                            )
+                    else:
+                        expected_best_f = torch.full(
+                            sample_shape + batch_shape + torch.Size([1]),
+                            con_cutoff,
+                            **tkwargs,
+                        )
+                    self.assertAllClose(best_f, expected_best_f)
+                    # test some feasible points with infeasible obi
+                    if sample_shape[0] == 3:
+                        best_f = compute_best_feasible_objective(
+                            samples=samples,
+                            obj=obj,
+                            constraints=[
+                                lambda samples: samples[..., 0] - (con_cutoff + 1 / 2)
+                            ],
+                            infeasible_obj=torch.ones(1, **tkwargs),
+                        )
+                        expected_best_f[-1] = 1
+                        self.assertAllClose(best_f, expected_best_f)
+
+                    # testing with no feasible points and infeasible obj
+                    infeasible_obj = torch.tensor(torch.pi, **tkwargs)
+                    expected_best_f = torch.full(
+                        sample_shape + batch_shape + torch.Size([1]),
+                        torch.pi,
+                        **tkwargs,
+                    )
+
+                    best_f = compute_best_feasible_objective(
+                        samples=samples,
+                        obj=obj,
+                        constraints=[lambda X: torch.ones_like(X[..., 0])],
+                        infeasible_obj=infeasible_obj,
+                    )
+                    self.assertAllClose(best_f, expected_best_f)
+
+                    # testing with no feasible points and not infeasible obj
+                    def objective(Y, X):
+                        return Y.squeeze(-1) - 5.0
+
+                    best_f = compute_best_feasible_objective(
+                        samples=samples,
+                        obj=obj,
+                        constraints=[lambda X: torch.ones_like(X[..., 0])],
+                        model=mm,
+                        X_baseline=X,
+                        objective=objective,
+                    )
+                    expected_best_f = torch.full(
+                        sample_shape + batch_shape + torch.Size([1]),
+                        -get_infeasible_cost(X=X, model=mm, objective=objective).item(),
+                        **tkwargs,
+                    )
+                    self.assertAllClose(best_f, expected_best_f)
+
+                    with self.assertRaisesRegex(ValueError, "Must specify `model`"):
+                        best_f = compute_best_feasible_objective(
+                            samples=means,
+                            obj=obj,
+                            constraints=[lambda X: torch.ones_like(X[..., 0])],
+                            X_baseline=X,
+                        )
+                    with self.assertRaisesRegex(
+                        ValueError, "Must specify `X_baseline`"
+                    ):
+                        best_f = compute_best_feasible_objective(
+                            samples=means,
+                            obj=obj,
+                            constraints=[lambda X: torch.ones_like(X[..., 0])],
+                            model=mm,
+                        )
+
     def test_get_infeasible_cost(self):
         for dtype in (torch.float, torch.double):
             tkwargs = {"dtype": dtype, "device": self.device}

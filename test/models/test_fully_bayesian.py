@@ -18,6 +18,10 @@ from botorch.acquisition.analytic import (
     ProbabilityOfImprovement,
     UpperConfidenceBound,
 )
+from botorch.acquisition.logei import (
+    qLogExpectedImprovement,
+    qLogNoisyExpectedImprovement,
+)
 from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
     qNoisyExpectedImprovement,
@@ -43,7 +47,7 @@ from botorch.models.fully_bayesian import (
 from botorch.models.transforms import Normalize, Standardize
 from botorch.posteriors.fully_bayesian import batched_bisect, FullyBayesianPosterior
 from botorch.sampling.get_sampler import get_sampler
-from botorch.utils.datasets import FixedNoiseDataset, SupervisedDataset
+from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
@@ -411,6 +415,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             model, warmup_steps=8, num_samples=5, thinning=2, disable_progbar=True
         )
         deterministic = GenericDeterministicModel(f=lambda x: x[..., :1])
+        # due to ModelList type, setting cache_root=False for all noisy EI variants
         list_gp = ModelListGP(model, model)
         mixed_list = ModelList(deterministic, model)
         simple_sampler = get_sampler(
@@ -427,11 +432,23 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             ProbabilityOfImprovement(model=model, best_f=train_Y.max()),
             PosteriorMean(model=model),
             UpperConfidenceBound(model=model, beta=4),
+            qLogExpectedImprovement(
+                model=model, best_f=train_Y.max(), sampler=simple_sampler
+            ),
             qExpectedImprovement(
                 model=model, best_f=train_Y.max(), sampler=simple_sampler
             ),
+            qLogNoisyExpectedImprovement(
+                model=model,
+                X_baseline=train_X,
+                sampler=simple_sampler,
+                cache_root=False,
+            ),
             qNoisyExpectedImprovement(
-                model=model, X_baseline=train_X, sampler=simple_sampler
+                model=model,
+                X_baseline=train_X,
+                sampler=simple_sampler,
+                cache_root=False,
             ),
             qProbabilityOfImprovement(
                 model=model, best_f=train_Y.max(), sampler=simple_sampler
@@ -443,6 +460,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 X_baseline=train_X,
                 ref_point=torch.zeros(2, **tkwargs),
                 sampler=list_gp_sampler,
+                cache_root=False,
             ),
             qExpectedHypervolumeImprovement(
                 model=list_gp,
@@ -458,6 +476,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 X_baseline=train_X,
                 ref_point=torch.zeros(2, **tkwargs),
                 sampler=mixed_list_sampler,
+                cache_root=False,
             ),
             qExpectedHypervolumeImprovement(
                 model=mixed_list,
@@ -531,10 +550,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             X, Y, Yvar, model = self._get_data_and_model(
                 infer_noise=infer_noise, **tkwargs
             )
-            if infer_noise:
-                training_data = SupervisedDataset(X, Y)
-            else:
-                training_data = FixedNoiseDataset(X, Y, Yvar)
+            training_data = SupervisedDataset(X, Y, Yvar)
 
             data_dict = model.construct_inputs(training_data)
             self.assertTrue(X.equal(data_dict["train_X"]))
@@ -683,7 +699,7 @@ class TestPyroCatchNumericalErrors(BotorchTestCase):
 
         # But once we register this specific error then it should
         def catch_runtime_error(e):
-            return type(e) == RuntimeError and "foo" in str(e)
+            return type(e) is RuntimeError and "foo" in str(e)
 
         register_exception_handler("foo_runtime", catch_runtime_error)
         _, val = potential_grad(potential_fn_rterr_foo, z)

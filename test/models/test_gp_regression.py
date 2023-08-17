@@ -20,7 +20,7 @@ from botorch.models.transforms.input import InputStandardize
 from botorch.models.utils import add_output_dim
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
-from botorch.utils.datasets import FixedNoiseDataset, SupervisedDataset
+from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.sampling import manual_seed
 from botorch.utils.testing import _get_random_data, BotorchTestCase
 from gpytorch.kernels import MaternKernel, RBFKernel, ScaleKernel
@@ -450,7 +450,7 @@ class TestFixedNoiseGP(TestSingleTaskGP):
             X = model_kwargs["train_X"]
             Y = model_kwargs["train_Y"]
             Yvar = model_kwargs["train_Yvar"]
-            training_data = FixedNoiseDataset(X, Y, Yvar)
+            training_data = SupervisedDataset(X, Y, Yvar)
             data_dict = model.construct_inputs(training_data)
             self.assertTrue(X.equal(data_dict["train_X"]))
             self.assertTrue(Y.equal(data_dict["train_Y"]))

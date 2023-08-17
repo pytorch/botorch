@@ -6,8 +6,10 @@
 
 import logging
 
+import torch
+
 from botorch import settings
-from botorch.logging import LOG_LEVEL_DEFAULT, logger
+from botorch.logging import LOG_LEVEL_DEFAULT, logger, shape_to_str
 from botorch.utils.testing import BotorchTestCase
 
 
@@ -31,3 +33,9 @@ class TestLogging(BotorchTestCase):
             self.assertEqual(logger.level, logging.INFO)
         # Finally, verify the original level is set again
         self.assertEqual(logger.level, LOG_LEVEL_DEFAULT)
+
+    def test_shape_to_str(self):
+        self.assertEqual("``", shape_to_str(torch.Size([])))
+        self.assertEqual("`1`", shape_to_str(torch.Size([1])))
+        self.assertEqual("`1 x 2`", shape_to_str(torch.Size([1, 2])))
+        self.assertEqual("`1 x 2 x 3`", shape_to_str(torch.Size([1, 2, 3])))

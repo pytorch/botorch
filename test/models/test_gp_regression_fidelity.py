@@ -20,7 +20,7 @@ from botorch.models.gp_regression_fidelity import (
 from botorch.models.transforms import Normalize, Standardize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
-from botorch.utils.datasets import FixedNoiseDataset, SupervisedDataset
+from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.testing import _get_random_data, BotorchTestCase
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.likelihoods import FixedNoiseGaussianLikelihood
@@ -487,7 +487,7 @@ class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
                 self.assertTrue("train_Yvar" not in data_dict)
 
                 # len(Xs) == len(Ys) == 1
-                training_data = FixedNoiseDataset(
+                training_data = SupervisedDataset(
                     X=kwargs["train_X"],
                     Y=kwargs["train_Y"],
                     Yvar=torch.full(kwargs["train_Y"].shape[:-1] + (1,), 0.1),

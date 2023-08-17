@@ -57,7 +57,7 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
 from botorch.utils.multi_objective.box_decompositions.utils import (
     _pad_batch_pareto_frontier,
 )
-from botorch.utils.objective import compute_smoothed_constraint_indicator
+from botorch.utils.objective import compute_smoothed_feasibility_indicator
 from botorch.utils.torch import BufferDict
 from botorch.utils.transforms import (
     concatenate_pending_points,
@@ -136,7 +136,7 @@ class MultiObjectiveMCAcquisitionFunction(AcquisitionFunction, MCSamplerMixin, A
         self.add_module("objective", objective)
         self.constraints = constraints
         if constraints:
-            if type(eta) != Tensor:
+            if type(eta) is not Tensor:
                 eta = torch.full((len(constraints),), eta)
             self.register_buffer("eta", eta)
         self.X_pending = None
@@ -279,7 +279,7 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
         obj = self.objective(samples, X=X)
         q = obj.shape[-2]
         if self.constraints is not None:
-            feas_weights = compute_smoothed_constraint_indicator(
+            feas_weights = compute_smoothed_feasibility_indicator(
                 constraints=self.constraints, samples=samples, eta=self.eta
             )  # `sample_shape x batch-shape x q`
         self._cache_q_subset_indices(q_out=q)
@@ -414,7 +414,7 @@ class qNoisyExpectedHypervolumeImprovement(
                 tensor the length of the tensor must match the number of provided
                 constraints. The i-th constraint is then estimated with the i-th
                 eta value. For more details, on this parameter, see the docs of
-                `compute_smoothed_constraint_indicator`.
+                `compute_smoothed_feasibility_indicator`.
             prune_baseline: If True, remove points in `X_baseline` that are
                 highly unlikely to be the pareto optimal and better than the
                 reference point. This can significantly improve computation time and
