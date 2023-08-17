@@ -74,7 +74,6 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
         inner_sampler: Optional[MCSampler] = None,
         X_pending: Optional[Tensor] = None,
         current_value: Optional[Tensor] = None,
-        **kwargs: Any,
     ) -> None:
         r"""q-Knowledge Gradient (one-shot optimization).
 
@@ -330,7 +329,6 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
         expand: Callable[[Tensor], Tensor] = lambda X: X,
         valfunc_cls: Optional[Type[AcquisitionFunction]] = None,
         valfunc_argfac: Optional[Callable[[Model], Dict[str, Any]]] = None,
-        **kwargs: Any,
     ) -> None:
         r"""Multi-Fidelity q-Knowledge Gradient (one-shot optimization).
 

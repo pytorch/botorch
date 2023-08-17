@@ -27,7 +27,7 @@ import warnings
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from itertools import combinations
-from typing import Any, Callable, List, Optional, Union
+from typing import Callable, List, Optional, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
@@ -373,7 +373,7 @@ class qNoisyExpectedHypervolumeImprovement(
         max_iep: int = 0,
         incremental_nehvi: bool = True,
         cache_root: bool = True,
-        **kwargs: Any,
+        marginalize_dim: Optional[int] = None,
     ) -> None:
         r"""q-Noisy Expected Hypervolume Improvement supporting m>=2 outcomes.
 
@@ -466,7 +466,7 @@ class qNoisyExpectedHypervolumeImprovement(
                 objective=objective,
                 constraints=constraints,
                 ref_point=ref_point,
-                marginalize_dim=kwargs.get("marginalize_dim"),
+                marginalize_dim=marginalize_dim,
             )
         self.register_buffer("ref_point", ref_point)
         self.alpha = alpha

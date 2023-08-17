@@ -14,6 +14,9 @@ from botorch.acquisition.multi_objective import (
     MCMultiOutputObjective,
     monte_carlo as moo_monte_carlo,
 )
+from botorch.acquisition.multi_objective.monte_carlo import (
+    qExpectedHypervolumeImprovement,
+)
 from botorch.acquisition.objective import (
     GenericMCObjective,
     MCAcquisitionObjective,
@@ -640,8 +643,11 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertEqual(sampler.seed, 2)
         self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
 
-    @mock.patch(f"{moo_monte_carlo.__name__}.qExpectedHypervolumeImprovement")
-    def test_GetQEHVI(self, mock_acqf):
+    @mock.patch(
+        f"{moo_monte_carlo.__name__}.qExpectedHypervolumeImprovement",
+        wraps=qExpectedHypervolumeImprovement,
+    )
+    def test_GetQEHVI(self, mock_acqf) -> None:
         # make sure ref_point is specified
         with self.assertRaises(ValueError):
             acqf = get_acquisition_function(
@@ -690,7 +696,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             ref_point=self.ref_point,
             Y=self.Y,
         )
-        self.assertEqual(acqf, mock_acqf.return_value)
+        self.assertIsInstance(acqf, qExpectedHypervolumeImprovement)
         mock_acqf.assert_called_once_with(
             constraints=None,
             eta=1e-3,

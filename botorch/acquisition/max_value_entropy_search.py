@@ -326,7 +326,6 @@ class qMaxValueEntropy(DiscreteMaxValueBase, MCSamplerMixin):
         maximize: bool = True,
         X_pending: Optional[Tensor] = None,
         train_inputs: Optional[Tensor] = None,
-        **kwargs: Any,
     ) -> None:
         r"""Single-outcome max-value entropy search acquisition function.
 
@@ -697,7 +696,6 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
         cost_aware_utility: Optional[CostAwareUtility] = None,
         project: Callable[[Tensor], Tensor] = lambda X: X,
         expand: Callable[[Tensor], Tensor] = lambda X: X,
-        **kwargs: Any,
     ) -> None:
         r"""Single-outcome max-value entropy search acquisition function.
 

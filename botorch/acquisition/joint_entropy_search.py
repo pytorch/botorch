@@ -25,7 +25,7 @@ from __future__ import annotations
 import warnings
 from math import log, pi
 
-from typing import Any, Optional
+from typing import Optional
 
 import torch
 from botorch import settings
@@ -78,7 +78,6 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
         estimation_type: str = "LB",
         maximize: bool = True,
         num_samples: int = 64,
-        **kwargs: Any,
     ) -> None:
         r"""Joint entropy search acquisition function.
 
