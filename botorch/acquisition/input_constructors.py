@@ -11,6 +11,7 @@ constructors programmatically from a consistent input format.
 
 from __future__ import annotations
 
+import inspect
 from typing import (
     Any,
     Callable,
@@ -110,6 +111,18 @@ ACQF_INPUT_CONSTRUCTOR_REGISTRY = {}
 
 T = TypeVar("T")
 MaybeDict = Union[T, Dict[Hashable, T]]
+TOptimizeObjectiveKwargs = Union[
+    None,
+    MCAcquisitionObjective,
+    PosteriorTransform,
+    Tuple[Tensor, Tensor],
+    Dict[int, float],
+    bool,
+    int,
+    Dict[str, Any],
+    Callable[[Tensor], Tensor],
+    Tensor,
+]
 
 
 def _field_is_shared(
@@ -181,6 +194,44 @@ def get_acqf_input_constructor(
     return ACQF_INPUT_CONSTRUCTOR_REGISTRY[acqf_cls]
 
 
+def allow_only_specific_variable_kwargs(f: Callable[..., T]) -> Callable[..., T]:
+    """
+    Decorator for allowing a function to accept keyword arguments that are not
+    explicitly listed in the function signature, but only specific ones.
+
+    This decorator is applied in `acqf_input_constructor` so that all constructors
+    obtained with `acqf_input_constructor` allow keyword
+    arguments such as `training_data` and `objective`, even if they do not appear
+    in the signature of `f`. Any other keyword arguments will raise an error.
+    """
+    allowed = {
+        "training_data",
+        "objective",
+        "posterior_transform",
+        "X_baseline",
+        "X_pending",
+        "objective_thresholds",
+        "constraints",
+        "target_fidelities",
+        "bounds",
+    }
+
+    def g(*args: Any, **kwargs: Any) -> T:
+        new_kwargs = {}
+        accepted_kwargs = inspect.signature(f).parameters.keys()
+        for k, v in kwargs.items():
+            if k in accepted_kwargs:
+                new_kwargs[k] = v
+            elif k not in allowed:
+                raise TypeError(
+                    f"Unexpected keyword argument `{k}` when"
+                    f" constructing input arguments for {f.__name__}."
+                )
+        return f(*args, **new_kwargs)
+
+    return g
+
+
 def acqf_input_constructor(
     *acqf_cls: Type[AcquisitionFunction],
 ) -> Callable[..., AcquisitionFunction]:
@@ -198,11 +249,12 @@ def acqf_input_constructor(
             )
 
     def decorator(method):
+        method_kwargs = allow_only_specific_variable_kwargs(method)
         for acqf_cls_ in acqf_cls:
             _register_acqf_input_constructor(
-                acqf_cls=acqf_cls_, input_constructor=method
+                acqf_cls=acqf_cls_, input_constructor=method_kwargs
             )
-            ACQF_INPUT_CONSTRUCTOR_REGISTRY[acqf_cls_] = method
+            ACQF_INPUT_CONSTRUCTOR_REGISTRY[acqf_cls_] = method_kwargs
         return method
 
     return decorator
@@ -219,20 +271,16 @@ def _register_acqf_input_constructor(
 
 
 @acqf_input_constructor(PosteriorMean)
-def construct_inputs_analytic_base(
+def construct_inputs_posterior_mean(
     model: Model,
-    training_data: MaybeDict[SupervisedDataset],
     posterior_transform: Optional[PosteriorTransform] = None,
-    **kwargs: Any,
-) -> Dict[str, Any]:
-    r"""Construct kwargs for basic analytic acquisition functions.
+) -> Dict[str, Union[Model, Optional[PosteriorTransform]]]:
+    r"""Construct kwargs for PosteriorMean acquisition function.
 
     Args:
         model: The model to be used in the acquisition function.
-        training_data: Dataset(s) used to train the model. Not used.
         posterior_transform: The posterior transform to be used in the
             acquisition function.
-        kwargs: Not used.
 
     Returns:
         A dict mapping kwarg names of the constructor to values.
@@ -252,7 +300,6 @@ def construct_inputs_best_f(
     posterior_transform: Optional[PosteriorTransform] = None,
     best_f: Optional[Union[float, Tensor]] = None,
     maximize: bool = True,
-    **kwargs: Any,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for the acquisition functions requiring `best_f`.
 
@@ -264,55 +311,50 @@ def construct_inputs_best_f(
         posterior_transform: The posterior transform to be used in the
             acquisition function.
         maximize: If True, consider the problem a maximization problem.
-        kwargs: Not used.
 
     Returns:
         A dict mapping kwarg names of the constructor to values.
     """
-    base_inputs = construct_inputs_analytic_base(
-        model=model,
-        training_data=training_data,
-        posterior_transform=posterior_transform,
-    )
     if best_f is None:
         best_f = get_best_f_analytic(
             training_data=training_data,
             posterior_transform=posterior_transform,
         )
 
-    return {**base_inputs, "best_f": best_f, "maximize": maximize}
+    return {
+        "model": model,
+        "posterior_transform": posterior_transform,
+        "best_f": best_f,
+        "maximize": maximize,
+    }
 
 
 @acqf_input_constructor(UpperConfidenceBound)
 def construct_inputs_ucb(
     model: Model,
-    training_data: MaybeDict[SupervisedDataset],
     posterior_transform: Optional[PosteriorTransform] = None,
     beta: Union[float, Tensor] = 0.2,
     maximize: bool = True,
-    **kwargs: Any,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for `UpperConfidenceBound`.
 
     Args:
         model: The model to be used in the acquisition function.
-        training_data: Dataset(s) used to train the model. Not used.
         posterior_transform: The posterior transform to be used in the
             acquisition function.
         beta: Either a scalar or a one-dim tensor with `b` elements (batch mode)
             representing the trade-off parameter between mean and covariance
         maximize: If True, consider the problem a maximization problem.
-        kwargs: Not used.
 
     Returns:
         A dict mapping kwarg names of the constructor to values.
     """
-    base_inputs = construct_inputs_analytic_base(
-        model=model,
-        training_data=training_data,
-        posterior_transform=posterior_transform,
-    )
-    return {**base_inputs, "beta": beta, "maximize": maximize}
+    return {
+        "model": model,
+        "posterior_transform": posterior_transform,
+        "beta": beta,
+        "maximize": maximize,
+    }
 
 
 @acqf_input_constructor(
@@ -324,7 +366,6 @@ def construct_inputs_constrained_ei(
     objective_index: int,
     constraints: Dict[int, Tuple[Optional[float], Optional[float]]],
     maximize: bool = True,
-    **kwargs: Any,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for `ConstrainedExpectedImprovement`.
 
@@ -336,7 +377,6 @@ def construct_inputs_constrained_ei(
             `i` is the output index, and `lower` and `upper` are lower and upper
             bounds on that output (resp. interpreted as -Inf / Inf if None)
         maximize: If True, consider the problem a maximization problem.
-        kwargs: Additional keyword arguments.
 
     Returns:
         A dict mapping kwarg names of the constructor to values.
@@ -359,7 +399,6 @@ def construct_inputs_noisy_ei(
     training_data: MaybeDict[SupervisedDataset],
     num_fantasies: int = 20,
     maximize: bool = True,
-    **kwargs: Any,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for `NoisyExpectedImprovement`.
 
@@ -370,7 +409,6 @@ def construct_inputs_noisy_ei(
             number the more accurate the model (at the expense of model
             complexity and performance).
         maximize: If True, consider the problem a maximization problem.
-        kwargs: Not used.
 
     Returns:
         A dict mapping kwarg names of the constructor to values.
@@ -385,14 +423,15 @@ def construct_inputs_noisy_ei(
     }
 
 
-def _construct_inputs_mc_base(
+@acqf_input_constructor(qSimpleRegret)
+def construct_inputs_qSimpleRegret(
     model: Model,
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
     X_pending: Optional[Tensor] = None,
     sampler: Optional[MCSampler] = None,
 ) -> Dict[str, Any]:
-    r"""Construct kwargs for basic MC acquisition functions.
+    r"""Construct kwargs for qSimpleRegret.
 
     Args:
         model: The model to be used in the acquisition function.
@@ -417,43 +456,6 @@ def _construct_inputs_mc_base(
     }
 
 
-@acqf_input_constructor(qSimpleRegret)
-def construct_inputs_qSimpleRegret(
-    model: Model,
-    training_data: MaybeDict[SupervisedDataset],
-    objective: Optional[MCAcquisitionObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
-    X_pending: Optional[Tensor] = None,
-    sampler: Optional[MCSampler] = None,
-    **kwargs: Any,
-) -> Dict[str, Any]:
-    r"""Construct kwargs for qSimpleRegret.
-
-    Args:
-        model: The model to be used in the acquisition function.
-        training_data: Dataset(s) used to train the model. Not used.
-        objective: The objective to be used in the acquisition function.
-        posterior_transform: The posterior transform to be used in the
-            acquisition function.
-        X_pending: A `batch_shape, m x d`-dim Tensor of `m` design points
-            that have points that have been submitted for function evaluation
-            but have not yet been evaluated.
-        sampler: The sampler used to draw base samples. If omitted, uses
-            the acquisition functions's default sampler.
-        kwargs: Not used.
-
-    Returns:
-        A dict mapping kwarg names of the constructor to values.
-    """
-    return _construct_inputs_mc_base(
-        model=model,
-        objective=objective,
-        posterior_transform=posterior_transform,
-        X_pending=X_pending,
-        sampler=sampler,
-    )
-
-
 @acqf_input_constructor(qExpectedImprovement)
 def construct_inputs_qEI(
     model: Model,
@@ -465,7 +467,6 @@ def construct_inputs_qEI(
     best_f: Optional[Union[float, Tensor]] = None,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     eta: Union[Tensor, float] = 1e-3,
-    **ignored: Any,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for the `qExpectedImprovement` constructor.
 
@@ -488,18 +489,10 @@ def construct_inputs_qEI(
         eta: Temperature parameter(s) governing the smoothness of the sigmoid
             approximation to the constraint indicators. For more details, on this
             parameter, see the docs of `compute_smoothed_feasibility_indicator`.
-        ignored: Not used.
 
     Returns:
         A dict mapping kwarg names of the constructor to values.
     """
-    base_inputs = _construct_inputs_mc_base(
-        model=model,
-        objective=objective,
-        posterior_transform=posterior_transform,
-        sampler=sampler,
-        X_pending=X_pending,
-    )
     if best_f is None:
         best_f = get_best_f_mc(
             training_data=training_data,
@@ -509,7 +502,16 @@ def construct_inputs_qEI(
             model=model,
         )
 
-    return {**base_inputs, "best_f": best_f, "constraints": constraints, "eta": eta}
+    return {
+        "model": model,
+        "objective": objective,
+        "posterior_transform": posterior_transform,
+        "X_pending": X_pending,
+        "sampler": sampler,
+        "best_f": best_f,
+        "constraints": constraints,
+        "eta": eta,
+    }
 
 
 @acqf_input_constructor(qLogExpectedImprovement)
@@ -526,7 +528,6 @@ def construct_inputs_qLogEI(
     fat: bool = True,
     tau_max: float = TAU_MAX,
     tau_relu: float = TAU_RELU,
-    **ignored: Any,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for the `qExpectedImprovement` constructor.
 
@@ -555,7 +556,6 @@ def construct_inputs_qLogEI(
             approximations to max.
         tau_relu: Temperature parameter controlling the sharpness of the smooth
             approximations to ReLU.
-        ignored: Not used.
 
     Returns:
         A dict mapping kwarg names of the constructor to values.
@@ -591,7 +591,6 @@ def construct_inputs_qNEI(
     cache_root: Optional[bool] = True,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     eta: Union[Tensor, float] = 1e-3,
-    **ignored: Any,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for the `qNoisyExpectedImprovement` constructor.
 
@@ -620,18 +619,10 @@ def construct_inputs_qNEI(
         eta: Temperature parameter(s) governing the smoothness of the sigmoid
             approximation to the constraint indicators. For more details, on this
             parameter, see the docs of `compute_smoothed_feasibility_indicator`.
-        ignored: Not used.
 
     Returns:
         A dict mapping kwarg names of the constructor to values.
     """
-    base_inputs = _construct_inputs_mc_base(
-        model=model,
-        objective=objective,
-        posterior_transform=posterior_transform,
-        sampler=sampler,
-        X_pending=X_pending,
-    )
     if X_baseline is None:
         X_baseline = _get_dataset_field(
             training_data,
@@ -641,7 +632,11 @@ def construct_inputs_qNEI(
             first_only=True,
         )
     return {
-        **base_inputs,
+        "model": model,
+        "objective": objective,
+        "posterior_transform": posterior_transform,
+        "X_pending": X_pending,
+        "sampler": sampler,
         "X_baseline": X_baseline,
         "prune_baseline": prune_baseline,
         "cache_root": cache_root,
@@ -666,9 +661,8 @@ def construct_inputs_qLogNEI(
     fat: bool = True,
     tau_max: float = TAU_MAX,
     tau_relu: float = TAU_RELU,
-    **ignored: Any,
 ):
-    r"""Construct kwargs for the `qNoisyExpectedImprovement` constructor.
+    r"""Construct kwargs for the `qLogNoisyExpectedImprovement` constructor.
 
     Args:
         model: The model to be used in the acquisition function.
@@ -701,7 +695,6 @@ def construct_inputs_qLogNEI(
             approximations to max.
         tau_relu: Temperature parameter controlling the sharpness of the smooth
             approximations to ReLU.
-        ignored: Not used.
 
     Returns:
         A dict mapping kwarg names of the constructor to values.
@@ -738,7 +731,6 @@ def construct_inputs_qPI(
     best_f: Optional[Union[float, Tensor]] = None,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     eta: Union[Tensor, float] = 1e-3,
-    **ignored: Any,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for the `qProbabilityOfImprovement` constructor.
 
@@ -767,7 +759,6 @@ def construct_inputs_qPI(
         eta: Temperature parameter(s) governing the smoothness of the sigmoid
             approximation to the constraint indicators. For more details, on this
             parameter, see the docs of `compute_smoothed_feasibility_indicator`.
-        ignored: Not used.
 
     Returns:
         A dict mapping kwarg names of the constructor to values.
@@ -780,16 +771,13 @@ def construct_inputs_qPI(
             constraints=constraints,
             model=model,
         )
-    base_inputs = _construct_inputs_mc_base(
-        model=model,
-        objective=objective,
-        posterior_transform=posterior_transform,
-        sampler=sampler,
-        X_pending=X_pending,
-    )
 
     return {
-        **base_inputs,
+        "model": model,
+        "objective": objective,
+        "posterior_transform": posterior_transform,
+        "X_pending": X_pending,
+        "sampler": sampler,
         "tau": tau,
         "best_f": best_f,
         "constraints": constraints,
@@ -800,19 +788,16 @@ def construct_inputs_qPI(
 @acqf_input_constructor(qUpperConfidenceBound)
 def construct_inputs_qUCB(
     model: Model,
-    training_data: MaybeDict[SupervisedDataset],
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
     X_pending: Optional[Tensor] = None,
     sampler: Optional[MCSampler] = None,
     beta: float = 0.2,
-    **ignored: Any,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for the `qUpperConfidenceBound` constructor.
 
     Args:
         model: The model to be used in the acquisition function.
-        training_data: Dataset(s) used to train the model.
         objective: The objective to be used in the acquisition function.
         posterior_transform: The posterior transform to be used in the
             acquisition function.
@@ -822,19 +807,18 @@ def construct_inputs_qUCB(
         sampler: The sampler used to draw base samples. If omitted, uses
             the acquisition functions's default sampler.
         beta: Controls tradeoff between mean and standard deviation in UCB.
-        ignored: Not used.
 
     Returns:
         A dict mapping kwarg names of the constructor to values.
     """
-    base_inputs = _construct_inputs_mc_base(
-        model=model,
-        objective=objective,
-        posterior_transform=posterior_transform,
-        sampler=sampler,
-        X_pending=X_pending,
-    )
-    return {**base_inputs, "beta": beta}
+    return {
+        "model": model,
+        "objective": objective,
+        "posterior_transform": posterior_transform,
+        "X_pending": X_pending,
+        "sampler": sampler,
+        "beta": beta,
+    }
 
 
 def _get_sampler(mc_samples: int, qmc: bool) -> MCSampler:
@@ -853,7 +837,8 @@ def construct_inputs_EHVI(
     objective_thresholds: Tensor,
     objective: Optional[AnalyticMultiOutputObjective] = None,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
-    **kwargs: Any,
+    alpha: Optional[float] = None,
+    Y_pmean: Optional[Tensor] = None,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for `ExpectedHypervolumeImprovement` constructor."""
     num_objectives = objective_thresholds.shape[0]
@@ -868,9 +853,10 @@ def construct_inputs_EHVI(
         assert_shared=True,
     )
 
-    alpha = kwargs.get(
-        "alpha",
-        get_default_partitioning_alpha(num_objectives=num_objectives),
+    alpha = (
+        get_default_partitioning_alpha(num_objectives=num_objectives)
+        if alpha is None
+        else alpha
     )
     # This selects the objectives (a subset of the outcomes) and set each
     # objective threhsold to have the proper optimization direction.
@@ -884,7 +870,6 @@ def construct_inputs_EHVI(
 
     # Compute posterior mean (for ref point computation ref pareto frontier)
     # if one is not provided among arguments.
-    Y_pmean = kwargs.get("Y_pmean")
     if Y_pmean is None:
         with torch.no_grad():
             Y_pmean = model.posterior(X).mean
@@ -915,7 +900,12 @@ def construct_inputs_qEHVI(
     objective_thresholds: Tensor,
     objective: Optional[MCMultiOutputObjective] = None,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
-    **kwargs: Any,
+    alpha: Optional[float] = None,
+    sampler: Optional[MCSampler] = None,
+    X_pending: Optional[Tensor] = None,
+    eta: float = 1e-3,
+    mc_samples: int = 128,
+    qmc: bool = True,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for `qExpectedHypervolumeImprovement` constructor."""
     X = _get_dataset_field(
@@ -943,23 +933,21 @@ def construct_inputs_qEHVI(
         training_data=training_data,
         objective_thresholds=objective_thresholds,
         objective=objective,
+        constraints=None,
+        alpha=alpha,
         # Pass `Y_pmean` that accounts for constraints to `construct_inputs_EHVI`
         # to ensure that correct non-dominated partitioning is produced.
         Y_pmean=Y_pmean,
-        **kwargs,
     )
 
-    sampler = kwargs.get("sampler")
     if sampler is None and isinstance(model, GPyTorchModel):
-        sampler = _get_sampler(
-            mc_samples=kwargs.get("mc_samples", 128), qmc=kwargs.get("qmc", True)
-        )
+        sampler = _get_sampler(mc_samples=mc_samples, qmc=qmc)
 
     add_qehvi_kwargs = {
         "sampler": sampler,
-        "X_pending": kwargs.get("X_pending"),
+        "X_pending": X_pending,
         "constraints": constraints,
-        "eta": kwargs.get("eta", 1e-3),
+        "eta": eta,
     }
     return {**ehvi_kwargs, **add_qehvi_kwargs}
 
@@ -972,7 +960,17 @@ def construct_inputs_qNEHVI(
     objective: Optional[MCMultiOutputObjective] = None,
     X_baseline: Optional[Tensor] = None,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
-    **kwargs: Any,
+    alpha: Optional[float] = None,
+    sampler: Optional[MCSampler] = None,
+    X_pending: Optional[Tensor] = None,
+    eta: float = 1e-3,
+    mc_samples: int = 128,
+    qmc: bool = True,
+    prune_baseline: bool = True,
+    cache_pending: bool = True,
+    max_iep: int = 0,
+    incremental_nehvi: bool = True,
+    cache_root: bool = True,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for `qNoisyExpectedHypervolumeImprovement` constructor."""
     if X_baseline is None:
@@ -995,11 +993,8 @@ def construct_inputs_qNEHVI(
                 "Use a feasibility-weighted risk measure instead."
             )
 
-    sampler = kwargs.get("sampler")
     if sampler is None and isinstance(model, GPyTorchModel):
-        sampler = _get_sampler(
-            mc_samples=kwargs.get("mc_samples", 128), qmc=kwargs.get("qmc", True)
-        )
+        sampler = _get_sampler(mc_samples=mc_samples, qmc=qmc)
 
     if isinstance(objective, RiskMeasureMCObjective):
         ref_point = objective.preprocessing_function(objective_thresholds)
@@ -1007,6 +1002,8 @@ def construct_inputs_qNEHVI(
         ref_point = objective(objective_thresholds)
 
     num_objectives = objective_thresholds[~torch.isnan(objective_thresholds)].shape[0]
+    if alpha is None:
+        alpha = get_default_partitioning_alpha(num_objectives=num_objectives)
 
     return {
         "model": model,
@@ -1015,14 +1012,14 @@ def construct_inputs_qNEHVI(
         "sampler": sampler,
         "objective": objective,
         "constraints": constraints,
-        "X_pending": kwargs.get("X_pending"),
-        "eta": kwargs.get("eta", 1e-3),
-        "prune_baseline": kwargs.get("prune_baseline", True),
-        "alpha": kwargs.get("alpha", get_default_partitioning_alpha(num_objectives)),
-        "cache_pending": kwargs.get("cache_pending", True),
-        "max_iep": kwargs.get("max_iep", 0),
-        "incremental_nehvi": kwargs.get("incremental_nehvi", True),
-        "cache_root": kwargs.get("cache_root", True),
+        "X_pending": X_pending,
+        "eta": eta,
+        "prune_baseline": prune_baseline,
+        "alpha": alpha,
+        "cache_pending": cache_pending,
+        "max_iep": max_iep,
+        "incremental_nehvi": incremental_nehvi,
+        "cache_root": cache_root,
     }
 
 
@@ -1032,35 +1029,29 @@ def construct_inputs_qMES(
     training_data: MaybeDict[SupervisedDataset],
     bounds: List[Tuple[float, float]],
     objective: Optional[MCAcquisitionObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
     candidate_size: int = 1000,
-    **kwargs: Any,
+    maximize: bool = True,
+    # TODO: qMES also supports other inputs, such as num_fantasies
 ) -> Dict[str, Any]:
     r"""Construct kwargs for `qMaxValueEntropy` constructor."""
-    inputs_mc = _construct_inputs_mc_base(
-        model=model,
-        objective=objective,
-    )
 
     X = _get_dataset_field(training_data, "X", first_only=True)
     _kw = {"device": X.device, "dtype": X.dtype}
     _rvs = torch.rand(candidate_size, len(bounds), **_kw)
     _bounds = torch.tensor(bounds, **_kw).transpose(0, 1)
     return {
-        **inputs_mc,
+        "model": model,
         "candidate_set": _bounds[0] + (_bounds[1] - _bounds[0]) * _rvs,
-        "maximize": kwargs.get("maximize", True),
+        "objective": objective,
+        "maximize": maximize,
     }
 
 
 def construct_inputs_mf_base(
-    model: Model,
-    training_data: MaybeDict[SupervisedDataset],
     target_fidelities: Dict[int, Union[int, float]],
     fidelity_weights: Optional[Dict[int, float]] = None,
     cost_intercept: float = 1.0,
     num_trace_observations: int = 0,
-    **ignore: Any,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for a multifidelity acquisition function's constructor."""
     if fidelity_weights is None:
@@ -1100,17 +1091,10 @@ def construct_inputs_qKG(
     bounds: List[Tuple[float, float]],
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
-    target_fidelities: Optional[Dict[int, float]] = None,
     num_fantasies: int = 64,
-    **kwargs: Any,
+    **optimize_objective_kwargs: TOptimizeObjectiveKwargs,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for `qKnowledgeGradient` constructor."""
-
-    inputs_mc = _construct_inputs_mc_base(
-        model=model,
-        objective=objective,
-        posterior_transform=posterior_transform,
-    )
 
     X = _get_dataset_field(training_data, "X", first_only=True)
     _bounds = torch.tensor(bounds, dtype=X.dtype, device=X.device)
@@ -1121,11 +1105,13 @@ def construct_inputs_qKG(
         q=1,
         objective=objective,
         posterior_transform=posterior_transform,
-        **kwargs,
+        **optimize_objective_kwargs,
     )
 
     return {
-        **inputs_mc,
+        "model": model,
+        "objective": objective,
+        "posterior_transform": posterior_transform,
         "num_fantasies": num_fantasies,
         "current_value": current_value.detach().cpu().max(),
     }
@@ -1139,15 +1125,18 @@ def construct_inputs_qMFKG(
     target_fidelities: Dict[int, Union[int, float]],
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
-    **kwargs: Any,
+    fidelity_weights: Optional[Dict[int, float]] = None,
+    cost_intercept: float = 1.0,
+    num_trace_observations: int = 0,
+    num_fantasies: int = 64,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for `qMultiFidelityKnowledgeGradient` constructor."""
 
     inputs_mf = construct_inputs_mf_base(
-        model=model,
-        training_data=training_data,
         target_fidelities=target_fidelities,
-        **kwargs,
+        fidelity_weights=fidelity_weights,
+        cost_intercept=cost_intercept,
+        num_trace_observations=num_trace_observations,
     )
 
     inputs_kg = construct_inputs_qKG(
@@ -1156,7 +1145,8 @@ def construct_inputs_qMFKG(
         bounds=bounds,
         objective=objective,
         posterior_transform=posterior_transform,
-        **kwargs,
+        target_fidelities=target_fidelities,
+        num_fantasies=num_fantasies,
     )
 
     return {**inputs_mf, **inputs_kg}
@@ -1170,14 +1160,24 @@ def construct_inputs_qMFMES(
     target_fidelities: Dict[int, Union[int, float]],
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
-    **kwargs: Any,
+    num_fantasies: int = 64,
+    X_baseline: Optional[Tensor] = None,
+    X_pending: Optional[Tensor] = None,
+    objective_thresholds: Optional[Tensor] = None,
+    outcome_constraints: Optional[List[Tuple[Tensor, Tensor]]] = None,
+    fidelity_weights: Optional[Dict[int, float]] = None,
+    cost_intercept: float = 1.0,
+    num_trace_observations: int = 0,
+    candidate_size: int = 1000,
+    maximize: bool = True,
+    **optimize_objective_kwargs: TOptimizeObjectiveKwargs,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for `qMultiFidelityMaxValueEntropy` constructor."""
     inputs_mf = construct_inputs_mf_base(
-        model=model,
-        training_data=training_data,
         target_fidelities=target_fidelities,
-        **kwargs,
+        fidelity_weights=fidelity_weights,
+        cost_intercept=cost_intercept,
+        num_trace_observations=num_trace_observations,
     )
 
     inputs_qmes = construct_inputs_qMES(
@@ -1186,7 +1186,8 @@ def construct_inputs_qMFMES(
         bounds=bounds,
         objective=objective,
         posterior_transform=posterior_transform,
-        **kwargs,
+        candidate_size=candidate_size,
+        maximize=maximize,
     )
 
     X = _get_dataset_field(training_data, "X", first_only=True)
@@ -1197,7 +1198,7 @@ def construct_inputs_qMFMES(
         q=1,
         objective=objective,
         posterior_transform=posterior_transform,
-        **kwargs,
+        **optimize_objective_kwargs,
     )
 
     return {
@@ -1213,7 +1214,6 @@ def construct_inputs_analytic_eubo(
     pref_model: Model,
     previous_winner: Optional[Tensor] = None,
     sample_multiplier: Optional[float] = 1.0,
-    **kwargs: Any,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for the `AnalyticExpectedUtilityOfBestOption` constructor.
 
@@ -1336,7 +1336,6 @@ def optimize_objective(
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
     batch_initial_conditions: Optional[Tensor] = None,
     sequential: bool = False,
-    **ignore,
 ) -> Tuple[Tensor, Tensor]:
     r"""Optimize an objective under the given model.
 
@@ -1361,7 +1360,6 @@ def optimize_objective(
         batch_initial_conditions: A Tensor of initial values for the optimizer.
         sequential: If False, uses joint optimization, otherwise uses sequential
             optimization.
-        ignore: Any other arguments are ignored.
 
     Returns:
         A tuple containing the best input locations and corresponding objective values.
@@ -1430,7 +1428,6 @@ def optimize_objective(
 @acqf_input_constructor(qJointEntropySearch)
 def construct_inputs_qJES(
     model: Model,
-    training_data: MaybeDict[SupervisedDataset],
     bounds: List[Tuple[float, float]],
     num_optima: int = 64,
     maximize: bool = True,
@@ -1438,7 +1435,6 @@ def construct_inputs_qJES(
     X_pending: Optional[Tensor] = None,
     estimation_type: str = "LB",
     num_samples: int = 64,
-    **kwargs: Any,
 ):
     dtype = model.train_targets.dtype
     optimal_inputs, optimal_outputs = get_optimal_samples(
@@ -1457,6 +1453,5 @@ def construct_inputs_qJES(
         "X_pending": X_pending,
         "estimation_type": estimation_type,
         "num_samples": num_samples,
-        **kwargs,
     }
     return inputs

@@ -24,7 +24,7 @@ import math
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from functools import partial
-from typing import Any, Callable, List, Optional, Protocol, Tuple, Union
+from typing import Callable, List, Optional, Protocol, Tuple, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
@@ -351,7 +351,6 @@ class qExpectedImprovement(SampleReducingMCAcquisitionFunction):
         X_pending: Optional[Tensor] = None,
         constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
         eta: Union[Tensor, float] = 1e-3,
-        **kwargs: Any,
     ) -> None:
         r"""q-Expected Improvement.
 
@@ -434,7 +433,7 @@ class qNoisyExpectedImprovement(
         cache_root: bool = True,
         constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
         eta: Union[Tensor, float] = 1e-3,
-        **kwargs: Any,
+        marginalize_dim: Optional[int] = None,
     ) -> None:
         r"""q-Noisy Expected Improvement.
 
@@ -469,6 +468,7 @@ class qNoisyExpectedImprovement(
             eta: Temperature parameter(s) governing the smoothness of the sigmoid
                 approximation to the constraint indicators. For more details, on this
                 parameter, see the docs of `compute_smoothed_feasibility_indicator`.
+            marginalize_dim: The dimension to marginalize over.
 
         TODO: similar to qNEHVI, when we are using sequential greedy candidate
         selection, we could incorporate pending points X_baseline and compute
@@ -491,7 +491,7 @@ class qNoisyExpectedImprovement(
                 X=X_baseline,
                 objective=objective,
                 posterior_transform=posterior_transform,
-                marginalize_dim=kwargs.get("marginalize_dim"),
+                marginalize_dim=marginalize_dim,
             )
         self.register_buffer("X_baseline", X_baseline)
         # registering buffers for _get_samples_and_objectives in the next `if` block
