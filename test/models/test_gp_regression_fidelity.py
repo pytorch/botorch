@@ -47,11 +47,11 @@ def _get_random_data_with_fidelity(
 class TestSingleTaskMultiFidelityGP(BotorchTestCase):
 
     FIDELITY_TEST_PAIRS = (
-        (None, 1),
+        (None, [1]),
         (1, None),
-        (None, -1),
+        (None, [-1]),
         (-1, None),
-        (1, 2),
+        (1, [2]),
         (1, [2, 3]),
         (None, [1, 2]),
         (-1, [1, -2]),
@@ -60,7 +60,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
     def _get_model_and_data(
         self,
         iteration_fidelity,
-        data_fidelity,
+        data_fidelities,
         batch_shape,
         m,
         lin_truncated,
@@ -70,13 +70,9 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
     ):
         model_kwargs = {}
         n_fidelity = iteration_fidelity is not None
-        if data_fidelity is not None:
-            if isinstance(data_fidelity, int):
-                n_fidelity += 1
-                model_kwargs["data_fidelities"] = [data_fidelity]
-            else:
-                n_fidelity += len(data_fidelity)
-                model_kwargs["data_fidelities"] = data_fidelity
+        if data_fidelities is not None:
+            n_fidelity += len(data_fidelities)
+            model_kwargs["data_fidelities"] = data_fidelities
         train_X, train_Y = _get_random_data_with_fidelity(
             batch_shape=batch_shape, m=m, n_fidelity=n_fidelity, **tkwargs
         )
@@ -104,15 +100,20 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 SingleTaskMultiFidelityGP(
                     train_X, train_Y, linear_truncated=lin_truncated
                 )
+        with self.assertRaises(ValueError):
+            SingleTaskMultiFidelityGP(
+                train_X, train_Y, data_fidelities=[1], data_fidelity=2
+            )
+        with self.assertWarnsRegex(DeprecationWarning, "data_fidelity"):
+            SingleTaskMultiFidelityGP(
+                train_X, train_Y, data_fidelity=1, linear_truncated=False
+            )
 
     def test_gp(self):
-        for (iteration_fidelity, data_fidelity) in self.FIDELITY_TEST_PAIRS:
+        for (iteration_fidelity, data_fidelities) in self.FIDELITY_TEST_PAIRS:
             num_dim = 1 + (iteration_fidelity is not None)
-            if data_fidelity is not None:
-                if isinstance(data_fidelity, int):
-                    num_dim += 1
-                else:
-                    num_dim += len(data_fidelity)
+            if data_fidelities is not None:
+                num_dim += len(data_fidelities)
             bounds = torch.zeros(2, num_dim)
             bounds[1] = 1
             for (
@@ -135,7 +136,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 intf = Normalize(d=num_dim, bounds=bounds) if use_intf else None
                 model, model_kwargs = self._get_model_and_data(
                     iteration_fidelity=iteration_fidelity,
-                    data_fidelity=data_fidelity,
+                    data_fidelities=data_fidelities,
                     batch_shape=batch_shape,
                     m=m,
                     lin_truncated=lin_trunc,
@@ -171,11 +172,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 # test param sizes
                 params = dict(model.named_parameters())
 
-                if (
-                    not isinstance(data_fidelity, list)
-                    or isinstance(data_fidelity, list)
-                    and len(data_fidelity) == 1
-                ):
+                if data_fidelities is not None and len(data_fidelities) == 1:
                     for p in params:
                         self.assertEqual(
                             params[p].numel(),
@@ -216,13 +213,10 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                     self.assertAllClose(posterior.variance, expected_var)
 
     def test_condition_on_observations(self):
-        for (iteration_fidelity, data_fidelity) in self.FIDELITY_TEST_PAIRS:
+        for (iteration_fidelity, data_fidelities) in self.FIDELITY_TEST_PAIRS:
             n_fidelity = iteration_fidelity is not None
-            if data_fidelity is not None:
-                if isinstance(data_fidelity, int):
-                    n_fidelity += 1
-                else:
-                    n_fidelity += len(data_fidelity)
+            if data_fidelities is not None:
+                n_fidelity += len(data_fidelities)
             num_dim = 1 + n_fidelity
             for batch_shape, m, dtype, lin_trunc in itertools.product(
                 (torch.Size(), torch.Size([2])),
@@ -233,7 +227,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 tkwargs = {"device": self.device, "dtype": dtype}
                 model, model_kwargs = self._get_model_and_data(
                     iteration_fidelity=iteration_fidelity,
-                    data_fidelity=data_fidelity,
+                    data_fidelities=data_fidelities,
                     batch_shape=batch_shape,
                     m=m,
                     lin_truncated=lin_trunc,
@@ -298,7 +292,6 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                         for k, v in model_kwargs.items():
                             if k in (
                                 "iteration_fidelity",
-                                "data_fidelity",
                                 "data_fidelities",
                                 "linear_truncated",
                                 "input_transform",
@@ -342,13 +335,10 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                         )
 
     def test_fantasize(self):
-        for (iteration_fidelity, data_fidelity) in self.FIDELITY_TEST_PAIRS:
+        for (iteration_fidelity, data_fidelities) in self.FIDELITY_TEST_PAIRS:
             n_fidelity = iteration_fidelity is not None
-            if data_fidelity is not None:
-                if isinstance(data_fidelity, int):
-                    n_fidelity += 1
-                else:
-                    n_fidelity += len(data_fidelity)
+            if data_fidelities is not None:
+                n_fidelity += len(data_fidelities)
             num_dim = 1 + n_fidelity
             for batch_shape, m, dtype, lin_trunc in itertools.product(
                 (torch.Size(), torch.Size([2])),
@@ -359,7 +349,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 tkwargs = {"device": self.device, "dtype": dtype}
                 model, model_kwargs = self._get_model_and_data(
                     iteration_fidelity=iteration_fidelity,
-                    data_fidelity=data_fidelity,
+                    data_fidelities=data_fidelities,
                     batch_shape=batch_shape,
                     m=m,
                     lin_truncated=lin_trunc,
@@ -376,13 +366,10 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 self.assertIsInstance(fm, model.__class__)
 
     def test_subset_model(self):
-        for (iteration_fidelity, data_fidelity) in self.FIDELITY_TEST_PAIRS:
+        for (iteration_fidelity, data_fidelities) in self.FIDELITY_TEST_PAIRS:
             num_dim = 1 + (iteration_fidelity is not None)
-            if data_fidelity is not None:
-                if isinstance(data_fidelity, int):
-                    num_dim += 1
-                else:
-                    num_dim += len(data_fidelity)
+            if data_fidelities is not None:
+                num_dim += len(data_fidelities)
             for batch_shape, dtype, lin_trunc in itertools.product(
                 (torch.Size(), torch.Size([2])),
                 (torch.float, torch.double),
@@ -391,7 +378,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 tkwargs = {"device": self.device, "dtype": dtype}
                 model, _ = self._get_model_and_data(
                     iteration_fidelity=iteration_fidelity,
-                    data_fidelity=data_fidelity,
+                    data_fidelities=data_fidelities,
                     batch_shape=batch_shape,
                     m=2,
                     lin_truncated=lin_trunc,
@@ -414,7 +401,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 )
 
     def test_construct_inputs(self):
-        for (iteration_fidelity, data_fidelity) in self.FIDELITY_TEST_PAIRS:
+        for (iteration_fidelity, data_fidelities) in self.FIDELITY_TEST_PAIRS:
             for batch_shape, dtype, lin_trunc in itertools.product(
                 (torch.Size(), torch.Size([2])),
                 (torch.float, torch.double),
@@ -423,7 +410,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 tkwargs = {"device": self.device, "dtype": dtype}
                 model, kwargs = self._get_model_and_data(
                     iteration_fidelity=iteration_fidelity,
-                    data_fidelity=data_fidelity,
+                    data_fidelities=data_fidelities,
                     batch_shape=batch_shape,
                     m=1,
                     lin_truncated=lin_trunc,
@@ -446,7 +433,7 @@ class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
     def _get_model_and_data(
         self,
         iteration_fidelity,
-        data_fidelity,
+        data_fidelities,
         batch_shape,
         m,
         lin_truncated,
@@ -456,13 +443,9 @@ class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
     ):
         model_kwargs = {}
         n_fidelity = iteration_fidelity is not None
-        if data_fidelity is not None:
-            if isinstance(data_fidelity, int):
-                n_fidelity += 1
-                model_kwargs["data_fidelities"] = [data_fidelity]
-            else:
-                n_fidelity += len(data_fidelity)
-                model_kwargs["data_fidelities"] = data_fidelity
+        if data_fidelities is not None:
+            n_fidelity += len(data_fidelities)
+            model_kwargs["data_fidelities"] = data_fidelities
         train_X, train_Y = _get_random_data_with_fidelity(
             batch_shape=batch_shape, m=m, n_fidelity=n_fidelity, **tkwargs
         )
@@ -492,9 +475,17 @@ class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
                 FixedNoiseMultiFidelityGP(
                     train_X, train_Y, train_Yvar, linear_truncated=lin_truncated
                 )
+        with self.assertRaises(ValueError):
+            FixedNoiseMultiFidelityGP(
+                train_X, train_Y, train_Yvar, data_fidelities=[1], data_fidelity=2
+            )
+        with self.assertWarnsRegex(DeprecationWarning, "data_fidelity"):
+            FixedNoiseMultiFidelityGP(
+                train_X, train_Y, train_Yvar, data_fidelity=1, linear_truncated=False
+            )
 
     def test_fixed_noise_likelihood(self):
-        for (iteration_fidelity, data_fidelity) in self.FIDELITY_TEST_PAIRS:
+        for (iteration_fidelity, data_fidelities) in self.FIDELITY_TEST_PAIRS:
             for batch_shape, m, dtype, lin_trunc in itertools.product(
                 (torch.Size(), torch.Size([2])),
                 (1, 2),
@@ -504,7 +495,7 @@ class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
                 tkwargs = {"device": self.device, "dtype": dtype}
                 model, model_kwargs = self._get_model_and_data(
                     iteration_fidelity=iteration_fidelity,
-                    data_fidelity=data_fidelity,
+                    data_fidelities=data_fidelities,
                     batch_shape=batch_shape,
                     m=m,
                     lin_truncated=lin_trunc,
@@ -519,7 +510,7 @@ class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
                 )
 
     def test_construct_inputs(self):
-        for (iteration_fidelity, data_fidelity) in self.FIDELITY_TEST_PAIRS:
+        for (iteration_fidelity, data_fidelities) in self.FIDELITY_TEST_PAIRS:
             for batch_shape, dtype, lin_trunc in itertools.product(
                 (torch.Size(), torch.Size([2])),
                 (torch.float, torch.double),
@@ -528,7 +519,7 @@ class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
                 tkwargs = {"device": self.device, "dtype": dtype}
                 model, kwargs = self._get_model_and_data(
                     iteration_fidelity=iteration_fidelity,
-                    data_fidelity=data_fidelity,
+                    data_fidelities=data_fidelities,
                     batch_shape=batch_shape,
                     m=1,
                     lin_truncated=lin_trunc,
