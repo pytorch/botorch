@@ -20,8 +20,94 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<section id="botorch-fit">
-<h1>botorch.fit<a class="headerlink" href="#botorch-fit" title="Link to this heading">¶</a></h1>
+<section id="module-botorch.fit">
+<span id="botorch-fit"></span><h1>botorch.fit<a class="headerlink" href="#module-botorch.fit" title="Permalink to this heading">¶</a></h1>
+<p>Model fitting routines.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.fit.fit_gpytorch_mll">
+<span class="sig-prename descclassname"><span class="pre">botorch.fit.</span></span><span class="sig-name descname"><span class="pre">fit_gpytorch_mll</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">closure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">closure_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/fit.html#fit_gpytorch_mll"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.fit.fit_gpytorch_mll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clearing house for fitting models passed as GPyTorch MarginalLogLikelihoods.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – A GPyTorch MarginalLogLikelihood instance.</p></li>
+<li><p><strong>closure</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Tensor</em><em> | </em><em>None</em><em>]</em><em>]</em><em>] </em><em>| </em><em>None</em>) – Forward-backward closure for obtaining objective values and gradients.
+Responsible for setting parameters’ <cite>grad</cite> attributes. If no closure is
+provided, one will be obtained by calling <cite>get_loss_closure_with_grads</cite>.</p></li>
+<li><p><strong>optimizer</strong> (<em>Callable</em><em> | </em><em>None</em>) – User specified optimization algorithm. When <cite>optimizer is None</cite>,
+this keyword argument is omitted when calling the dispatcher.</p></li>
+<li><p><strong>closure_kwargs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Keyword arguments passed when calling <cite>closure</cite>.</p></li>
+<li><p><strong>optimizer_kwargs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – A dictionary of keyword arguments passed when
+calling <cite>optimizer</cite>.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) – Keyword arguments passed down through the dispatcher to
+fit subroutines. Unexpected keywords are ignored.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The <cite>mll</cite> instance. If fitting succeeded, then <cite>mll</cite> will be in evaluation mode,
+i.e. <cite>mll.training == False</cite>. Otherwise, <cite>mll</cite> will be in training mode.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>MarginalLogLikelihood</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.fit.fit_gpytorch_model">
+<span class="sig-prename descclassname"><span class="pre">botorch.fit.</span></span><span class="sig-name descname"><span class="pre">fit_gpytorch_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_retries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/fit.html#fit_gpytorch_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.fit.fit_gpytorch_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convenience method for fitting GPyTorch models using legacy API. For more
+details, see <cite>fit_gpytorch_mll</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – A GPyTorch MarginalLogLikelihood instance.</p></li>
+<li><p><strong>optimizer</strong> (<em>Callable</em><em> | </em><em>None</em>) – User specified optimization algorithm. When <cite>optimizer is None</cite>,
+this keyword argument is omitted when calling the dispatcher from inside
+<cite>fit_gpytorch_mll</cite>.</p></li>
+<li><p><strong>optimizer_kwargs</strong> (<em>dict</em><em> | </em><em>None</em>) – Keyword arguments passed to <cite>optimizer</cite>.</p></li>
+<li><p><strong>exclude</strong> (<em>Iterable</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Legacy argument for specifying parameters <cite>x</cite> that should be held fixed
+during optimization. Internally, used to temporarily set <cite>x.requires_grad</cite>
+to False.</p></li>
+<li><p><strong>max_retries</strong> (<em>int</em><em> | </em><em>None</em>) – Legacy name for <cite>max_attempts</cite>. When <cite>max_retries is None</cite>,
+this keyword argument is omitted when calling <cite>fit_gpytorch_mll</cite>.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>MarginalLogLikelihood</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.fit.fit_fully_bayesian_model_nuts">
+<span class="sig-prename descclassname"><span class="pre">botorch.fit.</span></span><span class="sig-name descname"><span class="pre">fit_fully_bayesian_model_nuts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tree_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warmup_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thinning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disable_progbar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit_compile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/fit.html#fit_fully_bayesian_model_nuts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.fit.fit_fully_bayesian_model_nuts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit a fully Bayesian model using the No-U-Turn-Sampler (NUTS)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP" title="botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP"><em>SaasFullyBayesianSingleTaskGP</em></a><em> | </em><a class="reference internal" href="models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP" title="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP"><em>SaasFullyBayesianMultiTaskGP</em></a>) – SaasFullyBayesianSingleTaskGP to be fitted.</p></li>
+<li><p><strong>max_tree_depth</strong> (<em>int</em>) – Maximum tree depth for NUTS</p></li>
+<li><p><strong>warmup_steps</strong> (<em>int</em>) – The number of burn-in steps for NUTS.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>) – The number of MCMC samples. Note that with thinning,
+num_samples / thinning samples are retained.</p></li>
+<li><p><strong>thinning</strong> (<em>int</em>) – The amount of thinning. Every nth sample is retained.</p></li>
+<li><p><strong>disable_progbar</strong> (<em>bool</em>) – A boolean indicating whether to print the progress
+bar and diagnostics during MCMC.</p></li>
+<li><p><strong>jit_compile</strong> (<em>bool</em>) – Whether to use jit. Using jit may be ~2X faster (rough estimate),
+but it will also increase the memory usage and sometimes result in runtime
+errors, e.g., <a class="reference external" href="https://github.com/pyro-ppl/pyro/issues/3136">https://github.com/pyro-ppl/pyro/issues/3136</a>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gp</span> <span class="o">=</span> <span class="n">SaasFullyBayesianSingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fit_fully_bayesian_model_nuts</span><span class="p">(</span><span class="n">gp</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
 </section>
 </div>
 </div>

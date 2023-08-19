@@ -20,8 +20,76 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<section id="botorch-settings">
-<h1>botorch.settings<a class="headerlink" href="#botorch-settings" title="Link to this heading">¶</a></h1>
+<section id="module-botorch.settings">
+<span id="botorch-settings"></span><h1>botorch.settings<a class="headerlink" href="#module-botorch.settings" title="Permalink to this heading">¶</a></h1>
+<p>BoTorch settings.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.settings.propagate_grads">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.settings.</span></span><span class="sig-name descname"><span class="pre">propagate_grads</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/settings.html#propagate_grads"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.settings.propagate_grads" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_Flag</span></code></p>
+<p>Flag for propagating gradients to model training inputs / training data.</p>
+<p>When set to <cite>True</cite>, gradients will be propagated to the training inputs.
+This is useful in particular for propating gradients through fantasy models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>state</strong> (<em>bool</em>) – </p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.settings.debug">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.settings.</span></span><span class="sig-name descname"><span class="pre">debug</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/settings.html#debug"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.settings.debug" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_Flag</span></code></p>
+<p>Flag for printing verbose warnings.</p>
+<dl>
+<dt>To make sure a warning is only raised in debug mode:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">if</span> <span class="n">debug</span><span class="o">.</span><span class="n">on</span><span class="p">():</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="o">&lt;</span><span class="n">some</span> <span class="n">warning</span><span class="o">&gt;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>state</strong> (<em>bool</em>) – </p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.settings.validate_input_scaling">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.settings.</span></span><span class="sig-name descname"><span class="pre">validate_input_scaling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/settings.html#validate_input_scaling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.settings.validate_input_scaling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_Flag</span></code></p>
+<p>Flag for validating input normalization/standardization.</p>
+<p>When set to <cite>True</cite>, standard botorch models will validate (up to reasonable
+tolerance) that
+(i) none of the inputs contain NaN values
+(ii) the training data (<cite>train_X</cite>) is normalized to the unit cube
+(iii) the training targets (<cite>train_Y</cite>) are standardized (zero mean, unit var)
+No checks (other than the NaN check) are performed for observed variances
+(<cite>train_Y_var</cite>) at this point.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>state</strong> (<em>bool</em>) – </p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.settings.log_level">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.settings.</span></span><span class="sig-name descname"><span class="pre">log_level</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/settings.html#log_level"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.settings.log_level" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Flag for printing verbose logging statements.</p>
+<p>Applies the given level to logging.getLogger(‘botorch’) calls. For
+instance, when set to logging.INFO, all logger calls of level INFO or
+above will be printed to STDERR</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>level</strong> (<em>int</em>) – The log level. Defaults to LOG_LEVEL_DEFAULT.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.settings.log_level.level">
+<span class="sig-name descname"><span class="pre">level</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">50</span></em><a class="headerlink" href="#botorch.settings.log_level.level" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
 </section>
 </div>
 </div>

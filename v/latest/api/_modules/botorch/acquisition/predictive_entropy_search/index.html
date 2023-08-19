@@ -1,0 +1,185 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/latest/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/v/latest/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/latest/img/botorch.png"/><link rel="shortcut icon" href="/v/latest/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-CXN3PGE3CC"></script><script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments); }
+              gtag('js', new Date());
+              gtag('config', 'G-CXN3PGE3CC');
+            </script><link rel="stylesheet" href="/v/latest/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/latest/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/latest/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for botorch.acquisition.predictive_entropy_search</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
+
+<span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">Acquisition function for predictive entropy search (PES). The code utilizes the</span>
+<span class="sd">implementation designed for the multi-objective batch setting.</span>
+
+<span class="sd">NOTE: The PES acquisition might not be differentiable. As a result, we recommend</span>
+<span class="sd">optimizing the acquisition function using finite differences.</span>
+
+<span class="sd">"""</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.predictive_entropy_search</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">qMultiObjectivePredictiveEntropySearch</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">concatenate_pending_points</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+
+
+<div class="viewcode-block" id="qPredictiveEntropySearch"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.predictive_entropy_search.qPredictiveEntropySearch">[docs]</a><span class="k">class</span> <span class="nc">qPredictiveEntropySearch</span><span class="p">(</span><span class="n">qMultiObjectivePredictiveEntropySearch</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The acquisition function for Predictive Entropy Search.</span>
+
+<span class="sd">    This acquisition function approximates the mutual information between the</span>
+<span class="sd">    observation at a candidate point `X` and the optimal set of inputs using</span>
+<span class="sd">    expectation propagation (EP).</span>
+
+<span class="sd">    NOTES:</span>
+<span class="sd">    (i) The expectation propagation procedure can potentially fail due to the unstable</span>
+<span class="sd">    EP updates. This is however unlikely to happen in the single-objective setting</span>
+<span class="sd">    because we have much fewer EP factors. The jitter added in the training phase</span>
+<span class="sd">    (`ep_jitter`) and testing phase (`test_jitter`) can be increased to prevent</span>
+<span class="sd">    these failures from happening. More details in the description of</span>
+<span class="sd">    `qMultiObjectivePredictiveEntropySearch`.</span>
+
+<span class="sd">    (ii) The estimated acquisition value could be negative.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">optimal_inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">max_ep_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">250</span><span class="p">,</span>
+        <span class="n">ep_jitter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
+        <span class="n">test_jitter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
+        <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Predictive entropy search acquisition function.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model: A fitted single-outcome model.</span>
+<span class="sd">            optimal_inputs: A `num_samples x d`-dim tensor containing the sampled</span>
+<span class="sd">                optimal inputs of dimension `d`. We assume for simplicity that each</span>
+<span class="sd">                sample only contains one optimal set of inputs.</span>
+<span class="sd">            maximize: If true, we consider a maximization problem.</span>
+<span class="sd">            X_pending: A `m x d`-dim Tensor of `m` design points that have been</span>
+<span class="sd">                submitted for function evaluation, but have not yet been evaluated.</span>
+<span class="sd">            max_ep_iterations: The maximum number of expectation propagation</span>
+<span class="sd">                iterations. (The minimum number of iterations is set at 3.)</span>
+<span class="sd">            ep_jitter: The amount of jitter added for the matrix inversion that</span>
+<span class="sd">                occurs during the expectation propagation update during the training</span>
+<span class="sd">                phase.</span>
+<span class="sd">            test_jitter: The amount of jitter added for the matrix inversion that</span>
+<span class="sd">                occurs during the expectation propagation update in the testing</span>
+<span class="sd">                phase.</span>
+<span class="sd">            threshold: The convergence threshold for expectation propagation. This</span>
+<span class="sd">                assesses the relative change in the mean and covariance. We default</span>
+<span class="sd">                to one percent change i.e. `threshold = 1e-2`.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">pareto_sets</span><span class="o">=</span><span class="n">optimal_inputs</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">),</span>
+            <span class="n">maximize</span><span class="o">=</span><span class="n">maximize</span><span class="p">,</span>
+            <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
+            <span class="n">max_ep_iterations</span><span class="o">=</span><span class="n">max_ep_iterations</span><span class="p">,</span>
+            <span class="n">ep_jitter</span><span class="o">=</span><span class="n">ep_jitter</span><span class="p">,</span>
+            <span class="n">test_jitter</span><span class="o">=</span><span class="n">test_jitter</span><span class="p">,</span>
+            <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="qPredictiveEntropySearch.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.predictive_entropy_search.qPredictiveEntropySearch.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
+    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qPredictiveEntropySearch on the candidate set `X`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim</span>
+<span class="sd">                design points each.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape'`-dim Tensor of Predictive Entropy Search values at the</span>
+<span class="sd">            given design points `X`.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_information_gain</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div></div>
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../../index.html">Documentation overview</a><ul>
+<li><a href="../../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/latest/" class="nav-home"><img src="/v/latest/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/latest/docs/introduction">Introduction</a><a href="/v/latest/docs/getting_started">Getting Started</a><a href="/v/latest/tutorials/">Tutorials</a><a href="/v/latest/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/latest/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/latest/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>
