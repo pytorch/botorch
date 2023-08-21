@@ -269,6 +269,7 @@ class TestFastPartitioningUtils(BotorchTestCase):
     """
 
     def setUp(self):
+        super().setUp()
         self.ref_point = -torch.tensor([10.0, 10.0, 10.0], device=self.device)
         self.U = -self.ref_point.clone().view(1, -1)
         self.Z = torch.empty(1, 3, 3, device=self.device)

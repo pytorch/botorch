@@ -49,6 +49,7 @@ class DummyFastPartitioning(FastPartitioning, DummyBoxDecomposition):
 
 class TestBoxDecomposition(BotorchTestCase):
     def setUp(self):
+        super().setUp()
         self.ref_point_raw = torch.zeros(3, device=self.device)
         self.Y_raw = torch.tensor(
             [

@@ -39,6 +39,7 @@ def get_weighted_val(ei_val, prob, exponent, use_log):
 
 class TestPriorGuidedAcquisitionFunction(BotorchTestCase):
     def setUp(self):
+        super().setUp()
         self.prior = DummyPrior()
         self.train_X = torch.rand(5, 3, dtype=torch.double, device=self.device)
         self.train_Y = self.train_X.norm(dim=-1, keepdim=True)
