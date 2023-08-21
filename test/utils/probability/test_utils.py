@@ -153,7 +153,9 @@ class TestProbabilityUtils(BotorchTestCase):
         with self.assertRaisesRegex(ValueError, "at most 1-dimensional"):
             utils.swap_along_dim_(values.view(-1), i=i_lidx, j=j, dim=0)
 
-    def test_gaussian_probabilities(self):
+    def test_gaussian_probabilities(self) -> None:
+        # test passes for each possible seed
+        torch.manual_seed(torch.randint(high=1000, size=(1,)))
         # testing Gaussian probability functions
         for dtype in (torch.float, torch.double):
             rtol = 1e-12 if dtype == torch.double else 1e-6
@@ -161,12 +163,8 @@ class TestProbabilityUtils(BotorchTestCase):
             n = 16
             x = 3 * torch.randn(n, device=self.device, dtype=dtype)
             # first, test consistency between regular and log versions
-            self.assertTrue(
-                torch.allclose(phi(x), log_phi(x).exp(), atol=atol, rtol=rtol)
-            )
-            self.assertTrue(
-                torch.allclose(ndtr(x), log_ndtr(x).exp(), atol=atol, rtol=rtol)
-            )
+            self.assertAllClose(phi(x), log_phi(x).exp(), atol=atol, rtol=rtol)
+            self.assertAllClose(ndtr(x), log_ndtr(x).exp(), atol=atol, rtol=rtol)
 
             # test correctness of log_erfc and log_erfcx
             for special_f, custom_log_f in zip(
@@ -291,10 +289,13 @@ class TestProbabilityUtils(BotorchTestCase):
             self.assertTrue((a.grad.diff() < 0).all())
 
             # testing error raising for invalid inputs
-            with self.assertRaises(ValueError):
-                a = torch.randn(3, 4, dtype=dtype, device=self.device)
-                b = torch.randn(3, 4, dtype=dtype, device=self.device)
-                a[2, 3] = b[2, 3]
+            a = torch.randn(3, 4, dtype=dtype, device=self.device)
+            b = torch.randn(3, 4, dtype=dtype, device=self.device)
+            a[2, 3] = b[2, 3]
+            with self.assertRaisesRegex(
+                ValueError,
+                "Received input tensors a, b for which not all a < b.",
+            ):
                 log_prob_normal_in(a, b)
 
             # testing gaussian hazard function
@@ -303,12 +304,20 @@ class TestProbabilityUtils(BotorchTestCase):
             x = torch.cat((-x, x))
             log_hx = standard_normal_log_hazard(x)
             expected_log_hx = log_phi(x) - log_ndtr(-x)
-            self.assertAllClose(expected_log_hx, log_hx)  # correctness
+            self.assertAllClose(
+                expected_log_hx,
+                log_hx,
+                atol=1e-8 if dtype == torch.double else 1e-7,
+            )  # correctness
             # NOTE: Could extend tests here similarly to log_erfc(x) tests above, but
             # since the hazard functions are built on log_erfcx, not urgent.
 
-        with self.assertRaises(TypeError):
+        float16_msg = (
+            "only supports torch.float32 and torch.float64 dtypes, but received "
+            "x.dtype = torch.float16."
+        )
+        with self.assertRaisesRegex(TypeError, expected_regex=float16_msg):
             log_erfc(torch.tensor(1.0, dtype=torch.float16, device=self.device))
 
-        with self.assertRaises(TypeError):
+        with self.assertRaisesRegex(TypeError, expected_regex=float16_msg):
             log_ndtr(torch.tensor(1.0, dtype=torch.float16, device=self.device))
