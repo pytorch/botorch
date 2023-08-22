@@ -274,9 +274,6 @@
     <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">method</span><span class="p">):</span>
         <span class="n">method_kwargs</span> <span class="o">=</span> <span class="n">allow_only_specific_variable_kwargs</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">acqf_cls_</span> <span class="ow">in</span> <span class="n">acqf_cls</span><span class="p">:</span>
-            <span class="n">_register_acqf_input_constructor</span><span class="p">(</span>
-                <span class="n">acqf_cls</span><span class="o">=</span><span class="n">acqf_cls_</span><span class="p">,</span> <span class="n">input_constructor</span><span class="o">=</span><span class="n">method_kwargs</span>
-            <span class="p">)</span>
             <span class="n">ACQF_INPUT_CONSTRUCTOR_REGISTRY</span><span class="p">[</span><span class="n">acqf_cls_</span><span class="p">]</span> <span class="o">=</span> <span class="n">method_kwargs</span>
         <span class="k">return</span> <span class="n">method</span>
 
@@ -1051,7 +1048,6 @@
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
-    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">candidate_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
     <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="c1"># TODO: qMES also supports other inputs, such as num_fantasies</span>
@@ -1065,7 +1061,6 @@
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">"model"</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span>
         <span class="s2">"candidate_set"</span><span class="p">:</span> <span class="n">_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">_rvs</span><span class="p">,</span>
-        <span class="s2">"objective"</span><span class="p">:</span> <span class="n">objective</span><span class="p">,</span>
         <span class="s2">"maximize"</span><span class="p">:</span> <span class="n">maximize</span><span class="p">,</span>
     <span class="p">}</span></div>
 
@@ -1094,7 +1089,6 @@
     <span class="p">)</span>
 
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"target_fidelities"</span><span class="p">:</span> <span class="n">target_fidelities</span><span class="p">,</span>
         <span class="s2">"cost_aware_utility"</span><span class="p">:</span> <span class="n">cost_aware_utility</span><span class="p">,</span>
         <span class="s2">"expand"</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">X</span><span class="p">:</span> <span class="n">expand_trace_observations</span><span class="p">(</span>
             <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span>
@@ -1168,7 +1162,6 @@
         <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
         <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
         <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
-        <span class="n">target_fidelities</span><span class="o">=</span><span class="n">target_fidelities</span><span class="p">,</span>
         <span class="n">num_fantasies</span><span class="o">=</span><span class="n">num_fantasies</span><span class="p">,</span>
     <span class="p">)</span>
 
@@ -1207,8 +1200,6 @@
         <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
         <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span>
         <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
-        <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
-        <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
         <span class="n">candidate_size</span><span class="o">=</span><span class="n">candidate_size</span><span class="p">,</span>
         <span class="n">maximize</span><span class="o">=</span><span class="n">maximize</span><span class="p">,</span>
     <span class="p">)</span>
@@ -1228,6 +1219,7 @@
         <span class="o">**</span><span class="n">inputs_mf</span><span class="p">,</span>
         <span class="o">**</span><span class="n">inputs_qmes</span><span class="p">,</span>
         <span class="s2">"current_value"</span><span class="p">:</span> <span class="n">current_value</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span>
+        <span class="s2">"target_fidelities"</span><span class="p">:</span> <span class="n">target_fidelities</span><span class="p">,</span>
     <span class="p">}</span></div>
 
 
