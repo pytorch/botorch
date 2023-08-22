@@ -556,7 +556,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             "prune_baseline": False,
             "cache_root": True,
             "posterior_transform": ScalarizedPosteriorTransform(weights=torch.ones(m)),
-            "sampler": SobolQMCNormalSampler(5),
+            "sampler": SobolQMCNormalSampler(sample_shape=torch.Size([5])),
         }
         acqf = qNoisyExpectedImprovement(**nei_args)
         X = torch.randn_like(X_baseline)

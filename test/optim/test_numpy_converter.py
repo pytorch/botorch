@@ -230,7 +230,8 @@ class TestSetParamsWithArray(BotorchTestCase):
 
 
 class TestScipyObjectiveAndGrad(BotorchTestCase):
-    def setUp(self):
+    def setUp(self) -> None:
+        super().setUp()
         with torch.random.fork_rng():
             torch.manual_seed(0)
             train_X = torch.linspace(0, 1, 10).unsqueeze(-1)

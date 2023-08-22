@@ -97,6 +97,7 @@ class DummyAcquisitionFunction(AcquisitionFunction):
 
 class InputConstructorBaseTestCase:
     def setUp(self) -> None:
+        super().setUp()
         self.mock_model = MockModel(
             posterior=MockPosterior(mean=None, variance=None, base_shape=(1,))
         )
