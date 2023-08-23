@@ -29,6 +29,7 @@ from botorch.acquisition.cost_aware import (
     InverseCostWeightedUtility,
 )
 from botorch.acquisition.decoupled import DecoupledAcquisitionFunction
+from botorch.acquisition.factory import get_acquisition_function
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
 from botorch.acquisition.input_constructors import get_acqf_input_constructor
 from botorch.acquisition.knowledge_gradient import (
@@ -72,7 +73,6 @@ from botorch.acquisition.preference import (
 )
 from botorch.acquisition.prior_guided import PriorGuidedAcquisitionFunction
 from botorch.acquisition.proximal import ProximalAcquisitionFunction
-from botorch.acquisition.utils import get_acquisition_function
 
 __all__ = [
     "AcquisitionFunction",
