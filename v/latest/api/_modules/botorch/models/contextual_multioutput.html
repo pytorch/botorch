@@ -27,6 +27,16 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
+<span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">References</span>
+
+<span class="sd">.. [Feng2020HDCPS]</span>
+<span class="sd">    Q. Feng, B. Latham, H. Mao and E. Backshy. High-Dimensional Contextual Policy</span>
+<span class="sd">    Search with Unknown Context Rewards using Bayesian Optimization.</span>
+<span class="sd">    Advances in Neural Information Processing Systems 33, NeurIPS 2020.</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -36,15 +46,16 @@
 <span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">Interval</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions.multivariate_normal</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.rbf_kernel</span> <span class="kn">import</span> <span class="n">RBFKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.gaussian_likelihood</span> <span class="kn">import</span> <span class="n">FixedNoiseGaussianLikelihood</span>
 <span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="n">InterpolatedLinearOperator</span><span class="p">,</span> <span class="n">LinearOperator</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">ModuleList</span>
 
 
 <div class="viewcode-block" id="LCEMGP"><a class="viewcode-back" href="../../../models.html#botorch.models.contextual_multioutput.LCEMGP">[docs]</a><span class="k">class</span> <span class="nc">LCEMGP</span><span class="p">(</span><span class="n">MultiTaskGP</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""The Multi-Task GP with the latent context embedding multioutput</span>
-<span class="sd">    (LCE-M) kernel.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The Multi-Task GP with the latent context embedding multioutput (LCE-M)</span>
+<span class="sd">    kernel. See [Feng2020HDCPS]_ for a reference on the model and its use in Bayesian</span>
+<span class="sd">    optimization.</span>
+
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -52,6 +63,7 @@
         <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">task_feature</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">context_cat_feature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">context_emb_feature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">embs_dim_list</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -64,6 +76,9 @@
 <span class="sd">            train_X: (n x d) X training data.</span>
 <span class="sd">            train_Y: (n x 1) Y training data.</span>
 <span class="sd">            task_feature: Column index of train_X to get context indices.</span>
+<span class="sd">            train_Yvar: An optional (n x 1) tensor of observed variances of each</span>
+<span class="sd">                training Y. If None, we infer the noise. Note that the inferred noise</span>
+<span class="sd">                is common across all tasks.</span>
 <span class="sd">            context_cat_feature: (n_contexts x k) one-hot encoded context</span>
 <span class="sd">                features. Rows are ordered by context indices, where k is the</span>
 <span class="sd">                number of categorical variables. If None, task indices will</span>
@@ -75,11 +90,13 @@
 <span class="sd">                for each categorical variable.</span>
 <span class="sd">            output_tasks: A list of task indices for which to compute model</span>
 <span class="sd">                outputs for. If omitted, return outputs for all task indices.</span>
+
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
             <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span>
             <span class="n">task_feature</span><span class="o">=</span><span class="n">task_feature</span><span class="p">,</span>
+            <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">,</span>
             <span class="n">output_tasks</span><span class="o">=</span><span class="n">output_tasks</span><span class="p">,</span>
             <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span>
             <span class="n">outcome_transform</span><span class="o">=</span><span class="n">outcome_transform</span><span class="p">,</span>
@@ -149,6 +166,7 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            task_idcs: (n x 1) or (b x n x 1) task indices tensor</span>
+
 <span class="sd">        """</span>
         <span class="n">covar_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_context_covar</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">InterpolatedLinearOperator</span><span class="p">(</span>
@@ -173,6 +191,8 @@
 <div class="viewcode-block" id="FixedNoiseLCEMGP"><a class="viewcode-back" href="../../../models.html#botorch.models.contextual_multioutput.FixedNoiseLCEMGP">[docs]</a><span class="k">class</span> <span class="nc">FixedNoiseLCEMGP</span><span class="p">(</span><span class="n">LCEMGP</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The Multi-Task GP the latent context embedding multioutput</span>
 <span class="sd">    (LCE-M) kernel, with known observation noise.</span>
+
+<span class="sd">    DEPRECATED: Please use `LCEMGP` with `train_Yvar` instead.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -190,7 +210,7 @@
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: (n x d) X training data.</span>
 <span class="sd">            train_Y: (n x 1) Y training data.</span>
-<span class="sd">            train_Yvar: (n x 1) Noise variances of each training Y.</span>
+<span class="sd">            train_Yvar: (n x 1) Observed variances of each training Y.</span>
 <span class="sd">            task_feature: Column index of train_X to get context indices.</span>
 <span class="sd">            context_cat_feature: (n_contexts x k) one-hot encoded context</span>
 <span class="sd">                features. Rows are ordered by context indices, where k is the</span>
@@ -203,19 +223,26 @@
 <span class="sd">                1 for each categorical variable.</span>
 <span class="sd">            output_tasks: A list of task indices for which to compute model</span>
 <span class="sd">                outputs for. If omitted, return outputs for all task indices.</span>
+
 <span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">)</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">"`FixedNoiseLCEMGP` has been deprecated and will be removed in a "</span>
+            <span class="s2">"future release. Please use the `LCEMGP` model instead. "</span>
+            <span class="s2">"When `train_Yvar` is specified, `LCEMGP` behaves the same "</span>
+            <span class="s2">"as the `FixedNoiseLCEMGP`."</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span>
+        <span class="p">)</span>
+
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
             <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span>
             <span class="n">task_feature</span><span class="o">=</span><span class="n">task_feature</span><span class="p">,</span>
+            <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">,</span>
             <span class="n">context_cat_feature</span><span class="o">=</span><span class="n">context_cat_feature</span><span class="p">,</span>
             <span class="n">context_emb_feature</span><span class="o">=</span><span class="n">context_emb_feature</span><span class="p">,</span>
             <span class="n">embs_dim_list</span><span class="o">=</span><span class="n">embs_dim_list</span><span class="p">,</span>
             <span class="n">output_tasks</span><span class="o">=</span><span class="n">output_tasks</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span> <span class="o">=</span> <span class="n">FixedNoiseGaussianLikelihood</span><span class="p">(</span><span class="n">noise</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span></div>
+        <span class="p">)</span></div>
 </pre></div>
 </div>
 </div>
