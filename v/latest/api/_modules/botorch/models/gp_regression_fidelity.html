@@ -48,7 +48,9 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
@@ -81,7 +83,7 @@
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; train_X = torch.rand(20, 4)</span>
 <span class="sd">        &gt;&gt;&gt; train_Y = train_X.pow(2).sum(dim=-1, keepdim=True)</span>
-<span class="sd">        &gt;&gt;&gt; model = SingleTaskMultiFidelityGP(train_X, train_Y, data_fidelity=3)</span>
+<span class="sd">        &gt;&gt;&gt; model = SingleTaskMultiFidelityGP(train_X, train_Y, data_fidelities=[3])</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -89,6 +91,7 @@
         <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">iteration_fidelity</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">data_fidelities</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">data_fidelity</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">linear_truncated</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">nu</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.5</span><span class="p">,</span>
@@ -104,8 +107,11 @@
 <span class="sd">            train_Y: A `batch_shape x n x m` tensor of training observations.</span>
 <span class="sd">            iteration_fidelity: The column index for the training iteration fidelity</span>
 <span class="sd">                parameter (optional).</span>
+<span class="sd">            data_fidelities: The column indices for the downsampling fidelity parameter.</span>
+<span class="sd">                If a list/tuple of indices is provided, a kernel will be constructed for</span>
+<span class="sd">                each index (optional).</span>
 <span class="sd">            data_fidelity: The column index for the downsampling fidelity parameter</span>
-<span class="sd">                (optional).</span>
+<span class="sd">                (optional). Deprecated in favor of `data_fidelities`.</span>
 <span class="sd">            linear_truncated: If True, use a `LinearTruncatedFidelityKernel` instead</span>
 <span class="sd">                of the default kernel.</span>
 <span class="sd">            nu: The smoothness parameter for the Matern kernel: either 1/2, 3/2, or</span>
@@ -119,14 +125,26 @@
 <span class="sd">            input_transform: An input transform that is applied in the model's</span>
 <span class="sd">                    forward pass.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">data_fidelity</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">"The `data_fidelity` argument is deprecated and will be removed in "</span>
+                <span class="s2">"a future release. Please use `data_fidelities` instead."</span><span class="p">,</span>
+                <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">data_fidelities</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"Cannot specify both `data_fidelity` and `data_fidelities`."</span>
+                <span class="p">)</span>
+            <span class="n">data_fidelities</span> <span class="o">=</span> <span class="p">[</span><span class="n">data_fidelity</span><span class="p">]</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_init_args</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"iteration_fidelity"</span><span class="p">:</span> <span class="n">iteration_fidelity</span><span class="p">,</span>
-            <span class="s2">"data_fidelity"</span><span class="p">:</span> <span class="n">data_fidelity</span><span class="p">,</span>
+            <span class="s2">"data_fidelities"</span><span class="p">:</span> <span class="n">data_fidelities</span><span class="p">,</span>
             <span class="s2">"linear_truncated"</span><span class="p">:</span> <span class="n">linear_truncated</span><span class="p">,</span>
             <span class="s2">"nu"</span><span class="p">:</span> <span class="n">nu</span><span class="p">,</span>
             <span class="s2">"outcome_transform"</span><span class="p">:</span> <span class="n">outcome_transform</span><span class="p">,</span>
         <span class="p">}</span>
-        <span class="k">if</span> <span class="n">iteration_fidelity</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">data_fidelity</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">iteration_fidelity</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">data_fidelities</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
                 <span class="s2">"SingleTaskMultiFidelityGP requires at least one fidelity parameter."</span>
             <span class="p">)</span>
@@ -140,7 +158,7 @@
             <span class="n">dim</span><span class="o">=</span><span class="n">transformed_X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
             <span class="n">aug_batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
             <span class="n">iteration_fidelity</span><span class="o">=</span><span class="n">iteration_fidelity</span><span class="p">,</span>
-            <span class="n">data_fidelity</span><span class="o">=</span><span class="n">data_fidelity</span><span class="p">,</span>
+            <span class="n">data_fidelities</span><span class="o">=</span><span class="n">data_fidelities</span><span class="p">,</span>
             <span class="n">linear_truncated</span><span class="o">=</span><span class="n">linear_truncated</span><span class="p">,</span>
             <span class="n">nu</span><span class="o">=</span><span class="n">nu</span><span class="p">,</span>
         <span class="p">)</span>
@@ -173,11 +191,8 @@
 <span class="sd">            training_data: Dictionary of `SupervisedDataset`.</span>
 <span class="sd">            fidelity_features: Index of fidelity parameter as input columns.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fidelity_features</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span><span class="s2">"Multiple fidelity features not supported."</span><span class="p">)</span>
-
         <span class="n">inputs</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">construct_inputs</span><span class="p">(</span><span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="n">inputs</span><span class="p">[</span><span class="s2">"data_fidelity"</span><span class="p">]</span> <span class="o">=</span> <span class="n">fidelity_features</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">inputs</span><span class="p">[</span><span class="s2">"data_fidelities"</span><span class="p">]</span> <span class="o">=</span> <span class="n">fidelity_features</span>
         <span class="k">return</span> <span class="n">inputs</span></div></div>
 
 
@@ -198,7 +213,7 @@
 <span class="sd">        &gt;&gt;&gt;     train_X,</span>
 <span class="sd">        &gt;&gt;&gt;     train_Y,</span>
 <span class="sd">        &gt;&gt;&gt;     train_Yvar,</span>
-<span class="sd">        &gt;&gt;&gt;     data_fidelity=3,</span>
+<span class="sd">        &gt;&gt;&gt;     data_fidelities=[3],</span>
 <span class="sd">        &gt;&gt;&gt; )</span>
 <span class="sd">    """</span>
 
@@ -208,6 +223,7 @@
         <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">iteration_fidelity</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">data_fidelities</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">data_fidelity</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">linear_truncated</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">nu</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.5</span><span class="p">,</span>
@@ -223,8 +239,11 @@
 <span class="sd">            train_Yvar: A `batch_shape x n x m` tensor of observed measurement noise.</span>
 <span class="sd">            iteration_fidelity: The column index for the training iteration fidelity</span>
 <span class="sd">                parameter (optional).</span>
+<span class="sd">            data_fidelities: The column indices for the downsampling fidelity parameter.</span>
+<span class="sd">                If a list of indices is provided, a kernel will be constructed for</span>
+<span class="sd">                each index (optional).</span>
 <span class="sd">            data_fidelity: The column index for the downsampling fidelity parameter</span>
-<span class="sd">                (optional).</span>
+<span class="sd">                (optional). Deprecated in favor of `data_fidelities`.</span>
 <span class="sd">            linear_truncated: If True, use a `LinearTruncatedFidelityKernel` instead</span>
 <span class="sd">                of the default kernel.</span>
 <span class="sd">            nu: The smoothness parameter for the Matern kernel: either 1/2, 3/2, or</span>
@@ -236,7 +255,26 @@
 <span class="sd">            input_transform: An input transform that is applied in the model's</span>
 <span class="sd">                forward pass.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="n">iteration_fidelity</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">data_fidelity</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">data_fidelity</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">"The `data_fidelity` argument is deprecated and will be removed in "</span>
+                <span class="s2">"a future release. Please use `data_fidelities` instead."</span><span class="p">,</span>
+                <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">data_fidelities</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"Cannot specify both `data_fidelity` and `data_fidelities`."</span>
+                <span class="p">)</span>
+            <span class="n">data_fidelities</span> <span class="o">=</span> <span class="p">[</span><span class="n">data_fidelity</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_args</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"iteration_fidelity"</span><span class="p">:</span> <span class="n">iteration_fidelity</span><span class="p">,</span>
+            <span class="s2">"data_fidelities"</span><span class="p">:</span> <span class="n">data_fidelities</span><span class="p">,</span>
+            <span class="s2">"linear_truncated"</span><span class="p">:</span> <span class="n">linear_truncated</span><span class="p">,</span>
+            <span class="s2">"nu"</span><span class="p">:</span> <span class="n">nu</span><span class="p">,</span>
+            <span class="s2">"outcome_transform"</span><span class="p">:</span> <span class="n">outcome_transform</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">iteration_fidelity</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">data_fidelities</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
                 <span class="s2">"FixedNoiseMultiFidelityGP requires at least one fidelity parameter."</span>
             <span class="p">)</span>
@@ -249,7 +287,7 @@
             <span class="n">dim</span><span class="o">=</span><span class="n">transformed_X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
             <span class="n">aug_batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
             <span class="n">iteration_fidelity</span><span class="o">=</span><span class="n">iteration_fidelity</span><span class="p">,</span>
-            <span class="n">data_fidelity</span><span class="o">=</span><span class="n">data_fidelity</span><span class="p">,</span>
+            <span class="n">data_fidelities</span><span class="o">=</span><span class="n">data_fidelities</span><span class="p">,</span>
             <span class="n">linear_truncated</span><span class="o">=</span><span class="n">linear_truncated</span><span class="p">,</span>
             <span class="n">nu</span><span class="o">=</span><span class="n">nu</span><span class="p">,</span>
         <span class="p">)</span>
@@ -282,11 +320,8 @@
 <span class="sd">            training_data: Dictionary of `SupervisedDataset`.</span>
 <span class="sd">            fidelity_features: Column indices of fidelity features.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fidelity_features</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span><span class="s2">"Multiple fidelity features not supported."</span><span class="p">)</span>
-
         <span class="n">inputs</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">construct_inputs</span><span class="p">(</span><span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="n">inputs</span><span class="p">[</span><span class="s2">"data_fidelity"</span><span class="p">]</span> <span class="o">=</span> <span class="n">fidelity_features</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">inputs</span><span class="p">[</span><span class="s2">"data_fidelities"</span><span class="p">]</span> <span class="o">=</span> <span class="n">fidelity_features</span>
         <span class="k">return</span> <span class="n">inputs</span></div></div>
 
 
@@ -294,7 +329,7 @@
     <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">aug_batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
     <span class="n">iteration_fidelity</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
-    <span class="n">data_fidelity</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">data_fidelities</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
     <span class="n">linear_truncated</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="n">nu</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ScaleKernel</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]:</span>
@@ -307,7 +342,7 @@
 <span class="sd">            `BatchedMultiOutputGPyTorchModel`.</span>
 <span class="sd">        iteration_fidelity: The column index for the training iteration fidelity</span>
 <span class="sd">            parameter (optional).</span>
-<span class="sd">        data_fidelity: The column index for the downsampling fidelity parameter</span>
+<span class="sd">        data_fidelities: The column indices for the downsampling fidelity parameters</span>
 <span class="sd">            (optional).</span>
 <span class="sd">        linear_truncated: If True, use a `LinearTruncatedFidelityKernel` instead</span>
 <span class="sd">            of the default kernel.</span>
@@ -320,77 +355,101 @@
 
     <span class="k">if</span> <span class="n">iteration_fidelity</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">iteration_fidelity</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">iteration_fidelity</span> <span class="o">=</span> <span class="n">dim</span> <span class="o">+</span> <span class="n">iteration_fidelity</span>
-    <span class="k">if</span> <span class="n">data_fidelity</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">data_fidelity</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">data_fidelity</span> <span class="o">=</span> <span class="n">dim</span> <span class="o">+</span> <span class="n">data_fidelity</span>
+    <span class="k">if</span> <span class="n">data_fidelities</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_fidelities</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">data_fidelities</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">data_fidelities</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">dim</span> <span class="o">+</span> <span class="n">data_fidelities</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+    <span class="n">kernels</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">if</span> <span class="n">linear_truncated</span><span class="p">:</span>
-        <span class="n">fidelity_dims</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">(</span><span class="n">iteration_fidelity</span><span class="p">,</span> <span class="n">data_fidelity</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-        <span class="p">]</span>
-        <span class="n">kernel</span> <span class="o">=</span> <span class="n">LinearTruncatedFidelityKernel</span><span class="p">(</span>
-            <span class="n">fidelity_dims</span><span class="o">=</span><span class="n">fidelity_dims</span><span class="p">,</span>
-            <span class="n">dimension</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span>
-            <span class="n">nu</span><span class="o">=</span><span class="n">nu</span><span class="p">,</span>
-            <span class="n">batch_shape</span><span class="o">=</span><span class="n">aug_batch_shape</span><span class="p">,</span>
-            <span class="n">power_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">),</span>
+        <span class="n">leading_dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">iteration_fidelity</span><span class="p">]</span> <span class="k">if</span> <span class="n">iteration_fidelity</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="n">trailing_dims</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">[[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">data_fidelities</span><span class="p">]</span> <span class="k">if</span> <span class="n">data_fidelities</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[[]]</span>
         <span class="p">)</span>
+        <span class="k">for</span> <span class="n">tdims</span> <span class="ow">in</span> <span class="n">trailing_dims</span><span class="p">:</span>
+            <span class="n">kernels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">LinearTruncatedFidelityKernel</span><span class="p">(</span>
+                    <span class="n">fidelity_dims</span><span class="o">=</span><span class="n">leading_dims</span> <span class="o">+</span> <span class="n">tdims</span><span class="p">,</span>
+                    <span class="n">dimension</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span>
+                    <span class="n">nu</span><span class="o">=</span><span class="n">nu</span><span class="p">,</span>
+                    <span class="n">batch_shape</span><span class="o">=</span><span class="n">aug_batch_shape</span><span class="p">,</span>
+                    <span class="n">power_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">active_dimsX</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="n">iteration_fidelity</span><span class="p">,</span> <span class="n">data_fidelity</span><span class="p">}</span>
-        <span class="p">]</span>
-        <span class="n">kernel</span> <span class="o">=</span> <span class="n">RBFKernel</span><span class="p">(</span>
-            <span class="n">ard_num_dims</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">active_dimsX</span><span class="p">),</span>
-            <span class="n">batch_shape</span><span class="o">=</span><span class="n">aug_batch_shape</span><span class="p">,</span>
-            <span class="n">lengthscale_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">),</span>
-            <span class="n">active_dims</span><span class="o">=</span><span class="n">active_dimsX</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">additional_kernels</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">non_active_dims</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">data_fidelities</span> <span class="ow">or</span> <span class="p">[])</span>
         <span class="k">if</span> <span class="n">iteration_fidelity</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">exp_kernel</span> <span class="o">=</span> <span class="n">ExponentialDecayKernel</span><span class="p">(</span>
+            <span class="n">non_active_dims</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">iteration_fidelity</span><span class="p">)</span>
+        <span class="n">active_dimsX</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">))</span> <span class="o">-</span> <span class="n">non_active_dims</span><span class="p">)</span>
+        <span class="n">kernels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">RBFKernel</span><span class="p">(</span>
+                <span class="n">ard_num_dims</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">active_dimsX</span><span class="p">),</span>
                 <span class="n">batch_shape</span><span class="o">=</span><span class="n">aug_batch_shape</span><span class="p">,</span>
                 <span class="n">lengthscale_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">),</span>
-                <span class="n">offset_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">),</span>
-                <span class="n">power_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">),</span>
-                <span class="n">active_dims</span><span class="o">=</span><span class="p">[</span><span class="n">iteration_fidelity</span><span class="p">],</span>
+                <span class="n">active_dims</span><span class="o">=</span><span class="n">active_dimsX</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">additional_kernels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">exp_kernel</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">data_fidelity</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">ds_kernel</span> <span class="o">=</span> <span class="n">DownsamplingKernel</span><span class="p">(</span>
-                <span class="n">batch_shape</span><span class="o">=</span><span class="n">aug_batch_shape</span><span class="p">,</span>
-                <span class="n">offset_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">),</span>
-                <span class="n">power_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">),</span>
-                <span class="n">active_dims</span><span class="o">=</span><span class="p">[</span><span class="n">data_fidelity</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">iteration_fidelity</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kernels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">ExponentialDecayKernel</span><span class="p">(</span>
+                    <span class="n">batch_shape</span><span class="o">=</span><span class="n">aug_batch_shape</span><span class="p">,</span>
+                    <span class="n">lengthscale_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">),</span>
+                    <span class="n">offset_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">),</span>
+                    <span class="n">power_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">),</span>
+                    <span class="n">active_dims</span><span class="o">=</span><span class="p">[</span><span class="n">iteration_fidelity</span><span class="p">],</span>
+                <span class="p">)</span>
             <span class="p">)</span>
-            <span class="n">additional_kernels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ds_kernel</span><span class="p">)</span>
-        <span class="n">kernel</span> <span class="o">=</span> <span class="n">ProductKernel</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="o">*</span><span class="n">additional_kernels</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">data_fidelities</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">data_fidelity</span> <span class="ow">in</span> <span class="n">data_fidelities</span><span class="p">:</span>
+                <span class="n">kernels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">DownsamplingKernel</span><span class="p">(</span>
+                        <span class="n">batch_shape</span><span class="o">=</span><span class="n">aug_batch_shape</span><span class="p">,</span>
+                        <span class="n">offset_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">),</span>
+                        <span class="n">power_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">),</span>
+                        <span class="n">active_dims</span><span class="o">=</span><span class="p">[</span><span class="n">data_fidelity</span><span class="p">],</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+
+    <span class="n">kernel</span> <span class="o">=</span> <span class="n">ProductKernel</span><span class="p">(</span><span class="o">*</span><span class="n">kernels</span><span class="p">)</span>
 
     <span class="n">covar_module</span> <span class="o">=</span> <span class="n">ScaleKernel</span><span class="p">(</span>
         <span class="n">kernel</span><span class="p">,</span> <span class="n">batch_shape</span><span class="o">=</span><span class="n">aug_batch_shape</span><span class="p">,</span> <span class="n">outputscale_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">)</span>
     <span class="p">)</span>
 
+    <span class="n">key_prefix</span> <span class="o">=</span> <span class="s2">"covar_module.base_kernel.kernels"</span>
     <span class="k">if</span> <span class="n">linear_truncated</span><span class="p">:</span>
-        <span class="n">subset_batch_dict</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">"covar_module.base_kernel.raw_power"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
-            <span class="s2">"covar_module.base_kernel.covar_module_unbiased.raw_lengthscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span>
-            <span class="s2">"covar_module.base_kernel.covar_module_biased.raw_lengthscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span>
-        <span class="p">}</span>
+        <span class="n">subset_batch_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">kernels</span><span class="p">)):</span>
+            <span class="n">subset_batch_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key_prefix</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">.raw_power"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key_prefix</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">.covar_module_unbiased.raw_lengthscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key_prefix</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">.covar_module_biased.raw_lengthscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">subset_batch_dict</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">"covar_module.base_kernel.kernels.0.raw_lengthscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span>
-            <span class="s2">"covar_module.base_kernel.kernels.1.raw_power"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
-            <span class="s2">"covar_module.base_kernel.kernels.1.raw_offset"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key_prefix</span><span class="si">}</span><span class="s2">.0.raw_lengthscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span>
         <span class="p">}</span>
+
         <span class="k">if</span> <span class="n">iteration_fidelity</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">subset_batch_dict</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s2">"covar_module.base_kernel.kernels.1.raw_lengthscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span>
-                <span class="o">**</span><span class="n">subset_batch_dict</span><span class="p">,</span>
-            <span class="p">}</span>
-            <span class="k">if</span> <span class="n">data_fidelity</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">subset_batch_dict</span> <span class="o">=</span> <span class="p">{</span>
-                    <span class="s2">"covar_module.base_kernel.kernels.2.raw_power"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
-                    <span class="s2">"covar_module.base_kernel.kernels.2.raw_offset"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
-                    <span class="o">**</span><span class="n">subset_batch_dict</span><span class="p">,</span>
+            <span class="n">subset_batch_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key_prefix</span><span class="si">}</span><span class="s2">.1.raw_power"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key_prefix</span><span class="si">}</span><span class="s2">.1.raw_offset"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key_prefix</span><span class="si">}</span><span class="s2">.1.raw_lengthscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span>
                 <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">data_fidelities</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">start_idx</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">iteration_fidelity</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">1</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start_idx</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_fidelities</span><span class="p">)</span> <span class="o">+</span> <span class="n">start_idx</span><span class="p">):</span>
+                <span class="n">subset_batch_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key_prefix</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">.raw_power"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key_prefix</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">.raw_offset"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">covar_module</span><span class="p">,</span> <span class="n">subset_batch_dict</span>
 </pre></div>

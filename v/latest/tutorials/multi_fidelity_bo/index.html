@@ -155,7 +155,7 @@
     <span class="c1"># define a surrogate model suited for a "training data"-like fidelity parameter</span>
     <span class="c1"># in dimension 6, as in [2]</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskMultiFidelityGP</span><span class="p">(</span>
-        <span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">,</span> <span class="n">outcome_transform</span><span class="o">=</span><span class="n">Standardize</span><span class="p">(</span><span class="n">m</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">data_fidelity</span><span class="o">=</span><span class="mi">6</span>
+        <span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">,</span> <span class="n">outcome_transform</span><span class="o">=</span><span class="n">Standardize</span><span class="p">(</span><span class="n">m</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">data_fidelities</span><span class="o">=</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span>
     <span class="p">)</span>
     <span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">mll</span><span class="p">,</span> <span class="n">model</span>

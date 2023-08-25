@@ -1318,6 +1318,28 @@ defaults to <cite>min(20 / d, 1)</cite>.</p></li>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.initializers.is_nonnegative">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.initializers.</span></span><span class="sig-name descname"><span class="pre">is_nonnegative</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#is_nonnegative"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.initializers.is_nonnegative" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine whether a given acquisition function is non-negative.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>acq_function</strong> (<em>AcquisitionFunction</em>) – The <cite>AcquisitionFunction</cite> instance.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if <cite>acq_function</cite> is non-negative, False if not, or if the behavior
+is unknown (for custom acquisition functions).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">qEI</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">best_f</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">is_nonnegative</span><span class="p">(</span><span class="n">qEI</span><span class="p">)</span>  <span class="c1"># returns True</span>
+</pre></div>
+</div>
+</dd></dl>
 </section>
 <section id="module-botorch.optim.stopping">
 <span id="stopping-criteria"></span><h3>Stopping Criteria<a class="headerlink" href="#module-botorch.optim.stopping" title="Permalink to this heading">¶</a></h3>

@@ -43,12 +43,12 @@
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">analytic</span><span class="p">,</span> <span class="n">monte_carlo</span><span class="p">,</span> <span class="n">multi_objective</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.knowledge_gradient</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">_get_value_function</span><span class="p">,</span>
     <span class="n">qKnowledgeGradient</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.utils</span> <span class="kn">import</span> <span class="n">is_nonnegative</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">BadInitialCandidatesWarning</span><span class="p">,</span>
@@ -1062,6 +1062,37 @@
     <span class="c1"># Create candidate points</span>
     <span class="n">X_cand</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">pert</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">X_cand</span></div>
+
+
+<div class="viewcode-block" id="is_nonnegative"><a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.is_nonnegative">[docs]</a><span class="k">def</span> <span class="nf">is_nonnegative</span><span class="p">(</span><span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Determine whether a given acquisition function is non-negative.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        acq_function: The `AcquisitionFunction` instance.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True if `acq_function` is non-negative, False if not, or if the behavior</span>
+<span class="sd">        is unknown (for custom acquisition functions).</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; qEI = qExpectedImprovement(model, best_f=0.1)</span>
+<span class="sd">        &gt;&gt;&gt; is_nonnegative(qEI)  # returns True</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span>
+        <span class="n">acq_function</span><span class="p">,</span>
+        <span class="p">(</span>
+            <span class="n">analytic</span><span class="o">.</span><span class="n">ExpectedImprovement</span><span class="p">,</span>
+            <span class="n">analytic</span><span class="o">.</span><span class="n">ConstrainedExpectedImprovement</span><span class="p">,</span>
+            <span class="n">analytic</span><span class="o">.</span><span class="n">ProbabilityOfImprovement</span><span class="p">,</span>
+            <span class="n">analytic</span><span class="o">.</span><span class="n">NoisyExpectedImprovement</span><span class="p">,</span>
+            <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qExpectedImprovement</span><span class="p">,</span>
+            <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qNoisyExpectedImprovement</span><span class="p">,</span>
+            <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qProbabilityOfImprovement</span><span class="p">,</span>
+            <span class="n">multi_objective</span><span class="o">.</span><span class="n">analytic</span><span class="o">.</span><span class="n">ExpectedHypervolumeImprovement</span><span class="p">,</span>
+            <span class="n">multi_objective</span><span class="o">.</span><span class="n">monte_carlo</span><span class="o">.</span><span class="n">qExpectedHypervolumeImprovement</span><span class="p">,</span>
+            <span class="n">multi_objective</span><span class="o">.</span><span class="n">monte_carlo</span><span class="o">.</span><span class="n">qNoisyExpectedHypervolumeImprovement</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span></div>
 </pre></div>
 </div>
 </div>

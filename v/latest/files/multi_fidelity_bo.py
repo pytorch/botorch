@@ -63,7 +63,7 @@ def initialize_model(train_x, train_obj):
     # define a surrogate model suited for a "training data"-like fidelity parameter
     # in dimension 6, as in [2]
     model = SingleTaskMultiFidelityGP(
-        train_x, train_obj, outcome_transform=Standardize(m=1), data_fidelity=6
+        train_x, train_obj, outcome_transform=Standardize(m=1), data_fidelities=[6]
     )
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
     return mll, model
