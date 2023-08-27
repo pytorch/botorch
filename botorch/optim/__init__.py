@@ -23,7 +23,6 @@ from botorch.optim.homotopy import (
     LogLinearHomotopySchedule,
 )
 from botorch.optim.initializers import initialize_q_batch, initialize_q_batch_nonneg
-from botorch.optim.numpy_converter import module_to_array, set_params_with_array
 from botorch.optim.optimize import (
     gen_batch_initial_conditions,
     optimize_acqf,
@@ -51,9 +50,7 @@ __all__ = [
     "optimize_acqf_discrete_local_search",
     "optimize_acqf_mixed",
     "optimize_acqf_homotopy",
-    "module_to_array",
     "scipy_minimize",
-    "set_params_with_array",
     "torch_minimize",
     "ExpMAStoppingCriterion",
     "FixedHomotopySchedule",

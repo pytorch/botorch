@@ -9,11 +9,10 @@ r"""Model fitting routines."""
 from __future__ import annotations
 
 import logging
-from contextlib import nullcontext
 from functools import partial
 from itertools import filterfalse
-from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Tuple, Type, Union
-from warnings import catch_warnings, simplefilter, warn, warn_explicit, WarningMessage
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Type, Union
+from warnings import catch_warnings, simplefilter, warn_explicit, WarningMessage
 
 from botorch.exceptions.errors import ModelFittingError, UnsupportedError
 from botorch.exceptions.warnings import OptimizationWarning
@@ -33,7 +32,6 @@ from botorch.settings import debug
 from botorch.utils.context_managers import (
     module_rollback_ctx,
     parameter_rollback_ctx,
-    requires_grad_ctx,
     TensorCheckpoint,
 )
 from botorch.utils.dispatcher import Dispatcher, type_bypassing_encoder
@@ -111,66 +109,6 @@ def fit_gpytorch_mll(
         optimizer_kwargs=optimizer_kwargs,
         **kwargs,
     )
-
-
-def fit_gpytorch_model(
-    mll: MarginalLogLikelihood,
-    optimizer: Optional[Callable] = None,
-    optimizer_kwargs: Optional[dict] = None,
-    exclude: Optional[Iterable[str]] = None,
-    max_retries: Optional[int] = None,
-    **kwargs: Any,
-) -> MarginalLogLikelihood:
-    r"""Convenience method for fitting GPyTorch models using legacy API. For more
-    details, see `fit_gpytorch_mll`.
-
-    Args:
-        mll: A GPyTorch MarginalLogLikelihood instance.
-        optimizer: User specified optimization algorithm. When `optimizer is None`,
-            this keyword argument is omitted when calling the dispatcher from inside
-            `fit_gpytorch_mll`.
-        optimizer_kwargs: Keyword arguments passed to `optimizer`.
-        exclude: Legacy argument for specifying parameters `x` that should be held fixed
-            during optimization. Internally, used to temporarily set `x.requires_grad`
-            to False.
-        max_retries: Legacy name for `max_attempts`. When `max_retries is None`,
-            this keyword argument is omitted when calling `fit_gpytorch_mll`.
-    """
-    warn(
-        "`fit_gpytorch_model` is marked for deprecation, consider using "
-        "`fit_gpytorch_mll` instead.",
-        DeprecationWarning,
-    )
-    if max_retries is not None:
-        kwargs["max_attempts"] = max_retries
-
-    optimizer_kwargs = {} if optimizer_kwargs is None else optimizer_kwargs
-    for key in ("bounds", "options"):
-        if key not in kwargs:
-            continue
-
-        val = kwargs.pop(key)
-        if key in optimizer_kwargs and val is not optimizer_kwargs[key]:
-            raise SyntaxError(f"keyword argument repeated: {key}")
-
-        optimizer_kwargs[key] = val
-
-    with (
-        nullcontext()
-        if exclude is None
-        else requires_grad_ctx(mll, assignments={name: False for name in exclude})
-    ):
-        try:
-            mll = fit_gpytorch_mll(
-                mll,
-                optimizer=optimizer,
-                optimizer_kwargs=optimizer_kwargs,
-                **kwargs,
-            )
-        except ModelFittingError as err:
-            warn(str(err), RuntimeWarning)
-
-    return mll
 
 
 @FitGPyTorchMLL.register(MarginalLogLikelihood, object, object)
