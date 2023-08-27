@@ -19,7 +19,6 @@ from botorch.cross_validation import batch_cross_validation
 from botorch.fit import (
     fit_fully_bayesian_model_nuts,
     fit_gpytorch_mll,
-    fit_gpytorch_model,
 )
 from botorch.generation.gen import (
     gen_candidates_scipy,
@@ -56,7 +55,6 @@ __all__ = [
     "exceptions",
     "fit_fully_bayesian_model_nuts",
     "fit_gpytorch_mll",
-    "fit_gpytorch_model",
     "gen_candidates_scipy",
     "gen_candidates_torch",
     "get_best_candidates",

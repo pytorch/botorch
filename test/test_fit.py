@@ -109,68 +109,6 @@ class TestFitAPI(BotorchTestCase):
                 optimizer_kwargs=None,
             )
 
-    def test_fit_gyptorch_model(self):
-        r"""Test support for legacy API"""
-
-        # Test `option` argument
-        options = {"foo": 0}
-        with catch_warnings(), patch.object(
-            fit,
-            "fit_gpytorch_mll",
-            new=lambda mll, optimizer_kwargs=None, **kwargs: optimizer_kwargs,
-        ):
-            self.assertEqual(
-                {"options": options, "bar": 1},
-                fit.fit_gpytorch_model(
-                    self.mll,
-                    options=options,
-                    optimizer_kwargs={"bar": 1},
-                ),
-            )
-
-        # Test `max_retries` argument
-        with catch_warnings(), patch.object(
-            fit,
-            "fit_gpytorch_mll",
-            new=lambda mll, max_attempts=None, **kwargs: max_attempts,
-        ):
-            self.assertEqual(100, fit.fit_gpytorch_model(self.mll, max_retries=100))
-
-        # Test `exclude` argument
-        self.assertTrue(self.mll.model.mean_module.constant.requires_grad)
-        with catch_warnings(), patch.object(
-            fit,
-            "fit_gpytorch_mll",
-            new=lambda mll, **kwargs: mll.model.mean_module.constant.requires_grad,
-        ):
-            self.assertFalse(
-                fit.fit_gpytorch_model(
-                    self.mll,
-                    options=options,
-                    exclude=["model.mean_module.constant"],
-                )
-            )
-        self.assertTrue(self.mll.model.mean_module.constant.requires_grad)
-
-        # Test collisions
-        with catch_warnings(record=True) as ws, self.assertRaises(SyntaxError):
-            fit.fit_gpytorch_model(
-                self.mll,
-                options=options,
-                optimizer_kwargs={"options": {"bar": 1}},
-            )
-            self.assertTrue(any("marked for deprecation" in str(w.message) for w in ws))
-
-        # Test that ModelFittingErrors are rethrown as warnings
-        def mock_fit_gpytorch_mll(*args, **kwargs):
-            raise ModelFittingError("foo")
-
-        with catch_warnings(record=True) as ws, patch.object(
-            fit, "fit_gpytorch_mll", new=mock_fit_gpytorch_mll
-        ):
-            fit.fit_gpytorch_model(self.mll)
-        self.assertTrue(any("foo" in str(w.message) for w in ws))
-
 
 class TestFitFallback(BotorchTestCase):
     def setUp(self) -> None:
