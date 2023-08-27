@@ -4,7 +4,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import warnings
 from typing import Any
 
 import torch
@@ -24,7 +23,6 @@ from botorch.utils.transforms import (
     match_batch_shape,
     normalize,
     normalize_indices,
-    squeeze_last_dim,
     standardize,
     t_batch_mode_transform,
     unnormalize,
@@ -296,15 +294,6 @@ class TorchNormalizeIndices(BotorchTestCase):
             nlzd_indices = normalize_indices([3], 3)
         with self.assertRaises(ValueError):
             nlzd_indices = normalize_indices([-4], 3)
-
-
-class TestSqueezeLastDim(BotorchTestCase):
-    def test_squeeze_last_dim(self):
-        Y = torch.rand(2, 1, 1)
-        with warnings.catch_warnings(record=True) as ws:
-            Y_squeezed = squeeze_last_dim(Y=Y)
-            self.assertTrue(any(issubclass(w.category, DeprecationWarning) for w in ws))
-        self.assertTrue(torch.equal(Y_squeezed, Y.squeeze(-1)))
 
 
 class TestIsFullyBayesian(BotorchTestCase):
