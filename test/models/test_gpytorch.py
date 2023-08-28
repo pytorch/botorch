@@ -296,7 +296,7 @@ class TestGPyTorchModel(BotorchTestCase):
         self.assertFalse(model.last_fantasize_flag)
         model.posterior(test_X)
         self.assertFalse(model.last_fantasize_flag)
-        model.fantasize(test_X, SobolQMCNormalSampler(2))
+        model.fantasize(test_X, SobolQMCNormalSampler(sample_shape=torch.Size([2])))
         self.assertTrue(model.last_fantasize_flag)
         model.last_fantasize_flag = False
         with fantasize():

@@ -23,6 +23,7 @@ from torch.nn import Module, Parameter
 
 class TestContextManagers(BotorchTestCase):
     def setUp(self):
+        super().setUp()
         module = self.module = Module()
         for i, name in enumerate(ascii_lowercase[:3], start=1):
             values = torch.rand(2).to(torch.float16)

@@ -10,6 +10,7 @@ from botorch.exceptions.errors import (
     BotorchError,
     BotorchTensorDimensionError,
     CandidateGenerationError,
+    DeprecationError,
     InputDataError,
     OptimizationTimeoutError,
     UnsupportedError,
@@ -20,10 +21,14 @@ from botorch.utils.testing import BotorchTestCase
 class TestBotorchExceptions(BotorchTestCase):
     def test_botorch_exception_hierarchy(self):
         self.assertIsInstance(BotorchError(), Exception)
-        self.assertIsInstance(CandidateGenerationError(), BotorchError)
-        self.assertIsInstance(InputDataError(), BotorchError)
-        self.assertIsInstance(UnsupportedError(), BotorchError)
-        self.assertIsInstance(BotorchTensorDimensionError(), BotorchError)
+        for ErrorClass in [
+            CandidateGenerationError,
+            DeprecationError,
+            InputDataError,
+            UnsupportedError,
+            BotorchTensorDimensionError,
+        ]:
+            self.assertIsInstance(ErrorClass(), BotorchError)
 
     def test_raise_botorch_exceptions(self):
         for ErrorClass in (

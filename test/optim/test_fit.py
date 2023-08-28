@@ -24,7 +24,8 @@ from scipy.optimize import OptimizeResult
 
 
 class TestFitGPyTorchMLLScipy(BotorchTestCase):
-    def setUp(self):
+    def setUp(self) -> None:
+        super().setUp()
         self.mlls = {}
         with torch.random.fork_rng():
             torch.manual_seed(0)
@@ -171,7 +172,8 @@ class TestFitGPyTorchMLLScipy(BotorchTestCase):
 
 
 class TestFitGPyTorchMLLTorch(BotorchTestCase):
-    def setUp(self):
+    def setUp(self) -> None:
+        super().setUp()
         self.mlls = {}
         with torch.random.fork_rng():
             torch.manual_seed(0)

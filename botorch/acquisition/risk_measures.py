@@ -20,22 +20,13 @@ see also [Hong2014review]_.
     Computer Simulation, 2014.
 """
 
-import warnings
 from abc import ABC, abstractmethod
 from math import ceil
-from typing import Callable, List, Optional, Union
+from typing import Callable, Optional
 
 import torch
-from botorch.acquisition.multi_objective.objective import (
-    IdentityMCMultiOutputObjective,
-    WeightedMCMultiOutputObjective,
-)
-from botorch.acquisition.objective import (
-    IdentityMCObjective,
-    LinearMCObjective,
-    MCAcquisitionObjective,
-)
-from botorch.exceptions.errors import UnsupportedError
+from botorch.acquisition.multi_objective.objective import IdentityMCMultiOutputObjective
+from botorch.acquisition.objective import IdentityMCObjective, MCAcquisitionObjective
 from torch import Tensor
 
 
@@ -51,7 +42,8 @@ class RiskMeasureMCObjective(MCAcquisitionObjective, ABC):
     upper tail of the distribution, i.e., treating larger values as being undesirable.
     BoTorch by default assumes a maximization objective, so the default behavior here
     is to calculate the risk measures w.r.t. the lower tail of the distribution.
-    This can be changed by passing `weights=torch.tensor([-1.0])`.
+    This can be changed by passing a preprocessing function with
+    `weights=torch.tensor([-1.0])`.
 
     :meta private:
     """
@@ -60,7 +52,6 @@ class RiskMeasureMCObjective(MCAcquisitionObjective, ABC):
         self,
         n_w: int,
         preprocessing_function: Optional[Callable[[Tensor], Tensor]] = None,
-        weights: Optional[Union[List[float], Tensor]] = None,
     ) -> None:
         r"""Transform the posterior samples to samples of a risk measure.
 
@@ -72,28 +63,9 @@ class RiskMeasureMCObjective(MCAcquisitionObjective, ABC):
                 For constrained optimization, this should also apply
                 feasibility-weighting to samples. Given a `batch x m`-dim
                 tensor of samples, this should return a `batch`-dim tensor.
-            weights: An optional `m`-dim tensor or list of weights for scalarizing
-                multi-output samples before calculating the risk measure.
-                Deprecated, use `preprocessing_function` instead.
         """
         super().__init__()
         self.n_w = n_w
-        if weights is not None:
-            warnings.warn(
-                "`weights` argument of risk measures is deprecated and will be removed "
-                "in a future version. Use a `preprocessing_function` instead.",
-                DeprecationWarning,
-            )
-            if preprocessing_function is not None:
-                raise UnsupportedError(
-                    "`weights` and `preprocessing_function` are not supported "
-                    "together. Use only a `preprocessing_function` instead."
-                )
-            weights = torch.as_tensor(weights)
-            if self._is_mo:
-                preprocessing_function = WeightedMCMultiOutputObjective(weights=weights)
-            else:
-                preprocessing_function = LinearMCObjective(weights=weights)
         if preprocessing_function is None:
             if self._is_mo:
                 preprocessing_function = IdentityMCMultiOutputObjective()
@@ -158,7 +130,6 @@ class CVaR(RiskMeasureMCObjective):
         alpha: float,
         n_w: int,
         preprocessing_function: Optional[Callable[[Tensor], Tensor]] = None,
-        weights: Optional[Union[List[float], Tensor]] = None,
     ) -> None:
         r"""Transform the posterior samples to samples of a risk measure.
 
@@ -171,13 +142,8 @@ class CVaR(RiskMeasureMCObjective):
                 For constrained optimization, this should also apply
                 feasibility-weighting to samples. Given a `batch x m`-dim
                 tensor of samples, this should return a `batch`-dim tensor.
-            weights: An optional `m`-dim tensor or list of weights for scalarizing
-                multi-output samples before calculating the risk measure.
-                Deprecated, use `preprocessing_function` instead.
         """
-        super().__init__(
-            n_w=n_w, preprocessing_function=preprocessing_function, weights=weights
-        )
+        super().__init__(n_w=n_w, preprocessing_function=preprocessing_function)
         if not 0 < alpha <= 1:
             raise ValueError("alpha must be in (0.0, 1.0]")
         self.alpha = alpha
@@ -218,7 +184,6 @@ class VaR(CVaR):
         alpha: float,
         n_w: int,
         preprocessing_function: Optional[Callable[[Tensor], Tensor]] = None,
-        weights: Optional[Union[List[float], Tensor]] = None,
     ) -> None:
         r"""Transform the posterior samples to samples of a risk measure.
 
@@ -231,15 +196,11 @@ class VaR(CVaR):
                 For constrained optimization, this should also apply
                 feasibility-weighting to samples. Given a `batch x m`-dim
                 tensor of samples, this should return a `batch`-dim tensor.
-            weights: An optional `m`-dim tensor or list of weights for scalarizing
-                multi-output samples before calculating the risk measure.
-                Deprecated, use `preprocessing_function` instead.
         """
         super().__init__(
             n_w=n_w,
             alpha=alpha,
             preprocessing_function=preprocessing_function,
-            weights=weights,
         )
         self._q = 1 - self.alpha_idx / n_w
 

@@ -251,9 +251,6 @@ def acqf_input_constructor(
     def decorator(method):
         method_kwargs = allow_only_specific_variable_kwargs(method)
         for acqf_cls_ in acqf_cls:
-            _register_acqf_input_constructor(
-                acqf_cls=acqf_cls_, input_constructor=method_kwargs
-            )
             ACQF_INPUT_CONSTRUCTOR_REGISTRY[acqf_cls_] = method_kwargs
         return method
 
@@ -1028,7 +1025,6 @@ def construct_inputs_qMES(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
     bounds: List[Tuple[float, float]],
-    objective: Optional[MCAcquisitionObjective] = None,
     candidate_size: int = 1000,
     maximize: bool = True,
     # TODO: qMES also supports other inputs, such as num_fantasies
@@ -1042,7 +1038,6 @@ def construct_inputs_qMES(
     return {
         "model": model,
         "candidate_set": _bounds[0] + (_bounds[1] - _bounds[0]) * _rvs,
-        "objective": objective,
         "maximize": maximize,
     }
 
@@ -1071,7 +1066,6 @@ def construct_inputs_mf_base(
     )
 
     return {
-        "target_fidelities": target_fidelities,
         "cost_aware_utility": cost_aware_utility,
         "expand": lambda X: expand_trace_observations(
             X=X,
@@ -1145,7 +1139,6 @@ def construct_inputs_qMFKG(
         bounds=bounds,
         objective=objective,
         posterior_transform=posterior_transform,
-        target_fidelities=target_fidelities,
         num_fantasies=num_fantasies,
     )
 
@@ -1184,8 +1177,6 @@ def construct_inputs_qMFMES(
         model=model,
         training_data=training_data,
         bounds=bounds,
-        objective=objective,
-        posterior_transform=posterior_transform,
         candidate_size=candidate_size,
         maximize=maximize,
     )
@@ -1205,6 +1196,7 @@ def construct_inputs_qMFMES(
         **inputs_mf,
         **inputs_qmes,
         "current_value": current_value.detach().cpu().max(),
+        "target_fidelities": target_fidelities,
     }
 
 

@@ -43,25 +43,31 @@ class BotorchTestCase(TestCase):
 
     device = torch.device("cpu")
 
-    def setUp(self):
+    def setUp(self, suppress_input_warnings: bool = True) -> None:
         warnings.resetwarnings()
         settings.debug._set_state(False)
         warnings.simplefilter("always", append=True)
-        warnings.filterwarnings(
-            "ignore",
-            message="The model inputs are of type",
-            category=UserWarning,
-        )
-        warnings.filterwarnings(
-            "ignore",
-            message="Non-strict enforcement of botorch tensor conventions.",
-            category=BotorchTensorDimensionWarning,
-        )
-        warnings.filterwarnings(
-            "ignore",
-            message="Input data is not standardized.",
-            category=InputDataWarning,
-        )
+        if suppress_input_warnings:
+            warnings.filterwarnings(
+                "ignore",
+                message="The model inputs are of type",
+                category=UserWarning,
+            )
+            warnings.filterwarnings(
+                "ignore",
+                message="Non-strict enforcement of botorch tensor conventions.",
+                category=BotorchTensorDimensionWarning,
+            )
+            warnings.filterwarnings(
+                "ignore",
+                message="Input data is not standardized.",
+                category=InputDataWarning,
+            )
+            warnings.filterwarnings(
+                "ignore",
+                message="Input data is not contained to the unit cube.",
+                category=InputDataWarning,
+            )
 
     def assertAllClose(
         self,

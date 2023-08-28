@@ -9,25 +9,12 @@ r"""Utilities for fitting and manipulating models."""
 from __future__ import annotations
 
 from re import Pattern
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterator,
-    List,
-    NamedTuple,
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import Any, Callable, Dict, Iterator, NamedTuple, Optional, Tuple, Union
 from warnings import warn
 
 import torch
 from botorch.exceptions.warnings import BotorchWarning
 from botorch.models.gpytorch import GPyTorchModel
-from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
-from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
-from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 from torch import Tensor
 from torch.nn import Module
 from torch.utils.data import DataLoader, TensorDataset
@@ -37,29 +24,6 @@ class TorchAttr(NamedTuple):
     shape: torch.Size
     dtype: torch.dtype
     device: torch.device
-
-
-def _get_extra_mll_args(
-    mll: MarginalLogLikelihood,
-) -> Union[List[Tensor], List[List[Tensor]]]:
-    r"""Obtain extra arguments for MarginalLogLikelihood objects.
-
-    Get extra arguments (beyond the model output and training targets) required
-    for the particular type of MarginalLogLikelihood for a forward pass.
-
-    Args:
-        mll: The MarginalLogLikelihood module.
-
-    Returns:
-        Extra arguments for the MarginalLogLikelihood.
-        Returns an empty list if the mll type is unknown.
-    """
-    warn("`_get_extra_mll_args` is marked for deprecation.", DeprecationWarning)
-    if isinstance(mll, ExactMarginalLogLikelihood):
-        return list(mll.model.train_inputs)
-    elif isinstance(mll, SumMarginalLogLikelihood):
-        return [list(x) for x in mll.model.train_inputs]
-    return []
 
 
 def get_data_loader(

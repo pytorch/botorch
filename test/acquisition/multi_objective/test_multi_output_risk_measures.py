@@ -43,17 +43,6 @@ class TestMultiOutputRiskMeasureMCObjective(BotorchTestCase):
         with self.assertRaises(TypeError):
             MultiOutputRiskMeasureMCObjective(n_w=3)
 
-        # DeprecationWarning.
-        with self.assertWarnsRegex(DeprecationWarning, "`weights` argument"):
-            obj = NotSoAbstractMORiskMeasure(n_w=2, weights=[0.5, 0.3])
-        # Preprocessing function is constructed from the weight.
-        self.assertIsInstance(
-            obj.preprocessing_function, WeightedMCMultiOutputObjective
-        )
-        self.assertTrue(
-            torch.equal(obj.preprocessing_function.weights, torch.tensor([0.5, 0.3]))
-        )
-
         for dtype in (torch.float, torch.double):
             samples = torch.tensor(
                 [

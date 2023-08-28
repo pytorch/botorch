@@ -399,29 +399,36 @@ class TestIdentityMCObjective(BotorchTestCase):
 
 
 class TestLinearMCObjective(BotorchTestCase):
-    def test_linear_mc_objective(self):
+    def test_linear_mc_objective(self) -> None:
+        # Test passes for each seed
+        torch.manual_seed(torch.randint(high=1000, size=(1,)))
         for dtype in (torch.float, torch.double):
             weights = torch.rand(3, device=self.device, dtype=dtype)
             obj = LinearMCObjective(weights=weights)
             samples = torch.randn(4, 2, 3, device=self.device, dtype=dtype)
-            self.assertTrue(
-                torch.allclose(obj(samples), (samples * weights).sum(dim=-1))
-            )
+            atol = 1e-8 if dtype == torch.double else 3e-8
+            rtol = 1e-5 if dtype == torch.double else 4e-5
+            self.assertAllClose(obj(samples), samples @ weights, atol=atol, rtol=rtol)
             samples = torch.randn(5, 4, 2, 3, device=self.device, dtype=dtype)
-            self.assertTrue(
-                torch.allclose(obj(samples), (samples * weights).sum(dim=-1))
+            self.assertAllClose(
+                obj(samples),
+                samples @ weights,
+                atol=atol,
+                rtol=rtol,
             )
             # make sure this errors if sample output dimensions are incompatible
-            with self.assertRaises(RuntimeError):
+            shape_mismatch_msg = "Output shape of samples not equal to that of weights"
+            with self.assertRaisesRegex(RuntimeError, shape_mismatch_msg):
                 obj(samples=torch.randn(2, device=self.device, dtype=dtype))
-            with self.assertRaises(RuntimeError):
+            with self.assertRaisesRegex(RuntimeError, shape_mismatch_msg):
                 obj(samples=torch.randn(1, device=self.device, dtype=dtype))
             # make sure we can't construct objectives with multi-dim. weights
-            with self.assertRaises(ValueError):
+            weights_1d_msg = "weights must be a one-dimensional tensor."
+            with self.assertRaisesRegex(ValueError, expected_regex=weights_1d_msg):
                 LinearMCObjective(
                     weights=torch.rand(2, 3, device=self.device, dtype=dtype)
                 )
-            with self.assertRaises(ValueError):
+            with self.assertRaisesRegex(ValueError, expected_regex=weights_1d_msg):
                 LinearMCObjective(
                     weights=torch.tensor(1.0, device=self.device, dtype=dtype)
                 )

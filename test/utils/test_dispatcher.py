@@ -23,6 +23,7 @@ def _helper_test_source(val):
 
 class TestDispatcher(BotorchTestCase):
     def setUp(self):
+        super().setUp()
         self.dispatcher = Dispatcher(name="test")
 
     def test_encoder(self):

@@ -9,16 +9,7 @@ r"""Tools for model fitting."""
 from __future__ import annotations
 
 from functools import partial
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    Union,
-)
+from typing import Any, Callable, Dict, Optional, Sequence, Set, Tuple, Union
 from warnings import warn
 
 from botorch.exceptions.warnings import OptimizationWarning
@@ -30,10 +21,7 @@ from botorch.optim.core import (
     torch_minimize,
 )
 from botorch.optim.stopping import ExpMAStoppingCriterion
-from botorch.optim.utils import (
-    get_parameters_and_bounds,
-    TorchAttr,
-)
+from botorch.optim.utils import get_parameters_and_bounds, TorchAttr
 from botorch.utils.types import DEFAULT
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from numpy import ndarray

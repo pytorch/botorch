@@ -193,11 +193,15 @@ Proximal Acquisition Function Wrapper
 .. automodule:: botorch.acquisition.proximal
     :members:
 
+Factory Functions for Acquisition Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.factory
+    :members:
+
 General Utilities for Acquisition Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.utils
     :members:
-
 
 Multi-Objective Utilities for Acquisition Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -382,7 +382,9 @@ class TestModelListGP(BotorchTestCase):
         m1 = SingleTaskGP(torch.rand(5, 2), torch.rand(5, 1)).eval()
         m2 = SingleTaskGP(torch.rand(5, 2), torch.rand(5, 1)).eval()
         modellist = ModelListGP(m1, m2)
-        fm = modellist.fantasize(torch.rand(3, 2), sampler=IIDNormalSampler(2))
+        fm = modellist.fantasize(
+            torch.rand(3, 2), sampler=IIDNormalSampler(sample_shape=torch.Size([2]))
+        )
         self.assertIsInstance(fm, ModelListGP)
         for i in range(2):
             fm_i = fm.models[i]
@@ -391,8 +393,8 @@ class TestModelListGP(BotorchTestCase):
             self.assertEqual(fm_i.train_targets.shape, torch.Size([2, 8]))
 
         # test decoupled
-        sampler1 = IIDNormalSampler(2)
-        sampler2 = IIDNormalSampler(2)
+        sampler1 = IIDNormalSampler(sample_shape=torch.Size([2]))
+        sampler2 = IIDNormalSampler(sample_shape=torch.Size([2]))
         eval_mask = torch.tensor(
             [[1, 0], [0, 1], [1, 0]],
             dtype=torch.bool,
@@ -457,7 +459,7 @@ class TestModelListGP(BotorchTestCase):
                     return fant.posterior(target_x).mean.mean(dim=(-2, -3))
 
                 # ~0
-                sampler = IIDNormalSampler(10, seed=0)
+                sampler = IIDNormalSampler(sample_shape=torch.Size([10]), seed=0)
                 fant_mean_with_manual_transform = _get_fant_mean(
                     model_manually_transformed, sampler=sampler
                 )
@@ -490,8 +492,8 @@ class TestModelListGP(BotorchTestCase):
                 )
                 # test decoupled
                 sampler = ListSampler(
-                    IIDNormalSampler(10, seed=0),
-                    IIDNormalSampler(10, seed=0),
+                    IIDNormalSampler(sample_shape=torch.Size([10]), seed=0),
+                    IIDNormalSampler(sample_shape=torch.Size([10]), seed=0),
                 )
                 fant_mean_with_manual_transform = _get_fant_mean(
                     model_manually_transformed,
@@ -539,7 +541,7 @@ class TestModelListGP(BotorchTestCase):
         100 at x=0. If transforms are not properly applied, we'll get answers
         on the order of ~1. Answers between 99 and 101 are acceptable.
         """
-        n_fants = 20
+        n_fants = torch.Size([20])
         y_at_low_x = 100.0
         y_at_high_x = -40.0
 

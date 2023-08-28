@@ -310,6 +310,7 @@ class PolytopeSamplerTestBase:
     sampler_kwargs: Dict[str, Any] = {}
 
     def setUp(self):
+        super().setUp()
         self.bounds = torch.zeros(2, 3, device=self.device)
         self.bounds[1] = 1
         self.A = torch.tensor(
