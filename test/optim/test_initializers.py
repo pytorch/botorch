@@ -188,7 +188,10 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                     MockAcquisitionFunction,
                     "__call__",
                     wraps=mock_acqf.__call__,
-                ) as mock_acqf_call:
+                ) as mock_acqf_call, warnings.catch_warnings():
+                    warnings.simplefilter(
+                        "ignore", category=BadInitialCandidatesWarning
+                    )
                     batch_initial_conditions = gen_batch_initial_conditions(
                         acq_function=mock_acqf,
                         bounds=bounds,
@@ -248,6 +251,9 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                 [True, False], [None, 1234], [None, ffs_map], [True, False]
             ):
                 with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+                    warnings.simplefilter(
+                        "ignore", category=BadInitialCandidatesWarning
+                    )
                     batch_initial_conditions = gen_batch_initial_conditions(
                         acq_function=MockAcquisitionFunction(),
                         bounds=bounds,
@@ -279,19 +285,17 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                             torch.all(batch_initial_conditions[..., idx] == val)
                         )
 
-    def test_gen_batch_initial_conditions_warning(self):
+    def test_gen_batch_initial_conditions_warning(self) -> None:
         for dtype in (torch.float, torch.double):
             bounds = torch.tensor([[0, 0], [1, 1]], device=self.device, dtype=dtype)
             samples = torch.zeros(10, 1, 2, device=self.device, dtype=dtype)
-            with ExitStack() as es:
-                ws = es.enter_context(warnings.catch_warnings(record=True))
-                es.enter_context(settings.debug(True))
-                es.enter_context(
-                    mock.patch(
-                        "botorch.optim.initializers.draw_sobol_samples",
-                        return_value=samples,
-                    )
-                )
+            with self.assertWarnsRegex(
+                expected_warning=BadInitialCandidatesWarning,
+                expected_regex="Unable to find non-zero acquisition",
+            ), mock.patch(
+                "botorch.optim.initializers.draw_sobol_samples",
+                return_value=samples,
+            ):
                 batch_initial_conditions = gen_batch_initial_conditions(
                     acq_function=MockAcquisitionFunction(),
                     bounds=bounds,
@@ -300,16 +304,12 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                     raw_samples=10,
                     options={"seed": 1234},
                 )
-                self.assertEqual(len(ws), 1)
-                self.assertTrue(
-                    any(issubclass(w.category, BadInitialCandidatesWarning) for w in ws)
+            self.assertTrue(
+                torch.equal(
+                    batch_initial_conditions,
+                    torch.zeros(2, 1, 2, device=self.device, dtype=dtype),
                 )
-                self.assertTrue(
-                    torch.equal(
-                        batch_initial_conditions,
-                        torch.zeros(2, 1, 2, device=self.device, dtype=dtype),
-                    )
-                )
+            )
 
     def test_gen_batch_initial_conditions_transform_intra_point_constraint(self):
         for dtype in (torch.float, torch.double):
@@ -549,7 +549,10 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                     MockAcquisitionFunction,
                     "__call__",
                     wraps=mock_acqf.__call__,
-                ) as mock_acqf_call:
+                ) as mock_acqf_call, warnings.catch_warnings():
+                    warnings.simplefilter(
+                        "ignore", category=BadInitialCandidatesWarning
+                    )
                     batch_initial_conditions = gen_batch_initial_conditions(
                         acq_function=mock_acqf,
                         bounds=bounds,
@@ -723,7 +726,10 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                     MockAcquisitionFunction,
                     "__call__",
                     wraps=mock_acqf.__call__,
-                ):
+                ), warnings.catch_warnings():
+                    warnings.simplefilter(
+                        "ignore", category=BadInitialCandidatesWarning
+                    )
                     batch_initial_conditions = gen_batch_initial_conditions(
                         acq_function=mock_acqf,
                         bounds=bounds,

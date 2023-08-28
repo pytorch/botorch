@@ -18,7 +18,8 @@ from botorch.utils.testing import BotorchTestCase
 
 
 class TestPreferenceAcquisitionFunctions(BotorchTestCase):
-    def setUp(self):
+    def setUp(self) -> None:
+        super().setUp()
         self.twargs = {"dtype": torch.double}
         self.X_dim = 3
         self.Y_dim = 2

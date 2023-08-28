@@ -116,6 +116,7 @@ class TestGetDataLoader(BotorchTestCase):
 
 class TestGetParameters(BotorchTestCase):
     def setUp(self):
+        super().setUp()
         self.module = GaussianLikelihood(
             noise_constraint=GreaterThan(1e-6, initial_value=0.123),
         )
@@ -124,7 +125,7 @@ class TestGetParameters(BotorchTestCase):
         self.assertEqual(0, len(get_parameters(self.module, requires_grad=False)))
 
         params = get_parameters(self.module)
-        self.assertTrue(1 == len(params))
+        self.assertEqual(1, len(params))
         self.assertEqual(next(iter(params)), "noise_covar.raw_noise")
         self.assertTrue(
             self.module.noise_covar.raw_noise.equal(next(iter(params.values())))

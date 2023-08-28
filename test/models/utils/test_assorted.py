@@ -72,6 +72,11 @@ class TestAddOutputDim(BotorchTestCase):
 
 
 class TestInputDataChecks(BotorchTestCase):
+    def setUp(self) -> None:
+        # The super class usually disables input data warnings in unit tests.
+        # Don't do that here.
+        super().setUp(suppress_input_warnings=False)
+
     def test_check_no_nans(self):
         check_no_nans(torch.tensor([1.0, 2.0]))
         with self.assertRaises(InputDataError):
@@ -87,12 +92,10 @@ class TestInputDataChecks(BotorchTestCase):
                     any(issubclass(w.category, InputDataWarning) for w in ws)
                 )
             check_min_max_scaling(X=X, raise_on_fail=True)
-            with warnings.catch_warnings(record=True) as ws:
+            with self.assertWarnsRegex(
+                expected_warning=InputDataWarning, expected_regex="not scaled"
+            ):
                 check_min_max_scaling(X=X, strict=True)
-                self.assertTrue(
-                    any(issubclass(w.category, InputDataWarning) for w in ws)
-                )
-                self.assertTrue(any("not scaled" in str(w.message) for w in ws))
             with self.assertRaises(InputDataError):
                 check_min_max_scaling(X=X, strict=True, raise_on_fail=True)
             # check proper input

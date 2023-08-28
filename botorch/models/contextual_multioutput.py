@@ -4,6 +4,16 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+r"""
+References
+
+.. [Feng2020HDCPS]
+    Q. Feng, B. Latham, H. Mao and E. Backshy. High-Dimensional Contextual Policy
+    Search with Unknown Context Rewards using Bayesian Optimization.
+    Advances in Neural Information Processing Systems 33, NeurIPS 2020.
+"""
+
+import warnings
 from typing import List, Optional
 
 import torch
@@ -13,15 +23,16 @@ from botorch.models.transforms.outcome import OutcomeTransform
 from gpytorch.constraints import Interval
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.rbf_kernel import RBFKernel
-from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 from linear_operator.operators import InterpolatedLinearOperator, LinearOperator
 from torch import Tensor
 from torch.nn import ModuleList
 
 
 class LCEMGP(MultiTaskGP):
-    r"""The Multi-Task GP with the latent context embedding multioutput
-    (LCE-M) kernel.
+    r"""The Multi-Task GP with the latent context embedding multioutput (LCE-M)
+    kernel. See [Feng2020HDCPS]_ for a reference on the model and its use in Bayesian
+    optimization.
+
     """
 
     def __init__(
@@ -29,6 +40,7 @@ class LCEMGP(MultiTaskGP):
         train_X: Tensor,
         train_Y: Tensor,
         task_feature: int,
+        train_Yvar: Optional[Tensor] = None,
         context_cat_feature: Optional[Tensor] = None,
         context_emb_feature: Optional[Tensor] = None,
         embs_dim_list: Optional[List[int]] = None,
@@ -41,6 +53,9 @@ class LCEMGP(MultiTaskGP):
             train_X: (n x d) X training data.
             train_Y: (n x 1) Y training data.
             task_feature: Column index of train_X to get context indices.
+            train_Yvar: An optional (n x 1) tensor of observed variances of each
+                training Y. If None, we infer the noise. Note that the inferred noise
+                is common across all tasks.
             context_cat_feature: (n_contexts x k) one-hot encoded context
                 features. Rows are ordered by context indices, where k is the
                 number of categorical variables. If None, task indices will
@@ -52,11 +67,13 @@ class LCEMGP(MultiTaskGP):
                 for each categorical variable.
             output_tasks: A list of task indices for which to compute model
                 outputs for. If omitted, return outputs for all task indices.
+
         """
         super().__init__(
             train_X=train_X,
             train_Y=train_Y,
             task_feature=task_feature,
+            train_Yvar=train_Yvar,
             output_tasks=output_tasks,
             input_transform=input_transform,
             outcome_transform=outcome_transform,
@@ -126,6 +143,7 @@ class LCEMGP(MultiTaskGP):
 
         Args:
             task_idcs: (n x 1) or (b x n x 1) task indices tensor
+
         """
         covar_matrix = self._eval_context_covar()
         return InterpolatedLinearOperator(
@@ -150,6 +168,8 @@ class LCEMGP(MultiTaskGP):
 class FixedNoiseLCEMGP(LCEMGP):
     r"""The Multi-Task GP the latent context embedding multioutput
     (LCE-M) kernel, with known observation noise.
+
+    DEPRECATED: Please use `LCEMGP` with `train_Yvar` instead.
     """
 
     def __init__(
@@ -167,7 +187,7 @@ class FixedNoiseLCEMGP(LCEMGP):
         Args:
             train_X: (n x d) X training data.
             train_Y: (n x 1) Y training data.
-            train_Yvar: (n x 1) Noise variances of each training Y.
+            train_Yvar: (n x 1) Observed variances of each training Y.
             task_feature: Column index of train_X to get context indices.
             context_cat_feature: (n_contexts x k) one-hot encoded context
                 features. Rows are ordered by context indices, where k is the
@@ -180,16 +200,23 @@ class FixedNoiseLCEMGP(LCEMGP):
                 1 for each categorical variable.
             output_tasks: A list of task indices for which to compute model
                 outputs for. If omitted, return outputs for all task indices.
+
         """
-        self._validate_tensor_args(X=train_X, Y=train_Y, Yvar=train_Yvar)
+        warnings.warn(
+            "`FixedNoiseLCEMGP` has been deprecated and will be removed in a "
+            "future release. Please use the `LCEMGP` model instead. "
+            "When `train_Yvar` is specified, `LCEMGP` behaves the same "
+            "as the `FixedNoiseLCEMGP`.",
+            DeprecationWarning,
+        )
+
         super().__init__(
             train_X=train_X,
             train_Y=train_Y,
             task_feature=task_feature,
+            train_Yvar=train_Yvar,
             context_cat_feature=context_cat_feature,
             context_emb_feature=context_emb_feature,
             embs_dim_list=embs_dim_list,
             output_tasks=output_tasks,
         )
-        self.likelihood = FixedNoiseGaussianLikelihood(noise=train_Yvar)
-        self.to(train_X)
