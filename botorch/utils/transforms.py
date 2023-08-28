@@ -22,27 +22,6 @@ if TYPE_CHECKING:
     from botorch.model import Model  # pragma: no cover
 
 
-def squeeze_last_dim(Y: Tensor) -> Tensor:
-    r"""Squeeze the last dimension of a Tensor.
-
-    Args:
-        Y: A `... x d`-dim Tensor.
-
-    Returns:
-        The input tensor with last dimension squeezed.
-
-    Example:
-        >>> Y = torch.rand(4, 3)
-        >>> Y_squeezed = squeeze_last_dim(Y)
-    """
-    warnings.warn(
-        "`botorch.utils.transforms.squeeze_last_dim` is deprecated. "
-        "Simply use `.squeeze(-1)1 instead.",
-        DeprecationWarning,
-    )
-    return Y.squeeze(-1)
-
-
 def standardize(Y: Tensor) -> Tensor:
     r"""Standardizes (zero mean, unit variance) a tensor by dim=-2.
 
