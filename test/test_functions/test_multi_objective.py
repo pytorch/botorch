@@ -5,9 +5,11 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
+from typing import List
 
 import torch
 from botorch.exceptions.errors import UnsupportedError
+from botorch.test_functions.base import BaseTestProblem
 from botorch.test_functions.multi_objective import (
     BNH,
     BraninCurrin,
@@ -80,7 +82,9 @@ class TestBraninCurrin(
     BaseTestProblemTestCaseMixIn,
     MultiObjectiveTestProblemTestCaseMixin,
 ):
-    functions = [BraninCurrin()]
+    @property
+    def functions(self) -> List[BaseTestProblem]:
+        return [BraninCurrin()]
 
     def test_init(self):
         for f in self.functions:
@@ -93,20 +97,25 @@ class TestDH(
     BaseTestProblemTestCaseMixIn,
     MultiObjectiveTestProblemTestCaseMixin,
 ):
-    functions = [DH1(dim=2), DH2(dim=3), DH3(dim=4), DH4(dim=5)]
-    dims = [2, 3, 4, 5]
-    bounds = [
-        [[0.0, -1], [1, 1]],
-        [[0.0, -1, -1], [1, 1, 1]],
-        [[0.0, 0, -1, -1], [1, 1, 1, 1]],
-        [[0.0, -0.15, -1, -1, -1], [1, 1, 1, 1, 1]],
-    ]
-    expected = [
-        [[0.0, 1.0], [1.0, 1.0 / 1.2 + 1.0]],
-        [[0.0, 1.0], [1.0, 2.0 / 1.2 + 20.0]],
-        [[0.0, 1.88731], [1.0, 1.9990726 * 100]],
-        [[0.0, 1.88731], [1.0, 150.0]],
-    ]
+    def setUp(self, suppress_input_warnings: bool = True) -> None:
+        super().setUp(suppress_input_warnings=suppress_input_warnings)
+        self.dims = [2, 3, 4, 5]
+        self.bounds = [
+            [[0.0, -1], [1, 1]],
+            [[0.0, -1, -1], [1, 1, 1]],
+            [[0.0, 0, -1, -1], [1, 1, 1, 1]],
+            [[0.0, -0.15, -1, -1, -1], [1, 1, 1, 1, 1]],
+        ]
+        self.expected = [
+            [[0.0, 1.0], [1.0, 1.0 / 1.2 + 1.0]],
+            [[0.0, 1.0], [1.0, 2.0 / 1.2 + 20.0]],
+            [[0.0, 1.88731], [1.0, 1.9990726 * 100]],
+            [[0.0, 1.88731], [1.0, 150.0]],
+        ]
+
+    @property
+    def functions(self) -> List[BaseTestProblem]:
+        return [DH1(dim=2), DH2(dim=3), DH3(dim=4), DH4(dim=5)]
 
     def test_init(self):
         for i, f in enumerate(self.functions):
@@ -115,7 +124,12 @@ class TestDH(
             self.assertEqual(f.num_objectives, 2)
             self.assertEqual(f.dim, self.dims[i])
             self.assertTrue(
-                torch.equal(f.bounds, torch.tensor(self.bounds[i]).to(f.bounds))
+                torch.equal(
+                    f.bounds,
+                    torch.tensor(
+                        self.bounds[i], dtype=f.bounds.dtype, device=f.bounds.device
+                    ),
+                )
             )
 
     def test_function_values(self):
@@ -132,14 +146,16 @@ class TestDTLZ(
     BaseTestProblemTestCaseMixIn,
     MultiObjectiveTestProblemTestCaseMixin,
 ):
-    functions = [
-        DTLZ1(dim=5, num_objectives=2),
-        DTLZ2(dim=5, num_objectives=2),
-        DTLZ3(dim=5, num_objectives=2),
-        DTLZ4(dim=5, num_objectives=2),
-        DTLZ5(dim=5, num_objectives=2),
-        DTLZ7(dim=5, num_objectives=2),
-    ]
+    @property
+    def functions(self) -> List[BaseTestProblem]:
+        return [
+            DTLZ1(dim=5, num_objectives=2),
+            DTLZ2(dim=5, num_objectives=2),
+            DTLZ3(dim=5, num_objectives=2),
+            DTLZ4(dim=5, num_objectives=2),
+            DTLZ5(dim=5, num_objectives=2),
+            DTLZ7(dim=5, num_objectives=2),
+        ]
 
     def test_init(self):
         for f in self.functions:
@@ -198,7 +214,9 @@ class TestGMM(
     BaseTestProblemTestCaseMixIn,
     MultiObjectiveTestProblemTestCaseMixin,
 ):
-    functions = [GMM(num_objectives=4)]
+    @property
+    def functions(self) -> List[BaseTestProblem]:
+        return [GMM(num_objectives=4)]
 
     def test_init(self):
         f = self.functions[0]
@@ -249,7 +267,9 @@ class TestMW7(
     MultiObjectiveTestProblemTestCaseMixin,
     ConstrainedTestProblemTestCaseMixin,
 ):
-    functions = [MW7(dim=3)]
+    @property
+    def functions(self) -> List[BaseTestProblem]:
+        return [MW7(dim=3)]
 
     def test_init(self):
         for f in self.functions:
@@ -264,11 +284,13 @@ class TestZDT(
     BaseTestProblemTestCaseMixIn,
     MultiObjectiveTestProblemTestCaseMixin,
 ):
-    functions = [
-        ZDT1(dim=3, num_objectives=2),
-        ZDT2(dim=3, num_objectives=2),
-        ZDT3(dim=3, num_objectives=2),
-    ]
+    @property
+    def functions(self) -> List[BaseTestProblem]:
+        return [
+            ZDT1(dim=3, num_objectives=2),
+            ZDT2(dim=3, num_objectives=2),
+            ZDT3(dim=3, num_objectives=2),
+        ]
 
     def test_init(self):
         for f in self.functions:
@@ -338,8 +360,9 @@ class TestCarSideImpact(
     BaseTestProblemTestCaseMixIn,
     MultiObjectiveTestProblemTestCaseMixin,
 ):
-
-    functions = [CarSideImpact()]
+    @property
+    def functions(self) -> List[BaseTestProblem]:
+        return [CarSideImpact()]
 
 
 class TestPenicillin(
@@ -347,7 +370,9 @@ class TestPenicillin(
     BaseTestProblemTestCaseMixIn,
     MultiObjectiveTestProblemTestCaseMixin,
 ):
-    functions = [Penicillin()]
+    @property
+    def functions(self) -> List[BaseTestProblem]:
+        return [Penicillin()]
 
 
 class TestToyRobust(
@@ -355,7 +380,9 @@ class TestToyRobust(
     BaseTestProblemTestCaseMixIn,
     MultiObjectiveTestProblemTestCaseMixin,
 ):
-    functions = [ToyRobust()]
+    @property
+    def functions(self) -> List[BaseTestProblem]:
+        return [ToyRobust()]
 
 
 class TestVehicleSafety(
@@ -363,7 +390,9 @@ class TestVehicleSafety(
     BaseTestProblemTestCaseMixIn,
     MultiObjectiveTestProblemTestCaseMixin,
 ):
-    functions = [VehicleSafety()]
+    @property
+    def functions(self) -> List[BaseTestProblem]:
+        return [VehicleSafety()]
 
 
 # ------------------ Constrained Multi-objective test problems ------------------ #
@@ -375,7 +404,9 @@ class TestBNH(
     MultiObjectiveTestProblemTestCaseMixin,
     ConstrainedTestProblemTestCaseMixin,
 ):
-    functions = [BNH()]
+    @property
+    def functions(self) -> List[BaseTestProblem]:
+        return [BNH()]
 
 
 class TestSRN(
@@ -384,7 +415,9 @@ class TestSRN(
     MultiObjectiveTestProblemTestCaseMixin,
     ConstrainedTestProblemTestCaseMixin,
 ):
-    functions = [SRN()]
+    @property
+    def functions(self) -> List[BaseTestProblem]:
+        return [SRN()]
 
 
 class TestCONSTR(
@@ -393,7 +426,9 @@ class TestCONSTR(
     MultiObjectiveTestProblemTestCaseMixin,
     ConstrainedTestProblemTestCaseMixin,
 ):
-    functions = [CONSTR()]
+    @property
+    def functions(self) -> List[BaseTestProblem]:
+        return [CONSTR()]
 
 
 class TestConstrainedBraninCurrin(
@@ -402,9 +437,9 @@ class TestConstrainedBraninCurrin(
     MultiObjectiveTestProblemTestCaseMixin,
     ConstrainedTestProblemTestCaseMixin,
 ):
-    functions = [
-        ConstrainedBraninCurrin(),
-    ]
+    @property
+    def functions(self) -> List[BaseTestProblem]:
+        return [ConstrainedBraninCurrin()]
 
 
 class TestC2DTLZ2(
@@ -413,7 +448,9 @@ class TestC2DTLZ2(
     MultiObjectiveTestProblemTestCaseMixin,
     ConstrainedTestProblemTestCaseMixin,
 ):
-    functions = [C2DTLZ2(dim=3, num_objectives=2)]
+    @property
+    def functions(self) -> List[BaseTestProblem]:
+        return [C2DTLZ2(dim=3, num_objectives=2)]
 
     def test_batch_exception(self):
         f = C2DTLZ2(dim=3, num_objectives=2)
@@ -427,7 +464,9 @@ class TestDiscBrake(
     MultiObjectiveTestProblemTestCaseMixin,
     ConstrainedTestProblemTestCaseMixin,
 ):
-    functions = [DiscBrake()]
+    @property
+    def functions(self) -> List[BaseTestProblem]:
+        return [DiscBrake()]
 
 
 class TestWeldedBeam(
@@ -436,7 +475,9 @@ class TestWeldedBeam(
     MultiObjectiveTestProblemTestCaseMixin,
     ConstrainedTestProblemTestCaseMixin,
 ):
-    functions = [WeldedBeam()]
+    @property
+    def functions(self) -> List[BaseTestProblem]:
+        return [WeldedBeam()]
 
 
 class TestOSY(
@@ -445,4 +486,6 @@ class TestOSY(
     MultiObjectiveTestProblemTestCaseMixin,
     ConstrainedTestProblemTestCaseMixin,
 ):
-    functions = [OSY()]
+    @property
+    def functions(self) -> List[BaseTestProblem]:
+        return [OSY()]
