@@ -79,7 +79,7 @@ def neg_l1_dist(Y):
     if len(Y.shape) == 1:
         Y = Y.unsqueeze(0)
     dist = torch.cdist(
-        Y, torch.full(Y.shape[-1:], fill_value=0.5).unsqueeze(0), p=1
+        Y, torch.full(Y.shape[-1:], fill_value=0.5, dtype=Y.dtype).unsqueeze(0), p=1
     ).squeeze(-1)
     return -dist
 
