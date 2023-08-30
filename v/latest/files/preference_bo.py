@@ -29,12 +29,6 @@
 # In[1]:
 
 
-get_ipython().run_line_magic('local-changes', '')
-
-
-# In[2]:
-
-
 import os
 import warnings
 from itertools import combinations
@@ -48,7 +42,7 @@ warnings.filterwarnings("ignore")
 SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 
-# In[3]:
+# In[2]:
 
 
 # data generating helper functions
@@ -114,7 +108,7 @@ train_comp = generate_comparisons(train_y, m, noise=noise)
 # `PairwiseGP` from BoTorch is designed to work with such pairwise comparison input.
 # We use `PairwiseLaplaceMarginalLogLikelihood` as the marginal log likelihood that we aim to maximize for optimizing the hyperparameters.
 
-# In[ ]:
+# In[3]:
 
 
 from botorch.fit import fit_gpytorch_mll
@@ -134,7 +128,7 @@ mll = fit_gpytorch_mll(mll)
 # Because the we never observe the latent function value, output values from the model are only meaningful on a relative scale.
 # Hence, given a test pair (`test_X`, `test_y`), we can evaluate the model using Kendall-Tau rank correlation.
 
-# In[5]:
+# In[4]:
 
 
 from scipy.stats import kendalltau
@@ -165,7 +159,7 @@ print(f"Test Kendall-Tau rank correlation: {kt_correlation:.4f}")
 # 
 # We start off by defining a few helper functions.
 
-# In[6]:
+# In[5]:
 
 
 from botorch.acquisition.preference import AnalyticExpectedUtilityOfBestOption
@@ -200,7 +194,7 @@ def make_new_data(X, next_X, comps, q_comp):
 
 # The Bayesian optimization loop is as follows (running the code may take a while).
 
-# In[7]:
+# In[6]:
 
 
 algos = ["EUBO", "rand"]
@@ -276,7 +270,7 @@ for i in range(NUM_TRIALS):
 # 
 # The plot below shows the best objective value observed at each step of the optimization for each of the acquisition functions. The error bars represent the 95% confidence intervals for the sample mean at that step in the optimization across the trial runs.
 
-# In[8]:
+# In[7]:
 
 
 from matplotlib import pyplot as plt
