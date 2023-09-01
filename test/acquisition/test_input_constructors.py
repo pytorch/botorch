@@ -10,6 +10,7 @@ import math
 
 from typing import Any, Callable, List, Type
 from unittest import mock
+from unittest.mock import MagicMock
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -26,7 +27,9 @@ from botorch.acquisition.analytic import (
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
 from botorch.acquisition.input_constructors import (
     _field_is_shared,
+    _register_acqf_input_constructor,
     acqf_input_constructor,
+    ACQF_INPUT_CONSTRUCTOR_REGISTRY,
     construct_inputs_mf_base,
     get_acqf_input_constructor,
     get_best_f_analytic,
@@ -231,6 +234,22 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
             input_constructor(
                 model=self.mock_model, training_data=self.blockX_blockY, hat="car"
             )
+
+    def test__register_acqf_input_constructor(self) -> None:
+        with self.assertRaisesRegex(RuntimeError, "not registered"):
+            get_acqf_input_constructor(DummyAcquisitionFunction)
+
+        dummy_constructor = MagicMock()
+
+        _register_acqf_input_constructor(
+            acqf_cls=DummyAcquisitionFunction,
+            input_constructor=dummy_constructor,
+        )
+        input_constructor = get_acqf_input_constructor(DummyAcquisitionFunction)
+        self.assertIs(input_constructor, dummy_constructor)
+
+        # Clean up changes to the global registry (leads to failure of other tests).
+        ACQF_INPUT_CONSTRUCTOR_REGISTRY.pop(DummyAcquisitionFunction)
 
 
 class TestAnalyticAcquisitionFunctionInputConstructors(
