@@ -33,7 +33,7 @@ class ContextualKernelTest(BotorchTestCase):
         x2 = torch.rand(5, 4)
         res = kernel(x1, x2).to_dense()
         res_diag = kernel(x1, x2, diag=True)
-        self.assertLess(torch.norm(res_diag - res.diag()), 1e-4)
+        self.assertLess(torch.linalg.norm(res_diag - res.diag()), 1e-4)
 
         # test raise of ValueError
         with self.assertRaises(ValueError):
@@ -61,7 +61,7 @@ class ContextualKernelTest(BotorchTestCase):
         # test set_outputscale_list
         kernel.initialize(outputscale_list=[0.5, 0.5])
         actual_value = torch.tensor([0.5, 0.5]).view_as(kernel.outputscale_list)
-        self.assertLess(torch.norm(kernel.outputscale_list - actual_value), 1e-5)
+        self.assertLess(torch.linalg.norm(kernel.outputscale_list - actual_value), 1e-5)
 
         self.assertTrue(kernel.train_embedding)
         self.assertEqual(kernel.num_contexts, num_contexts)

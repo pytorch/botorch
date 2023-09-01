@@ -47,7 +47,7 @@ to optimize a $obj(y) = 1 - \\|y - y_0\\|_2$, where $y_0 \in \mathbb{R}^2$.
 For this you would use the following custom objective (here we can ignore the
 inputs $X$ as the objective does not depend on it):
 ```python
-obj = lambda xi, X: 1 - torch.norm(xi - y_0, dim=-1)
+obj = lambda xi, X: 1 - torch.linalg.norm(xi - y_0, dim=-1)
 mc_objective = GenericMCObjective(obj)
 ```
 
@@ -66,7 +66,7 @@ A custom objective module of the above example would be
 class MyCustomObjective(MCAcquisitionObjective):
 
     def forward(self, samples, X=None):
-      return 1 - torch.norm(samples - y_0, dim=-1)
+      return 1 - torch.linalg.norm(samples - y_0, dim=-1)
 ```
 
 

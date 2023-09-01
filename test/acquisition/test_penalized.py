@@ -41,7 +41,7 @@ class TestL2Penalty(BotorchTestCase):
             sample_point = torch.tensor([[1.0, 2.0, 3.0], [2.0, 3.0, 4.0]], **tkwargs)
 
             diff_norm_squared = (
-                torch.norm((sample_point - init_point), p=2, dim=-1) ** 2
+                torch.linalg.norm((sample_point - init_point), ord=2, dim=-1) ** 2
             )
             real_value = diff_norm_squared.max(dim=-1).values
             computed_value = l2_module(sample_point)
@@ -59,7 +59,7 @@ class TestL1Penalty(BotorchTestCase):
                 [[1.0, 2.0, 3.0], [2.0, 3.0, 4.0]], device=self.device, dtype=dtype
             )
 
-            diff_l1_norm = torch.norm((sample_point - init_point), p=1, dim=-1)
+            diff_l1_norm = torch.linalg.norm((sample_point - init_point), ord=1, dim=-1)
             real_value = diff_l1_norm.max(dim=-1).values
             computed_value = l1_module(sample_point)
             self.assertEqual(computed_value.item(), real_value.item())
@@ -77,7 +77,7 @@ class TestGaussianPenalty(BotorchTestCase):
             sample_point = torch.tensor([[1.0, 2.0, 3.0], [2.0, 3.0, 4.0]], **tkwargs)
 
             diff_norm_squared = (
-                torch.norm((sample_point - init_point), p=2, dim=-1) ** 2
+                torch.linalg.norm((sample_point - init_point), ord=2, dim=-1) ** 2
             )
             max_l2_distance = diff_norm_squared.max(dim=-1).values
             real_value = torch.exp(max_l2_distance / 2 / sigma**2)
@@ -266,8 +266,8 @@ class TestL1PenaltyObjective(BotorchTestCase):
                 [[1.0, 2.0, 3.0], [2.0, 3.0, 4.0]], device=self.device, dtype=dtype
             )
 
-            real_values = torch.norm(
-                (sample_point - init_point), p=1, dim=-1
+            real_values = torch.linalg.norm(
+                (sample_point - init_point), ord=1, dim=-1
             ).unsqueeze(dim=0)
             computed_values = l1_module(sample_point)
             self.assertTrue(torch.equal(real_values, computed_values))

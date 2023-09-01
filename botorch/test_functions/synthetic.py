@@ -139,7 +139,7 @@ class Ackley(SyntheticTestFunction):
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         a, b, c = self.a, self.b, self.c
-        part1 = -a * torch.exp(-b / math.sqrt(self.dim) * torch.norm(X, dim=-1))
+        part1 = -a * torch.exp(-b / math.sqrt(self.dim) * torch.linalg.norm(X, dim=-1))
         part2 = -(torch.exp(torch.mean(torch.cos(c * X), dim=-1)))
         return part1 + part2 + a + math.e
 
@@ -231,7 +231,7 @@ class DropWave(SyntheticTestFunction):
     _check_grad_at_opt = False
 
     def evaluate_true(self, X: Tensor) -> Tensor:
-        norm = torch.norm(X, dim=-1)
+        norm = torch.linalg.norm(X, dim=-1)
         part1 = 1.0 + torch.cos(12.0 * norm)
         part2 = 0.5 * norm.pow(2) + 2.0
         return -part1 / part2
@@ -455,7 +455,7 @@ class HolderTable(SyntheticTestFunction):
     ]
 
     def evaluate_true(self, X: Tensor) -> Tensor:
-        term = torch.abs(1 - torch.norm(X, dim=-1) / math.pi)
+        term = torch.abs(1 - torch.linalg.norm(X, dim=-1) / math.pi)
         return -(
             torch.abs(torch.sin(X[..., 0]) * torch.cos(X[..., 1]) * torch.exp(term))
         )

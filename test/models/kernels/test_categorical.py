@@ -27,14 +27,14 @@ class TestCategoricalKernel(BotorchTestCase, BaseKernelTestCase):
         kernel = CategoricalKernel()
         kernel.initialize(lengthscale=1)
         actual_value = torch.tensor(1.0).view_as(kernel.lengthscale)
-        self.assertLess(torch.norm(kernel.lengthscale - actual_value), 1e-5)
+        self.assertLess(torch.linalg.norm(kernel.lengthscale - actual_value), 1e-5)
 
     def test_initialize_lengthscale_batch(self):
         kernel = CategoricalKernel(batch_shape=torch.Size([2]))
         ls_init = torch.tensor([1.0, 2.0])
         kernel.initialize(lengthscale=ls_init)
         actual_value = ls_init.view_as(kernel.lengthscale)
-        self.assertLess(torch.norm(kernel.lengthscale - actual_value), 1e-5)
+        self.assertLess(torch.linalg.norm(kernel.lengthscale - actual_value), 1e-5)
 
     def test_forward(self):
         x1 = torch.tensor([[4, 2], [3, 1], [8, 5], [7, 6]], dtype=torch.float)
