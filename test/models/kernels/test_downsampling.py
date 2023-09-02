@@ -48,7 +48,7 @@ class TestDownsamplingKernel(BotorchTestCase, BaseKernelTestCase):
         actual = offset + diff.pow(1 + power)
         res = kernel(a, b).to_dense()
 
-        self.assertLess(torch.norm(res - actual), 1e-5)
+        self.assertLess(torch.linalg.norm(res - actual), 1e-5)
 
     def test_computes_downsampling_function(self):
         a = torch.tensor([0.1, 0.2]).view(2, 1)
@@ -64,7 +64,7 @@ class TestDownsamplingKernel(BotorchTestCase, BaseKernelTestCase):
         actual = offset + diff.pow(1 + power)
         res = kernel(a, b).to_dense()
 
-        self.assertLess(torch.norm(res - actual), 1e-5)
+        self.assertLess(torch.linalg.norm(res - actual), 1e-5)
 
     def test_subset_computes_active_downsampling_function_batch(self):
         a = torch.tensor([[0.1, 0.2, 0.2], [0.3, 0.4, 0.2], [0.5, 0.5, 0.5]]).view(
@@ -96,7 +96,7 @@ class TestDownsamplingKernel(BotorchTestCase, BaseKernelTestCase):
 
         diff = torch.tensor([[0.2, 0.2, 0.25], [0.2, 0.2, 0.25], [0.2, 0.2, 0.25]])
         actual[2, :, :] = offset + diff.pow(1 + power)
-        self.assertLess(torch.norm(res - actual), 1e-5)
+        self.assertLess(torch.linalg.norm(res - actual), 1e-5)
 
     def test_computes_downsampling_function_batch(self):
         a = torch.tensor([[0.1, 0.2], [0.3, 0.4], [0.5, 0.5]]).view(3, 2, 1)
@@ -119,33 +119,33 @@ class TestDownsamplingKernel(BotorchTestCase, BaseKernelTestCase):
 
         diff = torch.tensor([[0.2, 0.2], [0.2, 0.2]])
         actual[2, :, :] = offset + diff.pow(1 + power)
-        self.assertLess(torch.norm(res - actual), 1e-5)
+        self.assertLess(torch.linalg.norm(res - actual), 1e-5)
 
     def test_initialize_offset(self):
         kernel = DownsamplingKernel()
         kernel.initialize(offset=1)
         actual_value = torch.tensor(1.0).view_as(kernel.offset)
-        self.assertLess(torch.norm(kernel.offset - actual_value), 1e-5)
+        self.assertLess(torch.linalg.norm(kernel.offset - actual_value), 1e-5)
 
     def test_initialize_offset_batch(self):
         kernel = DownsamplingKernel(batch_shape=torch.Size([2]))
         off_init = torch.tensor([1.0, 2.0])
         kernel.initialize(offset=off_init)
         actual_value = off_init.view_as(kernel.offset)
-        self.assertLess(torch.norm(kernel.offset - actual_value), 1e-5)
+        self.assertLess(torch.linalg.norm(kernel.offset - actual_value), 1e-5)
 
     def test_initialize_power(self):
         kernel = DownsamplingKernel()
         kernel.initialize(power=1)
         actual_value = torch.tensor(1.0).view_as(kernel.power)
-        self.assertLess(torch.norm(kernel.power - actual_value), 1e-5)
+        self.assertLess(torch.linalg.norm(kernel.power - actual_value), 1e-5)
 
     def test_initialize_power_batch(self):
         kernel = DownsamplingKernel(batch_shape=torch.Size([2]))
         power_init = torch.tensor([1.0, 2.0])
         kernel.initialize(power=power_init)
         actual_value = power_init.view_as(kernel.power)
-        self.assertLess(torch.norm(kernel.power - actual_value), 1e-5)
+        self.assertLess(torch.linalg.norm(kernel.power - actual_value), 1e-5)
 
     def test_last_dim_is_batch(self):
         a = (
@@ -176,7 +176,7 @@ class TestDownsamplingKernel(BotorchTestCase, BaseKernelTestCase):
 
         diff = torch.tensor([[0.2, 0.2], [0.2, 0.2]])
         actual[2, :, :] = offset + diff.pow(1 + power)
-        self.assertLess(torch.norm(res - actual), 1e-5)
+        self.assertLess(torch.linalg.norm(res - actual), 1e-5)
 
     def test_diag_calculation(self):
         a = torch.tensor([0.1, 0.2]).view(2, 1)
@@ -192,7 +192,7 @@ class TestDownsamplingKernel(BotorchTestCase, BaseKernelTestCase):
         actual = offset + diff.pow(1 + power)
         res = kernel(a, b, diag=True)
 
-        self.assertLess(torch.norm(res - torch.diag(actual)), 1e-5)
+        self.assertLess(torch.linalg.norm(res - torch.diag(actual)), 1e-5)
 
     def test_initialize_power_prior(self):
         kernel = DownsamplingKernel()

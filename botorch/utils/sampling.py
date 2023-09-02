@@ -166,7 +166,7 @@ def sample_hypersphere(
     else:
         with manual_seed(seed=seed):
             rnd = torch.randn(n, d, dtype=dtype)
-    samples = rnd / torch.norm(rnd, dim=-1, keepdim=True)
+    samples = rnd / torch.linalg.norm(rnd, dim=-1, keepdim=True)
     if device is not None:
         samples = samples.to(device)
     return samples

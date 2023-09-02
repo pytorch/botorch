@@ -44,7 +44,8 @@ class L2Penalty(torch.nn.Module):
             A tensor of size "batch_shape" representing the acqfn for each q-batch.
         """
         regularization_term = (
-            torch.norm((X - self.init_point), p=2, dim=-1).max(dim=-1).values ** 2
+            torch.linalg.norm((X - self.init_point), ord=2, dim=-1).max(dim=-1).values
+            ** 2
         )
         return regularization_term
 
@@ -72,7 +73,7 @@ class L1Penalty(torch.nn.Module):
             A tensor of size "batch_shape" representing the acqfn for each q-batch.
         """
         regularization_term = (
-            torch.norm((X - self.init_point), p=1, dim=-1).max(dim=-1).values
+            torch.linalg.norm((X - self.init_point), ord=1, dim=-1).max(dim=-1).values
         )
         return regularization_term
 
@@ -101,7 +102,7 @@ class GaussianPenalty(torch.nn.Module):
         Returns:
             A tensor of size "batch_shape" representing the acqfn for each q-batch.
         """
-        sq_diff = torch.norm((X - self.init_point), p=2, dim=-1) ** 2
+        sq_diff = torch.linalg.norm((X - self.init_point), ord=2, dim=-1) ** 2
         pdf = torch.exp(sq_diff / 2 / self.sigma**2)
         regularization_term = pdf.max(dim=-1).values
         return regularization_term
@@ -257,7 +258,10 @@ def group_lasso_regularizer(X: Tensor, groups: List[List[int]]) -> Tensor:
     """
     return torch.sum(
         torch.stack(
-            [math.sqrt(len(g)) * torch.norm(X[..., g], p=2, dim=-1) for g in groups],
+            [
+                math.sqrt(len(g)) * torch.linalg.norm(X[..., g], ord=2, dim=-1)
+                for g in groups
+            ],
             dim=-1,
         ),
         dim=-1,
@@ -289,7 +293,7 @@ class L1PenaltyObjective(torch.nn.Module):
             A "1 x batch_shape x q" tensor representing the penalty for each point.
             The first dimension corresponds to the dimension of MC samples.
         """
-        return torch.norm((X - self.init_point), p=1, dim=-1).unsqueeze(dim=0)
+        return torch.linalg.norm((X - self.init_point), ord=1, dim=-1).unsqueeze(dim=0)
 
 
 class PenalizedMCObjective(GenericMCObjective):

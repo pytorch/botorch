@@ -66,7 +66,7 @@ class SquaredAcquisitionFunction(AcquisitionFunction):
         super().__init__(model=model)
 
     def forward(self, X):
-        return torch.norm(X, dim=-1).squeeze(-1)
+        return torch.linalg.norm(X, dim=-1).squeeze(-1)
 
 
 class MockOneShotEvaluateAcquisitionFunction(MockOneShotAcquisitionFunction):

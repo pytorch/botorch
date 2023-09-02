@@ -671,7 +671,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
             cov_g = covar @ g.unsqueeze(-1)
             x_update = torch.linalg.solve(cov_hl, cov_g).squeeze(-1)
             x_next = x - x_update
-            diff = torch.norm(x - x_next)
+            diff = torch.linalg.norm(x - x_next)
             x = x_next
             i += 1
 
