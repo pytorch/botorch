@@ -2601,6 +2601,22 @@ See <a class="reference internal" href="#maechler2012accurate" id="id5"><span>[M
 </dl>
 </dd></dl>
 <dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.logplusexp">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">logplusexp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#logplusexp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.logplusexp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes log(exp(a) + exp(b)) similar to logsumexp.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>b</strong> (<em>Tensor</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.safe_math.logdiffexp">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">logdiffexp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_b</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#logdiffexp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.logdiffexp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes log(b - a) accurately given log(a) and log(b).
@@ -2614,6 +2630,33 @@ Assumes, log_b &gt; log_a, i.e. b &gt; a &gt; 0.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A Tensor of values corresponding to log(b - a).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.logsumexp">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">logsumexp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keepdim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#logsumexp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.logsumexp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Version of logsumexp that has a well-behaved backward pass when
+x contains infinities.</p>
+<p>In particular, the gradient of the standard torch version becomes NaN
+1) for any element that is positive infinity, and 2) for any slice that
+only contains negative infinities.</p>
+<p>This version returns a gradient of 1 for any positive infinities in case 1, and
+for all elements of the slice in case 2, in agreement with the asymptotic behavior
+of the function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>Tensor</em>) – The Tensor to which to apply <cite>logsumexp</cite>.</p></li>
+<li><p><strong>dim</strong> (<em>int</em><em> | </em><em>Tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em>) – An integer or a tuple of integers, representing the dimensions to reduce.</p></li>
+<li><p><strong>keepdim</strong> (<em>bool</em>) – Whether to keep the reduced dimensions. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A Tensor representing the log of the summed exponentials of <cite>x</cite>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Tensor</em></p>
@@ -2662,7 +2705,7 @@ approximation to ReLU. Non-negative and defaults to 1.0.</p></li>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.safe_math.smooth_amax">
-<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">smooth_amax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#smooth_amax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.smooth_amax" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">smooth_amax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keepdim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#smooth_amax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.smooth_amax" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes a smooth approximation to <cite>max(X, dim=dim)</cite>, i.e the maximum value of
 <cite>X</cite> over dimension <cite>dim</cite>, using the logarithm of the <cite>l_(1/tau)</cite> norm of <cite>exp(X)</cite>.
 Note that when <cite>X = log(U)</cite> is the <em>logarithm</em> of an acquisition utility <cite>U</cite>,</p>
@@ -2671,9 +2714,10 @@ Note that when <cite>X = log(U)</cite> is the <em>logarithm</em> of an acquisiti
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>Tensor</em>) – A Tensor from which to compute the smoothed amax.</p></li>
+<li><p><strong>dim</strong> (<em>int</em><em> | </em><em>Tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em>) – The dimensions to reduce over.</p></li>
+<li><p><strong>keepdim</strong> (<em>bool</em>) – If True, keeps the reduced dimensions.</p></li>
 <li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – Temperature parameter controlling the smooth approximation
 to max operator, becomes tighter as tau goes to 0. Needs to be positive.</p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2725,7 +2769,7 @@ monotonicity and convexity.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x</strong> (<em>Tensor</em>) – A Tensor on whose values to compute the smoothed function.</p></li>
-<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – </p></li>
+<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – Temperature parameter controlling the smoothness of the approximation.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2738,20 +2782,71 @@ monotonicity and convexity.</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.safe_math.fatmax">
-<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">fatmax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#fatmax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.fatmax" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">fatmax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keepdim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#fatmax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.fatmax" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes a smooth approximation to amax(X, dim=dim) with a fat tail.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em>) – A Tensor from which to compute the smoothed amax.</p></li>
+<li><p><strong>X</strong> – A Tensor from which to compute the smoothed amax.</p></li>
+<li><p><strong>dim</strong> (<em>int</em><em> | </em><em>Tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em>) – The dimensions to reduce over.</p></li>
+<li><p><strong>keepdim</strong> (<em>bool</em>) – If True, keeps the reduced dimensions.</p></li>
 <li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – Temperature parameter controlling the smooth approximation
 to max operator, becomes tighter as tau goes to 0. Needs to be positive.</p></li>
-<li><p><strong>standardize</strong> – Toggles the temperature standardization of the smoothed function.</p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – The exponent of the asymptotic power decay of the approximation. The
+default value is 2. Higher alpha parameters make the function behave more
+similarly to the standard logsumexp approximation to the max, so it is
+recommended to keep this value low or moderate, e.g. &lt; 10.</p></li>
+<li><p><strong>x</strong> (<em>Tensor</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A Tensor of smooth approximations to <cite>max(X, dim=dim)</cite> with a fat tail.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.fatmaximum">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">fatmaximum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#fatmaximum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.fatmaximum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes a smooth approximation to torch.maximum(a, b) with a fat tail.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>Tensor</em>) – The first Tensor from which to compute the smoothed component-wise maximum.</p></li>
+<li><p><strong>b</strong> (<em>Tensor</em>) – The second Tensor from which to compute the smoothed component-wise maximum.</p></li>
+<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – Temperature parameter controlling the smoothness of the approximation. A
+smaller tau corresponds to a tighter approximation that leads to a sharper
+objective landscape that might be more difficult to optimize.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A smooth approximation of torch.maximum(a, b).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.fatminimum">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">fatminimum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#fatminimum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.fatminimum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes a smooth approximation to torch.minimum(a, b) with a fat tail.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>Tensor</em>) – The first Tensor from which to compute the smoothed component-wise minimum.</p></li>
+<li><p><strong>b</strong> (<em>Tensor</em>) – The second Tensor from which to compute the smoothed component-wise minimum.</p></li>
+<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – Temperature parameter controlling the smoothness of the approximation. A
+smaller tau corresponds to a tighter approximation that leads to a sharper
+objective landscape that might be more difficult to optimize.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A smooth approximation of torch.minimum(a, b).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Tensor</em></p>

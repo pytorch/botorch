@@ -377,7 +377,7 @@
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; train_X = torch.rand(20, 2)</span>
 <span class="sd">        &gt;&gt;&gt; train_Y = torch.sin(train_X).sum(dim=1, keepdim=True)</span>
-<span class="sd">        &gt;&gt;&gt; se = torch.norm(train_X, dim=1, keepdim=True)</span>
+<span class="sd">        &gt;&gt;&gt; se = torch.linalg.norm(train_X, dim=1, keepdim=True)</span>
 <span class="sd">        &gt;&gt;&gt; train_Yvar = 0.1 + se * torch.rand_like(train_Y)</span>
 <span class="sd">        &gt;&gt;&gt; model = HeteroskedasticSingleTaskGP(train_X, train_Y, train_Yvar)</span>
 <span class="sd">    """</span>

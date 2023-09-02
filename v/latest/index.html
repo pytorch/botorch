@@ -34,7 +34,7 @@
 <span class="hljs-keyword">from</span> gpytorch.mlls <span class="hljs-keyword">import</span> ExactMarginalLogLikelihood
 
 train_X = torch.rand(<span class="hljs-number">10</span>, <span class="hljs-number">2</span>)
-Y = <span class="hljs-number">1</span> - torch.norm(train_X - <span class="hljs-number">0.5</span>, dim=<span class="hljs-number">-1</span>, keepdim=<span class="hljs-literal">True</span>)
+Y = <span class="hljs-number">1</span> - torch.linalg.norm(train_X - <span class="hljs-number">0.5</span>, dim=<span class="hljs-number">-1</span>, keepdim=<span class="hljs-literal">True</span>)
 Y = Y + <span class="hljs-number">0.1</span> * torch.randn_like(Y)  <span class="hljs-comment"># add some noise</span>
 train_Y = standardize(Y)
 
