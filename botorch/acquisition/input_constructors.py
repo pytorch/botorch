@@ -127,7 +127,7 @@ TOptimizeObjectiveKwargs = Union[
 
 def _field_is_shared(
     datasets: Union[Iterable[SupervisedDataset], Dict[Hashable, SupervisedDataset]],
-    fieldname: Hashable,
+    fieldname: str,
 ) -> bool:
     r"""Determines whether or not a given field is shared by all datasets."""
     if isinstance(datasets, dict):

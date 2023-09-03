@@ -34,7 +34,7 @@ def parse_training_data(
     consumer: Any,
     training_data: Union[SupervisedDataset, Dict[Hashable, SupervisedDataset]],
     **kwargs: Any,
-) -> Dict[Hashable, Tensor]:
+) -> Dict[str, Tensor]:
     r"""Prepares a (collection of) datasets for consumption by a given object.
 
     Args:
@@ -50,7 +50,7 @@ def parse_training_data(
 @dispatcher.register(Model, SupervisedDataset)
 def _parse_model_supervised(
     consumer: Model, dataset: SupervisedDataset, **ignore: Any
-) -> Dict[Hashable, Tensor]:
+) -> Dict[str, Tensor]:
     parsed_data = {"train_X": dataset.X(), "train_Y": dataset.Y()}
     if dataset.Yvar is not None:
         parsed_data["train_Yvar"] = dataset.Yvar()
@@ -60,7 +60,7 @@ def _parse_model_supervised(
 @dispatcher.register(PairwiseGP, RankingDataset)
 def _parse_pairwiseGP_ranking(
     consumer: PairwiseGP, dataset: RankingDataset, **ignore: Any
-) -> Dict[Hashable, Tensor]:
+) -> Dict[str, Tensor]:
     datapoints = dataset.X.values
     comparisons = dataset.X.indices
     comp_order = dataset.Y()
@@ -77,7 +77,7 @@ def _parse_model_dict(
     consumer: Model,
     training_data: Dict[Hashable, SupervisedDataset],
     **kwargs: Any,
-) -> Dict[Hashable, Tensor]:
+) -> Dict[str, Tensor]:
     if len(training_data) != 1:
         raise UnsupportedError(
             "Default training data parsing logic does not support "
@@ -94,7 +94,7 @@ def _parse_multitask_dict(
     task_feature: int = 0,
     task_feature_container: Hashable = "train_X",
     **kwargs: Any,
-) -> Dict[Hashable, Tensor]:
+) -> Dict[str, Tensor]:
     cache = {}
     for task_id, dataset in enumerate(training_data.values()):
         parse = parse_training_data(consumer, dataset, **kwargs)
