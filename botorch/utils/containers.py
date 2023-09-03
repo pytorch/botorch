@@ -28,6 +28,7 @@ class BotorchContainer(ABC):
 
     :meta private:
     """
+    event_shape: Size
 
     def __post_init__(self, validate_init: bool = True) -> None:
         if validate_init:
