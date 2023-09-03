@@ -28,6 +28,8 @@ import numpy as np
 import torch
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions import UnsupportedError
+
+from botorch.exceptions.warnings import _get_single_precision_warning, InputDataWarning
 from botorch.models.likelihoods.pairwise import (
     PairwiseLikelihood,
     PairwiseProbitLikelihood,
@@ -167,12 +169,17 @@ class PairwiseGP(Model, GP, FantasizeMixin):
 
     def __init__(
         self,
-        datapoints: Tensor,
-        comparisons: Tensor,
+        datapoints: Optional[Tensor],
+        comparisons: Optional[Tensor],
         likelihood: Optional[PairwiseLikelihood] = None,
         covar_module: Optional[ScaleKernel] = None,
         input_transform: Optional[InputTransform] = None,
-        **kwargs,
+        *,
+        jitter: float = 1e-6,
+        xtol: Optional[float] = None,
+        consolidate_rtol: float = 0.0,
+        consolidate_atol: float = 1e-4,
+        maxfev: Optional[int] = None,
     ) -> None:
         r"""
         Args:
@@ -184,22 +191,35 @@ class PairwiseGP(Model, GP, FantasizeMixin):
             covar_module: Covariance module.
             input_transform: An input transform that is applied in the model's
                 forward pass.
+            jitter: Value added to diagonal for numerical stability in
+                `psd_safe_cholesky`.
+            xtol: Stopping creteria in scipy.optimize.fsolve used to find f_map
+                in `PairwiseGP._update`. If None, default behavior is handled by
+                `PairwiseGP._update`.
+            consolidate_rtol: `rtol` passed to `consolidate_duplicates`.
+            consolidate_atol: `atol` passed to `consolidate_duplicates`.
+            maxfev: The maximum number of calls to the function in
+                scipy.optimize.fsolve. If None, default behavior is handled by
+                `PairwiseGP._update`.
         """
         super().__init__()
+        # Input data validation
+        if datapoints is not None and datapoints.dtype == torch.float32:
+            warnings.warn(
+                _get_single_precision_warning(str(datapoints.dtype)),
+                category=InputDataWarning,
+            )
+        if comparisons is not None and comparisons.dtype.is_floating_point:
+            warnings.warn(
+                "An integer dtype is expected for `comparisons`.", InputDataWarning
+            )
 
         # Set optional parameters
-        # Explicitly set jitter for numerical stability in psd_safe_cholesky
-        self._jitter = kwargs.get("jitter", 1e-6)
-        # Stopping creteria in scipy.optimize.fsolve used to find f_map in _update()
-        # If None, set to 1e-6 by default in _update
-        self._xtol = kwargs.get("xtol")
-        # atol rtol for consolidate_duplicates
-        self._consolidate_rtol = kwargs.get("consolidate_rtol", 0)
-        self._consolidate_atol = kwargs.get("consolidate_atol", 1e-4)
-        # The maximum number of calls to the function in scipy.optimize.fsolve
-        # If None, set to 100 by default in _update
-        # If zero, then 100*(N+1) is used by default by fsolve;
-        self._maxfev = kwargs.get("maxfev")
+        self._jitter = jitter
+        self._xtol = xtol
+        self._consolidate_rtol = consolidate_rtol
+        self._consolidate_atol = consolidate_atol
+        self._maxfev = maxfev
 
         if input_transform is not None:
             input_transform.to(datapoints)
