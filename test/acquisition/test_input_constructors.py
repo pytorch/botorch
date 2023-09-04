@@ -8,8 +8,9 @@ from __future__ import annotations
 
 import math
 
-from typing import Any, Callable, List, Type
+from typing import Any, Callable, Sequence, Type
 from unittest import mock
+from unittest.mock import MagicMock
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -26,7 +27,9 @@ from botorch.acquisition.analytic import (
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
 from botorch.acquisition.input_constructors import (
     _field_is_shared,
+    _register_acqf_input_constructor,
     acqf_input_constructor,
+    ACQF_INPUT_CONSTRUCTOR_REGISTRY,
     construct_inputs_mf_base,
     get_acqf_input_constructor,
     get_best_f_analytic,
@@ -95,9 +98,9 @@ class DummyAcquisitionFunction(AcquisitionFunction):
     ...
 
 
-class InputConstructorBaseTestCase:
-    def setUp(self) -> None:
-        super().setUp()
+class InputConstructorBaseTestCase(BotorchTestCase):
+    def setUp(self, suppress_input_warnings: bool = True) -> None:
+        super().setUp(suppress_input_warnings=suppress_input_warnings)
         self.mock_model = MockModel(
             posterior=MockPosterior(mean=None, variance=None, base_shape=(1,))
         )
@@ -113,7 +116,7 @@ class InputConstructorBaseTestCase:
         self.bounds = 2 * [(0.0, 1.0)]
 
 
-class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
+class TestInputConstructorUtils(InputConstructorBaseTestCase):
     def test_field_is_shared(self) -> None:
         self.assertTrue(_field_is_shared(self.blockX_multiY, "X"))
         self.assertFalse(_field_is_shared(self.blockX_multiY, "Y"))
@@ -232,10 +235,24 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
                 model=self.mock_model, training_data=self.blockX_blockY, hat="car"
             )
 
+    def test__register_acqf_input_constructor(self) -> None:
+        with self.assertRaisesRegex(RuntimeError, "not registered"):
+            get_acqf_input_constructor(DummyAcquisitionFunction)
 
-class TestAnalyticAcquisitionFunctionInputConstructors(
-    InputConstructorBaseTestCase, BotorchTestCase
-):
+        dummy_constructor = MagicMock()
+
+        _register_acqf_input_constructor(
+            acqf_cls=DummyAcquisitionFunction,
+            input_constructor=dummy_constructor,
+        )
+        input_constructor = get_acqf_input_constructor(DummyAcquisitionFunction)
+        self.assertIs(input_constructor, dummy_constructor)
+
+        # Clean up changes to the global registry (leads to failure of other tests).
+        ACQF_INPUT_CONSTRUCTOR_REGISTRY.pop(DummyAcquisitionFunction)
+
+
+class TestAnalyticAcquisitionFunctionInputConstructors(InputConstructorBaseTestCase):
     def test_acqf_input_constructor(self) -> None:
         with self.assertRaisesRegex(RuntimeError, "not registered"):
             get_acqf_input_constructor(DummyAcquisitionFunction)
@@ -408,9 +425,7 @@ class TestAnalyticAcquisitionFunctionInputConstructors(
         self.assertEqual(kwargs["outcome_model"].w.shape[-1], mock_pref_model.dim)
 
 
-class TestMCAcquisitionFunctionInputConstructors(
-    InputConstructorBaseTestCase, BotorchTestCase
-):
+class TestMCAcquisitionFunctionInputConstructors(InputConstructorBaseTestCase):
     def test_construct_inputs_mc_base(self) -> None:
         c = get_acqf_input_constructor(qSimpleRegret)
         mock_model = self.mock_model
@@ -681,7 +696,7 @@ class TestMCAcquisitionFunctionInputConstructors(
 
 
 class TestMultiObjectiveAcquisitionFunctionInputConstructors(
-    InputConstructorBaseTestCase, BotorchTestCase
+    InputConstructorBaseTestCase
 ):
     def test_construct_inputs_EHVI(self) -> None:
         c = get_acqf_input_constructor(ExpectedHypervolumeImprovement)
@@ -1205,11 +1220,11 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         qJointEntropySearch(**kwargs)
 
 
-class TestInstantiationFromInputConstructor(
-    InputConstructorBaseTestCase, BotorchTestCase
-):
+class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
     def _test_constructor_base(
-        self, classes: List[Type[AcquisitionFunction]], **input_constructor_kwargs: Any
+        self,
+        classes: Sequence[Type[AcquisitionFunction]],
+        **input_constructor_kwargs: Any,
     ) -> None:
         for cls_ in classes:
             with self.subTest(cls_.__name__, cls_=cls_):

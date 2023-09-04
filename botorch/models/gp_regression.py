@@ -354,7 +354,7 @@ class HeteroskedasticSingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
     Example:
         >>> train_X = torch.rand(20, 2)
         >>> train_Y = torch.sin(train_X).sum(dim=1, keepdim=True)
-        >>> se = torch.norm(train_X, dim=1, keepdim=True)
+        >>> se = torch.linalg.norm(train_X, dim=1, keepdim=True)
         >>> train_Yvar = 0.1 + se * torch.rand_like(train_Y)
         >>> model = HeteroskedasticSingleTaskGP(train_X, train_Y, train_Yvar)
     """
