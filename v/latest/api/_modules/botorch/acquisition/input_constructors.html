@@ -150,7 +150,7 @@
 
 <span class="k">def</span> <span class="nf">_field_is_shared</span><span class="p">(</span>
     <span class="n">datasets</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">SupervisedDataset</span><span class="p">]],</span>
-    <span class="n">fieldname</span><span class="p">:</span> <span class="n">Hashable</span><span class="p">,</span>
+    <span class="n">fieldname</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Determines whether or not a given field is shared by all datasets."""</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">datasets</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
