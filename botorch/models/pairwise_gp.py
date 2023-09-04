@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import warnings
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -59,7 +59,7 @@ from torch.nn.modules.module import _IncompatibleKeys
 
 # Helper functions
 def _check_strict_input(
-    inputs: List[Tensor], t_inputs: List[Tensor], target_or_inputs: str
+    inputs: Iterable[Tensor], t_inputs: List[Tensor], target_or_inputs: str
 ):
     for input_, t_input in zip(inputs, t_inputs or (None,)):
         for attr in {"shape", "dtype", "device"}:
@@ -80,7 +80,7 @@ def _check_strict_input(
 
 
 def _scaled_psd_safe_cholesky(
-    matrix: Tensor, scale: Union[float, Tensor], jitter: Optional[float] = None
+    matrix: Tensor, scale: Tensor, jitter: Optional[float] = None
 ) -> Tensor:
     r"""scale matrix by 1/outputscale before cholesky for better numerical stability"""
     matrix = matrix / scale
@@ -183,10 +183,14 @@ class PairwiseGP(Model, GP, FantasizeMixin):
     ) -> None:
         r"""
         Args:
-            datapoints: A `batch_shape x n x d` tensor of training features.
-            comparisons: A `batch_shape x m x 2` training comparisons;
-                comparisons[i] is a noisy indicator suggesting the utility value
-                of comparisons[i, 0]-th is greater than comparisons[i, 1]-th.
+            datapoints: Either `None` or a `batch_shape x n x d` tensor of
+                training features. If either `datapoints` or `comparisons` is
+                `None`, construct a prior-only model.
+            comparisons: Either `None` or a `batch_shape x m x 2` tensor of
+                training comparisons; comparisons[i] is a noisy indicator
+                suggesting the utility value of comparisons[i, 0]-th is greater
+                than comparisons[i, 1]-th. If either `comparisons` or
+                `datapoints` is `None`, construct a prior-only model.
             likelihood: A PairwiseLikelihood.
             covar_module: Covariance module.
             input_transform: An input transform that is applied in the model's
@@ -776,18 +780,22 @@ class PairwiseGP(Model, GP, FantasizeMixin):
 
     def set_train_data(
         self,
-        datapoints: Tensor = None,
-        comparisons: Tensor = None,
+        datapoints: Optional[Tensor] = None,
+        comparisons: Optional[Tensor] = None,
         strict: bool = False,
         update_model: bool = True,
     ) -> None:
         r"""Set datapoints and comparisons and update model properties if needed
 
         Args:
-            datapoints: A `batch_shape x n x d` dimension tensor X. If there are input
-                transformations, assume the datapoints are not transformed
-            comparisons: A tensor of size `batch_shape x m x 2`. (i, j) means
-                f_i is preferred over f_j.
+            datapoints: Either `None` or a `batch_shape x n x d` dimension
+                tensor X. If there are input transformations, assume the
+                datapoints are not transformed. If either `datapoints` or
+                `comparisons` is `None`, construct a prior-only model.
+            comparisons: Either `None` or a tensor of size `batch_shape x m x
+                2`. (i, j) means f_i is preferred over f_j. If either
+                `comparisons` or `datapoints` is `None`, construct a prior-only
+                model.
             strict: `strict` argument as in gpytorch.models.exact_gp for compatibility
                 when using fit_gpytorch_model with input_transform.
             update_model: True if we want to refit the model (see _update) after

@@ -523,11 +523,10 @@ class ConstrainedMCObjective(GenericMCObjective):
         )
 
 
-def _get_learned_objective_pref_model_mixed_dtype_warn() -> str:
-    return (
-        "pref_model has double-precision data, but single-precision data "
-        "was passed to the LearnedObjective. Upcasting to double."
-    )
+LEARNED_OBJECTIVE_PREF_MODEL_MIXED_DTYPE_WARN = (
+    "pref_model has double-precision data, but single-precision data "
+    "was passed to the LearnedObjective. Upcasting to double."
+)
 
 
 class LearnedObjective(MCAcquisitionObjective):
@@ -588,7 +587,7 @@ class LearnedObjective(MCAcquisitionObjective):
             d == torch.float64 for d in self.pref_model.dtypes_of_buffers
         ):
             warnings.warn(
-                _get_learned_objective_pref_model_mixed_dtype_warn(),
+                LEARNED_OBJECTIVE_PREF_MODEL_MIXED_DTYPE_WARN,
                 InputDataWarning,
             )
             samples = samples.to(torch.float64)

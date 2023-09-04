@@ -12,11 +12,11 @@ import torch
 from botorch import settings
 from botorch.acquisition import LearnedObjective
 from botorch.acquisition.objective import (
-    _get_learned_objective_pref_model_mixed_dtype_warn,
     ConstrainedMCObjective,
     ExpectationPosteriorTransform,
     GenericMCObjective,
     IdentityMCObjective,
+    LEARNED_OBJECTIVE_PREF_MODEL_MIXED_DTYPE_WARN,
     LinearMCObjective,
     MCAcquisitionObjective,
     PosteriorTransform,
@@ -537,7 +537,7 @@ class TestLearnedObjective(BotorchTestCase):
                     warnings.filterwarnings(
                         "ignore",
                         category=InputDataWarning,
-                        message=_get_learned_objective_pref_model_mixed_dtype_warn(),
+                        message=LEARNED_OBJECTIVE_PREF_MODEL_MIXED_DTYPE_WARN,
                     )
                     first_call_output = pref_obj(test_X.to(dtype=test_x_dtype))
                     second_call_output = pref_obj(test_X.to(dtype=test_x_dtype))
@@ -554,6 +554,6 @@ class TestLearnedObjective(BotorchTestCase):
                 )
             pref_obj = LearnedObjective(pref_model=pref_model)
             with self.assertWarnsRegex(
-                InputDataWarning, _get_learned_objective_pref_model_mixed_dtype_warn()
+                InputDataWarning, LEARNED_OBJECTIVE_PREF_MODEL_MIXED_DTYPE_WARN
             ):
                 first_call_output = pref_obj(test_X)
