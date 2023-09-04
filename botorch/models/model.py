@@ -247,7 +247,7 @@ class Model(Module, ABC):
 
     @property
     def dtypes_of_buffers(self) -> Set[torch.dtype]:
-        return {t.dtype for t in self._buffers.values() if t is not None}
+        return {t.dtype for t in self.buffers() if t is not None}
 
 
 class FantasizeMixin(ABC):

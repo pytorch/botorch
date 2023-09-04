@@ -585,7 +585,7 @@ class LearnedObjective(MCAcquisitionObjective):
             objective values sampled from utility posterior using `pref_model`.
         """
         if samples.dtype == torch.float32 and any(
-            [d == torch.float64 for d in self.pref_model.dtypes_of_buffers]
+            d == torch.float64 for d in self.pref_model.dtypes_of_buffers
         ):
             warnings.warn(
                 _get_learned_objective_pref_model_mixed_dtype_warn(),
@@ -593,8 +593,7 @@ class LearnedObjective(MCAcquisitionObjective):
             )
             samples = samples.to(torch.float64)
 
-        posterior_ = self.pref_model.posterior
-        post = posterior_(samples)
+        post = self.pref_model.posterior(samples)
         if isinstance(self.pref_model, DeterministicModel):
             # return preference posterior mean
             return post.mean.squeeze(-1)
