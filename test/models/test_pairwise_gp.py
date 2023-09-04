@@ -100,35 +100,37 @@ class TestPairwiseGP(BotorchTestCase):
                 fit_gpytorch_mll(
                     mll, optimizer_kwargs={"options": {"maxiter": 2}}, max_attempts=1
                 )
-            # prior training
-            prior_m = PairwiseGP(None, None).to(**tkwargs)
-            with self.assertRaises(RuntimeError):
-                prior_m(train_X)
-            # forward in training mode with non-training data
-            custom_m = PairwiseGP(**model_kwargs)
-            other_X = torch.rand(batch_shape + torch.Size([3, X_dim]), **tkwargs)
-            other_comp = train_comp.clone()
-            with self.assertRaises(RuntimeError):
-                custom_m(other_X)
-            custom_mll = PairwiseLaplaceMarginalLogLikelihood(
-                custom_m.likelihood, custom_m
-            ).to(**tkwargs)
-            post = custom_m(train_X)
-            with self.assertRaises(RuntimeError):
-                custom_mll(post, other_comp)
+            with self.subTest("prior training"):
+                # prior training
+                prior_m = PairwiseGP(None, None).to(**tkwargs)
+                with self.assertRaises(RuntimeError):
+                    prior_m(train_X)
 
-            # test init
-            self.assertIsInstance(model.mean_module, ConstantMean)
-            self.assertIsInstance(model.covar_module, ScaleKernel)
-            self.assertIsInstance(model.covar_module.base_kernel, RBFKernel)
-            self.assertIsInstance(
-                model.covar_module.base_kernel.lengthscale_prior, GammaPrior
-            )
-            self.assertIsInstance(
-                model.covar_module.outputscale_prior, SmoothedBoxPrior
-            )
-            self.assertEqual(model.num_outputs, 1)
-            self.assertEqual(model.batch_shape, batch_shape)
+            with self.subTest("forward in training mode with non-training data"):
+                custom_m = PairwiseGP(**model_kwargs)
+                other_X = torch.rand(batch_shape + torch.Size([3, X_dim]), **tkwargs)
+                other_comp = train_comp.clone()
+                with self.assertRaises(RuntimeError):
+                    custom_m(other_X)
+                custom_mll = PairwiseLaplaceMarginalLogLikelihood(
+                    custom_m.likelihood, custom_m
+                ).to(**tkwargs)
+                post = custom_m(train_X)
+                with self.assertRaises(RuntimeError):
+                    custom_mll(post, other_comp)
+
+            with self.subTest("init"):
+                self.assertIsInstance(model.mean_module, ConstantMean)
+                self.assertIsInstance(model.covar_module, ScaleKernel)
+                self.assertIsInstance(model.covar_module.base_kernel, RBFKernel)
+                self.assertIsInstance(
+                    model.covar_module.base_kernel.lengthscale_prior, GammaPrior
+                )
+                self.assertIsInstance(
+                    model.covar_module.outputscale_prior, SmoothedBoxPrior
+                )
+                self.assertEqual(model.num_outputs, 1)
+                self.assertEqual(model.batch_shape, batch_shape)
 
             # test not using a ScaleKernel
             with self.assertRaisesRegex(UnsupportedError, "used with a ScaleKernel"):

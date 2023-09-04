@@ -213,10 +213,6 @@ class PairwiseGP(Model, GP, FantasizeMixin):
                 _get_single_precision_warning(str(datapoints.dtype)),
                 category=InputDataWarning,
             )
-        if comparisons is not None and comparisons.dtype.is_floating_point:
-            warnings.warn(
-                "An integer dtype is expected for `comparisons`.", InputDataWarning
-            )
 
         # Set optional parameters
         self._jitter = jitter
