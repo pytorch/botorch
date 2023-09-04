@@ -119,7 +119,9 @@ class GPyTorchModel(Model, ABC):
             )
         if X.dtype != torch.float64:
             # NOTE: Not using a BotorchWarning since those get ignored.
-            warnings.warn(_get_single_precision_warning(str(X.dtype)), UserWarning)
+            warnings.warn(
+                _get_single_precision_warning(str(X.dtype)), UserWarning, stacklevel=2
+            )
 
     @property
     def batch_shape(self) -> torch.Size:

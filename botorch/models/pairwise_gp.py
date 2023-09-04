@@ -212,6 +212,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
             warnings.warn(
                 _get_single_precision_warning(str(datapoints.dtype)),
                 category=InputDataWarning,
+                stacklevel=2,
             )
 
         # Set optional parameters

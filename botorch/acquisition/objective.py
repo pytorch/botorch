@@ -589,6 +589,7 @@ class LearnedObjective(MCAcquisitionObjective):
             warnings.warn(
                 LEARNED_OBJECTIVE_PREF_MODEL_MIXED_DTYPE_WARN,
                 InputDataWarning,
+                stacklevel=2,
             )
             samples = samples.to(torch.float64)
 
