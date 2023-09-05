@@ -22,7 +22,10 @@ from typing import Any, List, Optional, Tuple, TYPE_CHECKING, Union
 import torch
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions.errors import BotorchTensorDimensionError, InputDataError
-from botorch.exceptions.warnings import BotorchTensorDimensionWarning
+from botorch.exceptions.warnings import (
+    _get_single_precision_warning,
+    BotorchTensorDimensionWarning,
+)
 from botorch.models.model import Model, ModelList
 from botorch.models.utils import (
     _make_X_full,
@@ -42,16 +45,6 @@ if TYPE_CHECKING:
     from botorch.posteriors.posterior_list import PosteriorList  # pragma: no cover
     from botorch.posteriors.transformed import TransformedPosterior  # pragma: no cover
     from gpytorch.likelihoods import Likelihood  # pragma: no cover
-
-
-def _get_single_precision_warning(dtype: torch.dtype) -> str:
-    msg = (
-        f"The model inputs are of type {dtype}. It is strongly recommended "
-        "to use double precision in BoTorch, as this improves both "
-        "precision and stability and can help avoid numerical errors. "
-        "See https://github.com/pytorch/botorch/discussions/1444"
-    )
-    return msg
 
 
 class GPyTorchModel(Model, ABC):
@@ -126,7 +119,9 @@ class GPyTorchModel(Model, ABC):
             )
         if X.dtype != torch.float64:
             # NOTE: Not using a BotorchWarning since those get ignored.
-            warnings.warn(_get_single_precision_warning(X.dtype), UserWarning)
+            warnings.warn(
+                _get_single_precision_warning(str(X.dtype)), UserWarning, stacklevel=2
+            )
 
     @property
     def batch_shape(self) -> torch.Size:

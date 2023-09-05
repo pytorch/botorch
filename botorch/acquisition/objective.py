@@ -15,6 +15,7 @@ from typing import Callable, List, Optional, TYPE_CHECKING, Union
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedError
+from botorch.exceptions.warnings import InputDataWarning
 from botorch.models.model import Model
 from botorch.models.transforms.outcome import Standardize
 from botorch.posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
@@ -522,6 +523,12 @@ class ConstrainedMCObjective(GenericMCObjective):
         )
 
 
+LEARNED_OBJECTIVE_PREF_MODEL_MIXED_DTYPE_WARN = (
+    "pref_model has double-precision data, but single-precision data "
+    "was passed to the LearnedObjective. Upcasting to double."
+)
+
+
 class LearnedObjective(MCAcquisitionObjective):
     r"""Learned preference objective constructed from a preference model.
 
@@ -576,6 +583,16 @@ class LearnedObjective(MCAcquisitionObjective):
             A `(sample_size * num_samples) x batch_shape x N`-dim Tensor of
             objective values sampled from utility posterior using `pref_model`.
         """
+        if samples.dtype == torch.float32 and any(
+            d == torch.float64 for d in self.pref_model.dtypes_of_buffers
+        ):
+            warnings.warn(
+                LEARNED_OBJECTIVE_PREF_MODEL_MIXED_DTYPE_WARN,
+                InputDataWarning,
+                stacklevel=2,
+            )
+            samples = samples.to(torch.float64)
+
         post = self.pref_model.posterior(samples)
         if isinstance(self.pref_model, DeterministicModel):
             # return preference posterior mean

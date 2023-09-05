@@ -6,6 +6,7 @@
 
 import itertools
 import warnings
+from typing import Optional
 
 import torch
 from botorch import settings
@@ -15,14 +16,17 @@ from botorch.acquisition.objective import (
     ExpectationPosteriorTransform,
     GenericMCObjective,
     IdentityMCObjective,
+    LEARNED_OBJECTIVE_PREF_MODEL_MIXED_DTYPE_WARN,
     LinearMCObjective,
     MCAcquisitionObjective,
     PosteriorTransform,
     ScalarizedPosteriorTransform,
 )
 from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.warnings import _get_single_precision_warning, InputDataWarning
 from botorch.models.deterministic import PosteriorMeanModel
 from botorch.models.pairwise_gp import PairwiseGP
+from botorch.models.transforms.input import Normalize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils import apply_constraints
@@ -435,45 +439,121 @@ class TestLinearMCObjective(BotorchTestCase):
 
 
 class TestLearnedObjective(BotorchTestCase):
-    def test_learned_preference_objective(self):
-        X_dim = 2
-        train_X = torch.rand(2, X_dim)
+    def setUp(self, suppress_input_warnings: bool = False) -> None:
+        super().setUp(suppress_input_warnings=suppress_input_warnings)
+        self.x_dim = 2
+
+    def _get_pref_model(
+        self,
+        dtype: Optional[torch.dtype] = None,
+        input_transform: Optional[Normalize] = None,
+    ) -> PairwiseGP:
+        train_X = torch.rand((2, self.x_dim), dtype=dtype)
         train_comps = torch.LongTensor([[0, 1]])
-        pref_model = PairwiseGP(train_X, train_comps)
+        pref_model = PairwiseGP(train_X, train_comps, input_transform=input_transform)
+        return pref_model
+
+    def test_learned_preference_objective(self) -> None:
+        pref_model = self._get_pref_model(dtype=torch.float64)
 
         og_sample_shape = 3
         batch_size = 2
         n = 8
-        test_X = torch.rand(torch.Size((og_sample_shape, batch_size, n, X_dim)))
+        test_X = torch.rand(
+            torch.Size((og_sample_shape, batch_size, n, self.x_dim)),
+            dtype=torch.float64,
+        )
 
         # test default setting where sampler =
         # IIDNormalSampler(sample_shape=torch.Size([1]))
-        pref_obj = LearnedObjective(pref_model=pref_model)
-        self.assertEqual(
-            pref_obj(test_X).shape, torch.Size([og_sample_shape, batch_size, n])
-        )
+        with self.subTest("default sampler"):
+            pref_obj = LearnedObjective(pref_model=pref_model)
+            first_call_output = pref_obj(test_X)
+            self.assertEqual(
+                first_call_output.shape, torch.Size([og_sample_shape, batch_size, n])
+            )
 
         # test when sampler has num_samples = 16
-        num_samples = 16
-        pref_obj = LearnedObjective(
-            pref_model=pref_model,
-            sampler=SobolQMCNormalSampler(sample_shape=torch.Size([num_samples])),
-        )
-        self.assertEqual(
-            pref_obj(test_X).shape,
-            torch.Size([num_samples * og_sample_shape, batch_size, n]),
-        )
+        with self.subTest("SobolQMCNormalSampler"):
+            num_samples = 16
+            pref_obj = LearnedObjective(
+                pref_model=pref_model,
+                sampler=SobolQMCNormalSampler(sample_shape=torch.Size([num_samples])),
+            )
+            self.assertEqual(
+                pref_obj(test_X).shape,
+                torch.Size([num_samples * og_sample_shape, batch_size, n]),
+            )
 
         # test posterior mean
-        mean_pref_model = PosteriorMeanModel(model=pref_model)
-        pref_obj = LearnedObjective(pref_model=mean_pref_model)
-        self.assertEqual(
-            pref_obj(test_X).shape, torch.Size([og_sample_shape, batch_size, n])
-        )
+        with self.subTest("PosteriorMeanModel"):
+            mean_pref_model = PosteriorMeanModel(model=pref_model)
+            pref_obj = LearnedObjective(pref_model=mean_pref_model)
+            self.assertEqual(
+                pref_obj(test_X).shape, torch.Size([og_sample_shape, batch_size, n])
+            )
 
         # cannot use a deterministic model together with a sampler
-        with self.assertRaises(AssertionError):
+        with self.subTest("deterministic model"), self.assertRaises(AssertionError):
             LearnedObjective(
                 pref_model=mean_pref_model,
                 sampler=SobolQMCNormalSampler(sample_shape=torch.Size([num_samples])),
             )
+
+    def test_dtype_compatibility_with_PairwiseGP(self) -> None:
+        og_sample_shape = 3
+        batch_size = 2
+        n = 8
+
+        test_X = torch.rand(
+            torch.Size((og_sample_shape, batch_size, n, self.x_dim)),
+        )
+
+        for pref_model_dtype, test_x_dtype, expected_output_dtype in [
+            (torch.float64, torch.float64, torch.float64),
+            (torch.float32, torch.float32, torch.float32),
+            (torch.float64, torch.float32, torch.float64),
+        ]:
+            with self.subTest(
+                "numerical behavior",
+                pref_model_dtype=pref_model_dtype,
+                test_x_dtype=test_x_dtype,
+                expected_output_dtype=expected_output_dtype,
+            ):
+                # Ignore a single-precision warning in PairwiseGP
+                # and mixed-precision warning tested below
+                with warnings.catch_warnings():
+                    warnings.filterwarnings(
+                        "ignore",
+                        category=InputDataWarning,
+                        message=_get_single_precision_warning(str(torch.float32)),
+                    )
+                    pref_model = self._get_pref_model(
+                        dtype=pref_model_dtype,
+                        input_transform=Normalize(d=2),
+                    )
+                pref_obj = LearnedObjective(pref_model=pref_model)
+                with warnings.catch_warnings():
+                    warnings.filterwarnings(
+                        "ignore",
+                        category=InputDataWarning,
+                        message=LEARNED_OBJECTIVE_PREF_MODEL_MIXED_DTYPE_WARN,
+                    )
+                    first_call_output = pref_obj(test_X.to(dtype=test_x_dtype))
+                    second_call_output = pref_obj(test_X.to(dtype=test_x_dtype))
+
+                self.assertEqual(first_call_output.dtype, expected_output_dtype)
+                self.assertTrue(torch.equal(first_call_output, second_call_output))
+
+        with self.subTest("mixed precision warning"):
+            # should warn and test should pass
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=InputDataWarning)
+                pref_model = self._get_pref_model(
+                    dtype=torch.float64, input_transform=Normalize(d=2)
+                )
+            pref_obj = LearnedObjective(pref_model=pref_model)
+            with self.assertWarnsRegex(
+                InputDataWarning, LEARNED_OBJECTIVE_PREF_MODEL_MIXED_DTYPE_WARN
+            ):
+                first_call_output = pref_obj(test_X)

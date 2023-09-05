@@ -317,7 +317,7 @@ def detect_duplicates(
 
 
 def consolidate_duplicates(
-    X: Tensor, Y: Tensor, rtol: float = 0, atol: float = 1e-8
+    X: Tensor, Y: Tensor, rtol: float = 0.0, atol: float = 1e-8
 ) -> Tuple[Tensor, Tensor, Tensor]:
     """Drop duplicated Xs and update the indices tensor Y accordingly.
     Supporting 2d Tensor only as in batch mode block design is not guaranteed.

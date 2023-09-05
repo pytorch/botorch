@@ -24,6 +24,7 @@ from typing import (
     List,
     Mapping,
     Optional,
+    Set,
     TYPE_CHECKING,
     TypeVar,
     Union,
@@ -243,6 +244,10 @@ class Model(Module, ABC):
         else:
             self._set_transformed_inputs()
         return super().train(mode=mode)
+
+    @property
+    def dtypes_of_buffers(self) -> Set[torch.dtype]:
+        return {t.dtype for t in self.buffers() if t is not None}
 
 
 class FantasizeMixin(ABC):
