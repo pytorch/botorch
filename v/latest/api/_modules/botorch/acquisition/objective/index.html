@@ -38,6 +38,7 @@
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">InputDataWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">Standardize</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span><span class="p">,</span> <span class="n">scalarize_posterior</span>
@@ -545,6 +546,12 @@
         <span class="p">)</span></div></div>
 
 
+<span class="n">LEARNED_OBJECTIVE_PREF_MODEL_MIXED_DTYPE_WARN</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"pref_model has double-precision data, but single-precision data "</span>
+    <span class="s2">"was passed to the LearnedObjective. Upcasting to double."</span>
+<span class="p">)</span>
+
+
 <div class="viewcode-block" id="LearnedObjective"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.LearnedObjective">[docs]</a><span class="k">class</span> <span class="nc">LearnedObjective</span><span class="p">(</span><span class="n">MCAcquisitionObjective</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Learned preference objective constructed from a preference model.</span>
 
@@ -599,6 +606,16 @@
 <span class="sd">            A `(sample_size * num_samples) x batch_shape x N`-dim Tensor of</span>
 <span class="sd">            objective values sampled from utility posterior using `pref_model`.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">samples</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="n">d</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">float64</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pref_model</span><span class="o">.</span><span class="n">dtypes_of_buffers</span>
+        <span class="p">):</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="n">LEARNED_OBJECTIVE_PREF_MODEL_MIXED_DTYPE_WARN</span><span class="p">,</span>
+                <span class="n">InputDataWarning</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">samples</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
         <span class="n">post</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pref_model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pref_model</span><span class="p">,</span> <span class="n">DeterministicModel</span><span class="p">):</span>
             <span class="c1"># return preference posterior mean</span>
