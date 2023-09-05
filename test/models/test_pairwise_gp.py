@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
+import random
 import warnings
 from typing import Dict, Tuple, Union
 
@@ -75,6 +76,7 @@ class TestPairwiseGP(BotorchTestCase):
         return model, model_kwargs
 
     def test_pairwise_gp(self) -> None:
+        torch.manual_seed(random.randint(0, 10))
         for batch_shape, likelihood_cls in itertools.product(
             (torch.Size(), torch.Size([2])),
             (PairwiseLogitLikelihood, PairwiseProbitLikelihood),
