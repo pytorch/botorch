@@ -8,7 +8,7 @@ import itertools
 import warnings
 
 import torch
-from botorch.exceptions.warnings import OptimizationWarning
+from botorch.exceptions.warnings import InputDataWarning, OptimizationWarning
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.converter import batched_to_model_list
 from botorch.models.gp_regression_mixed import MixedSingleTaskGP
@@ -283,3 +283,13 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             self.assertTrue(Y.equal(model_kwargs["train_Y"]))
             self.assertEqual(model_kwargs["cat_dims"], cat_dims)
             self.assertIsNone(model_kwargs["likelihood"])
+
+        # With train_Yvar.
+        training_data = SupervisedDataset(X, Y, Y)
+        with self.assertWarnsRegex(InputDataWarning, "train_Yvar"):
+            model_kwargs = MixedSingleTaskGP.construct_inputs(
+                training_data, categorical_features=cat_dims
+            )
+        self.assertTrue(X.equal(model_kwargs["train_X"]))
+        self.assertTrue(Y.equal(model_kwargs["train_Y"]))
+        self.assertNotIn("train_Yvar", model_kwargs)

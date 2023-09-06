@@ -6,9 +6,11 @@
 
 from __future__ import annotations
 
+import warnings
 from typing import Any, Callable, Dict, List, Optional
 
 import torch
+from botorch.exceptions.warnings import InputDataWarning
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.kernels.categorical import CategoricalKernel
 from botorch.models.transforms.input import InputTransform
@@ -192,8 +194,16 @@ class MixedSingleTaskGP(SingleTaskGP):
             categorical_features: Column indices of categorical features.
             likelihood: Optional likelihood used to constuct the model.
         """
+        base_inputs = super().construct_inputs(training_data=training_data, **kwargs)
+        if base_inputs.pop("train_Yvar", None) is not None:
+            # TODO: Remove when SingleTaskGP supports optional Yvar [T162925473].
+            warnings.warn(
+                "`MixedSingleTaskGP` only supports inferred noise at the moment. "
+                "Ignoring the provided `train_Yvar` observations.",
+                InputDataWarning,
+            )
         return {
-            **super().construct_inputs(training_data=training_data, **kwargs),
+            **base_inputs,
             "cat_dims": categorical_features,
             "likelihood": likelihood,
         }
