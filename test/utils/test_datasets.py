@@ -4,10 +4,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import torch
 from botorch.utils.containers import DenseContainer, SliceContainer
 from botorch.utils.datasets import FixedNoiseDataset, RankingDataset, SupervisedDataset
 from botorch.utils.testing import BotorchTestCase
-from torch import rand, randperm, Size, stack, tensor
+from torch import rand, randperm, Size, stack, Tensor, tensor
 
 
 class TestDatasets(BotorchTestCase):
@@ -18,10 +19,19 @@ class TestDatasets(BotorchTestCase):
 
         # Test `__init__`
         dataset = SupervisedDataset(X=Xs[0], Y=Ys[0])
-        for name in ("X", "Y"):
-            field = getattr(dataset, name)
-            self.assertIsInstance(field, DenseContainer)
-            self.assertEqual(field.event_shape, field.values.shape[-1:])
+        self.assertIsInstance(dataset.X, Tensor)
+        self.assertIsInstance(dataset._X, Tensor)
+        self.assertIsInstance(dataset.Y, Tensor)
+        self.assertIsInstance(dataset._Y, Tensor)
+
+        dataset = SupervisedDataset(
+            X=DenseContainer(Xs[0], Xs[0].shape[-1:]),
+            Y=DenseContainer(Ys[0], Ys[0].shape[-1:]),
+        )
+        self.assertIsInstance(dataset.X, Tensor)
+        self.assertIsInstance(dataset._X, DenseContainer)
+        self.assertIsInstance(dataset.Y, Tensor)
+        self.assertIsInstance(dataset._Y, DenseContainer)
 
         # Test `_validate`
         with self.assertRaisesRegex(ValueError, "Batch dimensions .* incompatible."):
@@ -38,7 +48,18 @@ class TestDatasets(BotorchTestCase):
         datasets = SupervisedDataset.dict_from_iter(X=Xs[0], Y=Ys.unbind())
         self.assertEqual(len(datasets), len(Xs))
         for i in range(1, len(Xs)):
-            self.assertEqual(datasets[0].X, datasets[i].X)
+            self.assertTrue(torch.equal(datasets[0].X, datasets[i].X))
+
+        # Test with Yvar.
+        dataset = SupervisedDataset(
+            X=Xs[0], Y=Ys[0], Yvar=DenseContainer(Ys[0], Ys[0].shape[-1:])
+        )
+        self.assertIsInstance(dataset.X, Tensor)
+        self.assertIsInstance(dataset._X, Tensor)
+        self.assertIsInstance(dataset.Y, Tensor)
+        self.assertIsInstance(dataset._Y, Tensor)
+        self.assertIsInstance(dataset.Yvar, Tensor)
+        self.assertIsInstance(dataset._Yvar, DenseContainer)
 
     def test_fixedNoise(self):
         # Generate some data
@@ -53,9 +74,9 @@ class TestDatasets(BotorchTestCase):
             Yvar=Ys_var.unbind(),
         )
         for i, dataset in datasets.items():
-            self.assertTrue(dataset.X().equal(Xs[i]))
-            self.assertTrue(dataset.Y().equal(Ys[i]))
-            self.assertTrue(dataset.Yvar().equal(Ys_var[i]))
+            self.assertTrue(dataset.X.equal(Xs[i]))
+            self.assertTrue(dataset.Y.equal(Ys[i]))
+            self.assertTrue(dataset.Yvar.equal(Ys_var[i]))
 
         # Test handling of Tensor-valued arguments to `dict_from_iter`
         datasets = FixedNoiseDataset.dict_from_iter(
@@ -64,8 +85,8 @@ class TestDatasets(BotorchTestCase):
             Yvar=Ys_var.unbind(),
         )
         for dataset in datasets.values():
-            self.assertTrue(Xs[0].equal(dataset.X()))
-            self.assertTrue(Ys[1].equal(dataset.Y()))
+            self.assertTrue(Xs[0].equal(dataset.X))
+            self.assertTrue(Ys[1].equal(dataset.Y))
 
         with self.assertRaisesRegex(
             ValueError, "`Y` and `Yvar`"

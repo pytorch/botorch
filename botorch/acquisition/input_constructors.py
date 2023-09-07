@@ -141,7 +141,10 @@ def _field_is_shared(
         obj = getattr(dataset, fieldname)
         if base is None:
             base = obj
-        elif base != obj:
+        elif isinstance(base, Tensor):
+            if not torch.equal(base, obj):
+                return False
+        elif base != obj:  # pragma: no cover
             return False
 
     return True
@@ -414,7 +417,7 @@ def construct_inputs_noisy_ei(
     X = _get_dataset_field(training_data, "X", first_only=True, assert_shared=True)
     return {
         "model": model,
-        "X_observed": X(),
+        "X_observed": X,
         "num_fantasies": num_fantasies,
         "maximize": maximize,
     }
@@ -624,7 +627,6 @@ def construct_inputs_qNEI(
         X_baseline = _get_dataset_field(
             training_data,
             fieldname="X",
-            transform=lambda field: field(),
             assert_shared=True,
             first_only=True,
         )
@@ -845,7 +847,6 @@ def construct_inputs_EHVI(
     X = _get_dataset_field(
         training_data,
         fieldname="X",
-        transform=lambda field: field(),
         first_only=True,
         assert_shared=True,
     )
@@ -908,7 +909,6 @@ def construct_inputs_qEHVI(
     X = _get_dataset_field(
         training_data,
         fieldname="X",
-        transform=lambda field: field(),
         first_only=True,
         assert_shared=True,
     )
@@ -974,7 +974,6 @@ def construct_inputs_qNEHVI(
         X_baseline = _get_dataset_field(
             training_data,
             fieldname="X",
-            transform=lambda field: field(),
             first_only=True,
             assert_shared=True,
         )
@@ -1245,7 +1244,6 @@ def get_best_f_analytic(
     Y = _get_dataset_field(
         training_data,
         fieldname="Y",
-        transform=lambda field: field(),
         join_rule=lambda field_tensors: torch.cat(field_tensors, dim=-1),
     )
 
@@ -1274,7 +1272,6 @@ def get_best_f_mc(
     X_baseline = _get_dataset_field(
         training_data,
         fieldname="X",
-        transform=lambda field: field(),
         assert_shared=True,
         first_only=True,
     )
@@ -1282,7 +1279,6 @@ def get_best_f_mc(
     Y = _get_dataset_field(
         training_data,
         fieldname="Y",
-        transform=lambda field: field(),
         join_rule=lambda field_tensors: torch.cat(field_tensors, dim=-1),
     )  # batch_shape x n x d
 
