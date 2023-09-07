@@ -51,9 +51,9 @@ def parse_training_data(
 def _parse_model_supervised(
     consumer: Model, dataset: SupervisedDataset, **ignore: Any
 ) -> Dict[str, Tensor]:
-    parsed_data = {"train_X": dataset.X(), "train_Y": dataset.Y()}
+    parsed_data = {"train_X": dataset.X, "train_Y": dataset.Y}
     if dataset.Yvar is not None:
-        parsed_data["train_Yvar"] = dataset.Yvar()
+        parsed_data["train_Yvar"] = dataset.Yvar
     return parsed_data
 
 
@@ -61,9 +61,11 @@ def _parse_model_supervised(
 def _parse_pairwiseGP_ranking(
     consumer: PairwiseGP, dataset: RankingDataset, **ignore: Any
 ) -> Dict[str, Tensor]:
-    datapoints = dataset.X.values
-    comparisons = dataset.X.indices
-    comp_order = dataset.Y()
+    # TODO: [T163045056] Not sure what the point of the special container is if we have
+    # to further process it here. We should move this logic into RankingDataset.
+    datapoints = dataset._X.values
+    comparisons = dataset._X.indices
+    comp_order = dataset.Y
     comparisons = torch.gather(input=comparisons, dim=-1, index=comp_order)
 
     return {

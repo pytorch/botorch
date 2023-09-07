@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 import math
-
 from typing import Any, Callable, Sequence, Type
 from unittest import mock
 from unittest.mock import MagicMock
@@ -132,7 +131,7 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase):
         best_f = get_best_f_analytic(training_data=self.blockX_blockY)
         self.assertEqual(best_f, get_best_f_analytic(self.blockX_blockY[0]))
 
-        best_f_expected = self.blockX_blockY[0].Y().squeeze().max()
+        best_f_expected = self.blockX_blockY[0].Y.squeeze().max()
         self.assertEqual(best_f, best_f_expected)
         with self.assertRaisesRegex(
             NotImplementedError,
@@ -147,7 +146,7 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase):
             training_data=self.blockX_multiY, posterior_transform=post_tf
         )
 
-        multi_Y = torch.cat([d.Y() for d in self.blockX_multiY.values()], dim=-1)
+        multi_Y = torch.cat([d.Y for d in self.blockX_multiY.values()], dim=-1)
         best_f_expected = post_tf.evaluate(multi_Y).max()
         self.assertEqual(best_f_tf, best_f_expected)
 
@@ -160,14 +159,14 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase):
         best_f = get_best_f_mc(training_data=self.blockX_blockY)
         self.assertEqual(best_f, get_best_f_mc(self.blockX_blockY[0]))
 
-        best_f_expected = self.blockX_blockY[0].Y().max(dim=0).values
+        best_f_expected = self.blockX_blockY[0].Y.max(dim=0).values
         self.assertAllClose(best_f, best_f_expected)
         with self.assertRaisesRegex(UnsupportedError, "require an objective"):
             get_best_f_mc(training_data=self.blockX_multiY)
         obj = LinearMCObjective(weights=torch.rand(2))
         best_f = get_best_f_mc(training_data=self.blockX_multiY, objective=obj)
 
-        multi_Y = torch.cat([d.Y() for d in self.blockX_multiY.values()], dim=-1)
+        multi_Y = torch.cat([d.Y for d in self.blockX_multiY.values()], dim=-1)
         best_f_expected = (multi_Y @ obj.weights).amax(dim=-1, keepdim=True)
         self.assertAllClose(best_f, best_f_expected)
         post_tf = ScalarizedPosteriorTransform(weights=torch.ones(2))
@@ -295,7 +294,7 @@ class TestAnalyticAcquisitionFunctionInputConstructors(InputConstructorBaseTestC
                 kwargs = c(
                     model=mock_model, training_data=self.blockX_blockY, maximize=False
                 )
-                best_f_expected = self.blockX_blockY[0].Y().squeeze().max()
+                best_f_expected = self.blockX_blockY[0].Y.squeeze().max()
                 self.assertIs(kwargs["model"], mock_model)
                 self.assertIsNone(kwargs["posterior_transform"])
                 self.assertEqual(kwargs["best_f"], best_f_expected)
@@ -346,7 +345,7 @@ class TestAnalyticAcquisitionFunctionInputConstructors(InputConstructorBaseTestC
                 kwargs = c(model=mock_model, training_data=self.blockX_blockY)
                 self.assertEqual(kwargs["model"], mock_model)
                 self.assertTrue(
-                    torch.equal(kwargs["X_observed"], self.blockX_blockY[0].X())
+                    torch.equal(kwargs["X_observed"], self.blockX_blockY[0].X)
                 )
                 self.assertEqual(kwargs["num_fantasies"], 20)
                 self.assertTrue(kwargs["maximize"])
@@ -361,7 +360,7 @@ class TestAnalyticAcquisitionFunctionInputConstructors(InputConstructorBaseTestC
                 )
                 self.assertEqual(kwargs["model"], mock_model)
                 self.assertTrue(
-                    torch.equal(kwargs["X_observed"], self.blockX_blockY[0].X())
+                    torch.equal(kwargs["X_observed"], self.blockX_blockY[0].X)
                 )
                 self.assertEqual(kwargs["num_fantasies"], 10)
                 self.assertFalse(kwargs["maximize"])
@@ -484,7 +483,7 @@ class TestMCAcquisitionFunctionInputConstructors(InputConstructorBaseTestCase):
         acqf = qExpectedImprovement(**kwargs)
         self.assertIs(acqf.model, mock_model)
 
-        multi_Y = torch.cat([d.Y() for d in self.blockX_multiY.values()], dim=-1)
+        multi_Y = torch.cat([d.Y for d in self.blockX_multiY.values()], dim=-1)
         best_f_expected = objective(multi_Y).max()
         self.assertEqual(kwargs["best_f"], best_f_expected)
         # Check explicitly specifying `best_f`.
@@ -551,7 +550,7 @@ class TestMCAcquisitionFunctionInputConstructors(InputConstructorBaseTestCase):
         self.assertIsNone(kwargs["X_pending"])
         self.assertIsNone(kwargs["sampler"])
         self.assertTrue(kwargs["prune_baseline"])
-        self.assertTrue(torch.equal(kwargs["X_baseline"], self.blockX_blockY[0].X()))
+        self.assertTrue(torch.equal(kwargs["X_baseline"], self.blockX_blockY[0].X))
         self.assertIsNone(kwargs["constraints"])
         self.assertIsInstance(kwargs["eta"], float)
         self.assertLess(kwargs["eta"], 1)
@@ -637,7 +636,7 @@ class TestMCAcquisitionFunctionInputConstructors(InputConstructorBaseTestCase):
         self.assertEqual(kwargs["tau"], 1e-2)
         self.assertIsInstance(kwargs["eta"], float)
         self.assertLess(kwargs["eta"], 1)
-        multi_Y = torch.cat([d.Y() for d in self.blockX_multiY.values()], dim=-1)
+        multi_Y = torch.cat([d.Y for d in self.blockX_multiY.values()], dim=-1)
         best_f_expected = objective(multi_Y).max()
         self.assertEqual(kwargs["best_f"], best_f_expected)
         acqf = qProbabilityOfImprovement(**kwargs)
@@ -816,7 +815,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
 
         # Test defaults
         mm = SingleTaskGP(torch.rand(1, 2), torch.rand(1, 2))
-        mean = mm.posterior(self.blockX_blockY[0].X()).mean
+        mean = mm.posterior(self.blockX_blockY[0].X).mean
         kwargs = c(
             model=mm,
             training_data=self.blockX_blockY,
@@ -920,7 +919,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         )
         ref_point_expected = objective_thresholds
         self.assertTrue(torch.equal(kwargs["ref_point"], ref_point_expected))
-        self.assertTrue(torch.equal(kwargs["X_baseline"], self.blockX_blockY[0].X()))
+        self.assertTrue(torch.equal(kwargs["X_baseline"], self.blockX_blockY[0].X))
         self.assertIsInstance(kwargs["sampler"], SobolQMCNormalSampler)
         self.assertEqual(kwargs["sampler"].sample_shape, torch.Size([128]))
         self.assertIsInstance(kwargs["objective"], IdentityMCMultiOutputObjective)
@@ -1196,7 +1195,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         func = get_acqf_input_constructor(qJointEntropySearch)
         # we need to run optimize_posterior_samples, so we sort of need
         # a real model as there is no other (apparent) option
-        model = SingleTaskGP(self.blockX_blockY[0].X(), self.blockX_blockY[0].Y())
+        model = SingleTaskGP(self.blockX_blockY[0].X, self.blockX_blockY[0].Y)
 
         kwargs = func(
             model=model,
@@ -1208,9 +1207,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         )
 
         self.assertFalse(kwargs["maximize"])
-        self.assertEqual(
-            self.blockX_blockY[0].X().dtype, kwargs["optimal_inputs"].dtype
-        )
+        self.assertEqual(self.blockX_blockY[0].X.dtype, kwargs["optimal_inputs"].dtype)
         self.assertEqual(len(kwargs["optimal_inputs"]), 17)
         self.assertEqual(len(kwargs["optimal_outputs"]), 17)
         # asserting that, for the non-batch case, the optimal inputs are
@@ -1315,7 +1312,7 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
         )
 
     def test_qjes(self) -> None:
-        model = SingleTaskGP(self.blockX_blockY[0].X(), self.blockX_blockY[0].Y())
+        model = SingleTaskGP(self.blockX_blockY[0].X, self.blockX_blockY[0].Y)
         self._test_constructor_base(
             classes=[qJointEntropySearch],
             model=model,

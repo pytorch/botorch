@@ -4,6 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import torch
 from botorch.exceptions import UnsupportedError
 from botorch.models.gp_regression import FixedNoiseGP
 from botorch.models.model import Model
@@ -27,23 +28,23 @@ class TestParseTrainingData(BotorchTestCase):
 
         parse = parse_training_data(Model, dataset)
         self.assertIsInstance(parse, dict)
-        self.assertTrue(dataset.X().equal(parse["train_X"]))
-        self.assertTrue(dataset.Y().equal(parse["train_Y"]))
+        self.assertTrue(torch.equal(dataset.X, parse["train_X"]))
+        self.assertTrue(torch.equal(dataset.Y, parse["train_Y"]))
 
     def test_fixedNoise(self):
         # Test passing a `SupervisedDataset`
         dataset = SupervisedDataset(X=rand(3, 2), Y=rand(3, 1))
         parse = parse_training_data(FixedNoiseGP, dataset)
         self.assertTrue("train_Yvar" not in parse)
-        self.assertTrue(dataset.X().equal(parse["train_X"]))
-        self.assertTrue(dataset.Y().equal(parse["train_Y"]))
+        self.assertTrue(torch.equal(dataset.X, parse["train_X"]))
+        self.assertTrue(torch.equal(dataset.Y, parse["train_Y"]))
 
         # Test passing a `FixedNoiseDataset`
         dataset = FixedNoiseDataset(X=rand(3, 2), Y=rand(3, 1), Yvar=rand(3, 1))
         parse = parse_training_data(FixedNoiseGP, dataset)
-        self.assertTrue(dataset.X().equal(parse["train_X"]))
-        self.assertTrue(dataset.Y().equal(parse["train_Y"]))
-        self.assertTrue(dataset.Yvar().equal(parse["train_Yvar"]))
+        self.assertTrue(torch.equal(dataset.X, parse["train_X"]))
+        self.assertTrue(torch.equal(dataset.Y, parse["train_Y"]))
+        self.assertTrue(torch.equal(dataset.Yvar, parse["train_Yvar"]))
 
     def test_pairwiseGP_ranking(self):
         # Test parsing Ranking Dataset for PairwiseGP
@@ -54,7 +55,7 @@ class TestParseTrainingData(BotorchTestCase):
         dataset_Y = tensor([[0, 1], [1, 0]]).expand(indices.shape)
         dataset = RankingDataset(X=dataset_X, Y=dataset_Y)
         parse = parse_training_data(PairwiseGP, dataset)
-        self.assertTrue(dataset.X.values.equal(parse["datapoints"]))
+        self.assertTrue(dataset._X.values.equal(parse["datapoints"]))
 
         comparisons = tensor([[0, 1], [2, 1]], dtype=long)
         self.assertTrue(comparisons.equal(parse["comparisons"]))
@@ -81,11 +82,11 @@ class TestParseTrainingData(BotorchTestCase):
         with self.assertRaisesRegex(ValueError, "out-of-bounds"):
             parse_training_data(MultiTaskGP, datasets, task_feature=m + 1)
 
-        X = cat([dataset.X() for dataset in datasets.values()])
-        Y = cat([dataset.Y() for dataset in datasets.values()])
+        X = cat([dataset.X for dataset in datasets.values()])
+        Y = cat([dataset.Y for dataset in datasets.values()])
         for i in (0, 1, 2):
             parse = parse_training_data(MultiTaskGP, datasets, task_feature=i)
-            self.assertTrue(Y.equal(parse["train_Y"]))
+            self.assertTrue(torch.equal(Y, parse["train_Y"]))
 
             X2 = cat([parse["train_X"][..., :i], parse["train_X"][..., i + 1 :]], -1)
             self.assertTrue(X.equal(X2))
