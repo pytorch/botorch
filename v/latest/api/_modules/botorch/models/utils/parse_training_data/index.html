@@ -74,9 +74,9 @@
 <span class="k">def</span> <span class="nf">_parse_model_supervised</span><span class="p">(</span>
     <span class="n">consumer</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">SupervisedDataset</span><span class="p">,</span> <span class="o">**</span><span class="n">ignore</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-    <span class="n">parsed_data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"train_X"</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">X</span><span class="p">(),</span> <span class="s2">"train_Y"</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">Y</span><span class="p">()}</span>
+    <span class="n">parsed_data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"train_X"</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="s2">"train_Y"</span><span class="p">:</span> <span class="n">dataset</span><span class="o">.</span><span class="n">Y</span><span class="p">}</span>
     <span class="k">if</span> <span class="n">dataset</span><span class="o">.</span><span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">parsed_data</span><span class="p">[</span><span class="s2">"train_Yvar"</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">Yvar</span><span class="p">()</span>
+        <span class="n">parsed_data</span><span class="p">[</span><span class="s2">"train_Yvar"</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">Yvar</span>
     <span class="k">return</span> <span class="n">parsed_data</span>
 
 
@@ -84,9 +84,11 @@
 <span class="k">def</span> <span class="nf">_parse_pairwiseGP_ranking</span><span class="p">(</span>
     <span class="n">consumer</span><span class="p">:</span> <span class="n">PairwiseGP</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">RankingDataset</span><span class="p">,</span> <span class="o">**</span><span class="n">ignore</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-    <span class="n">datapoints</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">values</span>
-    <span class="n">comparisons</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">indices</span>
-    <span class="n">comp_order</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">Y</span><span class="p">()</span>
+    <span class="c1"># TODO: [T163045056] Not sure what the point of the special container is if we have</span>
+    <span class="c1"># to further process it here. We should move this logic into RankingDataset.</span>
+    <span class="n">datapoints</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">_X</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">comparisons</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">_X</span><span class="o">.</span><span class="n">indices</span>
+    <span class="n">comp_order</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">Y</span>
     <span class="n">comparisons</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="n">comparisons</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">comp_order</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="p">{</span>

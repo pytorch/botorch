@@ -35,11 +35,11 @@
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">count</span><span class="p">,</span> <span class="n">repeat</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="kn">from</span> <span class="nn">botorch.utils.containers</span> <span class="kn">import</span> <span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">DenseContainer</span><span class="p">,</span> <span class="n">SliceContainer</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.containers</span> <span class="kn">import</span> <span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">SliceContainer</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">long</span><span class="p">,</span> <span class="n">ones</span><span class="p">,</span> <span class="n">Tensor</span>
 
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"T"</span><span class="p">)</span>
-<span class="n">ContainerLike</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span>
 <span class="n">MaybeIterable</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">T</span><span class="p">]]</span>
 
 
@@ -47,9 +47,6 @@
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Base class for datasets consisting of labelled pairs `(X, Y)`</span>
 <span class="sd">    and an optional `Yvar` that stipulates observations variances so</span>
 <span class="sd">    that `Y[i] ~ N(f(X[i]), Yvar[i])`.</span>
-
-<span class="sd">    This class object's `__init__` method converts Tensors `src` to</span>
-<span class="sd">    DenseContainers under the assumption that `event_shape=src.shape[-1:]`.</span>
 
 <span class="sd">    Example:</span>
 
@@ -65,15 +62,11 @@
 <span class="sd">        assert A == B</span>
 <span class="sd">    """</span>
 
-    <span class="n">X</span><span class="p">:</span> <span class="n">BotorchContainer</span>
-    <span class="n">Y</span><span class="p">:</span> <span class="n">BotorchContainer</span>
-    <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">]</span>
-
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">X</span><span class="p">:</span> <span class="n">ContainerLike</span><span class="p">,</span>
-        <span class="n">Y</span><span class="p">:</span> <span class="n">ContainerLike</span><span class="p">,</span>
-        <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ContainerLike</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">Y</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">Yvar</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">validate_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Constructs a `SupervisedDataset`.</span>
@@ -85,17 +78,41 @@
 <span class="sd">                the observation noise.</span>
 <span class="sd">            validate_init: If `True`, validates the input shapes.</span>
 <span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">X</span> <span class="o">=</span> <span class="n">_containerize</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">Y</span> <span class="o">=</span> <span class="n">_containerize</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">Yvar</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">Yvar</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">_containerize</span><span class="p">(</span><span class="n">Yvar</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_X</span> <span class="o">=</span> <span class="n">X</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_Y</span> <span class="o">=</span> <span class="n">Y</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_Yvar</span> <span class="o">=</span> <span class="n">Yvar</span>
         <span class="k">if</span> <span class="n">validate_init</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate</span><span class="p">()</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">X</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_Y</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Y</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Y</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Yvar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Yvar</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_Yvar</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Yvar</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Yvar</span><span class="p">()</span>
+
     <span class="k">def</span> <span class="nf">_validate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">shape_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span>
-        <span class="n">shape_X</span> <span class="o">=</span> <span class="n">shape_X</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape_X</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">event_shape</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">,</span> <span class="n">BotorchContainer</span><span class="p">):</span>
+            <span class="n">shape_X</span> <span class="o">=</span> <span class="n">shape_X</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape_X</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="o">.</span><span class="n">event_shape</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">shape_X</span> <span class="o">=</span> <span class="n">shape_X</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">shape_Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span>
-        <span class="n">shape_Y</span> <span class="o">=</span> <span class="n">shape_Y</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape_Y</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="o">.</span><span class="n">event_shape</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_Y</span><span class="p">,</span> <span class="n">BotorchContainer</span><span class="p">):</span>
+            <span class="n">shape_Y</span> <span class="o">=</span> <span class="n">shape_Y</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape_Y</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_Y</span><span class="o">.</span><span class="n">event_shape</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">shape_Y</span> <span class="o">=</span> <span class="n">shape_Y</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">shape_X</span> <span class="o">!=</span> <span class="n">shape_Y</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Batch dimensions of `X` and `Y` are incompatible."</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">Yvar</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
@@ -104,9 +121,9 @@
 <div class="viewcode-block" id="SupervisedDataset.dict_from_iter"><a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.SupervisedDataset.dict_from_iter">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">dict_from_iter</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
-        <span class="n">X</span><span class="p">:</span> <span class="n">MaybeIterable</span><span class="p">[</span><span class="n">ContainerLike</span><span class="p">],</span>
-        <span class="n">Y</span><span class="p">:</span> <span class="n">MaybeIterable</span><span class="p">[</span><span class="n">ContainerLike</span><span class="p">],</span>
-        <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MaybeIterable</span><span class="p">[</span><span class="n">ContainerLike</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">MaybeIterable</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]],</span>
+        <span class="n">Y</span><span class="p">:</span> <span class="n">MaybeIterable</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]],</span>
+        <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MaybeIterable</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">keys</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">SupervisedDataset</span><span class="p">]:</span>
@@ -129,9 +146,13 @@
     <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">X</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">Y</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">Yvar</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">Yvar</span>
+            <span class="ow">and</span> <span class="n">torch</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">X</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">torch</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">Y</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="p">(</span>
+                <span class="n">other</span><span class="o">.</span><span class="n">Yvar</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">Yvar</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Yvar</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">Yvar</span><span class="p">)</span>
+            <span class="p">)</span>
         <span class="p">)</span></div>
 
 
@@ -144,9 +165,9 @@
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">X</span><span class="p">:</span> <span class="n">ContainerLike</span><span class="p">,</span>
-        <span class="n">Y</span><span class="p">:</span> <span class="n">ContainerLike</span><span class="p">,</span>
-        <span class="n">Yvar</span><span class="p">:</span> <span class="n">ContainerLike</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">Y</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">Yvar</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
         <span class="n">validate_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize a `FixedNoiseDataset` -- deprecated!"""</span>
@@ -182,11 +203,11 @@
 <span class="sd">        dataset = RankingDataset(X, Y)</span>
 <span class="sd">    """</span>
 
-    <span class="n">X</span><span class="p">:</span> <span class="n">SliceContainer</span>
-    <span class="n">Y</span><span class="p">:</span> <span class="n">BotorchContainer</span>
-
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">SliceContainer</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">ContainerLike</span><span class="p">,</span> <span class="n">validate_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">SliceContainer</span><span class="p">,</span>
+        <span class="n">Y</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">validate_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct a `RankingDataset`.</span>
 
@@ -200,8 +221,8 @@
     <span class="k">def</span> <span class="nf">_validate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_validate</span><span class="p">()</span>
 
-        <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">()</span>
-        <span class="n">arity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">indices</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span>
+        <span class="n">arity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="o">.</span><span class="n">indices</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">Y</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">Y</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">arity</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid ranking(s): out-of-bounds ranks detected."</span><span class="p">)</span>
 
@@ -225,16 +246,6 @@
 
             <span class="c1"># Same as: torch.where(y_diff == 0, y_incr + 1, 1)</span>
             <span class="n">y_incr</span> <span class="o">=</span> <span class="n">y_incr</span> <span class="o">-</span> <span class="n">y_diff</span> <span class="o">+</span> <span class="mi">1</span></div>
-
-
-<span class="k">def</span> <span class="nf">_containerize</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">ContainerLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BotorchContainer</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""Converts Tensor-valued arguments to DenseContainer under the assumption</span>
-<span class="sd">    that said arguments house collections of feature vectors.</span>
-<span class="sd">    """</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">DenseContainer</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">event_shape</span><span class="o">=</span><span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:])</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">value</span>
 </pre></div>
 </div>
 </div>

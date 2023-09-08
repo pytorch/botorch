@@ -306,8 +306,6 @@ is cleared, no rollback will occur.</p>
 <p>Base class for datasets consisting of labelled pairs <cite>(X, Y)</cite>
 and an optional <cite>Yvar</cite> that stipulates observations variances so
 that <cite>Y[i] ~ N(f(X[i]), Yvar[i])</cite>.</p>
-<p>This class object’s <cite>__init__</cite> method converts Tensors <cite>src</cite> to
-DenseContainers under the assumption that <cite>event_shape=src.shape[-1:]</cite>.</p>
 <p>Example:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="n">Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
@@ -323,25 +321,25 @@ DenseContainers under the assumption that <cite>event_shape=src.shape[-1:]</cite
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>BotorchContainer</em>) – A <cite>Tensor</cite> or <cite>BotorchContainer</cite> representing the input features.</p></li>
-<li><p><strong>Y</strong> (<em>BotorchContainer</em>) – A <cite>Tensor</cite> or <cite>BotorchContainer</cite> representing the outcomes.</p></li>
-<li><p><strong>Yvar</strong> (<em>BotorchContainer</em><em> | </em><em>None</em>) – An optional <cite>Tensor</cite> or <cite>BotorchContainer</cite> representing
+<li><p><strong>X</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>]</em>) – A <cite>Tensor</cite> or <cite>BotorchContainer</cite> representing the input features.</p></li>
+<li><p><strong>Y</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>]</em>) – A <cite>Tensor</cite> or <cite>BotorchContainer</cite> representing the outcomes.</p></li>
+<li><p><strong>Yvar</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>, </em><em>None</em><em>]</em>) – An optional <cite>Tensor</cite> or <cite>BotorchContainer</cite> representing
 the observation noise.</p></li>
 <li><p><strong>validate_init</strong> (<em>bool</em>) – If <cite>True</cite>, validates the input shapes.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
+<dl class="py property">
 <dt class="sig sig-object py" id="botorch.utils.datasets.SupervisedDataset.X">
-<span class="sig-name descname"><span class="pre">X</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">BotorchContainer</span></em><a class="headerlink" href="#botorch.utils.datasets.SupervisedDataset.X" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">X</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.utils.datasets.SupervisedDataset.X" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-<dl class="py attribute">
+<dl class="py property">
 <dt class="sig sig-object py" id="botorch.utils.datasets.SupervisedDataset.Y">
-<span class="sig-name descname"><span class="pre">Y</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">BotorchContainer</span></em><a class="headerlink" href="#botorch.utils.datasets.SupervisedDataset.Y" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Y</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.utils.datasets.SupervisedDataset.Y" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-<dl class="py attribute">
+<dl class="py property">
 <dt class="sig sig-object py" id="botorch.utils.datasets.SupervisedDataset.Yvar">
-<span class="sig-name descname"><span class="pre">Yvar</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">BotorchContainer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.utils.datasets.SupervisedDataset.Yvar" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Yvar</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.utils.datasets.SupervisedDataset.Yvar" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.utils.datasets.SupervisedDataset.dict_from_iter">
@@ -373,25 +371,13 @@ observations variances so that <cite>Y[i] ~ N(f(X[i]), Yvar[i])</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>BotorchContainer</em>) – </p></li>
-<li><p><strong>Y</strong> (<em>BotorchContainer</em>) – </p></li>
-<li><p><strong>Yvar</strong> (<em>BotorchContainer</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>X</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>]</em>) – </p></li>
+<li><p><strong>Y</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>]</em>) – </p></li>
+<li><p><strong>Yvar</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>]</em>) – </p></li>
 <li><p><strong>validate_init</strong> (<em>bool</em>) – </p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.datasets.FixedNoiseDataset.X">
-<span class="sig-name descname"><span class="pre">X</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">BotorchContainer</span></em><a class="headerlink" href="#botorch.utils.datasets.FixedNoiseDataset.X" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.datasets.FixedNoiseDataset.Y">
-<span class="sig-name descname"><span class="pre">Y</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">BotorchContainer</span></em><a class="headerlink" href="#botorch.utils.datasets.FixedNoiseDataset.Y" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.datasets.FixedNoiseDataset.Yvar">
-<span class="sig-name descname"><span class="pre">Yvar</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">BotorchContainer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.utils.datasets.FixedNoiseDataset.Yvar" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.datasets.RankingDataset">
@@ -425,19 +411,11 @@ observations variances so that <cite>Y[i] ~ N(f(X[i]), Yvar[i])</cite>.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<a class="reference internal" href="#botorch.utils.containers.SliceContainer" title="botorch.utils.containers.SliceContainer"><em>SliceContainer</em></a>) – A <cite>SliceContainer</cite> representing the input features being ranked.</p></li>
-<li><p><strong>Y</strong> (<em>BotorchContainer</em>) – A <cite>Tensor</cite> or <cite>BotorchContainer</cite> representing the rankings.</p></li>
+<li><p><strong>Y</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>]</em>) – A <cite>Tensor</cite> or <cite>BotorchContainer</cite> representing the rankings.</p></li>
 <li><p><strong>validate_init</strong> (<em>bool</em>) – If <cite>True</cite>, validates the input shapes.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.datasets.RankingDataset.X">
-<span class="sig-name descname"><span class="pre">X</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#botorch.utils.containers.SliceContainer" title="botorch.utils.containers.SliceContainer"><span class="pre">SliceContainer</span></a></em><a class="headerlink" href="#botorch.utils.datasets.RankingDataset.X" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.datasets.RankingDataset.Y">
-<span class="sig-name descname"><span class="pre">Y</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">BotorchContainer</span></em><a class="headerlink" href="#botorch.utils.datasets.RankingDataset.Y" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.utils.dispatcher">
