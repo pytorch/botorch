@@ -93,7 +93,9 @@
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model.</span>
 <span class="sd">            sampler: The sampler used to draw base samples. If not given,</span>
-<span class="sd">                a sampler is generated using `get_sampler`.</span>
+<span class="sd">                a sampler is generated on the fly within the</span>
+<span class="sd">                `get_posterior_samples` method using</span>
+<span class="sd">                `botorch.sampling.get_sampler`.</span>
 <span class="sd">                NOTE: For posteriors that do not support base samples,</span>
 <span class="sd">                a sampler compatible with intended use case must be provided.</span>
 <span class="sd">                See `ForkedRNGSampler` and `StochasticSampler` as examples.</span>
@@ -212,8 +214,10 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model.</span>
-<span class="sd">            sampler: The sampler used to draw base samples. If not given,</span>
-<span class="sd">                a sampler is generated using `get_sampler`.</span>
+<span class="sd">            sampler: The sampler used to draw base samples. If not given, a</span>
+<span class="sd">                sampler is generated on the fly within the</span>
+<span class="sd">                `get_posterior_samples` method using</span>
+<span class="sd">                `botorch.sampling.get_sampler`.</span>
 <span class="sd">                NOTE: For posteriors that do not support base samples,</span>
 <span class="sd">                a sampler compatible with intended use case must be provided.</span>
 <span class="sd">                See `ForkedRNGSampler` and `StochasticSampler` as examples.</span>
@@ -580,7 +584,7 @@
         <span class="k">return</span> <span class="n">val</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">view_shape</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_sample_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qNoisyExpectedImprovement per sample on the candidate set `X`.</span>
+<span class="w">        </span><span class="sd">"""Evaluate qNoisyExpectedImprovement per objective value in `obj`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            obj: A `sample_shape x batch_shape x q`-dim Tensor of MC objective values.</span>

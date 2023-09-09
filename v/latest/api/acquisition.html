@@ -194,7 +194,9 @@ which outputs should be evaluated.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted model.</p></li>
 <li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. If not given,
-a sampler is generated using <cite>get_sampler</cite>.
+a sampler is generated on the fly within the
+<cite>get_posterior_samples</cite> method using
+<cite>botorch.sampling.get_sampler</cite>.
 NOTE: For posteriors that do not support base samples,
 a sampler compatible with intended use case must be provided.
 See <cite>ForkedRNGSampler</cite> and <cite>StochasticSampler</cite> as examples.</p></li>
@@ -1117,8 +1119,10 @@ forward pass. These problems are circumvented by the design of this class.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted model.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. If not given,
-a sampler is generated using <cite>get_sampler</cite>.
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. If not given, a
+sampler is generated on the fly within the
+<cite>get_posterior_samples</cite> method using
+<cite>botorch.sampling.get_sampler</cite>.
 NOTE: For posteriors that do not support base samples,
 a sampler compatible with intended use case must be provided.
 See <cite>ForkedRNGSampler</cite> and <cite>StochasticSampler</cite> as examples.</p></li>
@@ -1374,8 +1378,10 @@ parameter, see the docs of <cite>compute_smoothed_feasibility_indicator</cite>.<
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted model.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. If not given,
-a sampler is generated using <cite>get_sampler</cite>.
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. If not given, a
+sampler is generated on the fly within the
+<cite>get_posterior_samples</cite> method using
+<cite>botorch.sampling.get_sampler</cite>.
 NOTE: For posteriors that do not support base samples,
 a sampler compatible with intended use case must be provided.
 See <cite>ForkedRNGSampler</cite> and <cite>StochasticSampler</cite> as examples.</p></li>
