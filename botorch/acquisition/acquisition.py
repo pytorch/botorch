@@ -124,7 +124,8 @@ class MCSamplerMixin(ABC):
 
         Args:
             sampler: The sampler used to draw base samples for MC-based acquisition
-                functions. If `None`, a sampler is generated using `get_sampler`.
+                functions. If `None`, a sampler is generated on the fly within
+                the `get_posterior_samples` method using `get_sampler`.
         """
         self.sampler = sampler
 

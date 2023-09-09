@@ -217,6 +217,9 @@ def _optimize_acqf_sequential_q(
 ) -> Tuple[Tensor, Tensor]:
     """
     Helper function for `optimize_acqf` when sequential=True and q > 1.
+
+    For each of `q` times, generate a single candidate greedily, then add it to
+    the list of pending points.
     """
     _validate_sequential_inputs(opt_inputs)
     # When using sequential optimization, we allocate the total timeout
