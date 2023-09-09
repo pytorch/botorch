@@ -70,7 +70,9 @@ class MCAcquisitionFunction(AcquisitionFunction, MCSamplerMixin, ABC):
         Args:
             model: A fitted model.
             sampler: The sampler used to draw base samples. If not given,
-                a sampler is generated using `get_sampler`.
+                a sampler is generated on the fly within the
+                `get_posterior_samples` method using
+                `botorch.sampling.get_sampler`.
                 NOTE: For posteriors that do not support base samples,
                 a sampler compatible with intended use case must be provided.
                 See `ForkedRNGSampler` and `StochasticSampler` as examples.
@@ -189,8 +191,10 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
 
         Args:
             model: A fitted model.
-            sampler: The sampler used to draw base samples. If not given,
-                a sampler is generated using `get_sampler`.
+            sampler: The sampler used to draw base samples. If not given, a
+                sampler is generated on the fly within the
+                `get_posterior_samples` method using
+                `botorch.sampling.get_sampler`.
                 NOTE: For posteriors that do not support base samples,
                 a sampler compatible with intended use case must be provided.
                 See `ForkedRNGSampler` and `StochasticSampler` as examples.
@@ -557,7 +561,7 @@ class qNoisyExpectedImprovement(
         return val.view(view_shape).to(obj)
 
     def _sample_forward(self, obj: Tensor) -> Tensor:
-        r"""Evaluate qNoisyExpectedImprovement per sample on the candidate set `X`.
+        """Evaluate qNoisyExpectedImprovement per objective value in `obj`.
 
         Args:
             obj: A `sample_shape x batch_shape x q`-dim Tensor of MC objective values.
