@@ -159,7 +159,9 @@ class GPyTorchModel(Model, ABC):
                 jointly.
             observation_noise: If True, add the observation noise from the
                 likelihood to the posterior. If a Tensor, use it directly as the
-                observation noise (must be of shape `(batch_shape) x q`).
+                observation noise (must be of shape `(batch_shape) x q`). It is
+                assumed to be in the outcome-transformed space if an outcome
+                transform is used.
             posterior_transform: An optional PosteriorTransform.
 
         Returns:
@@ -223,7 +225,8 @@ class GPyTorchModel(Model, ABC):
             # pass the transformed data to get_fantasy_model below
             # (unless we've already trasnformed if BatchedMultiOutputGPyTorchModel)
             if not isinstance(self, BatchedMultiOutputGPyTorchModel):
-                Y, Yvar = self.outcome_transform(Y, Yvar)
+                # `noise` is assumed to already be outcome-transformed.
+                Y, _ = self.outcome_transform(Y, Yvar)
         # validate using strict=False, since we cannot tell if Y has an explicit
         # output dimension
         self._validate_tensor_args(X=X, Y=Y, Yvar=Yvar, strict=False)
@@ -373,6 +376,12 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
                 )
             mvn = self(X)
             if observation_noise is not False:
+                if self._num_outputs > 1:
+                    noise_shape = X.shape[:-3] + torch.Size(
+                        [self._num_outputs, X.shape[-2]]
+                    )
+                else:
+                    noise_shape = X.shape[:-1]
                 if torch.is_tensor(observation_noise):
                     # TODO: Validate noise shape
                     # make observation_noise `batch_shape x q x n`
@@ -380,11 +389,19 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
                         obs_noise = observation_noise.transpose(-1, -2)
                     else:
                         obs_noise = observation_noise.squeeze(-1)
-                    mvn = self.likelihood(mvn, X, noise=obs_noise)
+                    mvn = self.likelihood(
+                        mvn,
+                        X,
+                        noise=obs_noise.expand(noise_shape),
+                    )
                 elif isinstance(self.likelihood, FixedNoiseGaussianLikelihood):
                     # Use the mean of the previous noise values (TODO: be smarter here).
-                    noise = self.likelihood.noise.mean().expand(X.shape[:-1])
-                    mvn = self.likelihood(mvn, X, noise=noise)
+                    observation_noise = self.likelihood.noise.mean(dim=-1, keepdim=True)
+                    mvn = self.likelihood(
+                        mvn,
+                        X,
+                        noise=observation_noise.expand(noise_shape),
+                    )
                 else:
                     mvn = self.likelihood(mvn, X)
             if self._num_outputs > 1:
@@ -443,8 +460,9 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
         """
         noise = kwargs.get("noise")
         if hasattr(self, "outcome_transform"):
-            # we need to apply transforms before shifting batch indices around
-            Y, noise = self.outcome_transform(Y, noise)
+            # We need to apply transforms before shifting batch indices around.
+            # `noise` is assumed to already be outcome-transformed.
+            Y, _ = self.outcome_transform(Y)
         self._validate_tensor_args(X=X, Y=Y, Yvar=noise, strict=False)
         inputs = X
         if self._num_outputs > 1:

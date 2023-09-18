@@ -382,8 +382,6 @@ class TestPairwiseGP(BotorchTestCase):
             sampler = PairwiseSobolQMCNormalSampler(sample_shape=torch.Size([3]))
             fm = model.fantasize(X=X_f, sampler=sampler)
             self.assertIsInstance(fm, model.__class__)
-            fm = model.fantasize(X=X_f, sampler=sampler, observation_noise=False)
-            self.assertIsInstance(fm, model.__class__)
 
     def test_load_state_dict(self) -> None:
         model, _ = self._get_model_and_data(batch_shape=[])

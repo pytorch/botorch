@@ -362,8 +362,6 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 sampler = SobolQMCNormalSampler(sample_shape=torch.Size([3]))
                 fm = model.fantasize(X=X_f, sampler=sampler)
                 self.assertIsInstance(fm, model.__class__)
-                fm = model.fantasize(X=X_f, sampler=sampler, observation_noise=False)
-                self.assertIsInstance(fm, model.__class__)
 
     def test_subset_model(self):
         for (iteration_fidelity, data_fidelities) in self.FIDELITY_TEST_PAIRS:

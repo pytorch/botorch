@@ -146,7 +146,8 @@ class qMultiObjectiveMaxValueEntropy(
         if X_pending is not None:
             # fantasize the model
             fantasy_model = self._init_model.fantasize(
-                X=X_pending, sampler=self.fantasies_sampler, observation_noise=True
+                X=X_pending,
+                sampler=self.fantasies_sampler,
             )
             self.mo_model = fantasy_model
             # convert model to batched single outcome model.

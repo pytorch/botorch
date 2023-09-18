@@ -379,38 +379,82 @@ class TestModelListGP(BotorchTestCase):
             self.assertTrue(torch.equal(m._original_train_inputs, org_inputs[i]))
 
     def test_fantasize(self):
-        m1 = SingleTaskGP(torch.rand(5, 2), torch.rand(5, 1)).eval()
-        m2 = SingleTaskGP(torch.rand(5, 2), torch.rand(5, 1)).eval()
-        modellist = ModelListGP(m1, m2)
-        fm = modellist.fantasize(
-            torch.rand(3, 2), sampler=IIDNormalSampler(sample_shape=torch.Size([2]))
-        )
-        self.assertIsInstance(fm, ModelListGP)
-        for i in range(2):
-            fm_i = fm.models[i]
-            self.assertIsInstance(fm_i, SingleTaskGP)
-            self.assertEqual(fm_i.train_inputs[0].shape, torch.Size([2, 8, 2]))
-            self.assertEqual(fm_i.train_targets.shape, torch.Size([2, 8]))
+        for model_cls in (SingleTaskGP, FixedNoiseGP):
+            x1 = torch.rand(5, 2)
+            y1 = torch.rand(5, 1)
+            x2 = torch.rand(5, 2)
+            y2 = torch.rand(5, 1)
+            m1_kwargs = {}
+            m2_kwargs = {}
+            if model_cls is FixedNoiseGP:
+                m1_kwargs = {"train_Yvar": torch.full_like(y1, 0.1)}
+                m2_kwargs = {"train_Yvar": torch.full_like(y2, 0.2)}
+            m1 = model_cls(x1, y1, **m1_kwargs).eval()
+            m2 = model_cls(x2, y2, **m2_kwargs).eval()
+            modellist = ModelListGP(m1, m2)
+            fm = modellist.fantasize(
+                torch.rand(3, 2), sampler=IIDNormalSampler(sample_shape=torch.Size([2]))
+            )
+            self.assertIsInstance(fm, ModelListGP)
+            for i in range(2):
+                fm_i = fm.models[i]
+                self.assertIsInstance(fm_i, model_cls)
+                self.assertEqual(fm_i.train_inputs[0].shape, torch.Size([2, 8, 2]))
+                self.assertEqual(fm_i.train_targets.shape, torch.Size([2, 8]))
 
-        # test decoupled
-        sampler1 = IIDNormalSampler(sample_shape=torch.Size([2]))
-        sampler2 = IIDNormalSampler(sample_shape=torch.Size([2]))
-        eval_mask = torch.tensor(
-            [[1, 0], [0, 1], [1, 0]],
-            dtype=torch.bool,
-        )
-        fm = modellist.fantasize(
-            torch.rand(3, 2),
-            sampler=ListSampler(sampler1, sampler2),
-            evaluation_mask=eval_mask,
-        )
-        self.assertIsInstance(fm, ModelListGP)
-        for i in range(2):
-            fm_i = fm.models[i]
-            self.assertIsInstance(fm_i, SingleTaskGP)
-            num_points = 7 - i
-            self.assertEqual(fm_i.train_inputs[0].shape, torch.Size([2, num_points, 2]))
-            self.assertEqual(fm_i.train_targets.shape, torch.Size([2, num_points]))
+            # test decoupled
+            sampler1 = IIDNormalSampler(sample_shape=torch.Size([2]))
+            sampler2 = IIDNormalSampler(sample_shape=torch.Size([2]))
+            eval_mask = torch.tensor(
+                [[1, 0], [0, 1], [1, 0]],
+                dtype=torch.bool,
+            )
+            num_designs_per_output = eval_mask.sum(dim=0)
+            fm = modellist.fantasize(
+                torch.rand(3, 2),
+                sampler=ListSampler(sampler1, sampler2),
+                evaluation_mask=eval_mask,
+            )
+            self.assertIsInstance(fm, ModelListGP)
+            for i in range(2):
+                fm_i = fm.models[i]
+                self.assertIsInstance(fm_i, model_cls)
+                num_points = 7 - i
+                self.assertEqual(
+                    fm_i.train_inputs[0].shape, torch.Size([2, num_points, 2])
+                )
+                self.assertEqual(fm_i.train_targets.shape, torch.Size([2, num_points]))
+            # test decoupled with observation_noise
+            if model_cls is FixedNoiseGP:
+                # already transformed
+                observation_noise = torch.full(
+                    (3, 2), 0.3, dtype=x1.dtype, device=x1.device
+                )
+                observation_noise[:, 1] = 0.4
+                fm = modellist.fantasize(
+                    torch.rand(3, 2),
+                    sampler=ListSampler(sampler1, sampler2),
+                    evaluation_mask=eval_mask,
+                    observation_noise=observation_noise,
+                )
+                self.assertIsInstance(fm, ModelListGP)
+                for i in range(2):
+                    fm_i = fm.models[i]
+                    self.assertIsInstance(fm_i, model_cls)
+                    num_points = 7 - i
+                    self.assertEqual(
+                        fm_i.train_inputs[0].shape, torch.Size([2, num_points, 2])
+                    )
+                    self.assertEqual(
+                        fm_i.train_targets.shape, torch.Size([2, num_points])
+                    )
+                    # check observation_noise
+                    self.assertTrue(
+                        torch.equal(
+                            fm_i.likelihood.noise[..., -num_designs_per_output[i] :],
+                            observation_noise[-num_designs_per_output[i] :, i],
+                        )
+                    )
 
     def test_fantasize_with_outcome_transform(self) -> None:
         """

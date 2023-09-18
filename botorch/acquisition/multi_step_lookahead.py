@@ -399,7 +399,7 @@ def _step(
     # construct fantasy model (with batch shape f_{j+1} x ... x f_1 x batch_shape)
     prop_grads = step_index > 0  # need to propagate gradients for steps > 0
     fantasy_model = model.fantasize(
-        X=X, sampler=samplers[0], observation_noise=True, propagate_grads=prop_grads
+        X=X, sampler=samplers[0], propagate_grads=prop_grads
     )
 
     # augment sample weights appropriately
@@ -585,7 +585,6 @@ def _get_induced_fantasy_model(
         fantasy_model = model.fantasize(
             X=Xs[0],
             sampler=samplers[0],
-            observation_noise=True,
         )
 
         return _get_induced_fantasy_model(
