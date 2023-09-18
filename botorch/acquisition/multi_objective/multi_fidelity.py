@@ -83,7 +83,7 @@ class MOMF(qExpectedHypervolumeImprovement):
             sampler: The sampler used to draw base samples. If not given,
                 a sampler is generated using `get_sampler`.
             objective: The MCMultiOutputObjective under which the samples are evaluated.
-                Defaults to `IdentityMultiOutputObjective()`.
+                Defaults to `IdentityMCMultiOutputObjective()`.
             constraints: A list of callables, each mapping a Tensor of dimension
                 `sample_shape x batch-shape x q x m` to a Tensor of dimension
                 `sample_shape x batch-shape x q`, where negative values imply
