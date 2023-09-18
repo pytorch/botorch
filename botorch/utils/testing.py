@@ -375,6 +375,7 @@ def _get_random_data(
         [torch.linspace(0, 0.95, n, **tkwargs) for _ in range(d)], dim=-1
     )
     train_x = train_x + 0.05 * torch.rand_like(train_x).repeat(rep_shape)
+    train_x[0] += 0.02  # modify the first batch
     train_y = torch.sin(train_x[..., :1] * (2 * math.pi))
     train_y = train_y + 0.2 * torch.randn(n, m, **tkwargs).repeat(rep_shape)
     return train_x, train_y

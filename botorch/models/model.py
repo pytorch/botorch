@@ -33,7 +33,11 @@ from typing import (
 import numpy as np
 import torch
 from botorch import settings
-from botorch.exceptions.errors import BotorchTensorDimensionError, InputDataError
+from botorch.exceptions.errors import (
+    BotorchTensorDimensionError,
+    DeprecationError,
+    InputDataError,
+)
 from botorch.logging import shape_to_str
 from botorch.models.utils.assorted import fantasize as fantasize_flag
 from botorch.posteriors import Posterior, PosteriorList
@@ -83,7 +87,7 @@ class Model(Module, ABC):
         self,
         X: Tensor,
         output_indices: Optional[List[int]] = None,
-        observation_noise: bool = False,
+        observation_noise: Union[bool, Tensor] = False,
         posterior_transform: Optional[PosteriorTransform] = None,
         **kwargs: Any,
     ) -> Posterior:
@@ -102,7 +106,12 @@ class Model(Module, ABC):
                 Can be used to speed up computation if only a subset of the
                 model's outputs are required for optimization. If omitted,
                 computes the posterior over all model outputs.
-            observation_noise: If True, add observation noise to the posterior.
+            observation_noise: For models with an inferred noise level, if True,
+                include observation noise. For models with an observed noise level,
+                this must be a `model_batch_shape x 1 x m`-dim tensor or
+                a `model_batch_shape x n' x m`-dim tensor containing the average
+                noise for each batch and output. `noise` must be in the
+                outcome-transformed space if an outcome transform is used.
             posterior_transform: An optional PosteriorTransform.
 
         Returns:
@@ -310,7 +319,7 @@ class FantasizeMixin(ABC):
         # TODO: see if any of these can be imported only if TYPE_CHECKING
         X: Tensor,
         sampler: MCSampler,
-        observation_noise: bool = True,
+        observation_noise: Optional[Tensor] = None,
         **kwargs: Any,
     ) -> TFantasizeMixin:
         r"""Construct a fantasy model.
@@ -328,12 +337,21 @@ class FantasizeMixin(ABC):
                 `batch_shape` is the batch shape (must be compatible with the
                 batch shape of the model).
             sampler: The sampler used for sampling from the posterior at `X`.
-            observation_noise: If True, include observation noise.
+            observation_noise: A `model_batch_shape x 1 x m`-dim tensor or
+                a `model_batch_shape x n' x m`-dim tensor containing the average
+                noise for each batch and output, where `m` is the number of outputs.
+                `noise` must be in the outcome-transformed space if an outcome
+                transform is used. If None, then the noise will be the inferred
+                noise level.
             kwargs: Will be passed to `model.condition_on_observations`
 
         Returns:
             The constructed fantasy model.
         """
+        if not isinstance(observation_noise, Tensor) and observation_noise is not None:
+            raise DeprecationError(
+                "`fantasize` no longer accepts a boolean for `observation_noise`."
+            )
         # if the inputs are empty, expand the inputs
         if X.shape[-2] == 0:
             output_shape = (
@@ -350,8 +368,15 @@ class FantasizeMixin(ABC):
         propagate_grads = kwargs.pop("propagate_grads", False)
         with fantasize_flag():
             with settings.propagate_grads(propagate_grads):
-                post_X = self.posterior(X, observation_noise=observation_noise)
+                post_X = self.posterior(
+                    X,
+                    observation_noise=True
+                    if observation_noise is None
+                    else observation_noise,
+                )
             Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x n' x m
+            if observation_noise is not None:
+                kwargs["noise"] = observation_noise.expand(Y_fantasized.shape[1:])
             return self.condition_on_observations(
                 X=self.transform_inputs(X), Y=Y_fantasized, **kwargs
             )
@@ -434,7 +459,9 @@ class ModelList(Model):
                 respective likelihoods to the posterior. If a Tensor of shape
                 `(batch_shape) x q x m`, use it directly as the observation
                 noise (with `observation_noise[...,i]` added to the posterior
-                of the `i`-th model).
+                of the `i`-th model). `observation_noise` is assumed
+                to be in the outcome-transformed space, if an outcome transform
+                is used by the model.
             posterior_transform: An optional PosteriorTransform.
 
         Returns:
@@ -553,7 +580,7 @@ class ModelList(Model):
         self,
         X: Tensor,
         sampler: MCSampler,
-        observation_noise: bool = True,
+        observation_noise: Optional[Tensor] = None,
         evaluation_mask: Optional[Tensor] = None,
         **kwargs: Any,
     ) -> Model:
@@ -573,7 +600,12 @@ class ModelList(Model):
                 batch shape of the model).
             sampler: The sampler used for sampling from the posterior at `X`. If
                 evaluation_mask is not None, this must be a `ListSampler`.
-            observation_noise: If True, include observation noise.
+            observation_noise: A `model_batch_shape x 1 x m`-dim tensor or
+                a `model_batch_shape x n' x m`-dim tensor containing the average
+                noise for each batch and output, where `m` is the number of outputs.
+                `noise` must be in the outcome-transformed space if an outcome
+                transform is used. If None, then the noise will be the inferred
+                noise level.
             evaluation_mask: A `n' x m`-dim tensor of booleans indicating which
                 outputs should be fantasized for a given design. This uses the same
                 evaluation mask for all batches.
@@ -595,6 +627,8 @@ class ModelList(Model):
 
         fant_models = []
         X_i = X
+        if observation_noise is None:
+            observation_noise_i = observation_noise
         for i in range(self.num_outputs):
             # get the inputs to fantasize at for output i
             if evaluation_mask is not None:
@@ -604,12 +638,15 @@ class ModelList(Model):
                 # samples from a single Sobol sequence or consider requiring that the
                 # sampling is IID to ensure good coverage.
                 sampler_i = sampler.samplers[i]
+                if observation_noise is not None:
+                    observation_noise_i = observation_noise[..., mask_i, i : i + 1]
             else:
                 sampler_i = sampler
+
             fant_model = self.models[i].fantasize(
                 X=X_i,
                 sampler=sampler_i,
-                observation_noise=observation_noise,
+                observation_noise=observation_noise_i,
                 **kwargs,
             )
             fant_models.append(fant_model)

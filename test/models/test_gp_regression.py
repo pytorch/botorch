@@ -318,8 +318,6 @@ class TestSingleTaskGP(BotorchTestCase):
             sampler = SobolQMCNormalSampler(sample_shape=torch.Size([3]))
             fm = model.fantasize(X=X_f, sampler=sampler)
             self.assertIsInstance(fm, model.__class__)
-            fm = model.fantasize(X=X_f, sampler=sampler, observation_noise=False)
-            self.assertIsInstance(fm, model.__class__)
 
         # check that input transforms are applied to X.
         tkwargs = {"device": self.device, "dtype": torch.float}
@@ -455,6 +453,68 @@ class TestFixedNoiseGP(TestSingleTaskGP):
             self.assertTrue(X.equal(data_dict["train_X"]))
             self.assertTrue(Y.equal(data_dict["train_Y"]))
             self.assertTrue(Yvar.equal(data_dict["train_Yvar"]))
+
+    def test_fantasized_noise(self):
+        for batch_shape, m, dtype, use_octf in itertools.product(
+            (torch.Size(), torch.Size([2])),
+            (1, 2),
+            (torch.float, torch.double),
+            (False, True),
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            octf = Standardize(m=m, batch_shape=batch_shape) if use_octf else None
+            model, _ = self._get_model_and_data(
+                batch_shape=batch_shape, m=m, outcome_transform=octf, **tkwargs
+            )
+            # fantasize
+            X_f = torch.rand(torch.Size(batch_shape + torch.Size([4, 1])), **tkwargs)
+            sampler = SobolQMCNormalSampler(sample_shape=torch.Size([3]))
+            fm = model.fantasize(X=X_f, sampler=sampler)
+            noise = (
+                model.likelihood.noise.unsqueeze(-1)
+                if m == 1
+                else model.likelihood.noise.transpose(-1, -2)
+            )
+            avg_noise = noise.mean(dim=-2, keepdim=True)
+            fm_noise = (
+                fm.likelihood.noise.unsqueeze(-1)
+                if m == 1
+                else fm.likelihood.noise.transpose(-1, -2)
+            )
+
+            self.assertTrue((fm_noise[..., -4:, :] == avg_noise).all())
+            # pass tensor of noise
+            # noise is assumed to be outcome transformed
+            # batch shape x n' x m
+            obs_noise = torch.full(
+                X_f.shape[:-1] + torch.Size([m]), 0.1, dtype=dtype, device=self.device
+            )
+            fm = model.fantasize(X=X_f, sampler=sampler, observation_noise=obs_noise)
+            fm_noise = (
+                fm.likelihood.noise.unsqueeze(-1)
+                if m == 1
+                else fm.likelihood.noise.transpose(-1, -2)
+            )
+            self.assertTrue((fm_noise[..., -4:, :] == obs_noise).all())
+            # test batch shape x 1 x m
+            obs_noise = torch.full(
+                X_f.shape[:-2] + torch.Size([1, m]),
+                0.1,
+                dtype=dtype,
+                device=self.device,
+            )
+            fm = model.fantasize(X=X_f, sampler=sampler, observation_noise=obs_noise)
+            fm_noise = (
+                fm.likelihood.noise.unsqueeze(-1)
+                if m == 1
+                else fm.likelihood.noise.transpose(-1, -2)
+            )
+            self.assertTrue(
+                (
+                    fm_noise[..., -4:, :]
+                    == obs_noise.expand(X_f.shape[:-1] + torch.Size([m]))
+                ).all()
+            )
 
 
 class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):

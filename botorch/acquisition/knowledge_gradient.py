@@ -184,7 +184,8 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
 
         # construct the fantasy model of shape `num_fantasies x b`
         fantasy_model = self.model.fantasize(
-            X=X_actual, sampler=self.sampler, observation_noise=True
+            X=X_actual,
+            sampler=self.sampler,
         )
 
         # get the value function
@@ -233,7 +234,8 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
 
         # construct the fantasy model of shape `num_fantasies x b`
         fantasy_model = self.model.fantasize(
-            X=X, sampler=self.sampler, observation_noise=True
+            X=X,
+            sampler=self.sampler,
         )
 
         # get the value function
@@ -451,7 +453,8 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
         # construct the fantasy model of shape `num_fantasies x b`
         # expand X (to potentially add trace observations)
         fantasy_model = self.model.fantasize(
-            X=self.expand(X_eval), sampler=self.sampler, observation_noise=True
+            X=self.expand(X_eval),
+            sampler=self.sampler,
         )
         # get the value function
         value_function = _get_value_function(

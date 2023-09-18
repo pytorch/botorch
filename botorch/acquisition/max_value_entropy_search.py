@@ -389,7 +389,8 @@ class qMaxValueEntropy(DiscreteMaxValueBase, MCSamplerMixin):
         if X_pending is not None:
             # fantasize the model and use this as the new model
             self.model = init_model.fantasize(
-                X=X_pending, sampler=self.fantasies_sampler, observation_noise=True
+                X=X_pending,
+                sampler=self.fantasies_sampler,
             )
         else:
             self.model = init_model

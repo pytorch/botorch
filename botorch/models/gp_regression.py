@@ -30,15 +30,14 @@ model like `MultiTaskGP`.
 
 from __future__ import annotations
 
-from typing import Any, List, NoReturn, Optional, Union
+from typing import Any, List, NoReturn, Optional
 
 import torch
-from botorch import settings
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.model import FantasizeMixin
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import Log, OutcomeTransform
-from botorch.models.utils import fantasize as fantasize_flag, validate_input_scaling
+from botorch.models.utils import validate_input_scaling
 from botorch.models.utils.gpytorch_modules import (
     get_gaussian_likelihood_with_gamma_prior,
     get_matern_kernel_with_gamma_prior,
@@ -164,7 +163,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         return MultivariateNormal(mean_x, covar_x)
 
 
-class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
+class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
     r"""A single-task exact GP model using fixed noise levels.
 
     A single-task exact GP that uses fixed observation noise levels, differing from
@@ -270,7 +269,7 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         self,
         X: Tensor,
         sampler: MCSampler,
-        observation_noise: Union[bool, Tensor] = True,
+        observation_noise: Optional[Tensor] = None,
         **kwargs: Any,
     ) -> FixedNoiseGP:
         r"""Construct a fantasy model.
@@ -290,29 +289,32 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 `batch_shape` is the batch shape (must be compatible with the
                 batch shape of the model).
             sampler: The sampler used for sampling from the posterior at `X`.
-            observation_noise: If True, include the mean across the observation
-                noise in the training data as observation noise in the posterior
-                from which the samples are drawn. If a Tensor, use it directly
-                as the specified measurement noise.
+            observation_noise: The noise level for fantasization if
+                provided. If `None`, the mean across the observation
+                noise in the training data is used as observation noise in
+                the posterior from which the samples are drawn and
+                the fantasized noise level. If observation noise is
+                provided, it is assumed to be in the outcome-transformed
+                space, if an outcome transform is used.
 
         Returns:
             The constructed fantasy model.
         """
-        propagate_grads = kwargs.pop("propagate_grads", False)
-        with fantasize_flag():
-            with settings.propagate_grads(propagate_grads):
-                post_X = self.posterior(
-                    X, observation_noise=observation_noise, **kwargs
-                )
-            Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x n' x m
-            # Use the mean of the previous noise values (TODO: be smarter here).
-            # noise should be batch_shape x q x m when X is batch_shape x q x d, and
-            # Y_fantasized is num_fantasies x batch_shape x q x m.
-            noise_shape = Y_fantasized.shape[1:]
-            noise = self.likelihood.noise.mean().expand(noise_shape)
-            return self.condition_on_observations(
-                X=self.transform_inputs(X), Y=Y_fantasized, noise=noise
-            )
+        # self.likelihood.noise is an `batch_shape x n x s(m)`-dimensional tensor
+        if observation_noise is None:
+            if self.num_outputs > 1:
+                # make noise ... x n x m
+                observation_noise = self.likelihood.noise.transpose(-1, -2)
+            else:
+                observation_noise = self.likelihood.noise.unsqueeze(-1)
+            observation_noise = observation_noise.mean(dim=-2, keepdim=True)
+
+        return super().fantasize(
+            X=X,
+            sampler=sampler,
+            observation_noise=observation_noise,
+            **kwargs,
+        )
 
     def forward(self, x: Tensor) -> MultivariateNormal:
         # TODO: reduce redundancy with the 'forward' method of
