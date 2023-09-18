@@ -98,7 +98,7 @@ class MultiObjectiveMCAcquisitionFunction(AcquisitionFunction, MCSamplerMixin, A
                 a sampler compatible with intended use case must be provided.
                 See `ForkedRNGSampler` and `StochasticSampler` as examples.
             objective: The MCMultiOutputObjective under which the samples are
-                evaluated. Defaults to `IdentityMultiOutputObjective()`.
+                evaluated. Defaults to `IdentityMCMultiOutputObjective()`.
             constraints: A list of callables, each mapping a Tensor of dimension
                 `sample_shape x batch-shape x q x m` to a Tensor of dimension
                 `sample_shape x batch-shape x q`, where negative values imply
@@ -189,7 +189,7 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
             sampler: The sampler used to draw base samples. If not given,
                 a sampler is generated using `get_sampler`.
             objective: The MCMultiOutputObjective under which the samples are evaluated.
-                Defaults to `IdentityMultiOutputObjective()`.
+                Defaults to `IdentityMCMultiOutputObjective()`.
             constraints: A list of callables, each mapping a Tensor of dimension
                 `sample_shape x batch-shape x q x m` to a Tensor of dimension
                 `sample_shape x batch-shape x q`, where negative values imply
@@ -399,7 +399,7 @@ class qNoisyExpectedHypervolumeImprovement(
                 Note: a pareto front is created for each mc sample, which can be
                 computationally intensive for `m` > 2.
             objective: The MCMultiOutputObjective under which the samples are
-                evaluated. Defaults to `IdentityMultiOutputObjective()`.
+                evaluated. Defaults to `IdentityMCMultiOutputObjective()`.
             constraints: A list of callables, each mapping a Tensor of dimension
                 `sample_shape x batch-shape x q x m` to a Tensor of dimension
                 `sample_shape x batch-shape x q`, where negative values imply
