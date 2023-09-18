@@ -93,7 +93,8 @@ class qNegIntegratedPosteriorVariance(AnalyticAcquisitionFunction):
         # Construct the fantasy model (we actually do not use the full model,
         # this is just a convenient way of computing fast posterior covariances
         fantasy_model = self.model.fantasize(
-            X=X, sampler=self.sampler, observation_noise=True
+            X=X,
+            sampler=self.sampler,
         )
 
         bdims = tuple(1 for _ in X.shape[:-2])

@@ -15,7 +15,7 @@ from botorch.exceptions import (
     BotorchTensorDimensionError,
     BotorchTensorDimensionWarning,
 )
-from botorch.exceptions.errors import InputDataError
+from botorch.exceptions.errors import DeprecationError, InputDataError
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.gpytorch import (
     BatchedMultiOutputGPyTorchModel,
@@ -209,17 +209,20 @@ class TestGPyTorchModel(BotorchTestCase):
             self.assertIsInstance(cm, SimpleGPyTorchModel)
             self.assertEqual(cm.train_targets.shape, torch.Size([2, 7]))
             cm = model.fantasize(
-                torch.rand(2, 1, **tkwargs), sampler=sampler, observation_noise=True
-            )
-            self.assertIsInstance(cm, SimpleGPyTorchModel)
-            self.assertEqual(cm.train_targets.shape, torch.Size([2, 7]))
-            cm = model.fantasize(
                 torch.rand(2, 1, **tkwargs),
                 sampler=sampler,
                 observation_noise=torch.rand(2, 1, **tkwargs),
             )
             self.assertIsInstance(cm, SimpleGPyTorchModel)
             self.assertEqual(cm.train_targets.shape, torch.Size([2, 7]))
+            # test that boolean observation noise is deprecated
+            msg = "`fantasize` no longer accepts a boolean for `observation_noise`."
+            with self.assertRaisesRegex(DeprecationError, msg):
+                model.fantasize(
+                    torch.rand(2, 1, **tkwargs),
+                    sampler=sampler,
+                    observation_noise=True,
+                )
 
     def test_validate_tensor_args(self) -> None:
         n, d = 3, 2
@@ -384,11 +387,6 @@ class TestBatchedMultiOutputGPyTorchModel(BotorchTestCase):
             # test fantasize
             sampler = SobolQMCNormalSampler(sample_shape=torch.Size([2]))
             cm = model.fantasize(torch.rand(2, 1, **tkwargs), sampler=sampler)
-            self.assertIsInstance(cm, SimpleBatchedMultiOutputGPyTorchModel)
-            self.assertEqual(cm.train_targets.shape, torch.Size([2, 2, 7]))
-            cm = model.fantasize(
-                torch.rand(2, 1, **tkwargs), sampler=sampler, observation_noise=True
-            )
             self.assertIsInstance(cm, SimpleBatchedMultiOutputGPyTorchModel)
             self.assertEqual(cm.train_targets.shape, torch.Size([2, 2, 7]))
             cm = model.fantasize(
