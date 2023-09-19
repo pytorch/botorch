@@ -396,9 +396,9 @@ def identify_samples_which_satisfy_constraints(X, constraints):
 
 
 fig, ax = plt.subplots(figsize=(8, 6))
-h1 = ax.contourf(Xplt.cpu(), Yplt.cpu(), Zplt.cpu(), 20, cmap="Blues", alpha=0.6)
+h1 = ax.contourf(Xplt.cpu().numpy(), Yplt.cpu().numpy(), Zplt.cpu().numpy(), 20, cmap="Blues", alpha=0.6)
 fig.colorbar(h1)
-ax.contour(Xplt.cpu(), Yplt.cpu(), Zplt.cpu(), [0.55, 0.75], colors="k")
+ax.contour(Xplt.cpu().numpy(), Yplt.cpu().numpy(), Zplt.cpu().numpy(), [0.55, 0.75], colors="k")
 
 feasible_inds = (
     identify_samples_which_satisfy_constraints(Y, constraints)

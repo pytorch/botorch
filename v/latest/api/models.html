@@ -77,7 +77,12 @@ which to compute the posterior (if the model is multi-output).
 Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
 computes the posterior over all model outputs.</p></li>
-<li><p><strong>observation_noise</strong> (<em>bool</em>) – If True, add observation noise to the posterior.</p></li>
+<li><p><strong>observation_noise</strong> (<em>Union</em><em>[</em><em>bool</em><em>, </em><em>Tensor</em><em>]</em>) – For models with an inferred noise level, if True,
+include observation noise. For models with an observed noise level,
+this must be a <cite>model_batch_shape x 1 x m</cite>-dim tensor or
+a <cite>model_batch_shape x n’ x m</cite>-dim tensor containing the average
+noise for each batch and output. <cite>noise</cite> must be in the
+outcome-transformed space if an outcome transform is used.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – An optional PosteriorTransform.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
@@ -295,7 +300,7 @@ a <cite>transform_inputs</cite> method.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.model.FantasizeMixin.fantasize">
-<span class="sig-name descname"><span class="pre">fantasize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#FantasizeMixin.fantasize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.FantasizeMixin.fantasize" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fantasize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#FantasizeMixin.fantasize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.FantasizeMixin.fantasize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct a fantasy model.</p>
 <p>Constructs a fantasy model in the following fashion:
 (1) compute the model posterior at <cite>X</cite> (including observation noise if
@@ -311,7 +316,12 @@ the feature space, <cite>n’</cite> is the number of points per batch, and
 <cite>batch_shape</cite> is the batch shape (must be compatible with the
 batch shape of the model).</p></li>
 <li><p><strong>sampler</strong> (<em>MCSampler</em>) – The sampler used for sampling from the posterior at <cite>X</cite>.</p></li>
-<li><p><strong>observation_noise</strong> (<em>bool</em>) – If True, include observation noise.</p></li>
+<li><p><strong>observation_noise</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>model_batch_shape x 1 x m</cite>-dim tensor or
+a <cite>model_batch_shape x n’ x m</cite>-dim tensor containing the average
+noise for each batch and output, where <cite>m</cite> is the number of outputs.
+<cite>noise</cite> must be in the outcome-transformed space if an outcome
+transform is used. If None, then the noise will be the inferred
+noise level.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – Will be passed to <cite>model.condition_on_observations</cite></p></li>
 <li><p><strong>self</strong> (<em>TFantasizeMixin</em>) – </p></li>
 </ul>
@@ -372,7 +382,9 @@ computes the posterior over all model outputs.</p></li>
 respective likelihoods to the posterior. If a Tensor of shape
 <cite>(batch_shape) x q x m</cite>, use it directly as the observation
 noise (with <cite>observation_noise[…,i]</cite> added to the posterior
-of the <cite>i</cite>-th model).</p></li>
+of the <cite>i</cite>-th model). <cite>observation_noise</cite> is assumed
+to be in the outcome-transformed space, if an outcome transform
+is used by the model.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="posteriors.html#botorch.posteriors.posterior_list.PosteriorList" title="botorch.posteriors.posterior_list.PosteriorList"><em>PosteriorList</em></a><em>]</em><em>, </em><em>Posterior</em><em>] </em><em>| </em><em>None</em>) – An optional PosteriorTransform.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
@@ -462,7 +474,7 @@ the model `m1</cite> subset to its second output.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.model.ModelList.fantasize">
-<span class="sig-name descname"><span class="pre">fantasize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#ModelList.fantasize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.ModelList.fantasize" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fantasize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#ModelList.fantasize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.ModelList.fantasize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct a fantasy model.</p>
 <p>Constructs a fantasy model in the following fashion:
 (1) compute the model posterior at <cite>X</cite> (including observation noise if
@@ -479,7 +491,12 @@ the feature space, <cite>n’</cite> is the number of points per batch, and
 batch shape of the model).</p></li>
 <li><p><strong>sampler</strong> (<em>MCSampler</em>) – The sampler used for sampling from the posterior at <cite>X</cite>. If
 evaluation_mask is not None, this must be a <cite>ListSampler</cite>.</p></li>
-<li><p><strong>observation_noise</strong> (<em>bool</em>) – If True, include observation noise.</p></li>
+<li><p><strong>observation_noise</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>model_batch_shape x 1 x m</cite>-dim tensor or
+a <cite>model_batch_shape x n’ x m</cite>-dim tensor containing the average
+noise for each batch and output, where <cite>m</cite> is the number of outputs.
+<cite>noise</cite> must be in the outcome-transformed space if an outcome
+transform is used. If None, then the noise will be the inferred
+noise level.</p></li>
 <li><p><strong>evaluation_mask</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>n’ x m</cite>-dim tensor of booleans indicating which
 outputs should be fantasized for a given design. This uses the same
 evaluation mask for all batches.</p></li>
@@ -869,7 +886,7 @@ registered hooks while the latter silently ignores them.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.gp_regression.FixedNoiseGP">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.gp_regression.</span></span><span class="sig-name descname"><span class="pre">FixedNoiseGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#FixedNoiseGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.FixedNoiseGP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BatchedMultiOutputGPyTorchModel</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ExactGP</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BatchedMultiOutputGPyTorchModel</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ExactGP</span></code>, <a class="reference internal" href="#botorch.models.model.FantasizeMixin" title="botorch.models.model.FantasizeMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">FantasizeMixin</span></code></a></p>
 <p>A single-task exact GP model using fixed noise levels.</p>
 <p>A single-task exact GP that uses fixed observation noise levels, differing from
 <cite>SingleTaskGP</cite> only in that noise levels are provided rather than inferred.
@@ -918,7 +935,7 @@ forward pass.</p></li>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.gp_regression.FixedNoiseGP.fantasize">
-<span class="sig-name descname"><span class="pre">fantasize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#FixedNoiseGP.fantasize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.FixedNoiseGP.fantasize" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fantasize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#FixedNoiseGP.fantasize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.FixedNoiseGP.fantasize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct a fantasy model.</p>
 <p>Constructs a fantasy model in the following fashion:
 (1) compute the model posterior at <cite>X</cite> (if <cite>observation_noise=True</cite>,
@@ -936,10 +953,13 @@ the feature space, <cite>n’</cite> is the number of points per batch, and
 <cite>batch_shape</cite> is the batch shape (must be compatible with the
 batch shape of the model).</p></li>
 <li><p><strong>sampler</strong> (<em>MCSampler</em>) – The sampler used for sampling from the posterior at <cite>X</cite>.</p></li>
-<li><p><strong>observation_noise</strong> (<em>bool</em><em> | </em><em>Tensor</em>) – If True, include the mean across the observation
-noise in the training data as observation noise in the posterior
-from which the samples are drawn. If a Tensor, use it directly
-as the specified measurement noise.</p></li>
+<li><p><strong>observation_noise</strong> (<em>Tensor</em><em> | </em><em>None</em>) – The noise level for fantasization if
+provided. If <cite>None</cite>, the mean across the observation
+noise in the training data is used as observation noise in
+the posterior from which the samples are drawn and
+the fantasized noise level. If observation noise is
+provided, it is assumed to be in the outcome-transformed
+space, if an outcome transform is used.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -1735,7 +1755,9 @@ of the feature space and <cite>q</cite> is the number of points considered
 jointly.</p></li>
 <li><p><strong>observation_noise</strong> (<em>bool</em><em> | </em><em>Tensor</em>) – If True, add the observation noise from the
 likelihood to the posterior. If a Tensor, use it directly as the
-observation noise (must be of shape <cite>(batch_shape) x q</cite>).</p></li>
+observation noise (must be of shape <cite>(batch_shape) x q</cite>). It is
+assumed to be in the outcome-transformed space if an outcome
+transform is used.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>PosteriorTransform</em><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
 <li><p><strong>output_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
@@ -2600,7 +2622,9 @@ of the feature space and <cite>q</cite> is the number of points considered
 jointly.</p></li>
 <li><p><strong>observation_noise</strong> – If True, add the observation noise from the
 likelihood to the posterior. If a Tensor, use it directly as the
-observation noise (must be of shape <cite>(batch_shape) x q</cite>).</p></li>
+observation noise (must be of shape <cite>(batch_shape) x q</cite>). It is
+assumed to be in the outcome-transformed space if an outcome
+transform is used.</p></li>
 <li><p><strong>posterior_transform</strong> – An optional PosteriorTransform.</p></li>
 </ul>
 </dd>
@@ -3263,7 +3287,12 @@ the feature space, <cite>n’</cite> is the number of points per batch, and
 <cite>batch_shape</cite> is the batch shape (must be compatible with the
 batch shape of the model).</p></li>
 <li><p><strong>sampler</strong> – The sampler used for sampling from the posterior at <cite>X</cite>.</p></li>
-<li><p><strong>observation_noise</strong> – If True, include observation noise.</p></li>
+<li><p><strong>observation_noise</strong> – A <cite>model_batch_shape x 1 x m</cite>-dim tensor or
+a <cite>model_batch_shape x n’ x m</cite>-dim tensor containing the average
+noise for each batch and output, where <cite>m</cite> is the number of outputs.
+<cite>noise</cite> must be in the outcome-transformed space if an outcome
+transform is used. If None, then the noise will be the inferred
+noise level.</p></li>
 <li><p><strong>kwargs</strong> – Will be passed to <cite>model.condition_on_observations</cite></p></li>
 </ul>
 </dd>

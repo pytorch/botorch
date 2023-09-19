@@ -299,9 +299,9 @@ ax.plot([0, 80], [0, 80], "b--", lw=2)
 yerr1, yerr2 = median - q1, q2 - median
 yerr = torch.cat((yerr1.unsqueeze(0), yerr2.unsqueeze(0)), dim=0).squeeze(-1)
 markers, caps, bars = ax.errorbar(
-    test_Y.squeeze(-1).cpu(),
-    median.squeeze(-1).cpu(),
-    yerr=yerr.cpu(),
+    test_Y.squeeze(-1).cpu().numpy(),
+    median.squeeze(-1).cpu().numpy(),
+    yerr=yerr.cpu().numpy(),
     fmt=".",
     capsize=4,
     elinewidth=2.0,

@@ -412,7 +412,8 @@
         <span class="k">if</span> <span class="n">X_pending</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># fantasize the model and use this as the new model</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">init_model</span><span class="o">.</span><span class="n">fantasize</span><span class="p">(</span>
-                <span class="n">X</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fantasies_sampler</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span>
+                <span class="n">X</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
+                <span class="n">sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fantasies_sampler</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">init_model</span>

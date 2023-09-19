@@ -1809,7 +1809,12 @@ which to compute the posterior (if the model is multi-output).
 Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
 computes the posterior over all model outputs.</p></li>
-<li><p><strong>observation_noise</strong> (<em>bool</em>) – If True, add observation noise to the posterior.</p></li>
+<li><p><strong>observation_noise</strong> (<em>bool</em>) – For models with an inferred noise level, if True,
+include observation noise. For models with an observed noise level,
+this must be a <cite>model_batch_shape x 1 x m</cite>-dim tensor or
+a <cite>model_batch_shape x n’ x m</cite>-dim tensor containing the average
+noise for each batch and output. <cite>noise</cite> must be in the
+outcome-transformed space if an outcome transform is used.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>PosteriorTransform</em><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
 </ul>
 </dd>
