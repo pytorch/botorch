@@ -414,7 +414,14 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                     lin_truncated=lin_trunc,
                     **tkwargs,
                 )
-                training_data = SupervisedDataset(kwargs["train_X"], kwargs["train_Y"])
+
+                X = kwargs["train_X"]
+                training_data = SupervisedDataset(
+                    X=X,
+                    Y=kwargs["train_Y"],
+                    feature_names=[f"x{i}" for i in range(X.shape[-1])],
+                    outcome_names=["y"],
+                )
 
                 # missing fidelity features
                 with self.assertRaisesRegex(TypeError, "argument: 'fidelity_features'"):
@@ -523,7 +530,13 @@ class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
                     lin_truncated=lin_trunc,
                     **tkwargs,
                 )
-                training_data = SupervisedDataset(kwargs["train_X"], kwargs["train_Y"])
+                X = kwargs["train_X"]
+                training_data = SupervisedDataset(
+                    X=X,
+                    Y=kwargs["train_Y"],
+                    feature_names=[f"x{i}" for i in range(X.shape[-1])],
+                    outcome_names=["y"],
+                )
                 data_dict = model.construct_inputs(training_data, fidelity_features=[1])
                 self.assertTrue("train_Yvar" not in data_dict)
 
@@ -532,6 +545,8 @@ class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
                     X=kwargs["train_X"],
                     Y=kwargs["train_Y"],
                     Yvar=torch.full(kwargs["train_Y"].shape[:-1] + (1,), 0.1),
+                    feature_names=[f"x{i}" for i in range(X.shape[-1])],
+                    outcome_names=["y"],
                 )
 
                 # missing fidelity features

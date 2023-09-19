@@ -9,8 +9,7 @@ r"""Representations for different kinds of datasets."""
 from __future__ import annotations
 
 import warnings
-from itertools import count, repeat
-from typing import Any, Dict, Hashable, Iterable, Optional, TypeVar, Union
+from typing import Any, Iterable, List, Optional, TypeVar, Union
 
 import torch
 from botorch.utils.containers import BotorchContainer, SliceContainer
@@ -31,10 +30,19 @@ class SupervisedDataset:
 
         X = torch.rand(16, 2)
         Y = torch.rand(16, 1)
-        A = SupervisedDataset(X, Y)
+        feature_names = ["learning_rate", "embedding_dim"]
+        outcome_names = ["neg training loss"]
+        A = SupervisedDataset(
+            X=X,
+            Y=Y,
+            feature_names=feature_names,
+            outcome_names=outcome_names,
+        )
         B = SupervisedDataset(
-            DenseContainer(X, event_shape=X.shape[-1:]),
-            DenseContainer(Y, event_shape=Y.shape[-1:]),
+            X=DenseContainer(X, event_shape=X.shape[-1:]),
+            Y=DenseContainer(Y, event_shape=Y.shape[-1:]),
+            feature_names=feature_names,
+            outcome_names=outcome_names,
         )
         assert A == B
     """
@@ -43,6 +51,9 @@ class SupervisedDataset:
         self,
         X: Union[BotorchContainer, Tensor],
         Y: Union[BotorchContainer, Tensor],
+        *,
+        feature_names: List[str],
+        outcome_names: List[str],
         Yvar: Union[BotorchContainer, Tensor, None] = None,
         validate_init: bool = True,
     ) -> None:
@@ -51,6 +62,8 @@ class SupervisedDataset:
         Args:
             X: A `Tensor` or `BotorchContainer` representing the input features.
             Y: A `Tensor` or `BotorchContainer` representing the outcomes.
+            feature_names: A list of names of the features in `X`.
+            outcome_names: A list of names of the outcomes in `Y`.
             Yvar: An optional `Tensor` or `BotorchContainer` representing
                 the observation noise.
             validate_init: If `True`, validates the input shapes.
@@ -58,6 +71,8 @@ class SupervisedDataset:
         self._X = X
         self._Y = Y
         self._Yvar = Yvar
+        self.feature_names = feature_names
+        self.outcome_names = outcome_names
         if validate_init:
             self._validate()
 
@@ -79,7 +94,23 @@ class SupervisedDataset:
             return self._Yvar
         return self._Yvar()
 
-    def _validate(self) -> None:
+    def _validate(
+        self,
+        validate_feature_names: bool = True,
+        validate_outcome_names: bool = True,
+    ) -> None:
+        r"""Checks that the shapes of the inputs are compatible with each other.
+
+        Args:
+            validate_feature_names: By default, we validate that the length of
+                `feature_names` matches the # of columns of `self.X`. If a
+                particular dataset, e.g., `RankingDataset`, is known to violate
+                this assumption, this can be set to `False`.
+            validate_outcome_names: By default, we validate that the length of
+                `outcomes_names` matches the # of columns of `self.Y`. If a
+                particular dataset, e.g., `RankingDataset`, is known to violate
+                this assumption, this can be set to `False`.
+        """
         shape_X = self.X.shape
         if isinstance(self._X, BotorchContainer):
             shape_X = shape_X[: len(shape_X) - len(self._X.event_shape)]
@@ -94,31 +125,16 @@ class SupervisedDataset:
             raise ValueError("Batch dimensions of `X` and `Y` are incompatible.")
         if self.Yvar is not None and self.Yvar.shape != self.Y.shape:
             raise ValueError("Shapes of `Y` and `Yvar` are incompatible.")
-
-    @classmethod
-    def dict_from_iter(
-        cls,
-        X: MaybeIterable[Union[BotorchContainer, Tensor]],
-        Y: MaybeIterable[Union[BotorchContainer, Tensor]],
-        Yvar: Optional[MaybeIterable[Union[BotorchContainer, Tensor]]] = None,
-        *,
-        keys: Optional[Iterable[Hashable]] = None,
-    ) -> Dict[Hashable, SupervisedDataset]:
-        r"""Returns a dictionary of `SupervisedDataset` from iterables."""
-        single_X = isinstance(X, (Tensor, BotorchContainer))
-        single_Y = isinstance(Y, (Tensor, BotorchContainer))
-        if single_X:
-            X = (X,) if single_Y else repeat(X)
-        if single_Y:
-            Y = (Y,) if single_X else repeat(Y)
-        Yvar = repeat(Yvar) if isinstance(Yvar, (Tensor, BotorchContainer)) else Yvar
-
-        # Pass in Yvar only if it is not None.
-        iterables = (X, Y) if Yvar is None else (X, Y, Yvar)
-        return {
-            elements[0]: cls(*elements[1:])
-            for elements in zip(keys or count(), *iterables)
-        }
+        if validate_feature_names and len(self.feature_names) != self.X.shape[-1]:
+            raise ValueError(
+                "`X` must have the same number of columns as the number of "
+                "features in `feature_names`."
+            )
+        if validate_outcome_names and len(self.outcome_names) != self.Y.shape[-1]:
+            raise ValueError(
+                "`Y` must have the same number of columns as the number of "
+                "outcomes in `outcome_names`."
+            )
 
     def __eq__(self, other: Any) -> bool:
         return (
@@ -130,6 +146,8 @@ class SupervisedDataset:
                 if self.Yvar is None
                 else torch.equal(self.Yvar, other.Yvar)
             )
+            and self.feature_names == other.feature_names
+            and self.outcome_names == other.outcome_names
         )
 
 
@@ -145,6 +163,8 @@ class FixedNoiseDataset(SupervisedDataset):
         X: Union[BotorchContainer, Tensor],
         Y: Union[BotorchContainer, Tensor],
         Yvar: Union[BotorchContainer, Tensor],
+        feature_names: List[str],
+        outcome_names: List[str],
         validate_init: bool = True,
     ) -> None:
         r"""Initialize a `FixedNoiseDataset` -- deprecated!"""
@@ -152,7 +172,14 @@ class FixedNoiseDataset(SupervisedDataset):
             "`FixedNoiseDataset` is deprecated. Use `SupervisedDataset` instead.",
             DeprecationWarning,
         )
-        super().__init__(X=X, Y=Y, Yvar=Yvar, validate_init=validate_init)
+        super().__init__(
+            X=X,
+            Y=Y,
+            feature_names=feature_names,
+            outcome_names=outcome_names,
+            Yvar=Yvar,
+            validate_init=validate_init,
+        )
 
 
 class RankingDataset(SupervisedDataset):
@@ -177,13 +204,22 @@ class RankingDataset(SupervisedDataset):
             torch.stack([torch.randperm(3) for _ in range(8)]),
             event_shape=torch.Size([3])
         )
-        dataset = RankingDataset(X, Y)
+        feature_names = ["item_0", "item_1"]
+        outcome_names = ["ranking outcome"]
+        dataset = RankingDataset(
+            X=X,
+            Y=Y,
+            feature_names=feature_names,
+            outcome_names=outcome_names,
+        )
     """
 
     def __init__(
         self,
         X: SliceContainer,
         Y: Union[BotorchContainer, Tensor],
+        feature_names: List[str],
+        outcome_names: List[str],
         validate_init: bool = True,
     ) -> None:
         r"""Construct a `RankingDataset`.
@@ -191,12 +227,26 @@ class RankingDataset(SupervisedDataset):
         Args:
             X: A `SliceContainer` representing the input features being ranked.
             Y: A `Tensor` or `BotorchContainer` representing the rankings.
+            feature_names: A list of names of the features in X.
+            outcome_names: A list of names of the outcomes in Y.
             validate_init: If `True`, validates the input shapes.
         """
-        super().__init__(X=X, Y=Y, Yvar=None, validate_init=validate_init)
+        super().__init__(
+            X=X,
+            Y=Y,
+            feature_names=feature_names,
+            outcome_names=outcome_names,
+            Yvar=None,
+            validate_init=validate_init,
+        )
 
     def _validate(self) -> None:
-        super()._validate()
+        super()._validate(validate_feature_names=False, validate_outcome_names=False)
+        if len(self.feature_names) != self._X.values.shape[-1]:
+            raise ValueError(
+                "The `values` field of `X` must have the same number of columns as "
+                "the number of features in `feature_names`."
+            )
 
         Y = self.Y
         arity = self._X.indices.shape[-1]

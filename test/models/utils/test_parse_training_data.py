@@ -22,7 +22,9 @@ class TestParseTrainingData(BotorchTestCase):
         with self.assertRaisesRegex(NotImplementedError, "Could not find signature"):
             parse_training_data(Model, None)
 
-        dataset = SupervisedDataset(X=rand(3, 2), Y=rand(3, 1))
+        dataset = SupervisedDataset(
+            X=rand(3, 2), Y=rand(3, 1), feature_names=["a", "b"], outcome_names=["y"]
+        )
         with self.assertRaisesRegex(NotImplementedError, "Could not find signature"):
             parse_training_data(None, dataset)
 
@@ -33,14 +35,22 @@ class TestParseTrainingData(BotorchTestCase):
 
     def test_fixedNoise(self):
         # Test passing a `SupervisedDataset`
-        dataset = SupervisedDataset(X=rand(3, 2), Y=rand(3, 1))
+        dataset = SupervisedDataset(
+            X=rand(3, 2), Y=rand(3, 1), feature_names=["a", "b"], outcome_names=["y"]
+        )
         parse = parse_training_data(FixedNoiseGP, dataset)
         self.assertTrue("train_Yvar" not in parse)
         self.assertTrue(torch.equal(dataset.X, parse["train_X"]))
         self.assertTrue(torch.equal(dataset.Y, parse["train_Y"]))
 
         # Test passing a `FixedNoiseDataset`
-        dataset = FixedNoiseDataset(X=rand(3, 2), Y=rand(3, 1), Yvar=rand(3, 1))
+        dataset = FixedNoiseDataset(
+            X=rand(3, 2),
+            Y=rand(3, 1),
+            Yvar=rand(3, 1),
+            feature_names=["a", "b"],
+            outcome_names=["y"],
+        )
         parse = parse_training_data(FixedNoiseGP, dataset)
         self.assertTrue(torch.equal(dataset.X, parse["train_X"]))
         self.assertTrue(torch.equal(dataset.Y, parse["train_Y"]))
@@ -53,7 +63,9 @@ class TestParseTrainingData(BotorchTestCase):
         event_shape = Size([2 * datapoints.shape[-1]])
         dataset_X = SliceContainer(datapoints, indices, event_shape=event_shape)
         dataset_Y = tensor([[0, 1], [1, 0]]).expand(indices.shape)
-        dataset = RankingDataset(X=dataset_X, Y=dataset_Y)
+        dataset = RankingDataset(
+            X=dataset_X, Y=dataset_Y, feature_names=["a", "b"], outcome_names=["y"]
+        )
         parse = parse_training_data(PairwiseGP, dataset)
         self.assertTrue(dataset._X.values.equal(parse["datapoints"]))
 
@@ -63,13 +75,27 @@ class TestParseTrainingData(BotorchTestCase):
     def test_dict(self):
         n = 3
         m = 2
-        datasets = {i: SupervisedDataset(X=rand(n, 2), Y=rand(n, 1)) for i in range(m)}
+        datasets = {
+            i: SupervisedDataset(
+                X=rand(n, 2),
+                Y=rand(n, 1),
+                feature_names=["a", "b"],
+                outcome_names=["y"],
+            )
+            for i in range(m)
+        }
         parse_training_data(Model, {0: datasets[0]})
         with self.assertRaisesRegex(UnsupportedError, "multiple datasets to single"):
             parse_training_data(Model, datasets)
 
         _datasets = datasets.copy()
-        _datasets[m] = SupervisedDataset(rand(n, 2), rand(n, 1), rand(n, 1))
+        _datasets[m] = SupervisedDataset(
+            rand(n, 2),
+            rand(n, 1),
+            Yvar=rand(n, 1),
+            feature_names=["a", "b"],
+            outcome_names=["y"],
+        )
         with self.assertRaisesRegex(UnsupportedError, "Cannot combine .* hetero"):
             parse_training_data(MultiTaskGP, _datasets)
 
