@@ -273,7 +273,12 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             tkwargs = {"device": self.device, "dtype": dtype}
             X, Y = _get_random_data(batch_shape=batch_shape, m=1, d=d, **tkwargs)
             cat_dims = list(range(ncat))
-            training_data = SupervisedDataset(X, Y)
+            training_data = SupervisedDataset(
+                X,
+                Y,
+                feature_names=[f"x{i}" for i in range(d)],
+                outcome_names=["y"],
+            )
             model_kwargs = MixedSingleTaskGP.construct_inputs(
                 training_data, categorical_features=cat_dims
             )
@@ -283,7 +288,13 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             self.assertIsNone(model_kwargs["likelihood"])
 
         # With train_Yvar.
-        training_data = SupervisedDataset(X, Y, Y)
+        training_data = SupervisedDataset(
+            X,
+            Y,
+            Yvar=Y,
+            feature_names=[f"x{i}" for i in range(d)],
+            outcome_names=["y"],
+        )
         with self.assertWarnsRegex(InputDataWarning, "train_Yvar"):
             model_kwargs = MixedSingleTaskGP.construct_inputs(
                 training_data, categorical_features=cat_dims

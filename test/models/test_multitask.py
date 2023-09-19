@@ -7,7 +7,7 @@
 import itertools
 import math
 import warnings
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import torch
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
@@ -43,23 +43,31 @@ from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikeliho
 from gpytorch.priors import GammaPrior, LogNormalPrior, SmoothedBoxPrior
 from gpytorch.priors.lkj_prior import LKJCovariancePrior
 from gpytorch.settings import max_cholesky_size, max_root_decomposition_size
+from torch import Tensor
 from torch.nn.functional import pad
 
 
-def _gen_datasets(yvar: Optional[float] = None, **tkwargs):
+def _gen_datasets(
+    yvar: Optional[float] = None, **tkwargs
+) -> Tuple[Dict[int, SupervisedDataset], Tuple[Tensor, Tensor, Tensor]]:
     X = torch.linspace(0, 0.95, 10, **tkwargs) + 0.05 * torch.rand(10, **tkwargs)
     X = X.unsqueeze(dim=-1)
     Y1 = torch.sin(X * (2 * math.pi)) + torch.randn_like(X) * 0.2
     Y2 = torch.cos(X * (2 * math.pi)) + torch.randn_like(X) * 0.2
     train_X = torch.cat([pad(X, (1, 0), value=i) for i in range(2)])
     train_Y = torch.cat([Y1, Y2])
-    if yvar is None:
-        return SupervisedDataset.dict_from_iter(X, (Y1, Y2)), (train_X, train_Y)
 
-    Yvar1 = torch.full_like(Y1, yvar)
-    Yvar2 = torch.full_like(Y2, yvar)
-    train_Yvar = torch.cat([Yvar1, Yvar2])
-    datasets = {0: SupervisedDataset(X, Y1, Yvar1), 1: SupervisedDataset(X, Y2, Yvar2)}
+    Yvar1 = None if yvar is None else torch.full_like(Y1, yvar)
+    Yvar2 = None if yvar is None else torch.full_like(Y2, yvar)
+    train_Yvar = None if yvar is None else torch.cat([Yvar1, Yvar2])
+    datasets = {
+        0: SupervisedDataset(
+            X, Y1, Yvar=Yvar1, feature_names=["X"], outcome_names=["y"]
+        ),
+        1: SupervisedDataset(
+            X, Y2, Yvar=Yvar2, feature_names=["X"], outcome_names=["y"]
+        ),
+    }
     return datasets, (train_X, train_Y, train_Yvar)
 
 
@@ -70,7 +78,7 @@ def _gen_model_and_data(
     outcome_transform=None,
     **tkwargs
 ):
-    datasets, (train_X, train_Y) = _gen_datasets(**tkwargs)
+    datasets, (train_X, train_Y, _) = _gen_datasets(**tkwargs)
     model = MultiTaskGP(
         train_X,
         train_Y,
@@ -83,7 +91,7 @@ def _gen_model_and_data(
 
 
 def _gen_model_single_output(**tkwargs):
-    _, (train_X, train_Y) = _gen_datasets(**tkwargs)
+    _, (train_X, train_Y, _) = _gen_datasets(**tkwargs)
     model = MultiTaskGP(train_X, train_Y, task_feature=0, output_tasks=[1])
     return model.to(**tkwargs)
 
@@ -117,7 +125,7 @@ def _gen_fixed_noise_model_single_output(**tkwargs):
 
 
 def _gen_fixed_prior_model(**tkwargs):
-    _, (train_X, train_Y) = _gen_datasets(**tkwargs)
+    _, (train_X, train_Y, _) = _gen_datasets(**tkwargs)
     sd_prior = GammaPrior(2.0, 0.15)
     sd_prior._event_shape = torch.Size([2])
     model = MultiTaskGP(
@@ -130,7 +138,7 @@ def _gen_fixed_prior_model(**tkwargs):
 
 
 def _gen_given_covar_module_model(**tkwargs):
-    _, (train_X, train_Y) = _gen_datasets(**tkwargs)
+    _, (train_X, train_Y, _) = _gen_datasets(**tkwargs)
     model = MultiTaskGP(
         train_X,
         train_Y,
@@ -296,7 +304,7 @@ class TestMultiTaskGP(BotorchTestCase):
                 MultiTaskGP(torch.rand(2, 2, 2), torch.rand(2, 2, 1), 0)
 
             # test that bad feature index throws correct error
-            _, (train_X, train_Y) = _gen_datasets(**tkwargs)
+            _, (train_X, train_Y, _) = _gen_datasets(**tkwargs)
             with self.assertRaises(ValueError):
                 MultiTaskGP(train_X, train_Y, 2)
 
@@ -380,7 +388,7 @@ class TestMultiTaskGP(BotorchTestCase):
 
     def test_custom_mean_and_likelihood(self):
         tkwargs = {"device": self.device, "dtype": torch.double}
-        _, (train_X, train_Y) = _gen_datasets(**tkwargs)
+        _, (train_X, train_Y, _) = _gen_datasets(**tkwargs)
         mean_module = LinearMean(input_size=train_X.shape[-1])
         likelihood = GaussianLikelihood(noise_prior=LogNormalPrior(0, 1))
         model = MultiTaskGP(
@@ -496,7 +504,7 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
                 )
 
             # test that bad feature index throws correct error
-            _, (train_X, train_Y) = _gen_datasets(**tkwargs)
+            _, (train_X, train_Y, _) = _gen_datasets(**tkwargs)
             train_Yvar = torch.full_like(train_Y, 0.05)
             with self.assertRaises(ValueError):
                 FixedNoiseMultiTaskGP(train_X, train_Y, train_Yvar, 2)

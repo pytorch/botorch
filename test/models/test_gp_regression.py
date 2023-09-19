@@ -374,7 +374,12 @@ class TestSingleTaskGP(BotorchTestCase):
             )
             X = model_kwargs["train_X"]
             Y = model_kwargs["train_Y"]
-            training_data = SupervisedDataset(X, Y)
+            training_data = SupervisedDataset(
+                X,
+                Y,
+                feature_names=[f"x{i}" for i in range(X.shape[-1])],
+                outcome_names=["y"],
+            )
             data_dict = model.construct_inputs(training_data)
             self.assertTrue(X.equal(data_dict["train_X"]))
             self.assertTrue(Y.equal(data_dict["train_Y"]))
@@ -448,7 +453,13 @@ class TestFixedNoiseGP(TestSingleTaskGP):
             X = model_kwargs["train_X"]
             Y = model_kwargs["train_Y"]
             Yvar = model_kwargs["train_Yvar"]
-            training_data = SupervisedDataset(X, Y, Yvar)
+            training_data = SupervisedDataset(
+                X,
+                Y,
+                Yvar=Yvar,
+                feature_names=[f"x{i}" for i in range(X.shape[-1])],
+                outcome_names=["y"],
+            )
             data_dict = model.construct_inputs(training_data)
             self.assertTrue(X.equal(data_dict["train_X"]))
             self.assertTrue(Y.equal(data_dict["train_Y"]))

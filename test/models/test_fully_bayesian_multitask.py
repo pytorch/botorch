@@ -566,14 +566,9 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
         for dtype, infer_noise in [(torch.float, False), (torch.double, True)]:
             tkwargs = {"device": self.device, "dtype": dtype}
             task_feature = 0
-
-            if infer_noise:
-                datasets, (train_X, train_Y) = _gen_datasets(yvar=None, **tkwargs)
-                train_Yvar = None
-            else:
-                datasets, (train_X, train_Y, train_Yvar) = _gen_datasets(
-                    yvar=0.05, **tkwargs
-                )
+            datasets, (train_X, train_Y, train_Yvar) = _gen_datasets(
+                yvar=None if infer_noise else 0.05, **tkwargs
+            )
 
             model = SaasFullyBayesianMultiTaskGP(
                 train_X=train_X,

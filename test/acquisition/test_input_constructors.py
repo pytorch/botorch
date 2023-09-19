@@ -108,10 +108,30 @@ class InputConstructorBaseTestCase(BotorchTestCase):
         X2 = torch.rand(3, 2)
         Y1 = torch.rand(3, 1)
         Y2 = torch.rand(3, 1)
+        feature_names = ["X1", "X2"]
+        outcome_names = ["Y"]
 
-        self.blockX_blockY = SupervisedDataset.dict_from_iter(X1, Y1)
-        self.blockX_multiY = SupervisedDataset.dict_from_iter(X1, (Y1, Y2))
-        self.multiX_multiY = SupervisedDataset.dict_from_iter((X1, X2), (Y1, Y2))
+        self.blockX_blockY = {
+            0: SupervisedDataset(
+                X1, Y1, feature_names=feature_names, outcome_names=outcome_names
+            )
+        }
+        self.blockX_multiY = {
+            0: SupervisedDataset(
+                X1, Y1, feature_names=feature_names, outcome_names=outcome_names
+            ),
+            1: SupervisedDataset(
+                X1, Y2, feature_names=feature_names, outcome_names=outcome_names
+            ),
+        }
+        self.multiX_multiY = {
+            0: SupervisedDataset(
+                X1, Y1, feature_names=feature_names, outcome_names=outcome_names
+            ),
+            1: SupervisedDataset(
+                X2, Y2, feature_names=feature_names, outcome_names=outcome_names
+            ),
+        }
         self.bounds = 2 * [(0.0, 1.0)]
 
 

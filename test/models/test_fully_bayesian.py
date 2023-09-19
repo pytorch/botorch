@@ -550,7 +550,9 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             X, Y, Yvar, model = self._get_data_and_model(
                 infer_noise=infer_noise, **tkwargs
             )
-            training_data = SupervisedDataset(X, Y, Yvar)
+            training_data = SupervisedDataset(
+                X, Y, Yvar=Yvar, feature_names=["1", "2", "3", "4"], outcome_names=["1"]
+            )
 
             data_dict = model.construct_inputs(training_data)
             self.assertTrue(X.equal(data_dict["train_X"]))
