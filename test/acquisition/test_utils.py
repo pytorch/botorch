@@ -98,7 +98,7 @@ class TestConstraintUtils(BotorchTestCase):
                             # When `batch_shape = (b,)`, this expands `expected_best_f`
                             # from shape (3, 1) to (3, 1, 1), then to
                             # (1, 1, ..., 1, 3, b, 1), where there are
-                            # `len(sample_shape)` leading ones.
+                            # `len(sample_shape) - 1` leading ones.
                             expected_best_f = expected_best_f.unsqueeze(1).repeat(
                                 *[1] * len(sample_shape), *batch_shape, 1
                             )
