@@ -32,8 +32,7 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">count</span><span class="p">,</span> <span class="n">repeat</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.containers</span> <span class="kn">import</span> <span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">SliceContainer</span>
@@ -54,10 +53,19 @@
 
 <span class="sd">        X = torch.rand(16, 2)</span>
 <span class="sd">        Y = torch.rand(16, 1)</span>
-<span class="sd">        A = SupervisedDataset(X, Y)</span>
+<span class="sd">        feature_names = ["learning_rate", "embedding_dim"]</span>
+<span class="sd">        outcome_names = ["neg training loss"]</span>
+<span class="sd">        A = SupervisedDataset(</span>
+<span class="sd">            X=X,</span>
+<span class="sd">            Y=Y,</span>
+<span class="sd">            feature_names=feature_names,</span>
+<span class="sd">            outcome_names=outcome_names,</span>
+<span class="sd">        )</span>
 <span class="sd">        B = SupervisedDataset(</span>
-<span class="sd">            DenseContainer(X, event_shape=X.shape[-1:]),</span>
-<span class="sd">            DenseContainer(Y, event_shape=Y.shape[-1:]),</span>
+<span class="sd">            X=DenseContainer(X, event_shape=X.shape[-1:]),</span>
+<span class="sd">            Y=DenseContainer(Y, event_shape=Y.shape[-1:]),</span>
+<span class="sd">            feature_names=feature_names,</span>
+<span class="sd">            outcome_names=outcome_names,</span>
 <span class="sd">        )</span>
 <span class="sd">        assert A == B</span>
 <span class="sd">    """</span>
@@ -66,6 +74,9 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">X</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
         <span class="n">Y</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">feature_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">outcome_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
         <span class="n">Yvar</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">validate_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -74,6 +85,8 @@
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `Tensor` or `BotorchContainer` representing the input features.</span>
 <span class="sd">            Y: A `Tensor` or `BotorchContainer` representing the outcomes.</span>
+<span class="sd">            feature_names: A list of names of the features in `X`.</span>
+<span class="sd">            outcome_names: A list of names of the outcomes in `Y`.</span>
 <span class="sd">            Yvar: An optional `Tensor` or `BotorchContainer` representing</span>
 <span class="sd">                the observation noise.</span>
 <span class="sd">            validate_init: If `True`, validates the input shapes.</span>
@@ -81,6 +94,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_X</span> <span class="o">=</span> <span class="n">X</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_Y</span> <span class="o">=</span> <span class="n">Y</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_Yvar</span> <span class="o">=</span> <span class="n">Yvar</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feature_names</span> <span class="o">=</span> <span class="n">feature_names</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outcome_names</span> <span class="o">=</span> <span class="n">outcome_names</span>
         <span class="k">if</span> <span class="n">validate_init</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate</span><span class="p">()</span>
 
@@ -102,7 +117,23 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Yvar</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Yvar</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_validate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">_validate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">validate_feature_names</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">validate_outcome_names</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Checks that the shapes of the inputs are compatible with each other.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            validate_feature_names: By default, we validate that the length of</span>
+<span class="sd">                `feature_names` matches the # of columns of `self.X`. If a</span>
+<span class="sd">                particular dataset, e.g., `RankingDataset`, is known to violate</span>
+<span class="sd">                this assumption, this can be set to `False`.</span>
+<span class="sd">            validate_outcome_names: By default, we validate that the length of</span>
+<span class="sd">                `outcomes_names` matches the # of columns of `self.Y`. If a</span>
+<span class="sd">                particular dataset, e.g., `RankingDataset`, is known to violate</span>
+<span class="sd">                this assumption, this can be set to `False`.</span>
+<span class="sd">        """</span>
         <span class="n">shape_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">,</span> <span class="n">BotorchContainer</span><span class="p">):</span>
             <span class="n">shape_X</span> <span class="o">=</span> <span class="n">shape_X</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape_X</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="o">.</span><span class="n">event_shape</span><span class="p">)]</span>
@@ -117,31 +148,16 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Batch dimensions of `X` and `Y` are incompatible."</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">Yvar</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Shapes of `Y` and `Yvar` are incompatible."</span><span class="p">)</span>
-
-<div class="viewcode-block" id="SupervisedDataset.dict_from_iter"><a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.SupervisedDataset.dict_from_iter">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">dict_from_iter</span><span class="p">(</span>
-        <span class="bp">cls</span><span class="p">,</span>
-        <span class="n">X</span><span class="p">:</span> <span class="n">MaybeIterable</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]],</span>
-        <span class="n">Y</span><span class="p">:</span> <span class="n">MaybeIterable</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]],</span>
-        <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MaybeIterable</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">*</span><span class="p">,</span>
-        <span class="n">keys</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">SupervisedDataset</span><span class="p">]:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Returns a dictionary of `SupervisedDataset` from iterables."""</span>
-        <span class="n">single_X</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="p">(</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">BotorchContainer</span><span class="p">))</span>
-        <span class="n">single_Y</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="p">(</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">BotorchContainer</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">single_X</span><span class="p">:</span>
-            <span class="n">X</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span><span class="p">,)</span> <span class="k">if</span> <span class="n">single_Y</span> <span class="k">else</span> <span class="n">repeat</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">single_Y</span><span class="p">:</span>
-            <span class="n">Y</span> <span class="o">=</span> <span class="p">(</span><span class="n">Y</span><span class="p">,)</span> <span class="k">if</span> <span class="n">single_X</span> <span class="k">else</span> <span class="n">repeat</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
-        <span class="n">Yvar</span> <span class="o">=</span> <span class="n">repeat</span><span class="p">(</span><span class="n">Yvar</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">Yvar</span><span class="p">,</span> <span class="p">(</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">BotorchContainer</span><span class="p">))</span> <span class="k">else</span> <span class="n">Yvar</span>
-
-        <span class="c1"># Pass in Yvar only if it is not None.</span>
-        <span class="n">iterables</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span> <span class="k">if</span> <span class="n">Yvar</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="n">elements</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="bp">cls</span><span class="p">(</span><span class="o">*</span><span class="n">elements</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
-            <span class="k">for</span> <span class="n">elements</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">keys</span> <span class="ow">or</span> <span class="n">count</span><span class="p">(),</span> <span class="o">*</span><span class="n">iterables</span><span class="p">)</span>
-        <span class="p">}</span></div>
+        <span class="k">if</span> <span class="n">validate_feature_names</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">feature_names</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"`X` must have the same number of columns as the number of "</span>
+                <span class="s2">"features in `feature_names`."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">validate_outcome_names</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outcome_names</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"`Y` must have the same number of columns as the number of "</span>
+                <span class="s2">"outcomes in `outcome_names`."</span>
+            <span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">(</span>
@@ -153,6 +169,8 @@
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">Yvar</span> <span class="ow">is</span> <span class="kc">None</span>
                 <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Yvar</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">Yvar</span><span class="p">)</span>
             <span class="p">)</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_names</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">feature_names</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_names</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">outcome_names</span>
         <span class="p">)</span></div>
 
 
@@ -168,6 +186,8 @@
         <span class="n">X</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
         <span class="n">Y</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
         <span class="n">Yvar</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">feature_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">outcome_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
         <span class="n">validate_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize a `FixedNoiseDataset` -- deprecated!"""</span>
@@ -175,7 +195,14 @@
             <span class="s2">"`FixedNoiseDataset` is deprecated. Use `SupervisedDataset` instead."</span><span class="p">,</span>
             <span class="ne">DeprecationWarning</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">Yvar</span><span class="p">,</span> <span class="n">validate_init</span><span class="o">=</span><span class="n">validate_init</span><span class="p">)</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span>
+            <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span>
+            <span class="n">feature_names</span><span class="o">=</span><span class="n">feature_names</span><span class="p">,</span>
+            <span class="n">outcome_names</span><span class="o">=</span><span class="n">outcome_names</span><span class="p">,</span>
+            <span class="n">Yvar</span><span class="o">=</span><span class="n">Yvar</span><span class="p">,</span>
+            <span class="n">validate_init</span><span class="o">=</span><span class="n">validate_init</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="RankingDataset"><a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.RankingDataset">[docs]</a><span class="k">class</span> <span class="nc">RankingDataset</span><span class="p">(</span><span class="n">SupervisedDataset</span><span class="p">):</span>
@@ -200,13 +227,22 @@
 <span class="sd">            torch.stack([torch.randperm(3) for _ in range(8)]),</span>
 <span class="sd">            event_shape=torch.Size([3])</span>
 <span class="sd">        )</span>
-<span class="sd">        dataset = RankingDataset(X, Y)</span>
+<span class="sd">        feature_names = ["item_0", "item_1"]</span>
+<span class="sd">        outcome_names = ["ranking outcome"]</span>
+<span class="sd">        dataset = RankingDataset(</span>
+<span class="sd">            X=X,</span>
+<span class="sd">            Y=Y,</span>
+<span class="sd">            feature_names=feature_names,</span>
+<span class="sd">            outcome_names=outcome_names,</span>
+<span class="sd">        )</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">X</span><span class="p">:</span> <span class="n">SliceContainer</span><span class="p">,</span>
         <span class="n">Y</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">feature_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">outcome_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
         <span class="n">validate_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct a `RankingDataset`.</span>
@@ -214,12 +250,26 @@
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `SliceContainer` representing the input features being ranked.</span>
 <span class="sd">            Y: A `Tensor` or `BotorchContainer` representing the rankings.</span>
+<span class="sd">            feature_names: A list of names of the features in X.</span>
+<span class="sd">            outcome_names: A list of names of the outcomes in Y.</span>
 <span class="sd">            validate_init: If `True`, validates the input shapes.</span>
 <span class="sd">        """</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">validate_init</span><span class="o">=</span><span class="n">validate_init</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span>
+            <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span>
+            <span class="n">feature_names</span><span class="o">=</span><span class="n">feature_names</span><span class="p">,</span>
+            <span class="n">outcome_names</span><span class="o">=</span><span class="n">outcome_names</span><span class="p">,</span>
+            <span class="n">Yvar</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">validate_init</span><span class="o">=</span><span class="n">validate_init</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_validate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_validate</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_validate</span><span class="p">(</span><span class="n">validate_feature_names</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">validate_outcome_names</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">feature_names</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"The `values` field of `X` must have the same number of columns as "</span>
+                <span class="s2">"the number of features in `feature_names`."</span>
+            <span class="p">)</span>
 
         <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span>
         <span class="n">arity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="o">.</span><span class="n">indices</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
