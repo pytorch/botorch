@@ -2462,6 +2462,8 @@
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="optim.html#botorch.optim.closures.core.ForwardBackwardClosure">ForwardBackwardClosure (class in botorch.optim.closures.core)</a>
 </li>
+<li><a href="utils.html#botorch.utils.datasets.MultiTaskDataset.from_joint_dataset">from_joint_dataset() (botorch.utils.datasets.MultiTaskDataset class method)</a>
+</li>
 <li><a href="optim.html#botorch.optim.optimize.OptimizeAcqfInputs.full_tree">full_tree (botorch.optim.optimize.OptimizeAcqfInputs property)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.fully_bayesian.FullyBayesianPosterior">FullyBayesianPosterior (class in botorch.posteriors.fully_bayesian)</a>
@@ -2560,6 +2562,8 @@
 </ul></li>
 <li><a href="optim.html#botorch.optim.utils.model_utils.get_data_loader">get_data_loader() (in module botorch.optim.utils.model_utils)</a>
 </li>
+<li><a href="utils.html#botorch.utils.datasets.MultiTaskDataset.get_dataset_without_task_feature">get_dataset_without_task_feature() (botorch.utils.datasets.MultiTaskDataset method)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.utils.get_default_partitioning_alpha">get_default_partitioning_alpha() (in module botorch.acquisition.multi_objective.utils)</a>
 </li>
 <li><a href="utils.html#botorch.utils.gp_sampling.get_deterministic_model">get_deterministic_model() (in module botorch.utils.gp_sampling)</a>
@@ -2574,10 +2578,10 @@
 </li>
 <li><a href="utils.html#botorch.utils.gp_sampling.get_eval_gp_sample_callable">get_eval_gp_sample_callable() (in module botorch.utils.gp_sampling)</a>
 </li>
-<li><a href="models.html#botorch.models.higher_order_gp.HigherOrderGP.get_fantasy_model">get_fantasy_model() (botorch.models.higher_order_gp.HigherOrderGP method)</a>
-</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="models.html#botorch.models.higher_order_gp.HigherOrderGP.get_fantasy_model">get_fantasy_model() (botorch.models.higher_order_gp.HigherOrderGP method)</a>
+</li>
 <li><a href="utils.html#botorch.utils.feasible_volume.get_feasible_samples">get_feasible_samples() (in module botorch.utils.feasible_volume)</a>
 </li>
 <li><a href="models.html#botorch.models.utils.gpytorch_modules.get_gaussian_likelihood_with_gamma_prior">get_gaussian_likelihood_with_gamma_prior() (in module botorch.models.utils.gpytorch_modules)</a>
@@ -3520,6 +3524,8 @@
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputExpectation">MultiOutputExpectation (class in botorch.acquisition.multi_objective.multi_output_risk_measures)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputWorstCase">MultiOutputWorstCase (class in botorch.acquisition.multi_objective.multi_output_risk_measures)</a>
+</li>
+<li><a href="utils.html#botorch.utils.datasets.MultiTaskDataset">MultiTaskDataset (class in botorch.utils.datasets)</a>
 </li>
 <li><a href="models.html#botorch.models.multitask.MultiTaskGP">MultiTaskGP (class in botorch.models.multitask)</a>
 </li>
@@ -4965,8 +4971,11 @@
 <h2 id="X">X</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
-<li><a href="utils.html#botorch.utils.datasets.SupervisedDataset.X">X (botorch.utils.datasets.SupervisedDataset property)</a>
+<li><a href="utils.html#botorch.utils.datasets.MultiTaskDataset.X">X (botorch.utils.datasets.MultiTaskDataset property)</a>
+<ul>
+<li><a href="utils.html#botorch.utils.datasets.SupervisedDataset.X">(botorch.utils.datasets.SupervisedDataset property)</a>
 </li>
+</ul></li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.X_baseline">X_baseline (botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement property)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.decoupled.DecoupledAcquisitionFunction.X_evaluation_mask">X_evaluation_mask (botorch.acquisition.decoupled.DecoupledAcquisitionFunction property)</a>
@@ -4987,8 +4996,11 @@
 <h2 id="Y">Y</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
-<li><a href="utils.html#botorch.utils.datasets.SupervisedDataset.Y">Y (botorch.utils.datasets.SupervisedDataset property)</a>
+<li><a href="utils.html#botorch.utils.datasets.MultiTaskDataset.Y">Y (botorch.utils.datasets.MultiTaskDataset property)</a>
+<ul>
+<li><a href="utils.html#botorch.utils.datasets.SupervisedDataset.Y">(botorch.utils.datasets.SupervisedDataset property)</a>
 </li>
+</ul></li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.Penicillin.Y_ps">Y_ps (botorch.test_functions.multi_objective.Penicillin attribute)</a>
 </li>
 </ul></td>
@@ -4997,8 +5009,11 @@
 </li>
 <li><a href="utils.html#botorch.utils.gp_sampling.GPDraw.Ys">Ys (botorch.utils.gp_sampling.GPDraw property)</a>
 </li>
-<li><a href="utils.html#botorch.utils.datasets.SupervisedDataset.Yvar">Yvar (botorch.utils.datasets.SupervisedDataset property)</a>
+<li><a href="utils.html#botorch.utils.datasets.MultiTaskDataset.Yvar">Yvar (botorch.utils.datasets.MultiTaskDataset property)</a>
+<ul>
+<li><a href="utils.html#botorch.utils.datasets.SupervisedDataset.Yvar">(botorch.utils.datasets.SupervisedDataset property)</a>
 </li>
+</ul></li>
 </ul></td>
 </tr></table>
 <h2 id="Z">Z</h2>

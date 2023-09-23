@@ -421,6 +421,96 @@ observations variances so that <cite>Y[i] ~ N(f(X[i]), Yvar[i])</cite>.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.datasets.MultiTaskDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.datasets.</span></span><span class="sig-name descname"><span class="pre">MultiTaskDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datasets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_outcome_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#MultiTaskDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.MultiTaskDataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">SupervisedDataset</span></code></a></p>
+<p>This is a multi-task dataset that is constructed from the datasets of
+individual tasks. It offers functionality to combine parts of individual
+datasets to construct the inputs necessary for the <cite>MultiTaskGP</cite> models.</p>
+<p>Construct a <cite>MultiTaskDataset</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>datasets</strong> (<em>List</em><em>[</em><a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – A list of the datasets of individual tasks. Each dataset
+is expected to contain data for only one outcome.</p></li>
+<li><p><strong>target_outcome_name</strong> (<em>str</em>) – Name of the target outcome to be modeled.</p></li>
+<li><p><strong>task_feature_index</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – If the task feature is included in the Xs of the
+individual datasets, this should be used to specify its index.
+If omitted, the task feature will be appended while concatenating Xs.
+If given, we sanity-check that the names of the task features
+match between all datasets.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.datasets.MultiTaskDataset.from_joint_dataset">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_joint_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_task_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_names_per_task</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#MultiTaskDataset.from_joint_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.MultiTaskDataset.from_joint_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a <cite>MultiTaskDataset</cite> from a joint dataset that includes the
+data for all tasks with the task feature index.</p>
+<p>This will break down the joint dataset into individual datasets by the value
+of the task feature. Each resulting dataset will have its outcome name set
+based on <cite>outcome_names_per_task</cite>, with the missing values defaulting to
+<cite>task_&lt;task_feature&gt;</cite> (except for the target task, which will retain the
+original outcome name from the dataset).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a>) – The joint dataset.</p></li>
+<li><p><strong>task_feature_index</strong> (<em>int</em>) – The column index of the task feature in <cite>dataset.X</cite>.</p></li>
+<li><p><strong>target_task_value</strong> (<em>int</em>) – The value of the task feature for the target task
+in the dataset. The data for the target task is filtered according to
+<cite>dataset.X[task_feature_index] == target_task_value</cite>.</p></li>
+<li><p><strong>outcome_names_per_task</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional dictionary mapping task feature values
+to the outcome names for each task. If not provided, the auxiliary
+tasks will be named <cite>task_&lt;task_feature&gt;</cite> and the target task will
+retain the outcome name from the dataset.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>MultiTaskDataset</cite> instance.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.utils.datasets.MultiTaskDataset" title="botorch.utils.datasets.MultiTaskDataset"><em>MultiTaskDataset</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.datasets.MultiTaskDataset.X">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">X</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.utils.datasets.MultiTaskDataset.X" title="Permalink to this definition">¶</a></dt>
+<dd><p>Appends task features, if needed, and concatenates the Xs of datasets to
+produce the <cite>train_X</cite> expected by <cite>MultiTaskGP</cite> and subclasses.</p>
+<p>If appending the task features, 0 is reserved for the target task and the
+remaining tasks are populated with 1, 2, …, len(datasets) - 1.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.datasets.MultiTaskDataset.Y">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Y</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.utils.datasets.MultiTaskDataset.Y" title="Permalink to this definition">¶</a></dt>
+<dd><p>Concatenates Ys of the datasets.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.datasets.MultiTaskDataset.Yvar">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Yvar</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.utils.datasets.MultiTaskDataset.Yvar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Concatenates Yvars of the datasets if they exist.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.datasets.MultiTaskDataset.get_dataset_without_task_feature">
+<span class="sig-name descname"><span class="pre">get_dataset_without_task_feature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outcome_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#MultiTaskDataset.get_dataset_without_task_feature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.MultiTaskDataset.get_dataset_without_task_feature" title="Permalink to this definition">¶</a></dt>
+<dd><p>A helper for extracting the child datasets with their task features removed.</p>
+<p>If the task feature index is <cite>None</cite>, the dataset will be returned as is.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>outcome_name</strong> (<em>str</em>) – The outcome name for the dataset to extract.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The dataset without the task feature.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
 </section>
 <section id="module-botorch.utils.dispatcher">
 <span id="dispatcher"></span><h2>Dispatcher<a class="headerlink" href="#module-botorch.utils.dispatcher" title="Permalink to this heading">¶</a></h2>

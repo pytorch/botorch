@@ -32,14 +32,12 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">InputDataError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.containers</span> <span class="kn">import</span> <span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">SliceContainer</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">long</span><span class="p">,</span> <span class="n">ones</span><span class="p">,</span> <span class="n">Tensor</span>
-
-<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"T"</span><span class="p">)</span>
-<span class="n">MaybeIterable</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">T</span><span class="p">]]</span>
 
 
 <div class="viewcode-block" id="SupervisedDataset"><a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.SupervisedDataset">[docs]</a><span class="k">class</span> <span class="nc">SupervisedDataset</span><span class="p">:</span>
@@ -296,6 +294,210 @@
 
             <span class="c1"># Same as: torch.where(y_diff == 0, y_incr + 1, 1)</span>
             <span class="n">y_incr</span> <span class="o">=</span> <span class="n">y_incr</span> <span class="o">-</span> <span class="n">y_diff</span> <span class="o">+</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="MultiTaskDataset"><a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.MultiTaskDataset">[docs]</a><span class="k">class</span> <span class="nc">MultiTaskDataset</span><span class="p">(</span><span class="n">SupervisedDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""This is a multi-task dataset that is constructed from the datasets of</span>
+<span class="sd">    individual tasks. It offers functionality to combine parts of individual</span>
+<span class="sd">    datasets to construct the inputs necessary for the `MultiTaskGP` models.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">datasets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
+        <span class="n">target_outcome_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">task_feature_index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Construct a `MultiTaskDataset`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            datasets: A list of the datasets of individual tasks. Each dataset</span>
+<span class="sd">                is expected to contain data for only one outcome.</span>
+<span class="sd">            target_outcome_name: Name of the target outcome to be modeled.</span>
+<span class="sd">            task_feature_index: If the task feature is included in the Xs of the</span>
+<span class="sd">                individual datasets, this should be used to specify its index.</span>
+<span class="sd">                If omitted, the task feature will be appended while concatenating Xs.</span>
+<span class="sd">                If given, we sanity-check that the names of the task features</span>
+<span class="sd">                match between all datasets.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SupervisedDataset</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">ds</span><span class="o">.</span><span class="n">outcome_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">ds</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">datasets</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_outcome_name</span> <span class="o">=</span> <span class="n">target_outcome_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">task_feature_index</span> <span class="o">=</span> <span class="n">task_feature_index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_datasets</span><span class="p">(</span><span class="n">datasets</span><span class="o">=</span><span class="n">datasets</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feature_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="n">target_outcome_name</span><span class="p">]</span><span class="o">.</span><span class="n">feature_names</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outcome_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">target_outcome_name</span><span class="p">]</span>
+
+<div class="viewcode-block" id="MultiTaskDataset.from_joint_dataset"><a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.MultiTaskDataset.from_joint_dataset">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_joint_dataset</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">dataset</span><span class="p">:</span> <span class="n">SupervisedDataset</span><span class="p">,</span>
+        <span class="n">task_feature_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">target_task_value</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">outcome_names_per_task</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultiTaskDataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct a `MultiTaskDataset` from a joint dataset that includes the</span>
+<span class="sd">        data for all tasks with the task feature index.</span>
+
+<span class="sd">        This will break down the joint dataset into individual datasets by the value</span>
+<span class="sd">        of the task feature. Each resulting dataset will have its outcome name set</span>
+<span class="sd">        based on `outcome_names_per_task`, with the missing values defaulting to</span>
+<span class="sd">        `task_&lt;task_feature&gt;` (except for the target task, which will retain the</span>
+<span class="sd">        original outcome name from the dataset).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            dataset: The joint dataset.</span>
+<span class="sd">            task_feature_index: The column index of the task feature in `dataset.X`.</span>
+<span class="sd">            target_task_value: The value of the task feature for the target task</span>
+<span class="sd">                in the dataset. The data for the target task is filtered according to</span>
+<span class="sd">                `dataset.X[task_feature_index] == target_task_value`.</span>
+<span class="sd">            outcome_names_per_task: Optional dictionary mapping task feature values</span>
+<span class="sd">                to the outcome names for each task. If not provided, the auxiliary</span>
+<span class="sd">                tasks will be named `task_&lt;task_feature&gt;` and the target task will</span>
+<span class="sd">                retain the outcome name from the dataset.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `MultiTaskDataset` instance.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">outcome_names</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                <span class="s2">"Dataset containing more than one outcome is not supported. "</span>
+                <span class="sa">f</span><span class="s2">"Got </span><span class="si">{</span><span class="n">dataset</span><span class="o">.</span><span class="n">outcome_names</span><span class="si">=}</span><span class="s2">."</span>
+            <span class="p">)</span>
+        <span class="n">outcome_names_per_task</span> <span class="o">=</span> <span class="n">outcome_names_per_task</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="c1"># Split datasets by task feature.</span>
+        <span class="n">datasets</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">all_task_features</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">X</span><span class="p">[:,</span> <span class="n">task_feature_index</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">task_value</span> <span class="ow">in</span> <span class="n">all_task_features</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="o">.</span><span class="n">long</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">():</span>
+            <span class="n">default_name</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">dataset</span><span class="o">.</span><span class="n">outcome_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">task_value</span> <span class="o">==</span> <span class="n">target_task_value</span>
+                <span class="k">else</span> <span class="sa">f</span><span class="s2">"task_</span><span class="si">{</span><span class="n">task_value</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+            <span class="n">outcome_name</span> <span class="o">=</span> <span class="n">outcome_names_per_task</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task_value</span><span class="p">,</span> <span class="n">default_name</span><span class="p">)</span>
+            <span class="n">filter_mask</span> <span class="o">=</span> <span class="n">all_task_features</span> <span class="o">==</span> <span class="n">task_value</span>
+            <span class="n">new_dataset</span> <span class="o">=</span> <span class="n">SupervisedDataset</span><span class="p">(</span>
+                <span class="n">X</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">X</span><span class="p">[</span><span class="n">filter_mask</span><span class="p">],</span>
+                <span class="n">Y</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">Y</span><span class="p">[</span><span class="n">filter_mask</span><span class="p">],</span>
+                <span class="n">Yvar</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">Yvar</span><span class="p">[</span><span class="n">filter_mask</span><span class="p">]</span> <span class="k">if</span> <span class="n">dataset</span><span class="o">.</span><span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">feature_names</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">feature_names</span><span class="p">,</span>
+                <span class="n">outcome_names</span><span class="o">=</span><span class="p">[</span><span class="n">outcome_name</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="n">datasets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_dataset</span><span class="p">)</span>
+        <span class="c1"># Return the new</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">datasets</span><span class="o">=</span><span class="n">datasets</span><span class="p">,</span>
+            <span class="n">target_outcome_name</span><span class="o">=</span><span class="n">outcome_names_per_task</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="n">target_task_value</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">outcome_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="p">),</span>
+            <span class="n">task_feature_index</span><span class="o">=</span><span class="n">task_feature_index</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_validate_datasets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datasets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Validates that:</span>
+<span class="sd">        * Each dataset models only one outcome;</span>
+<span class="sd">        * Each outcome is modeled by only one dataset;</span>
+<span class="sd">        * The target outcome is included in the datasets;</span>
+<span class="sd">        * The datasets do not model batched inputs;</span>
+<span class="sd">        * The task feature names of the datasets all match;</span>
+<span class="sd">        * Either all or none of the datasets specify Yvar.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">outcome_names</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                <span class="s2">"Datasets containing more than one outcome are not supported."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">datasets</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                <span class="s2">"Received multiple datasets for the same outcome. Each dataset "</span>
+                <span class="s2">"must contain data for a unique outcome. Got datasets with "</span>
+                <span class="sa">f</span><span class="s2">"outcome names: </span><span class="si">{</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">outcome_names</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">ds</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">datasets</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_outcome_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">InputDataError</span><span class="p">(</span>
+                <span class="s2">"Target outcome is not present in the datasets. "</span>
+                <span class="sa">f</span><span class="s2">"Got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">target_outcome_name</span><span class="si">=}</span><span class="s2"> and datasets for "</span>
+                <span class="sa">f</span><span class="s2">"outcomes </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                <span class="s2">"Datasets modeling batched inputs are not supported."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_feature_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tf_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">feature_names</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">task_feature_index</span><span class="p">]</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">name</span> <span class="o">!=</span> <span class="n">tf_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">tf_names</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+                <span class="k">raise</span> <span class="n">InputDataError</span><span class="p">(</span>
+                    <span class="s2">"Expected the names of the task features to match across all "</span>
+                    <span class="sa">f</span><span class="s2">"datasets. Got </span><span class="si">{</span><span class="n">tf_names</span><span class="si">}</span><span class="s2">."</span>
+                <span class="p">)</span>
+        <span class="n">all_Yvars</span> <span class="o">=</span> <span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">Yvar</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">]</span>
+        <span class="n">is_none</span> <span class="o">=</span> <span class="p">[</span><span class="n">yvar</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">yvar</span> <span class="ow">in</span> <span class="n">all_Yvars</span><span class="p">]</span>
+        <span class="c1"># Check that either all or None of the Yvars exist.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">is_none</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">is_none</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                <span class="s2">"Expected either all or none of the datasets to have a Yvar. "</span>
+                <span class="s2">"Only subset of datasets define Yvar, which is unsupported."</span>
+            <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">X</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Appends task features, if needed, and concatenates the Xs of datasets to</span>
+<span class="sd">        produce the `train_X` expected by `MultiTaskGP` and subclasses.</span>
+
+<span class="sd">        If appending the task features, 0 is reserved for the target task and the</span>
+<span class="sd">        remaining tasks are populated with 1, 2, ..., len(datasets) - 1.</span>
+<span class="sd">        """</span>
+        <span class="n">all_Xs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">next_task</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">outcome</span><span class="p">,</span> <span class="n">ds</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_feature_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># Append the task feature index.</span>
+                <span class="k">if</span> <span class="n">outcome</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_outcome_name</span><span class="p">:</span>
+                    <span class="n">task_feature</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">task_feature</span> <span class="o">=</span> <span class="n">next_task</span>
+                    <span class="n">next_task</span> <span class="o">=</span> <span class="n">next_task</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="n">all_Xs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="n">task_feature</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">all_Xs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">all_Xs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Concatenates Ys of the datasets."""</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">ds</span><span class="o">.</span><span class="n">Y</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">values</span><span class="p">()],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Yvar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Concatenates Yvars of the datasets if they exist."""</span>
+        <span class="n">all_Yvars</span> <span class="o">=</span> <span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">Yvar</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">all_Yvars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">all_Yvars</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MultiTaskDataset.get_dataset_without_task_feature"><a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.MultiTaskDataset.get_dataset_without_task_feature">[docs]</a>    <span class="k">def</span> <span class="nf">get_dataset_without_task_feature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outcome_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SupervisedDataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A helper for extracting the child datasets with their task features removed.</span>
+
+<span class="sd">        If the task feature index is `None`, the dataset will be returned as is.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            outcome_name: The outcome name for the dataset to extract.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The dataset without the task feature.</span>
+<span class="sd">        """</span>
+        <span class="n">dataset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="n">outcome_name</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_feature_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">dataset</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">feature_names</span><span class="p">)))</span>
+        <span class="n">indices</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task_feature_index</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">SupervisedDataset</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">indices</span><span class="p">],</span>
+            <span class="n">Y</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span>
+            <span class="n">Yvar</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">Yvar</span><span class="p">,</span>
+            <span class="n">feature_names</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">fn</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">fn</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">feature_names</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span>
+            <span class="p">],</span>
+            <span class="n">outcome_names</span><span class="o">=</span><span class="p">[</span><span class="n">outcome_name</span><span class="p">],</span>
+        <span class="p">)</span></div></div>
 </pre></div>
 </div>
 </div>
