@@ -9,14 +9,12 @@ r"""Representations for different kinds of datasets."""
 from __future__ import annotations
 
 import warnings
-from typing import Any, Iterable, List, Optional, TypeVar, Union
+from typing import Any, Dict, List, Optional, Union
 
 import torch
+from botorch.exceptions.errors import InputDataError, UnsupportedError
 from botorch.utils.containers import BotorchContainer, SliceContainer
 from torch import long, ones, Tensor
-
-T = TypeVar("T")
-MaybeIterable = Union[T, Iterable[T]]
 
 
 class SupervisedDataset:
@@ -273,3 +271,207 @@ class RankingDataset(SupervisedDataset):
 
             # Same as: torch.where(y_diff == 0, y_incr + 1, 1)
             y_incr = y_incr - y_diff + 1
+
+
+class MultiTaskDataset(SupervisedDataset):
+    """This is a multi-task dataset that is constructed from the datasets of
+    individual tasks. It offers functionality to combine parts of individual
+    datasets to construct the inputs necessary for the `MultiTaskGP` models.
+    """
+
+    def __init__(
+        self,
+        datasets: List[SupervisedDataset],
+        target_outcome_name: str,
+        task_feature_index: Optional[int] = None,
+    ):
+        """Construct a `MultiTaskDataset`.
+
+        Args:
+            datasets: A list of the datasets of individual tasks. Each dataset
+                is expected to contain data for only one outcome.
+            target_outcome_name: Name of the target outcome to be modeled.
+            task_feature_index: If the task feature is included in the Xs of the
+                individual datasets, this should be used to specify its index.
+                If omitted, the task feature will be appended while concatenating Xs.
+                If given, we sanity-check that the names of the task features
+                match between all datasets.
+        """
+        self.datasets: Dict[str, SupervisedDataset] = {
+            ds.outcome_names[0]: ds for ds in datasets
+        }
+        self.target_outcome_name = target_outcome_name
+        self.task_feature_index = task_feature_index
+        self._validate_datasets(datasets=datasets)
+        self.feature_names = self.datasets[target_outcome_name].feature_names
+        self.outcome_names = [target_outcome_name]
+
+    @classmethod
+    def from_joint_dataset(
+        cls,
+        dataset: SupervisedDataset,
+        task_feature_index: int,
+        target_task_value: int,
+        outcome_names_per_task: Optional[Dict[int, str]] = None,
+    ) -> MultiTaskDataset:
+        r"""Construct a `MultiTaskDataset` from a joint dataset that includes the
+        data for all tasks with the task feature index.
+
+        This will break down the joint dataset into individual datasets by the value
+        of the task feature. Each resulting dataset will have its outcome name set
+        based on `outcome_names_per_task`, with the missing values defaulting to
+        `task_<task_feature>` (except for the target task, which will retain the
+        original outcome name from the dataset).
+
+        Args:
+            dataset: The joint dataset.
+            task_feature_index: The column index of the task feature in `dataset.X`.
+            target_task_value: The value of the task feature for the target task
+                in the dataset. The data for the target task is filtered according to
+                `dataset.X[task_feature_index] == target_task_value`.
+            outcome_names_per_task: Optional dictionary mapping task feature values
+                to the outcome names for each task. If not provided, the auxiliary
+                tasks will be named `task_<task_feature>` and the target task will
+                retain the outcome name from the dataset.
+
+        Returns:
+            A `MultiTaskDataset` instance.
+        """
+        if len(dataset.outcome_names) > 1:
+            raise UnsupportedError(
+                "Dataset containing more than one outcome is not supported. "
+                f"Got {dataset.outcome_names=}."
+            )
+        outcome_names_per_task = outcome_names_per_task or {}
+        # Split datasets by task feature.
+        datasets = []
+        all_task_features = dataset.X[:, task_feature_index]
+        for task_value in all_task_features.unique().long().tolist():
+            default_name = (
+                dataset.outcome_names[0]
+                if task_value == target_task_value
+                else f"task_{task_value}"
+            )
+            outcome_name = outcome_names_per_task.get(task_value, default_name)
+            filter_mask = all_task_features == task_value
+            new_dataset = SupervisedDataset(
+                X=dataset.X[filter_mask],
+                Y=dataset.Y[filter_mask],
+                Yvar=dataset.Yvar[filter_mask] if dataset.Yvar is not None else None,
+                feature_names=dataset.feature_names,
+                outcome_names=[outcome_name],
+            )
+            datasets.append(new_dataset)
+        # Return the new
+        return cls(
+            datasets=datasets,
+            target_outcome_name=outcome_names_per_task.get(
+                target_task_value, dataset.outcome_names[0]
+            ),
+            task_feature_index=task_feature_index,
+        )
+
+    def _validate_datasets(self, datasets: List[SupervisedDataset]) -> None:
+        """Validates that:
+        * Each dataset models only one outcome;
+        * Each outcome is modeled by only one dataset;
+        * The target outcome is included in the datasets;
+        * The datasets do not model batched inputs;
+        * The task feature names of the datasets all match;
+        * Either all or none of the datasets specify Yvar.
+        """
+        if any(len(ds.outcome_names) > 1 for ds in datasets):
+            raise UnsupportedError(
+                "Datasets containing more than one outcome are not supported."
+            )
+        if len(self.datasets) != len(datasets):
+            raise UnsupportedError(
+                "Received multiple datasets for the same outcome. Each dataset "
+                "must contain data for a unique outcome. Got datasets with "
+                f"outcome names: {(ds.outcome_names for ds in datasets)}."
+            )
+        if self.target_outcome_name not in self.datasets:
+            raise InputDataError(
+                "Target outcome is not present in the datasets. "
+                f"Got {self.target_outcome_name=} and datasets for "
+                f"outcomes {list(self.datasets.keys())}."
+            )
+        if any(len(ds.X.shape) > 2 for ds in datasets):
+            raise UnsupportedError(
+                "Datasets modeling batched inputs are not supported."
+            )
+        if self.task_feature_index is not None:
+            tf_names = [ds.feature_names[self.task_feature_index] for ds in datasets]
+            if any(name != tf_names[0] for name in tf_names[1:]):
+                raise InputDataError(
+                    "Expected the names of the task features to match across all "
+                    f"datasets. Got {tf_names}."
+                )
+        all_Yvars = [ds.Yvar for ds in datasets]
+        is_none = [yvar is None for yvar in all_Yvars]
+        # Check that either all or None of the Yvars exist.
+        if not all(is_none) and any(is_none):
+            raise UnsupportedError(
+                "Expected either all or none of the datasets to have a Yvar. "
+                "Only subset of datasets define Yvar, which is unsupported."
+            )
+
+    @property
+    def X(self) -> Tensor:
+        """Appends task features, if needed, and concatenates the Xs of datasets to
+        produce the `train_X` expected by `MultiTaskGP` and subclasses.
+
+        If appending the task features, 0 is reserved for the target task and the
+        remaining tasks are populated with 1, 2, ..., len(datasets) - 1.
+        """
+        all_Xs = []
+        next_task = 1
+        for outcome, ds in self.datasets.items():
+            if self.task_feature_index is None:
+                # Append the task feature index.
+                if outcome == self.target_outcome_name:
+                    task_feature = 0
+                else:
+                    task_feature = next_task
+                    next_task = next_task + 1
+                all_Xs.append(torch.nn.functional.pad(ds.X, (0, 1), value=task_feature))
+            else:
+                all_Xs.append(ds.X)
+        return torch.cat(all_Xs, dim=0)
+
+    @property
+    def Y(self) -> Tensor:
+        """Concatenates Ys of the datasets."""
+        return torch.cat([ds.Y for ds in self.datasets.values()], dim=0)
+
+    @property
+    def Yvar(self) -> Optional[Tensor]:
+        """Concatenates Yvars of the datasets if they exist."""
+        all_Yvars = [ds.Yvar for ds in self.datasets.values()]
+        return None if all_Yvars[0] is None else torch.cat(all_Yvars, dim=0)
+
+    def get_dataset_without_task_feature(self, outcome_name: str) -> SupervisedDataset:
+        """A helper for extracting the child datasets with their task features removed.
+
+        If the task feature index is `None`, the dataset will be returned as is.
+
+        Args:
+            outcome_name: The outcome name for the dataset to extract.
+
+        Returns:
+            The dataset without the task feature.
+        """
+        dataset = self.datasets[outcome_name]
+        if self.task_feature_index is None:
+            return dataset
+        indices = list(range(len(self.feature_names)))
+        indices.pop(self.task_feature_index)
+        return SupervisedDataset(
+            X=dataset.X[..., indices],
+            Y=dataset.Y,
+            Yvar=dataset.Yvar,
+            feature_names=[
+                fn for i, fn in enumerate(dataset.feature_names) if i in indices
+            ],
+            outcome_names=[outcome_name],
+        )
