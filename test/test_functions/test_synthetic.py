@@ -11,6 +11,7 @@ from botorch.test_functions.synthetic import (
     Beale,
     Branin,
     Bukin,
+    ConstrainedHartmann,
     Cosine8,
     DixonPrice,
     DropWave,
@@ -67,6 +68,7 @@ class TestCustomBounds(BotorchTestCase):
         (EggHolder, 2),
         (Griewank, 2),
         (Hartmann, 6),
+        (ConstrainedHartmann, 6),
         (HolderTable, 2),
         (Levy, 2),
         (Michalewicz, 2),
@@ -314,6 +316,17 @@ class TestThreeHumpCamel(
 
 
 # ------------------ Constrained synthetic test problems ------------------ #
+
+
+class TestConstrainedHartmann(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    ConstrainedTestProblemTestCaseMixin,
+):
+
+    functions = [
+        ConstrainedHartmann(dim=6, negate=True),
+    ]
 
 
 class TestPressureVessel(

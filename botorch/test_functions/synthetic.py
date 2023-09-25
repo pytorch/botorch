@@ -32,6 +32,11 @@ References:
     Silva. Constrained optimization problems in mechanical engineering design
     using a real-coded steady-state genetic algorithm. Mecánica Computacional,
     XXIX:9287–9303, 2010.
+
+.. [Letham2019]
+    B. Letham, B. Karrer, G. Ottoni, and E. Bakshy. Constrained Bayesian
+    Optimization with Noisy Experiments. Bayesian Analysis, Bayesian Anal.
+    14(2), 495-519, 2019.
 """
 
 from __future__ import annotations
@@ -790,6 +795,18 @@ class ThreeHumpCamel(SyntheticTestFunction):
 
 
 #  ------------ Constrained synthetic test functions ----------- #
+
+
+class ConstrainedHartmann(Hartmann, ConstrainedBaseTestProblem):
+    r"""Constrained Hartmann test function.
+
+    This is a constrained version of the standard Hartmann test function that
+    uses `||x||_2 <= 1` as the constraint. This problem comes from [Letham2019]_.
+    """
+    num_constraints = 1
+
+    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+        return -X.norm(dim=-1, keepdim=True) + 1
 
 
 class PressureVessel(SyntheticTestFunction, ConstrainedBaseTestProblem):
