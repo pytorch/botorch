@@ -11,6 +11,7 @@ from botorch.test_functions.synthetic import (
     Beale,
     Branin,
     Bukin,
+    ConstrainedGramacy,
     ConstrainedHartmann,
     Cosine8,
     DixonPrice,
@@ -316,6 +317,17 @@ class TestThreeHumpCamel(
 
 
 # ------------------ Constrained synthetic test problems ------------------ #
+
+
+class TestConstrainedGramacy(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    ConstrainedTestProblemTestCaseMixin,
+):
+
+    functions = [
+        ConstrainedGramacy(),
+    ]
 
 
 class TestConstrainedHartmann(
