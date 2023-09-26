@@ -13,6 +13,7 @@ from botorch.test_functions.synthetic import (
     Bukin,
     ConstrainedGramacy,
     ConstrainedHartmann,
+    ConstrainedHartmannSmooth,
     Cosine8,
     DixonPrice,
     DropWave,
@@ -338,6 +339,17 @@ class TestConstrainedHartmann(
 
     functions = [
         ConstrainedHartmann(dim=6, negate=True),
+    ]
+
+
+class TestConstrainedHartmannSmooth(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    ConstrainedTestProblemTestCaseMixin,
+):
+
+    functions = [
+        ConstrainedHartmannSmooth(dim=6, negate=True),
     ]
 
 
