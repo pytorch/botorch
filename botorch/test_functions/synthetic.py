@@ -37,6 +37,11 @@ References:
     B. Letham, B. Karrer, G. Ottoni, and E. Bakshy. Constrained Bayesian
     Optimization with Noisy Experiments. Bayesian Analysis, Bayesian Anal.
     14(2), 495-519, 2019.
+
+.. [Gramacy2016]
+    R. Gramacy, G. Gray, S. Le Digabel, H. Lee, P. Ranjan, G. Wells & S. Wild.
+    Modeling an Augmented Lagrangian for Blackbox Constrained Optimization,
+    Technometrics, 2016.
 """
 
 from __future__ import annotations
@@ -795,6 +800,39 @@ class ThreeHumpCamel(SyntheticTestFunction):
 
 
 #  ------------ Constrained synthetic test functions ----------- #
+
+
+class ConstrainedGramacy(ConstrainedBaseTestProblem):
+    r"""Constrained Gramacy test function.
+
+    This problem comes from [Gramacy2016]_. The problem is defined
+    over the unit cube and the goal is to minimize x1+x2 subject to
+    1.5 - x1 - 2 * x2 - 0.5 * sin(2*pi*(x1^2 - 2 * x2)) <= 0
+    and x1^2 + x2^2 - 1.5 <= 0.
+    """
+
+    num_objectives = 1
+    num_constraints = 2
+    dim = 2
+    _bounds = [(0.0, 1.0), (0.0, 1.0)]
+    _optimizers = [(0.1954, 0.4044)]
+    _optimal_value = 0.5998  # approximate from [Gramacy2016]_
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        """
+        Evaluate the function (w/o observation noise) on a set of points.
+
+        Args:
+            X: A `batch_shape x d`-dim tensor of point(s) at which to evaluate the
+                function.
+        """
+        return X.sum(dim=-1)
+
+    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+        x1, x2 = X.split(1, dim=-1)
+        c1 = 1.5 - x1 - 2 * x2 - 0.5 * torch.sin(2 * math.pi * (x1.pow(2) - 2 * x2))
+        c2 = x1.pow(2) + x2.pow(2) - 1.5
+        return torch.cat([-c1, -c2], dim=-1)
 
 
 class ConstrainedHartmann(Hartmann, ConstrainedBaseTestProblem):
