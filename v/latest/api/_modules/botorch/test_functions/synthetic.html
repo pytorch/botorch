@@ -55,6 +55,11 @@
 <span class="sd">    Silva. Constrained optimization problems in mechanical engineering design</span>
 <span class="sd">    using a real-coded steady-state genetic algorithm. Mecánica Computacional,</span>
 <span class="sd">    XXIX:9287–9303, 2010.</span>
+
+<span class="sd">.. [Letham2019]</span>
+<span class="sd">    B. Letham, B. Karrer, G. Ottoni, and E. Bakshy. Constrained Bayesian</span>
+<span class="sd">    Optimization with Noisy Experiments. Bayesian Analysis, Bayesian Anal.</span>
+<span class="sd">    14(2), 495-519, 2019.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
@@ -813,6 +818,18 @@
 
 
 <span class="c1">#  ------------ Constrained synthetic test functions ----------- #</span>
+
+
+<div class="viewcode-block" id="ConstrainedHartmann"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.ConstrainedHartmann">[docs]</a><span class="k">class</span> <span class="nc">ConstrainedHartmann</span><span class="p">(</span><span class="n">Hartmann</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Constrained Hartmann test function.</span>
+
+<span class="sd">    This is a constrained version of the standard Hartmann test function that</span>
+<span class="sd">    uses `||x||_2 &lt;= 1` as the constraint. This problem comes from [Letham2019]_.</span>
+<span class="sd">    """</span>
+    <span class="n">num_constraints</span> <span class="o">=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="ConstrainedHartmann.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.ConstrainedHartmann.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">X</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span></div></div>
 
 
 <div class="viewcode-block" id="PressureVessel"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.PressureVessel">[docs]</a><span class="k">class</span> <span class="nc">PressureVessel</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
