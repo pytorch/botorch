@@ -847,6 +847,18 @@ class ConstrainedHartmann(Hartmann, ConstrainedBaseTestProblem):
         return -X.norm(dim=-1, keepdim=True) + 1
 
 
+class ConstrainedHartmannSmooth(Hartmann, ConstrainedBaseTestProblem):
+    r"""Smooth constrained Hartmann test function.
+
+    This is a constrained version of the standard Hartmann test function that
+    uses `||x||_2^2 <= 1` as the constraint to obtain smoother constraint slack.
+    """
+    num_constraints = 1
+
+    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+        return -X.pow(2).sum(dim=-1, keepdim=True) + 1
+
+
 class PressureVessel(SyntheticTestFunction, ConstrainedBaseTestProblem):
     r"""Pressure vessel design problem with constraints.
 
