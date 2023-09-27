@@ -60,6 +60,11 @@
 <span class="sd">    B. Letham, B. Karrer, G. Ottoni, and E. Bakshy. Constrained Bayesian</span>
 <span class="sd">    Optimization with Noisy Experiments. Bayesian Analysis, Bayesian Anal.</span>
 <span class="sd">    14(2), 495-519, 2019.</span>
+
+<span class="sd">.. [Gramacy2016]</span>
+<span class="sd">    R. Gramacy, G. Gray, S. Le Digabel, H. Lee, P. Ranjan, G. Wells &amp; S. Wild.</span>
+<span class="sd">    Modeling an Augmented Lagrangian for Blackbox Constrained Optimization,</span>
+<span class="sd">    Technometrics, 2016.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
@@ -820,6 +825,39 @@
 <span class="c1">#  ------------ Constrained synthetic test functions ----------- #</span>
 
 
+<div class="viewcode-block" id="ConstrainedGramacy"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.ConstrainedGramacy">[docs]</a><span class="k">class</span> <span class="nc">ConstrainedGramacy</span><span class="p">(</span><span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Constrained Gramacy test function.</span>
+
+<span class="sd">    This problem comes from [Gramacy2016]_. The problem is defined</span>
+<span class="sd">    over the unit cube and the goal is to minimize x1+x2 subject to</span>
+<span class="sd">    1.5 - x1 - 2 * x2 - 0.5 * sin(2*pi*(x1^2 - 2 * x2)) &lt;= 0</span>
+<span class="sd">    and x1^2 + x2^2 - 1.5 &lt;= 0.</span>
+<span class="sd">    """</span>
+
+    <span class="n">num_objectives</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">num_constraints</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">dim</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)]</span>
+    <span class="n">_optimizers</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.1954</span><span class="p">,</span> <span class="mf">0.4044</span><span class="p">)]</span>
+    <span class="n">_optimal_value</span> <span class="o">=</span> <span class="mf">0.5998</span>  <span class="c1"># approximate from [Gramacy2016]_</span>
+
+<div class="viewcode-block" id="ConstrainedGramacy.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.ConstrainedGramacy.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Evaluate the function (w/o observation noise) on a set of points.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x d`-dim tensor of point(s) at which to evaluate the</span>
+<span class="sd">                function.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">X</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ConstrainedGramacy.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.ConstrainedGramacy.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">c1</span> <span class="o">=</span> <span class="mf">1.5</span> <span class="o">-</span> <span class="n">x1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">x2</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="n">x1</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">x2</span><span class="p">))</span>
+        <span class="n">c2</span> <span class="o">=</span> <span class="n">x1</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">x2</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.5</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="o">-</span><span class="n">c1</span><span class="p">,</span> <span class="o">-</span><span class="n">c2</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+
+
 <div class="viewcode-block" id="ConstrainedHartmann"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.ConstrainedHartmann">[docs]</a><span class="k">class</span> <span class="nc">ConstrainedHartmann</span><span class="p">(</span><span class="n">Hartmann</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Constrained Hartmann test function.</span>
 
@@ -830,6 +868,18 @@
 
 <div class="viewcode-block" id="ConstrainedHartmann.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.ConstrainedHartmann.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="o">-</span><span class="n">X</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span></div></div>
+
+
+<div class="viewcode-block" id="ConstrainedHartmannSmooth"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.ConstrainedHartmannSmooth">[docs]</a><span class="k">class</span> <span class="nc">ConstrainedHartmannSmooth</span><span class="p">(</span><span class="n">Hartmann</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Smooth constrained Hartmann test function.</span>
+
+<span class="sd">    This is a constrained version of the standard Hartmann test function that</span>
+<span class="sd">    uses `||x||_2^2 &lt;= 1` as the constraint to obtain smoother constraint slack.</span>
+<span class="sd">    """</span>
+    <span class="n">num_constraints</span> <span class="o">=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="ConstrainedHartmannSmooth.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.ConstrainedHartmannSmooth.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">X</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span></div></div>
 
 
 <div class="viewcode-block" id="PressureVessel"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.PressureVessel">[docs]</a><span class="k">class</span> <span class="nc">PressureVessel</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
