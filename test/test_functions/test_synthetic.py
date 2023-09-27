@@ -324,6 +324,7 @@ class TestConstrainedGramacy(
     BotorchTestCase,
     BaseTestProblemTestCaseMixIn,
     ConstrainedTestProblemTestCaseMixin,
+    SyntheticTestFunctionTestCaseMixin,
 ):
 
     functions = [
@@ -334,6 +335,7 @@ class TestConstrainedGramacy(
 class TestConstrainedHartmann(
     BotorchTestCase,
     BaseTestProblemTestCaseMixIn,
+    SyntheticTestFunctionTestCaseMixin,
     ConstrainedTestProblemTestCaseMixin,
 ):
 
@@ -345,6 +347,7 @@ class TestConstrainedHartmann(
 class TestConstrainedHartmannSmooth(
     BotorchTestCase,
     BaseTestProblemTestCaseMixIn,
+    SyntheticTestFunctionTestCaseMixin,
     ConstrainedTestProblemTestCaseMixin,
 ):
 

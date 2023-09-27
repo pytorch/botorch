@@ -802,7 +802,7 @@ class ThreeHumpCamel(SyntheticTestFunction):
 #  ------------ Constrained synthetic test functions ----------- #
 
 
-class ConstrainedGramacy(ConstrainedBaseTestProblem):
+class ConstrainedGramacy(ConstrainedBaseTestProblem, SyntheticTestFunction):
     r"""Constrained Gramacy test function.
 
     This problem comes from [Gramacy2016]_. The problem is defined
