@@ -4235,7 +4235,7 @@ weighted by feasibility (assuming maximization).</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.objective.LearnedObjective">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.objective.</span></span><span class="sig-name descname"><span class="pre">LearnedObjective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pref_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/objective.html#LearnedObjective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.objective.LearnedObjective" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.objective.</span></span><span class="sig-name descname"><span class="pre">LearnedObjective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pref_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/objective.html#LearnedObjective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.objective.LearnedObjective" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MCAcquisitionObjective</span></code></p>
 <p>Learned preference objective constructed from a preference model.</p>
 <p>For input <cite>samples</cite>, it samples each individual sample again from the latent
@@ -4257,10 +4257,12 @@ function. Given an input tensor of size
 <cite>sample_size x batch_shape x N x d</cite>, its <cite>posterior</cite> method should
 return a <cite>Posterior</cite> object with single outcome representing the
 utility values of the input.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – Sampler for the preference model to account for uncertainty in
+<li><p><strong>sampler</strong> – Sampler for the preference model to account for uncertainty in
 preferece when calculating the objective; it’s not the one used
 in MC acquisition functions. If None,
 it uses <cite>IIDNormalSampler(sample_shape=torch.Size([1]))</cite>.</p></li>
+<li><p><strong>sample_shape</strong> (<em>Optional</em><em>[</em><em>torch.Size</em><em>]</em>) – </p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – </p></li>
 </ul>
 </dd>
 </dl>

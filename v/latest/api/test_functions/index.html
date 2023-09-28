@@ -1082,25 +1082,25 @@ z_4 = ( 8.05502, -9.66459)</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.test_functions.synthetic.ConstrainedGramacy">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">ConstrainedGramacy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#ConstrainedGramacy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.ConstrainedGramacy" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedBaseTestProblem</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">ConstrainedGramacy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#ConstrainedGramacy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.ConstrainedGramacy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedBaseTestProblem</span></code></a>, <a class="reference internal" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="botorch.test_functions.synthetic.SyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">SyntheticTestFunction</span></code></a></p>
 <p>Constrained Gramacy test function.</p>
 <p>This problem comes from <a class="reference internal" href="#gramacy2016" id="id2"><span>[Gramacy2016]</span></a>. The problem is defined
 over the unit cube and the goal is to minimize x1+x2 subject to
 1.5 - x1 - 2 * x2 - 0.5 * sin(2*pi*(x1^2 - 2 * x2)) &lt;= 0
 and x1^2 + x2^2 - 1.5 &lt;= 0.</p>
-<p>Base constructor for test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.test_functions.synthetic.ConstrainedGramacy.num_objectives">
-<span class="sig-name descname"><span class="pre">num_objectives</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#botorch.test_functions.synthetic.ConstrainedGramacy.num_objectives" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">num_objectives</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#botorch.test_functions.synthetic.ConstrainedGramacy.num_objectives" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.test_functions.synthetic.ConstrainedGramacy.num_constraints">

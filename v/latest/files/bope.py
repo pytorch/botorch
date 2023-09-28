@@ -26,7 +26,7 @@
 # 
 # [1] [Z.J. Lin, R. Astudillo, P.I. Frazier, and E. Bakshy, Preference Exploration for Efficient Bayesian Optimization with Multiple Outcomes. AISTATS, 2022.](https://arxiv.org/abs/2203.11382)
 
-# In[1]:
+# In[ ]:
 
 
 import os
@@ -71,7 +71,7 @@ SMOKE_TEST = os.environ.get("SMOKE_TEST")
 # For the utility function $g_\mathrm{true}$, we use the negative L1 distance from a Pareto-optimal point the outcome space:
 # $Y^* = f(X^*)$ where $X^* = [0.5, 0.5, 0.5, 0.5, 0.5]$. 
 
-# In[2]:
+# In[3]:
 
 
 def neg_l1_dist(Y):
@@ -105,7 +105,7 @@ util_func = neg_l1_dist
 
 # Here we define a collection of helper functions for BOPE:
 
-# In[3]:
+# In[4]:
 
 
 def fit_outcome_model(X, Y, X_bounds):
@@ -239,8 +239,7 @@ def find_max_posterior_mean(outcome_model, train_Y, train_comps, verbose=False):
     """Helper function that find the max posterior mean under current outcome and
     preference model"""
     pref_model = fit_pref_model(train_Y, train_comps)
-    sampler = SobolQMCNormalSampler(sample_shape=torch.Size([NUM_PREF_SAMPLES]))
-    pref_obj = LearnedObjective(pref_model=pref_model, sampler=sampler)
+    pref_obj = LearnedObjective(pref_model=pref_model, sample_shape=torch.Size([NUM_PREF_SAMPLES]))
     post_mean_cand_X = gen_exp_cand(
         outcome_model, pref_obj, q=1, acqf_name="posterior_mean"
     )
@@ -281,7 +280,7 @@ def find_max_posterior_mean(outcome_model, train_Y, train_comps, verbose=False):
 # This represents the performance upper bound of PE strategies.
 # For the second experiment canadidate generation strategy, we use random design points to generate new candidates.
 
-# In[4]:
+# In[5]:
 
 
 verbose = False
@@ -335,8 +334,7 @@ for i in range(n_reps):
         # Going back to the experimentation stage: generate an additional batch of experimental evaluations
         # with the learned preference model and qNEIUU
         pref_model = fit_pref_model(train_Y, train_comps)
-        sampler = SobolQMCNormalSampler(sample_shape=torch.Size([NUM_PREF_SAMPLES]))
-        pref_obj = LearnedObjective(pref_model=pref_model, sampler=sampler)
+        pref_obj = LearnedObjective(pref_model=pref_model, sample_shape=torch.Size([NUM_PREF_SAMPLES]))
         exp_cand_X = gen_exp_cand(outcome_model, pref_obj, q=1, acqf_name="qNEI")
         qneiuu_util = util_func(problem(exp_cand_X)).item()
         print(f"{pe_strategy} qNEIUU candidate utility: {qneiuu_util:.3f}")
@@ -378,13 +376,13 @@ for i in range(n_reps):
 # 
 # In the first plot, we focus on comparing how $\text{EUBO}\mathrm{-}\zeta$ can efficiently identify the maximizer 
 # of $g_\mathrm{true}(f_\mathrm{true}(x))$ within a preference exploration stage.
-# We examine this by estimatig the maximum posterior mean after every 3 pairwise comparisons.
+# We examine this by estimating the maximum posterior mean after every 3 pairwise comparisons.
 # 
 # Here, we plot the the max utility value identified using $\text{EUBO}\mathrm{-}\zeta$ and $\text{Random}\mathrm{-}f$
 # with increasing number of pairwise comparisons.
 # As we can see in this plot, the preference model learned using $\text{EUBO}\mathrm{-}\zeta$ is able to identify the maximum utility more efficiently.
 
-# In[5]:
+# In[6]:
 
 
 # Prepare PE data for plots
@@ -417,7 +415,7 @@ plt.legend(title="PE Strategy")
 # On the other hand, despite that $\text{Random}\mathrm{-}f$ is a relatively straightforward PE strategy,
 # it is still able to suggest experimental candidates with generally higher utility values than the random experiment baseline.
 
-# In[6]:
+# In[7]:
 
 
 # Prepare the 2nd experimentation batch data for plot
@@ -443,10 +441,4 @@ for _, (name, mean) in exp_df.iterrows():
 plt.xlabel("Experimentation Strategy")
 plt.ylabel("Utility achieved in the 2nd experiment stage")
 plt.legend(title="Experimentation Strategy")
-
-
-# In[ ]:
-
-
-
 
