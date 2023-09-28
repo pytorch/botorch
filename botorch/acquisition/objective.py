@@ -19,7 +19,7 @@ from botorch.exceptions.warnings import InputDataWarning
 from botorch.models.model import Model
 from botorch.models.transforms.outcome import Standardize
 from botorch.posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
-from botorch.sampling import IIDNormalSampler, MCSampler
+from botorch.sampling import IIDNormalSampler
 from botorch.utils import apply_constraints
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from linear_operator.operators.dense_linear_operator import to_linear_operator
@@ -547,7 +547,8 @@ class LearnedObjective(MCAcquisitionObjective):
     def __init__(
         self,
         pref_model: Model,
-        sampler: Optional[MCSampler] = None,
+        sample_shape: Optional[torch.Size] = None,
+        seed: Optional[int] = None,
     ):
         r"""
         Args:
@@ -564,13 +565,13 @@ class LearnedObjective(MCAcquisitionObjective):
         super().__init__()
         self.pref_model = pref_model
         if isinstance(pref_model, DeterministicModel):
-            assert sampler is None
+            assert sample_shape is None
             self.sampler = None
         else:
-            if sampler is None:
-                self.sampler = IIDNormalSampler(sample_shape=torch.Size([1]))
-            else:
-                self.sampler = sampler
+            if sample_shape is None:
+                sample_shape = torch.Size([1])
+            self.sampler = IIDNormalSampler(sample_shape=sample_shape, seed=seed)
+            self.sampler.batch_range_override = (1, -1)
 
     def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         r"""Sample each element of samples.
@@ -583,7 +584,7 @@ class LearnedObjective(MCAcquisitionObjective):
             A `(sample_size * num_samples) x batch_shape x N`-dim Tensor of
             objective values sampled from utility posterior using `pref_model`.
         """
-        if samples.dtype == torch.float32 and any(
+        if samples.dtype != torch.float64 and any(
             d == torch.float64 for d in self.pref_model.dtypes_of_buffers
         ):
             warnings.warn(
@@ -593,11 +594,11 @@ class LearnedObjective(MCAcquisitionObjective):
             )
             samples = samples.to(torch.float64)
 
-        post = self.pref_model.posterior(samples)
+        posterior = self.pref_model.posterior(samples)
         if isinstance(self.pref_model, DeterministicModel):
             # return preference posterior mean
-            return post.mean.squeeze(-1)
+            return posterior.mean.squeeze(-1)
         else:
-            # return preference posterior sample mean
-            samples = self.sampler(post).squeeze(-1)
+            # return preference posterior augmented samples
+            samples = self.sampler(posterior).squeeze(-1)
             return samples.reshape(-1, *samples.shape[2:])  # batch_shape x N

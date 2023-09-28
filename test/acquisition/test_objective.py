@@ -28,7 +28,6 @@ from botorch.models.deterministic import PosteriorMeanModel
 from botorch.models.pairwise_gp import PairwiseGP
 from botorch.models.transforms.input import Normalize
 from botorch.posteriors import GPyTorchPosterior
-from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils import apply_constraints
 from botorch.utils.testing import _get_test_posterior, BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
@@ -457,10 +456,15 @@ class TestLearnedObjective(BotorchTestCase):
         pref_model = self._get_pref_model(dtype=torch.float64)
 
         og_sample_shape = 3
+        large_sample_shape = 256
         batch_size = 2
         n = 8
         test_X = torch.rand(
             torch.Size((og_sample_shape, batch_size, n, self.x_dim)),
+            dtype=torch.float64,
+        )
+        large_X = torch.rand(
+            torch.Size((large_sample_shape, batch_size, n, self.x_dim)),
             dtype=torch.float64,
         )
 
@@ -472,18 +476,34 @@ class TestLearnedObjective(BotorchTestCase):
             self.assertEqual(
                 first_call_output.shape, torch.Size([og_sample_shape, batch_size, n])
             )
+            # Making sure the sampler has correct base_samples shape
+            self.assertEqual(
+                pref_obj.sampler.base_samples.shape,
+                torch.Size([1, og_sample_shape, 1, n]),
+            )
+            # Passing through a same-shaped X again shouldn't change the base sample
+            previous_base_samples = pref_obj.sampler.base_samples
+            another_test_X = torch.rand_like(test_X)
+            pref_obj(another_test_X)
+            self.assertIs(pref_obj.sampler.base_samples, previous_base_samples)
 
-        # test when sampler has num_samples = 16
-        with self.subTest("SobolQMCNormalSampler"):
-            num_samples = 16
+        # test when sampler has multiple preference samples
+        with self.subTest("Multiple samples"):
+            num_samples = 256
             pref_obj = LearnedObjective(
                 pref_model=pref_model,
-                sampler=SobolQMCNormalSampler(sample_shape=torch.Size([num_samples])),
+                sample_shape=torch.Size([num_samples]),
             )
             self.assertEqual(
                 pref_obj(test_X).shape,
                 torch.Size([num_samples * og_sample_shape, batch_size, n]),
             )
+
+            avg_obj_val = pref_obj(large_X).mean(dim=0)
+            flipped_avg_obj_val = pref_obj(large_X.flip(dims=[0])).mean(dim=0)
+            # Check if they are approximately close.
+            # The variance is large hence the loose atol.
+            self.assertAllClose(avg_obj_val, flipped_avg_obj_val, atol=1e-2)
 
         # test posterior mean
         with self.subTest("PosteriorMeanModel"):
@@ -493,11 +513,17 @@ class TestLearnedObjective(BotorchTestCase):
                 pref_obj(test_X).shape, torch.Size([og_sample_shape, batch_size, n])
             )
 
+            # the order of samples shouldn't matter
+            avg_obj_val = pref_obj(large_X).mean(dim=0)
+            flipped_avg_obj_val = pref_obj(large_X.flip(dims=[0])).mean(dim=0)
+            # When we use the posterior mean objective, they should be very close
+            self.assertAllClose(avg_obj_val, flipped_avg_obj_val)
+
         # cannot use a deterministic model together with a sampler
         with self.subTest("deterministic model"), self.assertRaises(AssertionError):
             LearnedObjective(
                 pref_model=mean_pref_model,
-                sampler=SobolQMCNormalSampler(sample_shape=torch.Size([num_samples])),
+                sample_shape=torch.Size([num_samples]),
             )
 
     def test_dtype_compatibility_with_PairwiseGP(self) -> None:
