@@ -294,17 +294,14 @@ class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
         r"""Sample from the model posterior.
 
         Args:
-            X: A `batch_shape x N x d`-dim Tensor
-                from which to sample (in the `N`
-                dimension) according to the maximum
-                posterior value under the objective.
+            X: A `batch_shape x N x d`-dim Tensor from which to sample (in the `N`
+                dimension) according to the maximum posterior value under the objective.
             num_samples: The number of samples to draw.
             observation_noise: If True, sample with observation noise.
 
         Returns:
-            A `batch_shape x num_samples x d`-dim
-            Tensor of samples from `X`, where
-            `X[..., i, :]` is the `i`-th sample.
+            A `batch_shape x num_samples x d`-dim Tensor of samples from `X`, where
+                `X[..., i, :]` is the `i`-th sample.
         """
         posterior = self.model.posterior(X, observation_noise=observation_noise)
         samples = posterior.rsample(sample_shape=torch.Size([num_samples]))
@@ -319,7 +316,7 @@ class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
         if (valid_samples.sum() == 0) or self.minimize_constraints_only:
             # if none of the samples meet the constraints
             # we pick the one that minimizes total violation
-            constraint_samples = constraint_samples.sum(dim=-1)
+            constraint_samples = constraint_samples.clamp(min=0).sum(dim=-1)
             idcs = torch.argmin(constraint_samples, dim=-1)
             if idcs.ndim > 1:
                 idcs = idcs.permute(*range(1, idcs.ndim), 0)
