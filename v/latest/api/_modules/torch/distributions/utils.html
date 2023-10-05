@@ -23,15 +23,24 @@
 <h1>Source code for torch.distributions.utils</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">update_wrapper</span>
 <span class="kn">from</span> <span class="nn">numbers</span> <span class="kn">import</span> <span class="n">Number</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span>
+
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span>
 <span class="kn">from</span> <span class="nn">torch.overrides</span> <span class="kn">import</span> <span class="n">is_tensor_like</span>
 
 <span class="n">euler_constant</span> <span class="o">=</span> <span class="mf">0.57721566490153286060</span>  <span class="c1"># Euler Mascheroni Constant</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"broadcast_all"</span><span class="p">,</span> <span class="s2">"logits_to_probs"</span><span class="p">,</span> <span class="s2">"clamp_probs"</span><span class="p">,</span> <span class="s2">"probs_to_logits"</span><span class="p">,</span> <span class="s2">"lazy_property"</span><span class="p">,</span>
-           <span class="s2">"tril_matrix_to_vec"</span><span class="p">,</span> <span class="s2">"vec_to_tril_matrix"</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"broadcast_all"</span><span class="p">,</span>
+    <span class="s2">"logits_to_probs"</span><span class="p">,</span>
+    <span class="s2">"clamp_probs"</span><span class="p">,</span>
+    <span class="s2">"probs_to_logits"</span><span class="p">,</span>
+    <span class="s2">"lazy_property"</span><span class="p">,</span>
+    <span class="s2">"tril_matrix_to_vec"</span><span class="p">,</span>
+    <span class="s2">"vec_to_tril_matrix"</span><span class="p">,</span>
+<span class="p">]</span>
+
 
 <span class="k">def</span> <span class="nf">broadcast_all</span><span class="p">(</span><span class="o">*</span><span class="n">values</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
@@ -49,18 +58,20 @@
 <span class="sd">        ValueError: if any of the values is not a `numbers.Number` instance,</span>
 <span class="sd">            a `torch.*Tensor` instance, or an instance implementing __torch_function__</span>
 <span class="sd">    """</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">is_tensor_like</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Number</span><span class="p">)</span>
-               <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'Input arguments must all be instances of numbers.Number, '</span>
-                         <span class="s1">'torch.Tensor or objects implementing __torch_function__.'</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">is_tensor_like</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Number</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"Input arguments must all be instances of numbers.Number, "</span>
+            <span class="s2">"torch.Tensor or objects implementing __torch_function__."</span>
+        <span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">is_tensor_like</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">):</span>
         <span class="n">options</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">get_default_dtype</span><span class="p">())</span>
         <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
                 <span class="n">options</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">value</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">value</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
                 <span class="k">break</span>
-        <span class="n">new_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">if</span> <span class="n">is_tensor_like</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
-                      <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">]</span>
+        <span class="n">new_values</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">v</span> <span class="k">if</span> <span class="n">is_tensor_like</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span>
+        <span class="p">]</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">broadcast_tensors</span><span class="p">(</span><span class="o">*</span><span class="n">new_values</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">broadcast_tensors</span><span class="p">(</span><span class="o">*</span><span class="n">values</span><span class="p">)</span>
 
@@ -68,8 +79,10 @@
 <span class="k">def</span> <span class="nf">_standard_normal</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">_C</span><span class="o">.</span><span class="n">_get_tracing_state</span><span class="p">():</span>
         <span class="c1"># [JIT WORKAROUND] lack of support for .normal_()</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span>
-                            <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span>
+        <span class="p">)</span>
     <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">normal_</span><span class="p">()</span>
 
 
@@ -124,6 +137,7 @@
 <span class="sd">    first call; thereafter replacing the wrapped method into an instance</span>
 <span class="sd">    attribute.</span>
 <span class="sd">    """</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wrapped</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">wrapped</span> <span class="o">=</span> <span class="n">wrapped</span>
         <span class="n">update_wrapper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wrapped</span><span class="p">)</span>
@@ -143,36 +157,42 @@
 <span class="sd">    * property when Sphinx autodoc looks</span>
 <span class="sd">    * lazy_property when Distribution validate_args looks</span>
 <span class="sd">    """</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wrapped</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">property</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wrapped</span><span class="p">)</span>
+        <span class="nb">property</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wrapped</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">tril_matrix_to_vec</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">diag</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">tril_matrix_to_vec</span><span class="p">(</span><span class="n">mat</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">diag</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Convert a `D x D` matrix or a batch of matrices into a (batched) vector</span>
 <span class="sd">    which comprises of lower triangular elements from the matrix in row order.</span>
 <span class="sd">    """</span>
     <span class="n">n</span> <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">_C</span><span class="o">.</span><span class="n">_get_tracing_state</span><span class="p">()</span> <span class="ow">and</span> <span class="p">(</span><span class="n">diag</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">n</span> <span class="ow">or</span> <span class="n">diag</span> <span class="o">&gt;=</span> <span class="n">n</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">'diag (</span><span class="si">{</span><span class="n">diag</span><span class="si">}</span><span class="s1">) provided is outside [</span><span class="si">{</span><span class="o">-</span><span class="n">n</span><span class="si">}</span><span class="s1">, </span><span class="si">{</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="si">}</span><span class="s1">].'</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"diag (</span><span class="si">{</span><span class="n">diag</span><span class="si">}</span><span class="s2">) provided is outside [</span><span class="si">{</span><span class="o">-</span><span class="n">n</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="si">}</span><span class="s2">]."</span><span class="p">)</span>
     <span class="n">arange</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">mat</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
     <span class="n">tril_mask</span> <span class="o">=</span> <span class="n">arange</span> <span class="o">&lt;</span> <span class="n">arange</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">diag</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
     <span class="n">vec</span> <span class="o">=</span> <span class="n">mat</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">tril_mask</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">vec</span>
 
 
-<span class="k">def</span> <span class="nf">vec_to_tril_matrix</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">diag</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">vec_to_tril_matrix</span><span class="p">(</span><span class="n">vec</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">diag</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Convert a vector or a batch of vectors into a batched `D x D`</span>
 <span class="sd">    lower triangular matrix containing elements from the vector in row order.</span>
 <span class="sd">    """</span>
     <span class="c1"># +ve root of D**2 + (1+2*diag)*D - |diag| * (diag+1) - 2*vec.shape[-1] = 0</span>
-    <span class="n">n</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">diag</span><span class="p">)</span> <span class="o">+</span> <span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">diag</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">8</span> <span class="o">*</span> <span class="n">vec</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">4</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">diag</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">diag</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span><span class="o">**</span><span class="mf">0.5</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="o">-</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">diag</span><span class="p">)</span>
+        <span class="o">+</span> <span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">diag</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">8</span> <span class="o">*</span> <span class="n">vec</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">4</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">diag</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">diag</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="o">**</span> <span class="mf">0.5</span>
+    <span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
     <span class="n">eps</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">vec</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">_C</span><span class="o">.</span><span class="n">_get_tracing_state</span><span class="p">()</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">-</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="n">eps</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">'The size of last dimension is </span><span class="si">{</span><span class="n">vec</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1"> which cannot be expressed as '</span> <span class="o">+</span>
-                         <span class="s1">'the lower triangular part of a square D x D matrix.'</span><span class="p">)</span>
-    <span class="n">n</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">long</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="k">else</span> <span class="nb">round</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"The size of last dimension is </span><span class="si">{</span><span class="n">vec</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> which cannot be expressed as "</span>
+            <span class="o">+</span> <span class="s2">"the lower triangular part of a square D x D matrix."</span>
+        <span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">item</span><span class="p">())</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="k">else</span> <span class="nb">round</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
     <span class="n">mat</span> <span class="o">=</span> <span class="n">vec</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">vec</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">)))</span>
     <span class="n">arange</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">vec</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
     <span class="n">tril_mask</span> <span class="o">=</span> <span class="n">arange</span> <span class="o">&lt;</span> <span class="n">arange</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">diag</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>

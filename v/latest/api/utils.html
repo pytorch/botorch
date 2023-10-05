@@ -1996,6 +1996,11 @@ Default: <code class="docutils literal notranslate"><span class="pre">False</spa
 this module and its descendants. If <code class="xref py py-attr docutils literal notranslate"><span class="pre">strict</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, then
 the keys of <a class="reference internal" href="#botorch.utils.testing.MockModel.state_dict" title="botorch.utils.testing.MockModel.state_dict"><code class="xref py py-attr docutils literal notranslate"><span class="pre">state_dict</span></code></a> must exactly match the keys returned
 by this module’s <code class="xref py py-meth docutils literal notranslate"><span class="pre">state_dict()</span></code> function.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>If <code class="xref py py-attr docutils literal notranslate"><span class="pre">assign</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code> the optimizer must be created after
+the call to <a class="reference internal" href="#botorch.utils.testing.MockModel.load_state_dict" title="botorch.utils.testing.MockModel.load_state_dict"><code class="xref py py-attr docutils literal notranslate"><span class="pre">load_state_dict</span></code></a>.</p>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -2004,6 +2009,13 @@ persistent buffers.</p></li>
 <li><p><strong>strict</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether to strictly enforce that the keys
 in <a class="reference internal" href="#botorch.utils.testing.MockModel.state_dict" title="botorch.utils.testing.MockModel.state_dict"><code class="xref py py-attr docutils literal notranslate"><span class="pre">state_dict</span></code></a> match the keys returned by this module’s
 <code class="xref py py-meth docutils literal notranslate"><span class="pre">state_dict()</span></code> function. Default: <code class="docutils literal notranslate"><span class="pre">True</span></code></p></li>
+<li><p><strong>assign</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether to assign items in the state
+dictionary to their corresponding keys in the module instead
+of copying them inplace into the module’s current parameters and buffers.
+When <code class="docutils literal notranslate"><span class="pre">False</span></code>, the properties of the tensors in the current
+module are preserved while when <code class="docutils literal notranslate"><span class="pre">True</span></code>, the properties of the
+Tensors in the state dict are preserved.
+Default: <code class="docutils literal notranslate"><span class="pre">False</span></code></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
