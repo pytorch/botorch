@@ -285,7 +285,7 @@ class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
         r"""Convert the objective and constraint samples into a score.
 
         The logic is as follows:
-            - If a realization has at least on feasible candidate we use the objective
+            - If a realization has at least one feasible candidate we use the objective
                 value as the score and set all infeasible candidates to -inf.
             - If a realization doesn't have a feasible candidate we set the score to
                 the negative total violation of the constraints to incentivize choosing
@@ -307,12 +307,12 @@ class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
 
         scores = Y_samples.clone()
         scores[~is_feasible] = -float("inf")
-        if (~has_feasible_candidate).any():
+        if not has_feasible_candidate.all():
             # Use negative total violation for samples where no candidate is feasible
             total_violation = (
                 C_samples[~has_feasible_candidate]
                 .clamp(min=0)
-                .sum(dim=-1, keepdims=True)
+                .sum(dim=-1, keepdim=True)
             )
             scores[~has_feasible_candidate] = -total_violation
         return scores
