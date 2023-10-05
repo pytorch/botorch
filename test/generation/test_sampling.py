@@ -154,24 +154,33 @@ class TestConstrainedMaxPosteriorSampling(BotorchTestCase):
     def test_init(self):
         mm = MockModel(MockPosterior(mean=None))
         cmms = MockModel(MockPosterior(mean=None))
-        MPS = ConstrainedMaxPosteriorSampling(mm, cmms)
-        self.assertEqual(MPS.model, mm)
-        self.assertTrue(MPS.replacement)
-        self.assertIsInstance(MPS.objective, IdentityMCObjective)
+        for replacement in (True, False):
+            MPS = ConstrainedMaxPosteriorSampling(mm, cmms, replacement=replacement)
+            self.assertEqual(MPS.model, mm)
+            self.assertEqual(MPS.replacement, replacement)
+            self.assertIsInstance(MPS.objective, IdentityMCObjective)
+
         obj = LinearMCObjective(torch.rand(2))
-        MPS = ConstrainedMaxPosteriorSampling(
-            mm, cmms, objective=obj, replacement=False
-        )
-        self.assertEqual(MPS.objective, obj)
-        self.assertFalse(MPS.replacement)
+        with self.assertRaisesRegex(
+            NotImplementedError, "`objective` is not supported"
+        ):
+            ConstrainedMaxPosteriorSampling(mm, cmms, objective=obj, replacement=False)
 
     def test_constrained_max_posterior_sampling(self):
         batch_shapes = (torch.Size(), torch.Size([3]), torch.Size([3, 2]))
         dtypes = (torch.float, torch.double)
-        for batch_shape, dtype, N, num_samples, d in itertools.product(
-            batch_shapes, dtypes, (5, 6), (1, 2), (1, 2)
+        for (
+            batch_shape,
+            dtype,
+            N,
+            num_samples,
+            d,
+            observation_noise,
+        ) in itertools.product(
+            batch_shapes, dtypes, (5, 6), (1, 2), (1, 2), (True, False)
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
+            expected_shape = torch.Size(list(batch_shape) + [num_samples] + [d])
             # X is `batch_shape x N x d` = batch_shape x N x 1.
             X = torch.randn(*batch_shape, N, d, **tkwargs)
             # the event shape is `num_samples x batch_shape x N x m`
@@ -196,42 +205,57 @@ class TestConstrainedMaxPosteriorSampling(BotorchTestCase):
                     cmms2 = ModelListGP(c_model1, c_model2)
                     cmms3 = ModelListGP(c_model1, c_model2, c_model3)
                     for cmms in [cmms1, cmms2, cmms3]:
-                        MPS = ConstrainedMaxPosteriorSampling(mm, cmms)
-                        s1 = MPS(X, num_samples=num_samples)
-                        # run again with minimize_constraints_only
-                        MPS = ConstrainedMaxPosteriorSampling(
-                            mm, cmms, minimize_constraints_only=True
+                        CPS = ConstrainedMaxPosteriorSampling(mm, cmms)
+                        s1 = CPS(
+                            X=X,
+                            num_samples=num_samples,
+                            observation_noise=observation_noise,
                         )
-                        s2 = MPS(X, num_samples=num_samples)
-                        assert s1.shape == s2.shape
+                        self.assertEqual(s1.shape, expected_shape)
 
-            # ScalarizedPosteriorTransform w/ replacement
-            with mock.patch.object(MockPosterior, "rsample", return_value=psamples):
-                mp = MockPosterior(None)
-                with mock.patch.object(MockModel, "posterior", return_value=mp):
-                    mm = MockModel(None)
-                    cmms = MockModel(None)
-                    with mock.patch.object(
-                        ScalarizedPosteriorTransform, "forward", return_value=mp
-                    ):
-                        post_tf = ScalarizedPosteriorTransform(torch.rand(2, **tkwargs))
-                        MPS = ConstrainedMaxPosteriorSampling(
-                            mm, cmms, posterior_transform=post_tf
-                        )
-                        s = MPS(X, num_samples=num_samples)
-                        self.assertTrue(s.shape[-2] == num_samples)
+            # Test selection (_convert_samples_to_scores is tested separately)
+            m_model = SingleTaskGP(
+                X, torch.randn(X.shape[0:-1], **tkwargs).unsqueeze(-1)
+            )
+            cmms = cmms2
+            with torch.random.fork_rng():
+                torch.manual_seed(123)
+                Y = m_model.posterior(X=X, observation_noise=observation_noise).rsample(
+                    sample_shape=torch.Size([num_samples])
+                )
+                C = cmms.posterior(X=X, observation_noise=observation_noise).rsample(
+                    sample_shape=torch.Size([num_samples])
+                )
+                scores = CPS._convert_samples_to_scores(Y_samples=Y, C_samples=C)
+                X_true = CPS.maximize_samples(
+                    X=X, samples=scores, num_samples=num_samples
+                )
 
-            # without replacement
-            psamples[..., 1, 0] = 1e-6
-            with mock.patch.object(MockPosterior, "rsample", return_value=psamples):
-                mp = MockPosterior(None)
-                with mock.patch.object(MockModel, "posterior", return_value=mp):
-                    mm = MockModel(None)
-                    cmms = MockModel(None)
-                    MPS = ConstrainedMaxPosteriorSampling(mm, cmms, replacement=False)
-                    if len(batch_shape) > 1:
-                        with self.assertRaises(NotImplementedError):
-                            MPS(X, num_samples=num_samples)
-                    else:
-                        s = MPS(X, num_samples=num_samples)
-                        self.assertTrue(s.shape[-2] == num_samples)
+                torch.manual_seed(123)
+                CPS = ConstrainedMaxPosteriorSampling(m_model, cmms)
+                X_cand = CPS(
+                    X=X,
+                    num_samples=num_samples,
+                    observation_noise=observation_noise,
+                )
+                self.assertAllClose(X_true, X_cand)
+
+        # Test `_convert_samples_to_scores`
+        N, num_constraints, batch_shape = 10, 3, torch.Size([2])
+        X = torch.randn(*batch_shape, N, d, **tkwargs)
+        Y_samples = torch.rand(num_samples, *batch_shape, N, 1, **tkwargs)
+        C_samples = -torch.rand(
+            num_samples, *batch_shape, N, num_constraints, **tkwargs
+        )
+
+        Y_samples[0, 0, 3] = 1.234
+        C_samples[0, 1, 1:, 1] = 0.123 + torch.arange(N - 1, **tkwargs)
+        C_samples[1, 0, :, :] = 1 + (torch.arange(N).unsqueeze(-1) - N // 2) ** 2
+        Y_samples[1, 1, 7] = 10
+        scores = ConstrainedMaxPosteriorSampling(
+            m_model, cmms
+        )._convert_samples_to_scores(Y_samples=Y_samples, C_samples=C_samples)
+        self.assertEqual(scores[0, 0].argmax().item(), 3)
+        self.assertEqual(scores[0, 1].argmax().item(), 0)
+        self.assertEqual(scores[1, 0].argmax().item(), N // 2)
+        self.assertEqual(scores[1, 1].argmax().item(), 7)
