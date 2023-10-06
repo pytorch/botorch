@@ -427,7 +427,7 @@ class ModelList(Model):
         idcs = [idx % cum_output_sizes[-1] for idx in idcs]
         group_indices: Dict[int, List[int]] = defaultdict(list)
         for idx in idcs:
-            grp_idx = int(np.argwhere(idx < cum_output_sizes)[0].item())
+            grp_idx = np.argwhere(idx < cum_output_sizes)[0].item()
             sub_idx = idx - int(np.sum(output_sizes[:grp_idx]))
             group_indices[grp_idx].append(sub_idx)
         return group_indices
