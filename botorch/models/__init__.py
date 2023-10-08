@@ -33,6 +33,7 @@ from botorch.models.multitask import (
     MultiTaskGP,
 )
 from botorch.models.pairwise_gp import PairwiseGP, PairwiseLaplaceMarginalLogLikelihood
+from botorch.models.skew_gp import SkewGP, SkewGPClassifier
 
 __all__ = [
     "AffineDeterministicModel",
@@ -56,4 +57,6 @@ __all__ = [
     "SingleTaskGP",
     "SingleTaskMultiFidelityGP",
     "SingleTaskVariationalGP",
+    "SkewGP",
+    "SkewGPClassifier",
 ]

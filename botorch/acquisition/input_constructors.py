@@ -42,6 +42,10 @@ from botorch.acquisition.analytic import (
     UpperConfidenceBound,
 )
 from botorch.acquisition.cost_aware import InverseCostWeightedUtility
+from botorch.acquisition.expected_feasible_improvement import (
+    ExpectedFeasibleImprovement,
+    qExpectedFeasibleImprovement,
+)
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
 from botorch.acquisition.joint_entropy_search import qJointEntropySearch
 from botorch.acquisition.knowledge_gradient import (
@@ -1443,3 +1447,8 @@ def construct_inputs_qJES(
         "num_samples": num_samples,
     }
     return inputs
+
+
+@acqf_input_constructor(ExpectedFeasibleImprovement)
+def _construct_inputs_efi(*args, X_pending=None, **kwargs):
+    return {"X_pending": X_pending, **construct_inputs_best_f(*args, **kwargs)}
