@@ -124,16 +124,26 @@ class TestGetParameters(BotorchTestCase):
     def test_get_parameters(self):
         self.assertEqual(0, len(get_parameters(self.module, requires_grad=False)))
 
-        params = get_parameters(self.module)
-        self.assertEqual(1, len(params))
-        self.assertEqual(next(iter(params)), "noise_covar.raw_noise")
-        self.assertTrue(
-            self.module.noise_covar.raw_noise.equal(next(iter(params.values())))
-        )
+        # No name filter
+        for name_filter in [None, lambda x: "n" in x]:
+            with self.subTest("none filtered", name_filter=name_filter):
+                params = get_parameters(self.module, name_filter=name_filter)
+                self.assertEqual(1, len(params))
+                self.assertEqual(next(iter(params)), "noise_covar.raw_noise")
+                self.assertTrue(
+                    self.module.noise_covar.raw_noise.equal(next(iter(params.values())))
+                )
+
+        with self.subTest("all params filtered"):
+            params_filtered = get_parameters(self.module, lambda x: "z" in x)
+            self.assertEqual(params_filtered, {})
+
+            params_filtered = get_parameters(self.module, lambda x: "n" in x)
 
     def test_get_parameters_and_bounds(self):
         param_dict, bounds_dict = get_parameters_and_bounds(self.module)
-        self.assertTrue(1 == len(param_dict) == len(bounds_dict))
+        self.assertEqual(1, len(param_dict))
+        self.assertEqual(1, len(bounds_dict))
 
         name, bounds = next(iter(bounds_dict.items()))
         self.assertEqual(name, "noise_covar.raw_noise")
@@ -145,20 +155,24 @@ class TestGetParameters(BotorchTestCase):
         )
         param_dict2, bounds_dict2 = get_parameters_and_bounds(mock_module)
         self.assertEqual(param_dict, param_dict2)
-        self.assertTrue(len(bounds_dict2) == 0)
+        self.assertEqual(len(bounds_dict2), 0)
 
 
 class TestGetNameFilter(BotorchTestCase):
-    def test_get_name_filter(self):
+    def test__get_name_filter__raises_on_invalid_pattern_type(self) -> None:
         with self.assertRaisesRegex(TypeError, "Expected `patterns` to contain"):
             get_name_filter(("foo", re.compile("bar"), 1))
 
+    def test__get_name_filter(self) -> None:
         names = ascii_lowercase
         name_filter = get_name_filter(iter(names[1::2]))
         self.assertEqual(names[::2], "".join(filter(name_filter, names)))
 
         items = tuple(zip(names, range(len(names))))
         self.assertEqual(items[::2], tuple(filter(name_filter, items)))
+
+        self.assertTrue(name_filter("a"))
+        self.assertFalse(name_filter("b"))
 
 
 class TestSampleAllPriors(BotorchTestCase):
