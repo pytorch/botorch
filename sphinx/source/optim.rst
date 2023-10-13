@@ -83,11 +83,6 @@ Optimization with Timeouts
 .. automodule:: botorch.optim.utils.timeout
     :members:
 
-Numpy - Torch Conversion Tools (OLD)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.optim.numpy_converter
-    :members:
-
 Parameter Constraint Utilities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.optim.parameter_constraints
