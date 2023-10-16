@@ -362,6 +362,8 @@ class LogExpectedImprovement(AnalyticAcquisitionFunction):
     to avoid numerical issues in the computation of the acquisition value and its
     gradient in regions where improvement is predicted to be virtually impossible.
 
+    See [Ament2023logei]_ for details. Formally,
+
     `LogEI(x) = log(E(max(f(x) - best_f, 0))),`
 
     where the expectation is taken over the value of stochastic function `f` at `x`.
@@ -423,7 +425,10 @@ class LogConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
     multi-outcome, with the index of the objective and constraints passed to
     the constructor.
 
+    See [Ament2023logei]_ for details. Formally,
+
     `LogConstrainedEI(x) = log(EI(x)) + Sum_i log(P(y_i \in [lower_i, upper_i]))`,
+
     where `y_i ~ constraint_i(x)` and `lower_i`, `upper_i` are the lower and
     upper bounds for the i-th constraint, respectively.
 
@@ -569,7 +574,10 @@ class LogNoisyExpectedImprovement(AnalyticAcquisitionFunction):
     `q=1`. Assumes that the posterior distribution of the model is Gaussian.
     The model must be single-outcome.
 
+    See [Ament2023logei]_ for details. Formally,
+
     `LogNEI(x) = log(E(max(y - max Y_base), 0))), (y, Y_base) ~ f((x, X_base))`,
+
     where `X_base` are previously observed points.
 
     Note: This acquisition function currently relies on using a FixedNoiseGP (required

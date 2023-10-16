@@ -269,6 +269,16 @@ def smooth_amax(
     return logsumexp(X / tau, dim=dim, keepdim=keepdim) * tau  # ~ X.amax(dim=dim)
 
 
+def smooth_amin(
+    X: Tensor,
+    dim: Union[int, Tuple[int, ...]] = -1,
+    keepdim: bool = False,
+    tau: Union[float, Tensor] = 1.0,
+) -> Tensor:
+    """A smooth approximation to `min(X, dim=dim)`, similar to `smooth_amax`."""
+    return -smooth_amax(X=-X, dim=dim, keepdim=keepdim, tau=tau)
+
+
 def check_dtype_float32_or_float64(X: Tensor) -> None:
     if X.dtype != torch.float32 and X.dtype != torch.float64:
         raise UnsupportedError(
@@ -316,7 +326,7 @@ def fatmax(
     """Computes a smooth approximation to amax(X, dim=dim) with a fat tail.
 
     Args:
-        X: A Tensor from which to compute the smoothed amax.
+        X: A Tensor from which to compute the smoothed maximum.
         dim: The dimensions to reduce over.
         keepdim: If True, keeps the reduced dimensions.
         tau: Temperature parameter controlling the smooth approximation
@@ -327,7 +337,7 @@ def fatmax(
             recommended to keep this value low or moderate, e.g. < 10.
 
     Returns:
-        A Tensor of smooth approximations to `max(X, dim=dim)` with a fat tail.
+        A Tensor of smooth approximations to `amax(X, dim=dim)` with a fat tail.
     """
 
     def max_fun(
@@ -336,6 +346,32 @@ def fatmax(
         return tau * _pareto(-x / tau, alpha=alpha).sum(dim=dim, keepdim=keepdim).log()
 
     return _inf_max_helper(max_fun=max_fun, x=x, dim=dim, keepdim=keepdim)
+
+
+def fatmin(
+    x: Tensor,
+    dim: Union[int, Tuple[int, ...]],
+    keepdim: bool = False,
+    tau: Union[float, Tensor] = TAU,
+    alpha: float = ALPHA,
+) -> Tensor:
+    """Computes a smooth approximation to amin(X, dim=dim) with a fat tail.
+
+    Args:
+        X: A Tensor from which to compute the smoothed minimum.
+        dim: The dimensions to reduce over.
+        keepdim: If True, keeps the reduced dimensions.
+        tau: Temperature parameter controlling the smooth approximation
+            to min operator, becomes tighter as tau goes to 0. Needs to be positive.
+        alpha: The exponent of the asymptotic power decay of the approximation. The
+            default value is 2. Higher alpha parameters make the function behave more
+            similarly to the standard logsumexp approximation to the max, so it is
+            recommended to keep this value low or moderate, e.g. < 10.
+
+    Returns:
+        A Tensor of smooth approximations to `amin(X, dim=dim)` with a fat tail.
+    """
+    return -fatmax(-x, dim=dim, keepdim=keepdim, tau=tau, alpha=alpha)
 
 
 def fatmaximum(

@@ -26,7 +26,6 @@ from __future__ import annotations
 import warnings
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from itertools import combinations
 from typing import Callable, List, Optional, Union
 
 import torch
@@ -57,6 +56,7 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
 from botorch.utils.multi_objective.box_decompositions.utils import (
     _pad_batch_pareto_frontier,
 )
+from botorch.utils.multi_objective.hypervolume import SubsetIndexCachingMixin
 from botorch.utils.objective import compute_smoothed_feasibility_indicator
 from botorch.utils.torch import BufferDict
 from botorch.utils.transforms import (
@@ -154,7 +154,9 @@ class MultiObjectiveMCAcquisitionFunction(AcquisitionFunction, MCSamplerMixin, A
         pass  # pragma: no cover
 
 
-class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
+class qExpectedHypervolumeImprovement(
+    MultiObjectiveMCAcquisitionFunction, SubsetIndexCachingMixin
+):
     def __init__(
         self,
         model: Model,
@@ -229,39 +231,7 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
         cell_bounds = partitioning.get_hypercell_bounds()
         self.register_buffer("cell_lower_bounds", cell_bounds[0])
         self.register_buffer("cell_upper_bounds", cell_bounds[1])
-        self.q_out = -1
-        self.q_subset_indices = BufferDict()
-
-    def _cache_q_subset_indices(self, q_out: int) -> None:
-        r"""Cache indices corresponding to all subsets of `q_out`.
-
-        This means that consecutive calls to `forward` with the same
-        `q_out` will not recompute the indices for all (2^q_out - 1) subsets.
-
-        Note: this will use more memory than regenerating the indices
-        for each i and then deleting them, but it will be faster for
-        repeated evaluations (e.g. during optimization).
-
-        Args:
-            q_out: The batch size of the objectives. This is typically equal
-                to the q-batch size of `X`. However, if using a set valued
-                objective (e.g., MVaR) that produces `s` objective values for
-                each point on the q-batch of `X`, we need to properly account
-                for each objective while calculating the hypervolume contributions
-                by using `q_out = q * s`.
-        """
-        if q_out != self.q_out:
-            indices = list(range(q_out))
-            tkwargs = {"dtype": torch.long, "device": self.ref_point.device}
-            self.q_subset_indices = BufferDict(
-                {
-                    f"q_choose_{i}": torch.tensor(
-                        list(combinations(indices, i)), **tkwargs
-                    )
-                    for i in range(1, q_out + 1)
-                }
-            )
-            self.q_out = q_out
+        SubsetIndexCachingMixin.__init__(self)
 
     def _compute_qehvi(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         r"""Compute the expected (feasible) hypervolume improvement given MC samples.
@@ -282,14 +252,15 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
             feas_weights = compute_smoothed_feasibility_indicator(
                 constraints=self.constraints, samples=samples, eta=self.eta
             )  # `sample_shape x batch-shape x q`
-        self._cache_q_subset_indices(q_out=q)
+        device = self.ref_point.device
+        q_subset_indices = self.compute_q_subset_indices(q_out=q, device=device)
         batch_shape = obj.shape[:-2]
         # this is n_samples x input_batch_shape x
         areas_per_segment = torch.zeros(
             *batch_shape,
             self.cell_lower_bounds.shape[-2],
             dtype=obj.dtype,
-            device=obj.device,
+            device=device,
         )
         cell_batch_ndim = self.cell_lower_bounds.ndim - 2
         sample_batch_view_shape = torch.Size(
@@ -310,7 +281,7 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
             # simultaneously since subsets of size i and q-i have the same number of
             # elements. This would decrease the number of iterations, but increase
             # memory usage.
-            q_choose_i = self.q_subset_indices[f"q_choose_{i}"]
+            q_choose_i = q_subset_indices[f"q_choose_{i}"]
             # this tensor is mc_samples x batch_shape x i x q_choose_i x m
             obj_subsets = obj.index_select(dim=-2, index=q_choose_i.view(-1))
             obj_subsets = obj_subsets.view(
