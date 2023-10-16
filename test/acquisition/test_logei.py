@@ -223,12 +223,10 @@ class TestQLogExpectedImprovement(BotorchTestCase):
             acqf = qLogExpectedImprovement(model=mm, best_f=0, sampler=sampler)
             exp_log_res = acqf(X).exp()
             # with no approximations (qEI): self.assertEqual(res[0].item(), 1.0)
-            # in the batch case, the values get adjusted toward
             self.assertEqual(exp_log_res.dtype, dtype)
             self.assertEqual(exp_log_res.device.type, self.device.type)
             self.assertTrue(1.0 <= exp_log_res[0].item())
             self.assertTrue(exp_log_res[0].item() <= 1.0 + acqf.tau_relu)
-            # self.assertAllClose(exp_log_res[0], torch.ones_like(exp_log_res[0]), )
 
             # with no approximations (qEI): self.assertEqual(res[1].item(), 0.0)
             self.assertTrue(0 < exp_log_res[1].item())

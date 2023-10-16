@@ -22,10 +22,13 @@ References
 
 from __future__ import annotations
 
+from itertools import combinations
+
 from typing import List, Optional
 
 import torch
 from botorch.exceptions.errors import BotorchError, BotorchTensorDimensionError
+from botorch.utils.torch import BufferDict
 from torch import Tensor
 
 MIN_Y_RANGE = 1e-7
@@ -412,3 +415,62 @@ class MultiList:
             node.prev[i].next[i] = node
             node.next[i].prev[i] = node
         bounds.data = torch.min(bounds, node.data)
+
+
+class SubsetIndexCachingMixin:
+    """A Mixin class that adds q-subset index computations and caching."""
+
+    def __init__(self):
+        """Initializes the class with q_out = -1 and an empty q_subset_indices dict."""
+        self.q_out: int = -1
+        self.q_subset_indices: BufferDict[str, Tensor] = BufferDict()
+
+    def compute_q_subset_indices(
+        self, q_out: int, device: torch.device
+    ) -> BufferDict[str, Tensor]:
+        r"""Returns and caches a dict of indices equal to subsets of `{1, ..., q_out}`.
+
+        This means that consecutive calls to `self.compute_q_subset_indices` with
+        the same `q_out` do not recompute the indices for all (2^q_out - 1) subsets.
+
+        NOTE: This will use more memory than regenerating the indices
+        for each i and then deleting them, but it will be faster for
+        repeated evaluations (e.g. during optimization).
+
+        Args:
+            q_out: The batch size of the objectives. This is typically equal
+                to the q-batch size of `X`. However, if using a set valued
+                objective (e.g., MVaR) that produces `s` objective values for
+                each point on the q-batch of `X`, we need to properly account
+                for each objective while calculating the hypervolume contributions
+                by using `q_out = q * s`.
+
+        Returns:
+            A dict that maps "q choose i" to all size-i subsets of `{1, ..., q_out}`.
+        """
+        if q_out != self.q_out:
+            self.q_subset_indices = compute_subset_indices(q_out, device=device)
+            self.q_out = q_out
+        return self.q_subset_indices
+
+
+def compute_subset_indices(
+    q: int, device: Optional[torch.device] = None
+) -> BufferDict[str, Tensor]:
+    r"""Compute all (2^q - 1) distinct subsets of {1, ..., `q`}.
+
+    Args:
+        q: An integer defininig the set {1, ..., `q`} whose subsets to compute.
+
+    Returns:
+        A dict that maps "q choose i" to all size-i subsets of {1, ..., `q_out`}.
+    """
+    indices = torch.arange(q, dtype=torch.long, device=device)
+    return BufferDict(
+        {
+            f"q_choose_{i}": torch.tensor(
+                list(combinations(indices, i)), dtype=torch.long, device=device
+            )
+            for i in range(1, q + 1)
+        }
+    )

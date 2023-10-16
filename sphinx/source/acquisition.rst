@@ -90,6 +90,9 @@ Multi-Objective Monte-Carlo Acquisition Functions
     :members:
     :exclude-members: MultiObjectiveMCAcquisitionFunction
 
+.. automodule:: botorch.acquisition.multi_objective.logei
+    :members:
+
 Multi-Objective Multi-Fidelity Acquisition Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.multi_objective.multi_fidelity

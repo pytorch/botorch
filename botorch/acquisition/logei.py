@@ -4,7 +4,15 @@
 # LICENSE file in the root directory of this source tree.
 
 r"""
-Batch implementations of the LogEI family of improvements-based acquisition functions.
+Monte-Carlo variants of the LogEI family of improvements-based acquisition functions,
+see [Ament2023logei]_ for details.
+
+References
+
+.. [Ament2023logei]
+    S. Ament, S. Daulton, D. Eriksson, M. Balandat, and E. Bakshy.
+    Unexpected Improvements to Expected Improvement for Bayesian Optimization. Advances
+    in Neural Information Processing Systems 36, 2023.
 """
 
 from __future__ import annotations
@@ -138,9 +146,11 @@ class qLogExpectedImprovement(LogImprovementMCAcquisitionFunction):
     (3) smoothly maximizing over q, and
     (4) averaging over the samples in log space.
 
-    `qLogEI(X) ~ log(qEI(X)) = log(E(max(max Y - best_f, 0)))`,
+    See [Ament2023logei]_ for details. Formally,
 
-    where `Y ~ f(X)`, and `X = (x_1,...,x_q)`.
+    `qLogEI(X) ~ log(qEI(X)) = log(E(max(max Y - best_f, 0)))`.
+
+    where `Y ~ f(X)`, and `X = (x_1,...,x_q)`, .
 
     Example:
         >>> model = SingleTaskGP(train_X, train_Y)
@@ -237,8 +247,11 @@ class qLogNoisyExpectedImprovement(
     to the canonical improvement over previously observed points is computed
     for each sample and the logarithm of the average is returned.
 
-    `qLogNEI(X) ~ log(qNEI(X)) = Log E(max(max Y - max Y_baseline, 0))`, where
-    `(Y, Y_baseline) ~ f((X, X_baseline)), X = (x_1,...,x_q)`
+    See [Ament2023logei]_ for details. Formally,
+
+    `qLogNEI(X) ~ log(qNEI(X)) = Log E(max(max Y - max Y_baseline, 0))`,
+
+    where `(Y, Y_baseline) ~ f((X, X_baseline)), X = (x_1,...,x_q)`.
 
     Example:
         >>> model = SingleTaskGP(train_X, train_Y)
