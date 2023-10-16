@@ -135,10 +135,18 @@ class TestGetParameters(BotorchTestCase):
                 )
 
         with self.subTest("all params filtered"):
-            params_filtered = get_parameters(self.module, lambda x: "z" in x)
-            self.assertEqual(params_filtered, {})
+            params = get_parameters(self.module, name_filter=lambda x: "z" in x)
+            self.assertEqual(params, {})
 
-            params_filtered = get_parameters(self.module, lambda x: "n" in x)
+            params = get_parameters(self.module, name_filter=lambda x: "n" in x)
+            self.assertEqual(1, len(params))
+            self.assertEqual(next(iter(params)), "noise_covar.raw_noise")
+
+            # requires_grad case
+            params = get_parameters(
+                self.module, requires_grad=False, name_filter=lambda x: "n" in x
+            )
+            self.assertEqual(params, {})
 
     def test_get_parameters_and_bounds(self):
         param_dict, bounds_dict = get_parameters_and_bounds(self.module)
@@ -164,15 +172,21 @@ class TestGetNameFilter(BotorchTestCase):
             get_name_filter(("foo", re.compile("bar"), 1))
 
     def test__get_name_filter(self) -> None:
-        names = ascii_lowercase
-        name_filter = get_name_filter(iter(names[1::2]))
-        self.assertEqual(names[::2], "".join(filter(name_filter, names)))
+        items = tuple(zip(ascii_lowercase, range(len(ascii_lowercase))))
+        aceg_etc = ascii_lowercase[::2]
+        bdfh_etc = ascii_lowercase[1::2]
 
-        items = tuple(zip(names, range(len(names))))
-        self.assertEqual(items[::2], tuple(filter(name_filter, items)))
-
-        self.assertTrue(name_filter("a"))
-        self.assertFalse(name_filter("b"))
+        test_cases = [
+            ("names (str check)", bdfh_etc),
+            ("patterns (regex check)", [re.compile(f"[{bdfh_etc}]")]),
+        ]
+        for arg_type, patterns in test_cases:
+            with self.subTest(arg_type, patterns=patterns):
+                name_filter = get_name_filter(patterns)
+                self.assertEqual(
+                    aceg_etc, "".join(filter(name_filter, ascii_lowercase))
+                )
+                self.assertEqual(items[::2], tuple(filter(name_filter, items)))
 
 
 class TestSampleAllPriors(BotorchTestCase):
