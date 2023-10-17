@@ -125,7 +125,10 @@ class GPyTorchPosterior(TorchPosterior):
             `self._extended_shape(sample_shape=sample_shape)`.
         """
         if base_samples.shape[: len(sample_shape)] != sample_shape:
-            raise RuntimeError("`sample_shape` disagrees with shape of `base_samples`.")
+            raise RuntimeError(
+                "`sample_shape` disagrees with shape of `base_samples`. "
+                f"Got {sample_shape=} and {base_samples.shape=}."
+            )
         if self._is_mt:
             base_samples = _reshape_base_samples_non_interleaved(
                 mvn=self.distribution,
@@ -171,7 +174,8 @@ class GPyTorchPosterior(TorchPosterior):
             )
             if base_samples.shape[: len(sample_shape)] != sample_shape:
                 raise RuntimeError(
-                    "`sample_shape` disagrees with shape of `base_samples`."
+                    "`sample_shape` disagrees with shape of `base_samples`. "
+                    f"Got {sample_shape=} and {base_samples.shape=}."
                 )
             # get base_samples to the correct shape
             base_samples = base_samples.expand(self._extended_shape(sample_shape))

@@ -51,7 +51,7 @@ class TestPairwiseLikelihood(BotorchTestCase):
             n_datapoints = 4
             n_comps = 3
             X_dim = 4
-            train_X = torch.rand(*batch_shape, n_datapoints, X_dim)
+            train_X = torch.rand(*batch_shape, n_datapoints, X_dim, dtype=torch.double)
             train_Y = train_X.sum(dim=-1, keepdim=True)
             train_comp = torch.stack(
                 [

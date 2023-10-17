@@ -129,7 +129,7 @@ class TestQNegIntegratedPosteriorVariance(BotorchTestCase):
 
 class TestPairwiseMCPosteriorVariance(BotorchTestCase):
     def test_pairwise_mc_post_var(self):
-        train_X = torch.tensor([[0.0, 0.0, 0.0], [1.0, 1.0, 0.0]])
+        train_X = torch.tensor([[0.0, 0.0, 0.0], [1.0, 1.0, 0.0]], dtype=torch.double)
         train_comp = torch.tensor([[0, 1]], dtype=torch.long)
         model = PairwiseGP(train_X, train_comp)
 
