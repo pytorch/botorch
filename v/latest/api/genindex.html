@@ -338,6 +338,13 @@
 </li>
 </ul></li>
 <li>
+    botorch.acquisition.multi_objective.logei
+
+      <ul>
+<li><a href="acquisition.html#module-botorch.acquisition.multi_objective.logei">module</a>
+</li>
+</ul></li>
+<li>
     botorch.acquisition.multi_objective.max_value_entropy_search
 
       <ul>
@@ -750,6 +757,8 @@
 <li><a href="models.html#module-botorch.models.utils.gpytorch_modules">module</a>
 </li>
 </ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.models.utils.inducing_point_allocators
 
@@ -757,8 +766,6 @@
 <li><a href="models.html#module-botorch.models.utils.inducing_point_allocators">module</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.models.utils.parse_training_data
 
@@ -1483,9 +1490,13 @@
 </li>
 <li><a href="utils.html#botorch.utils.multi_objective.box_decompositions.utils.compute_non_dominated_hypercell_bounds_2d">compute_non_dominated_hypercell_bounds_2d() (in module botorch.utils.multi_objective.box_decompositions.utils)</a>
 </li>
+<li><a href="utils.html#botorch.utils.multi_objective.hypervolume.SubsetIndexCachingMixin.compute_q_subset_indices">compute_q_subset_indices() (botorch.utils.multi_objective.hypervolume.SubsetIndexCachingMixin method)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.utils.compute_sample_box_decomposition">compute_sample_box_decomposition() (in module botorch.acquisition.multi_objective.utils)</a>
 </li>
 <li><a href="utils.html#botorch.utils.objective.compute_smoothed_feasibility_indicator">compute_smoothed_feasibility_indicator() (in module botorch.utils.objective)</a>
+</li>
+<li><a href="utils.html#botorch.utils.multi_objective.hypervolume.compute_subset_indices">compute_subset_indices() (in module botorch.utils.multi_objective.hypervolume)</a>
 </li>
 <li><a href="utils.html#botorch.utils.probability.linalg.PivotedCholesky.concat">concat() (botorch.utils.probability.linalg.PivotedCholesky method)</a>
 <ul>
@@ -1511,10 +1522,10 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.CONSTR">CONSTR (class in botorch.test_functions.multi_objective)</a>
 </li>
-<li><a href="test_functions.html#botorch.test_functions.base.ConstrainedBaseTestProblem">ConstrainedBaseTestProblem (class in botorch.test_functions.base)</a>
-</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="test_functions.html#botorch.test_functions.base.ConstrainedBaseTestProblem">ConstrainedBaseTestProblem (class in botorch.test_functions.base)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.ConstrainedBraninCurrin">ConstrainedBraninCurrin (class in botorch.test_functions.multi_objective)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.analytic.ConstrainedExpectedImprovement">ConstrainedExpectedImprovement (class in botorch.acquisition.analytic)</a>
@@ -2178,6 +2189,8 @@
 </li>
 <li><a href="utils.html#botorch.utils.safe_math.fatmaximum">fatmaximum() (in module botorch.utils.safe_math)</a>
 </li>
+<li><a href="utils.html#botorch.utils.safe_math.fatmin">fatmin() (in module botorch.utils.safe_math)</a>
+</li>
 <li><a href="utils.html#botorch.utils.safe_math.fatminimum">fatminimum() (in module botorch.utils.safe_math)</a>
 </li>
 <li><a href="utils.html#botorch.utils.safe_math.fatmoid">fatmoid() (in module botorch.utils.safe_math)</a>
@@ -2283,6 +2296,8 @@
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.joint_entropy_search.LowerBoundMultiObjectiveEntropySearch.forward">(botorch.acquisition.multi_objective.joint_entropy_search.LowerBoundMultiObjectiveEntropySearch method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch.forward">(botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch method)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.logei.qLogExpectedHypervolumeImprovement.forward">(botorch.acquisition.multi_objective.logei.qLogExpectedHypervolumeImprovement method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.max_value_entropy_search.qLowerBoundMultiObjectiveMaxValueEntropySearch.forward">(botorch.acquisition.multi_objective.max_value_entropy_search.qLowerBoundMultiObjectiveMaxValueEntropySearch method)</a>
 </li>
@@ -3128,6 +3143,8 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch.model">(botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch attribute)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.logei.qLogExpectedHypervolumeImprovement.model">(botorch.acquisition.multi_objective.logei.qLogExpectedHypervolumeImprovement attribute)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.max_value_entropy_search.qLowerBoundMultiObjectiveMaxValueEntropySearch.model">(botorch.acquisition.multi_objective.max_value_entropy_search.qLowerBoundMultiObjectiveMaxValueEntropySearch attribute)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.max_value_entropy_search.qMultiObjectiveMaxValueEntropy.model">(botorch.acquisition.multi_objective.max_value_entropy_search.qMultiObjectiveMaxValueEntropy attribute)</a>
@@ -3198,6 +3215,8 @@
 <li><a href="acquisition.html#module-botorch.acquisition.multi_objective.analytic">botorch.acquisition.multi_objective.analytic</a>
 </li>
 <li><a href="acquisition.html#module-botorch.acquisition.multi_objective.joint_entropy_search">botorch.acquisition.multi_objective.joint_entropy_search</a>
+</li>
+<li><a href="acquisition.html#module-botorch.acquisition.multi_objective.logei">botorch.acquisition.multi_objective.logei</a>
 </li>
 <li><a href="acquisition.html#module-botorch.acquisition.multi_objective.max_value_entropy_search">botorch.acquisition.multi_objective.max_value_entropy_search</a>
 </li>
@@ -3973,6 +3992,16 @@
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="optim.html#botorch.optim.optimize.OptimizeAcqfInputs.q">q (botorch.optim.optimize.OptimizeAcqfInputs attribute)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.q_out">q_out (botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement attribute)</a>
+<ul>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_fidelity.MOMF.q_out">(botorch.acquisition.multi_objective.multi_fidelity.MOMF attribute)</a>
+</li>
+</ul></li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.q_subset_indices">q_subset_indices (botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement attribute)</a>
+<ul>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_fidelity.MOMF.q_subset_indices">(botorch.acquisition.multi_objective.multi_fidelity.MOMF attribute)</a>
+</li>
+</ul></li>
 <li><a href="acquisition.html#botorch.acquisition.analytic.qAnalyticProbabilityOfImprovement">qAnalyticProbabilityOfImprovement (class in botorch.acquisition.analytic)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement">qExpectedHypervolumeImprovement (class in botorch.acquisition.multi_objective.monte_carlo)</a>
@@ -3982,6 +4011,8 @@
 <li><a href="acquisition.html#botorch.acquisition.joint_entropy_search.qJointEntropySearch">qJointEntropySearch (class in botorch.acquisition.joint_entropy_search)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient">qKnowledgeGradient (class in botorch.acquisition.knowledge_gradient)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.logei.qLogExpectedHypervolumeImprovement">qLogExpectedHypervolumeImprovement (class in botorch.acquisition.multi_objective.logei)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.logei.qLogExpectedImprovement">qLogExpectedImprovement (class in botorch.acquisition.logei)</a>
 </li>
@@ -3995,12 +4026,12 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.max_value_entropy_search.qMaxValueEntropy">qMaxValueEntropy (class in botorch.acquisition.max_value_entropy_search)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient">qMultiFidelityKnowledgeGradient (class in botorch.acquisition.knowledge_gradient)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.max_value_entropy_search.qMultiFidelityLowerBoundMaxValueEntropy">qMultiFidelityLowerBoundMaxValueEntropy (class in botorch.acquisition.max_value_entropy_search)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="acquisition.html#botorch.acquisition.max_value_entropy_search.qMultiFidelityMaxValueEntropy">qMultiFidelityMaxValueEntropy (class in botorch.acquisition.max_value_entropy_search)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.max_value_entropy_search.qMultiObjectiveMaxValueEntropy">qMultiObjectiveMaxValueEntropy (class in botorch.acquisition.multi_objective.max_value_entropy_search)</a>
@@ -4261,10 +4292,10 @@
 </ul></li>
 <li><a href="logging.html#botorch.logging.shape_to_str">shape_to_str() (in module botorch.logging)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Shekel">Shekel (class in botorch.test_functions.synthetic)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="optim.html#botorch.optim.homotopy.FixedHomotopySchedule.should_stop">should_stop (botorch.optim.homotopy.FixedHomotopySchedule property)</a>
 <ul>
 <li><a href="optim.html#botorch.optim.homotopy.Homotopy.should_stop">(botorch.optim.homotopy.Homotopy property)</a>
@@ -4287,6 +4318,8 @@
 <li><a href="utils.html#botorch.utils.containers.SliceContainer">SliceContainer (class in botorch.utils.containers)</a>
 </li>
 <li><a href="utils.html#botorch.utils.safe_math.smooth_amax">smooth_amax() (in module botorch.utils.safe_math)</a>
+</li>
+<li><a href="utils.html#botorch.utils.safe_math.smooth_amin">smooth_amin() (in module botorch.utils.safe_math)</a>
 </li>
 <li><a href="sampling.html#botorch.sampling.normal.SobolQMCNormalSampler">SobolQMCNormalSampler (class in botorch.sampling.normal)</a>
 </li>
@@ -4370,6 +4403,8 @@
 </li>
 </ul></li>
 <li><a href="models.html#botorch.models.transforms.utils.subset_transform">subset_transform() (in module botorch.models.transforms.utils)</a>
+</li>
+<li><a href="utils.html#botorch.utils.multi_objective.hypervolume.SubsetIndexCachingMixin">SubsetIndexCachingMixin (class in botorch.utils.multi_objective.hypervolume)</a>
 </li>
 <li><a href="optim.html#botorch.optim.core.OptimizationStatus.SUCCESS">SUCCESS (botorch.optim.core.OptimizationStatus attribute)</a>
 </li>
@@ -4520,6 +4555,8 @@
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.joint_entropy_search.LowerBoundMultiObjectiveEntropySearch.training">(botorch.acquisition.multi_objective.joint_entropy_search.LowerBoundMultiObjectiveEntropySearch attribute)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch.training">(botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch attribute)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.logei.qLogExpectedHypervolumeImprovement.training">(botorch.acquisition.multi_objective.logei.qLogExpectedHypervolumeImprovement attribute)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.max_value_entropy_search.qLowerBoundMultiObjectiveMaxValueEntropySearch.training">(botorch.acquisition.multi_objective.max_value_entropy_search.qLowerBoundMultiObjectiveMaxValueEntropySearch attribute)</a>
 </li>

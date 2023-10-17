@@ -292,6 +292,16 @@
     <span class="k">return</span> <span class="n">logsumexp</span><span class="p">(</span><span class="n">X</span> <span class="o">/</span> <span class="n">tau</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="n">keepdim</span><span class="p">)</span> <span class="o">*</span> <span class="n">tau</span>  <span class="c1"># ~ X.amax(dim=dim)</span></div>
 
 
+<div class="viewcode-block" id="smooth_amin"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.smooth_amin">[docs]</a><span class="k">def</span> <span class="nf">smooth_amin</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">dim</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">keepdim</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">tau</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A smooth approximation to `min(X, dim=dim)`, similar to `smooth_amax`."""</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">smooth_amax</span><span class="p">(</span><span class="n">X</span><span class="o">=-</span><span class="n">X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="n">keepdim</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="n">tau</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="check_dtype_float32_or_float64"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.check_dtype_float32_or_float64">[docs]</a><span class="k">def</span> <span class="nf">check_dtype_float32_or_float64</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span> <span class="ow">and</span> <span class="n">X</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
@@ -339,7 +349,7 @@
 <span class="w">    </span><span class="sd">"""Computes a smooth approximation to amax(X, dim=dim) with a fat tail.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        X: A Tensor from which to compute the smoothed amax.</span>
+<span class="sd">        X: A Tensor from which to compute the smoothed maximum.</span>
 <span class="sd">        dim: The dimensions to reduce over.</span>
 <span class="sd">        keepdim: If True, keeps the reduced dimensions.</span>
 <span class="sd">        tau: Temperature parameter controlling the smooth approximation</span>
@@ -350,7 +360,7 @@
 <span class="sd">            recommended to keep this value low or moderate, e.g. &lt; 10.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        A Tensor of smooth approximations to `max(X, dim=dim)` with a fat tail.</span>
+<span class="sd">        A Tensor of smooth approximations to `amax(X, dim=dim)` with a fat tail.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="nf">max_fun</span><span class="p">(</span>
@@ -359,6 +369,32 @@
         <span class="k">return</span> <span class="n">tau</span> <span class="o">*</span> <span class="n">_pareto</span><span class="p">(</span><span class="o">-</span><span class="n">x</span> <span class="o">/</span> <span class="n">tau</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="n">keepdim</span><span class="p">)</span><span class="o">.</span><span class="n">log</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">_inf_max_helper</span><span class="p">(</span><span class="n">max_fun</span><span class="o">=</span><span class="n">max_fun</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="n">keepdim</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="fatmin"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.fatmin">[docs]</a><span class="k">def</span> <span class="nf">fatmin</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">dim</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]],</span>
+    <span class="n">keepdim</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">tau</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="n">TAU</span><span class="p">,</span>
+    <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">ALPHA</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Computes a smooth approximation to amin(X, dim=dim) with a fat tail.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: A Tensor from which to compute the smoothed minimum.</span>
+<span class="sd">        dim: The dimensions to reduce over.</span>
+<span class="sd">        keepdim: If True, keeps the reduced dimensions.</span>
+<span class="sd">        tau: Temperature parameter controlling the smooth approximation</span>
+<span class="sd">            to min operator, becomes tighter as tau goes to 0. Needs to be positive.</span>
+<span class="sd">        alpha: The exponent of the asymptotic power decay of the approximation. The</span>
+<span class="sd">            default value is 2. Higher alpha parameters make the function behave more</span>
+<span class="sd">            similarly to the standard logsumexp approximation to the max, so it is</span>
+<span class="sd">            recommended to keep this value low or moderate, e.g. &lt; 10.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A Tensor of smooth approximations to `amin(X, dim=dim)` with a fat tail.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">fatmax</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="n">keepdim</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="n">tau</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="fatmaximum"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.fatmaximum">[docs]</a><span class="k">def</span> <span class="nf">fatmaximum</span><span class="p">(</span>

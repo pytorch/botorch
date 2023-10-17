@@ -385,6 +385,8 @@
 <span class="sd">    to avoid numerical issues in the computation of the acquisition value and its</span>
 <span class="sd">    gradient in regions where improvement is predicted to be virtually impossible.</span>
 
+<span class="sd">    See [Ament2023logei]_ for details. Formally,</span>
+
 <span class="sd">    `LogEI(x) = log(E(max(f(x) - best_f, 0))),`</span>
 
 <span class="sd">    where the expectation is taken over the value of stochastic function `f` at `x`.</span>
@@ -446,7 +448,10 @@
 <span class="sd">    multi-outcome, with the index of the objective and constraints passed to</span>
 <span class="sd">    the constructor.</span>
 
+<span class="sd">    See [Ament2023logei]_ for details. Formally,</span>
+
 <span class="sd">    `LogConstrainedEI(x) = log(EI(x)) + Sum_i log(P(y_i \in [lower_i, upper_i]))`,</span>
+
 <span class="sd">    where `y_i ~ constraint_i(x)` and `lower_i`, `upper_i` are the lower and</span>
 <span class="sd">    upper bounds for the i-th constraint, respectively.</span>
 
@@ -592,7 +597,10 @@
 <span class="sd">    `q=1`. Assumes that the posterior distribution of the model is Gaussian.</span>
 <span class="sd">    The model must be single-outcome.</span>
 
+<span class="sd">    See [Ament2023logei]_ for details. Formally,</span>
+
 <span class="sd">    `LogNEI(x) = log(E(max(y - max Y_base), 0))), (y, Y_base) ~ f((x, X_base))`,</span>
+
 <span class="sd">    where `X_base` are previously observed points.</span>
 
 <span class="sd">    Note: This acquisition function currently relies on using a FixedNoiseGP (required</span>

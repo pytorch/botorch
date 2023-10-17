@@ -49,7 +49,6 @@
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">combinations</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -80,6 +79,7 @@
 <span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.utils</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">_pad_batch_pareto_frontier</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.hypervolume</span> <span class="kn">import</span> <span class="n">SubsetIndexCachingMixin</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.objective</span> <span class="kn">import</span> <span class="n">compute_smoothed_feasibility_indicator</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.torch</span> <span class="kn">import</span> <span class="n">BufferDict</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="p">(</span>
@@ -177,7 +177,9 @@
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div></div>
 
 
-<div class="viewcode-block" id="qExpectedHypervolumeImprovement"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement">[docs]</a><span class="k">class</span> <span class="nc">qExpectedHypervolumeImprovement</span><span class="p">(</span><span class="n">MultiObjectiveMCAcquisitionFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="qExpectedHypervolumeImprovement"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement">[docs]</a><span class="k">class</span> <span class="nc">qExpectedHypervolumeImprovement</span><span class="p">(</span>
+    <span class="n">MultiObjectiveMCAcquisitionFunction</span><span class="p">,</span> <span class="n">SubsetIndexCachingMixin</span>
+<span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
@@ -252,39 +254,7 @@
         <span class="n">cell_bounds</span> <span class="o">=</span> <span class="n">partitioning</span><span class="o">.</span><span class="n">get_hypercell_bounds</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"cell_lower_bounds"</span><span class="p">,</span> <span class="n">cell_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"cell_upper_bounds"</span><span class="p">,</span> <span class="n">cell_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">q_out</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">q_subset_indices</span> <span class="o">=</span> <span class="n">BufferDict</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">_cache_q_subset_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q_out</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Cache indices corresponding to all subsets of `q_out`.</span>
-
-<span class="sd">        This means that consecutive calls to `forward` with the same</span>
-<span class="sd">        `q_out` will not recompute the indices for all (2^q_out - 1) subsets.</span>
-
-<span class="sd">        Note: this will use more memory than regenerating the indices</span>
-<span class="sd">        for each i and then deleting them, but it will be faster for</span>
-<span class="sd">        repeated evaluations (e.g. during optimization).</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            q_out: The batch size of the objectives. This is typically equal</span>
-<span class="sd">                to the q-batch size of `X`. However, if using a set valued</span>
-<span class="sd">                objective (e.g., MVaR) that produces `s` objective values for</span>
-<span class="sd">                each point on the q-batch of `X`, we need to properly account</span>
-<span class="sd">                for each objective while calculating the hypervolume contributions</span>
-<span class="sd">                by using `q_out = q * s`.</span>
-<span class="sd">        """</span>
-        <span class="k">if</span> <span class="n">q_out</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_out</span><span class="p">:</span>
-            <span class="n">indices</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">q_out</span><span class="p">))</span>
-            <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dtype"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="o">.</span><span class="n">device</span><span class="p">}</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">q_subset_indices</span> <span class="o">=</span> <span class="n">BufferDict</span><span class="p">(</span>
-                <span class="p">{</span>
-                    <span class="sa">f</span><span class="s2">"q_choose_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
-                        <span class="nb">list</span><span class="p">(</span><span class="n">combinations</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">i</span><span class="p">)),</span> <span class="o">**</span><span class="n">tkwargs</span>
-                    <span class="p">)</span>
-                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">q_out</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-                <span class="p">}</span>
-            <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">q_out</span> <span class="o">=</span> <span class="n">q_out</span>
+        <span class="n">SubsetIndexCachingMixin</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_compute_qehvi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the expected (feasible) hypervolume improvement given MC samples.</span>
@@ -305,14 +275,15 @@
             <span class="n">feas_weights</span> <span class="o">=</span> <span class="n">compute_smoothed_feasibility_indicator</span><span class="p">(</span>
                 <span class="n">constraints</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">eta</span>
             <span class="p">)</span>  <span class="c1"># `sample_shape x batch-shape x q`</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_cache_q_subset_indices</span><span class="p">(</span><span class="n">q_out</span><span class="o">=</span><span class="n">q</span><span class="p">)</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="o">.</span><span class="n">device</span>
+        <span class="n">q_subset_indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_q_subset_indices</span><span class="p">(</span><span class="n">q_out</span><span class="o">=</span><span class="n">q</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
         <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
         <span class="c1"># this is n_samples x input_batch_shape x</span>
         <span class="n">areas_per_segment</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
             <span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">cell_lower_bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span>
             <span class="n">dtype</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-            <span class="n">device</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+            <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">cell_batch_ndim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_lower_bounds</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span>
         <span class="n">sample_batch_view_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">(</span>
@@ -333,7 +304,7 @@
             <span class="c1"># simultaneously since subsets of size i and q-i have the same number of</span>
             <span class="c1"># elements. This would decrease the number of iterations, but increase</span>
             <span class="c1"># memory usage.</span>
-            <span class="n">q_choose_i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_subset_indices</span><span class="p">[</span><span class="sa">f</span><span class="s2">"q_choose_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span>
+            <span class="n">q_choose_i</span> <span class="o">=</span> <span class="n">q_subset_indices</span><span class="p">[</span><span class="sa">f</span><span class="s2">"q_choose_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span>
             <span class="c1"># this tensor is mc_samples x batch_shape x i x q_choose_i x m</span>
             <span class="n">obj_subsets</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">q_choose_i</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
             <span class="n">obj_subsets</span> <span class="o">=</span> <span class="n">obj_subsets</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>

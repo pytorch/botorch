@@ -45,10 +45,13 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">combinations</span>
+
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchError</span><span class="p">,</span> <span class="n">BotorchTensorDimensionError</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.torch</span> <span class="kn">import</span> <span class="n">BufferDict</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 <span class="n">MIN_Y_RANGE</span> <span class="o">=</span> <span class="mf">1e-7</span>
@@ -435,6 +438,65 @@
             <span class="n">node</span><span class="o">.</span><span class="n">prev</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">next</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span>
             <span class="n">node</span><span class="o">.</span><span class="n">next</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">prev</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span>
         <span class="n">bounds</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SubsetIndexCachingMixin"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.SubsetIndexCachingMixin">[docs]</a><span class="k">class</span> <span class="nc">SubsetIndexCachingMixin</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A Mixin class that adds q-subset index computations and caching."""</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Initializes the class with q_out = -1 and an empty q_subset_indices dict."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">q_out</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">q_subset_indices</span><span class="p">:</span> <span class="n">BufferDict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="n">BufferDict</span><span class="p">()</span>
+
+<div class="viewcode-block" id="SubsetIndexCachingMixin.compute_q_subset_indices"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.SubsetIndexCachingMixin.compute_q_subset_indices">[docs]</a>    <span class="k">def</span> <span class="nf">compute_q_subset_indices</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">q_out</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BufferDict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Returns and caches a dict of indices equal to subsets of `{1, ..., q_out}`.</span>
+
+<span class="sd">        This means that consecutive calls to `self.compute_q_subset_indices` with</span>
+<span class="sd">        the same `q_out` do not recompute the indices for all (2^q_out - 1) subsets.</span>
+
+<span class="sd">        NOTE: This will use more memory than regenerating the indices</span>
+<span class="sd">        for each i and then deleting them, but it will be faster for</span>
+<span class="sd">        repeated evaluations (e.g. during optimization).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            q_out: The batch size of the objectives. This is typically equal</span>
+<span class="sd">                to the q-batch size of `X`. However, if using a set valued</span>
+<span class="sd">                objective (e.g., MVaR) that produces `s` objective values for</span>
+<span class="sd">                each point on the q-batch of `X`, we need to properly account</span>
+<span class="sd">                for each objective while calculating the hypervolume contributions</span>
+<span class="sd">                by using `q_out = q * s`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A dict that maps "q choose i" to all size-i subsets of `{1, ..., q_out}`.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">q_out</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_out</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">q_subset_indices</span> <span class="o">=</span> <span class="n">compute_subset_indices</span><span class="p">(</span><span class="n">q_out</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">q_out</span> <span class="o">=</span> <span class="n">q_out</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_subset_indices</span></div></div>
+
+
+<div class="viewcode-block" id="compute_subset_indices"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.compute_subset_indices">[docs]</a><span class="k">def</span> <span class="nf">compute_subset_indices</span><span class="p">(</span>
+    <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BufferDict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Compute all (2^q - 1) distinct subsets of {1, ..., `q`}.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        q: An integer defininig the set {1, ..., `q`} whose subsets to compute.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dict that maps "q choose i" to all size-i subsets of {1, ..., `q_out`}.</span>
+<span class="sd">    """</span>
+    <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">BufferDict</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="sa">f</span><span class="s2">"q_choose_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+                <span class="nb">list</span><span class="p">(</span><span class="n">combinations</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">i</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">q</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
 </pre></div>
 </div>
 </div>

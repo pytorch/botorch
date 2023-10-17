@@ -2818,6 +2818,24 @@ to max operator, becomes tighter as tau goes to 0. Needs to be positive.</p></li
 </dl>
 </dd></dl>
 <dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.smooth_amin">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">smooth_amin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keepdim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#smooth_amin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.smooth_amin" title="Permalink to this definition">¶</a></dt>
+<dd><p>A smooth approximation to <cite>min(X, dim=dim)</cite>, similar to <cite>smooth_amax</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>dim</strong> (<em>int</em><em> | </em><em>Tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em>) – </p></li>
+<li><p><strong>keepdim</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.safe_math.check_dtype_float32_or_float64">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">check_dtype_float32_or_float64</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#check_dtype_float32_or_float64"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.check_dtype_float32_or_float64" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -2876,7 +2894,7 @@ monotonicity and convexity.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> – A Tensor from which to compute the smoothed amax.</p></li>
+<li><p><strong>X</strong> – A Tensor from which to compute the smoothed maximum.</p></li>
 <li><p><strong>dim</strong> (<em>int</em><em> | </em><em>Tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em>) – The dimensions to reduce over.</p></li>
 <li><p><strong>keepdim</strong> (<em>bool</em>) – If True, keeps the reduced dimensions.</p></li>
 <li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – Temperature parameter controlling the smooth approximation
@@ -2889,7 +2907,34 @@ recommended to keep this value low or moderate, e.g. &lt; 10.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A Tensor of smooth approximations to <cite>max(X, dim=dim)</cite> with a fat tail.</p>
+<dd class="field-even"><p>A Tensor of smooth approximations to <cite>amax(X, dim=dim)</cite> with a fat tail.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.fatmin">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">fatmin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keepdim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#fatmin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.fatmin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes a smooth approximation to amin(X, dim=dim) with a fat tail.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> – A Tensor from which to compute the smoothed minimum.</p></li>
+<li><p><strong>dim</strong> (<em>int</em><em> | </em><em>Tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em>) – The dimensions to reduce over.</p></li>
+<li><p><strong>keepdim</strong> (<em>bool</em>) – If True, keeps the reduced dimensions.</p></li>
+<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – Temperature parameter controlling the smooth approximation
+to min operator, becomes tighter as tau goes to 0. Needs to be positive.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – The exponent of the asymptotic power decay of the approximation. The
+default value is 2. Higher alpha parameters make the function behave more
+similarly to the standard logsumexp approximation to the max, so it is
+recommended to keep this value low or moderate, e.g. &lt; 10.</p></li>
+<li><p><strong>x</strong> (<em>Tensor</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A Tensor of smooth approximations to <cite>amin(X, dim=dim)</cite> with a fat tail.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Tensor</em></p>
@@ -3501,6 +3546,61 @@ nodes of the node that is reinserted are in the list.</p>
 </dd>
 </dl>
 </dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.hypervolume.SubsetIndexCachingMixin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.hypervolume.</span></span><span class="sig-name descname"><span class="pre">SubsetIndexCachingMixin</span></span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#SubsetIndexCachingMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.SubsetIndexCachingMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A Mixin class that adds q-subset index computations and caching.</p>
+<p>Initializes the class with q_out = -1 and an empty q_subset_indices dict.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.hypervolume.SubsetIndexCachingMixin.compute_q_subset_indices">
+<span class="sig-name descname"><span class="pre">compute_q_subset_indices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q_out</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#SubsetIndexCachingMixin.compute_q_subset_indices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.SubsetIndexCachingMixin.compute_q_subset_indices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns and caches a dict of indices equal to subsets of <cite>{1, …, q_out}</cite>.</p>
+<p>This means that consecutive calls to <cite>self.compute_q_subset_indices</cite> with
+the same <cite>q_out</cite> do not recompute the indices for all (2^q_out - 1) subsets.</p>
+<p>NOTE: This will use more memory than regenerating the indices
+for each i and then deleting them, but it will be faster for
+repeated evaluations (e.g. during optimization).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>q_out</strong> (<em>int</em>) – The batch size of the objectives. This is typically equal
+to the q-batch size of <cite>X</cite>. However, if using a set valued
+objective (e.g., MVaR) that produces <cite>s</cite> objective values for
+each point on the q-batch of <cite>X</cite>, we need to properly account
+for each objective while calculating the hypervolume contributions
+by using <cite>q_out = q * s</cite>.</p></li>
+<li><p><strong>device</strong> (<em>torch.device</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dict that maps “q choose i” to all size-i subsets of <cite>{1, …, q_out}</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.utils.torch.BufferDict" title="botorch.utils.torch.BufferDict">BufferDict</a>[str, Tensor]</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.hypervolume.compute_subset_indices">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.hypervolume.</span></span><span class="sig-name descname"><span class="pre">compute_subset_indices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#compute_subset_indices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.compute_subset_indices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute all (2^q - 1) distinct subsets of {1, …, <cite>q</cite>}.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>q</strong> (<em>int</em>) – An integer defininig the set {1, …, <cite>q</cite>} whose subsets to compute.</p></li>
+<li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>torch.device</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dict that maps “q choose i” to all size-i subsets of {1, …, <cite>q_out</cite>}.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.utils.torch.BufferDict" title="botorch.utils.torch.BufferDict">BufferDict</a>[str, Tensor]</p>
+</dd>
+</dl>
 </dd></dl>
 </section>
 <section id="module-botorch.utils.multi_objective.box_decompositions.non_dominated">
