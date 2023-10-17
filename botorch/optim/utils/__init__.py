@@ -15,7 +15,6 @@ from botorch.optim.utils.common import (
     _warning_handler_template,
 )
 from botorch.optim.utils.model_utils import (
-    _get_extra_mll_args,
     get_data_loader,
     get_name_filter,
     get_parameters,
@@ -33,7 +32,6 @@ from botorch.optim.utils.timeout import minimize_with_timeout
 
 __all__ = [
     "_filter_kwargs",
-    "_get_extra_mll_args",
     "_handle_numerical_errors",
     "_warning_handler_template",
     "as_ndarray",
