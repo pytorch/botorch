@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, patch
 
 import torch
 from botorch import settings
-from botorch.models import ModelListGP, SingleTaskGP
+from botorch.models import SingleTaskGP
 from botorch.optim.utils import (
     get_data_loader,
     get_name_filter,
@@ -29,8 +29,6 @@ from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
-from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
-from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 from gpytorch.priors import UniformPrior
 from gpytorch.priors.prior import Prior
 from gpytorch.priors.torch_priors import GammaPrior
