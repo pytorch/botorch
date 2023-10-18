@@ -75,7 +75,7 @@ class TestCategoricalKernel(BotorchTestCase, BaseKernelTestCase):
         self.assertAllClose(res, actual)
 
         # diag
-        res = kernel(x1, x2).diag()
+        res = kernel(x1, x2).diagonal()
         actual = torch.diagonal(actual, dim1=-1, dim2=-2)
         self.assertAllClose(res, actual)
 
@@ -85,7 +85,7 @@ class TestCategoricalKernel(BotorchTestCase, BaseKernelTestCase):
         self.assertAllClose(res, actual)
 
         # batch_dims + diag
-        res = kernel(x1, x2, last_dim_is_batch=True).diag()
+        res = kernel(x1, x2, last_dim_is_batch=True).diagonal()
         self.assertAllClose(res, torch.diagonal(actual, dim1=-1, dim2=-2))
 
     def test_ard_batch(self):
@@ -131,7 +131,7 @@ class TestCategoricalKernel(BotorchTestCase, BaseKernelTestCase):
         self.assertAllClose(res, actual)
 
         # diag
-        res = kernel(x1, x2).diag()
+        res = kernel(x1, x2).diagonal()
         actual = torch.diagonal(actual, dim1=-1, dim2=-2)
         self.assertAllClose(res, actual)
 
@@ -141,5 +141,5 @@ class TestCategoricalKernel(BotorchTestCase, BaseKernelTestCase):
         self.assertAllClose(res, actual)
 
         # batch_dims + diag
-        res = kernel(x1, x2, last_dim_is_batch=True).diag()
+        res = kernel(x1, x2, last_dim_is_batch=True).diagonal()
         self.assertAllClose(res, torch.diagonal(actual, dim1=-1, dim2=-2))
