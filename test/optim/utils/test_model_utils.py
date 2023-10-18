@@ -16,7 +16,6 @@ import torch
 from botorch import settings
 from botorch.models import ModelListGP, SingleTaskGP
 from botorch.optim.utils import (
-    _get_extra_mll_args,
     get_data_loader,
     get_name_filter,
     get_parameters,
@@ -49,38 +48,6 @@ class DummyPriorRuntimeError(Prior):
 
     def rsample(self, sample_shape=torch.Size()):  # noqa: B008
         raise RuntimeError("Another runtime error.")
-
-
-class TestGetExtraMllArgs(BotorchTestCase):
-    def test_get_extra_mll_args(self):
-        train_X = torch.rand(3, 5)
-        train_Y = torch.rand(3, 1)
-        model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
-
-        # test ExactMarginalLogLikelihood
-        exact_mll = ExactMarginalLogLikelihood(model.likelihood, model)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=DeprecationWarning)
-            exact_extra_args = _get_extra_mll_args(mll=exact_mll)
-        self.assertEqual(len(exact_extra_args), 1)
-        self.assertTrue(torch.equal(exact_extra_args[0], train_X))
-
-        # test SumMarginalLogLikelihood
-        model2 = ModelListGP(model)
-        sum_mll = SumMarginalLogLikelihood(model2.likelihood, model2)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=DeprecationWarning)
-            sum_mll_extra_args = _get_extra_mll_args(mll=sum_mll)
-        self.assertEqual(len(sum_mll_extra_args), 1)
-        self.assertEqual(len(sum_mll_extra_args[0]), 1)
-        self.assertTrue(torch.equal(sum_mll_extra_args[0][0], train_X))
-
-        # test unsupported MarginalLogLikelihood type
-        unsupported_mll = MarginalLogLikelihood(model.likelihood, model)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=DeprecationWarning)
-            unsupported_mll_extra_args = _get_extra_mll_args(mll=unsupported_mll)
-        self.assertEqual(unsupported_mll_extra_args, [])
 
 
 class TestGetDataLoader(BotorchTestCase):
