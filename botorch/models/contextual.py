@@ -4,11 +4,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from botorch.models.gp_regression import FixedNoiseGP
 from botorch.models.kernels.contextual_lcea import LCEAKernel
 from botorch.models.kernels.contextual_sac import SACKernel
+from botorch.utils.datasets import SupervisedDataset
 from torch import Tensor
 
 
@@ -40,6 +41,26 @@ class SACGP(FixedNoiseGP):
         self.decomposition = decomposition
         self.to(train_X)
 
+    @classmethod
+    def construct_inputs(
+        cls,
+        training_data: SupervisedDataset,
+        decomposition: Dict[str, List[int]],
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        r"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`.
+
+        Args:
+            training_data: A `SupervisedDataset` containing the training data.
+            decomposition: Dictionary of context names and their indexes of the
+                corresponding active context parameters.
+        """
+        base_inputs = super().construct_inputs(training_data=training_data, **kwargs)
+        return {
+            **base_inputs,
+            "decomposition": decomposition,
+        }
+
 
 class LCEAGP(FixedNoiseGP):
     r"""A GP using a Latent Context Embedding Additive (LCE-A) Kernel.
@@ -67,6 +88,8 @@ class LCEAGP(FixedNoiseGP):
             train_Yvar: (n x 1) Noise variance of Y.
             decomposition: Keys are context names. Values are the indexes of
                 parameters belong to the context.
+            train_embedding: Whether to train the embedding layer or not. If False,
+                the model will use pre-trained embeddings in embs_feature_dict.
             cat_feature_dict: Keys are context names and values are list of categorical
                 features i.e. {"context_name" : [cat_0, ..., cat_k]}, where k is the
                 number of categorical variables. If None, we use context names in the
@@ -91,3 +114,44 @@ class LCEAGP(FixedNoiseGP):
         )
         self.decomposition = decomposition
         self.to(train_X)
+
+    @classmethod
+    def construct_inputs(
+        cls,
+        training_data: SupervisedDataset,
+        decomposition: Dict[str, List[int]],
+        train_embedding: bool = True,
+        cat_feature_dict: Optional[Dict] = None,
+        embs_feature_dict: Optional[Dict] = None,
+        embs_dim_list: Optional[List[int]] = None,
+        context_weight_dict: Optional[Dict] = None,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        r"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`.
+
+        Args:
+            training_data: A `SupervisedDataset` containing the training data.
+            decomposition: Dictionary of context names and their indexes of the
+                corresponding active context parameters.
+            train_embedding: Whether to train the embedding layer or not.
+            cat_feature_dict: Keys are context names and values are list of categorical
+                features i.e. {"context_name" : [cat_0, ..., cat_k]}, where k is the
+                number of categorical variables. If None, we use context names in the
+                decomposition as the only categorical feature, i.e., k = 1.
+            embs_feature_dict: Pre-trained continuous embedding features of each
+                context.
+            embs_dim_list: Embedding dimension for each categorical variable. The length
+                equals the number of categorical features k. If None, the embedding
+                dimension is set to 1 for each categorical variable.
+            context_weight_dict: Known population weights of each context.
+        """
+        base_inputs = super().construct_inputs(training_data=training_data, **kwargs)
+        return {
+            **base_inputs,
+            "decomposition": decomposition,
+            "train_embedding": train_embedding,
+            "cat_feature_dict": cat_feature_dict,
+            "embs_feature_dict": embs_feature_dict,
+            "embs_dim_list": embs_dim_list,
+            "context_weight_dict": context_weight_dict,
+        }
