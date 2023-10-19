@@ -12,7 +12,7 @@ from itertools import chain
 from unittest.mock import patch
 
 import torch
-from botorch.models import FixedNoiseGP, SingleTaskGP, SingleTaskVariationalGP
+from botorch.models import SingleTaskGP, SingleTaskVariationalGP
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.sampling.pathwise import (
@@ -61,8 +61,8 @@ class TestPathwiseUpdates(BotorchTestCase):
                 input_transform = Normalize(d=X.shape[-1], bounds=bounds)
                 outcome_transform = Standardize(m=Y.shape[-1])
 
-                # SingleTaskGP in eval mode
-                self.models[SingleTaskGP].append(
+                # SingleTaskGP w/ inferred noise in eval mode
+                self.models["inferred"].append(
                     SingleTaskGP(
                         train_X=X,
                         train_Y=Y,
@@ -74,9 +74,9 @@ class TestPathwiseUpdates(BotorchTestCase):
                     .eval()
                 )
 
-                # FixedNoiseGP in train mode
-                self.models[FixedNoiseGP].append(
-                    FixedNoiseGP(
+                # SingleTaskGP w/ observed noise in train mode
+                self.models["observed"].append(
+                    SingleTaskGP(
                         train_X=X,
                         train_Y=Y,
                         train_Yvar=0.01 * torch.rand_like(Y),
@@ -89,7 +89,7 @@ class TestPathwiseUpdates(BotorchTestCase):
                 # SingleTaskVariationalGP in train mode
                 # When batched, uses a multitask format which break the tests below
                 if not kernel.batch_shape:
-                    self.models[SingleTaskVariationalGP].append(
+                    self.models["variational"].append(
                         SingleTaskVariationalGP(
                             train_X=X,
                             train_Y=Y,

@@ -182,7 +182,7 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
         >>> ])
         >>> train_Y = torch.cat(f1(X1), f2(X2)).unsqueeze(-1)
         >>> train_Yvar = 0.01 * torch.ones_like(train_Y)
-        >>> mtsaas_gp = SaasFullyBayesianFixedNoiseMultiTaskGP(
+        >>> mtsaas_gp = SaasFullyBayesianMultiTaskGP(
         >>>     train_X, train_Y, train_Yvar, task_feature=-1,
         >>> )
         >>> fit_fully_bayesian_model_nuts(mtsaas_gp)

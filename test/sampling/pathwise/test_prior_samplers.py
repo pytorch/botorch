@@ -12,12 +12,7 @@ from itertools import product
 from unittest.mock import MagicMock
 
 import torch
-from botorch.models import (
-    FixedNoiseGP,
-    ModelListGP,
-    SingleTaskGP,
-    SingleTaskVariationalGP,
-)
+from botorch.models import ModelListGP, SingleTaskGP, SingleTaskVariationalGP
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.sampling.pathwise import (
@@ -64,8 +59,8 @@ class TestPriorSamplers(BotorchTestCase):
                 input_transform = Normalize(d=X.shape[-1], bounds=bounds)
                 outcome_transform = Standardize(m=Y.shape[-1])
 
-                # SingleTaskGP in eval mode
-                self.models[SingleTaskGP].append(
+                # SingleTaskGP w/ inferred noise in eval mode
+                self.models["inferred"].append(
                     SingleTaskGP(
                         train_X=X,
                         train_Y=Y,
@@ -77,9 +72,9 @@ class TestPriorSamplers(BotorchTestCase):
                     .eval()
                 )
 
-                # FixedNoiseGP in train mode
-                self.models[FixedNoiseGP].append(
-                    FixedNoiseGP(
+                # SingleTaskGP w/ observed noise in train mode
+                self.models["observed"].append(
+                    SingleTaskGP(
                         train_X=X,
                         train_Y=Y,
                         train_Yvar=0.01 * torch.rand_like(Y),
@@ -92,7 +87,7 @@ class TestPriorSamplers(BotorchTestCase):
                 # SingleTaskVariationalGP in train mode
                 # When batched, uses a multitask format which break the tests below
                 if not kernel.batch_shape:
-                    self.models[SingleTaskVariationalGP].append(
+                    self.models["variational"].append(
                         SingleTaskVariationalGP(
                             train_X=X,
                             train_Y=Y,
@@ -119,7 +114,7 @@ class TestPriorSamplers(BotorchTestCase):
 
         with self.subTest("test_model_list"):
             model_list = ModelListGP(
-                self.models[SingleTaskGP][0], self.models[FixedNoiseGP][0]
+                self.models["inferred"][0], self.models["observed"][0]
             )
             path_list = draw_kernel_feature_paths(
                 model=model_list,
@@ -136,7 +131,7 @@ class TestPriorSamplers(BotorchTestCase):
             self.assertEqual(len(sample_list), len(path_list.paths))
 
         with self.subTest("test_initialization"):
-            model = self.models[SingleTaskGP][0]
+            model = self.models["inferred"][0]
             sample_shape = torch.Size([16])
             expected_weight_shape = (
                 sample_shape + model.covar_module.batch_shape + (self.num_features,)
