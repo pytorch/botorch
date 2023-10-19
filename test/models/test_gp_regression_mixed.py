@@ -8,7 +8,7 @@ import itertools
 import warnings
 
 import torch
-from botorch.exceptions.warnings import InputDataWarning, OptimizationWarning
+from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.converter import batched_to_model_list
 from botorch.models.gp_regression_mixed import MixedSingleTaskGP
@@ -21,6 +21,8 @@ from botorch.utils.testing import _get_random_data, BotorchTestCase
 from gpytorch.kernels.kernel import AdditiveKernel, ProductKernel
 from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
+from gpytorch.likelihoods import FixedNoiseGaussianLikelihood
+from gpytorch.likelihoods.gaussian_likelihood import GaussianLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
@@ -28,14 +30,15 @@ from .test_gp_regression import _get_pvar_expected
 
 
 class TestMixedSingleTaskGP(BotorchTestCase):
+    observed_noise = False
+
     def test_gp(self):
         d = 3
         bounds = torch.tensor([[-1.0] * d, [1.0] * d])
-        for batch_shape, m, ncat, dtype in itertools.product(
-            (torch.Size(), torch.Size([2])),
-            (1, 2),
-            (0, 1, 3),
-            (torch.float, torch.double),
+        for batch_shape, m, ncat, dtype, observed_noise in (
+            (torch.Size(), 1, 0, torch.float, False),
+            (torch.Size(), 2, 1, torch.double, True),
+            (torch.Size([2]), 2, 3, torch.double, False),
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
             train_X, train_Y = _get_random_data(
@@ -62,7 +65,13 @@ class TestMixedSingleTaskGP(BotorchTestCase):
                     MixedSingleTaskGP(train_X, train_Y, cat_dims=cat_dims)
                 continue
 
-            model = MixedSingleTaskGP(train_X, train_Y, cat_dims=cat_dims)
+            train_Yvar = torch.full_like(train_Y, 0.1) if observed_noise else None
+            model = MixedSingleTaskGP(
+                train_X=train_X,
+                train_Y=train_Y,
+                cat_dims=cat_dims,
+                train_Yvar=train_Yvar,
+            )
             self.assertEqual(model._ignore_X_dims_scaling_check, cat_dims)
             mll = ExactMarginalLogLikelihood(model.likelihood, model).to(**tkwargs)
             with warnings.catch_warnings():
@@ -90,6 +99,10 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             else:
                 self.assertIsInstance(model.covar_module, ScaleKernel)
                 self.assertIsInstance(model.covar_module.base_kernel, CategoricalKernel)
+            if observed_noise:
+                self.assertIsInstance(model.likelihood, FixedNoiseGaussianLikelihood)
+            else:
+                self.assertIsInstance(model.likelihood, GaussianLikelihood)
 
             # test posterior
             # test non batch evaluation
@@ -127,20 +140,24 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             with self.assertRaisesRegex(NotImplementedError, "not supported"):
                 batched_to_model_list(model)
 
-    def test_condition_on_observations(self):
+    def test_condition_on_observations__(self):
         d = 3
-        for batch_shape, m, ncat, dtype in itertools.product(
-            (torch.Size(), torch.Size([2])),
-            (1, 2),
-            (1, 2),
-            (torch.float, torch.double),
+        for batch_shape, m, ncat, dtype, observed_noise in (
+            (torch.Size(), 2, 1, torch.float, True),
+            (torch.Size([2]), 1, 2, torch.double, False),
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
             train_X, train_Y = _get_random_data(
                 batch_shape=batch_shape, m=m, d=d, **tkwargs
             )
             cat_dims = list(range(ncat))
-            model = MixedSingleTaskGP(train_X, train_Y, cat_dims=cat_dims)
+            train_Yvar = torch.full_like(train_Y, 0.1) if observed_noise else None
+            model = MixedSingleTaskGP(
+                train_X=train_X,
+                train_Y=train_Y,
+                cat_dims=cat_dims,
+                train_Yvar=train_Yvar,
+            )
 
             # evaluate model
             model.posterior(torch.rand(torch.Size([4, d]), **tkwargs))
@@ -151,11 +168,16 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             X_fant, Y_fant = _get_random_data(
                 fant_shape + batch_shape, m=m, d=d, n=3, **tkwargs
             )
-            cm = model.condition_on_observations(X_fant, Y_fant)
+            additional_kwargs = (
+                {"noise": torch.full_like(Y_fant, 0.1)} if observed_noise else {}
+            )
+            cm = model.condition_on_observations(X_fant, Y_fant, **additional_kwargs)
             # fantasize at same input points (check proper broadcasting)
+            additional_kwargs = (
+                {"noise": torch.full_like(Y_fant[0], 0.1)} if observed_noise else {}
+            )
             cm_same_inputs = model.condition_on_observations(
-                X_fant[0],
-                Y_fant,
+                X_fant[0], Y_fant, **additional_kwargs
             )
 
             test_Xs = [
@@ -189,14 +211,20 @@ class TestMixedSingleTaskGP(BotorchTestCase):
                         "train_Y": train_Y[0],
                         "cat_dims": cat_dims,
                     }
+                    if observed_noise:
+                        model_kwargs_non_batch["train_Yvar"] = train_Yvar[0]
                     model_non_batch = type(model)(**model_kwargs_non_batch)
                     model_non_batch.load_state_dict(state_dict_non_batch)
                     model_non_batch.eval()
                     model_non_batch.likelihood.eval()
                     model_non_batch.posterior(torch.rand(torch.Size([4, d]), **tkwargs))
+                    additional_kwargs = (
+                        {"noise": torch.full_like(Y_fant, 0.1)}
+                        if observed_noise
+                        else {}
+                    )
                     cm_non_batch = model_non_batch.condition_on_observations(
-                        X_fant[0][0],
-                        Y_fant[:, 0, :],
+                        X_fant[0][0], Y_fant[:, 0, :], **additional_kwargs
                     )
                     non_batch_posterior = cm_non_batch.posterior(test_X)
                     self.assertTrue(
@@ -218,18 +246,22 @@ class TestMixedSingleTaskGP(BotorchTestCase):
 
     def test_fantasize(self):
         d = 3
-        for batch_shape, m, ncat, dtype in itertools.product(
-            (torch.Size(), torch.Size([2])),
-            (1, 2),
-            (1, 2),
-            (torch.float, torch.double),
+        for batch_shape, m, ncat, dtype, observed_noise in (
+            (torch.Size(), 2, 1, torch.float, True),
+            (torch.Size([2]), 1, 2, torch.double, False),
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
             train_X, train_Y = _get_random_data(
                 batch_shape=batch_shape, m=m, d=d, **tkwargs
             )
+            train_Yvar = torch.full_like(train_Y, 0.1) if observed_noise else None
             cat_dims = list(range(ncat))
-            model = MixedSingleTaskGP(train_X, train_Y, cat_dims=cat_dims)
+            model = MixedSingleTaskGP(
+                train_X=train_X,
+                train_Y=train_Y,
+                cat_dims=cat_dims,
+                train_Yvar=train_Yvar,
+            )
 
             # fantasize
             X_f = torch.rand(torch.Size(batch_shape + torch.Size([4, d])), **tkwargs)
@@ -295,10 +327,9 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             feature_names=[f"x{i}" for i in range(d)],
             outcome_names=["y"],
         )
-        with self.assertWarnsRegex(InputDataWarning, "train_Yvar"):
-            model_kwargs = MixedSingleTaskGP.construct_inputs(
-                training_data, categorical_features=cat_dims
-            )
+        model_kwargs = MixedSingleTaskGP.construct_inputs(
+            training_data, categorical_features=cat_dims
+        )
         self.assertTrue(X.equal(model_kwargs["train_X"]))
         self.assertTrue(Y.equal(model_kwargs["train_Y"]))
-        self.assertNotIn("train_Yvar", model_kwargs)
+        self.assertTrue(Y.equal(model_kwargs["train_Yvar"]))
