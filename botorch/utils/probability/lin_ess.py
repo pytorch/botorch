@@ -343,7 +343,6 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
             theta_active = self._full_angular_range
             # TODO: What about `self.ellipse_in_domain = False` in the original code?
         elif delta_active[0] == -1:  # ensuring that the first interval is feasible
-
             theta_active = torch.cat((theta_active[1:], theta_active[:1]))
 
         return theta_active.view(-1)

@@ -60,7 +60,6 @@ def _draw_kernel_feature_paths_fallback(
     output_transform: Optional[TOutputTransform] = None,
     weight_generator: Optional[Callable[[Size], Tensor]] = None,
 ) -> GeneralizedLinearPath:
-
     # Generate a kernel feature map
     feature_map = map_generator(
         kernel=covar_module,

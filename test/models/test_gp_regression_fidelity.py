@@ -44,7 +44,6 @@ def _get_random_data_with_fidelity(
 
 
 class TestSingleTaskMultiFidelityGP(BotorchTestCase):
-
     FIDELITY_TEST_PAIRS = (
         (None, [1]),
         (1, None),
@@ -109,7 +108,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
             )
 
     def test_gp(self):
-        for (iteration_fidelity, data_fidelities) in self.FIDELITY_TEST_PAIRS:
+        for iteration_fidelity, data_fidelities in self.FIDELITY_TEST_PAIRS:
             num_dim = 1 + (iteration_fidelity is not None)
             if data_fidelities is not None:
                 num_dim += len(data_fidelities)
@@ -212,7 +211,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                     self.assertAllClose(posterior.variance, expected_var)
 
     def test_condition_on_observations(self):
-        for (iteration_fidelity, data_fidelities) in self.FIDELITY_TEST_PAIRS:
+        for iteration_fidelity, data_fidelities in self.FIDELITY_TEST_PAIRS:
             n_fidelity = iteration_fidelity is not None
             if data_fidelities is not None:
                 n_fidelity += len(data_fidelities)
@@ -336,7 +335,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                         )
 
     def test_fantasize(self):
-        for (iteration_fidelity, data_fidelities) in self.FIDELITY_TEST_PAIRS:
+        for iteration_fidelity, data_fidelities in self.FIDELITY_TEST_PAIRS:
             n_fidelity = iteration_fidelity is not None
             if data_fidelities is not None:
                 n_fidelity += len(data_fidelities)
@@ -365,7 +364,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 self.assertIsInstance(fm, model.__class__)
 
     def test_subset_model(self):
-        for (iteration_fidelity, data_fidelities) in self.FIDELITY_TEST_PAIRS:
+        for iteration_fidelity, data_fidelities in self.FIDELITY_TEST_PAIRS:
             num_dim = 1 + (iteration_fidelity is not None)
             if data_fidelities is not None:
                 num_dim += len(data_fidelities)
@@ -400,7 +399,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 )
 
     def test_construct_inputs(self):
-        for (iteration_fidelity, data_fidelities) in self.FIDELITY_TEST_PAIRS:
+        for iteration_fidelity, data_fidelities in self.FIDELITY_TEST_PAIRS:
             for batch_shape, dtype, lin_trunc in itertools.product(
                 (torch.Size(), torch.Size([2])),
                 (torch.float, torch.double),
@@ -497,7 +496,7 @@ class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
             )
 
     def test_fixed_noise_likelihood(self):
-        for (iteration_fidelity, data_fidelities) in self.FIDELITY_TEST_PAIRS:
+        for iteration_fidelity, data_fidelities in self.FIDELITY_TEST_PAIRS:
             for batch_shape, m, dtype, lin_trunc in itertools.product(
                 (torch.Size(), torch.Size([2])),
                 (1, 2),
@@ -522,7 +521,7 @@ class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
                 )
 
     def test_construct_inputs(self):
-        for (iteration_fidelity, data_fidelities) in self.FIDELITY_TEST_PAIRS:
+        for iteration_fidelity, data_fidelities in self.FIDELITY_TEST_PAIRS:
             for batch_shape, dtype, lin_trunc in itertools.product(
                 (torch.Size(), torch.Size([2])),
                 (torch.float, torch.double),

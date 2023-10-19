@@ -892,8 +892,9 @@ class PosteriorStandardDeviation(AnalyticAcquisitionFunction):
                 a PosteriorTransform that transforms the multi-output posterior into a
                 single-output posterior is required.
             maximize: If True, consider the problem a maximization problem. Note
-                that if `maximize=False`, the posterior standard deviation is negated. As a
-                consequence `optimize_acqf(PosteriorStandardDeviation(gp, maximize=False))`
+                that if `maximize=False`, the posterior standard deviation is negated.
+                As a consequence,
+                `optimize_acqf(PosteriorStandardDeviation(gp, maximize=False))`
                 actually returns -1 * minimum of the posterior standard deviation.
         """
         super().__init__(model=model, posterior_transform=posterior_transform)
@@ -912,6 +913,7 @@ class PosteriorStandardDeviation(AnalyticAcquisitionFunction):
         """
         _, std = self._mean_and_sigma(X)
         return std if self.maximize else -std
+
 
 # --------------- Helper functions for analytic acquisition functions. ---------------
 

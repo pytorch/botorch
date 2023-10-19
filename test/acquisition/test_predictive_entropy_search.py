@@ -52,7 +52,12 @@ class TestQPredictiveEntropySearch(BotorchTestCase):
         tkwargs = {"device": self.device}
         num_objectives = 1
 
-        for (dtype, use_model_list, standardize_model, maximize,) in product(
+        for (
+            dtype,
+            use_model_list,
+            standardize_model,
+            maximize,
+        ) in product(
             (torch.float, torch.double),
             (False, True),
             (False, True),

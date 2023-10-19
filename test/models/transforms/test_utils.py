@@ -21,7 +21,6 @@ from botorch.utils.testing import BotorchTestCase
 class TestTransformUtils(BotorchTestCase):
     def test_lognorm_to_norm(self):
         for dtype in (torch.float, torch.double):
-
             # independent case
             mu = torch.tensor([0.25, 0.5, 1.0], device=self.device, dtype=dtype)
             diag = torch.tensor([0.5, 2.0, 1.0], device=self.device, dtype=dtype)
@@ -54,7 +53,6 @@ class TestTransformUtils(BotorchTestCase):
 
     def test_norm_to_lognorm(self):
         for dtype in (torch.float, torch.double):
-
             # Test joint, independent
             expmu = torch.tensor([1.0, 2.0, 3.0], device=self.device, dtype=dtype)
             expdiag = torch.tensor([1.5, 2.0, 3], device=self.device, dtype=dtype)

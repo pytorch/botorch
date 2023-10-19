@@ -21,6 +21,7 @@ from botorch.acquisition.analytic import (
     LogProbabilityOfImprovement,
     NoisyExpectedImprovement,
     PosteriorMean,
+    PosteriorStandardDeviation,
     ProbabilityOfImprovement,
     ScalarizedPosteriorMean,
     UpperConfidenceBound,
@@ -290,6 +291,47 @@ class TestPosteriorMean(BotorchTestCase):
             mm2 = MockModel(MockPosterior(mean=mean2))
             with self.assertRaises(UnsupportedError):
                 PosteriorMean(model=mm2)
+
+
+class TestPosteriorStandardDeviation(BotorchTestCase):
+    def test_posterior_stddev(self):
+        for dtype in (torch.float, torch.double):
+            mean = torch.rand(3, 1, device=self.device, dtype=dtype)
+            std = torch.rand_like(mean)
+            mm = MockModel(MockPosterior(mean=mean, variance=std.square()))
+
+            module = PosteriorStandardDeviation(model=mm)
+            X = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
+            pm = module(X)
+            self.assertTrue(torch.equal(pm, std.view(-1)))
+
+            module = PosteriorStandardDeviation(model=mm, maximize=False)
+            X = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
+            pm = module(X)
+            self.assertTrue(torch.equal(pm, -std.view(-1)))
+
+            # check for proper error if multi-output model
+            mean2 = torch.rand(1, 2, device=self.device, dtype=dtype)
+            std2 = torch.rand_like(mean2)
+            mm2 = MockModel(MockPosterior(mean=mean2, variance=std2.square()))
+            with self.assertRaises(UnsupportedError):
+                PosteriorStandardDeviation(model=mm2)
+
+    def test_posterior_stddev_batch(self):
+        for dtype in (torch.float, torch.double):
+            mean = torch.rand(3, 1, 1, device=self.device, dtype=dtype)
+            std = torch.rand_like(mean)
+            mm = MockModel(MockPosterior(mean=mean, variance=std.square()))
+            module = PosteriorStandardDeviation(model=mm)
+            X = torch.empty(3, 1, 1, device=self.device, dtype=dtype)
+            pm = module(X)
+            self.assertTrue(torch.equal(pm, std.view(-1)))
+            # check for proper error if multi-output model
+            mean2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
+            std2 = torch.rand_like(mean2)
+            mm2 = MockModel(MockPosterior(mean=mean2, variance=std2.square()))
+            with self.assertRaises(UnsupportedError):
+                PosteriorStandardDeviation(model=mm2)
 
 
 class TestProbabilityOfImprovement(BotorchTestCase):

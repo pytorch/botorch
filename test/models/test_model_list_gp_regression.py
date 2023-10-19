@@ -228,7 +228,6 @@ class TestModelListGP(BotorchTestCase):
         for dtype, outcome_transform in itertools.product(
             (torch.float, torch.double), ("None", "Standardize", "Log", "Chained")
         ):
-
             model = self._base_test_ModelListGP(
                 fixed_noise=False, dtype=dtype, outcome_transform=outcome_transform
             )
@@ -264,7 +263,6 @@ class TestModelListGP(BotorchTestCase):
                 )
 
     def test_ModelListGP_fixed_noise(self) -> None:
-
         for dtype, outcome_transform in itertools.product(
             (torch.float, torch.double), ("None", "Standardize")
         ):

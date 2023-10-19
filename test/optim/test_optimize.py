@@ -992,7 +992,6 @@ class TestOptimizeAcqf(BotorchTestCase):
             else:
                 mock_signature.return_value = signature(gen_candidates_scipy)
             for dtype in (torch.float, torch.double):
-
                 mock_acq_function = MockAcquisitionFunction()
                 mock_gen_batch_initial_conditions.side_effect = [
                     torch.zeros(num_restarts, 1, 3, device=self.device, dtype=dtype)
@@ -1538,7 +1537,6 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
 
 class TestOptimizeAcqfDiscrete(BotorchTestCase):
     def test_optimize_acqf_discrete(self):
-
         for q, dtype in itertools.product((1, 2), (torch.float, torch.double)):
             tkwargs = {"device": self.device, "dtype": dtype}
 
@@ -1765,7 +1763,6 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
             self.assertAllClose(torch.unique(X, dim=0), X)
 
     def test_no_precision_loss_with_fixed_features(self) -> None:
-
         acqf = SquaredAcquisitionFunction()
 
         val = 1e-1

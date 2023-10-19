@@ -155,7 +155,6 @@ class Ackley(SyntheticTestFunction):
 
 
 class Beale(SyntheticTestFunction):
-
     dim = 2
     _optimal_value = 0.0
     _bounds = [(-4.5, 4.5), (-4.5, 4.5)]
@@ -199,7 +198,6 @@ class Branin(SyntheticTestFunction):
 
 
 class Bukin(SyntheticTestFunction):
-
     dim = 2
     _bounds = [(-15.0, -5.0), (-3.0, 3.0)]
     _optimal_value = 0.0
@@ -233,7 +231,6 @@ class Cosine8(SyntheticTestFunction):
 
 
 class DropWave(SyntheticTestFunction):
-
     dim = 2
     _bounds = [(-5.12, 5.12), (-5.12, 5.12)]
     _optimal_value = -1.0
@@ -248,7 +245,6 @@ class DropWave(SyntheticTestFunction):
 
 
 class DixonPrice(SyntheticTestFunction):
-
     _optimal_value = 0.0
 
     def __init__(
@@ -307,7 +303,6 @@ class EggHolder(SyntheticTestFunction):
 
 
 class Griewank(SyntheticTestFunction):
-
     _optimal_value = 0.0
 
     def __init__(
@@ -573,7 +568,6 @@ class Michalewicz(SyntheticTestFunction):
 
 
 class Powell(SyntheticTestFunction):
-
     _optimal_value = 0.0
 
     def __init__(
@@ -609,7 +603,6 @@ class Powell(SyntheticTestFunction):
 
 
 class Rastrigin(SyntheticTestFunction):
-
     _optimal_value = 0.0
 
     def __init__(
@@ -737,7 +730,6 @@ class Shekel(SyntheticTestFunction):
 
 
 class SixHumpCamel(SyntheticTestFunction):
-
     dim = 2
     _bounds = [(-3.0, 3.0), (-2.0, 2.0)]
     _optimal_value = -1.0316
@@ -788,7 +780,6 @@ class StyblinskiTang(SyntheticTestFunction):
 
 
 class ThreeHumpCamel(SyntheticTestFunction):
-
     dim = 2
     _bounds = [(-5.0, 5.0), (-5.0, 5.0)]
     _optimal_value = 0.0
