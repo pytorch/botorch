@@ -6,11 +6,9 @@
 
 from __future__ import annotations
 
-import warnings
 from typing import Any, Callable, Dict, List, Optional
 
 import torch
-from botorch.exceptions.warnings import InputDataWarning
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.kernels.categorical import CategoricalKernel
 from botorch.models.transforms.input import InputTransform
@@ -64,6 +62,7 @@ class MixedSingleTaskGP(SingleTaskGP):
         train_X: Tensor,
         train_Y: Tensor,
         cat_dims: List[int],
+        train_Yvar: Optional[Tensor] = None,
         cont_kernel_factory: Optional[
             Callable[[torch.Size, int, List[int]], Kernel]
         ] = None,
@@ -78,6 +77,8 @@ class MixedSingleTaskGP(SingleTaskGP):
             train_Y: A `batch_shape x n x m` tensor of training observations.
             cat_dims: A list of indices corresponding to the columns of
                 the input `X` that should be considered categorical features.
+            train_Yvar: An optional `batch_shape x n x m` tensor of observed
+                measurement noise.
             cont_kernel_factory: A method that accepts  `batch_shape`, `ard_num_dims`,
                 and `active_dims` arguments and returns an instantiated GPyTorch
                 `Kernel` object to be used as the base kernel for the continuous
@@ -118,7 +119,7 @@ class MixedSingleTaskGP(SingleTaskGP):
                     lengthscale_constraint=GreaterThan(1e-04),
                 )
 
-        if likelihood is None:
+        if likelihood is None and train_Yvar is None:
             # This Gamma prior is quite close to the Horseshoe prior
             min_noise = 1e-5 if train_X.dtype == torch.float else 1e-6
             likelihood = GaussianLikelihood(
@@ -173,6 +174,7 @@ class MixedSingleTaskGP(SingleTaskGP):
         super().__init__(
             train_X=train_X,
             train_Y=train_Y,
+            train_Yvar=train_Yvar,
             likelihood=likelihood,
             covar_module=covar_module,
             outcome_transform=outcome_transform,
@@ -195,13 +197,6 @@ class MixedSingleTaskGP(SingleTaskGP):
             likelihood: Optional likelihood used to constuct the model.
         """
         base_inputs = super().construct_inputs(training_data=training_data, **kwargs)
-        if base_inputs.pop("train_Yvar", None) is not None:
-            # TODO: Remove when SingleTaskGP supports optional Yvar [T162925473].
-            warnings.warn(
-                "`MixedSingleTaskGP` only supports inferred noise at the moment. "
-                "Ignoring the provided `train_Yvar` observations.",
-                InputDataWarning,
-            )
         return {
             **base_inputs,
             "cat_dims": categorical_features,
