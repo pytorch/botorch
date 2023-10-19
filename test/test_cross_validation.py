@@ -10,7 +10,7 @@ import warnings
 import torch
 from botorch.cross_validation import batch_cross_validation, gen_loo_cv_folds
 from botorch.exceptions.warnings import OptimizationWarning
-from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
+from botorch.models.gp_regression import SingleTaskGP
 from botorch.utils.testing import _get_random_data, BotorchTestCase
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
@@ -57,7 +57,7 @@ class TestFitBatchCrossValidation(BotorchTestCase):
             self.assertEqual(cv_results.posterior.mean.shape, expected_shape)
             self.assertEqual(cv_results.observed_Y.shape, expected_shape)
 
-            # Test FixedNoiseGP
+            # Test with noise observations
             noisy_cv_folds = gen_loo_cv_folds(
                 train_X=train_X, train_Y=train_Y, train_Yvar=train_Yvar
             )
@@ -71,7 +71,7 @@ class TestFitBatchCrossValidation(BotorchTestCase):
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=OptimizationWarning)
                 cv_results = batch_cross_validation(
-                    model_cls=FixedNoiseGP,
+                    model_cls=SingleTaskGP,
                     mll_cls=ExactMarginalLogLikelihood,
                     cv_folds=noisy_cv_folds,
                     fit_args={"optimizer_kwargs": {"options": {"maxiter": 1}}},

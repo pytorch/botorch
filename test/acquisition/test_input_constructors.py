@@ -80,7 +80,7 @@ from botorch.acquisition.utils import (
     project_to_target_fidelity,
 )
 from botorch.exceptions.errors import UnsupportedError
-from botorch.models import FixedNoiseGP, MultiTaskGP, SingleTaskGP
+from botorch.models import MultiTaskGP, SingleTaskGP
 from botorch.models.deterministic import FixedSingleSampleModel
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
@@ -357,7 +357,7 @@ class TestAnalyticAcquisitionFunctionInputConstructors(InputConstructorBaseTestC
         for acqf_cls in [NoisyExpectedImprovement, LogNoisyExpectedImprovement]:
             with self.subTest(acqf_cls=acqf_cls):
                 c = get_acqf_input_constructor(acqf_cls)
-                mock_model = FixedNoiseGP(
+                mock_model = SingleTaskGP(
                     train_X=torch.rand((2, 2)),
                     train_Y=torch.rand((2, 1)),
                     train_Yvar=torch.rand((2, 1)),
@@ -1269,7 +1269,7 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
             qLogNoisyExpectedImprovement,
             qProbabilityOfImprovement,
         ]
-        model = FixedNoiseGP(
+        model = SingleTaskGP(
             train_X=torch.rand((4, 2)),
             train_Y=torch.rand((4, 1)),
             train_Yvar=torch.ones((4, 1)),

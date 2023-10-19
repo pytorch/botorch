@@ -24,7 +24,7 @@ import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions import UnsupportedError
-from botorch.models.gp_regression import FixedNoiseGP
+from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
 from botorch.utils.constants import get_constants_like
@@ -38,6 +38,7 @@ from botorch.utils.probability.utils import (
 )
 from botorch.utils.safe_math import log1mexp, logmeanexp
 from botorch.utils.transforms import convert_to_target_pre_hook, t_batch_mode_transform
+from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 from torch import Tensor
 from torch.nn.functional import pad
 
@@ -580,11 +581,12 @@ class LogNoisyExpectedImprovement(AnalyticAcquisitionFunction):
 
     where `X_base` are previously observed points.
 
-    Note: This acquisition function currently relies on using a FixedNoiseGP (required
-    for noiseless fantasies).
+    Note: This acquisition function currently relies on using a SingleTaskGP
+    with known observation noise. In other words, `train_Yvar` must be passed
+    to the model. (required for noiseless fantasies).
 
     Example:
-        >>> model = FixedNoiseGP(train_X, train_Y, train_Yvar=train_Yvar)
+        >>> model = SingleTaskGP(train_X, train_Y, train_Yvar=train_Yvar)
         >>> LogNEI = LogNoisyExpectedImprovement(model, train_X)
         >>> nei = LogNEI(test_X)
     """
@@ -608,10 +610,6 @@ class LogNoisyExpectedImprovement(AnalyticAcquisitionFunction):
                 complexity and performance).
             maximize: If True, consider the problem a maximization problem.
         """
-        if not isinstance(model, FixedNoiseGP):
-            raise UnsupportedError(
-                "Only FixedNoiseGPs are currently supported for fantasy LogNEI"
-            )
         # sample fantasies
         from botorch.sampling.normal import SobolQMCNormalSampler
 
@@ -662,11 +660,12 @@ class NoisyExpectedImprovement(ExpectedImprovement):
     `NEI(x) = E(max(y - max Y_baseline), 0)), (y, Y_baseline) ~ f((x, X_baseline))`,
     where `X_baseline` are previously observed points.
 
-    Note: This acquisition function currently relies on using a FixedNoiseGP (required
-    for noiseless fantasies).
+    Note: This acquisition function currently relies on using a SingleTaskGP
+    with known observation noise. In other words, `train_Yvar` must be passed
+    to the model. (required for noiseless fantasies).
 
     Example:
-        >>> model = FixedNoiseGP(train_X, train_Y, train_Yvar=train_Yvar)
+        >>> model = SingleTaskGP(train_X, train_Y, train_Yvar=train_Yvar)
         >>> NEI = NoisyExpectedImprovement(model, train_X)
         >>> nei = NEI(test_X)
     """
@@ -689,10 +688,6 @@ class NoisyExpectedImprovement(ExpectedImprovement):
                 complexity and performance).
             maximize: If True, consider the problem a maximization problem.
         """
-        if not isinstance(model, FixedNoiseGP):
-            raise UnsupportedError(
-                "Only FixedNoiseGPs are currently supported for fantasy NEI"
-            )
         # sample fantasies
         from botorch.sampling.normal import SobolQMCNormalSampler
 
@@ -974,15 +969,15 @@ def _log_abs_u_Phi_div_phi(u: Tensor) -> Tensor:
 
 
 def _get_noiseless_fantasy_model(
-    model: FixedNoiseGP, batch_X_observed: Tensor, Y_fantasized: Tensor
-) -> FixedNoiseGP:
+    model: SingleTaskGP, batch_X_observed: Tensor, Y_fantasized: Tensor
+) -> SingleTaskGP:
     r"""Construct a fantasy model from a fitted model and provided fantasies.
 
     The fantasy model uses the hyperparameters from the original fitted model and
     assumes the fantasies are noiseless.
 
     Args:
-        model: a fitted FixedNoiseGP
+        model: A fitted SingleTaskGP with known observation noise.
         batch_X_observed: A `b x n x d` tensor of inputs where `b` is the number of
             fantasies.
         Y_fantasized: A `b x n` tensor of fantasized targets where `b` is the number of
@@ -991,11 +986,18 @@ def _get_noiseless_fantasy_model(
     Returns:
         The fantasy model.
     """
-    # initialize a copy of FixedNoiseGP on the original training inputs
-    # this makes FixedNoiseGP a non-batch GP, so that the same hyperparameters
+    if not isinstance(model, SingleTaskGP) or not isinstance(
+        model.likelihood, FixedNoiseGaussianLikelihood
+    ):
+        raise UnsupportedError(
+            "Only SingleTaskGP models with known observation noise "
+            "are currently supported for fantasy-based NEI & LogNEI."
+        )
+    # initialize a copy of SingleTaskGP on the original training inputs
+    # this makes SingleTaskGP a non-batch GP, so that the same hyperparameters
     # are used across all batches (by default, a GP with batched training data
     # uses independent hyperparameters for each batch).
-    fantasy_model = FixedNoiseGP(
+    fantasy_model = SingleTaskGP(
         train_X=model.train_inputs[0],
         train_Y=model.train_targets.unsqueeze(-1),
         train_Yvar=model.likelihood.noise_covar.noise.unsqueeze(-1),

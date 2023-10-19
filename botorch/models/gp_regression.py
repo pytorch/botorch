@@ -202,6 +202,7 @@ class FixedNoiseGP(SingleTaskGP):
 
     DEPRECATED: `FixedNoiseGP` has been merged into `SingleTaskGP`. Please use
     `SingleTaskGP` with `train_Yvar` instead.
+    Will be removed in a future release (~v0.12).
     """
 
     def __init__(

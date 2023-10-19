@@ -373,9 +373,10 @@ class FantasizeMixin(ABC):
                 + self.batch_shape
                 + torch.Size([0, self.num_outputs])
             )
+            Y = torch.empty(output_shape, dtype=X.dtype, device=X.device)
             return self.condition_on_observations(
                 X=self.transform_inputs(X),
-                Y=torch.empty(output_shape, dtype=X.dtype, device=X.device),
+                Y=Y,
                 **kwargs,
             )
         propagate_grads = kwargs.pop("propagate_grads", False)

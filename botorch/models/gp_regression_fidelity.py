@@ -192,7 +192,9 @@ class FixedNoiseMultiFidelityGP(SingleTaskMultiFidelityGP):
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
     ) -> None:
-        r"""DEPRECATED: Use `SingleTaskMultiFidelityGP` instead."""
+        r"""DEPRECATED: Use `SingleTaskMultiFidelityGP` instead.
+        Will be removed in a future release (~v0.11).
+        """
         warnings.warn(
             "`FixedNoiseMultiFidelityGP` has been deprecated. "
             "Use `SingleTaskMultiFidelityGP` with `train_Yvar` instead.",

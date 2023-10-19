@@ -10,48 +10,59 @@ from typing import Dict, Tuple
 import torch
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.contextual import LCEAGP, SACGP
-from botorch.models.gp_regression import FixedNoiseGP
+from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.kernels.contextual_lcea import LCEAKernel
 from botorch.models.kernels.contextual_sac import SACKernel
 from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
+from gpytorch.likelihoods.gaussian_likelihood import (
+    FixedNoiseGaussianLikelihood,
+    GaussianLikelihood,
+)
 from gpytorch.means import ConstantMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from torch import Tensor
 
 
 def _gen_datasets(
+    infer_noise: bool = False,
     **tkwargs,
 ) -> Tuple[Dict[int, SupervisedDataset], Tuple[Tensor, Tensor, Tensor]]:
     train_X = torch.tensor(
         [[0.0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0], [2.0, 2.0, 2.0, 2.0]], **tkwargs
     )
     train_Y = torch.tensor([[1.0], [2.0], [3.0]], **tkwargs)
-    train_Yvar = 0.01 * torch.ones(3, 1, **tkwargs)
+    train_Yvar = None if infer_noise else torch.full_like(train_Y, 0.01)
 
     datasets = SupervisedDataset(
         X=train_X,
         Y=train_Y,
+        Yvar=train_Yvar,
         feature_names=[f"x{i}" for i in range(train_X.shape[-1])],
         outcome_names=["y"],
-        Yvar=train_Yvar,
     )
     return datasets, (train_X, train_Y, train_Yvar)
 
 
 class TestContextualGP(BotorchTestCase):
     def test_SACGP(self):
-        for dtype in (torch.float, torch.double):
+        for dtype, infer_noise in ((torch.float, False), (torch.double, True)):
             tkwargs = {"device": self.device, "dtype": dtype}
-            datasets, (train_X, train_Y, train_Yvar) = _gen_datasets(**tkwargs)
+            datasets, (train_X, train_Y, train_Yvar) = _gen_datasets(
+                infer_noise, **tkwargs
+            )
             self.decomposition = {"1": [0, 3], "2": [1, 2]}
 
             model = SACGP(train_X, train_Y, train_Yvar, self.decomposition)
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
             fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 1}})
 
-            self.assertIsInstance(model, FixedNoiseGP)
+            self.assertIsInstance(model, SingleTaskGP)
+            self.assertIsInstance(
+                model.likelihood,
+                GaussianLikelihood if infer_noise else FixedNoiseGaussianLikelihood,
+            )
             self.assertDictEqual(model.decomposition, self.decomposition)
             self.assertIsInstance(model.mean_module, ConstantMean)
             self.assertIsInstance(model.covar_module, SACKernel)
@@ -90,13 +101,14 @@ class TestContextualGP(BotorchTestCase):
             self.assertTrue(train_Yvar.equal(data_dict["train_Yvar"]))
             self.assertDictEqual(data_dict["decomposition"], self.decomposition)
 
-    def testLCEAGP(self):
-        for dtype in (torch.float, torch.double):
+    def test_LCEAGP(self):
+        for dtype, infer_noise in ((torch.float, False), (torch.double, True)):
             tkwargs = {"device": self.device, "dtype": dtype}
-            datasets, (train_X, train_Y, train_Yvar) = _gen_datasets(**tkwargs)
+            datasets, (train_X, train_Y, train_Yvar) = _gen_datasets(
+                infer_noise, **tkwargs
+            )
             # Test setting attributes
             decomposition = {"1": [0, 1], "2": [2, 3]}
-
             # test instantiate model
             model = LCEAGP(
                 train_X=train_X,
@@ -110,6 +122,10 @@ class TestContextualGP(BotorchTestCase):
             self.assertIsInstance(model, LCEAGP)
             self.assertIsInstance(model.covar_module, LCEAKernel)
             self.assertDictEqual(model.decomposition, decomposition)
+            self.assertIsInstance(
+                model.likelihood,
+                GaussianLikelihood if infer_noise else FixedNoiseGaussianLikelihood,
+            )
 
             test_x = torch.rand(5, 4, device=self.device, dtype=dtype)
             posterior = model(test_x)
