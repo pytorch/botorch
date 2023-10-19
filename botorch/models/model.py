@@ -45,6 +45,7 @@ from botorch.sampling.base import MCSampler
 from botorch.sampling.list_sampler import ListSampler
 from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.transforms import is_fully_bayesian
+from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 from torch import Tensor
 from torch.nn import Module, ModuleDict, ModuleList
 
@@ -325,8 +326,9 @@ class FantasizeMixin(ABC):
         r"""Construct a fantasy model.
 
         Constructs a fantasy model in the following fashion:
-        (1) compute the model posterior at `X` (including observation noise if
-        `observation_noise=True`).
+        (1) compute the model posterior at `X`, including observation noise.
+        If `observation_noise` is a Tensor, use it directly as the observation
+        noise to add.
         (2) sample from this posterior (using `sampler`) to generate "fake"
         observations.
         (3) condition the model on the new fake observations.
@@ -341,8 +343,10 @@ class FantasizeMixin(ABC):
                 a `model_batch_shape x n' x m`-dim tensor containing the average
                 noise for each batch and output, where `m` is the number of outputs.
                 `noise` must be in the outcome-transformed space if an outcome
-                transform is used. If None, then the noise will be the inferred
-                noise level.
+                transform is used.
+                If None and using an inferred noise likelihood, the noise will be the
+                inferred noise level. If using a fixed noise likelihood, the mean across
+                the observation noise in the training data is used as observation noise.
             kwargs: Will be passed to `model.condition_on_observations`
 
         Returns:
@@ -352,6 +356,15 @@ class FantasizeMixin(ABC):
             raise DeprecationError(
                 "`fantasize` no longer accepts a boolean for `observation_noise`."
             )
+        elif observation_noise is None and isinstance(
+            self.likelihood, FixedNoiseGaussianLikelihood
+        ):
+            if self.num_outputs > 1:
+                # make noise ... x n x m
+                observation_noise = self.likelihood.noise.transpose(-1, -2)
+            else:
+                observation_noise = self.likelihood.noise.unsqueeze(-1)
+            observation_noise = observation_noise.mean(dim=-2, keepdim=True)
         # if the inputs are empty, expand the inputs
         if X.shape[-2] == 0:
             output_shape = (

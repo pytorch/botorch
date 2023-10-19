@@ -220,14 +220,14 @@ class TestSingleTaskGP(BotorchTestCase):
             )
             c_kwargs = (
                 {"noise": torch.full_like(Y_fant, 0.01)}
-                if isinstance(model, FixedNoiseGP)
+                if isinstance(model.likelihood, FixedNoiseGaussianLikelihood)
                 else {}
             )
             cm = model.condition_on_observations(X_fant, Y_fant, **c_kwargs)
             # fantasize at same input points (check proper broadcasting)
             c_kwargs_same_inputs = (
                 {"noise": torch.full_like(Y_fant[0], 0.01)}
-                if isinstance(model, FixedNoiseGP)
+                if isinstance(model.likelihood, FixedNoiseGaussianLikelihood)
                 else {}
             )
             cm_same_inputs = model.condition_on_observations(
@@ -277,7 +277,7 @@ class TestSingleTaskGP(BotorchTestCase):
                     model_non_batch.posterior(torch.rand(torch.Size([4, 1]), **tkwargs))
                     c_kwargs = (
                         {"noise": torch.full_like(Y_fant[0, 0, :], 0.01)}
-                        if isinstance(model, FixedNoiseGP)
+                        if isinstance(model.likelihood, FixedNoiseGaussianLikelihood)
                         else {}
                     )
                     cm_non_batch = model_non_batch.condition_on_observations(
@@ -399,6 +399,8 @@ class TestSingleTaskGP(BotorchTestCase):
 
 
 class TestFixedNoiseGP(TestSingleTaskGP):
+    model_class = FixedNoiseGP
+
     def _get_model_and_data(
         self,
         batch_shape,
@@ -417,7 +419,14 @@ class TestFixedNoiseGP(TestSingleTaskGP):
             "input_transform": input_transform,
             "outcome_transform": outcome_transform,
         }
-        model = FixedNoiseGP(**model_kwargs, **extra_model_kwargs)
+        if self.model_class is FixedNoiseGP:
+            with self.assertWarnsRegex(
+                DeprecationWarning,
+                "`FixedNoiseGP` has been merged into `SingleTaskGP`. ",
+            ):
+                model = FixedNoiseGP(**model_kwargs, **extra_model_kwargs)
+        else:
+            model = self.model_class(**model_kwargs, **extra_model_kwargs)
         return model, model_kwargs
 
     def _get_extra_model_kwargs(self):
@@ -526,6 +535,11 @@ class TestFixedNoiseGP(TestSingleTaskGP):
                     == obs_noise.expand(X_f.shape[:-1] + torch.Size([m]))
                 ).all()
             )
+
+
+class TestFixedNoiseSingleTaskGP(TestFixedNoiseGP):
+    # Repeat the FixedNoiseGP tests using SingleTaskGP.
+    model_class = SingleTaskGP
 
 
 class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
