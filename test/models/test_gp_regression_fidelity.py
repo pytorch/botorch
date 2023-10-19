@@ -12,7 +12,6 @@ import torch
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_mll
-from botorch.models.gp_regression import FixedNoiseGP
 from botorch.models.gp_regression_fidelity import (
     FixedNoiseMultiFidelityGP,
     SingleTaskMultiFidelityGP,
@@ -243,14 +242,14 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 )
                 c_kwargs = (
                     {"noise": torch.full_like(Y_fant, 0.01)}
-                    if isinstance(model, FixedNoiseGP)
+                    if isinstance(model.likelihood, FixedNoiseGaussianLikelihood)
                     else {}
                 )
                 cm = model.condition_on_observations(X_fant, Y_fant, **c_kwargs)
                 # fantasize at different same input points
                 c_kwargs_same_inputs = (
                     {"noise": torch.full_like(Y_fant[0], 0.01)}
-                    if isinstance(model, FixedNoiseGP)
+                    if isinstance(model.likelihood, FixedNoiseGaussianLikelihood)
                     else {}
                 )
                 cm_same_inputs = model.condition_on_observations(
@@ -309,7 +308,9 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                         )
                         c_kwargs = (
                             {"noise": torch.full_like(Y_fant[0, 0, :], 0.01)}
-                            if isinstance(model, FixedNoiseGP)
+                            if isinstance(
+                                model.likelihood, FixedNoiseGaussianLikelihood
+                            )
                             else {}
                         )
                         mnb = model_non_batch
@@ -435,6 +436,8 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
 
 
 class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
+    model_class = FixedNoiseMultiFidelityGP
+
     def _get_model_and_data(
         self,
         iteration_fidelity,
@@ -468,7 +471,11 @@ class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
             model_kwargs["outcome_transform"] = outcome_transform
         if input_transform is not None:
             model_kwargs["input_transform"] = input_transform
-        model = FixedNoiseMultiFidelityGP(**model_kwargs)
+        if self.model_class is FixedNoiseMultiFidelityGP:
+            with self.assertWarnsRegex(DeprecationWarning, "SingleTaskMultiFidelityGP"):
+                model = FixedNoiseMultiFidelityGP(**model_kwargs)
+        else:
+            model = self.model_class(**model_kwargs)
         return model, model_kwargs
 
     def test_init_error(self):
@@ -558,3 +565,8 @@ class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
                 self.assertEqual(data_dict.get("data_fidelities", None), [1])
                 self.assertTrue(kwargs["train_X"].equal(data_dict["train_X"]))
                 self.assertTrue(kwargs["train_Y"].equal(data_dict["train_Y"]))
+
+
+class TestFixedNoiseSingleTaskMultiFidelityGP(TestFixedNoiseMultiFidelityGP):
+    # Test SingleTaskMultiFidelityGP with observed noise.
+    model_class = SingleTaskMultiFidelityGP
