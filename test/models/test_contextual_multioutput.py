@@ -18,7 +18,7 @@ from torch import Tensor
 
 
 class ContextualMultiOutputTest(BotorchTestCase):
-    def testLCEMGP(self):
+    def test_LCEMGP(self):
         d = 1
         for dtype, fixed_noise in ((torch.float, True), (torch.double, False)):
             # test with batch evaluation
@@ -100,7 +100,7 @@ class ContextualMultiOutputTest(BotorchTestCase):
             self.assertIsInstance(embeddings2, Tensor)
             self.assertEqual(embeddings2.shape, torch.Size([2, 3]))
 
-    def testFixedNoiseLCEMGP(self):
+    def test_FixedNoiseLCEMGP(self):
         d = 1
         for dtype in (torch.float, torch.double):
             train_x = torch.rand(10, d, device=self.device, dtype=dtype)
@@ -111,9 +111,13 @@ class ContextualMultiOutputTest(BotorchTestCase):
             train_x = torch.cat([train_x, task_indices.unsqueeze(-1)], axis=1)
             train_yvar = torch.ones(10, 1, device=self.device, dtype=dtype) * 0.01
 
-            model = FixedNoiseLCEMGP(
-                train_X=train_x, train_Y=train_y, train_Yvar=train_yvar, task_feature=d
-            )
+            with self.assertWarnsRegex(DeprecationWarning, "FixedNoiseLCEMGP"):
+                model = FixedNoiseLCEMGP(
+                    train_X=train_x,
+                    train_Y=train_y,
+                    train_Yvar=train_yvar,
+                    task_feature=d,
+                )
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
             fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 1}})
 

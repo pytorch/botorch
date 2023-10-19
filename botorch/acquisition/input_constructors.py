@@ -1033,7 +1033,7 @@ def construct_inputs_qMES(
     X = _get_dataset_field(training_data, "X", first_only=True)
     _kw = {"device": X.device, "dtype": X.dtype}
     _rvs = torch.rand(candidate_size, len(bounds), **_kw)
-    _bounds = torch.tensor(bounds, **_kw).transpose(0, 1)
+    _bounds = torch.as_tensor(bounds, **_kw).transpose(0, 1)
     return {
         "model": model,
         "candidate_set": _bounds[0] + (_bounds[1] - _bounds[0]) * _rvs,
@@ -1090,7 +1090,7 @@ def construct_inputs_qKG(
     r"""Construct kwargs for `qKnowledgeGradient` constructor."""
 
     X = _get_dataset_field(training_data, "X", first_only=True)
-    _bounds = torch.tensor(bounds, dtype=X.dtype, device=X.device)
+    _bounds = torch.as_tensor(bounds, dtype=X.dtype, device=X.device)
 
     _, current_value = optimize_objective(
         model=model,
@@ -1181,7 +1181,7 @@ def construct_inputs_qMFMES(
     )
 
     X = _get_dataset_field(training_data, "X", first_only=True)
-    _bounds = torch.tensor(bounds, dtype=X.dtype, device=X.device)
+    _bounds = torch.as_tensor(bounds, dtype=X.dtype, device=X.device)
     _, current_value = optimize_objective(
         model=model,
         bounds=_bounds.t(),

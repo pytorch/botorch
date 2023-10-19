@@ -95,7 +95,7 @@ class TestCachedCholeskyMCAcquisitionFunction(BotorchTestCase):
             acqf = DummyCachedCholeskyAcqf(
                 model=model,
                 sampler=sampler,
-                objective=GenericMCObjective(lambda Y: Y[..., 0]),
+                objective=GenericMCObjective(lambda Y, _: Y[..., 0]),
             )
             baseline_L = torch.eye(2, **tkwargs)
             with mock.patch(
