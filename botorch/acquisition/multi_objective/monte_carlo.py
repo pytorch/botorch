@@ -30,7 +30,7 @@ from typing import Callable, List, Optional, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
-from botorch.acquisition.cached_cholesky import CachedCholeskyMCAcquisitionFunction
+from botorch.acquisition.cached_cholesky import CachedCholeskyMCSamplerMixin
 from botorch.acquisition.multi_objective.objective import (
     IdentityMCMultiOutputObjective,
     MCMultiOutputObjective,
@@ -326,7 +326,7 @@ class qExpectedHypervolumeImprovement(
 
 
 class qNoisyExpectedHypervolumeImprovement(
-    qExpectedHypervolumeImprovement, CachedCholeskyMCAcquisitionFunction
+    qExpectedHypervolumeImprovement, CachedCholeskyMCSamplerMixin
 ):
     def __init__(
         self,
@@ -423,7 +423,9 @@ class qNoisyExpectedHypervolumeImprovement(
             constraints=constraints,
             eta=eta,
         )
-        self._setup(model=model, cache_root=cache_root)
+        CachedCholeskyMCSamplerMixin.__init__(
+            self, model=model, cache_root=cache_root, sampler=sampler
+        )
 
         if X_baseline.ndim > 2:
             raise UnsupportedError(
