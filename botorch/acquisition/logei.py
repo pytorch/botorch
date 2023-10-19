@@ -24,7 +24,7 @@ from functools import partial
 from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union
 
 import torch
-from botorch.acquisition.cached_cholesky import CachedCholeskyMCAcquisitionFunction
+from botorch.acquisition.cached_cholesky import CachedCholeskyMCSamplerMixin
 from botorch.acquisition.monte_carlo import SampleReducingMCAcquisitionFunction
 from botorch.acquisition.objective import (
     ConstrainedMCObjective,
@@ -237,7 +237,7 @@ class qLogExpectedImprovement(LogImprovementMCAcquisitionFunction):
 
 
 class qLogNoisyExpectedImprovement(
-    LogImprovementMCAcquisitionFunction, CachedCholeskyMCAcquisitionFunction
+    LogImprovementMCAcquisitionFunction, CachedCholeskyMCSamplerMixin
 ):
     r"""MC-based batch Log Noisy Expected Improvement.
 
@@ -374,8 +374,9 @@ class qLogNoisyExpectedImprovement(
         cache_root: bool = True,
         **kwargs: Any,
     ) -> None:
-        # setup of CachedCholeskyMCAcquisitionFunction
-        self._setup(model=model, cache_root=cache_root)
+        CachedCholeskyMCSamplerMixin.__init__(
+            self, model=model, cache_root=cache_root, sampler=sampler
+        )
         if prune_baseline:
             X_baseline = prune_inferior_points(
                 model=model,
