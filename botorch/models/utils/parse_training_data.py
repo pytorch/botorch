@@ -14,7 +14,7 @@ from typing import Any, Dict, Hashable, Type, Union
 import torch
 from botorch.exceptions import UnsupportedError
 from botorch.models.model import Model
-from botorch.models.multitask import FixedNoiseMultiTaskGP, MultiTaskGP
+from botorch.models.multitask import MultiTaskGP
 from botorch.models.pairwise_gp import PairwiseGP
 from botorch.utils.datasets import RankingDataset, SupervisedDataset
 from botorch.utils.dispatcher import Dispatcher
@@ -88,7 +88,7 @@ def _parse_model_dict(
     return dispatcher(consumer, next(iter(training_data.values())))
 
 
-@dispatcher.register((MultiTaskGP, FixedNoiseMultiTaskGP), dict)
+@dispatcher.register(MultiTaskGP, dict)
 def _parse_multitask_dict(
     consumer: Model,
     training_data: Dict[Hashable, SupervisedDataset],

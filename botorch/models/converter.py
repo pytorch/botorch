@@ -15,13 +15,14 @@ from typing import Dict, Optional, Set, Tuple
 
 import torch
 from botorch.exceptions import UnsupportedError
-from botorch.models.gp_regression import FixedNoiseGP, HeteroskedasticSingleTaskGP
+from botorch.models.gp_regression import HeteroskedasticSingleTaskGP
 from botorch.models.gp_regression_fidelity import SingleTaskMultiFidelityGP
 from botorch.models.gp_regression_mixed import MixedSingleTaskGP
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
+from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 from torch import Tensor
 from torch.nn import Module
 
@@ -140,7 +141,7 @@ def model_list_to_batched(model_list: ModelListGP) -> BatchedMultiOutputGPyTorch
     train_X = deepcopy(models[0].train_inputs[0])
     train_Y = torch.stack([m.train_targets.clone() for m in models], dim=-1)
     kwargs = {"train_X": train_X, "train_Y": train_Y}
-    if isinstance(models[0], FixedNoiseGP):
+    if isinstance(models[0].likelihood, FixedNoiseGaussianLikelihood):
         kwargs["train_Yvar"] = torch.stack(
             [m.likelihood.noise_covar.noise.clone() for m in models], dim=-1
         )
@@ -302,7 +303,7 @@ def batched_to_model_list(batch_model: BatchedMultiOutputGPyTorchModel) -> Model
             .clone()
             .unsqueeze(-1),
         }
-        if isinstance(batch_model, FixedNoiseGP):
+        if isinstance(batch_model.likelihood, FixedNoiseGaussianLikelihood):
             noise_covar = batch_model.likelihood.noise_covar
             kwargs["train_Yvar"] = (
                 noise_covar.noise.select(input_bdims, i).clone().unsqueeze(-1)
@@ -390,7 +391,7 @@ def batched_multi_output_to_single_output(
         "train_X": batch_mo_model.train_inputs[0].clone(),
         "train_Y": batch_mo_model.train_targets.clone().unsqueeze(-1),
     }
-    if isinstance(batch_mo_model, FixedNoiseGP):
+    if isinstance(batch_mo_model.likelihood, FixedNoiseGaussianLikelihood):
         noise_covar = batch_mo_model.likelihood.noise_covar
         kwargs["train_Yvar"] = noise_covar.noise.clone().unsqueeze(-1)
     if isinstance(batch_mo_model, SingleTaskMultiFidelityGP):

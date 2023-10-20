@@ -30,7 +30,8 @@ model like `MultiTaskGP`.
 
 from __future__ import annotations
 
-from typing import Any, List, NoReturn, Optional
+import warnings
+from typing import NoReturn, Optional
 
 import torch
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
@@ -43,7 +44,6 @@ from botorch.models.utils.gpytorch_modules import (
     get_matern_kernel_with_gamma_prior,
     MIN_INFERRED_NOISE_LEVEL,
 )
-from botorch.sampling.base import MCSampler
 from gpytorch.constraints.constraints import GreaterThan
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.likelihoods.gaussian_likelihood import (
@@ -63,7 +63,7 @@ from torch import Tensor
 
 
 class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
-    r"""A single-task exact GP model.
+    r"""A single-task exact GP model, supporting both known and inferred noise levels.
 
     A single-task exact GP using relatively strong priors on the Kernel
     hyperparameters, which work best when covariates are normalized to the unit
@@ -78,16 +78,35 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
     training data, use the ModelListGP. When modeling correlations between
     outputs, use the MultiTaskGP.
 
+    An example of a case in which noise levels are known is online
+    experimentation, where noise can be measured using the variability of
+    different observations from the same arm, or provided by outside software.
+    Another use case is simulation optimization, where the evaluation can
+    provide variance estimates, perhaps from bootstrapping. In any case, these
+    noise levels can be provided to `SingleTaskGP` as `train_Yvar`.
+
+    `SingleTaskGP` can also be used when the observations are known to be
+    noise-free. Noise-free observations can be modeled using arbitrarily small
+    noise values, such as `train_Yvar=torch.full_like(train_Y, 1e-6)`.
+
     Example:
+        >>> # Model with inferred noise levels.
         >>> train_X = torch.rand(20, 2)
         >>> train_Y = torch.sin(train_X).sum(dim=1, keepdim=True)
-        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> inferred_noise_model = SingleTaskGP(train_X, train_Y)
+        >>> # With known observation variance of 0.2.
+        >>> train_Yvar = torch.full_like(train_Y, 0.2)
+        >>> observed_noise_model = SingleTaskGP(train_X, train_Y, train_Yvar)
+        >>> # To model noise-free observations.
+        >>> train_Yvar = torch.full_like(train_Y, 1e-6)
+        >>> noise_free_model = SingleTaskGP(train_X, train_Y, train_Yvar)
     """
 
     def __init__(
         self,
         train_X: Tensor,
         train_Y: Tensor,
+        train_Yvar: Optional[Tensor] = None,
         likelihood: Optional[Likelihood] = None,
         covar_module: Optional[Module] = None,
         mean_module: Optional[Mean] = None,
@@ -98,8 +117,12 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         Args:
             train_X: A `batch_shape x n x d` tensor of training features.
             train_Y: A `batch_shape x n x m` tensor of training observations.
+            train_Yvar: An optional `batch_shape x n x m` tensor of observed
+                measurement noise.
             likelihood: A likelihood. If omitted, use a standard
-                GaussianLikelihood with inferred noise level.
+                `GaussianLikelihood` with inferred noise level if `train_Yvar`
+                is None, and a `FixedNoiseGaussianLikelihood` with the given
+                noise observations if `train_Yvar` is not None.
             covar_module: The module computing the covariance (Kernel) matrix.
                 If omitted, use a `MaternKernel`.
             mean_module: The mean function to be used. If omitted, use a
@@ -116,18 +139,28 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
                 X=train_X, input_transform=input_transform
             )
         if outcome_transform is not None:
-            train_Y, _ = outcome_transform(train_Y)
-        self._validate_tensor_args(X=transformed_X, Y=train_Y)
+            train_Y, train_Yvar = outcome_transform(train_Y, train_Yvar)
+        self._validate_tensor_args(X=transformed_X, Y=train_Y, Yvar=train_Yvar)
         ignore_X_dims = getattr(self, "_ignore_X_dims_scaling_check", None)
         validate_input_scaling(
-            train_X=transformed_X, train_Y=train_Y, ignore_X_dims=ignore_X_dims
+            train_X=transformed_X,
+            train_Y=train_Y,
+            train_Yvar=train_Yvar,
+            ignore_X_dims=ignore_X_dims,
         )
         self._set_dimensions(train_X=train_X, train_Y=train_Y)
-        train_X, train_Y, _ = self._transform_tensor_args(X=train_X, Y=train_Y)
+        train_X, train_Y, train_Yvar = self._transform_tensor_args(
+            X=train_X, Y=train_Y, Yvar=train_Yvar
+        )
         if likelihood is None:
-            likelihood = get_gaussian_likelihood_with_gamma_prior(
-                batch_shape=self._aug_batch_shape
-            )
+            if train_Yvar is None:
+                likelihood = get_gaussian_likelihood_with_gamma_prior(
+                    batch_shape=self._aug_batch_shape
+                )
+            else:
+                likelihood = FixedNoiseGaussianLikelihood(
+                    noise=train_Yvar, batch_shape=self._aug_batch_shape
+                )
         else:
             self._is_custom_likelihood = True
         ExactGP.__init__(
@@ -142,11 +175,12 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
                 batch_shape=self._aug_batch_shape,
             )
             self._subset_batch_dict = {
-                "likelihood.noise_covar.raw_noise": -2,
                 "mean_module.raw_constant": -1,
                 "covar_module.raw_outputscale": -1,
                 "covar_module.base_kernel.raw_lengthscale": -3,
             }
+            if train_Yvar is None:
+                self._subset_batch_dict["likelihood.noise_covar.raw_noise"] = -2
         self.covar_module = covar_module
         # TODO: Allow subsetting of other covar modules
         if outcome_transform is not None:
@@ -163,37 +197,12 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         return MultivariateNormal(mean_x, covar_x)
 
 
-class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
+class FixedNoiseGP(SingleTaskGP):
     r"""A single-task exact GP model using fixed noise levels.
 
-    A single-task exact GP that uses fixed observation noise levels, differing from
-    `SingleTaskGP` only in that noise levels are provided rather than inferred.
-    This model also uses relatively strong priors on the Kernel hyperparameters,
-    which work best when covariates are normalized to the unit cube and outcomes
-    are standardized (zero mean, unit variance).
-
-    This model works in batch mode (each batch having its own hyperparameters).
-
-    An example of a case in which noise levels are known is online
-    experimentation, where noise can be measured using the variability of
-    different observations from the same arm, or provided by outside software.
-    Another use case is simulation optimization, where the evaluation can
-    provide variance estimates, perhaps from bootstrapping. In any case, these
-    noise levels must be provided to `FixedNoiseGP` as `train_Yvar`.
-
-    `FixedNoiseGP` is also commonly used when the observations are known to be
-    noise-free.  Noise-free observations can be modeled using arbitrarily small
-    noise values, such as `train_Yvar=torch.full_like(train_Y, 1e-6)`.
-
-    `FixedNoiseGP` cannot predict noise levels out of sample. If this is needed,
-    use `HeteroskedasticSingleTaskGP`, which will create another model for the
-    observation noise.
-
-    Example:
-        >>> train_X = torch.rand(20, 2)
-        >>> train_Y = torch.sin(train_X).sum(dim=1, keepdim=True)
-        >>> train_Yvar = torch.full_like(train_Y, 0.2)
-        >>> model = FixedNoiseGP(train_X, train_Y, train_Yvar)
+    DEPRECATED: `FixedNoiseGP` has been merged into `SingleTaskGP`. Please use
+    `SingleTaskGP` with `train_Yvar` instead.
+    Will be removed in a future release (~v0.12).
     """
 
     def __init__(
@@ -206,139 +215,21 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
     ) -> None:
-        r"""
-        Args:
-            train_X: A `batch_shape x n x d` tensor of training features.
-            train_Y: A `batch_shape x n x m` tensor of training observations.
-            train_Yvar: A `batch_shape x n x m` tensor of observed measurement
-                noise.
-            covar_module: The module computing the covariance (Kernel) matrix.
-                If omitted, use a `MaternKernel`.
-            mean_module: The mean function to be used. If omitted, use a
-                `ConstantMean`.
-            outcome_transform: An outcome transform that is applied to the
-                training data during instantiation and to the posterior during
-                inference (that is, the `Posterior` obtained by calling
-                `.posterior` on the model will be on the original scale).
-            input_transform: An input transfrom that is applied in the model's
-                forward pass.
-        """
-        with torch.no_grad():
-            transformed_X = self.transform_inputs(
-                X=train_X, input_transform=input_transform
-            )
-        if outcome_transform is not None:
-            train_Y, train_Yvar = outcome_transform(train_Y, train_Yvar)
-        self._validate_tensor_args(X=transformed_X, Y=train_Y, Yvar=train_Yvar)
-        validate_input_scaling(
-            train_X=transformed_X, train_Y=train_Y, train_Yvar=train_Yvar
+        r"""DEPRECATED. See SingleTaskGP."""
+        warnings.warn(
+            "`FixedNoiseGP` has been merged into `SingleTaskGP`. "
+            "Please use `SingleTaskGP` with `train_Yvar` instead.",
+            DeprecationWarning,
         )
-        self._set_dimensions(train_X=train_X, train_Y=train_Y)
-        train_X, train_Y, train_Yvar = self._transform_tensor_args(
-            X=train_X, Y=train_Y, Yvar=train_Yvar
+        super().__init__(
+            train_X=train_X,
+            train_Y=train_Y,
+            train_Yvar=train_Yvar,
+            covar_module=covar_module,
+            mean_module=mean_module,
+            outcome_transform=outcome_transform,
+            input_transform=input_transform,
         )
-        likelihood = FixedNoiseGaussianLikelihood(
-            noise=train_Yvar, batch_shape=self._aug_batch_shape
-        )
-        ExactGP.__init__(
-            self, train_inputs=train_X, train_targets=train_Y, likelihood=likelihood
-        )
-        if mean_module is None:
-            mean_module = ConstantMean(batch_shape=self._aug_batch_shape)
-        self.mean_module = mean_module
-        if covar_module is None:
-            covar_module = get_matern_kernel_with_gamma_prior(
-                ard_num_dims=transformed_X.shape[-1],
-                batch_shape=self._aug_batch_shape,
-            )
-            self._subset_batch_dict = {
-                "mean_module.raw_constant": -1,
-                "covar_module.raw_outputscale": -1,
-                "covar_module.base_kernel.raw_lengthscale": -3,
-            }
-        self.covar_module = covar_module
-        # TODO: Allow subsetting of other covar modules
-        if input_transform is not None:
-            self.input_transform = input_transform
-        if outcome_transform is not None:
-            self.outcome_transform = outcome_transform
-
-        self.to(train_X)
-
-    def fantasize(
-        self,
-        X: Tensor,
-        sampler: MCSampler,
-        observation_noise: Optional[Tensor] = None,
-        **kwargs: Any,
-    ) -> FixedNoiseGP:
-        r"""Construct a fantasy model.
-
-        Constructs a fantasy model in the following fashion:
-        (1) compute the model posterior at `X` (if `observation_noise=True`,
-        this includes observation noise taken as the mean across the observation
-        noise in the training data. If `observation_noise` is a Tensor, use
-        it directly as the observation noise to add).
-        (2) sample from this posterior (using `sampler`) to generate "fake"
-        observations.
-        (3) condition the model on the new fake observations.
-
-        Args:
-            X: A `batch_shape x n' x d`-dim Tensor, where `d` is the dimension of
-                the feature space, `n'` is the number of points per batch, and
-                `batch_shape` is the batch shape (must be compatible with the
-                batch shape of the model).
-            sampler: The sampler used for sampling from the posterior at `X`.
-            observation_noise: The noise level for fantasization if
-                provided. If `None`, the mean across the observation
-                noise in the training data is used as observation noise in
-                the posterior from which the samples are drawn and
-                the fantasized noise level. If observation noise is
-                provided, it is assumed to be in the outcome-transformed
-                space, if an outcome transform is used.
-
-        Returns:
-            The constructed fantasy model.
-        """
-        # self.likelihood.noise is an `batch_shape x n x s(m)`-dimensional tensor
-        if observation_noise is None:
-            if self.num_outputs > 1:
-                # make noise ... x n x m
-                observation_noise = self.likelihood.noise.transpose(-1, -2)
-            else:
-                observation_noise = self.likelihood.noise.unsqueeze(-1)
-            observation_noise = observation_noise.mean(dim=-2, keepdim=True)
-
-        return super().fantasize(
-            X=X,
-            sampler=sampler,
-            observation_noise=observation_noise,
-            **kwargs,
-        )
-
-    def forward(self, x: Tensor) -> MultivariateNormal:
-        # TODO: reduce redundancy with the 'forward' method of
-        # SingleTaskGP, which is identical
-        if self.training:
-            x = self.transform_inputs(x)
-        mean_x = self.mean_module(x)
-        covar_x = self.covar_module(x)
-        return MultivariateNormal(mean_x, covar_x)
-
-    def subset_output(self, idcs: List[int]) -> BatchedMultiOutputGPyTorchModel:
-        r"""Subset the model along the output dimension.
-
-        Args:
-            idcs: The output indices to subset the model to.
-
-        Returns:
-            The current model, subset to the specified output indices.
-        """
-        new_model = super().subset_output(idcs=idcs)
-        full_noise = new_model.likelihood.noise_covar.noise
-        new_noise = full_noise[..., idcs if len(idcs) > 1 else idcs[0], :]
-        new_model.likelihood.noise_covar.noise = new_noise
-        return new_model
 
 
 class HeteroskedasticSingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):

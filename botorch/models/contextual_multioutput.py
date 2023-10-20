@@ -170,6 +170,7 @@ class FixedNoiseLCEMGP(LCEMGP):
     (LCE-M) kernel, with known observation noise.
 
     DEPRECATED: Please use `LCEMGP` with `train_Yvar` instead.
+    Will be removed in a future release (~v0.11).
     """
 
     def __init__(

@@ -14,7 +14,7 @@ from unittest import mock
 import numpy as np
 import torch
 from botorch.exceptions.errors import BotorchError
-from botorch.models import FixedNoiseGP
+from botorch.models.gp_regression import SingleTaskGP
 from botorch.sampling.pathwise import draw_matheron_paths
 from botorch.utils.sampling import (
     _convert_bounds_to_inequality_constraints,
@@ -514,7 +514,7 @@ class TestOptimizePosteriorSamples(BotorchTestCase):
 
             # having a noiseless model all but guarantees that the found optima
             # will be better than the observations
-            model = FixedNoiseGP(X, Y, torch.full_like(Y, eps))
+            model = SingleTaskGP(X, Y, torch.full_like(Y, eps))
             paths = draw_matheron_paths(
                 model=model, sample_shape=torch.Size([num_optima])
             )

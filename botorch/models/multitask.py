@@ -327,6 +327,7 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
     r"""Multi-Task GP model using an ICM kernel, with known observation noise.
 
     DEPRECATED: Please use `MultiTaskGP` with `train_Yvar` instead.
+    Will be removed in a future release (~v0.10).
     """
 
     def __init__(

@@ -11,7 +11,7 @@ import torch
 from botorch.acquisition import ExpectedImprovement, qExpectedImprovement
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_mll
-from botorch.models import FixedNoiseGP, SingleTaskGP
+from botorch.models.gp_regression import SingleTaskGP
 from botorch.optim import optimize_acqf
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
@@ -56,7 +56,7 @@ class TestEndToEnd(BotorchTestCase):
                 optimizer_kwargs={"options": {"maxiter": 5}},
                 max_attempts=1,
             )
-        model_fn = FixedNoiseGP(
+        model_fn = SingleTaskGP(
             self.train_x, self.train_y, self.train_yvar.expand_as(self.train_y)
         )
         self.model_fn = model_fn.to(device=self.device, dtype=dtype)

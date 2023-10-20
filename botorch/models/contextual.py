@@ -6,28 +6,29 @@
 
 from typing import Any, Dict, List, Optional
 
-from botorch.models.gp_regression import FixedNoiseGP
+from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.kernels.contextual_lcea import LCEAKernel
 from botorch.models.kernels.contextual_sac import SACKernel
 from botorch.utils.datasets import SupervisedDataset
 from torch import Tensor
 
 
-class SACGP(FixedNoiseGP):
+class SACGP(SingleTaskGP):
     r"""A GP using a Structural Additive Contextual(SAC) kernel."""
 
     def __init__(
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        train_Yvar: Tensor,
+        train_Yvar: Optional[Tensor],
         decomposition: Dict[str, List[int]],
     ) -> None:
         r"""
         Args:
             train_X: (n x d) X training data.
             train_Y: (n x 1) Y training data.
-            train_Yvar: (n x 1) Noise variances of each training Y.
+            train_Yvar: (n x 1) Noise variances of each training Y. If None,
+                we use an inferred noise likelihood.
             decomposition: Keys are context names. Values are the indexes of
                 parameters belong to the context. The parameter indexes are in
                 the same order across contexts.
@@ -62,7 +63,7 @@ class SACGP(FixedNoiseGP):
         }
 
 
-class LCEAGP(FixedNoiseGP):
+class LCEAGP(SingleTaskGP):
     r"""A GP using a Latent Context Embedding Additive (LCE-A) Kernel.
 
     Note that the model does not support batch training. Input training
@@ -73,7 +74,7 @@ class LCEAGP(FixedNoiseGP):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        train_Yvar: Tensor,
+        train_Yvar: Optional[Tensor],
         decomposition: Dict[str, List[int]],
         train_embedding: bool = True,
         cat_feature_dict: Optional[Dict] = None,
@@ -85,7 +86,8 @@ class LCEAGP(FixedNoiseGP):
         Args:
             train_X: (n x d) X training data.
             train_Y: (n x 1) Y training data.
-            train_Yvar: (n x 1) Noise variance of Y.
+            train_Yvar: (n x 1) Noise variance of Y. If None,
+                we use an inferred noise likelihood.
             decomposition: Keys are context names. Values are the indexes of
                 parameters belong to the context.
             train_embedding: Whether to train the embedding layer or not. If False,

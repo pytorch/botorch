@@ -540,6 +540,12 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
         except AttributeError:
             pass
 
+        # Subset fixed noise likelihood if present.
+        if isinstance(self.likelihood, FixedNoiseGaussianLikelihood):
+            full_noise = new_model.likelihood.noise_covar.noise
+            new_noise = full_noise[..., idcs if len(idcs) > 1 else idcs[0], :]
+            new_model.likelihood.noise_covar.noise = new_noise
+
         return new_model
 
 

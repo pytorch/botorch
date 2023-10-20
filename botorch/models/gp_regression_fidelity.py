@@ -31,7 +31,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
 from botorch.exceptions.errors import UnsupportedError
-from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
+from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.kernels.downsampling import DownsamplingKernel
 from botorch.models.kernels.exponential_decay import ExponentialDecayKernel
 from botorch.models.kernels.linear_truncated_fidelity import (
@@ -67,6 +67,7 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
         self,
         train_X: Tensor,
         train_Y: Tensor,
+        train_Yvar: Optional[Tensor] = None,
         iteration_fidelity: Optional[int] = None,
         data_fidelities: Optional[Union[List[int], Tuple[int]]] = None,
         data_fidelity: Optional[int] = None,
@@ -82,6 +83,8 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
                 where `s` is the dimension of the fidelity parameters (either one
                 or two).
             train_Y: A `batch_shape x n x m` tensor of training observations.
+            train_Yvar: An optional `batch_shape x n x m` tensor of observed
+                measurement noise.
             iteration_fidelity: The column index for the training iteration fidelity
                 parameter (optional).
             data_fidelities: The column indices for the downsampling fidelity parameter.
@@ -142,17 +145,19 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
         super().__init__(
             train_X=train_X,
             train_Y=train_Y,
+            train_Yvar=train_Yvar,
             likelihood=likelihood,
             covar_module=covar_module,
             outcome_transform=outcome_transform,
             input_transform=input_transform,
         )
         self._subset_batch_dict = {
-            "likelihood.noise_covar.raw_noise": -2,
             "mean_module.raw_constant": -1,
             "covar_module.raw_outputscale": -1,
             **subset_batch_dict,
         }
+        if train_Yvar is None:
+            self._subset_batch_dict["likelihood.noise_covar.raw_noise"] = -2
         self.to(train_X)
 
     @classmethod
@@ -173,27 +178,7 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
         return inputs
 
 
-class FixedNoiseMultiFidelityGP(FixedNoiseGP):
-    r"""A single task multi-fidelity GP model using fixed noise levels.
-
-    A FixedNoiseGP model analogue to SingleTaskMultiFidelityGP, using a
-    DownsamplingKernel for the data fidelity parameter (if present) and
-    an ExponentialDecayKernel for the iteration fidelity parameter (if present).
-
-    This kernel is described in [Wu2019mf]_.
-
-    Example:
-        >>> train_X = torch.rand(20, 4)
-        >>> train_Y = train_X.pow(2).sum(dim=-1, keepdim=True)
-        >>> train_Yvar = torch.full_like(train_Y) * 0.01
-        >>> model = FixedNoiseMultiFidelityGP(
-        >>>     train_X,
-        >>>     train_Y,
-        >>>     train_Yvar,
-        >>>     data_fidelities=[3],
-        >>> )
-    """
-
+class FixedNoiseMultiFidelityGP(SingleTaskMultiFidelityGP):
     def __init__(
         self,
         train_X: Tensor,
@@ -207,99 +192,26 @@ class FixedNoiseMultiFidelityGP(FixedNoiseGP):
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
     ) -> None:
-        r"""
-        Args:
-            train_X: A `batch_shape x n x (d + s)` tensor of training features,
-                where `s` is the dimension of the fidelity parameters (either one
-                or two).
-            train_Y: A `batch_shape x n x m` tensor of training observations.
-            train_Yvar: A `batch_shape x n x m` tensor of observed measurement noise.
-            iteration_fidelity: The column index for the training iteration fidelity
-                parameter (optional).
-            data_fidelities: The column indices for the downsampling fidelity parameter.
-                If a list of indices is provided, a kernel will be constructed for
-                each index (optional).
-            data_fidelity: The column index for the downsampling fidelity parameter
-                (optional). Deprecated in favor of `data_fidelities`.
-            linear_truncated: If True, use a `LinearTruncatedFidelityKernel` instead
-                of the default kernel.
-            nu: The smoothness parameter for the Matern kernel: either 1/2, 3/2, or
-                5/2. Only used when `linear_truncated=True`.
-            outcome_transform: An outcome transform that is applied to the
-                training data during instantiation and to the posterior during
-                inference (that is, the `Posterior` obtained by calling
-                `.posterior` on the model will be on the original scale).
-            input_transform: An input transform that is applied in the model's
-                forward pass.
+        r"""DEPRECATED: Use `SingleTaskMultiFidelityGP` instead.
+        Will be removed in a future release (~v0.11).
         """
-        if data_fidelity is not None:
-            warnings.warn(
-                "The `data_fidelity` argument is deprecated and will be removed in "
-                "a future release. Please use `data_fidelities` instead.",
-                DeprecationWarning,
-            )
-            if data_fidelities is not None:
-                raise ValueError(
-                    "Cannot specify both `data_fidelity` and `data_fidelities`."
-                )
-            data_fidelities = [data_fidelity]
-
-        self._init_args = {
-            "iteration_fidelity": iteration_fidelity,
-            "data_fidelities": data_fidelities,
-            "linear_truncated": linear_truncated,
-            "nu": nu,
-            "outcome_transform": outcome_transform,
-        }
-        if iteration_fidelity is None and data_fidelities is None:
-            raise UnsupportedError(
-                "FixedNoiseMultiFidelityGP requires at least one fidelity parameter."
-            )
-        with torch.no_grad():
-            transformed_X = self.transform_inputs(
-                X=train_X, input_transform=input_transform
-            )
-        self._set_dimensions(train_X=transformed_X, train_Y=train_Y)
-        covar_module, subset_batch_dict = _setup_multifidelity_covar_module(
-            dim=transformed_X.size(-1),
-            aug_batch_shape=self._aug_batch_shape,
-            iteration_fidelity=iteration_fidelity,
-            data_fidelities=data_fidelities,
-            linear_truncated=linear_truncated,
-            nu=nu,
+        warnings.warn(
+            "`FixedNoiseMultiFidelityGP` has been deprecated. "
+            "Use `SingleTaskMultiFidelityGP` with `train_Yvar` instead.",
+            DeprecationWarning,
         )
         super().__init__(
             train_X=train_X,
             train_Y=train_Y,
             train_Yvar=train_Yvar,
-            covar_module=covar_module,
+            iteration_fidelity=iteration_fidelity,
+            data_fidelities=data_fidelities,
+            data_fidelity=data_fidelity,
+            linear_truncated=linear_truncated,
+            nu=nu,
             outcome_transform=outcome_transform,
             input_transform=input_transform,
         )
-        self._subset_batch_dict = {
-            "likelihood.noise_covar.raw_noise": -2,
-            "mean_module.raw_constant": -1,
-            "covar_module.raw_outputscale": -1,
-            **subset_batch_dict,
-        }
-        self.to(train_X)
-
-    @classmethod
-    def construct_inputs(
-        cls,
-        training_data: SupervisedDataset,
-        fidelity_features: List[int],
-        **kwargs,
-    ) -> Dict[str, Any]:
-        r"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`.
-
-        Args:
-            training_data: Dictionary of `SupervisedDataset`.
-            fidelity_features: Column indices of fidelity features.
-        """
-        inputs = super().construct_inputs(training_data=training_data, **kwargs)
-        inputs["data_fidelities"] = fidelity_features
-        return inputs
 
 
 def _setup_multifidelity_covar_module(

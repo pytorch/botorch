@@ -6,13 +6,12 @@
 
 import torch
 from botorch.exceptions import UnsupportedError
-from botorch.models.gp_regression import FixedNoiseGP
 from botorch.models.model import Model
 from botorch.models.multitask import MultiTaskGP
 from botorch.models.pairwise_gp import PairwiseGP
 from botorch.models.utils.parse_training_data import parse_training_data
 from botorch.utils.containers import SliceContainer
-from botorch.utils.datasets import FixedNoiseDataset, RankingDataset, SupervisedDataset
+from botorch.utils.datasets import RankingDataset, SupervisedDataset
 from botorch.utils.testing import BotorchTestCase
 from torch import cat, long, rand, Size, tensor
 
@@ -32,26 +31,17 @@ class TestParseTrainingData(BotorchTestCase):
         self.assertIsInstance(parse, dict)
         self.assertTrue(torch.equal(dataset.X, parse["train_X"]))
         self.assertTrue(torch.equal(dataset.Y, parse["train_Y"]))
-
-    def test_fixedNoise(self):
-        # Test passing a `SupervisedDataset`
-        dataset = SupervisedDataset(
-            X=rand(3, 2), Y=rand(3, 1), feature_names=["a", "b"], outcome_names=["y"]
-        )
-        parse = parse_training_data(FixedNoiseGP, dataset)
         self.assertTrue("train_Yvar" not in parse)
-        self.assertTrue(torch.equal(dataset.X, parse["train_X"]))
-        self.assertTrue(torch.equal(dataset.Y, parse["train_Y"]))
 
-        # Test passing a `FixedNoiseDataset`
-        dataset = FixedNoiseDataset(
+        # Test with noise
+        dataset = SupervisedDataset(
             X=rand(3, 2),
             Y=rand(3, 1),
             Yvar=rand(3, 1),
             feature_names=["a", "b"],
             outcome_names=["y"],
         )
-        parse = parse_training_data(FixedNoiseGP, dataset)
+        parse = parse_training_data(Model, dataset)
         self.assertTrue(torch.equal(dataset.X, parse["train_X"]))
         self.assertTrue(torch.equal(dataset.Y, parse["train_Y"]))
         self.assertTrue(torch.equal(dataset.Yvar, parse["train_Yvar"]))

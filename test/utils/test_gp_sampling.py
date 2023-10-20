@@ -12,7 +12,7 @@ import torch
 from botorch.models.converter import batched_to_model_list
 from botorch.models.deterministic import DeterministicModel
 from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
-from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
+from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.model import ModelList
 from botorch.models.multitask import MultiTaskGP
 from botorch.models.transforms.input import Normalize
@@ -652,7 +652,7 @@ class TestRandomFourierFeatures(BotorchTestCase):
     def test_with_fixed_noise(self):
         for n_samples in (1, 20):
             gp_samples = get_gp_samples(
-                model=FixedNoiseGP(
+                model=SingleTaskGP(
                     torch.rand(5, 3, dtype=torch.double),
                     torch.randn(5, 1, dtype=torch.double),
                     torch.rand(5, 1, dtype=torch.double) * 0.1,

@@ -30,7 +30,7 @@ from typing import Callable, List, Optional, Protocol, Tuple, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
-from botorch.acquisition.cached_cholesky import CachedCholeskyMCAcquisitionFunction
+from botorch.acquisition.cached_cholesky import CachedCholeskyMCSamplerMixin
 from botorch.acquisition.objective import (
     ConstrainedMCObjective,
     IdentityMCObjective,
@@ -408,7 +408,7 @@ class qExpectedImprovement(SampleReducingMCAcquisitionFunction):
 
 
 class qNoisyExpectedImprovement(
-    SampleReducingMCAcquisitionFunction, CachedCholeskyMCAcquisitionFunction
+    SampleReducingMCAcquisitionFunction, CachedCholeskyMCSamplerMixin
 ):
     r"""MC-based batch Noisy Expected Improvement.
 
@@ -490,7 +490,9 @@ class qNoisyExpectedImprovement(
             constraints=constraints,
             eta=eta,
         )
-        self._setup(model=model, cache_root=cache_root)
+        CachedCholeskyMCSamplerMixin.__init__(
+            self, model=model, cache_root=cache_root, sampler=sampler
+        )
         if prune_baseline:
             X_baseline = prune_inferior_points(
                 model=model,

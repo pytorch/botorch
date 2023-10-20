@@ -154,6 +154,7 @@ class FixedNoiseDataset(SupervisedDataset):
     observations variances so that `Y[i] ~ N(f(X[i]), Yvar[i])`.
 
     NOTE: This is deprecated. Use `SupervisedDataset` instead.
+    Will be removed in a future release (~v0.11).
     """
 
     def __init__(
