@@ -338,7 +338,8 @@ def gen_batch_initial_conditions(
             n = raw_samples * factor
             if generator is not None:
                 X_rnd = generator(n, q, seed)
-            elif inequality_constraints is None and equality_constraints is None:
+            # check if no constraints are provided
+            elif not (inequality_constraints or equality_constraints):
                 if effective_dim <= SobolEngine.MAXDIM:
                     X_rnd = draw_sobol_samples(bounds=bounds_cpu, n=n, q=q, seed=seed)
                 else:
