@@ -29,28 +29,29 @@
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">FixedNoiseGP</span>
+<span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.kernels.contextual_lcea</span> <span class="kn">import</span> <span class="n">LCEAKernel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.kernels.contextual_sac</span> <span class="kn">import</span> <span class="n">SACKernel</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">SupervisedDataset</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="SACGP"><a class="viewcode-back" href="../../../models.html#botorch.models.contextual.SACGP">[docs]</a><span class="k">class</span> <span class="nc">SACGP</span><span class="p">(</span><span class="n">FixedNoiseGP</span><span class="p">):</span>
+<div class="viewcode-block" id="SACGP"><a class="viewcode-back" href="../../../models.html#botorch.models.contextual.SACGP">[docs]</a><span class="k">class</span> <span class="nc">SACGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A GP using a Structural Additive Contextual(SAC) kernel."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
         <span class="n">decomposition</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: (n x d) X training data.</span>
 <span class="sd">            train_Y: (n x 1) Y training data.</span>
-<span class="sd">            train_Yvar: (n x 1) Noise variances of each training Y.</span>
+<span class="sd">            train_Yvar: (n x 1) Noise variances of each training Y. If None,</span>
+<span class="sd">                we use an inferred noise likelihood.</span>
 <span class="sd">            decomposition: Keys are context names. Values are the indexes of</span>
 <span class="sd">                parameters belong to the context. The parameter indexes are in</span>
 <span class="sd">                the same order across contexts.</span>
@@ -85,7 +86,7 @@
         <span class="p">}</span></div></div>
 
 
-<div class="viewcode-block" id="LCEAGP"><a class="viewcode-back" href="../../../models.html#botorch.models.contextual.LCEAGP">[docs]</a><span class="k">class</span> <span class="nc">LCEAGP</span><span class="p">(</span><span class="n">FixedNoiseGP</span><span class="p">):</span>
+<div class="viewcode-block" id="LCEAGP"><a class="viewcode-back" href="../../../models.html#botorch.models.contextual.LCEAGP">[docs]</a><span class="k">class</span> <span class="nc">LCEAGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A GP using a Latent Context Embedding Additive (LCE-A) Kernel.</span>
 
 <span class="sd">    Note that the model does not support batch training. Input training</span>
@@ -96,7 +97,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
         <span class="n">decomposition</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
         <span class="n">train_embedding</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">cat_feature_dict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -108,7 +109,8 @@
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: (n x d) X training data.</span>
 <span class="sd">            train_Y: (n x 1) Y training data.</span>
-<span class="sd">            train_Yvar: (n x 1) Noise variance of Y.</span>
+<span class="sd">            train_Yvar: (n x 1) Noise variance of Y. If None,</span>
+<span class="sd">                we use an inferred noise likelihood.</span>
 <span class="sd">            decomposition: Keys are context names. Values are the indexes of</span>
 <span class="sd">                parameters belong to the context.</span>
 <span class="sd">            train_embedding: Whether to train the embedding layer or not. If False,</span>

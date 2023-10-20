@@ -68,6 +68,7 @@
 <span class="kn">from</span> <span class="nn">botorch.sampling.list_sampler</span> <span class="kn">import</span> <span class="n">ListSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">SupervisedDataset</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">is_fully_bayesian</span>
+<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.gaussian_likelihood</span> <span class="kn">import</span> <span class="n">FixedNoiseGaussianLikelihood</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span><span class="p">,</span> <span class="n">ModuleDict</span><span class="p">,</span> <span class="n">ModuleList</span>
 
@@ -348,8 +349,9 @@
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct a fantasy model.</span>
 
 <span class="sd">        Constructs a fantasy model in the following fashion:</span>
-<span class="sd">        (1) compute the model posterior at `X` (including observation noise if</span>
-<span class="sd">        `observation_noise=True`).</span>
+<span class="sd">        (1) compute the model posterior at `X`, including observation noise.</span>
+<span class="sd">        If `observation_noise` is a Tensor, use it directly as the observation</span>
+<span class="sd">        noise to add.</span>
 <span class="sd">        (2) sample from this posterior (using `sampler`) to generate "fake"</span>
 <span class="sd">        observations.</span>
 <span class="sd">        (3) condition the model on the new fake observations.</span>
@@ -364,8 +366,10 @@
 <span class="sd">                a `model_batch_shape x n' x m`-dim tensor containing the average</span>
 <span class="sd">                noise for each batch and output, where `m` is the number of outputs.</span>
 <span class="sd">                `noise` must be in the outcome-transformed space if an outcome</span>
-<span class="sd">                transform is used. If None, then the noise will be the inferred</span>
-<span class="sd">                noise level.</span>
+<span class="sd">                transform is used.</span>
+<span class="sd">                If None and using an inferred noise likelihood, the noise will be the</span>
+<span class="sd">                inferred noise level. If using a fixed noise likelihood, the mean across</span>
+<span class="sd">                the observation noise in the training data is used as observation noise.</span>
 <span class="sd">            kwargs: Will be passed to `model.condition_on_observations`</span>
 
 <span class="sd">        Returns:</span>
@@ -375,6 +379,15 @@
             <span class="k">raise</span> <span class="n">DeprecationError</span><span class="p">(</span>
                 <span class="s2">"`fantasize` no longer accepts a boolean for `observation_noise`."</span>
             <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">observation_noise</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">FixedNoiseGaussianLikelihood</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="c1"># make noise ... x n x m</span>
+                <span class="n">observation_noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">observation_noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">observation_noise</span> <span class="o">=</span> <span class="n">observation_noise</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="c1"># if the inputs are empty, expand the inputs</span>
         <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">output_shape</span> <span class="o">=</span> <span class="p">(</span>
@@ -383,9 +396,10 @@
                 <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span>
                 <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span><span class="p">])</span>
             <span class="p">)</span>
+            <span class="n">Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">output_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_on_observations</span><span class="p">(</span>
                 <span class="n">X</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">X</span><span class="p">),</span>
-                <span class="n">Y</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">output_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
+                <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span>
                 <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="n">propagate_grads</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"propagate_grads"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>

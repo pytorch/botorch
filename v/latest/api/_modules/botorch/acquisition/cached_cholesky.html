@@ -34,9 +34,10 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">MCSamplerMixin</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">BotorchWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.higher_order_gp</span> <span class="kn">import</span> <span class="n">HigherOrderGP</span>
@@ -45,6 +46,7 @@
 <span class="kn">from</span> <span class="nn">botorch.models.multitask</span> <span class="kn">import</span> <span class="n">KroneckerMultiTaskGP</span><span class="p">,</span> <span class="n">MultiTaskGP</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.low_rank</span> <span class="kn">import</span> <span class="n">extract_batch_covar</span><span class="p">,</span> <span class="n">sample_cached_cholesky</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions.multitask_multivariate_normal</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">MultitaskMultivariateNormal</span><span class="p">,</span>
@@ -81,8 +83,8 @@
     <span class="k">return</span> <span class="n">msg</span>
 
 
-<span class="k">class</span> <span class="nc">CachedCholeskyMCAcquisitionFunction</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""Abstract class for acquisition functions using a cached Cholesky.</span>
+<span class="k">class</span> <span class="nc">CachedCholeskyMCSamplerMixin</span><span class="p">(</span><span class="n">MCSamplerMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Abstract Mixin class for acquisition functions using a cached Cholesky.</span>
 
 <span class="sd">    Specifically, this is for acquisition functions that require sampling from</span>
 <span class="sd">    the posterior P(f(X_baseline, X) | D). The Cholesky of the posterior</span>
@@ -91,10 +93,11 @@
 <span class="sd">    :meta private:</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">_setup</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">cache_root</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Set class attributes and perform compatibility checks.</span>
 
@@ -102,7 +105,9 @@
 <span class="sd">            model: A model.</span>
 <span class="sd">            cache_root: A boolean indicating whether to cache the Cholesky.</span>
 <span class="sd">                This might be overridden in the model is not compatible.</span>
+<span class="sd">            sampler: An optional MCSampler object.</span>
 <span class="sd">        """</span>
+        <span class="n">MCSamplerMixin</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">cache_root</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">supports_cache_root</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
                 <span class="n">_get_cache_root_not_supported_message</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)),</span>
@@ -204,6 +209,31 @@
                 <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span> <span class="n">base_sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_sampler</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">q_in</span> <span class="o">=</span> <span class="n">q_in</span>
+
+
+<span class="c1"># TODO: remove</span>
+<div class="viewcode-block" id="CachedCholeskyMCAcquisitionFunction"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cached_cholesky.CachedCholeskyMCAcquisitionFunction">[docs]</a><span class="k">class</span> <span class="nc">CachedCholeskyMCAcquisitionFunction</span><span class="p">(</span><span class="n">CachedCholeskyMCSamplerMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""DEPRECATED - USE CachedCholeskyMCSamplerMixin instead."""</span>
+
+    <span class="k">def</span> <span class="nf">_setup</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">cache_root</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Set class attributes and perform compatibility checks.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model: A model.</span>
+<span class="sd">            cache_root: A boolean indicating whether to cache the Cholesky.</span>
+<span class="sd">                This might be overridden in the model is not compatible.</span>
+<span class="sd">        """</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">"`CachedCholeskyMCAcquisitionFunction` is deprecated. Please switch to "</span>
+            <span class="s2">"`CachedCholeskyMCSamplerMixin` and replace any calls to _setup with the "</span>
+            <span class="s2">"constructor of the Mixin class."</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">cache_root</span><span class="o">=</span><span class="n">cache_root</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">)</span></div>
 </pre></div>
 </div>
 </div>
