@@ -51,6 +51,8 @@ else:
 # In[2]:
 
 
+from typing import Optional
+
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.utils.datasets import SupervisedDataset
 from gpytorch.distributions import MultivariateNormal
@@ -58,13 +60,15 @@ from gpytorch.kernels import RBFKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.models import ExactGP
+from torch import Tensor
 
 
 class SimpleCustomGP(ExactGP, GPyTorchModel):
 
     _num_outputs = 1  # to inform GPyTorchModel API
 
-    def __init__(self, train_X, train_Y):
+    def __init__(self, train_X, train_Y, train_Yvar: Optional[Tensor] = None):
+        # NOTE: This ignores train_Yvar and uses inferred noise instead.
         # squeeze output dim before passing train_Y to ExactGP
         super().__init__(train_X, train_Y.squeeze(-1), GaussianLikelihood())
         self.mean_module = ConstantMean()
