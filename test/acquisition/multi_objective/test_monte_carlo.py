@@ -739,7 +739,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             if m == 1:
                 with self.assertRaisesRegex(
                     ValueError,
-                    "qNoisyExpectedHypervolumeImprovement supports m>=2 outcomes ",
+                    "NoisyExpectedHypervolumeMixin supports m>=2 outcomes ",
                 ):
                     acqf = qNoisyExpectedHypervolumeImprovement(
                         model=mm,
@@ -1438,7 +1438,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
         # test prune_baseline
         no = "botorch.utils.testing.MockModel.num_outputs"
         prune = (
-            "botorch.acquisition.multi_objective.monte_carlo."
+            "botorch.utils.multi_objective.hypervolume."
             "prune_inferior_points_multi_objective"
         )
         for dtype in (torch.float, torch.double):

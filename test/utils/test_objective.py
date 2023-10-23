@@ -203,7 +203,7 @@ class TestApplyConstraints(BotorchTestCase):
         # nonnegative objective, one constraint
         samples = torch.randn(1)
         ind = compute_feasibility_indicator(constraints=[zeros_f], samples=samples)
-        self.assertAllClose(ind, torch.zeros_like(ind))
+        self.assertAllClose(ind, torch.ones_like(ind))
         self.assertEqual(ind.dtype, torch.bool)
 
         smoothed_ind = compute_smoothed_feasibility_indicator(
