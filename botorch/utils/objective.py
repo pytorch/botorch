@@ -115,7 +115,7 @@ def compute_feasibility_indicator(
     ind = torch.ones(samples.shape[:-1], dtype=torch.bool, device=samples.device)
     if constraints is not None:
         for constraint in constraints:
-            ind = ind.logical_and(constraint(samples) < 0)
+            ind = ind.logical_and(constraint(samples) <= 0)
     return ind
 
 
