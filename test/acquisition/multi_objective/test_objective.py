@@ -206,6 +206,7 @@ class TestUnstandardizeMultiOutputObjective(BotorchTestCase):
                             val_expected = Y_mean + Y * Y_std
                             self.assertTrue(torch.allclose(val, val_expected))
                 else:
+
                     samples = torch.rand(
                         *batch_shape, 2, m, dtype=dtype, device=self.device
                     )

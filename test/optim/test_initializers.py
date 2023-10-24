@@ -1100,6 +1100,7 @@ class TestSampleAroundBest(BotorchTestCase):
             acqf = qExpectedImprovement(model, best_f=0.0)
 
             with warnings.catch_warnings(record=True) as w, settings.debug(True):
+
                 X_rnd = sample_points_around_best(
                     acq_function=acqf,
                     n_discrete_points=4,

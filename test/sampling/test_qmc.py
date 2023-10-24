@@ -163,6 +163,7 @@ class MultivariateNormalQMCTests(BotorchTestCase):
 
     def test_MultivariateNormalQMCEngineSeeded(self):
         for dtype in (torch.float, torch.double):
+
             # test even dimension
             a = torch.randn(2, 2)
             cov = a @ a.transpose(-1, -2) + torch.rand(2).diag()

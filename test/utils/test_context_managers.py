@@ -66,7 +66,7 @@ class TestContextManagers(BotorchTestCase):
         c = self.module.c.detach().clone()
         parameters = dict(self.module.named_parameters())
         with parameter_rollback_ctx(parameters, dtype=torch.float16) as ckpt:
-            for tnsr, _, __ in ckpt.values():  # test whether dtype is obeyed
+            for (tnsr, _, __) in ckpt.values():  # test whether dtype is obeyed
                 self.assertEqual(torch.float16, tnsr.dtype)
 
             self.module.a.data[...] = 0
@@ -93,7 +93,7 @@ class TestContextManagers(BotorchTestCase):
         with module_rollback_ctx(
             self.module, lambda name: name == "a", dtype=torch.float16
         ) as ckpt:
-            for tnsr, _, __ in ckpt.values():  # test whether dtype is obeyed
+            for (tnsr, _, __) in ckpt.values():  # test whether dtype is obeyed
                 self.assertEqual(torch.float16, tnsr.dtype)
 
             self.module.a.data[...] = 0

@@ -19,6 +19,7 @@ from botorch.utils.testing import (
 class TestAugmentedBranin(
     BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
 ):
+
     functions = [
         AugmentedBranin(),
         AugmentedBranin(negate=True),
@@ -29,6 +30,7 @@ class TestAugmentedBranin(
 class TestAugmentedHartmann(
     BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
 ):
+
     functions = [
         AugmentedHartmann(),
         AugmentedHartmann(negate=True),
@@ -39,6 +41,7 @@ class TestAugmentedHartmann(
 class TestAugmentedRosenbrock(
     BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
 ):
+
     functions = [
         AugmentedRosenbrock(),
         AugmentedRosenbrock(negate=True),

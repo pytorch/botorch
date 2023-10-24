@@ -19,6 +19,7 @@ class DummyTestProblem(BaseTestProblem):
 
 
 class DummyConstrainedTestProblem(DummyTestProblem, ConstrainedBaseTestProblem):
+
     num_constraints = 1
 
     def evaluate_slack_true(self, X: Tensor) -> Tensor:

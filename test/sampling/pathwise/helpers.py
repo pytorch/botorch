@@ -25,6 +25,7 @@ def standardize_moments(
     loc: Tensor,
     covariance_matrix: Tensor,
 ) -> Tuple[Tensor, Tensor]:
+
     m = transform.means.squeeze().unsqueeze(-1)
     s = transform.stdvs.squeeze().reciprocal().unsqueeze(-1)
     loc = s * (loc - m)

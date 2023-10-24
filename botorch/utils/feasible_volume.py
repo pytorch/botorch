@@ -45,7 +45,7 @@ def get_feasible_samples(
 
     feasible = torch.ones(nsamples, device=samples.device, dtype=torch.bool)
 
-    for indices, coefficients, rhs in inequality_constraints:
+    for (indices, coefficients, rhs) in inequality_constraints:
         lhs = samples.index_select(1, indices) @ coefficients.to(dtype=samples.dtype)
         feasible &= lhs >= rhs
 

@@ -280,6 +280,7 @@ class TestOutcomeTransforms(BotorchTestCase):
 
         # test transforming a subset of outcomes
         for batch_shape, dtype in itertools.product(batch_shapes, dtypes):
+
             m = 2
             outputs = [-1]
 
@@ -369,6 +370,7 @@ class TestOutcomeTransforms(BotorchTestCase):
 
         # test transform and untransform
         for m, batch_shape, dtype in itertools.product(ms, batch_shapes, dtypes):
+
             # test init
             tf = Log()
             self.assertTrue(tf.training)
@@ -430,6 +432,7 @@ class TestOutcomeTransforms(BotorchTestCase):
 
         # test transforming a subset of outcomes
         for batch_shape, dtype in itertools.product(batch_shapes, dtypes):
+
             m = 2
             outputs = [-1]
 
@@ -484,6 +487,7 @@ class TestOutcomeTransforms(BotorchTestCase):
 
         # test transform and untransform
         for m, batch_shape, dtype in itertools.product(ms, batch_shapes, dtypes):
+
             # test init
             tf1 = Log()
             tf2 = Standardize(m=m, batch_shape=batch_shape)
@@ -598,6 +602,7 @@ class TestOutcomeTransforms(BotorchTestCase):
 
         # test transform and untransform
         for m, batch_shape, dtype in itertools.product(ms, batch_shapes, dtypes):
+
             # test init
             tf = Power(power=power)
             self.assertTrue(tf.training)

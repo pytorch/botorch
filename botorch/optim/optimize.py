@@ -241,6 +241,7 @@ def _optimize_acqf_sequential_q(
         timeout_sec=timeout_sec,
     )
     for i in range(opt_inputs.q):
+
         candidate, acq_value = _optimize_acqf_batch(new_inputs)
 
         candidate_list.append(candidate)
@@ -550,6 +551,7 @@ def optimize_acqf(
 
 
 def _optimize_acqf(opt_inputs: OptimizeAcqfInputs) -> Tuple[Tensor, Tensor]:
+
     # Handle the trivial case when all features are fixed
     if (
         opt_inputs.fixed_features is not None
@@ -1093,7 +1095,7 @@ def _filter_infeasible(
 ):
     """Remove all points from `X` that don't satisfy the constraints."""
     is_feasible = torch.ones(X.shape[0], dtype=torch.bool, device=X.device)
-    for inds, weights, bound in inequality_constraints:
+    for (inds, weights, bound) in inequality_constraints:
         is_feasible &= (X[..., inds] * weights).sum(dim=-1) >= bound
     return X[is_feasible]
 

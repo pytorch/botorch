@@ -164,6 +164,7 @@ class TestGetXBaseline(BotorchTestCase):
             acqf = qExpectedImprovement(model, best_f=0.0)
 
             with warnings.catch_warnings(record=True) as w, settings.debug(True):
+
                 X_rnd = get_X_baseline(
                     acq_function=acqf,
                 )

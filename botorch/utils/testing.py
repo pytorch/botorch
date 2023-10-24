@@ -467,7 +467,7 @@ def _get_max_violation_of_constraints(
     n, q, d = samples.shape
     max_error = 0
     if constraints is not None:
-        for ind, coef, rhs in constraints:
+        for (ind, coef, rhs) in constraints:
             if ind.ndim == 1:
                 constr = samples[:, :, ind] @ coef
             else:

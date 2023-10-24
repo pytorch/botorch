@@ -56,6 +56,7 @@ class TestFeasibleVolumeEstimates(BotorchTestCase):
                 torch.zeros(1, 2, 1, device=self.device, dtype=dtype),
                 torch.ones(1, 1, 1, device=self.device, dtype=dtype),
             ):
+
                 mm = MockModel(MockPosterior(samples=samples))
                 bounds = torch.ones((2, 1))
                 outcome_constraints = [lambda y: y[..., 0] - 0.5]

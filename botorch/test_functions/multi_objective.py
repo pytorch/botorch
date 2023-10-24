@@ -1250,6 +1250,7 @@ class ConstrainedBraninCurrin(BraninCurrin, ConstrainedBaseTestProblem):
 
 
 class C2DTLZ2(DTLZ2, ConstrainedBaseTestProblem):
+
     num_constraints = 1
     _r = 0.2
     # approximate from nsga-ii, TODO: replace with analytic

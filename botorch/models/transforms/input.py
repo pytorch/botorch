@@ -1224,6 +1224,7 @@ class AppendFeatures(InputTransform, Module):
 
 
 class FilterFeatures(InputTransform, Module):
+
     r"""A transform that filters the input with a given set of features indices.
 
     As an example, this can be used in a multiobjective optimization with `ModelListGP`

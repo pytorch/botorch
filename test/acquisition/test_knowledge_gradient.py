@@ -595,6 +595,7 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
                         function=gen_candidates_scipy, **kwargs
                     ),
                 ):
+
                     candidate, value = optimize_acqf(
                         acq_function=kg,
                         bounds=bounds,

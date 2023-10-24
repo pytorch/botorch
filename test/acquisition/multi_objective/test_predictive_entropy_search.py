@@ -68,11 +68,7 @@ class TestQMultiObjectivePredictiveEntropySearch(BotorchTestCase):
         torch.manual_seed(1)
         tkwargs = {"device": self.device}
         standardize_model = False
-        for (
-            dtype,
-            num_objectives,
-            use_model_list,
-        ) in product(
+        for (dtype, num_objectives, use_model_list,) in product(
             (torch.float, torch.double),
             (1, 2, 3),
             (False, True),
@@ -124,11 +120,7 @@ class TestQMultiObjectivePredictiveEntropySearch(BotorchTestCase):
         torch.manual_seed(1)
         tkwargs = {"device": self.device}
 
-        for (
-            dtype,
-            num_objectives,
-            standardize_model,
-        ) in product(
+        for (dtype, num_objectives, standardize_model,) in product(
             (torch.float, torch.double),
             (1, 2, 3),
             (False, True),

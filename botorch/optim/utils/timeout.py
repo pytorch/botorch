@@ -40,6 +40,7 @@ def minimize_with_timeout(
     track of the runtime and the optimization variables at the current iteration.
     """
     if timeout_sec:
+
         start_time = time.monotonic()
         callback_data = {"num_iterations": 0}  # update from withing callback below
 

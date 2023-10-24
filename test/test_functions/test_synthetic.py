@@ -114,42 +114,49 @@ class TestCustomBounds(BotorchTestCase):
 class TestAckley(
     BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
 ):
+
     functions = [Ackley(), Ackley(negate=True), Ackley(noise_std=0.1), Ackley(dim=3)]
 
 
 class TestBeale(
     BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
 ):
+
     functions = [Beale(), Beale(negate=True), Beale(noise_std=0.1)]
 
 
 class TestBranin(
     BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
 ):
+
     functions = [Branin(), Branin(negate=True), Branin(noise_std=0.1)]
 
 
 class TestBukin(
     BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
 ):
+
     functions = [Bukin(), Bukin(negate=True), Bukin(noise_std=0.1)]
 
 
 class TestCosine8(
     BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
 ):
+
     functions = [Cosine8(), Cosine8(negate=True), Cosine8(noise_std=0.1)]
 
 
 class TestDropWave(
     BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
 ):
+
     functions = [DropWave(), DropWave(negate=True), DropWave(noise_std=0.1)]
 
 
 class TestDixonPrice(
     BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
 ):
+
     functions = [
         DixonPrice(),
         DixonPrice(negate=True),
@@ -161,12 +168,14 @@ class TestDixonPrice(
 class TestEggHolder(
     BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
 ):
+
     functions = [EggHolder(), EggHolder(negate=True), EggHolder(noise_std=0.1)]
 
 
 class TestGriewank(
     BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
 ):
+
     functions = [
         Griewank(),
         Griewank(negate=True),
@@ -178,6 +187,7 @@ class TestGriewank(
 class TestHartmann(
     BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
 ):
+
     functions = [
         Hartmann(),
         Hartmann(negate=True),
@@ -198,12 +208,14 @@ class TestHartmann(
 class TestHolderTable(
     BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
 ):
+
     functions = [HolderTable(), HolderTable(negate=True), HolderTable(noise_std=0.1)]
 
 
 class TestLevy(
     BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
 ):
+
     functions = [
         Levy(),
         Levy(negate=True),
@@ -217,6 +229,7 @@ class TestLevy(
 class TestMichalewicz(
     BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
 ):
+
     functions = [
         Michalewicz(),
         Michalewicz(negate=True),
@@ -233,12 +246,14 @@ class TestMichalewicz(
 class TestPowell(
     BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
 ):
+
     functions = [Powell(), Powell(negate=True), Powell(noise_std=0.1)]
 
 
 class TestRastrigin(
     BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
 ):
+
     functions = [
         Rastrigin(),
         Rastrigin(negate=True),
@@ -252,6 +267,7 @@ class TestRastrigin(
 class TestRosenbrock(
     BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
 ):
+
     functions = [
         Rosenbrock(),
         Rosenbrock(negate=True),
@@ -265,18 +281,21 @@ class TestRosenbrock(
 class TestShekel(
     BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
 ):
+
     functions = [Shekel(), Shekel(negate=True), Shekel(noise_std=0.1)]
 
 
 class TestSixHumpCamel(
     BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
 ):
+
     functions = [SixHumpCamel(), SixHumpCamel(negate=True), SixHumpCamel(noise_std=0.1)]
 
 
 class TestStyblinskiTang(
     BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
 ):
+
     functions = [
         StyblinskiTang(),
         StyblinskiTang(negate=True),
@@ -290,6 +309,7 @@ class TestStyblinskiTang(
 class TestThreeHumpCamel(
     BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
 ):
+
     functions = [
         ThreeHumpCamel(),
         ThreeHumpCamel(negate=True),
@@ -306,6 +326,7 @@ class TestConstrainedGramacy(
     ConstrainedTestProblemTestCaseMixin,
     SyntheticTestFunctionTestCaseMixin,
 ):
+
     functions = [
         ConstrainedGramacy(),
     ]
@@ -317,6 +338,7 @@ class TestConstrainedHartmann(
     SyntheticTestFunctionTestCaseMixin,
     ConstrainedTestProblemTestCaseMixin,
 ):
+
     functions = [
         ConstrainedHartmann(dim=6, negate=True),
     ]
@@ -328,6 +350,7 @@ class TestConstrainedHartmannSmooth(
     SyntheticTestFunctionTestCaseMixin,
     ConstrainedTestProblemTestCaseMixin,
 ):
+
     functions = [
         ConstrainedHartmannSmooth(dim=6, negate=True),
     ]
@@ -338,6 +361,7 @@ class TestPressureVessel(
     BaseTestProblemTestCaseMixIn,
     ConstrainedTestProblemTestCaseMixin,
 ):
+
     functions = [PressureVessel()]
 
 
@@ -346,6 +370,7 @@ class TestSpeedReducer(
     BaseTestProblemTestCaseMixIn,
     ConstrainedTestProblemTestCaseMixin,
 ):
+
     functions = [SpeedReducer()]
 
 
@@ -354,6 +379,7 @@ class TestTensionCompressionString(
     BaseTestProblemTestCaseMixIn,
     ConstrainedTestProblemTestCaseMixin,
 ):
+
     functions = [TensionCompressionString()]
 
 
@@ -362,4 +388,5 @@ class TestWeldedBeamSO(
     BaseTestProblemTestCaseMixIn,
     ConstrainedTestProblemTestCaseMixin,
 ):
+
     functions = [WeldedBeamSO()]
