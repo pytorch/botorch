@@ -155,6 +155,7 @@ class qExpectedHypervolumeImprovement(
         constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
         X_pending: Optional[Tensor] = None,
         eta: Optional[Union[Tensor, float]] = 1e-3,
+        fat: bool = False,
     ) -> None:
         r"""q-Expected Hypervolume Improvement supporting m>=2 outcomes.
 
@@ -195,6 +196,8 @@ class qExpectedHypervolumeImprovement(
                 tensor the length of the tensor must match the number of provided
                 constraints. The i-th constraint is then estimated with the i-th
                 eta value.
+            fat: A Boolean flag indicating whether to use the heavy-tailed approximation
+                of the constraint indicator.
         """
         if len(ref_point) != partitioning.num_outcomes:
             raise ValueError(
@@ -220,6 +223,7 @@ class qExpectedHypervolumeImprovement(
         self.register_buffer("cell_lower_bounds", cell_bounds[0])
         self.register_buffer("cell_upper_bounds", cell_bounds[1])
         SubsetIndexCachingMixin.__init__(self)
+        self.fat = fat
 
     def _compute_qehvi(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         r"""Compute the expected (feasible) hypervolume improvement given MC samples.
@@ -241,6 +245,7 @@ class qExpectedHypervolumeImprovement(
                 constraints=self.constraints,
                 samples=samples,
                 eta=self.eta,
+                fat=self.fat,
             )  # `sample_shape x batch-shape x q`
         device = self.ref_point.device
         q_subset_indices = self.compute_q_subset_indices(q_out=q, device=device)
@@ -328,6 +333,7 @@ class qNoisyExpectedHypervolumeImprovement(
         constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
         X_pending: Optional[Tensor] = None,
         eta: Optional[Union[Tensor, float]] = 1e-3,
+        fat: bool = False,
         prune_baseline: bool = False,
         alpha: float = 0.0,
         cache_pending: bool = True,
@@ -376,6 +382,8 @@ class qNoisyExpectedHypervolumeImprovement(
                 constraints. The i-th constraint is then estimated with the i-th
                 `eta` value. For more details, on this parameter, see the docs of
                 `compute_smoothed_feasibility_indicator`.
+            fat: A Boolean flag indicating whether to use the heavy-tailed approximation
+                of the constraint indicator.
             prune_baseline: If True, remove points in `X_baseline` that are
                 highly unlikely to be the pareto optimal and better than the
                 reference point. This can significantly improve computation time and
@@ -426,17 +434,22 @@ class qNoisyExpectedHypervolumeImprovement(
             cache_root=cache_root,
             marginalize_dim=marginalize_dim,
         )
+        self.fat = fat
 
     @concatenate_pending_points
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
         X_full = torch.cat([match_batch_shape(self.X_baseline, X), X], dim=-2)
-        # Note: it is important to compute the full posterior over `(X_baseline, X)`
-        # to ensure that we properly sample `f(X)` from the joint distribution `
-        # `f(X_baseline, X) ~ P(f | D)` given that we can already fixed the sampled
-        # function values for `f(X_baseline)`.
-        # TODO: improve efficiency by not recomputing baseline-baseline
-        # covariance matrix.
+        # NOTE: To ensure that we correctly sample `f(X)` from the joint distribution
+        # `f((X_baseline, X)) ~ P(f | D)`, it is critical to compute the joint posterior
+        # over X *and* X_baseline -- which also contains pending points whenever there
+        # are any --  since the baseline and pending values `f(X_baseline)` are
+        # generally pre-computed and cached before the `forward` call, see the docs of
+        # `cache_pending` for details.
+        # TODO: Improve the efficiency by not re-computing the X_baseline-X_baseline
+        # covariance matrix, but only the covariance of
+        # 1) X and X, and
+        # 2) X and X_baseline.
         posterior = self.model.posterior(X_full)
         # Account for possible one-to-many transform and the MCMC batch dimension in
         # `SaasFullyBayesianSingleTaskGP`
