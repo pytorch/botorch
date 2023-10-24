@@ -8,6 +8,8 @@ r"""Representations for different kinds of datasets."""
 
 from __future__ import annotations
 
+import collections
+
 import warnings
 from typing import Any, Dict, List, Optional, Union
 
@@ -476,3 +478,152 @@ class MultiTaskDataset(SupervisedDataset):
             ],
             outcome_names=[outcome_name],
         )
+
+
+class ContextualDataset(SupervisedDataset):
+    """This is a contextual dataset that is constructed from either a single
+    dateset containing overall outcome or a list of datasets that each corresponds
+    to a context breakdown.
+    """
+
+    def __init__(
+        self,
+        datasets: List[SupervisedDataset],
+        parameter_decomposition: Dict[str, List[str]],
+        context_buckets: List[str],
+        metric_decomposition: Optional[Dict[str, List[str]]] = None,
+    ):
+        """Construct a `ContextualDataset`.
+
+        Args:
+            datasets: A list of the datasets of individual tasks. Each dataset
+                is expected to contain data for only one outcome.
+            parameter_decomposition: Dict from context name to list of indices
+                of X corresponding to that context.
+            context_buckets: List of the context names in the order of dataset
+                in datasets corresponding to each context outcome.
+            metric_decomposition: Context breakdown metrics. Keys are context names.
+                Values are the lists of metric names belonging to the context:
+                {'context1': ['m1_c1'], 'context2': ['m1_c2'],}.
+        """
+        self.datasets: Dict[str, SupervisedDataset] = {
+            ds.outcome_names[0]: ds for ds in datasets
+        }
+        self.feature_names = datasets[0].feature_names
+        self.outcome_names = list(self.datasets.keys())
+        self.parameter_decomposition = parameter_decomposition
+        self.context_buckets = context_buckets
+        self.metric_decomposition = metric_decomposition
+        self._validate_datasets(
+            datasets=datasets, metric_decomposition=metric_decomposition
+        )
+        # order the dataset based on context bucket
+        self.outcome_names = self._sort_outcome_names()
+
+    @property
+    def X(self) -> Tensor:
+        return self.datasets[self.outcome_names[0]].X
+
+    @property
+    def Y(self) -> Tensor:
+        """Concatenates the Ys from the child datasets to create the Y expected
+        by LCEM model if there are multiple datasets; Or return the Y expected
+        by LCEA model if there is only one dataset.
+        """
+        if len(self.datasets) == 1:
+            # use LCEA model
+            return self.datasets[self.outcome_names[0]].Y
+        else:
+            return torch.cat(
+                [self.datasets[outcome_name].Y for outcome_name in self.outcome_names],
+                dim=-1,
+            )
+
+    @property
+    def Yvar(self) -> Tensor:
+        """Concatenates the Yvars from the child datasets to create the Y expected
+        by LCEM model if there are multiple datasets; Or return the Yvar expected
+        by LCEA model if there is only one dataset.
+        """
+        if len(self.datasets) == 1:
+            # use LCEA model
+            return self.datasets[self.outcome_names[0]].Yvar
+        else:
+            return torch.cat(
+                [
+                    self.datasets[outcome_name].Yvar
+                    for outcome_name in self.outcome_names
+                ],
+                dim=-1,
+            )
+
+    def _sort_outcome_names(self) -> List[str]:
+        """Sort the outcome names according to the order of context buckets."""
+        outcome_names = list(self.datasets.keys())
+        if len(outcome_names) == 1:
+            return outcome_names
+        else:
+            context_outcome_map = {}
+            for context in self.context_buckets:
+                for outcome_name in outcome_names:
+                    if outcome_name in self.metric_decomposition[context]:
+                        if context_outcome_map.get(context, None) is not None:
+                            raise ValueError(
+                                f"{context} bucket contains mutltiple outcomes"
+                            )
+                        context_outcome_map[context] = outcome_name
+        return [context_outcome_map[context] for context in self.context_buckets]
+
+    def _validate_datasets(
+        self,
+        datasets: List[SupervisedDataset],
+        metric_decomposition: Optional[Dict[str, List[str]]] = None,
+    ) -> None:
+        """Validation of given datasets.
+        1. each dataset has same X.
+        2. metric_decomposition is not None if there are multiple datasets.
+        3. metric_decomposition contains all the outcomes in datasets.
+        4. value keys of parameter decomposition and the keys of
+        metric_decomposition match context buckets.
+        """
+        X = datasets[0].X
+        for dataset in datasets:
+            if torch.equal(X, dataset.X) is not True:
+                raise InputDataError("Require same X for context buckets")
+
+        if len(datasets) > 1:
+            if metric_decomposition is None:
+                raise InputDataError(
+                    "metric_decomposition must be provided when there are"
+                    + " multiple datasets."
+                )
+        else:
+            if metric_decomposition is not None:
+                raise InputDataError(
+                    "metric_decomposition is redundant when there is one "
+                    + "dataset for overall outcome."
+                )
+
+        if collections.Counter(
+            list(self.parameter_decomposition.keys())
+        ) != collections.Counter(self.context_buckets):
+            raise InputDataError(
+                "Keys of parameter decomposition and context buckets do not match."
+            )
+
+        if metric_decomposition is not None:
+            if collections.Counter(
+                list(self.metric_decomposition.keys())
+            ) != collections.Counter(self.context_buckets):
+                raise InputDataError(
+                    "Keys of metric decomposition and context buckets do not match."
+                )
+
+            all_metrics = []
+            for m in metric_decomposition.values():
+                all_metrics.extend(m)
+            for outcome in self.outcome_names:
+                if outcome not in all_metrics:
+                    raise InputDataError(
+                        f"{outcome} is missing in metric_decomposition."
+                    )

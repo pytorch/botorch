@@ -10,6 +10,7 @@ import torch
 from botorch.exceptions.errors import InputDataError, UnsupportedError
 from botorch.utils.containers import DenseContainer, SliceContainer
 from botorch.utils.datasets import (
+    ContextualDataset,
     FixedNoiseDataset,
     MultiTaskDataset,
     RankingDataset,
@@ -334,4 +335,176 @@ class TestDatasets(BotorchTestCase):
                 dataset=make_dataset(m=2),
                 task_feature_index=-1,
                 target_task_value=0,
+            )
+
+    def test_contextual_datasets(self):
+        num_contexts = 3
+        feature_names = [f"x_c{i}" for i in range(num_contexts)]
+        parameter_decomposition = {
+            f"context_{i}": [f"x_c{i}"] for i in range(num_contexts)
+        }
+        context_buckets = list(parameter_decomposition.keys())
+        context_outcome_list = [f"y:context_{i}" for i in range(num_contexts)]
+        metric_decomposition = {f"{c}": [f"y:{c}"] for c in context_buckets}
+
+        # test construction of agg outcome
+        dataset_list1 = [
+            make_dataset(
+                d=1 * num_contexts,
+                has_yvar=True,
+                feature_names=feature_names,
+                outcome_names=["y"],
+            )
+        ]
+        context_dt = ContextualDataset(
+            datasets=dataset_list1,
+            parameter_decomposition=parameter_decomposition,
+            context_buckets=context_buckets,
+        )
+        self.assertEqual(len(context_dt.datasets), len(dataset_list1))
+        self.assertListEqual(context_dt.context_buckets, context_buckets)
+        self.assertListEqual(context_dt.outcome_names, ["y"])
+        self.assertListEqual(context_dt.feature_names, feature_names)
+        self.assertIs(context_dt.datasets["y"], dataset_list1[0])
+        self.assertIs(context_dt.X, dataset_list1[0].X)
+        self.assertIs(context_dt.Y, dataset_list1[0].Y)
+        self.assertIs(context_dt.Yvar, dataset_list1[0].Yvar)
+
+        # test construction of context outcome
+        dataset_list2 = [
+            make_dataset(
+                d=1 * num_contexts,
+                has_yvar=True,
+                feature_names=feature_names,
+                outcome_names=[context_outcome_list[0]],
+            )
+        ]
+        for m in context_outcome_list[1:]:
+            dataset_list2.append(
+                SupervisedDataset(
+                    X=dataset_list2[0].X,
+                    Y=rand(dataset_list2[0].Y.size()),
+                    Yvar=rand(dataset_list2[0].Yvar.size()),
+                    feature_names=feature_names,
+                    outcome_names=[m],
+                )
+            )
+        context_dt = ContextualDataset(
+            datasets=dataset_list2,
+            parameter_decomposition=parameter_decomposition,
+            context_buckets=context_buckets,
+            metric_decomposition=metric_decomposition,
+        )
+        self.assertEqual(len(context_dt.datasets), len(dataset_list2))
+        self.assertListEqual(context_dt.context_buckets, context_buckets)
+        self.assertListEqual(context_dt.outcome_names, context_outcome_list)
+        self.assertListEqual(context_dt.feature_names, feature_names)
+        self.assertTrue(torch.equal(context_dt.X, dataset_list2[-1].X))
+        self.assertEqual(context_dt.Y.shape[-1], len(context_outcome_list))
+        self.assertEqual(context_dt.Yvar.shape[-1], len(context_outcome_list))
+        for dt in dataset_list2:
+            self.assertIs(context_dt.datasets[dt.outcome_names[0]], dt)
+
+        # test the ordering via context buckets
+        context_dt_reverse = ContextualDataset(
+            datasets=dataset_list2,
+            parameter_decomposition=parameter_decomposition,
+            context_buckets=context_buckets[::-1],  # reverse order
+            metric_decomposition=metric_decomposition,
+        )
+        self.assertListEqual(
+            context_dt_reverse.outcome_names, context_outcome_list[::-1]
+        )
+        self.assertTrue(
+            torch.equal(context_dt.Y, torch.flip(context_dt_reverse.Y, (1,)))
+        )
+        self.assertTrue(
+            torch.equal(context_dt.Yvar, torch.flip(context_dt_reverse.Yvar, (1,)))
+        )
+
+        # test dataset validation
+        wrong_metric_decomposition = {
+            f"{c}": [f"y:{c}"] for c in context_buckets if c != "context_0"
+        }
+        wrong_metric_decomposition["context_0"] = ["y:context_0", "y:context_1"]
+        with self.assertRaisesRegex(
+            ValueError, "context_0 bucket contains mutltiple outcomes"
+        ):
+            ContextualDataset(
+                datasets=dataset_list2,
+                parameter_decomposition=parameter_decomposition,
+                context_buckets=context_buckets,
+                metric_decomposition=wrong_metric_decomposition,
+            )
+
+        with self.assertRaisesRegex(
+            InputDataError, "Require same X for context buckets"
+        ):
+            ContextualDataset(
+                datasets=[
+                    make_dataset(d=num_contexts, outcome_names=[m])
+                    for m in context_outcome_list
+                ],
+                parameter_decomposition=parameter_decomposition,
+                context_buckets=context_buckets,
+            )
+
+        with self.assertRaisesRegex(
+            InputDataError,
+            "metric_decomposition must be provided when there are multiple datasets.",
+        ):
+            ContextualDataset(
+                datasets=dataset_list2,
+                parameter_decomposition=parameter_decomposition,
+                context_buckets=context_buckets,
+            )
+
+        with self.assertRaisesRegex(
+            InputDataError,
+            "metric_decomposition is redundant when there is "
+            + "one dataset for overall outcome.",
+        ):
+            ContextualDataset(
+                datasets=dataset_list1,
+                parameter_decomposition=parameter_decomposition,
+                context_buckets=context_buckets,
+                metric_decomposition=metric_decomposition,
+            )
+
+        with self.assertRaisesRegex(
+            InputDataError,
+            "Keys of parameter decomposition and context buckets do not match.",
+        ):
+            ContextualDataset(
+                datasets=dataset_list1,
+                parameter_decomposition=parameter_decomposition,
+                context_buckets=["context_0", "context_1"],
+            )
+
+        with self.assertRaisesRegex(
+            InputDataError,
+            "Keys of metric decomposition and context buckets do not match.",
+        ):
+            ContextualDataset(
+                datasets=dataset_list2,
+                parameter_decomposition=parameter_decomposition,
+                context_buckets=context_buckets,
+                metric_decomposition={
+                    f"{c}": [f"y:{c}"] for c in context_buckets if c != "context_0"
+                },
+            )
+
+        wrong_metric_decomposition = {
+            f"{c}": [f"y:{c}"] for c in context_buckets if c != "context_0"
+        }
+        wrong_metric_decomposition["context_0"] = ["wrong_metric"]
+        missing_outcome = "y:context_0"
+        with self.assertRaisesRegex(
+            InputDataError, f"{missing_outcome} is missing in metric_decomposition."
+        ):
+            ContextualDataset(
+                datasets=dataset_list2,
+                parameter_decomposition=parameter_decomposition,
+                context_buckets=context_buckets,
+                metric_decomposition=wrong_metric_decomposition,
             )
