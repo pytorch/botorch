@@ -168,7 +168,6 @@
 <h3 id="Instantiate-a-BoTorchModel-in-Ax">Instantiate a <code>BoTorchModel</code> in Ax<a class="anchor-link" href="#Instantiate-a-BoTorchModel-in-Ax">¶</a></h3><p>A <code>BoTorchModel</code> in Ax encapsulates both the surrogate (commonly referred to as <code>Model</code> in BoTorch) and an acquisition function. Here, we will only specify the custom surrogate and let Ax choose the default acquisition function.</p>
 <p>Most models should work with the base <code>Surrogate</code> in Ax, except for BoTorch <code>ModelListGP</code>, which works with <code>ListSurrogate</code>.
 Note that the <code>Model</code> (e.g., the <code>SimpleCustomGP</code>) must implement <code>construct_inputs</code>, as this is used to construct the inputs required for instantiating a <code>Model</code> instance from the experiment data.</p>
-<p>In case the <code>Model</code> requires a complex set of arguments that cannot be constructed using a <code>construct_inputs</code> method, one can initialize the <code>model</code> and supply it via <code>Surrogate.from_botorch(model=model, mll_class=&lt;Optional&gt;)</code>, replacing the <code>Surrogate(...)</code> below.</p>
 </div>
 </div>
 </div>
