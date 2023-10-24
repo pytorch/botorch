@@ -13,8 +13,12 @@ from __future__ import annotations
 from typing import Callable, List, Optional, Union
 
 import torch
-from botorch.acquisition import monte_carlo
-from botorch.acquisition.multi_objective import monte_carlo as moo_monte_carlo
+
+from botorch.acquisition import logei, monte_carlo
+from botorch.acquisition.multi_objective import (
+    logei as moo_logei,
+    monte_carlo as moo_monte_carlo,
+)
 from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
 from botorch.acquisition.utils import compute_best_feasible_objective
 from botorch.models.model import Model
@@ -91,6 +95,8 @@ def get_acquisition_function(
     if posterior_transform is not None and acquisition_function_name in [
         "qEHVI",
         "qNEHVI",
+        "qLogEHVI",
+        "qLogNEHVI",
     ]:
         raise NotImplementedError(
             "PosteriorTransforms are not yet implemented for multi-objective "
@@ -111,24 +117,13 @@ def get_acquisition_function(
             posterior_transform=posterior_transform,
             X_baseline=X_observed,
         )
-    if acquisition_function_name == "qEI":
-        return monte_carlo.qExpectedImprovement(
-            model=model,
-            best_f=best_f,
-            sampler=sampler,
-            objective=objective,
-            posterior_transform=posterior_transform,
-            X_pending=X_pending,
-            constraints=constraints,
-            eta=eta,
+    if acquisition_function_name in ["qEI", "qLogEI"]:
+        acqf_class = (
+            monte_carlo.qExpectedImprovement
+            if acquisition_function_name == "qEI"
+            else logei.qLogExpectedImprovement
         )
-    if acquisition_function_name == "qLogEI":
-        # putting the import here to avoid circular imports
-        # ideally, the entire function should be moved out of this file,
-        # but since it is used for legacy code to be deprecated, we keep it here.
-        from botorch.acquisition.logei import qLogExpectedImprovement
-
-        return qLogExpectedImprovement(
+        return acqf_class(
             model=model,
             best_f=best_f,
             sampler=sampler,
@@ -150,24 +145,13 @@ def get_acquisition_function(
             constraints=constraints,
             eta=eta,
         )
-    elif acquisition_function_name == "qNEI":
-        return monte_carlo.qNoisyExpectedImprovement(
-            model=model,
-            X_baseline=X_observed,
-            sampler=sampler,
-            objective=objective,
-            posterior_transform=posterior_transform,
-            X_pending=X_pending,
-            prune_baseline=prune_baseline,
-            marginalize_dim=marginalize_dim,
-            cache_root=cache_root,
-            constraints=constraints,
-            eta=eta,
+    elif acquisition_function_name in ["qNEI", "qLogNEI"]:
+        acqf_class = (
+            monte_carlo.qNoisyExpectedImprovement
+            if acquisition_function_name == "qNEI"
+            else logei.qLogNoisyExpectedImprovement
         )
-    elif acquisition_function_name == "qLogNEI":
-        from botorch.acquisition.logei import qLogNoisyExpectedImprovement
-
-        return qLogNoisyExpectedImprovement(
+        return acqf_class(
             model=model,
             X_baseline=X_observed,
             sampler=sampler,
@@ -199,11 +183,13 @@ def get_acquisition_function(
             posterior_transform=posterior_transform,
             X_pending=X_pending,
         )
-    elif acquisition_function_name == "qEHVI":
+    elif acquisition_function_name in ["qEHVI", "qLogEHVI"]:
         if Y is None:
-            raise ValueError("`Y` must not be None for qEHVI")
+            raise ValueError(f"`Y` must not be None for {acquisition_function_name}")
         if ref_point is None:
-            raise ValueError("`ref_point` must not be None for qEHVI")
+            raise ValueError(
+                f"`ref_point` must not be None for {acquisition_function_name}"
+            )
         # get feasible points
         if constraints is not None:
             feas = torch.stack([c(Y) <= 0 for c in constraints], dim=-1).all(dim=-1)
@@ -220,7 +206,12 @@ def get_acquisition_function(
                 ref_point=torch.as_tensor(ref_point, dtype=Y.dtype, device=Y.device),
                 Y=obj,
             )
-        return moo_monte_carlo.qExpectedHypervolumeImprovement(
+        acqf_class = (
+            moo_monte_carlo.qExpectedHypervolumeImprovement
+            if acquisition_function_name == "qEHVI"
+            else moo_logei.qLogExpectedHypervolumeImprovement
+        )
+        return acqf_class(
             model=model,
             ref_point=ref_point,
             partitioning=partitioning,
@@ -230,10 +221,17 @@ def get_acquisition_function(
             eta=eta,
             X_pending=X_pending,
         )
-    elif acquisition_function_name == "qNEHVI":
+    elif acquisition_function_name in ["qNEHVI", "qLogNEHVI"]:
         if ref_point is None:
-            raise ValueError("`ref_point` must not be None for qNEHVI")
-        return moo_monte_carlo.qNoisyExpectedHypervolumeImprovement(
+            raise ValueError(
+                f"`ref_point` must not be None for {acquisition_function_name}"
+            )
+        acqf_class = (
+            moo_monte_carlo.qNoisyExpectedHypervolumeImprovement
+            if acquisition_function_name == "qNEHVI"
+            else moo_logei.qLogNoisyExpectedHypervolumeImprovement
+        )
+        return acqf_class(
             model=model,
             ref_point=ref_point,
             X_baseline=X_observed,
