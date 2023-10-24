@@ -875,6 +875,11 @@ class PosteriorStandardDeviation(AnalyticAcquisitionFunction):
     An acquisition function for pure exploration.
     Only supports the case of q=1. Requires the model's posterior to have a
     `stddev` property. The model must be single-outcome.
+
+    Example:
+        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> PSTD = PosteriorMean(model)
+        >>> std = PSTD(test_X)
     """
 
     def __init__(

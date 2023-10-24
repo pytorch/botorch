@@ -300,14 +300,14 @@ class TestPosteriorStandardDeviation(BotorchTestCase):
             std = torch.rand_like(mean)
             mm = MockModel(MockPosterior(mean=mean, variance=std.square()))
 
-            module = PosteriorStandardDeviation(model=mm)
+            acqf = PosteriorStandardDeviation(model=mm)
             X = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
-            pm = module(X)
+            pm = acqf(X)
             self.assertTrue(torch.equal(pm, std.view(-1)))
 
-            module = PosteriorStandardDeviation(model=mm, maximize=False)
+            acqf = PosteriorStandardDeviation(model=mm, maximize=False)
             X = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
-            pm = module(X)
+            pm = acqf(X)
             self.assertTrue(torch.equal(pm, -std.view(-1)))
 
             # check for proper error if multi-output model
@@ -322,9 +322,9 @@ class TestPosteriorStandardDeviation(BotorchTestCase):
             mean = torch.rand(3, 1, 1, device=self.device, dtype=dtype)
             std = torch.rand_like(mean)
             mm = MockModel(MockPosterior(mean=mean, variance=std.square()))
-            module = PosteriorStandardDeviation(model=mm)
+            acqf = PosteriorStandardDeviation(model=mm)
             X = torch.empty(3, 1, 1, device=self.device, dtype=dtype)
-            pm = module(X)
+            pm = acqf(X)
             self.assertTrue(torch.equal(pm, std.view(-1)))
             # check for proper error if multi-output model
             mean2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
