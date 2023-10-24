@@ -330,7 +330,8 @@ class TestPosteriorStandardDeviation(BotorchTestCase):
             mean2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
             std2 = torch.rand_like(mean2)
             mm2 = MockModel(MockPosterior(mean=mean2, variance=std2.square()))
-            with self.assertRaises(UnsupportedError):
+            msg = "Must specify a posterior transform when using a multi-output model."
+            with self.assertRaisesRegex(UnsupportedError, msg):
                 PosteriorStandardDeviation(model=mm2)
 
 
