@@ -499,6 +499,7 @@ class qNoisyExpectedImprovement(
                 X=X_baseline,
                 objective=objective,
                 posterior_transform=posterior_transform,
+                constraints=self._constraints,
                 marginalize_dim=marginalize_dim,
             )
         self.register_buffer("X_baseline", X_baseline)

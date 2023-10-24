@@ -384,6 +384,7 @@ class qLogNoisyExpectedImprovement(
                 objective=objective,
                 posterior_transform=posterior_transform,
                 marginalize_dim=kwargs.get("marginalize_dim"),
+                constraints=self._constraints,
             )
         self.register_buffer("X_baseline", X_baseline)
         # registering buffers for _get_samples_and_objectives in the next `if` block

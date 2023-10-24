@@ -29,6 +29,7 @@ from botorch.acquisition.objective import (
     PosteriorTransform,
     ScalarizedPosteriorTransform,
 )
+from botorch.acquisition.utils import prune_inferior_points
 from botorch.exceptions import BotorchWarning, UnsupportedError
 from botorch.models import SingleTaskGP
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
@@ -378,30 +379,56 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
     def test_prune_baseline(self):
         no = "botorch.utils.testing.MockModel.num_outputs"
         prune = "botorch.acquisition.monte_carlo.prune_inferior_points"
+        constraints = [lambda Y: Y[..., 1] + 0.1]
+        # only the last sample if feasible and it has the worst objective value
+
         for dtype in (torch.float, torch.double):
-            X_baseline = torch.zeros(1, 1, device=self.device, dtype=dtype)
-            X_pruned = torch.rand(1, 1, device=self.device, dtype=dtype)
+            samples = torch.tensor(
+                [[1.0, 1.0], [0.0, 0.0], [-1.0, -1.0]],
+                device=self.device,
+                dtype=dtype,
+            )
+            mm = MockModel(
+                MockPosterior(
+                    samples=samples,
+                )
+            )
+            X_baseline = torch.zeros(3, 1, device=self.device, dtype=dtype)
             with mock.patch(no, new_callable=mock.PropertyMock) as mock_num_outputs:
-                mock_num_outputs.return_value = 1
-                mm = MockModel(MockPosterior(samples=X_baseline))
-                with mock.patch(prune, return_value=X_pruned) as mock_prune:
+                mock_num_outputs.return_value = 2
+                with mock.patch(prune, wraps=prune_inferior_points) as mock_prune:
                     acqf = qNoisyExpectedImprovement(
                         model=mm,
                         X_baseline=X_baseline,
                         prune_baseline=True,
                         cache_root=False,
+                        objective=GenericMCObjective(objective=lambda Y: Y[..., 0]),
+                        constraints=constraints,
                     )
                 mock_prune.assert_called_once()
-                self.assertTrue(torch.equal(acqf.X_baseline, X_pruned))
-                with mock.patch(prune, return_value=X_pruned) as mock_prune:
+                self.assertIs(mock_prune.call_args[1]["constraints"], constraints)
+                self.assertTrue(torch.equal(acqf.X_baseline, X_baseline[[-1]]))
+                # test marginalize_dim
+                samples2 = torch.stack([samples, samples * 2], dim=0)
+                mm = MockModel(
+                    MockPosterior(
+                        samples=samples2,
+                    )
+                )
+                with mock.patch(prune, wraps=prune_inferior_points) as mock_prune:
                     acqf = qNoisyExpectedImprovement(
                         model=mm,
                         X_baseline=X_baseline,
                         prune_baseline=True,
-                        marginalize_dim=-3,
                         cache_root=False,
+                        marginalize_dim=-3,
+                        objective=GenericMCObjective(objective=lambda Y: Y[..., 0]),
+                        constraints=constraints,
                     )
+                    mock_prune.assert_called_once()
                     _, kwargs = mock_prune.call_args
+                    self.assertIs(kwargs["constraints"], constraints)
+                    self.assertTrue(torch.equal(acqf.X_baseline, X_baseline[[-1]]))
                     self.assertEqual(kwargs["marginalize_dim"], -3)
 
     def test_cache_root(self):

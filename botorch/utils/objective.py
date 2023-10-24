@@ -16,6 +16,7 @@ from typing import Callable, List, Optional, Union
 
 import torch
 from botorch.utils.safe_math import log_fatmoid, logexpit
+from botorch.utils.transforms import normalize_indices
 from torch import Tensor
 
 
@@ -101,6 +102,7 @@ def apply_constraints_nonnegative_soft(
 def compute_feasibility_indicator(
     constraints: Optional[List[Callable[[Tensor], Tensor]]],
     samples: Tensor,
+    marginalize_dim: Optional[int] = None,
 ) -> Tensor:
     r"""Computes the feasibility of a list of constraints given posterior samples.
 
@@ -108,6 +110,9 @@ def compute_feasibility_indicator(
         constraints: A list of callables, each mapping a batch_shape x q x m`-dim Tensor
             to a `batch_shape x q`-dim Tensor, where negative values imply feasibility.
         samples: A batch_shape x q x m`-dim Tensor of posterior samples.
+        marginalize_dim: A batch dimension that should be marginalized.
+            For example, this is useful when using a batched fully Bayesian
+            model.
 
     Returns:
         A `batch_shape x q`-dim tensor of Boolean feasibility values.
@@ -116,6 +121,14 @@ def compute_feasibility_indicator(
     if constraints is not None:
         for constraint in constraints:
             ind = ind.logical_and(constraint(samples) <= 0)
+    if ind.ndim >= 3 and marginalize_dim is not None:
+        # make sure marginalize_dim is not negative
+        if marginalize_dim < 0:
+            # add 1 to the normalize marginalize_dim since we have already
+            # removed the output dim
+            marginalize_dim = 1 + normalize_indices([marginalize_dim], d=ind.ndim)[0]
+
+        ind = ind.float().mean(dim=marginalize_dim).round().bool()
     return ind
 
 
