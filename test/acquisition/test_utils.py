@@ -270,6 +270,26 @@ class TestPruneInferiorPoints(BotorchTestCase):
                 mm = MockModel(MockPosterior(samples=samples))
                 X_pruned = prune_inferior_points(model=mm, X=X)
             self.assertTrue(torch.equal(X_pruned, X[:2]))
+            # test constraints
+            constraints = [lambda Y: Y[..., 1] + 0.1]
+            # only the last sample if feasible and it has the worst objective value
+            samples = torch.tensor(
+                [[1.0, 1.0], [0.0, 0.0], [-1.0, -1.0]],
+                device=self.device,
+                dtype=dtype,
+            )
+            mm = MockModel(
+                MockPosterior(
+                    samples=samples,
+                )
+            )
+            X_pruned = prune_inferior_points(
+                model=mm,
+                X=X,
+                objective=GenericMCObjective(objective=lambda Y: Y[..., 0]),
+                constraints=constraints,
+            )
+            self.assertTrue(torch.equal(X_pruned, X[[-1]]))
 
 
 class TestFidelityUtils(BotorchTestCase):

@@ -38,8 +38,9 @@ from botorch.utils.multi_objective.box_decompositions.dominated import (
     DominatedPartitioning,
 )
 from botorch.utils.multi_objective.pareto import is_non_dominated
+from botorch.utils.objective import compute_feasibility_indicator
 from botorch.utils.sampling import draw_sobol_samples
-from botorch.utils.transforms import is_fully_bayesian, normalize_indices
+from botorch.utils.transforms import is_fully_bayesian
 from torch import Tensor
 
 
@@ -138,19 +139,12 @@ def prune_inferior_points_multi_objective(
                 "Models with multiple batch dims are currently unsupported by"
                 " prune_inferior_points_multi_objective."
             )
-    if constraints is not None:
-        infeas = torch.stack([c(samples) > 0 for c in constraints], dim=0).any(dim=0)
-        if infeas.ndim == 3 and marginalize_dim is not None:
-            # make sure marginalize_dim is not negative
-            if marginalize_dim < 0:
-                # add 1 to the normalize marginalize_dim since we have already
-                # removed the output dim
-                marginalize_dim = (
-                    1 + normalize_indices([marginalize_dim], d=infeas.ndim)[0]
-                )
-
-            infeas = infeas.float().mean(dim=marginalize_dim).round().bool()
-        # set infeasible points to be the ref point
+    infeas = ~compute_feasibility_indicator(
+        constraints=constraints,
+        samples=samples,
+        marginalize_dim=marginalize_dim,
+    )
+    if infeas.any():
         obj_vals[infeas] = ref_point
     pareto_mask = is_non_dominated(obj_vals, deduplicate=False) & (
         obj_vals > ref_point

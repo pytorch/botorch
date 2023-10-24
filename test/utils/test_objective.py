@@ -240,6 +240,15 @@ class TestApplyConstraints(BotorchTestCase):
                 eta=torch.tensor([0.1], device=self.device),
             )
 
+        # test marginalize_dim
+        samples = torch.randn(1, 2, 1, 1)
+        ind = compute_feasibility_indicator(
+            constraints=[zeros_f], samples=samples, marginalize_dim=-3
+        )
+        self.assertAllClose(ind, torch.ones_like(ind))
+        self.assertTrue(ind.shape == torch.Size([1, 1]))
+        self.assertEqual(ind.dtype, torch.bool)
+
 
 class TestGetObjectiveWeightsTransform(BotorchTestCase):
     def test_NoWeights(self):

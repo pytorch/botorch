@@ -27,7 +27,7 @@ from botorch.sampling.get_sampler import get_sampler
 from botorch.sampling.pathwise import draw_matheron_paths
 from botorch.utils.objective import compute_feasibility_indicator
 from botorch.utils.sampling import optimize_posterior_samples
-from botorch.utils.transforms import is_fully_bayesian
+from botorch.utils.transforms import is_fully_bayesian, normalize_indices
 from torch import Tensor
 
 
@@ -194,6 +194,7 @@ def prune_inferior_points(
     X: Tensor,
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
+    constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     num_samples: int = 2048,
     max_frac: float = 1.0,
     sampler: Optional[MCSampler] = None,
@@ -213,6 +214,10 @@ def prune_inferior_points(
             supported.
         objective: The objective under which to evaluate the posterior.
         posterior_transform: A PosteriorTransform (optional).
+        constraints: A list of constraint callables which map a Tensor of posterior
+            samples of dimension `sample_shape x batch-shape x q x m`-dim to a
+            `sample_shape x batch-shape x q`-dim Tensor. The associated constraints
+            are satisfied if `constraint(samples) < 0`.
         num_samples: The number of samples used to compute empirical
             probabilities of being the best point.
         max_frac: The maximum fraction of points to retain. Must satisfy
@@ -256,6 +261,12 @@ def prune_inferior_points(
     obj_vals = objective(samples, X=X)
     if obj_vals.ndim > 2:
         if obj_vals.ndim == 3 and marginalize_dim is not None:
+            if marginalize_dim < 0:
+                # we do this again in compute_feasibility_indicator, but that will
+                # have no effect since marginalize_dim will be non-negative
+                marginalize_dim = (
+                    1 + normalize_indices([marginalize_dim], d=obj_vals.ndim)[0]
+                )
             obj_vals = obj_vals.mean(dim=marginalize_dim)
         else:
             # TODO: support batched inputs (req. dealing with ragged tensors)
@@ -263,6 +274,16 @@ def prune_inferior_points(
                 "Models with multiple batch dims are currently unsupported by"
                 " prune_inferior_points."
             )
+    infeas = ~compute_feasibility_indicator(
+        constraints=constraints,
+        samples=samples,
+        marginalize_dim=marginalize_dim,
+    )
+    if infeas.any():
+        # set infeasible points to worse than worst objective
+        # across all samples
+        obj_vals[infeas] = obj_vals.min() - 1
+
     is_best = torch.argmax(obj_vals, dim=-1)
     idcs, counts = torch.unique(is_best, return_counts=True)
 
