@@ -61,6 +61,9 @@ from botorch.acquisition.multi_objective import (
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
 )
+from botorch.acquisition.multi_objective.logei import (
+    qLogNoisyExpectedHypervolumeImprovement,
+)
 from botorch.acquisition.multi_objective.multi_output_risk_measures import (
     MultiOutputExpectation,
 )
@@ -928,7 +931,13 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         self.assertEqual(sampler.seed, 1234)
 
     def test_construct_inputs_qNEHVI(self) -> None:
-        c = get_acqf_input_constructor(qNoisyExpectedHypervolumeImprovement)
+        self._test_construct_inputs_qNEHVI(qNoisyExpectedHypervolumeImprovement)
+
+    def test_construct_inputs_qLogNEHVI(self) -> None:
+        self._test_construct_inputs_qNEHVI(qLogNoisyExpectedHypervolumeImprovement)
+
+    def _test_construct_inputs_qNEHVI(self, acqf_class: Type[AcquisitionFunction]):
+        c = get_acqf_input_constructor(acqf_class)
         objective_thresholds = torch.rand(2)
 
         # Test defaults
@@ -952,6 +961,15 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         self.assertEqual(kwargs["max_iep"], 0)
         self.assertTrue(kwargs["incremental_nehvi"])
         self.assertTrue(kwargs["cache_root"])
+
+        if acqf_class == qLogNoisyExpectedHypervolumeImprovement:
+            self.assertEqual(kwargs["tau_relu"], TAU_RELU)
+            self.assertEqual(kwargs["tau_max"], TAU_MAX)
+            self.assertEqual(kwargs["fat"], True)
+        else:
+            self.assertNotIn("tau_relu", kwargs)
+            self.assertNotIn("tau_max", kwargs)
+            self.assertEqual(kwargs["fat"], False)
 
         # Test check for block designs
         mock_model = mock.Mock()

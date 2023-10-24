@@ -71,6 +71,9 @@ from botorch.acquisition.multi_objective import (
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
 )
+from botorch.acquisition.multi_objective.logei import (
+    qLogNoisyExpectedHypervolumeImprovement,
+)
 from botorch.acquisition.multi_objective.objective import (
     AnalyticMultiOutputObjective,
     IdentityAnalyticMultiOutputObjective,
@@ -688,8 +691,8 @@ def construct_inputs_qLogNEI(
         eta: Temperature parameter(s) governing the smoothness of the sigmoid
             approximation to the constraint indicators. For more details, on this
             parameter, see the docs of `compute_smoothed_feasibility_indicator`.
-        fat: Toggles the logarithmic / linear asymptotic behavior of the smooth
-            approximation to the ReLU.
+        fat: Toggles the use of the fat-tailed non-linearities to smoothly approximate
+            the constraints indicator function.
         tau_max: Temperature parameter controlling the sharpness of the smooth
             approximations to max.
         tau_relu: Temperature parameter controlling the sharpness of the smooth
@@ -961,6 +964,7 @@ def construct_inputs_qNEHVI(
     sampler: Optional[MCSampler] = None,
     X_pending: Optional[Tensor] = None,
     eta: float = 1e-3,
+    fat: bool = False,
     mc_samples: int = 128,
     qmc: bool = True,
     prune_baseline: bool = True,
@@ -969,7 +973,7 @@ def construct_inputs_qNEHVI(
     incremental_nehvi: bool = True,
     cache_root: bool = True,
 ) -> Dict[str, Any]:
-    r"""Construct kwargs for `qNoisyExpectedHypervolumeImprovement` constructor."""
+    r"""Construct kwargs for `qNoisyExpectedHypervolumeImprovement`'s constructor."""
     if X_baseline is None:
         X_baseline = _get_dataset_field(
             training_data,
@@ -1010,12 +1014,65 @@ def construct_inputs_qNEHVI(
         "constraints": constraints,
         "X_pending": X_pending,
         "eta": eta,
+        "fat": fat,
         "prune_baseline": prune_baseline,
         "alpha": alpha,
         "cache_pending": cache_pending,
         "max_iep": max_iep,
         "incremental_nehvi": incremental_nehvi,
         "cache_root": cache_root,
+    }
+
+
+@acqf_input_constructor(qLogNoisyExpectedHypervolumeImprovement)
+def construct_inputs_qLogNEHVI(
+    model: Model,
+    training_data: MaybeDict[SupervisedDataset],
+    objective_thresholds: Tensor,
+    objective: Optional[MCMultiOutputObjective] = None,
+    X_baseline: Optional[Tensor] = None,
+    constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+    alpha: Optional[float] = None,
+    sampler: Optional[MCSampler] = None,
+    X_pending: Optional[Tensor] = None,
+    eta: float = 1e-3,
+    fat: bool = True,
+    mc_samples: int = 128,
+    qmc: bool = True,
+    prune_baseline: bool = True,
+    cache_pending: bool = True,
+    max_iep: int = 0,
+    incremental_nehvi: bool = True,
+    cache_root: bool = True,
+    tau_relu: float = TAU_RELU,
+    tau_max: float = TAU_MAX,
+) -> Dict[str, Any]:
+    """
+    Construct kwargs for `qLogNoisyExpectedHypervolumeImprovement`'s constructor."
+    """
+    return {
+        **construct_inputs_qNEHVI(
+            model=model,
+            training_data=training_data,
+            objective_thresholds=objective_thresholds,
+            objective=objective,
+            X_baseline=X_baseline,
+            constraints=constraints,
+            alpha=alpha,
+            sampler=sampler,
+            X_pending=X_pending,
+            eta=eta,
+            fat=fat,
+            mc_samples=mc_samples,
+            qmc=qmc,
+            prune_baseline=prune_baseline,
+            cache_pending=cache_pending,
+            max_iep=max_iep,
+            incremental_nehvi=incremental_nehvi,
+            cache_root=cache_root,
+        ),
+        "tau_relu": tau_relu,
+        "tau_max": tau_max,
     }
 
 
