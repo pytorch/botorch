@@ -873,8 +873,9 @@ class PosteriorStandardDeviation(AnalyticAcquisitionFunction):
     r"""Single-outcome Posterior Standard Deviation.
 
     An acquisition function for pure exploration.
-    Only supports the case of q=1. Requires the model's posterior to have a
-    `stddev` property. The model must be single-outcome.
+    Only supports the case of q=1. Requires the model's posterior to have
+    `mean` and `variance` properties. The model must be either single-outcome
+    or combined with a `posterior_transform` to produce a single-output posterior.
 
     Example:
         >>> model = SingleTaskGP(train_X, train_Y)
