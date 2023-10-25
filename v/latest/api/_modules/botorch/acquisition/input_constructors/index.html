@@ -94,6 +94,9 @@
     <span class="n">qExpectedHypervolumeImprovement</span><span class="p">,</span>
     <span class="n">qNoisyExpectedHypervolumeImprovement</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.logei</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">qLogNoisyExpectedHypervolumeImprovement</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.objective</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">AnalyticMultiOutputObjective</span><span class="p">,</span>
     <span class="n">IdentityAnalyticMultiOutputObjective</span><span class="p">,</span>
@@ -711,8 +714,8 @@
 <span class="sd">        eta: Temperature parameter(s) governing the smoothness of the sigmoid</span>
 <span class="sd">            approximation to the constraint indicators. For more details, on this</span>
 <span class="sd">            parameter, see the docs of `compute_smoothed_feasibility_indicator`.</span>
-<span class="sd">        fat: Toggles the logarithmic / linear asymptotic behavior of the smooth</span>
-<span class="sd">            approximation to the ReLU.</span>
+<span class="sd">        fat: Toggles the use of the fat-tailed non-linearities to smoothly approximate</span>
+<span class="sd">            the constraints indicator function.</span>
 <span class="sd">        tau_max: Temperature parameter controlling the sharpness of the smooth</span>
 <span class="sd">            approximations to max.</span>
 <span class="sd">        tau_relu: Temperature parameter controlling the sharpness of the smooth</span>
@@ -984,6 +987,7 @@
     <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
+    <span class="n">fat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">mc_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
     <span class="n">qmc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">prune_baseline</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -992,7 +996,7 @@
     <span class="n">incremental_nehvi</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">cache_root</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""Construct kwargs for `qNoisyExpectedHypervolumeImprovement` constructor."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Construct kwargs for `qNoisyExpectedHypervolumeImprovement`'s constructor."""</span>
     <span class="k">if</span> <span class="n">X_baseline</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">X_baseline</span> <span class="o">=</span> <span class="n">_get_dataset_field</span><span class="p">(</span>
             <span class="n">training_data</span><span class="p">,</span>
@@ -1033,12 +1037,65 @@
         <span class="s2">"constraints"</span><span class="p">:</span> <span class="n">constraints</span><span class="p">,</span>
         <span class="s2">"X_pending"</span><span class="p">:</span> <span class="n">X_pending</span><span class="p">,</span>
         <span class="s2">"eta"</span><span class="p">:</span> <span class="n">eta</span><span class="p">,</span>
+        <span class="s2">"fat"</span><span class="p">:</span> <span class="n">fat</span><span class="p">,</span>
         <span class="s2">"prune_baseline"</span><span class="p">:</span> <span class="n">prune_baseline</span><span class="p">,</span>
         <span class="s2">"alpha"</span><span class="p">:</span> <span class="n">alpha</span><span class="p">,</span>
         <span class="s2">"cache_pending"</span><span class="p">:</span> <span class="n">cache_pending</span><span class="p">,</span>
         <span class="s2">"max_iep"</span><span class="p">:</span> <span class="n">max_iep</span><span class="p">,</span>
         <span class="s2">"incremental_nehvi"</span><span class="p">:</span> <span class="n">incremental_nehvi</span><span class="p">,</span>
         <span class="s2">"cache_root"</span><span class="p">:</span> <span class="n">cache_root</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="construct_inputs_qLogNEHVI"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qLogNEHVI">[docs]</a><span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qLogNoisyExpectedHypervolumeImprovement</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">construct_inputs_qLogNEHVI</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
+    <span class="n">objective_thresholds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCMultiOutputObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">X_baseline</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">alpha</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
+    <span class="n">fat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">mc_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+    <span class="n">qmc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">prune_baseline</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">cache_pending</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">max_iep</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">incremental_nehvi</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">cache_root</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">tau_relu</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">TAU_RELU</span><span class="p">,</span>
+    <span class="n">tau_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">TAU_MAX</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Construct kwargs for `qLogNoisyExpectedHypervolumeImprovement`'s constructor."</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="o">**</span><span class="n">construct_inputs_qNEHVI</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span>
+            <span class="n">objective_thresholds</span><span class="o">=</span><span class="n">objective_thresholds</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">X_baseline</span><span class="o">=</span><span class="n">X_baseline</span><span class="p">,</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span>
+            <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
+            <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
+            <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
+            <span class="n">fat</span><span class="o">=</span><span class="n">fat</span><span class="p">,</span>
+            <span class="n">mc_samples</span><span class="o">=</span><span class="n">mc_samples</span><span class="p">,</span>
+            <span class="n">qmc</span><span class="o">=</span><span class="n">qmc</span><span class="p">,</span>
+            <span class="n">prune_baseline</span><span class="o">=</span><span class="n">prune_baseline</span><span class="p">,</span>
+            <span class="n">cache_pending</span><span class="o">=</span><span class="n">cache_pending</span><span class="p">,</span>
+            <span class="n">max_iep</span><span class="o">=</span><span class="n">max_iep</span><span class="p">,</span>
+            <span class="n">incremental_nehvi</span><span class="o">=</span><span class="n">incremental_nehvi</span><span class="p">,</span>
+            <span class="n">cache_root</span><span class="o">=</span><span class="n">cache_root</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="s2">"tau_relu"</span><span class="p">:</span> <span class="n">tau_relu</span><span class="p">,</span>
+        <span class="s2">"tau_max"</span><span class="p">:</span> <span class="n">tau_max</span><span class="p">,</span>
     <span class="p">}</span></div>
 
 

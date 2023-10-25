@@ -892,6 +892,58 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mean_and_sigma</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">compute_sigma</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span></div></div>
 
 
+<div class="viewcode-block" id="PosteriorStandardDeviation"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.PosteriorStandardDeviation">[docs]</a><span class="k">class</span> <span class="nc">PosteriorStandardDeviation</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Single-outcome Posterior Standard Deviation.</span>
+
+<span class="sd">    An acquisition function for pure exploration.</span>
+<span class="sd">    Only supports the case of q=1. Requires the model's posterior to have</span>
+<span class="sd">    `mean` and `variance` properties. The model must be either single-outcome</span>
+<span class="sd">    or combined with a `posterior_transform` to produce a single-output posterior.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(train_X, train_Y)</span>
+<span class="sd">        &gt;&gt;&gt; PSTD = PosteriorMean(model)</span>
+<span class="sd">        &gt;&gt;&gt; std = PSTD(test_X)</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Single-outcome Posterior Mean.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model: A fitted single-outcome GP model (must be in batch mode if</span>
+<span class="sd">                candidate sets X will be)</span>
+<span class="sd">            posterior_transform: A PosteriorTransform. If using a multi-output model,</span>
+<span class="sd">                a PosteriorTransform that transforms the multi-output posterior into a</span>
+<span class="sd">                single-output posterior is required.</span>
+<span class="sd">            maximize: If True, consider the problem a maximization problem. Note</span>
+<span class="sd">                that if `maximize=False`, the posterior standard deviation is negated.</span>
+<span class="sd">                As a consequence,</span>
+<span class="sd">                `optimize_acqf(PosteriorStandardDeviation(gp, maximize=False))`</span>
+<span class="sd">                actually returns -1 * minimum of the posterior standard deviation.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span> <span class="o">=</span> <span class="n">maximize</span>
+
+<div class="viewcode-block" id="PosteriorStandardDeviation.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.PosteriorStandardDeviation.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the posterior standard deviation on the candidate set X.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `(b1 x ... bk) x 1 x d`-dim batched tensor of `d`-dim design points.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `(b1 x ... bk)`-dim tensor of Posterior Mean values at the</span>
+<span class="sd">            given design points `X`.</span>
+<span class="sd">        """</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">std</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mean_and_sigma</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">std</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span> <span class="k">else</span> <span class="o">-</span><span class="n">std</span></div></div>
+
+
 <span class="c1"># --------------- Helper functions for analytic acquisition functions. ---------------</span>
 
 

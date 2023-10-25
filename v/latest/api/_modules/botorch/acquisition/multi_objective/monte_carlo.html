@@ -178,6 +178,7 @@
         <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">eta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
+        <span class="n">fat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""q-Expected Hypervolume Improvement supporting m&gt;=2 outcomes.</span>
 
@@ -218,6 +219,8 @@
 <span class="sd">                tensor the length of the tensor must match the number of provided</span>
 <span class="sd">                constraints. The i-th constraint is then estimated with the i-th</span>
 <span class="sd">                eta value.</span>
+<span class="sd">            fat: A Boolean flag indicating whether to use the heavy-tailed approximation</span>
+<span class="sd">                of the constraint indicator.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ref_point</span><span class="p">)</span> <span class="o">!=</span> <span class="n">partitioning</span><span class="o">.</span><span class="n">num_outcomes</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -243,6 +246,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"cell_lower_bounds"</span><span class="p">,</span> <span class="n">cell_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"cell_upper_bounds"</span><span class="p">,</span> <span class="n">cell_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
         <span class="n">SubsetIndexCachingMixin</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fat</span> <span class="o">=</span> <span class="n">fat</span>
 
     <span class="k">def</span> <span class="nf">_compute_qehvi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the expected (feasible) hypervolume improvement given MC samples.</span>
@@ -264,6 +268,7 @@
                 <span class="n">constraints</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">,</span>
                 <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span>
                 <span class="n">eta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">eta</span><span class="p">,</span>
+                <span class="n">fat</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fat</span><span class="p">,</span>
             <span class="p">)</span>  <span class="c1"># `sample_shape x batch-shape x q`</span>
         <span class="n">device</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="o">.</span><span class="n">device</span>
         <span class="n">q_subset_indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_q_subset_indices</span><span class="p">(</span><span class="n">q_out</span><span class="o">=</span><span class="n">q</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
@@ -351,6 +356,7 @@
         <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">eta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
+        <span class="n">fat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">prune_baseline</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
         <span class="n">cache_pending</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -399,6 +405,8 @@
 <span class="sd">                constraints. The i-th constraint is then estimated with the i-th</span>
 <span class="sd">                `eta` value. For more details, on this parameter, see the docs of</span>
 <span class="sd">                `compute_smoothed_feasibility_indicator`.</span>
+<span class="sd">            fat: A Boolean flag indicating whether to use the heavy-tailed approximation</span>
+<span class="sd">                of the constraint indicator.</span>
 <span class="sd">            prune_baseline: If True, remove points in `X_baseline` that are</span>
 <span class="sd">                highly unlikely to be the pareto optimal and better than the</span>
 <span class="sd">                reference point. This can significantly improve computation time and</span>
@@ -449,17 +457,22 @@
             <span class="n">cache_root</span><span class="o">=</span><span class="n">cache_root</span><span class="p">,</span>
             <span class="n">marginalize_dim</span><span class="o">=</span><span class="n">marginalize_dim</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fat</span> <span class="o">=</span> <span class="n">fat</span>
 
     <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">X_full</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">match_batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_baseline</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span> <span class="n">X</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
-        <span class="c1"># Note: it is important to compute the full posterior over `(X_baseline, X)`</span>
-        <span class="c1"># to ensure that we properly sample `f(X)` from the joint distribution `</span>
-        <span class="c1"># `f(X_baseline, X) ~ P(f | D)` given that we can already fixed the sampled</span>
-        <span class="c1"># function values for `f(X_baseline)`.</span>
-        <span class="c1"># TODO: improve efficiency by not recomputing baseline-baseline</span>
-        <span class="c1"># covariance matrix.</span>
+        <span class="c1"># NOTE: To ensure that we correctly sample `f(X)` from the joint distribution</span>
+        <span class="c1"># `f((X_baseline, X)) ~ P(f | D)`, it is critical to compute the joint posterior</span>
+        <span class="c1"># over X *and* X_baseline -- which also contains pending points whenever there</span>
+        <span class="c1"># are any --  since the baseline and pending values `f(X_baseline)` are</span>
+        <span class="c1"># generally pre-computed and cached before the `forward` call, see the docs of</span>
+        <span class="c1"># `cache_pending` for details.</span>
+        <span class="c1"># TODO: Improve the efficiency by not re-computing the X_baseline-X_baseline</span>
+        <span class="c1"># covariance matrix, but only the covariance of</span>
+        <span class="c1"># 1) X and X, and</span>
+        <span class="c1"># 2) X and X_baseline.</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X_full</span><span class="p">)</span>
         <span class="c1"># Account for possible one-to-many transform and the MCMC batch dimension in</span>
         <span class="c1"># `SaasFullyBayesianSingleTaskGP`</span>

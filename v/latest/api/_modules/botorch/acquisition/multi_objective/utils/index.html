@@ -61,8 +61,9 @@
     <span class="n">DominatedPartitioning</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.pareto</span> <span class="kn">import</span> <span class="n">is_non_dominated</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.objective</span> <span class="kn">import</span> <span class="n">compute_feasibility_indicator</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">draw_sobol_samples</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">is_fully_bayesian</span><span class="p">,</span> <span class="n">normalize_indices</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">is_fully_bayesian</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
@@ -161,19 +162,12 @@
                 <span class="s2">"Models with multiple batch dims are currently unsupported by"</span>
                 <span class="s2">" prune_inferior_points_multi_objective."</span>
             <span class="p">)</span>
-    <span class="k">if</span> <span class="n">constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">infeas</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">c</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">infeas</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">marginalize_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># make sure marginalize_dim is not negative</span>
-            <span class="k">if</span> <span class="n">marginalize_dim</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="c1"># add 1 to the normalize marginalize_dim since we have already</span>
-                <span class="c1"># removed the output dim</span>
-                <span class="n">marginalize_dim</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="mi">1</span> <span class="o">+</span> <span class="n">normalize_indices</span><span class="p">([</span><span class="n">marginalize_dim</span><span class="p">],</span> <span class="n">d</span><span class="o">=</span><span class="n">infeas</span><span class="o">.</span><span class="n">ndim</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-                <span class="p">)</span>
-
-            <span class="n">infeas</span> <span class="o">=</span> <span class="n">infeas</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">marginalize_dim</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">()</span><span class="o">.</span><span class="n">bool</span><span class="p">()</span>
-        <span class="c1"># set infeasible points to be the ref point</span>
+    <span class="n">infeas</span> <span class="o">=</span> <span class="o">~</span><span class="n">compute_feasibility_indicator</span><span class="p">(</span>
+        <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+        <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span>
+        <span class="n">marginalize_dim</span><span class="o">=</span><span class="n">marginalize_dim</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">infeas</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
         <span class="n">obj_vals</span><span class="p">[</span><span class="n">infeas</span><span class="p">]</span> <span class="o">=</span> <span class="n">ref_point</span>
     <span class="n">pareto_mask</span> <span class="o">=</span> <span class="n">is_non_dominated</span><span class="p">(</span><span class="n">obj_vals</span><span class="p">,</span> <span class="n">deduplicate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
         <span class="n">obj_vals</span> <span class="o">&gt;</span> <span class="n">ref_point</span>

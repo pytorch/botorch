@@ -50,7 +50,7 @@
 <span class="kn">from</span> <span class="nn">botorch.sampling.pathwise</span> <span class="kn">import</span> <span class="n">draw_matheron_paths</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.objective</span> <span class="kn">import</span> <span class="n">compute_feasibility_indicator</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">optimize_posterior_samples</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">is_fully_bayesian</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">is_fully_bayesian</span><span class="p">,</span> <span class="n">normalize_indices</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
@@ -217,6 +217,7 @@
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2048</span><span class="p">,</span>
     <span class="n">max_frac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
     <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -236,6 +237,10 @@
 <span class="sd">            supported.</span>
 <span class="sd">        objective: The objective under which to evaluate the posterior.</span>
 <span class="sd">        posterior_transform: A PosteriorTransform (optional).</span>
+<span class="sd">        constraints: A list of constraint callables which map a Tensor of posterior</span>
+<span class="sd">            samples of dimension `sample_shape x batch-shape x q x m`-dim to a</span>
+<span class="sd">            `sample_shape x batch-shape x q`-dim Tensor. The associated constraints</span>
+<span class="sd">            are satisfied if `constraint(samples) &lt; 0`.</span>
 <span class="sd">        num_samples: The number of samples used to compute empirical</span>
 <span class="sd">            probabilities of being the best point.</span>
 <span class="sd">        max_frac: The maximum fraction of points to retain. Must satisfy</span>
@@ -279,6 +284,12 @@
     <span class="n">obj_vals</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">obj_vals</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">obj_vals</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">marginalize_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">marginalize_dim</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># we do this again in compute_feasibility_indicator, but that will</span>
+                <span class="c1"># have no effect since marginalize_dim will be non-negative</span>
+                <span class="n">marginalize_dim</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="mi">1</span> <span class="o">+</span> <span class="n">normalize_indices</span><span class="p">([</span><span class="n">marginalize_dim</span><span class="p">],</span> <span class="n">d</span><span class="o">=</span><span class="n">obj_vals</span><span class="o">.</span><span class="n">ndim</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="p">)</span>
             <span class="n">obj_vals</span> <span class="o">=</span> <span class="n">obj_vals</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">marginalize_dim</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># TODO: support batched inputs (req. dealing with ragged tensors)</span>
@@ -286,6 +297,16 @@
                 <span class="s2">"Models with multiple batch dims are currently unsupported by"</span>
                 <span class="s2">" prune_inferior_points."</span>
             <span class="p">)</span>
+    <span class="n">infeas</span> <span class="o">=</span> <span class="o">~</span><span class="n">compute_feasibility_indicator</span><span class="p">(</span>
+        <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+        <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span>
+        <span class="n">marginalize_dim</span><span class="o">=</span><span class="n">marginalize_dim</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">infeas</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="c1"># set infeasible points to worse than worst objective</span>
+        <span class="c1"># across all samples</span>
+        <span class="n">obj_vals</span><span class="p">[</span><span class="n">infeas</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj_vals</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span>
+
     <span class="n">is_best</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">obj_vals</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">idcs</span><span class="p">,</span> <span class="n">counts</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">is_best</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 

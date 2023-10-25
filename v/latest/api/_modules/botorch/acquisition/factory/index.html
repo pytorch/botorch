@@ -36,8 +36,12 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">monte_carlo</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective</span> <span class="kn">import</span> <span class="n">monte_carlo</span> <span class="k">as</span> <span class="n">moo_monte_carlo</span>
+
+<span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">logei</span><span class="p">,</span> <span class="n">monte_carlo</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">logei</span> <span class="k">as</span> <span class="n">moo_logei</span><span class="p">,</span>
+    <span class="n">monte_carlo</span> <span class="k">as</span> <span class="n">moo_monte_carlo</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">MCAcquisitionObjective</span><span class="p">,</span> <span class="n">PosteriorTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.utils</span> <span class="kn">import</span> <span class="n">compute_best_feasible_objective</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
@@ -114,6 +118,8 @@
     <span class="k">if</span> <span class="n">posterior_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">acquisition_function_name</span> <span class="ow">in</span> <span class="p">[</span>
         <span class="s2">"qEHVI"</span><span class="p">,</span>
         <span class="s2">"qNEHVI"</span><span class="p">,</span>
+        <span class="s2">"qLogEHVI"</span><span class="p">,</span>
+        <span class="s2">"qLogNEHVI"</span><span class="p">,</span>
     <span class="p">]:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="s2">"PosteriorTransforms are not yet implemented for multi-objective "</span>
@@ -134,24 +140,13 @@
             <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
             <span class="n">X_baseline</span><span class="o">=</span><span class="n">X_observed</span><span class="p">,</span>
         <span class="p">)</span>
-    <span class="k">if</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qEI"</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qExpectedImprovement</span><span class="p">(</span>
-            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-            <span class="n">best_f</span><span class="o">=</span><span class="n">best_f</span><span class="p">,</span>
-            <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
-            <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
-            <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
-            <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
-            <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
-            <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
+    <span class="k">if</span> <span class="n">acquisition_function_name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"qEI"</span><span class="p">,</span> <span class="s2">"qLogEI"</span><span class="p">]:</span>
+        <span class="n">acqf_class</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qExpectedImprovement</span>
+            <span class="k">if</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qEI"</span>
+            <span class="k">else</span> <span class="n">logei</span><span class="o">.</span><span class="n">qLogExpectedImprovement</span>
         <span class="p">)</span>
-    <span class="k">if</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qLogEI"</span><span class="p">:</span>
-        <span class="c1"># putting the import here to avoid circular imports</span>
-        <span class="c1"># ideally, the entire function should be moved out of this file,</span>
-        <span class="c1"># but since it is used for legacy code to be deprecated, we keep it here.</span>
-        <span class="kn">from</span> <span class="nn">botorch.acquisition.logei</span> <span class="kn">import</span> <span class="n">qLogExpectedImprovement</span>
-
-        <span class="k">return</span> <span class="n">qLogExpectedImprovement</span><span class="p">(</span>
+        <span class="k">return</span> <span class="n">acqf_class</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
             <span class="n">best_f</span><span class="o">=</span><span class="n">best_f</span><span class="p">,</span>
             <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
@@ -173,24 +168,13 @@
             <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
             <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
         <span class="p">)</span>
-    <span class="k">elif</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qNEI"</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qNoisyExpectedImprovement</span><span class="p">(</span>
-            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-            <span class="n">X_baseline</span><span class="o">=</span><span class="n">X_observed</span><span class="p">,</span>
-            <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
-            <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
-            <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
-            <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
-            <span class="n">prune_baseline</span><span class="o">=</span><span class="n">prune_baseline</span><span class="p">,</span>
-            <span class="n">marginalize_dim</span><span class="o">=</span><span class="n">marginalize_dim</span><span class="p">,</span>
-            <span class="n">cache_root</span><span class="o">=</span><span class="n">cache_root</span><span class="p">,</span>
-            <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
-            <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
+    <span class="k">elif</span> <span class="n">acquisition_function_name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"qNEI"</span><span class="p">,</span> <span class="s2">"qLogNEI"</span><span class="p">]:</span>
+        <span class="n">acqf_class</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qNoisyExpectedImprovement</span>
+            <span class="k">if</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qNEI"</span>
+            <span class="k">else</span> <span class="n">logei</span><span class="o">.</span><span class="n">qLogNoisyExpectedImprovement</span>
         <span class="p">)</span>
-    <span class="k">elif</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qLogNEI"</span><span class="p">:</span>
-        <span class="kn">from</span> <span class="nn">botorch.acquisition.logei</span> <span class="kn">import</span> <span class="n">qLogNoisyExpectedImprovement</span>
-
-        <span class="k">return</span> <span class="n">qLogNoisyExpectedImprovement</span><span class="p">(</span>
+        <span class="k">return</span> <span class="n">acqf_class</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
             <span class="n">X_baseline</span><span class="o">=</span><span class="n">X_observed</span><span class="p">,</span>
             <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
@@ -222,11 +206,13 @@
             <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
             <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
         <span class="p">)</span>
-    <span class="k">elif</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qEHVI"</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">acquisition_function_name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"qEHVI"</span><span class="p">,</span> <span class="s2">"qLogEHVI"</span><span class="p">]:</span>
         <span class="k">if</span> <span class="n">Y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`Y` must not be None for qEHVI"</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"`Y` must not be None for </span><span class="si">{</span><span class="n">acquisition_function_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">ref_point</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`ref_point` must not be None for qEHVI"</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"`ref_point` must not be None for </span><span class="si">{</span><span class="n">acquisition_function_name</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
         <span class="c1"># get feasible points</span>
         <span class="k">if</span> <span class="n">constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">feas</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">c</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
@@ -243,7 +229,12 @@
                 <span class="n">ref_point</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
                 <span class="n">Y</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">moo_monte_carlo</span><span class="o">.</span><span class="n">qExpectedHypervolumeImprovement</span><span class="p">(</span>
+        <span class="n">acqf_class</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">moo_monte_carlo</span><span class="o">.</span><span class="n">qExpectedHypervolumeImprovement</span>
+            <span class="k">if</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qEHVI"</span>
+            <span class="k">else</span> <span class="n">moo_logei</span><span class="o">.</span><span class="n">qLogExpectedHypervolumeImprovement</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">acqf_class</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
             <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>
             <span class="n">partitioning</span><span class="o">=</span><span class="n">partitioning</span><span class="p">,</span>
@@ -253,10 +244,17 @@
             <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
             <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
         <span class="p">)</span>
-    <span class="k">elif</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qNEHVI"</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">acquisition_function_name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"qNEHVI"</span><span class="p">,</span> <span class="s2">"qLogNEHVI"</span><span class="p">]:</span>
         <span class="k">if</span> <span class="n">ref_point</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`ref_point` must not be None for qNEHVI"</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">moo_monte_carlo</span><span class="o">.</span><span class="n">qNoisyExpectedHypervolumeImprovement</span><span class="p">(</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"`ref_point` must not be None for </span><span class="si">{</span><span class="n">acquisition_function_name</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">acqf_class</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">moo_monte_carlo</span><span class="o">.</span><span class="n">qNoisyExpectedHypervolumeImprovement</span>
+            <span class="k">if</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qNEHVI"</span>
+            <span class="k">else</span> <span class="n">moo_logei</span><span class="o">.</span><span class="n">qLogNoisyExpectedHypervolumeImprovement</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">acqf_class</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
             <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>
             <span class="n">X_baseline</span><span class="o">=</span><span class="n">X_observed</span><span class="p">,</span>
