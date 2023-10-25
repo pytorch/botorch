@@ -90,16 +90,34 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
     noise values, such as `train_Yvar=torch.full_like(train_Y, 1e-6)`.
 
     Example:
-        >>> # Model with inferred noise levels.
-        >>> train_X = torch.rand(20, 2)
+        Model with inferred noise levels:
+
+        >>> import torch
+        >>> from botorch.models.gp_regression import SingleTaskGP
+        >>> from botorch.models.transforms.outcome import Standardize
+        >>>
+        >>> train_X = torch.rand(20, 2, dtype=torch.float64)
         >>> train_Y = torch.sin(train_X).sum(dim=1, keepdim=True)
-        >>> inferred_noise_model = SingleTaskGP(train_X, train_Y)
-        >>> # With known observation variance of 0.2.
+        >>> outcome_transform = Standardize(m=1)
+        >>> inferred_noise_model = SingleTaskGP(
+        ...     train_X, train_Y, outcome_transform=outcome_transform,
+        ... )
+
+        Model with a known observation variance of 0.2:
+
         >>> train_Yvar = torch.full_like(train_Y, 0.2)
-        >>> observed_noise_model = SingleTaskGP(train_X, train_Y, train_Yvar)
-        >>> # To model noise-free observations.
+        >>> observed_noise_model = SingleTaskGP(
+        ...     train_X, train_Y, train_Yvar,
+        ...     outcome_transform=outcome_transform,
+        ... )
+
+        With noise-free observations:
+
         >>> train_Yvar = torch.full_like(train_Y, 1e-6)
-        >>> noise_free_model = SingleTaskGP(train_X, train_Y, train_Yvar)
+        >>> noise_free_model = SingleTaskGP(
+        ...     train_X, train_Y, train_Yvar,
+        ...     outcome_transform=outcome_transform,
+        ... )
     """
 
     def __init__(
