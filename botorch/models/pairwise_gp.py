@@ -406,9 +406,8 @@ class PairwiseGP(Model, GP, FantasizeMixin):
         utility: Union[Tensor, np.ndarray],
         datapoints: Tensor,
         D: Tensor,
-        DT: Tensor,
         covar_chol: Tensor,
-        covar_inv: Tensor,
+        covar_inv: Optional[Tensor] = None,
         ret_np: bool = False,
     ) -> Union[Tensor, np.ndarray]:
         r"""Compute the gradient of S loss wrt to f/utility in [Chu2005preference]_.
@@ -421,10 +420,12 @@ class PairwiseGP(Model, GP, FantasizeMixin):
             utility: A Tensor of shape `batch_size x n`
             datapoints: A Tensor of shape `batch_size x n x d` as in self.datapoints
             D: A Tensor of shape `batch_size x m x n` as in self.D
-            DT: Transpose of D. A Tensor of shape `batch_size x n x m` as in self.DT
             covar_chol: A Tensor of shape `batch_size x n x n`, as in self.covar_chol
-            covar_inv: A Tensor of shape `batch_size x n x n`, as in self.covar_inv
-            ret_np: return a numpy array if true, otherwise a Tensor
+            covar_inv: `None` or a Tensor of shape `batch_size x n x n`, as in
+                self.covar_inv. This is not used but is needed so that
+                PairwiseGP._grad_posterior_f has the same signature as
+                PairwiseGP._hess_posterior_f.
+            ret_np: return a numpy array if True, otherwise a Tensor
         """
         prior_mean = self._prior_mean(datapoints)
 
@@ -442,15 +443,13 @@ class PairwiseGP(Model, GP, FantasizeMixin):
         g = g_ + b
         if ret_np:
             return g.cpu().numpy()
-        else:
-            return g
+        return g
 
     def _hess_posterior_f(
         self,
         utility: Union[Tensor, np.ndarray],
         datapoints: Tensor,
         D: Tensor,
-        DT: Tensor,
         covar_chol: Tensor,
         covar_inv: Tensor,
         ret_np: bool = False,
@@ -463,10 +462,15 @@ class PairwiseGP(Model, GP, FantasizeMixin):
 
         Args:
             utility: A Tensor of shape `batch_size x n`
-            datapoints: A Tensor of shape `batch_size x n x d` as in self.datapoints
+            datapoints: A Tensor of shape `batch_size x n x d`, as in
+                self.datapoints. This is not used but is needed so that
+                `_hess_posterior_f` has the same signature as
+                `_grad_posterior_f`.
             D: A Tensor of shape `batch_size x m x n` as in self.D
-            DT: Transpose of D. A Tensor of shape `batch_size x n x m` as in self.DT
-            covar_chol: A Tensor of shape `batch_size x n x n`, as in self.covar_chol
+            covar_chol: A Tensor of shape `batch_size x n x n`, as in
+                self.covar_chol. This is not used but is needed so that
+                `_hess_posterior_f` has the same signature as
+                `_grad_posterior_f`.
             covar_inv: A Tensor of shape `batch_size x n x n`, as in self.covar_inv
             ret_np: return a numpy array if true, otherwise a Tensor
         """
@@ -478,12 +482,16 @@ class PairwiseGP(Model, GP, FantasizeMixin):
         return hess.numpy() if ret_np else hess
 
     def _update_utility_derived_values(self) -> None:
-        r"""Calculate utility-derived values not needed during optimization
+        r"""
+        Set self.hlcov_eye to self.likelihood_hess @ self.covar + I.
 
-        Using subsitution method for better numerical stability
-        Let `pred_cov_fac = (covar + hl^-1)`, which is needed for calculate
-        predictive covariance = `K - k.T @ pred_cov_fac^-1 @ k`
-        (Also see posterior mode in `forward`)
+        `self.hlcov_eye` is a utility-derived value not used during
+        optimization. This quantity is used so that we will be able to compute
+        the predictive covariance (in PairwiseGP.forward in posterior mode) with
+        better numerical stability using the substitution method:
+
+        Let `pred_cov_fac = (covar + hl^-1)`, which is needed for calculating
+        the predictive covariance = `K - k.T @ pred_cov_fac^-1 @ k`.
         Instead of inverting `pred_cov_fac`, let `hlcov_eye = (hl @ covar + I)`
         Then we can obtain `pred_cov_fac^-1 @ k` by solving for p in
         `(hl @ k) p = hlcov_eye`
@@ -554,12 +562,11 @@ class PairwiseGP(Model, GP, FantasizeMixin):
                 x0 = x0.reshape(-1, self.n)
                 dp_v = datapoints.view(-1, self.n, self.dim).cpu()
                 D_v = self.D.view(-1, self.m, self.n).cpu()
-                DT_v = self.DT.view(-1, self.n, self.m).cpu()
                 ch_v = self.covar_chol.view(-1, self.n, self.n).cpu()
                 ci_v = self.covar_inv.view(-1, self.n, self.n).cpu()
                 x = np.empty(x0.shape)
                 for i in range(x0.shape[0]):
-                    fsolve_args = (dp_v[i], D_v[i], DT_v[i], ch_v[i], ci_v[i], True)
+                    fsolve_args = (dp_v[i], D_v[i], ch_v[i], ci_v[i], True)
                     with warnings.catch_warnings():
                         warnings.filterwarnings("ignore", category=RuntimeWarning)
                         x[i] = optimize.fsolve(
@@ -577,7 +584,6 @@ class PairwiseGP(Model, GP, FantasizeMixin):
                 fsolve_args = (
                     datapoints.cpu(),
                     self.D.cpu(),
-                    self.DT.cpu(),
                     self.covar_chol.cpu(),
                     self.covar_inv.cpu(),
                     True,
@@ -616,7 +622,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
         # the first step results in gradients in the order of 1e-7 while the 2nd step
         # allows it go down further to the order of 1e-12 and stay there.
         self.utility = self._util_newton_updates(
-            datapoints, f.clone().requires_grad_(True), max_iter=2
+            dp=datapoints, x0=f.clone().requires_grad_(True), max_iter=2
         )
 
     def _transform_batch_shape(self, X: Tensor, X_new: Tensor) -> Tuple[Tensor, Tensor]:
@@ -650,7 +656,9 @@ class PairwiseGP(Model, GP, FantasizeMixin):
             # if X has fewer dimension, try to expand it to X_new's shape
             return X.expand(X_new_bs + X.shape[-2:]), X_new
 
-    def _util_newton_updates(self, dp, x0, max_iter=1, xtol=None) -> Tensor:
+    def _util_newton_updates(
+        self, dp: Tensor, x0: Tensor, max_iter: int = 1, xtol: Optional[float] = None
+    ) -> Tensor:
         r"""Make `max_iter` newton updates on utility.
 
         This is used in `forward` to calculate and fill in gradient into tensors.
@@ -659,19 +667,15 @@ class PairwiseGP(Model, GP, FantasizeMixin):
         By default only need to run one iteration just to fill the the gradients.
 
         Args:
-            dp: (Transformed) datapoints.
+            dp: (Transformed) datapoints. A Tensor of shape `batch_size x n x d`
+                as in self.datapoints
             x0: A `batch_size x n` dimension tensor, initial values.
             max_iter: Max number of iterations.
             xtol: Stop creteria. If `None`, do not stop until
                 finishing `max_iter` updates.
         """
         xtol = float("-Inf") if xtol is None else xtol
-        D, DT, ch, ci = (
-            self.D,
-            self.DT,
-            self.covar_chol,
-            self.covar_inv,
-        )
+        D, ch = self.D, self.covar_chol
         covar = self.covar
         diff = float("Inf")
         i = 0
@@ -688,7 +692,12 @@ class PairwiseGP(Model, GP, FantasizeMixin):
                     )
                 )
             cov_hl = cov_hl + eye  # add 1 to cov_hl
-            g = self._grad_posterior_f(x, dp, D, DT, ch, ci)
+            g = self._grad_posterior_f(
+                utility=x,
+                datapoints=dp,
+                D=D,
+                covar_chol=ch,
+            )
             cov_g = covar @ g.unsqueeze(-1)
             x_update = torch.linalg.solve(cov_hl, cov_g).squeeze(-1)
             x_next = x - x_update
@@ -961,8 +970,8 @@ class PairwiseGP(Model, GP, FantasizeMixin):
                 device=self.datapoints.device,
             ).expand(hl_cov.shape)
             hl_cov_I = hl_cov + eye  # add I to hl_cov
-            train_covar_map = covar - covar @ torch.linalg.solve(hl_cov_I, hl_cov)
-            output_mean, output_covar = self.utility, train_covar_map
+            output_covar = covar - covar @ torch.linalg.solve(hl_cov_I, hl_cov)
+            output_mean = self.utility
 
         # Prior mode
         elif settings.prior_mode.on() or self._has_no_data():
@@ -999,10 +1008,17 @@ class PairwiseGP(Model, GP, FantasizeMixin):
             pred_mean = (covar_xnew_x @ covar_inv_p).squeeze(-1)
             pred_mean = pred_mean + self._prior_mean(X_new)
 
-            # [Brochu2010tutorial]_ page 27
-            # Preictive covariance fatcor: hlcov_eye = (K + C^-1)
-            # fac = (K + C^-1)^-1 @ k = pred_cov_fac_inv @ covar_x_xnew
-            # used substitution method here to calculate fac
+            # Using the terminology from [Brochu2010tutorial]_ page 27:
+            # hl = C; hlcov_eye = CK + I; k = covar_x_xnew
+            #
+            # To compute the predictive covariance, one term we need is
+            # k^T (K + C^{-1})^{-1} k.
+            # Rather than performing two matrix inversions, we can compute this
+            # in a more efficient and numerically stable way by using
+            # fac = hlcov_eye^-1 @ hl @ covar_x_xnew
+            #     = (CK + I)^-1 @ C @ k
+            #     = (K + C^-1)^{-1}
+            # This is the substitution method.
             fac = torch.linalg.solve(hlcov_eye, hl @ covar_x_xnew)
             pred_covar = covar_xnew - (covar_xnew_x @ fac)
 
@@ -1058,8 +1074,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
         posterior = GPyTorchPosterior(post)
         if posterior_transform is not None:
             return posterior_transform(posterior)
-        else:
-            return posterior
+        return posterior
 
     def condition_on_observations(self, X: Tensor, Y: Tensor, **kwargs: Any) -> Model:
         r"""Condition the model on new observations.
@@ -1071,6 +1086,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
             X: A `batch_shape x n x d` dimension tensor X
             Y: A tensor of size `batch_shape x m x 2`. (i, j) means
                 f_i is preferred over f_j
+            kwargs: Not used.
 
         Returns:
             A (deepcopied) `Model` object of the same type, representing the
