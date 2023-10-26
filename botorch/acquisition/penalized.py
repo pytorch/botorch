@@ -366,6 +366,12 @@ class PenalizedMCObjective(GenericMCObjective):
         if self.expand_dim is not None:
             # reshape penalty_obj to match the dim
             penalty_obj = penalty_obj.unsqueeze(self.expand_dim)
+        # this happens when samples is a `q x m`-dim tensor and X is a `q x d`-dim
+        # tensor; obj returned from GenericMCObjective is a `q`-dim tensor and
+        # penalty_obj is a `1 x q`-dim tensor.
+        if obj.ndim == 1:
+            assert penalty_obj.shape == torch.Size([1, samples.shape[-2]])
+            penalty_obj = penalty_obj.squeeze(dim=0)
         return obj - self.regularization_parameter * penalty_obj
 
 

@@ -291,7 +291,7 @@ class TestPenalizedMCObjective(BotorchTestCase):
             samples = torch.randn(4, 3, device=self.device, dtype=dtype)
             X = torch.randn(4, 5, device=self.device, dtype=dtype)
             penalized_obj = generic_obj(samples) - 0.1 * l1_penalty_obj(X)
-            self.assertTrue(torch.equal(obj(samples, X), penalized_obj))
+            self.assertTrue(torch.equal(obj(samples, X), penalized_obj.squeeze(0)))
             # test 'q x d' Tensor X
             samples = torch.randn(4, 2, 3, device=self.device, dtype=dtype)
             X = torch.randn(2, 5, device=self.device, dtype=dtype)
