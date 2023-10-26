@@ -901,9 +901,24 @@
 <span class="sd">    or combined with a `posterior_transform` to produce a single-output posterior.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(train_X, train_Y)</span>
-<span class="sd">        &gt;&gt;&gt; PSTD = PosteriorMean(model)</span>
+<span class="sd">        &gt;&gt;&gt; import torch</span>
+<span class="sd">        &gt;&gt;&gt; from botorch.models.gp_regression import SingleTaskGP</span>
+<span class="sd">        &gt;&gt;&gt; from botorch.models.transforms.input import Normalize</span>
+<span class="sd">        &gt;&gt;&gt; from botorch.models.transforms.outcome import Standardize</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; # Set up a model</span>
+<span class="sd">        &gt;&gt;&gt; train_X = torch.rand(20, 2, dtype=torch.float64)</span>
+<span class="sd">        &gt;&gt;&gt; train_Y = torch.sin(train_X).sum(dim=1, keepdim=True)</span>
+<span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(</span>
+<span class="sd">        ...     train_X, train_Y, outcome_transform=Standardize(m=1),</span>
+<span class="sd">        ...     input_transform=Normalize(d=2),</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &gt;&gt;&gt; # Now set up the acquisition function</span>
+<span class="sd">        &gt;&gt;&gt; PSTD = PosteriorStandardDeviation(model)</span>
+<span class="sd">        &gt;&gt;&gt; test_X = torch.zeros((1, 2), dtype=torch.float64)</span>
 <span class="sd">        &gt;&gt;&gt; std = PSTD(test_X)</span>
+<span class="sd">        &gt;&gt;&gt; std.item()</span>
+<span class="sd">        0.16341639895667773</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
