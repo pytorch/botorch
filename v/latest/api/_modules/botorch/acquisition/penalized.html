@@ -389,6 +389,12 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">expand_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># reshape penalty_obj to match the dim</span>
             <span class="n">penalty_obj</span> <span class="o">=</span> <span class="n">penalty_obj</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expand_dim</span><span class="p">)</span>
+        <span class="c1"># this happens when samples is a `q x m`-dim tensor and X is a `q x d`-dim</span>
+        <span class="c1"># tensor; obj returned from GenericMCObjective is a `q`-dim tensor and</span>
+        <span class="c1"># penalty_obj is a `1 x q`-dim tensor.</span>
+        <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">penalty_obj</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]])</span>
+            <span class="n">penalty_obj</span> <span class="o">=</span> <span class="n">penalty_obj</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">obj</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">regularization_parameter</span> <span class="o">*</span> <span class="n">penalty_obj</span></div></div>
 
 

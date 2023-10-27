@@ -512,6 +512,48 @@ remaining tasks are populated with 1, 2, …, len(datasets) - 1.</p>
 </dl>
 </dd></dl>
 </dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.datasets.ContextualDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.datasets.</span></span><span class="sig-name descname"><span class="pre">ContextualDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datasets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_decomposition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context_buckets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_decomposition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#ContextualDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.ContextualDataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">SupervisedDataset</span></code></a></p>
+<p>This is a contextual dataset that is constructed from either a single
+dateset containing overall outcome or a list of datasets that each corresponds
+to a context breakdown.</p>
+<p>Construct a <cite>ContextualDataset</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>datasets</strong> (<em>List</em><em>[</em><a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – A list of the datasets of individual tasks. Each dataset
+is expected to contain data for only one outcome.</p></li>
+<li><p><strong>parameter_decomposition</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – Dict from context name to list of indices
+of X corresponding to that context.</p></li>
+<li><p><strong>context_buckets</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – List of the context names in the order of dataset
+in datasets corresponding to each context outcome.</p></li>
+<li><p><strong>metric_decomposition</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em><em>]</em>) – Context breakdown metrics. Keys are context names.
+Values are the lists of metric names belonging to the context:
+{‘context1’: [‘m1_c1’], ‘context2’: [‘m1_c2’],}.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.datasets.ContextualDataset.X">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">X</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.utils.datasets.ContextualDataset.X" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.datasets.ContextualDataset.Y">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Y</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.utils.datasets.ContextualDataset.Y" title="Permalink to this definition">¶</a></dt>
+<dd><p>Concatenates the Ys from the child datasets to create the Y expected
+by LCEM model if there are multiple datasets; Or return the Y expected
+by LCEA model if there is only one dataset.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.datasets.ContextualDataset.Yvar">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Yvar</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.utils.datasets.ContextualDataset.Yvar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Concatenates the Yvars from the child datasets to create the Y expected
+by LCEM model if there are multiple datasets; Or return the Yvar expected
+by LCEA model if there is only one dataset.</p>
+</dd></dl>
+</dd></dl>
 </section>
 <section id="module-botorch.utils.dispatcher">
 <span id="dispatcher"></span><h2>Dispatcher<a class="headerlink" href="#module-botorch.utils.dispatcher" title="Permalink to this heading">¶</a></h2>
