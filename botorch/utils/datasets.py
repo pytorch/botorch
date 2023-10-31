@@ -144,7 +144,7 @@ class SupervisedDataset:
             and (
                 other.Yvar is None
                 if self.Yvar is None
-                else torch.equal(self.Yvar, other.Yvar)
+                else other.Yvar is not None and torch.equal(self.Yvar, other.Yvar)
             )
             and self.feature_names == other.feature_names
             and self.outcome_names == other.outcome_names

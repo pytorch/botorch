@@ -118,6 +118,11 @@ class TestDatasets(BotorchTestCase):
         self.assertIsInstance(dataset.Yvar, Tensor)
         self.assertIsInstance(dataset._Yvar, DenseContainer)
 
+        # More equality checks with & without Yvar.
+        self.assertEqual(dataset, dataset)
+        self.assertNotEqual(dataset, dataset2)
+        self.assertNotEqual(dataset2, dataset)
+
     def test_fixedNoise(self):
         # Generate some data
         X = rand(3, 2)
