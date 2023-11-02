@@ -18,6 +18,8 @@ The main reference for BoTorch is
 
 Here is an incomplete selection of peer-reviewed Bayesian optimization papers that build off of BoTorch:
 
+- [Unexpected Improvements to Expected Improvement for Bayesian Optimization](https://arxiv.org/abs/2310.20708). Sebastian Ament, Samuel Daulton, David Eriksson, Maximilian Balandat, Eytan Bakshy. NeurIPS 2023.
+
 - [Hypervolume Knowledge Gradient: A Lookahead Approach for Multi-Objective Bayesian Optimization with Partial Information](https://proceedings.mlr.press/v202/daulton23a.html). Sam Daulton, Max Balandat, Eytan Bakshy. ICML 2023.
 
 - [Global Optimization with Parametric Function Approximation](https://proceedings.mlr.press/v202/liu23al.html). Chong Liu, Yu-Xiang Wang. ICML 2023.
