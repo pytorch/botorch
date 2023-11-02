@@ -32,6 +32,8 @@ class AcquisitionFunction(Module, ABC):
     :meta private:
     """
 
+    _log: bool = False  # whether the acquisition utilities are in log-space
+
     def __init__(self, model: Model) -> None:
         r"""Constructor for the AcquisitionFunction base class.
 

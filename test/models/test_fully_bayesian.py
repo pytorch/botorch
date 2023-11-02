@@ -7,11 +7,12 @@
 
 import itertools
 from unittest import mock
+from unittest.mock import patch
 
 import pyro
 
 import torch
-from botorch import fit_fully_bayesian_model_nuts
+from botorch import fit_fully_bayesian_model_nuts, utils
 from botorch.acquisition.analytic import (
     ExpectedImprovement,
     PosteriorMean,
@@ -34,6 +35,10 @@ from botorch.acquisition.multi_objective import (
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
 )
+from botorch.acquisition.multi_objective.logei import (
+    qLogExpectedHypervolumeImprovement,
+    qLogNoisyExpectedHypervolumeImprovement,
+)
 from botorch.acquisition.utils import prune_inferior_points
 from botorch.models import ModelList, ModelListGP
 from botorch.models.deterministic import GenericDeterministicModel
@@ -51,6 +56,7 @@ from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
+from botorch.utils.safe_math import logmeanexp
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
@@ -438,13 +444,13 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             qExpectedImprovement(
                 model=model, best_f=train_Y.max(), sampler=simple_sampler
             ),
-            qLogNoisyExpectedImprovement(
+            qNoisyExpectedImprovement(
                 model=model,
                 X_baseline=train_X,
                 sampler=simple_sampler,
                 cache_root=False,
             ),
-            qNoisyExpectedImprovement(
+            qLogNoisyExpectedImprovement(
                 model=model,
                 X_baseline=train_X,
                 sampler=simple_sampler,
@@ -462,7 +468,22 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 sampler=list_gp_sampler,
                 cache_root=False,
             ),
+            qLogNoisyExpectedHypervolumeImprovement(
+                model=list_gp,
+                X_baseline=train_X,
+                ref_point=torch.zeros(2, **tkwargs),
+                sampler=list_gp_sampler,
+                cache_root=False,
+            ),
             qExpectedHypervolumeImprovement(
+                model=list_gp,
+                ref_point=torch.zeros(2, **tkwargs),
+                sampler=list_gp_sampler,
+                partitioning=NondominatedPartitioning(
+                    ref_point=torch.zeros(2, **tkwargs), Y=train_Y.repeat([1, 2])
+                ),
+            ),
+            qLogExpectedHypervolumeImprovement(
                 model=list_gp,
                 ref_point=torch.zeros(2, **tkwargs),
                 sampler=list_gp_sampler,
@@ -478,7 +499,22 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 sampler=mixed_list_sampler,
                 cache_root=False,
             ),
+            qLogNoisyExpectedHypervolumeImprovement(
+                model=mixed_list,
+                X_baseline=train_X,
+                ref_point=torch.zeros(2, **tkwargs),
+                sampler=mixed_list_sampler,
+                cache_root=False,
+            ),
             qExpectedHypervolumeImprovement(
+                model=mixed_list,
+                ref_point=torch.zeros(2, **tkwargs),
+                sampler=mixed_list_sampler,
+                partitioning=NondominatedPartitioning(
+                    ref_point=torch.zeros(2, **tkwargs), Y=train_Y.repeat([1, 2])
+                ),
+            ),
+            qLogExpectedHypervolumeImprovement(
                 model=mixed_list,
                 ref_point=torch.zeros(2, **tkwargs),
                 sampler=mixed_list_sampler,
@@ -491,7 +527,16 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
         for acqf in acquisition_functions:
             for batch_shape in [[5], [6, 5, 2]]:
                 test_X = torch.rand(*batch_shape, 1, 4, **tkwargs)
-                self.assertEqual(acqf(test_X).shape, torch.Size(batch_shape))
+                # Testing that the t_batch_mode_transform works correctly for
+                # fully Bayesian models with log-space acquisition functions.
+                with patch.object(
+                    utils.transforms, "logmeanexp", wraps=logmeanexp
+                ) as mock:
+                    self.assertEqual(acqf(test_X).shape, torch.Size(batch_shape))
+                    if acqf._log:
+                        mock.assert_called_once()
+                    else:
+                        mock.assert_not_called()
 
         # Test prune_inferior_points
         X_pruned = prune_inferior_points(model=model, X=train_X)

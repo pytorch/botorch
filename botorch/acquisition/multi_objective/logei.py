@@ -48,6 +48,9 @@ from torch import Tensor
 class qLogExpectedHypervolumeImprovement(
     MultiObjectiveMCAcquisitionFunction, SubsetIndexCachingMixin
 ):
+
+    _log: bool = True
+
     def __init__(
         self,
         model: Model,
@@ -318,6 +321,9 @@ class qLogNoisyExpectedHypervolumeImprovement(
     NoisyExpectedHypervolumeMixin,
     qLogExpectedHypervolumeImprovement,
 ):
+
+    _log: bool = True
+
     def __init__(
         self,
         model: Model,

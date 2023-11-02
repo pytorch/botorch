@@ -135,6 +135,8 @@ class LogProbabilityOfImprovement(AnalyticAcquisitionFunction):
         >>> log_pi = LogPI(test_X)
     """
 
+    _log: bool = True
+
     def __init__(
         self,
         model: Model,
@@ -375,6 +377,8 @@ class LogExpectedImprovement(AnalyticAcquisitionFunction):
         >>> ei = LogEI(test_X)
     """
 
+    _log: bool = True
+
     def __init__(
         self,
         model: Model,
@@ -441,6 +445,8 @@ class LogConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
         >>> LogCEI = LogConstrainedExpectedImprovement(model, 0.2, 1, constraints)
         >>> cei = LogCEI(test_X)
     """
+
+    _log: bool = True
 
     def __init__(
         self,
@@ -590,6 +596,8 @@ class LogNoisyExpectedImprovement(AnalyticAcquisitionFunction):
         >>> LogNEI = LogNoisyExpectedImprovement(model, train_X)
         >>> nei = LogNEI(test_X)
     """
+
+    _log: bool = True
 
     def __init__(
         self,
