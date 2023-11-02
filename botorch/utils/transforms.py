@@ -15,6 +15,7 @@ from functools import wraps
 from typing import Any, Callable, List, Optional, TYPE_CHECKING
 
 import torch
+from botorch.utils.safe_math import logmeanexp
 from torch import Tensor
 
 if TYPE_CHECKING:
@@ -255,7 +256,10 @@ def t_batch_mode_transform(
             X = X if X.dim() > 2 else X.unsqueeze(0)
             output = method(acqf, X, *args, **kwargs)
             if hasattr(acqf, "model") and is_fully_bayesian(acqf.model):
-                output = output.mean(dim=-1)
+                # IDEA: this could be wrapped into SampleReducingMCAcquisitionFunction
+                output = (
+                    output.mean(dim=-1) if not acqf._log else logmeanexp(output, dim=-1)
+                )
             if assert_output_shape and not _verify_output_shape(
                 acqf=acqf,
                 X=X,

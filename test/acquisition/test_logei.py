@@ -13,14 +13,24 @@ from unittest import mock
 import torch
 from botorch import settings
 from botorch.acquisition import (
+    AcquisitionFunction,
     LogImprovementMCAcquisitionFunction,
     qLogExpectedImprovement,
     qLogNoisyExpectedImprovement,
+)
+from botorch.acquisition.analytic import (
+    ExpectedImprovement,
+    LogExpectedImprovement,
+    LogNoisyExpectedImprovement,
+    NoisyExpectedImprovement,
 )
 from botorch.acquisition.input_constructors import ACQF_INPUT_CONSTRUCTOR_REGISTRY
 from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
     qNoisyExpectedImprovement,
+)
+from botorch.acquisition.multi_objective.logei import (
+    qLogNoisyExpectedHypervolumeImprovement,
 )
 
 from botorch.acquisition.objective import (
@@ -33,7 +43,8 @@ from botorch.acquisition.objective import (
 from botorch.acquisition.utils import prune_inferior_points
 from botorch.exceptions import BotorchWarning, UnsupportedError
 from botorch.exceptions.errors import BotorchError
-from botorch.models import SingleTaskGP
+from botorch.models import ModelListGP, SingleTaskGP
+from botorch.models.gp_regression import FixedNoiseGP
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.low_rank import sample_cached_cholesky
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
@@ -717,3 +728,44 @@ class TestQLogNoisyExpectedImprovement(BotorchTestCase):
                         best_feas_f, torch.full_like(obj[..., [0]], -infcost.item())
                     )
         # TODO: Test different objectives (incl. constraints)
+
+
+class TestIsLog(BotorchTestCase):
+    def test_is_log(self):
+        # the flag is False by default
+        self.assertFalse(AcquisitionFunction._log)
+
+        # single objective case
+        X, Y = torch.rand(3, 2), torch.randn(3, 1)
+        model = FixedNoiseGP(train_X=X, train_Y=Y, train_Yvar=torch.rand_like(Y))
+
+        # (q)LogEI
+        for acqf_class in [LogExpectedImprovement, qLogExpectedImprovement]:
+            acqf = acqf_class(model=model, best_f=0.0)
+            self.assertTrue(acqf._log)
+
+        # (q)EI
+        for acqf_class in [ExpectedImprovement, qExpectedImprovement]:
+            acqf = acqf_class(model=model, best_f=0.0)
+            self.assertFalse(acqf._log)
+
+        # (q)LogNEI
+        for acqf_class in [LogNoisyExpectedImprovement, qLogNoisyExpectedImprovement]:
+            # avoiding keywords since they differ: X_observed vs. X_baseline
+            acqf = acqf_class(model, X)
+            self.assertTrue(acqf._log)
+
+        # (q)NEI
+        for acqf_class in [NoisyExpectedImprovement, qNoisyExpectedImprovement]:
+            acqf = acqf_class(model, X)
+            self.assertFalse(acqf._log)
+
+        # multi-objective case
+        model_list = ModelListGP(model, model)
+        ref_point = [4, 2]  # the meaning of life
+
+        # qLogNEHVI
+        acqf = qLogNoisyExpectedHypervolumeImprovement(
+            model=model_list, X_baseline=X, ref_point=ref_point
+        )
+        self.assertTrue(acqf._log)
