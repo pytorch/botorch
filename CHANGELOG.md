@@ -2,6 +2,44 @@
 
 The release log for BoTorch.
 
+
+## [0.9.3] - Nov 2, 2023
+
+### Highlights
+* Additional "Log" acquisition functions for multi-objective optimization with better numerical behavior, which often leads to significantly improved BO performance over their non-"Log" counterparts:
+  * `qLogEHVI` (#2036).
+  * `qLogNEHVI` (#2045, #2046, #2048, #2051).
+  * Support fully Bayesian models with `LogEI`-type acquisition functions (#2058).
+* `FixedNoiseGP` and `FixedNoiseMultiFidelityGP` have been deprecated, their functionalities merged into `SingleTaskGP` and `SingleTaskMultiFidelityGP`, respectively (#2052, #2053).
+* Removed deprecated legacy model fitting functions: `numpy_converter`, `fit_gpytorch_scipy`, `fit_gpytorch_torch`, `_get_extra_mll_args` (#1995, #2050).
+
+#### New Features
+* Support multiple data fidelity dimensions in `SingleTaskMultiFidelityGP` and (deprecated) `FixedNoiseMultiFidelityGP` models (#1956).
+* Add `logsumexp` and `fatmax` to handle infinities and control asymptotic behavior in "Log" acquisition functions (#1999).
+* Add outcome and feature names to datasets, implement `MultiTaskDataset` (#2015, #2019).
+* Add constrained Hartmann and constrained Gramacy synthetic test problems (#2022, #2026, #2027).
+* Support observed noise in `MixedSingleTaskGP` (#2054).
+* Add `PosteriorStandardDeviation` acquisition function (#2060).
+
+#### Bug fixes
+* Fix input constructors for `qMaxValueEntropy` and `qMultiFidelityKnowledgeGradient` (#1989).
+* Fix precision issue that arises from inconsistent data types in `LearnedObjective` (#2006).
+* Fix fantasization with `FixedNoiseGP` and outcome transforms and use `FantasizeMixin` (#2011).
+* Fix `LearnedObjective` base sample shape (#2021).
+* Apply constraints in `prune_inferior_points` (#2069).
+* Support non-batch evaluation of `PenalizedMCObjective` (#2073).
+* Fix `Dataset` equality checks (#2077).
+
+#### Other changes
+* Don't allow unused `**kwargs` in input_constructors except for a defined set of exceptions (#1872, #1985).
+* Merge inferred and fixed noise LCE-M models (#1993).
+* Fix import structure in `botorch.acquisition.utils` (#1986).
+* Remove deprecated functionality: `weights` argument of `RiskMeasureMCObjective` and `squeeze_last_dim` (#1994).
+* Make `X`, `Y`, `Yvar` into properties in datasets (#2004).
+* Make synthetic constrained test functions subclass from `SyntheticTestFunction` (#2029).
+* Add `construct_inputs` to contextual GP models `LCEAGP` and `SACGP` (#2057).
+
+
 ## [0.9.2] - Aug 10, 2023
 
 #### Bug fixes
@@ -13,8 +51,8 @@ The release log for BoTorch.
 
 #### Other changes
 * Merge `SupervisedDataset` and `FixedNoiseDataset` (#1945).
-* Constrained tutorial updates (#1967, #1970)
-* Resolve issues with missing pytorch binaries with py3.11 on Mac (#1966)
+* Constrained tutorial updates (#1967, #1970).
+* Resolve issues with missing pytorch binaries with py3.11 on Mac (#1966).
 
 
 ## [0.9.1] - Aug 1, 2023
