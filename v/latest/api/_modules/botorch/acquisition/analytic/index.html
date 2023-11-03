@@ -158,6 +158,8 @@
 <span class="sd">        &gt;&gt;&gt; log_pi = LogPI(test_X)</span>
 <span class="sd">    """</span>
 
+    <span class="n">_log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
@@ -398,6 +400,8 @@
 <span class="sd">        &gt;&gt;&gt; ei = LogEI(test_X)</span>
 <span class="sd">    """</span>
 
+    <span class="n">_log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
@@ -464,6 +468,8 @@
 <span class="sd">        &gt;&gt;&gt; LogCEI = LogConstrainedExpectedImprovement(model, 0.2, 1, constraints)</span>
 <span class="sd">        &gt;&gt;&gt; cei = LogCEI(test_X)</span>
 <span class="sd">    """</span>
+
+    <span class="n">_log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -613,6 +619,8 @@
 <span class="sd">        &gt;&gt;&gt; LogNEI = LogNoisyExpectedImprovement(model, train_X)</span>
 <span class="sd">        &gt;&gt;&gt; nei = LogNEI(test_X)</span>
 <span class="sd">    """</span>
+
+    <span class="n">_log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
