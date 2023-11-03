@@ -301,20 +301,27 @@ is cleared, no rollback will occur.</p>
 <p>Representations for different kinds of datasets.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.datasets.SupervisedDataset">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.datasets.</span></span><span class="sig-name descname"><span class="pre">SupervisedDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#SupervisedDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.SupervisedDataset" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.datasets.</span></span><span class="sig-name descname"><span class="pre">SupervisedDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#SupervisedDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.SupervisedDataset" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Base class for datasets consisting of labelled pairs <cite>(X, Y)</cite>
 and an optional <cite>Yvar</cite> that stipulates observations variances so
 that <cite>Y[i] ~ N(f(X[i]), Yvar[i])</cite>.</p>
-<p>This class object’s <cite>__init__</cite> method converts Tensors <cite>src</cite> to
-DenseContainers under the assumption that <cite>event_shape=src.shape[-1:]</cite>.</p>
 <p>Example:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="n">Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="n">A</span> <span class="o">=</span> <span class="n">SupervisedDataset</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+<span class="n">feature_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"learning_rate"</span><span class="p">,</span> <span class="s2">"embedding_dim"</span><span class="p">]</span>
+<span class="n">outcome_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"neg training loss"</span><span class="p">]</span>
+<span class="n">A</span> <span class="o">=</span> <span class="n">SupervisedDataset</span><span class="p">(</span>
+    <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span>
+    <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span>
+    <span class="n">feature_names</span><span class="o">=</span><span class="n">feature_names</span><span class="p">,</span>
+    <span class="n">outcome_names</span><span class="o">=</span><span class="n">outcome_names</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="n">B</span> <span class="o">=</span> <span class="n">SupervisedDataset</span><span class="p">(</span>
-    <span class="n">DenseContainer</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">event_shape</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]),</span>
-    <span class="n">DenseContainer</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">event_shape</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]),</span>
+    <span class="n">X</span><span class="o">=</span><span class="n">DenseContainer</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">event_shape</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]),</span>
+    <span class="n">Y</span><span class="o">=</span><span class="n">DenseContainer</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">event_shape</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]),</span>
+    <span class="n">feature_names</span><span class="o">=</span><span class="n">feature_names</span><span class="p">,</span>
+    <span class="n">outcome_names</span><span class="o">=</span><span class="n">outcome_names</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="k">assert</span> <span class="n">A</span> <span class="o">==</span> <span class="n">B</span>
 </pre></div>
@@ -323,79 +330,54 @@ DenseContainers under the assumption that <cite>event_shape=src.shape[-1:]</cite
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>BotorchContainer</em>) – A <cite>Tensor</cite> or <cite>BotorchContainer</cite> representing the input features.</p></li>
-<li><p><strong>Y</strong> (<em>BotorchContainer</em>) – A <cite>Tensor</cite> or <cite>BotorchContainer</cite> representing the outcomes.</p></li>
-<li><p><strong>Yvar</strong> (<em>BotorchContainer</em><em> | </em><em>None</em>) – An optional <cite>Tensor</cite> or <cite>BotorchContainer</cite> representing
+<li><p><strong>X</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>]</em>) – A <cite>Tensor</cite> or <cite>BotorchContainer</cite> representing the input features.</p></li>
+<li><p><strong>Y</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>]</em>) – A <cite>Tensor</cite> or <cite>BotorchContainer</cite> representing the outcomes.</p></li>
+<li><p><strong>feature_names</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – A list of names of the features in <cite>X</cite>.</p></li>
+<li><p><strong>outcome_names</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – A list of names of the outcomes in <cite>Y</cite>.</p></li>
+<li><p><strong>Yvar</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>, </em><em>None</em><em>]</em>) – An optional <cite>Tensor</cite> or <cite>BotorchContainer</cite> representing
 the observation noise.</p></li>
 <li><p><strong>validate_init</strong> (<em>bool</em>) – If <cite>True</cite>, validates the input shapes.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
+<dl class="py property">
 <dt class="sig sig-object py" id="botorch.utils.datasets.SupervisedDataset.X">
-<span class="sig-name descname"><span class="pre">X</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">BotorchContainer</span></em><a class="headerlink" href="#botorch.utils.datasets.SupervisedDataset.X" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">X</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.utils.datasets.SupervisedDataset.X" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-<dl class="py attribute">
+<dl class="py property">
 <dt class="sig sig-object py" id="botorch.utils.datasets.SupervisedDataset.Y">
-<span class="sig-name descname"><span class="pre">Y</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">BotorchContainer</span></em><a class="headerlink" href="#botorch.utils.datasets.SupervisedDataset.Y" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Y</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.utils.datasets.SupervisedDataset.Y" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-<dl class="py attribute">
+<dl class="py property">
 <dt class="sig sig-object py" id="botorch.utils.datasets.SupervisedDataset.Yvar">
-<span class="sig-name descname"><span class="pre">Yvar</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">BotorchContainer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.utils.datasets.SupervisedDataset.Yvar" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Yvar</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.utils.datasets.SupervisedDataset.Yvar" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.utils.datasets.SupervisedDataset.dict_from_iter">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dict_from_iter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keys</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#SupervisedDataset.dict_from_iter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.SupervisedDataset.dict_from_iter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a dictionary of <cite>SupervisedDataset</cite> from iterables.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>BotorchContainer</em><em> | </em><em>Tensor</em><em> | </em><em>Iterable</em><em>[</em><em>BotorchContainer</em><em> | </em><em>Tensor</em><em>]</em>) – </p></li>
-<li><p><strong>Y</strong> (<em>BotorchContainer</em><em> | </em><em>Tensor</em><em> | </em><em>Iterable</em><em>[</em><em>BotorchContainer</em><em> | </em><em>Tensor</em><em>]</em>) – </p></li>
-<li><p><strong>Yvar</strong> (<em>BotorchContainer</em><em> | </em><em>Tensor</em><em> | </em><em>Iterable</em><em>[</em><em>BotorchContainer</em><em> | </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>keys</strong> (<em>Iterable</em><em>[</em><em>Hashable</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[<em>Hashable</em>, <a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a>]</p>
-</dd>
-</dl>
-</dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.datasets.FixedNoiseDataset">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.datasets.</span></span><span class="sig-name descname"><span class="pre">FixedNoiseDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#FixedNoiseDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.FixedNoiseDataset" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.datasets.</span></span><span class="sig-name descname"><span class="pre">FixedNoiseDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#FixedNoiseDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.FixedNoiseDataset" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">SupervisedDataset</span></code></a></p>
 <p>A SupervisedDataset with an additional field <cite>Yvar</cite> that stipulates
 observations variances so that <cite>Y[i] ~ N(f(X[i]), Yvar[i])</cite>.</p>
-<p>NOTE: This is deprecated. Use <cite>SupervisedDataset</cite> instead.</p>
+<p>NOTE: This is deprecated. Use <cite>SupervisedDataset</cite> instead.
+Will be removed in a future release (~v0.11).</p>
 <p>Initialize a <cite>FixedNoiseDataset</cite> – deprecated!</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>BotorchContainer</em>) – </p></li>
-<li><p><strong>Y</strong> (<em>BotorchContainer</em>) – </p></li>
-<li><p><strong>Yvar</strong> (<em>BotorchContainer</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>X</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>]</em>) – </p></li>
+<li><p><strong>Y</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>]</em>) – </p></li>
+<li><p><strong>Yvar</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>]</em>) – </p></li>
+<li><p><strong>feature_names</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – </p></li>
+<li><p><strong>outcome_names</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – </p></li>
 <li><p><strong>validate_init</strong> (<em>bool</em>) – </p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.datasets.FixedNoiseDataset.X">
-<span class="sig-name descname"><span class="pre">X</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">BotorchContainer</span></em><a class="headerlink" href="#botorch.utils.datasets.FixedNoiseDataset.X" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.datasets.FixedNoiseDataset.Y">
-<span class="sig-name descname"><span class="pre">Y</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">BotorchContainer</span></em><a class="headerlink" href="#botorch.utils.datasets.FixedNoiseDataset.Y" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.datasets.FixedNoiseDataset.Yvar">
-<span class="sig-name descname"><span class="pre">Yvar</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">BotorchContainer</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.utils.datasets.FixedNoiseDataset.Yvar" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.datasets.RankingDataset">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.datasets.</span></span><span class="sig-name descname"><span class="pre">RankingDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#RankingDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.RankingDataset" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.datasets.</span></span><span class="sig-name descname"><span class="pre">RankingDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#RankingDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.RankingDataset" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">SupervisedDataset</span></code></a></p>
 <p>A SupervisedDataset whose labelled pairs <cite>(x, y)</cite> consist of m-ary combinations
 <cite>x ∈ Z^{m}</cite> of elements from a ground set <cite>Z = (z_1, …)</cite> and ranking vectors
@@ -417,7 +399,14 @@ observations variances so that <cite>Y[i] ~ N(f(X[i]), Yvar[i])</cite>.</p>
     <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">)]),</span>
     <span class="n">event_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">3</span><span class="p">])</span>
 <span class="p">)</span>
-<span class="n">dataset</span> <span class="o">=</span> <span class="n">RankingDataset</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+<span class="n">feature_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"item_0"</span><span class="p">,</span> <span class="s2">"item_1"</span><span class="p">]</span>
+<span class="n">outcome_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"ranking outcome"</span><span class="p">]</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">RankingDataset</span><span class="p">(</span>
+    <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span>
+    <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span>
+    <span class="n">feature_names</span><span class="o">=</span><span class="n">feature_names</span><span class="p">,</span>
+    <span class="n">outcome_names</span><span class="o">=</span><span class="n">outcome_names</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 <p>Construct a <cite>RankingDataset</cite>.</p>
@@ -425,19 +414,145 @@ observations variances so that <cite>Y[i] ~ N(f(X[i]), Yvar[i])</cite>.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<a class="reference internal" href="#botorch.utils.containers.SliceContainer" title="botorch.utils.containers.SliceContainer"><em>SliceContainer</em></a>) – A <cite>SliceContainer</cite> representing the input features being ranked.</p></li>
-<li><p><strong>Y</strong> (<em>BotorchContainer</em>) – A <cite>Tensor</cite> or <cite>BotorchContainer</cite> representing the rankings.</p></li>
+<li><p><strong>Y</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>]</em>) – A <cite>Tensor</cite> or <cite>BotorchContainer</cite> representing the rankings.</p></li>
+<li><p><strong>feature_names</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – A list of names of the features in X.</p></li>
+<li><p><strong>outcome_names</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – A list of names of the outcomes in Y.</p></li>
 <li><p><strong>validate_init</strong> (<em>bool</em>) – If <cite>True</cite>, validates the input shapes.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.datasets.RankingDataset.X">
-<span class="sig-name descname"><span class="pre">X</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#botorch.utils.containers.SliceContainer" title="botorch.utils.containers.SliceContainer"><span class="pre">SliceContainer</span></a></em><a class="headerlink" href="#botorch.utils.datasets.RankingDataset.X" title="Permalink to this definition">¶</a></dt>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.datasets.MultiTaskDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.datasets.</span></span><span class="sig-name descname"><span class="pre">MultiTaskDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datasets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_outcome_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#MultiTaskDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.MultiTaskDataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">SupervisedDataset</span></code></a></p>
+<p>This is a multi-task dataset that is constructed from the datasets of
+individual tasks. It offers functionality to combine parts of individual
+datasets to construct the inputs necessary for the <cite>MultiTaskGP</cite> models.</p>
+<p>Construct a <cite>MultiTaskDataset</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>datasets</strong> (<em>List</em><em>[</em><a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – A list of the datasets of individual tasks. Each dataset
+is expected to contain data for only one outcome.</p></li>
+<li><p><strong>target_outcome_name</strong> (<em>str</em>) – Name of the target outcome to be modeled.</p></li>
+<li><p><strong>task_feature_index</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – If the task feature is included in the Xs of the
+individual datasets, this should be used to specify its index.
+If omitted, the task feature will be appended while concatenating Xs.
+If given, we sanity-check that the names of the task features
+match between all datasets.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.datasets.MultiTaskDataset.from_joint_dataset">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_joint_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_task_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_names_per_task</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#MultiTaskDataset.from_joint_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.MultiTaskDataset.from_joint_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a <cite>MultiTaskDataset</cite> from a joint dataset that includes the
+data for all tasks with the task feature index.</p>
+<p>This will break down the joint dataset into individual datasets by the value
+of the task feature. Each resulting dataset will have its outcome name set
+based on <cite>outcome_names_per_task</cite>, with the missing values defaulting to
+<cite>task_&lt;task_feature&gt;</cite> (except for the target task, which will retain the
+original outcome name from the dataset).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a>) – The joint dataset.</p></li>
+<li><p><strong>task_feature_index</strong> (<em>int</em>) – The column index of the task feature in <cite>dataset.X</cite>.</p></li>
+<li><p><strong>target_task_value</strong> (<em>int</em>) – The value of the task feature for the target task
+in the dataset. The data for the target task is filtered according to
+<cite>dataset.X[task_feature_index] == target_task_value</cite>.</p></li>
+<li><p><strong>outcome_names_per_task</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional dictionary mapping task feature values
+to the outcome names for each task. If not provided, the auxiliary
+tasks will be named <cite>task_&lt;task_feature&gt;</cite> and the target task will
+retain the outcome name from the dataset.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>MultiTaskDataset</cite> instance.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.utils.datasets.MultiTaskDataset" title="botorch.utils.datasets.MultiTaskDataset"><em>MultiTaskDataset</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.datasets.MultiTaskDataset.X">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">X</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.utils.datasets.MultiTaskDataset.X" title="Permalink to this definition">¶</a></dt>
+<dd><p>Appends task features, if needed, and concatenates the Xs of datasets to
+produce the <cite>train_X</cite> expected by <cite>MultiTaskGP</cite> and subclasses.</p>
+<p>If appending the task features, 0 is reserved for the target task and the
+remaining tasks are populated with 1, 2, …, len(datasets) - 1.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.datasets.MultiTaskDataset.Y">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Y</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.utils.datasets.MultiTaskDataset.Y" title="Permalink to this definition">¶</a></dt>
+<dd><p>Concatenates Ys of the datasets.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.datasets.MultiTaskDataset.Yvar">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Yvar</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.utils.datasets.MultiTaskDataset.Yvar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Concatenates Yvars of the datasets if they exist.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.datasets.MultiTaskDataset.get_dataset_without_task_feature">
+<span class="sig-name descname"><span class="pre">get_dataset_without_task_feature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outcome_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#MultiTaskDataset.get_dataset_without_task_feature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.MultiTaskDataset.get_dataset_without_task_feature" title="Permalink to this definition">¶</a></dt>
+<dd><p>A helper for extracting the child datasets with their task features removed.</p>
+<p>If the task feature index is <cite>None</cite>, the dataset will be returned as is.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>outcome_name</strong> (<em>str</em>) – The outcome name for the dataset to extract.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The dataset without the task feature.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.datasets.ContextualDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.datasets.</span></span><span class="sig-name descname"><span class="pre">ContextualDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datasets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_decomposition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context_buckets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_decomposition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#ContextualDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.ContextualDataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">SupervisedDataset</span></code></a></p>
+<p>This is a contextual dataset that is constructed from either a single
+dateset containing overall outcome or a list of datasets that each corresponds
+to a context breakdown.</p>
+<p>Construct a <cite>ContextualDataset</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>datasets</strong> (<em>List</em><em>[</em><a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – A list of the datasets of individual tasks. Each dataset
+is expected to contain data for only one outcome.</p></li>
+<li><p><strong>parameter_decomposition</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – Dict from context name to list of indices
+of X corresponding to that context.</p></li>
+<li><p><strong>context_buckets</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – List of the context names in the order of dataset
+in datasets corresponding to each context outcome.</p></li>
+<li><p><strong>metric_decomposition</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em><em>]</em>) – Context breakdown metrics. Keys are context names.
+Values are the lists of metric names belonging to the context:
+{‘context1’: [‘m1_c1’], ‘context2’: [‘m1_c2’],}.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.datasets.ContextualDataset.X">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">X</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.utils.datasets.ContextualDataset.X" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.datasets.RankingDataset.Y">
-<span class="sig-name descname"><span class="pre">Y</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">BotorchContainer</span></em><a class="headerlink" href="#botorch.utils.datasets.RankingDataset.Y" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.datasets.ContextualDataset.Y">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Y</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.utils.datasets.ContextualDataset.Y" title="Permalink to this definition">¶</a></dt>
+<dd><p>Concatenates the Ys from the child datasets to create the Y expected
+by LCEM model if there are multiple datasets; Or return the Y expected
+by LCEA model if there is only one dataset.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.datasets.ContextualDataset.Yvar">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Yvar</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.utils.datasets.ContextualDataset.Yvar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Concatenates the Yvars from the child datasets to create the Y expected
+by LCEM model if there are multiple datasets; Or return the Yvar expected
+by LCEA model if there is only one dataset.</p>
+</dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.utils.dispatcher">
@@ -664,7 +779,7 @@ then estimated with the i-th eta value.</p></li>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.objective.compute_feasibility_indicator">
-<span class="sig-prename descclassname"><span class="pre">botorch.utils.objective.</span></span><span class="sig-name descname"><span class="pre">compute_feasibility_indicator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constraints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/objective.html#compute_feasibility_indicator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.objective.compute_feasibility_indicator" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.objective.</span></span><span class="sig-name descname"><span class="pre">compute_feasibility_indicator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constraints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marginalize_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/objective.html#compute_feasibility_indicator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.objective.compute_feasibility_indicator" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the feasibility of a list of constraints given posterior samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -672,6 +787,9 @@ then estimated with the i-th eta value.</p></li>
 <li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of callables, each mapping a batch_shape x q x m`-dim Tensor
 to a <cite>batch_shape x q</cite>-dim Tensor, where negative values imply feasibility.</p></li>
 <li><p><strong>samples</strong> (<em>Tensor</em>) – A batch_shape x q x m`-dim Tensor of posterior samples.</p></li>
+<li><p><strong>marginalize_dim</strong> (<em>int</em><em> | </em><em>None</em>) – A batch dimension that should be marginalized.
+For example, this is useful when using a batched fully Bayesian
+model.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1606,8 +1724,16 @@ not have a method with the specified name.</p>
 <dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.utils.testing.BotorchTestCase.setUp">
-<span class="sig-name descname"><span class="pre">setUp</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#BotorchTestCase.setUp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.BotorchTestCase.setUp" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">setUp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suppress_input_warnings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#BotorchTestCase.setUp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.BotorchTestCase.setUp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Hook method for setting up the test fixture before exercising it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>suppress_input_warnings</strong> (<em>bool</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.utils.testing.BotorchTestCase.assertAllClose">
@@ -1823,7 +1949,12 @@ which to compute the posterior (if the model is multi-output).
 Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
 computes the posterior over all model outputs.</p></li>
-<li><p><strong>observation_noise</strong> (<em>bool</em>) – If True, add observation noise to the posterior.</p></li>
+<li><p><strong>observation_noise</strong> (<em>bool</em>) – For models with an inferred noise level, if True,
+include observation noise. For models with an observed noise level,
+this must be a <cite>model_batch_shape x 1 x m</cite>-dim tensor or
+a <cite>model_batch_shape x n’ x m</cite>-dim tensor containing the average
+noise for each batch and output. <cite>noise</cite> must be in the
+outcome-transformed space if an outcome transform is used.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>PosteriorTransform</em><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
 </ul>
 </dd>
@@ -1911,6 +2042,11 @@ Default: <code class="docutils literal notranslate"><span class="pre">False</spa
 this module and its descendants. If <code class="xref py py-attr docutils literal notranslate"><span class="pre">strict</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, then
 the keys of <a class="reference internal" href="#botorch.utils.testing.MockModel.state_dict" title="botorch.utils.testing.MockModel.state_dict"><code class="xref py py-attr docutils literal notranslate"><span class="pre">state_dict</span></code></a> must exactly match the keys returned
 by this module’s <code class="xref py py-meth docutils literal notranslate"><span class="pre">state_dict()</span></code> function.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>If <code class="xref py py-attr docutils literal notranslate"><span class="pre">assign</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code> the optimizer must be created after
+the call to <a class="reference internal" href="#botorch.utils.testing.MockModel.load_state_dict" title="botorch.utils.testing.MockModel.load_state_dict"><code class="xref py py-attr docutils literal notranslate"><span class="pre">load_state_dict</span></code></a>.</p>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1919,6 +2055,13 @@ persistent buffers.</p></li>
 <li><p><strong>strict</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether to strictly enforce that the keys
 in <a class="reference internal" href="#botorch.utils.testing.MockModel.state_dict" title="botorch.utils.testing.MockModel.state_dict"><code class="xref py py-attr docutils literal notranslate"><span class="pre">state_dict</span></code></a> match the keys returned by this module’s
 <code class="xref py py-meth docutils literal notranslate"><span class="pre">state_dict()</span></code> function. Default: <code class="docutils literal notranslate"><span class="pre">True</span></code></p></li>
+<li><p><strong>assign</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether to assign items in the state
+dictionary to their corresponding keys in the module instead
+of copying them inplace into the module’s current parameters and buffers.
+When <code class="docutils literal notranslate"><span class="pre">False</span></code>, the properties of the tensors in the current
+module are preserved while when <code class="docutils literal notranslate"><span class="pre">True</span></code>, the properties of the
+Tensors in the state dict are preserved.
+Default: <code class="docutils literal notranslate"><span class="pre">False</span></code></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2068,27 +2211,6 @@ strings are acceptable.</p>
 <section id="module-botorch.utils.transforms">
 <span id="transformations"></span><h2>Transformations<a class="headerlink" href="#module-botorch.utils.transforms" title="Permalink to this heading">¶</a></h2>
 <p>Some basic data transformation helpers.</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="botorch.utils.transforms.squeeze_last_dim">
-<span class="sig-prename descclassname"><span class="pre">botorch.utils.transforms.</span></span><span class="sig-name descname"><span class="pre">squeeze_last_dim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#squeeze_last_dim"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.transforms.squeeze_last_dim" title="Permalink to this definition">¶</a></dt>
-<dd><p>Squeeze the last dimension of a Tensor.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>… x d</cite>-dim Tensor.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The input tensor with last dimension squeezed.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tensor</em></p>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">Y_squeezed</span> <span class="o">=</span> <span class="n">squeeze_last_dim</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.transforms.standardize">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.transforms.</span></span><span class="sig-name descname"><span class="pre">standardize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#standardize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.transforms.standardize" title="Permalink to this definition">¶</a></dt>
@@ -2614,6 +2736,22 @@ See <a class="reference internal" href="#maechler2012accurate" id="id5"><span>[M
 </dl>
 </dd></dl>
 <dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.logplusexp">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">logplusexp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#logplusexp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.logplusexp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes log(exp(a) + exp(b)) similar to logsumexp.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>b</strong> (<em>Tensor</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.safe_math.logdiffexp">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">logdiffexp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_b</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#logdiffexp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.logdiffexp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes log(b - a) accurately given log(a) and log(b).
@@ -2627,6 +2765,33 @@ Assumes, log_b &gt; log_a, i.e. b &gt; a &gt; 0.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A Tensor of values corresponding to log(b - a).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.logsumexp">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">logsumexp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keepdim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#logsumexp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.logsumexp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Version of logsumexp that has a well-behaved backward pass when
+x contains infinities.</p>
+<p>In particular, the gradient of the standard torch version becomes NaN
+1) for any element that is positive infinity, and 2) for any slice that
+only contains negative infinities.</p>
+<p>This version returns a gradient of 1 for any positive infinities in case 1, and
+for all elements of the slice in case 2, in agreement with the asymptotic behavior
+of the function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>Tensor</em>) – The Tensor to which to apply <cite>logsumexp</cite>.</p></li>
+<li><p><strong>dim</strong> (<em>int</em><em> | </em><em>Tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em>) – An integer or a tuple of integers, representing the dimensions to reduce.</p></li>
+<li><p><strong>keepdim</strong> (<em>bool</em>) – Whether to keep the reduced dimensions. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A Tensor representing the log of the summed exponentials of <cite>x</cite>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Tensor</em></p>
@@ -2675,7 +2840,7 @@ approximation to ReLU. Non-negative and defaults to 1.0.</p></li>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.safe_math.smooth_amax">
-<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">smooth_amax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#smooth_amax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.smooth_amax" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">smooth_amax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keepdim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#smooth_amax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.smooth_amax" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes a smooth approximation to <cite>max(X, dim=dim)</cite>, i.e the maximum value of
 <cite>X</cite> over dimension <cite>dim</cite>, using the logarithm of the <cite>l_(1/tau)</cite> norm of <cite>exp(X)</cite>.
 Note that when <cite>X = log(U)</cite> is the <em>logarithm</em> of an acquisition utility <cite>U</cite>,</p>
@@ -2684,9 +2849,10 @@ Note that when <cite>X = log(U)</cite> is the <em>logarithm</em> of an acquisiti
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>Tensor</em>) – A Tensor from which to compute the smoothed amax.</p></li>
+<li><p><strong>dim</strong> (<em>int</em><em> | </em><em>Tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em>) – The dimensions to reduce over.</p></li>
+<li><p><strong>keepdim</strong> (<em>bool</em>) – If True, keeps the reduced dimensions.</p></li>
 <li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – Temperature parameter controlling the smooth approximation
 to max operator, becomes tighter as tau goes to 0. Needs to be positive.</p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2694,6 +2860,24 @@ to max operator, becomes tighter as tau goes to 0. Needs to be positive.</p></li
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.smooth_amin">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">smooth_amin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keepdim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#smooth_amin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.smooth_amin" title="Permalink to this definition">¶</a></dt>
+<dd><p>A smooth approximation to <cite>min(X, dim=dim)</cite>, similar to <cite>smooth_amax</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>dim</strong> (<em>int</em><em> | </em><em>Tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em>) – </p></li>
+<li><p><strong>keepdim</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2738,7 +2922,7 @@ monotonicity and convexity.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x</strong> (<em>Tensor</em>) – A Tensor on whose values to compute the smoothed function.</p></li>
-<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – </p></li>
+<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – Temperature parameter controlling the smoothness of the approximation.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2751,20 +2935,98 @@ monotonicity and convexity.</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.safe_math.fatmax">
-<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">fatmax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#fatmax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.fatmax" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">fatmax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keepdim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#fatmax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.fatmax" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes a smooth approximation to amax(X, dim=dim) with a fat tail.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em>) – A Tensor from which to compute the smoothed amax.</p></li>
+<li><p><strong>X</strong> – A Tensor from which to compute the smoothed maximum.</p></li>
+<li><p><strong>dim</strong> (<em>int</em><em> | </em><em>Tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em>) – The dimensions to reduce over.</p></li>
+<li><p><strong>keepdim</strong> (<em>bool</em>) – If True, keeps the reduced dimensions.</p></li>
 <li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – Temperature parameter controlling the smooth approximation
 to max operator, becomes tighter as tau goes to 0. Needs to be positive.</p></li>
-<li><p><strong>standardize</strong> – Toggles the temperature standardization of the smoothed function.</p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – The exponent of the asymptotic power decay of the approximation. The
+default value is 2. Higher alpha parameters make the function behave more
+similarly to the standard logsumexp approximation to the max, so it is
+recommended to keep this value low or moderate, e.g. &lt; 10.</p></li>
+<li><p><strong>x</strong> (<em>Tensor</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A Tensor of smooth approximations to <cite>max(X, dim=dim)</cite> with a fat tail.</p>
+<dd class="field-even"><p>A Tensor of smooth approximations to <cite>amax(X, dim=dim)</cite> with a fat tail.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.fatmin">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">fatmin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keepdim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#fatmin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.fatmin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes a smooth approximation to amin(X, dim=dim) with a fat tail.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> – A Tensor from which to compute the smoothed minimum.</p></li>
+<li><p><strong>dim</strong> (<em>int</em><em> | </em><em>Tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em>) – The dimensions to reduce over.</p></li>
+<li><p><strong>keepdim</strong> (<em>bool</em>) – If True, keeps the reduced dimensions.</p></li>
+<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – Temperature parameter controlling the smooth approximation
+to min operator, becomes tighter as tau goes to 0. Needs to be positive.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – The exponent of the asymptotic power decay of the approximation. The
+default value is 2. Higher alpha parameters make the function behave more
+similarly to the standard logsumexp approximation to the max, so it is
+recommended to keep this value low or moderate, e.g. &lt; 10.</p></li>
+<li><p><strong>x</strong> (<em>Tensor</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A Tensor of smooth approximations to <cite>amin(X, dim=dim)</cite> with a fat tail.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.fatmaximum">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">fatmaximum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#fatmaximum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.fatmaximum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes a smooth approximation to torch.maximum(a, b) with a fat tail.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>Tensor</em>) – The first Tensor from which to compute the smoothed component-wise maximum.</p></li>
+<li><p><strong>b</strong> (<em>Tensor</em>) – The second Tensor from which to compute the smoothed component-wise maximum.</p></li>
+<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – Temperature parameter controlling the smoothness of the approximation. A
+smaller tau corresponds to a tighter approximation that leads to a sharper
+objective landscape that might be more difficult to optimize.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A smooth approximation of torch.maximum(a, b).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.fatminimum">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">fatminimum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#fatminimum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.fatminimum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes a smooth approximation to torch.minimum(a, b) with a fat tail.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>Tensor</em>) – The first Tensor from which to compute the smoothed component-wise minimum.</p></li>
+<li><p><strong>b</strong> (<em>Tensor</em>) – The second Tensor from which to compute the smoothed component-wise minimum.</p></li>
+<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – Temperature parameter controlling the smoothness of the approximation. A
+smaller tau corresponds to a tighter approximation that leads to a sharper
+objective landscape that might be more difficult to optimize.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A smooth approximation of torch.minimum(a, b).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Tensor</em></p>
@@ -3330,6 +3592,61 @@ nodes of the node that is reinserted are in the list.</p>
 </dd>
 </dl>
 </dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.hypervolume.SubsetIndexCachingMixin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.hypervolume.</span></span><span class="sig-name descname"><span class="pre">SubsetIndexCachingMixin</span></span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#SubsetIndexCachingMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.SubsetIndexCachingMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A Mixin class that adds q-subset index computations and caching.</p>
+<p>Initializes the class with q_out = -1 and an empty q_subset_indices dict.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.hypervolume.SubsetIndexCachingMixin.compute_q_subset_indices">
+<span class="sig-name descname"><span class="pre">compute_q_subset_indices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q_out</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#SubsetIndexCachingMixin.compute_q_subset_indices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.SubsetIndexCachingMixin.compute_q_subset_indices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns and caches a dict of indices equal to subsets of <cite>{1, …, q_out}</cite>.</p>
+<p>This means that consecutive calls to <cite>self.compute_q_subset_indices</cite> with
+the same <cite>q_out</cite> do not recompute the indices for all (2^q_out - 1) subsets.</p>
+<p>NOTE: This will use more memory than regenerating the indices
+for each i and then deleting them, but it will be faster for
+repeated evaluations (e.g. during optimization).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>q_out</strong> (<em>int</em>) – The batch size of the objectives. This is typically equal
+to the q-batch size of <cite>X</cite>. However, if using a set valued
+objective (e.g., MVaR) that produces <cite>s</cite> objective values for
+each point on the q-batch of <cite>X</cite>, we need to properly account
+for each objective while calculating the hypervolume contributions
+by using <cite>q_out = q * s</cite>.</p></li>
+<li><p><strong>device</strong> (<em>torch.device</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dict that maps “q choose i” to all size-i subsets of <cite>{1, …, q_out}</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.utils.torch.BufferDict" title="botorch.utils.torch.BufferDict">BufferDict</a>[str, Tensor]</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.hypervolume.compute_subset_indices">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.hypervolume.</span></span><span class="sig-name descname"><span class="pre">compute_subset_indices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#compute_subset_indices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.compute_subset_indices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute all (2^q - 1) distinct subsets of {1, …, <cite>q</cite>}.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>q</strong> (<em>int</em>) – An integer defininig the set {1, …, <cite>q</cite>} whose subsets to compute.</p></li>
+<li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>torch.device</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dict that maps “q choose i” to all size-i subsets of {1, …, <cite>q_out</cite>}.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.utils.torch.BufferDict" title="botorch.utils.torch.BufferDict">BufferDict</a>[str, Tensor]</p>
+</dd>
+</dl>
 </dd></dl>
 </section>
 <section id="module-botorch.utils.multi_objective.box_decompositions.non_dominated">

@@ -29,6 +29,9 @@
 
 <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">Monte-Carlo Acquisition Functions for Multi-objective Bayesian optimization.</span>
+<span class="sd">In particular, this module contains implementations of</span>
+<span class="sd">1) qEHVI [Daulton2020qehvi]_, and</span>
+<span class="sd">2) qNEHVI [Daulton2021nehvi]_.</span>
 
 <span class="sd">References</span>
 
@@ -46,42 +49,27 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">combinations</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.cached_cholesky</span> <span class="kn">import</span> <span class="n">CachedCholeskyMCAcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.objective</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">IdentityMCMultiOutputObjective</span><span class="p">,</span>
     <span class="n">MCMultiOutputObjective</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.utils</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">prune_inferior_points_multi_objective</span><span class="p">,</span>
-<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">BotorchWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputPerturbation</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.box_decomposition_list</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">BoxDecompositionList</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.dominated</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">DominatedPartitioning</span><span class="p">,</span>
-<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">FastNondominatedPartitioning</span><span class="p">,</span>
     <span class="n">NondominatedPartitioning</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.utils</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">_pad_batch_pareto_frontier</span><span class="p">,</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.hypervolume</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">NoisyExpectedHypervolumeMixin</span><span class="p">,</span>
+    <span class="n">SubsetIndexCachingMixin</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.objective</span> <span class="kn">import</span> <span class="n">compute_smoothed_feasibility_indicator</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.torch</span> <span class="kn">import</span> <span class="n">BufferDict</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">concatenate_pending_points</span><span class="p">,</span>
     <span class="n">is_fully_bayesian</span><span class="p">,</span>
@@ -121,7 +109,7 @@
 <span class="sd">                a sampler compatible with intended use case must be provided.</span>
 <span class="sd">                See `ForkedRNGSampler` and `StochasticSampler` as examples.</span>
 <span class="sd">            objective: The MCMultiOutputObjective under which the samples are</span>
-<span class="sd">                evaluated. Defaults to `IdentityMultiOutputObjective()`.</span>
+<span class="sd">                evaluated. Defaults to `IdentityMCMultiOutputObjective()`.</span>
 <span class="sd">            constraints: A list of callables, each mapping a Tensor of dimension</span>
 <span class="sd">                `sample_shape x batch-shape x q x m` to a Tensor of dimension</span>
 <span class="sd">                `sample_shape x batch-shape x q`, where negative values imply</span>
@@ -177,7 +165,9 @@
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div></div>
 
 
-<div class="viewcode-block" id="qExpectedHypervolumeImprovement"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement">[docs]</a><span class="k">class</span> <span class="nc">qExpectedHypervolumeImprovement</span><span class="p">(</span><span class="n">MultiObjectiveMCAcquisitionFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="qExpectedHypervolumeImprovement"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement">[docs]</a><span class="k">class</span> <span class="nc">qExpectedHypervolumeImprovement</span><span class="p">(</span>
+    <span class="n">MultiObjectiveMCAcquisitionFunction</span><span class="p">,</span> <span class="n">SubsetIndexCachingMixin</span>
+<span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
@@ -188,6 +178,7 @@
         <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">eta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
+        <span class="n">fat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""q-Expected Hypervolume Improvement supporting m&gt;=2 outcomes.</span>
 
@@ -212,7 +203,7 @@
 <span class="sd">            sampler: The sampler used to draw base samples. If not given,</span>
 <span class="sd">                a sampler is generated using `get_sampler`.</span>
 <span class="sd">            objective: The MCMultiOutputObjective under which the samples are evaluated.</span>
-<span class="sd">                Defaults to `IdentityMultiOutputObjective()`.</span>
+<span class="sd">                Defaults to `IdentityMCMultiOutputObjective()`.</span>
 <span class="sd">            constraints: A list of callables, each mapping a Tensor of dimension</span>
 <span class="sd">                `sample_shape x batch-shape x q x m` to a Tensor of dimension</span>
 <span class="sd">                `sample_shape x batch-shape x q`, where negative values imply</span>
@@ -228,6 +219,8 @@
 <span class="sd">                tensor the length of the tensor must match the number of provided</span>
 <span class="sd">                constraints. The i-th constraint is then estimated with the i-th</span>
 <span class="sd">                eta value.</span>
+<span class="sd">            fat: A Boolean flag indicating whether to use the heavy-tailed approximation</span>
+<span class="sd">                of the constraint indicator.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ref_point</span><span class="p">)</span> <span class="o">!=</span> <span class="n">partitioning</span><span class="o">.</span><span class="n">num_outcomes</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -252,39 +245,8 @@
         <span class="n">cell_bounds</span> <span class="o">=</span> <span class="n">partitioning</span><span class="o">.</span><span class="n">get_hypercell_bounds</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"cell_lower_bounds"</span><span class="p">,</span> <span class="n">cell_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"cell_upper_bounds"</span><span class="p">,</span> <span class="n">cell_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">q_out</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">q_subset_indices</span> <span class="o">=</span> <span class="n">BufferDict</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">_cache_q_subset_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q_out</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Cache indices corresponding to all subsets of `q_out`.</span>
-
-<span class="sd">        This means that consecutive calls to `forward` with the same</span>
-<span class="sd">        `q_out` will not recompute the indices for all (2^q_out - 1) subsets.</span>
-
-<span class="sd">        Note: this will use more memory than regenerating the indices</span>
-<span class="sd">        for each i and then deleting them, but it will be faster for</span>
-<span class="sd">        repeated evaluations (e.g. during optimization).</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            q_out: The batch size of the objectives. This is typically equal</span>
-<span class="sd">                to the q-batch size of `X`. However, if using a set valued</span>
-<span class="sd">                objective (e.g., MVaR) that produces `s` objective values for</span>
-<span class="sd">                each point on the q-batch of `X`, we need to properly account</span>
-<span class="sd">                for each objective while calculating the hypervolume contributions</span>
-<span class="sd">                by using `q_out = q * s`.</span>
-<span class="sd">        """</span>
-        <span class="k">if</span> <span class="n">q_out</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_out</span><span class="p">:</span>
-            <span class="n">indices</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">q_out</span><span class="p">))</span>
-            <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dtype"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="o">.</span><span class="n">device</span><span class="p">}</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">q_subset_indices</span> <span class="o">=</span> <span class="n">BufferDict</span><span class="p">(</span>
-                <span class="p">{</span>
-                    <span class="sa">f</span><span class="s2">"q_choose_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
-                        <span class="nb">list</span><span class="p">(</span><span class="n">combinations</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">i</span><span class="p">)),</span> <span class="o">**</span><span class="n">tkwargs</span>
-                    <span class="p">)</span>
-                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">q_out</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-                <span class="p">}</span>
-            <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">q_out</span> <span class="o">=</span> <span class="n">q_out</span>
+        <span class="n">SubsetIndexCachingMixin</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fat</span> <span class="o">=</span> <span class="n">fat</span>
 
     <span class="k">def</span> <span class="nf">_compute_qehvi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the expected (feasible) hypervolume improvement given MC samples.</span>
@@ -303,16 +265,20 @@
         <span class="n">q</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">feas_weights</span> <span class="o">=</span> <span class="n">compute_smoothed_feasibility_indicator</span><span class="p">(</span>
-                <span class="n">constraints</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">eta</span>
+                <span class="n">constraints</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">,</span>
+                <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span>
+                <span class="n">eta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">eta</span><span class="p">,</span>
+                <span class="n">fat</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fat</span><span class="p">,</span>
             <span class="p">)</span>  <span class="c1"># `sample_shape x batch-shape x q`</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_cache_q_subset_indices</span><span class="p">(</span><span class="n">q_out</span><span class="o">=</span><span class="n">q</span><span class="p">)</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="o">.</span><span class="n">device</span>
+        <span class="n">q_subset_indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_q_subset_indices</span><span class="p">(</span><span class="n">q_out</span><span class="o">=</span><span class="n">q</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
         <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
         <span class="c1"># this is n_samples x input_batch_shape x</span>
         <span class="n">areas_per_segment</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
             <span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">cell_lower_bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span>
             <span class="n">dtype</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-            <span class="n">device</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+            <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">cell_batch_ndim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_lower_bounds</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span>
         <span class="n">sample_batch_view_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">(</span>
@@ -333,7 +299,7 @@
             <span class="c1"># simultaneously since subsets of size i and q-i have the same number of</span>
             <span class="c1"># elements. This would decrease the number of iterations, but increase</span>
             <span class="c1"># memory usage.</span>
-            <span class="n">q_choose_i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_subset_indices</span><span class="p">[</span><span class="sa">f</span><span class="s2">"q_choose_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span>
+            <span class="n">q_choose_i</span> <span class="o">=</span> <span class="n">q_subset_indices</span><span class="p">[</span><span class="sa">f</span><span class="s2">"q_choose_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span>
             <span class="c1"># this tensor is mc_samples x batch_shape x i x q_choose_i x m</span>
             <span class="n">obj_subsets</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">q_choose_i</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
             <span class="n">obj_subsets</span> <span class="o">=</span> <span class="n">obj_subsets</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
@@ -377,8 +343,8 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_qehvi</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="qNoisyExpectedHypervolumeImprovement"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement">[docs]</a><span class="k">class</span> <span class="nc">qNoisyExpectedHypervolumeImprovement</span><span class="p">(</span>
-    <span class="n">qExpectedHypervolumeImprovement</span><span class="p">,</span> <span class="n">CachedCholeskyMCAcquisitionFunction</span>
+<span class="k">class</span> <span class="nc">qNoisyExpectedHypervolumeImprovement</span><span class="p">(</span>
+    <span class="n">NoisyExpectedHypervolumeMixin</span><span class="p">,</span> <span class="n">qExpectedHypervolumeImprovement</span>
 <span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -390,13 +356,14 @@
         <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">eta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
+        <span class="n">fat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">prune_baseline</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
         <span class="n">cache_pending</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">max_iep</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">incremental_nehvi</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">cache_root</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">marginalize_dim</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""q-Noisy Expected Hypervolume Improvement supporting m&gt;=2 outcomes.</span>
 
@@ -422,7 +389,7 @@
 <span class="sd">                Note: a pareto front is created for each mc sample, which can be</span>
 <span class="sd">                computationally intensive for `m` &gt; 2.</span>
 <span class="sd">            objective: The MCMultiOutputObjective under which the samples are</span>
-<span class="sd">                evaluated. Defaults to `IdentityMultiOutputObjective()`.</span>
+<span class="sd">                evaluated. Defaults to `IdentityMCMultiOutputObjective()`.</span>
 <span class="sd">            constraints: A list of callables, each mapping a Tensor of dimension</span>
 <span class="sd">                `sample_shape x batch-shape x q x m` to a Tensor of dimension</span>
 <span class="sd">                `sample_shape x batch-shape x q`, where negative values imply</span>
@@ -433,11 +400,13 @@
 <span class="sd">                have not yet been evaluated.</span>
 <span class="sd">            eta: The temperature parameter for the sigmoid function used for the</span>
 <span class="sd">                differentiable approximation of the constraints. In case of a float the</span>
-<span class="sd">                same eta is used for every constraint in constraints. In case of a</span>
+<span class="sd">                same `eta` is used for every constraint in constraints. In case of a</span>
 <span class="sd">                tensor the length of the tensor must match the number of provided</span>
 <span class="sd">                constraints. The i-th constraint is then estimated with the i-th</span>
-<span class="sd">                eta value. For more details, on this parameter, see the docs of</span>
+<span class="sd">                `eta` value. For more details, on this parameter, see the docs of</span>
 <span class="sd">                `compute_smoothed_feasibility_indicator`.</span>
+<span class="sd">            fat: A Boolean flag indicating whether to use the heavy-tailed approximation</span>
+<span class="sd">                of the constraint indicator.</span>
 <span class="sd">            prune_baseline: If True, remove points in `X_baseline` that are</span>
 <span class="sd">                highly unlikely to be the pareto optimal and better than the</span>
 <span class="sd">                reference point. This can significantly improve computation time and</span>
@@ -459,278 +428,51 @@
 <span class="sd">                `q` points.</span>
 <span class="sd">            cache_root: A boolean indicating whether to cache the root</span>
 <span class="sd">                decomposition over `X_baseline` and use low-rank updates.</span>
+<span class="sd">            marginalize_dim: A batch dimension that should be marginalized. For example,</span>
+<span class="sd">                this is useful when using a batched fully Bayesian model.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ref_point</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"qNoisyExpectedHypervolumeImprovement supports m&gt;=2 outcomes "</span>
-                <span class="sa">f</span><span class="s2">"but ref_point has length </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ref_point</span><span class="p">)</span><span class="si">}</span><span class="s2">, which is smaller than 2."</span>
-            <span class="p">)</span>
-        <span class="n">ref_point</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span>
-            <span class="n">ref_point</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X_baseline</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X_baseline</span><span class="o">.</span><span class="n">device</span>
-        <span class="p">)</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">qExpectedHypervolumeImprovement</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="n">MultiObjectiveMCAcquisitionFunction</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
             <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
             <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
             <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
             <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_setup</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">cache_root</span><span class="o">=</span><span class="n">cache_root</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">X_baseline</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
-                <span class="s2">"qNoisyExpectedHypervolumeImprovement does not support batched "</span>
-                <span class="sa">f</span><span class="s2">"X_baseline. Expected 2 dims, got </span><span class="si">{</span><span class="n">X_baseline</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2">."</span>
-            <span class="p">)</span>
-        <span class="k">if</span> <span class="n">prune_baseline</span><span class="p">:</span>
-            <span class="n">X_baseline</span> <span class="o">=</span> <span class="n">prune_inferior_points_multi_objective</span><span class="p">(</span>
-                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-                <span class="n">X</span><span class="o">=</span><span class="n">X_baseline</span><span class="p">,</span>
-                <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
-                <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
-                <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>
-                <span class="n">marginalize_dim</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"marginalize_dim"</span><span class="p">),</span>
-            <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"ref_point"</span><span class="p">,</span> <span class="n">ref_point</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">q_in</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">q_out</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">q_subset_indices</span> <span class="o">=</span> <span class="n">BufferDict</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">partitioning</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="c1"># set partitioning class and args</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">p_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">p_kwargs</span><span class="p">[</span><span class="s2">"alpha"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">p_class</span> <span class="o">=</span> <span class="n">NondominatedPartitioning</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">p_class</span> <span class="o">=</span> <span class="n">FastNondominatedPartitioning</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"_X_baseline"</span><span class="p">,</span> <span class="n">X_baseline</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"_X_baseline_and_pending"</span><span class="p">,</span> <span class="n">X_baseline</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
-            <span class="s2">"cache_pending"</span><span class="p">,</span>
-            <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">cache_pending</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">),</span>
+        <span class="n">SubsetIndexCachingMixin</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">NoisyExpectedHypervolumeMixin</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>
+            <span class="n">X_baseline</span><span class="o">=</span><span class="n">X_baseline</span><span class="p">,</span>
+            <span class="n">sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
+            <span class="n">prune_baseline</span><span class="o">=</span><span class="n">prune_baseline</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span>
+            <span class="n">cache_pending</span><span class="o">=</span><span class="n">cache_pending</span><span class="p">,</span>
+            <span class="n">max_iep</span><span class="o">=</span><span class="n">max_iep</span><span class="p">,</span>
+            <span class="n">incremental_nehvi</span><span class="o">=</span><span class="n">incremental_nehvi</span><span class="p">,</span>
+            <span class="n">cache_root</span><span class="o">=</span><span class="n">cache_root</span><span class="p">,</span>
+            <span class="n">marginalize_dim</span><span class="o">=</span><span class="n">marginalize_dim</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
-            <span class="s2">"_prev_nehvi"</span><span class="p">,</span>
-            <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ref_point</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">ref_point</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
-            <span class="s2">"_max_iep"</span><span class="p">,</span>
-            <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">max_iep</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">),</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
-            <span class="s2">"incremental_nehvi"</span><span class="p">,</span>
-            <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">incremental_nehvi</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">),</span>
-        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fat</span> <span class="o">=</span> <span class="n">fat</span>
 
-        <span class="c1"># Base sampler is initialized in _set_cell_bounds.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">base_sampler</span> <span class="o">=</span> <span class="kc">None</span>
-
-        <span class="k">if</span> <span class="n">X_pending</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># This will call self._set_cell_bounds if the number of pending</span>
-            <span class="c1"># points is greater than self._max_iep.</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span><span class="n">X_pending</span><span class="p">)</span>
-        <span class="c1"># In the case that X_pending is not None, but there are fewer than</span>
-        <span class="c1"># max_iep pending points, the box decompositions are not performed in</span>
-        <span class="c1"># set_X_pending. Therefore, we need to perform a box decomposition over</span>
-        <span class="c1"># f(X_baseline) here.</span>
-        <span class="k">if</span> <span class="n">X_pending</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">X_pending</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_iep</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_set_cell_bounds</span><span class="p">(</span><span class="n">num_new_points</span><span class="o">=</span><span class="n">X_baseline</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="c1"># Set q_in=-1 to so that self.sampler is updated at the next forward call.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">q_in</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">X_baseline</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Return X_baseline augmented with pending points cached using CBD."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X_baseline_and_pending</span>
-
-    <span class="k">def</span> <span class="nf">_compute_initial_hvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">feas</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute hypervolume dominated by f(X_baseline) under each sample.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            obj: A `sample_shape x batch_shape x n x m`-dim tensor of samples</span>
-<span class="sd">                of objectives.</span>
-<span class="sd">            feas: `sample_shape x batch_shape x n`-dim tensor of samples</span>
-<span class="sd">                of feasibility indicators.</span>
-<span class="sd">        """</span>
-        <span class="n">initial_hvs</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sample</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">sample</span> <span class="o">=</span> <span class="n">sample</span><span class="p">[</span><span class="n">feas</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
-            <span class="n">dominated_partitioning</span> <span class="o">=</span> <span class="n">DominatedPartitioning</span><span class="p">(</span>
-                <span class="n">ref_point</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="p">,</span>
-                <span class="n">Y</span><span class="o">=</span><span class="n">sample</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">hv</span> <span class="o">=</span> <span class="n">dominated_partitioning</span><span class="o">.</span><span class="n">compute_hypervolume</span><span class="p">()</span>
-            <span class="n">initial_hvs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hv</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
-            <span class="s2">"_initial_hvs"</span><span class="p">,</span>
-            <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">initial_hvs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_batch_sample_shape</span><span class="p">,</span> <span class="o">*</span><span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
-            <span class="p">),</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_set_cell_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_new_points</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the box decomposition under each posterior sample.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            num_new_points: The number of new points (beyond the points</span>
-<span class="sd">                in X_baseline) that were used in the previous box decomposition.</span>
-<span class="sd">                In the first box decomposition, this should be the number of points</span>
-<span class="sd">                in X_baseline.</span>
-<span class="sd">        """</span>
-        <span class="n">feas</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">X_baseline</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-                <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_baseline</span><span class="p">)</span>
-            <span class="c1"># Reset sampler, accounting for possible one-to-many transform.</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">q_in</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_sampler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="c1"># Initialize the base sampler if needed.</span>
-                <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_posterior_samples</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">base_sampler</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
-            <span class="n">n_w</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">_extended_shape</span><span class="p">()[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">X_baseline</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_set_sampler</span><span class="p">(</span><span class="n">q_in</span><span class="o">=</span><span class="n">num_new_points</span> <span class="o">*</span> <span class="n">n_w</span><span class="p">,</span> <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">)</span>
-            <span class="c1"># cache posterior</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache_root</span><span class="p">:</span>
-                <span class="c1"># Note that this implicitly uses LinearOperator's caching to check if</span>
-                <span class="c1"># the proper root decomposition has already been cached to</span>
-                <span class="c1"># `posterior.mvn.lazy_covariance_matrix`, which it may have been in</span>
-                <span class="c1"># the call to `self.base_sampler`, and computes it if not found</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_baseline_L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_root_decomposition</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">)</span>
-            <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">X_baseline</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">feas</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
-                    <span class="p">[</span><span class="n">c</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span>
-                <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">sample_shape</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">sample_shape</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_sample_shape</span>
-            <span class="p">)</span>
-            <span class="n">obj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span>
-                <span class="o">*</span><span class="n">sample_shape</span><span class="p">,</span>
-                <span class="mi">0</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-                <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-                <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_batch_sample_shape</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
-        <span class="c1"># collapse batch dimensions</span>
-        <span class="c1"># use numel() rather than view(-1) to handle case of no baseline points</span>
-        <span class="n">new_batch_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_batch_sample_shape</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
-        <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">new_batch_shape</span><span class="p">,</span> <span class="o">*</span><span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:])</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">feas</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">feas</span> <span class="o">=</span> <span class="n">feas</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">new_batch_shape</span><span class="p">,</span> <span class="o">*</span><span class="n">feas</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:])</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">partitioning</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">incremental_nehvi</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_initial_hvs</span><span class="p">(</span><span class="n">obj</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span> <span class="n">feas</span><span class="o">=</span><span class="n">feas</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="c1"># the partitioning algorithms run faster on the CPU</span>
-            <span class="c1"># due to advanced indexing</span>
-            <span class="n">ref_point_cpu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
-            <span class="n">obj_cpu</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">feas</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">feas_cpu</span> <span class="o">=</span> <span class="n">feas</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
-                <span class="n">obj_cpu</span> <span class="o">=</span> <span class="p">[</span><span class="n">obj_cpu</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">feas_cpu</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span>
-            <span class="n">partitionings</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">obj_cpu</span><span class="p">:</span>
-                <span class="n">partitioning</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_class</span><span class="p">(</span>
-                    <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point_cpu</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">sample</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">p_kwargs</span>
-                <span class="p">)</span>
-                <span class="n">partitionings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">partitioning</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">partitioning</span> <span class="o">=</span> <span class="n">BoxDecompositionList</span><span class="p">(</span><span class="o">*</span><span class="n">partitionings</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># use batched partitioning</span>
-            <span class="n">obj</span> <span class="o">=</span> <span class="n">_pad_batch_pareto_frontier</span><span class="p">(</span>
-                <span class="n">Y</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span>
-                <span class="n">ref_point</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
-                    <span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-                <span class="p">),</span>
-                <span class="n">feasibility_mask</span><span class="o">=</span><span class="n">feas</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">partitioning</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_class</span><span class="p">(</span>
-                <span class="n">ref_point</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">p_kwargs</span>
-            <span class="p">)</span>
-        <span class="n">cell_bounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">partitioning</span><span class="o">.</span><span class="n">get_hypercell_bounds</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="p">)</span>
-        <span class="n">cell_bounds</span> <span class="o">=</span> <span class="n">cell_bounds</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
-            <span class="mi">2</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_batch_sample_shape</span><span class="p">,</span> <span class="o">*</span><span class="n">cell_bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"cell_lower_bounds"</span><span class="p">,</span> <span class="n">cell_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"cell_upper_bounds"</span><span class="p">,</span> <span class="n">cell_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-
-<div class="viewcode-block" id="qNoisyExpectedHypervolumeImprovement.set_X_pending"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.set_X_pending">[docs]</a>    <span class="k">def</span> <span class="nf">set_X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Informs the acquisition function about pending design points.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            X_pending: `n x d` Tensor with `n` `d`-dim design points that have</span>
-<span class="sd">                been submitted for evaluation but have not yet been evaluated.</span>
-<span class="sd">        """</span>
-        <span class="k">if</span> <span class="n">X_pending</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">X_pending</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">X_pending</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">:</span>
-                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                    <span class="s2">"Pending points require a gradient but the acquisition function"</span>
-                    <span class="s2">" will not provide a gradient to these points."</span><span class="p">,</span>
-                    <span class="n">BotorchWarning</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="n">X_pending</span> <span class="o">=</span> <span class="n">X_pending</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache_pending</span><span class="p">:</span>
-                <span class="n">X_baseline</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_X_baseline</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
-                <span class="c1"># Number of new points is the total number of points minus</span>
-                <span class="c1"># (the number of previously cached pending points plus the</span>
-                <span class="c1"># of number of baseline points).</span>
-                <span class="n">num_new_points</span> <span class="o">=</span> <span class="n">X_baseline</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">X_baseline</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-                <span class="k">if</span> <span class="n">num_new_points</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">num_new_points</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_iep</span><span class="p">:</span>
-                        <span class="c1"># Set the new baseline points to include pending points.</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"_X_baseline_and_pending"</span><span class="p">,</span> <span class="n">X_baseline</span><span class="p">)</span>
-                        <span class="c1"># Recompute box decompositions.</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">_set_cell_bounds</span><span class="p">(</span><span class="n">num_new_points</span><span class="o">=</span><span class="n">num_new_points</span><span class="p">)</span>
-                        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">incremental_nehvi</span><span class="p">:</span>
-                            <span class="bp">self</span><span class="o">.</span><span class="n">_prev_nehvi</span> <span class="o">=</span> <span class="p">(</span>
-                                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hypervolumes</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_hvs</span><span class="p">)</span>
-                                <span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
-                                <span class="o">.</span><span class="n">mean</span><span class="p">()</span>
-                            <span class="p">)</span>
-                        <span class="c1"># Set to None so that pending points are not concatenated in</span>
-                        <span class="c1"># forward.</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">X_pending</span> <span class="o">=</span> <span class="kc">None</span>
-                        <span class="c1"># Set q_in=-1 to so that self.sampler is updated at the next</span>
-                        <span class="c1"># forward call.</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">q_in</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">X_pending</span> <span class="o">=</span> <span class="n">X_pending</span><span class="p">[</span><span class="o">-</span><span class="n">num_new_points</span><span class="p">:]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">X_pending</span> <span class="o">=</span> <span class="n">X_pending</span></div>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">_hypervolumes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute hypervolume over X_baseline under each posterior sample.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            A `n_samples`-dim tensor of hypervolumes.</span>
-<span class="sd">        """</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">partitioning</span><span class="o">.</span><span class="n">compute_hypervolume</span><span class="p">()</span>
-            <span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="p">)</span>  <span class="c1"># for m &gt; 2, the partitioning is on the CPU</span>
-            <span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_batch_sample_shape</span><span class="p">)</span>
-        <span class="p">)</span>
-
-<div class="viewcode-block" id="qNoisyExpectedHypervolumeImprovement.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
+    <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">X_full</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">match_batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_baseline</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span> <span class="n">X</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
-        <span class="c1"># Note: it is important to compute the full posterior over `(X_baseline, X)`</span>
-        <span class="c1"># to ensure that we properly sample `f(X)` from the joint distribution `</span>
-        <span class="c1"># `f(X_baseline, X) ~ P(f | D)` given that we can already fixed the sampled</span>
-        <span class="c1"># function values for `f(X_baseline)`.</span>
-        <span class="c1"># TODO: improve efficiency by not recomputing baseline-baseline</span>
-        <span class="c1"># covariance matrix.</span>
+        <span class="c1"># NOTE: To ensure that we correctly sample `f(X)` from the joint distribution</span>
+        <span class="c1"># `f((X_baseline, X)) ~ P(f | D)`, it is critical to compute the joint posterior</span>
+        <span class="c1"># over X *and* X_baseline -- which also contains pending points whenever there</span>
+        <span class="c1"># are any --  since the baseline and pending values `f(X_baseline)` are</span>
+        <span class="c1"># generally pre-computed and cached before the `forward` call, see the docs of</span>
+        <span class="c1"># `cache_pending` for details.</span>
+        <span class="c1"># TODO: Improve the efficiency by not re-computing the X_baseline-X_baseline</span>
+        <span class="c1"># covariance matrix, but only the covariance of</span>
+        <span class="c1"># 1) X and X, and</span>
+        <span class="c1"># 2) X and X_baseline.</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X_full</span><span class="p">)</span>
         <span class="c1"># Account for possible one-to-many transform and the MCMC batch dimension in</span>
         <span class="c1"># `SaasFullyBayesianSingleTaskGP`</span>
@@ -743,7 +485,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_sampler</span><span class="p">(</span><span class="n">q_in</span><span class="o">=</span><span class="n">q_in</span><span class="p">,</span> <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">)</span>
         <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_f_X_samples</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span> <span class="n">q_in</span><span class="o">=</span><span class="n">q_in</span><span class="p">)</span>
         <span class="c1"># Add previous nehvi from pending points.</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_qehvi</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prev_nehvi</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_qehvi</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prev_nehvi</span>
 </pre></div>
 </div>
 </div>

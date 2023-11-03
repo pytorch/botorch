@@ -32,6 +32,8 @@
 <span class="sd">with (quasi) Monte-Carlo sampling. See [Rezende2014reparam]_, [Wilson2017reparam]_ and</span>
 <span class="sd">[Balandat2020botorch]_.</span>
 
+<span class="sd">References</span>
+
 <span class="sd">.. [Rezende2014reparam]</span>
 <span class="sd">    D. J. Rezende, S. Mohamed, and D. Wierstra. Stochastic backpropagation and</span>
 <span class="sd">    approximate inference in deep generative models. ICML 2014.</span>
@@ -47,11 +49,11 @@
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.cached_cholesky</span> <span class="kn">import</span> <span class="n">CachedCholeskyMCAcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.cached_cholesky</span> <span class="kn">import</span> <span class="n">CachedCholeskyMCSamplerMixin</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ConstrainedMCObjective</span><span class="p">,</span>
     <span class="n">IdentityMCObjective</span><span class="p">,</span>
@@ -93,7 +95,9 @@
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model.</span>
 <span class="sd">            sampler: The sampler used to draw base samples. If not given,</span>
-<span class="sd">                a sampler is generated using `get_sampler`.</span>
+<span class="sd">                a sampler is generated on the fly within the</span>
+<span class="sd">                `get_posterior_samples` method using</span>
+<span class="sd">                `botorch.sampling.get_sampler`.</span>
 <span class="sd">                NOTE: For posteriors that do not support base samples,</span>
 <span class="sd">                a sampler compatible with intended use case must be provided.</span>
 <span class="sd">                See `ForkedRNGSampler` and `StochasticSampler` as examples.</span>
@@ -212,8 +216,10 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model.</span>
-<span class="sd">            sampler: The sampler used to draw base samples. If not given,</span>
-<span class="sd">                a sampler is generated using `get_sampler`.</span>
+<span class="sd">            sampler: The sampler used to draw base samples. If not given, a</span>
+<span class="sd">                sampler is generated on the fly within the</span>
+<span class="sd">                `get_posterior_samples` method using</span>
+<span class="sd">                `botorch.sampling.get_sampler`.</span>
 <span class="sd">                NOTE: For posteriors that do not support base samples,</span>
 <span class="sd">                a sampler compatible with intended use case must be provided.</span>
 <span class="sd">                See `ForkedRNGSampler` and `StochasticSampler` as examples.</span>
@@ -374,7 +380,6 @@
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">eta</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""q-Expected Improvement.</span>
 
@@ -426,7 +431,7 @@
 
 
 <div class="viewcode-block" id="qNoisyExpectedImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qNoisyExpectedImprovement">[docs]</a><span class="k">class</span> <span class="nc">qNoisyExpectedImprovement</span><span class="p">(</span>
-    <span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">,</span> <span class="n">CachedCholeskyMCAcquisitionFunction</span>
+    <span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">,</span> <span class="n">CachedCholeskyMCSamplerMixin</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batch Noisy Expected Improvement.</span>
 
@@ -457,7 +462,7 @@
         <span class="n">cache_root</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">eta</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">marginalize_dim</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""q-Noisy Expected Improvement.</span>
 
@@ -492,6 +497,7 @@
 <span class="sd">            eta: Temperature parameter(s) governing the smoothness of the sigmoid</span>
 <span class="sd">                approximation to the constraint indicators. For more details, on this</span>
 <span class="sd">                parameter, see the docs of `compute_smoothed_feasibility_indicator`.</span>
+<span class="sd">            marginalize_dim: The dimension to marginalize over.</span>
 
 <span class="sd">        TODO: similar to qNEHVI, when we are using sequential greedy candidate</span>
 <span class="sd">        selection, we could incorporate pending points X_baseline and compute</span>
@@ -507,14 +513,17 @@
             <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
             <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_setup</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">cache_root</span><span class="o">=</span><span class="n">cache_root</span><span class="p">)</span>
+        <span class="n">CachedCholeskyMCSamplerMixin</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">cache_root</span><span class="o">=</span><span class="n">cache_root</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="n">prune_baseline</span><span class="p">:</span>
             <span class="n">X_baseline</span> <span class="o">=</span> <span class="n">prune_inferior_points</span><span class="p">(</span>
                 <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
                 <span class="n">X</span><span class="o">=</span><span class="n">X_baseline</span><span class="p">,</span>
                 <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
                 <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
-                <span class="n">marginalize_dim</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"marginalize_dim"</span><span class="p">),</span>
+                <span class="n">constraints</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">,</span>
+                <span class="n">marginalize_dim</span><span class="o">=</span><span class="n">marginalize_dim</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"X_baseline"</span><span class="p">,</span> <span class="n">X_baseline</span><span class="p">)</span>
         <span class="c1"># registering buffers for _get_samples_and_objectives in the next `if` block</span>
@@ -580,7 +589,7 @@
         <span class="k">return</span> <span class="n">val</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">view_shape</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_sample_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qNoisyExpectedImprovement per sample on the candidate set `X`.</span>
+<span class="w">        </span><span class="sd">"""Evaluate qNoisyExpectedImprovement per objective value in `obj`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            obj: A `sample_shape x batch_shape x q`-dim Tensor of MC objective values.</span>

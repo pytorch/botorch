@@ -422,7 +422,7 @@
     <span class="c1"># construct fantasy model (with batch shape f_{j+1} x ... x f_1 x batch_shape)</span>
     <span class="n">prop_grads</span> <span class="o">=</span> <span class="n">step_index</span> <span class="o">&gt;</span> <span class="mi">0</span>  <span class="c1"># need to propagate gradients for steps &gt; 0</span>
     <span class="n">fantasy_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">fantasize</span><span class="p">(</span>
-        <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="n">samplers</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">propagate_grads</span><span class="o">=</span><span class="n">prop_grads</span>
+        <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="n">samplers</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">propagate_grads</span><span class="o">=</span><span class="n">prop_grads</span>
     <span class="p">)</span>
 
     <span class="c1"># augment sample weights appropriately</span>
@@ -608,7 +608,6 @@
         <span class="n">fantasy_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">fantasize</span><span class="p">(</span>
             <span class="n">X</span><span class="o">=</span><span class="n">Xs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
             <span class="n">sampler</span><span class="o">=</span><span class="n">samplers</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-            <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">_get_induced_fantasy_model</span><span class="p">(</span>

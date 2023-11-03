@@ -205,7 +205,7 @@
 <span class="sd">        &gt;&gt;&gt; ])</span>
 <span class="sd">        &gt;&gt;&gt; train_Y = torch.cat(f1(X1), f2(X2)).unsqueeze(-1)</span>
 <span class="sd">        &gt;&gt;&gt; train_Yvar = 0.01 * torch.ones_like(train_Y)</span>
-<span class="sd">        &gt;&gt;&gt; mtsaas_gp = SaasFullyBayesianFixedNoiseMultiTaskGP(</span>
+<span class="sd">        &gt;&gt;&gt; mtsaas_gp = SaasFullyBayesianMultiTaskGP(</span>
 <span class="sd">        &gt;&gt;&gt;     train_X, train_Y, train_Yvar, task_feature=-1,</span>
 <span class="sd">        &gt;&gt;&gt; )</span>
 <span class="sd">        &gt;&gt;&gt; fit_fully_bayesian_model_nuts(mtsaas_gp)</span>

@@ -39,6 +39,7 @@
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.safe_math</span> <span class="kn">import</span> <span class="n">log_fatmoid</span><span class="p">,</span> <span class="n">logexpit</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">normalize_indices</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
@@ -124,6 +125,7 @@
 <div class="viewcode-block" id="compute_feasibility_indicator"><a class="viewcode-back" href="../../../utils.html#botorch.utils.objective.compute_feasibility_indicator">[docs]</a><span class="k">def</span> <span class="nf">compute_feasibility_indicator</span><span class="p">(</span>
     <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]],</span>
     <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">marginalize_dim</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes the feasibility of a list of constraints given posterior samples.</span>
 
@@ -131,6 +133,9 @@
 <span class="sd">        constraints: A list of callables, each mapping a batch_shape x q x m`-dim Tensor</span>
 <span class="sd">            to a `batch_shape x q`-dim Tensor, where negative values imply feasibility.</span>
 <span class="sd">        samples: A batch_shape x q x m`-dim Tensor of posterior samples.</span>
+<span class="sd">        marginalize_dim: A batch dimension that should be marginalized.</span>
+<span class="sd">            For example, this is useful when using a batched fully Bayesian</span>
+<span class="sd">            model.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A `batch_shape x q`-dim tensor of Boolean feasibility values.</span>
@@ -138,7 +143,15 @@
     <span class="n">ind</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">samples</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">:</span>
-            <span class="n">ind</span> <span class="o">=</span> <span class="n">ind</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">constraint</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">ind</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">constraint</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ind</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;=</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">marginalize_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># make sure marginalize_dim is not negative</span>
+        <span class="k">if</span> <span class="n">marginalize_dim</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># add 1 to the normalize marginalize_dim since we have already</span>
+            <span class="c1"># removed the output dim</span>
+            <span class="n">marginalize_dim</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">normalize_indices</span><span class="p">([</span><span class="n">marginalize_dim</span><span class="p">],</span> <span class="n">d</span><span class="o">=</span><span class="n">ind</span><span class="o">.</span><span class="n">ndim</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">ind</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">marginalize_dim</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">()</span><span class="o">.</span><span class="n">bool</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">ind</span></div>
 
 

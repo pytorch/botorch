@@ -47,7 +47,7 @@
 <span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">PosteriorTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">FixedNoiseGP</span>
+<span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.constants</span> <span class="kn">import</span> <span class="n">get_constants_like</span>
@@ -61,6 +61,7 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.safe_math</span> <span class="kn">import</span> <span class="n">log1mexp</span><span class="p">,</span> <span class="n">logmeanexp</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">convert_to_target_pre_hook</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
+<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.gaussian_likelihood</span> <span class="kn">import</span> <span class="n">FixedNoiseGaussianLikelihood</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn.functional</span> <span class="kn">import</span> <span class="n">pad</span>
 
@@ -156,6 +157,8 @@
 <span class="sd">        &gt;&gt;&gt; LogPI = LogProbabilityOfImprovement(model, best_f=0.2)</span>
 <span class="sd">        &gt;&gt;&gt; log_pi = LogPI(test_X)</span>
 <span class="sd">    """</span>
+
+    <span class="n">_log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -385,6 +388,8 @@
 <span class="sd">    to avoid numerical issues in the computation of the acquisition value and its</span>
 <span class="sd">    gradient in regions where improvement is predicted to be virtually impossible.</span>
 
+<span class="sd">    See [Ament2023logei]_ for details. Formally,</span>
+
 <span class="sd">    `LogEI(x) = log(E(max(f(x) - best_f, 0))),`</span>
 
 <span class="sd">    where the expectation is taken over the value of stochastic function `f` at `x`.</span>
@@ -394,6 +399,8 @@
 <span class="sd">        &gt;&gt;&gt; LogEI = LogExpectedImprovement(model, best_f=0.2)</span>
 <span class="sd">        &gt;&gt;&gt; ei = LogEI(test_X)</span>
 <span class="sd">    """</span>
+
+    <span class="n">_log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -446,7 +453,10 @@
 <span class="sd">    multi-outcome, with the index of the objective and constraints passed to</span>
 <span class="sd">    the constructor.</span>
 
+<span class="sd">    See [Ament2023logei]_ for details. Formally,</span>
+
 <span class="sd">    `LogConstrainedEI(x) = log(EI(x)) + Sum_i log(P(y_i \in [lower_i, upper_i]))`,</span>
+
 <span class="sd">    where `y_i ~ constraint_i(x)` and `lower_i`, `upper_i` are the lower and</span>
 <span class="sd">    upper bounds for the i-th constraint, respectively.</span>
 
@@ -458,6 +468,8 @@
 <span class="sd">        &gt;&gt;&gt; LogCEI = LogConstrainedExpectedImprovement(model, 0.2, 1, constraints)</span>
 <span class="sd">        &gt;&gt;&gt; cei = LogCEI(test_X)</span>
 <span class="sd">    """</span>
+
+    <span class="n">_log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -592,17 +604,23 @@
 <span class="sd">    `q=1`. Assumes that the posterior distribution of the model is Gaussian.</span>
 <span class="sd">    The model must be single-outcome.</span>
 
+<span class="sd">    See [Ament2023logei]_ for details. Formally,</span>
+
 <span class="sd">    `LogNEI(x) = log(E(max(y - max Y_base), 0))), (y, Y_base) ~ f((x, X_base))`,</span>
+
 <span class="sd">    where `X_base` are previously observed points.</span>
 
-<span class="sd">    Note: This acquisition function currently relies on using a FixedNoiseGP (required</span>
-<span class="sd">    for noiseless fantasies).</span>
+<span class="sd">    Note: This acquisition function currently relies on using a SingleTaskGP</span>
+<span class="sd">    with known observation noise. In other words, `train_Yvar` must be passed</span>
+<span class="sd">    to the model. (required for noiseless fantasies).</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; model = FixedNoiseGP(train_X, train_Y, train_Yvar=train_Yvar)</span>
+<span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(train_X, train_Y, train_Yvar=train_Yvar)</span>
 <span class="sd">        &gt;&gt;&gt; LogNEI = LogNoisyExpectedImprovement(model, train_X)</span>
 <span class="sd">        &gt;&gt;&gt; nei = LogNEI(test_X)</span>
 <span class="sd">    """</span>
+
+    <span class="n">_log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -623,10 +641,6 @@
 <span class="sd">                complexity and performance).</span>
 <span class="sd">            maximize: If True, consider the problem a maximization problem.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">FixedNoiseGP</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
-                <span class="s2">"Only FixedNoiseGPs are currently supported for fantasy LogNEI"</span>
-            <span class="p">)</span>
         <span class="c1"># sample fantasies</span>
         <span class="kn">from</span> <span class="nn">botorch.sampling.normal</span> <span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
 
@@ -677,11 +691,12 @@
 <span class="sd">    `NEI(x) = E(max(y - max Y_baseline), 0)), (y, Y_baseline) ~ f((x, X_baseline))`,</span>
 <span class="sd">    where `X_baseline` are previously observed points.</span>
 
-<span class="sd">    Note: This acquisition function currently relies on using a FixedNoiseGP (required</span>
-<span class="sd">    for noiseless fantasies).</span>
+<span class="sd">    Note: This acquisition function currently relies on using a SingleTaskGP</span>
+<span class="sd">    with known observation noise. In other words, `train_Yvar` must be passed</span>
+<span class="sd">    to the model. (required for noiseless fantasies).</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; model = FixedNoiseGP(train_X, train_Y, train_Yvar=train_Yvar)</span>
+<span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(train_X, train_Y, train_Yvar=train_Yvar)</span>
 <span class="sd">        &gt;&gt;&gt; NEI = NoisyExpectedImprovement(model, train_X)</span>
 <span class="sd">        &gt;&gt;&gt; nei = NEI(test_X)</span>
 <span class="sd">    """</span>
@@ -704,10 +719,6 @@
 <span class="sd">                complexity and performance).</span>
 <span class="sd">            maximize: If True, consider the problem a maximization problem.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">FixedNoiseGP</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
-                <span class="s2">"Only FixedNoiseGPs are currently supported for fantasy NEI"</span>
-            <span class="p">)</span>
         <span class="c1"># sample fantasies</span>
         <span class="kn">from</span> <span class="nn">botorch.sampling.normal</span> <span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
 
@@ -889,6 +900,73 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mean_and_sigma</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">compute_sigma</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span></div></div>
 
 
+<div class="viewcode-block" id="PosteriorStandardDeviation"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.PosteriorStandardDeviation">[docs]</a><span class="k">class</span> <span class="nc">PosteriorStandardDeviation</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Single-outcome Posterior Standard Deviation.</span>
+
+<span class="sd">    An acquisition function for pure exploration.</span>
+<span class="sd">    Only supports the case of q=1. Requires the model's posterior to have</span>
+<span class="sd">    `mean` and `variance` properties. The model must be either single-outcome</span>
+<span class="sd">    or combined with a `posterior_transform` to produce a single-output posterior.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; import torch</span>
+<span class="sd">        &gt;&gt;&gt; from botorch.models.gp_regression import SingleTaskGP</span>
+<span class="sd">        &gt;&gt;&gt; from botorch.models.transforms.input import Normalize</span>
+<span class="sd">        &gt;&gt;&gt; from botorch.models.transforms.outcome import Standardize</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; # Set up a model</span>
+<span class="sd">        &gt;&gt;&gt; train_X = torch.rand(20, 2, dtype=torch.float64)</span>
+<span class="sd">        &gt;&gt;&gt; train_Y = torch.sin(train_X).sum(dim=1, keepdim=True)</span>
+<span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(</span>
+<span class="sd">        ...     train_X, train_Y, outcome_transform=Standardize(m=1),</span>
+<span class="sd">        ...     input_transform=Normalize(d=2),</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &gt;&gt;&gt; # Now set up the acquisition function</span>
+<span class="sd">        &gt;&gt;&gt; PSTD = PosteriorStandardDeviation(model)</span>
+<span class="sd">        &gt;&gt;&gt; test_X = torch.zeros((1, 2), dtype=torch.float64)</span>
+<span class="sd">        &gt;&gt;&gt; std = PSTD(test_X)</span>
+<span class="sd">        &gt;&gt;&gt; std.item()</span>
+<span class="sd">        0.16341639895667773</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Single-outcome Posterior Mean.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model: A fitted single-outcome GP model (must be in batch mode if</span>
+<span class="sd">                candidate sets X will be)</span>
+<span class="sd">            posterior_transform: A PosteriorTransform. If using a multi-output model,</span>
+<span class="sd">                a PosteriorTransform that transforms the multi-output posterior into a</span>
+<span class="sd">                single-output posterior is required.</span>
+<span class="sd">            maximize: If True, consider the problem a maximization problem. Note</span>
+<span class="sd">                that if `maximize=False`, the posterior standard deviation is negated.</span>
+<span class="sd">                As a consequence,</span>
+<span class="sd">                `optimize_acqf(PosteriorStandardDeviation(gp, maximize=False))`</span>
+<span class="sd">                actually returns -1 * minimum of the posterior standard deviation.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span> <span class="o">=</span> <span class="n">maximize</span>
+
+<div class="viewcode-block" id="PosteriorStandardDeviation.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.PosteriorStandardDeviation.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the posterior standard deviation on the candidate set X.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `(b1 x ... bk) x 1 x d`-dim batched tensor of `d`-dim design points.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `(b1 x ... bk)`-dim tensor of Posterior Mean values at the</span>
+<span class="sd">            given design points `X`.</span>
+<span class="sd">        """</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">std</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mean_and_sigma</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">std</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span> <span class="k">else</span> <span class="o">-</span><span class="n">std</span></div></div>
+
+
 <span class="c1"># --------------- Helper functions for analytic acquisition functions. ---------------</span>
 
 
@@ -989,15 +1067,15 @@
 
 
 <span class="k">def</span> <span class="nf">_get_noiseless_fantasy_model</span><span class="p">(</span>
-    <span class="n">model</span><span class="p">:</span> <span class="n">FixedNoiseGP</span><span class="p">,</span> <span class="n">batch_X_observed</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y_fantasized</span><span class="p">:</span> <span class="n">Tensor</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FixedNoiseGP</span><span class="p">:</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">SingleTaskGP</span><span class="p">,</span> <span class="n">batch_X_observed</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y_fantasized</span><span class="p">:</span> <span class="n">Tensor</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SingleTaskGP</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Construct a fantasy model from a fitted model and provided fantasies.</span>
 
 <span class="sd">    The fantasy model uses the hyperparameters from the original fitted model and</span>
 <span class="sd">    assumes the fantasies are noiseless.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        model: a fitted FixedNoiseGP</span>
+<span class="sd">        model: A fitted SingleTaskGP with known observation noise.</span>
 <span class="sd">        batch_X_observed: A `b x n x d` tensor of inputs where `b` is the number of</span>
 <span class="sd">            fantasies.</span>
 <span class="sd">        Y_fantasized: A `b x n` tensor of fantasized targets where `b` is the number of</span>
@@ -1006,11 +1084,18 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        The fantasy model.</span>
 <span class="sd">    """</span>
-    <span class="c1"># initialize a copy of FixedNoiseGP on the original training inputs</span>
-    <span class="c1"># this makes FixedNoiseGP a non-batch GP, so that the same hyperparameters</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">SingleTaskGP</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">FixedNoiseGaussianLikelihood</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+            <span class="s2">"Only SingleTaskGP models with known observation noise "</span>
+            <span class="s2">"are currently supported for fantasy-based NEI &amp; LogNEI."</span>
+        <span class="p">)</span>
+    <span class="c1"># initialize a copy of SingleTaskGP on the original training inputs</span>
+    <span class="c1"># this makes SingleTaskGP a non-batch GP, so that the same hyperparameters</span>
     <span class="c1"># are used across all batches (by default, a GP with batched training data</span>
     <span class="c1"># uses independent hyperparameters for each batch).</span>
-    <span class="n">fantasy_model</span> <span class="o">=</span> <span class="n">FixedNoiseGP</span><span class="p">(</span>
+    <span class="n">fantasy_model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span>
         <span class="n">train_X</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
         <span class="n">train_Y</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">train_targets</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
         <span class="n">train_Yvar</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise_covar</span><span class="o">.</span><span class="n">noise</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>

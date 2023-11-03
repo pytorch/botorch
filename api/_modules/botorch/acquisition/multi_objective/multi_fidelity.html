@@ -106,7 +106,7 @@
 <span class="sd">            sampler: The sampler used to draw base samples. If not given,</span>
 <span class="sd">                a sampler is generated using `get_sampler`.</span>
 <span class="sd">            objective: The MCMultiOutputObjective under which the samples are evaluated.</span>
-<span class="sd">                Defaults to `IdentityMultiOutputObjective()`.</span>
+<span class="sd">                Defaults to `IdentityMCMultiOutputObjective()`.</span>
 <span class="sd">            constraints: A list of callables, each mapping a Tensor of dimension</span>
 <span class="sd">                `sample_shape x batch-shape x q x m` to a Tensor of dimension</span>
 <span class="sd">                `sample_shape x batch-shape x q`, where negative values imply</span>

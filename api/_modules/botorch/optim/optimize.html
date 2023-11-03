@@ -240,6 +240,9 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Helper function for `optimize_acqf` when sequential=True and q &gt; 1.</span>
+
+<span class="sd">    For each of `q` times, generate a single candidate greedily, then add it to</span>
+<span class="sd">    the list of pending points.</span>
 <span class="sd">    """</span>
     <span class="n">_validate_sequential_inputs</span><span class="p">(</span><span class="n">opt_inputs</span><span class="p">)</span>
     <span class="c1"># When using sequential optimization, we allocate the total timeout</span>

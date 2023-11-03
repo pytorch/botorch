@@ -66,25 +66,31 @@
 
     <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"cpu"</span><span class="p">)</span>
 
-<div class="viewcode-block" id="BotorchTestCase.setUp"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.BotorchTestCase.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="BotorchTestCase.setUp"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.BotorchTestCase.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">suppress_input_warnings</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">resetwarnings</span><span class="p">()</span>
         <span class="n">settings</span><span class="o">.</span><span class="n">debug</span><span class="o">.</span><span class="n">_set_state</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"always"</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span>
-            <span class="s2">"ignore"</span><span class="p">,</span>
-            <span class="n">message</span><span class="o">=</span><span class="s2">"The model inputs are of type"</span><span class="p">,</span>
-            <span class="n">category</span><span class="o">=</span><span class="ne">UserWarning</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span>
-            <span class="s2">"ignore"</span><span class="p">,</span>
-            <span class="n">message</span><span class="o">=</span><span class="s2">"Non-strict enforcement of botorch tensor conventions."</span><span class="p">,</span>
-            <span class="n">category</span><span class="o">=</span><span class="n">BotorchTensorDimensionWarning</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span>
-            <span class="s2">"ignore"</span><span class="p">,</span>
-            <span class="n">message</span><span class="o">=</span><span class="s2">"Input data is not standardized."</span><span class="p">,</span>
-            <span class="n">category</span><span class="o">=</span><span class="n">InputDataWarning</span><span class="p">,</span>
-        <span class="p">)</span></div>
+        <span class="k">if</span> <span class="n">suppress_input_warnings</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span>
+                <span class="s2">"ignore"</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">"The model inputs are of type"</span><span class="p">,</span>
+                <span class="n">category</span><span class="o">=</span><span class="ne">UserWarning</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span>
+                <span class="s2">"ignore"</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">"Non-strict enforcement of botorch tensor conventions."</span><span class="p">,</span>
+                <span class="n">category</span><span class="o">=</span><span class="n">BotorchTensorDimensionWarning</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span>
+                <span class="s2">"ignore"</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">"Input data is not standardized."</span><span class="p">,</span>
+                <span class="n">category</span><span class="o">=</span><span class="n">InputDataWarning</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span>
+                <span class="s2">"ignore"</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">"Input data is not contained to the unit cube."</span><span class="p">,</span>
+                <span class="n">category</span><span class="o">=</span><span class="n">InputDataWarning</span><span class="p">,</span>
+            <span class="p">)</span></div>
 
 <div class="viewcode-block" id="BotorchTestCase.assertAllClose"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.BotorchTestCase.assertAllClose">[docs]</a>    <span class="k">def</span> <span class="nf">assertAllClose</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -392,6 +398,7 @@
         <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
     <span class="p">)</span>
     <span class="n">train_x</span> <span class="o">=</span> <span class="n">train_x</span> <span class="o">+</span> <span class="mf">0.05</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand_like</span><span class="p">(</span><span class="n">train_x</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">rep_shape</span><span class="p">)</span>
+    <span class="n">train_x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mf">0.02</span>  <span class="c1"># modify the first batch</span>
     <span class="n">train_y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">train_x</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span>
     <span class="n">train_y</span> <span class="o">=</span> <span class="n">train_y</span> <span class="o">+</span> <span class="mf">0.2</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">rep_shape</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">train_x</span><span class="p">,</span> <span class="n">train_y</span>

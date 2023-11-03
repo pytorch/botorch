@@ -148,7 +148,10 @@
 <span class="sd">            `self._extended_shape(sample_shape=sample_shape)`.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">sample_shape</span><span class="p">)]</span> <span class="o">!=</span> <span class="n">sample_shape</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"`sample_shape` disagrees with shape of `base_samples`."</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">"`sample_shape` disagrees with shape of `base_samples`. "</span>
+                <span class="sa">f</span><span class="s2">"Got </span><span class="si">{</span><span class="n">sample_shape</span><span class="si">=}</span><span class="s2"> and </span><span class="si">{</span><span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="si">=}</span><span class="s2">."</span>
+            <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_mt</span><span class="p">:</span>
             <span class="n">base_samples</span> <span class="o">=</span> <span class="n">_reshape_base_samples_non_interleaved</span><span class="p">(</span>
                 <span class="n">mvn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">,</span>
@@ -194,7 +197,8 @@
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">sample_shape</span><span class="p">)]</span> <span class="o">!=</span> <span class="n">sample_shape</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                    <span class="s2">"`sample_shape` disagrees with shape of `base_samples`."</span>
+                    <span class="s2">"`sample_shape` disagrees with shape of `base_samples`. "</span>
+                    <span class="sa">f</span><span class="s2">"Got </span><span class="si">{</span><span class="n">sample_shape</span><span class="si">=}</span><span class="s2"> and </span><span class="si">{</span><span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="si">=}</span><span class="s2">."</span>
                 <span class="p">)</span>
             <span class="c1"># get base_samples to the correct shape</span>
             <span class="n">base_samples</span> <span class="o">=</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_extended_shape</span><span class="p">(</span><span class="n">sample_shape</span><span class="p">))</span>

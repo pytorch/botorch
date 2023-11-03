@@ -77,7 +77,12 @@ which to compute the posterior (if the model is multi-output).
 Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
 computes the posterior over all model outputs.</p></li>
-<li><p><strong>observation_noise</strong> (<em>bool</em>) – If True, add observation noise to the posterior.</p></li>
+<li><p><strong>observation_noise</strong> (<em>Union</em><em>[</em><em>bool</em><em>, </em><em>Tensor</em><em>]</em>) – For models with an inferred noise level, if True,
+include observation noise. For models with an observed noise level,
+this must be a <cite>model_batch_shape x 1 x m</cite>-dim tensor or
+a <cite>model_batch_shape x n’ x m</cite>-dim tensor containing the average
+noise for each batch and output. <cite>noise</cite> must be in the
+outcome-transformed space if an outcome transform is used.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – An optional PosteriorTransform.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
@@ -214,6 +219,10 @@ If <cite>False</cite>, model is put in <cite>eval</cite> mode.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.models.model.Model.dtypes_of_buffers">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dtypes_of_buffers</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Set</span><span class="p"><span class="pre">[</span></span><span class="pre">dtype</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.models.model.Model.dtypes_of_buffers" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.model.FantasizeMixin">
@@ -291,11 +300,12 @@ a <cite>transform_inputs</cite> method.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.model.FantasizeMixin.fantasize">
-<span class="sig-name descname"><span class="pre">fantasize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#FantasizeMixin.fantasize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.FantasizeMixin.fantasize" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fantasize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#FantasizeMixin.fantasize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.FantasizeMixin.fantasize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct a fantasy model.</p>
 <p>Constructs a fantasy model in the following fashion:
-(1) compute the model posterior at <cite>X</cite> (including observation noise if
-<cite>observation_noise=True</cite>).
+(1) compute the model posterior at <cite>X</cite>, including observation noise.
+If <cite>observation_noise</cite> is a Tensor, use it directly as the observation
+noise to add.
 (2) sample from this posterior (using <cite>sampler</cite>) to generate “fake”
 observations.
 (3) condition the model on the new fake observations.</p>
@@ -307,7 +317,14 @@ the feature space, <cite>n’</cite> is the number of points per batch, and
 <cite>batch_shape</cite> is the batch shape (must be compatible with the
 batch shape of the model).</p></li>
 <li><p><strong>sampler</strong> (<em>MCSampler</em>) – The sampler used for sampling from the posterior at <cite>X</cite>.</p></li>
-<li><p><strong>observation_noise</strong> (<em>bool</em>) – If True, include observation noise.</p></li>
+<li><p><strong>observation_noise</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>model_batch_shape x 1 x m</cite>-dim tensor or
+a <cite>model_batch_shape x n’ x m</cite>-dim tensor containing the average
+noise for each batch and output, where <cite>m</cite> is the number of outputs.
+<cite>noise</cite> must be in the outcome-transformed space if an outcome
+transform is used.
+If None and using an inferred noise likelihood, the noise will be the
+inferred noise level. If using a fixed noise likelihood, the mean across
+the observation noise in the training data is used as observation noise.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – Will be passed to <cite>model.condition_on_observations</cite></p></li>
 <li><p><strong>self</strong> (<em>TFantasizeMixin</em>) – </p></li>
 </ul>
@@ -368,7 +385,9 @@ computes the posterior over all model outputs.</p></li>
 respective likelihoods to the posterior. If a Tensor of shape
 <cite>(batch_shape) x q x m</cite>, use it directly as the observation
 noise (with <cite>observation_noise[…,i]</cite> added to the posterior
-of the <cite>i</cite>-th model).</p></li>
+of the <cite>i</cite>-th model). <cite>observation_noise</cite> is assumed
+to be in the outcome-transformed space, if an outcome transform
+is used by the model.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="posteriors.html#botorch.posteriors.posterior_list.PosteriorList" title="botorch.posteriors.posterior_list.PosteriorList"><em>PosteriorList</em></a><em>]</em><em>, </em><em>Posterior</em><em>] </em><em>| </em><em>None</em>) – An optional PosteriorTransform.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
@@ -458,7 +477,7 @@ the model `m1</cite> subset to its second output.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.model.ModelList.fantasize">
-<span class="sig-name descname"><span class="pre">fantasize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#ModelList.fantasize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.ModelList.fantasize" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fantasize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#ModelList.fantasize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.ModelList.fantasize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct a fantasy model.</p>
 <p>Constructs a fantasy model in the following fashion:
 (1) compute the model posterior at <cite>X</cite> (including observation noise if
@@ -475,7 +494,12 @@ the feature space, <cite>n’</cite> is the number of points per batch, and
 batch shape of the model).</p></li>
 <li><p><strong>sampler</strong> (<em>MCSampler</em>) – The sampler used for sampling from the posterior at <cite>X</cite>. If
 evaluation_mask is not None, this must be a <cite>ListSampler</cite>.</p></li>
-<li><p><strong>observation_noise</strong> (<em>bool</em>) – If True, include observation noise.</p></li>
+<li><p><strong>observation_noise</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>model_batch_shape x 1 x m</cite>-dim tensor or
+a <cite>model_batch_shape x n’ x m</cite>-dim tensor containing the average
+noise for each batch and output, where <cite>m</cite> is the number of outputs.
+<cite>noise</cite> must be in the outcome-transformed space if an outcome
+transform is used. If None, then the noise will be the inferred
+noise level.</p></li>
 <li><p><strong>evaluation_mask</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>n’ x m</cite>-dim tensor of booleans indicating which
 outputs should be fantasized for a given design. This uses the same
 evaluation mask for all batches.</p></li>
@@ -801,9 +825,9 @@ If outputs are independent and outputs have different training data, use the
 model like <cite>MultiTaskGP</cite>.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.gp_regression.SingleTaskGP">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.gp_regression.</span></span><span class="sig-name descname"><span class="pre">SingleTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#SingleTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.SingleTaskGP" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.gp_regression.</span></span><span class="sig-name descname"><span class="pre">SingleTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#SingleTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.SingleTaskGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BatchedMultiOutputGPyTorchModel</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ExactGP</span></code>, <a class="reference internal" href="#botorch.models.model.FantasizeMixin" title="botorch.models.model.FantasizeMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">FantasizeMixin</span></code></a></p>
-<p>A single-task exact GP model.</p>
+<p>A single-task exact GP model, supporting both known and inferred noise levels.</p>
 <p>A single-task exact GP using relatively strong priors on the Kernel
 hyperparameters, which work best when covariates are normalized to the unit
 cube and outcomes are standardized (zero mean, unit variance).</p>
@@ -814,10 +838,43 @@ batching to model outputs independently.</p>
 same training data. If outputs are independent and outputs have different
 training data, use the ModelListGP. When modeling correlations between
 outputs, use the MultiTaskGP.</p>
+<p>An example of a case in which noise levels are known is online
+experimentation, where noise can be measured using the variability of
+different observations from the same arm, or provided by outside software.
+Another use case is simulation optimization, where the evaluation can
+provide variance estimates, perhaps from bootstrapping. In any case, these
+noise levels can be provided to <cite>SingleTaskGP</cite> as <cite>train_Yvar</cite>.</p>
+<p><cite>SingleTaskGP</cite> can also be used when the observations are known to be
+noise-free. Noise-free observations can be modeled using arbitrarily small
+noise values, such as <cite>train_Yvar=torch.full_like(train_Y, 1e-6)</cite>.</p>
 <p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<p>Model with inferred noise levels:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">Standardize</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">Standardize</span><span class="p">(</span><span class="n">m</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">inferred_noise_model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">outcome_transform</span><span class="o">=</span><span class="n">outcome_transform</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Model with a known observation variance of 0.2:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">train_Y</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">observed_noise_model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">outcome_transform</span><span class="o">=</span><span class="n">outcome_transform</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+<p>With noise-free observations:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">train_Y</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">noise_free_model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">outcome_transform</span><span class="o">=</span><span class="n">outcome_transform</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="field-list simple">
@@ -825,8 +882,12 @@ outputs, use the MultiTaskGP.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_X</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x d</cite> tensor of training features.</p></li>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
+<li><p><strong>train_Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – An optional <cite>batch_shape x n x m</cite> tensor of observed
+measurement noise.</p></li>
 <li><p><strong>likelihood</strong> (<em>Optional</em><em>[</em><em>Likelihood</em><em>]</em>) – A likelihood. If omitted, use a standard
-GaussianLikelihood with inferred noise level.</p></li>
+<cite>GaussianLikelihood</cite> with inferred noise level if <cite>train_Yvar</cite>
+is None, and a <cite>FixedNoiseGaussianLikelihood</cite> with the given
+noise observations if <cite>train_Yvar</cite> is not None.</p></li>
 <li><p><strong>covar_module</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>) – The module computing the covariance (Kernel) matrix.
 If omitted, use a <cite>MaternKernel</cite>.</p></li>
 <li><p><strong>mean_module</strong> (<em>Optional</em><em>[</em><em>Mean</em><em>]</em>) – The mean function to be used. If omitted, use a
@@ -865,125 +926,25 @@ registered hooks while the latter silently ignores them.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.gp_regression.FixedNoiseGP">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.gp_regression.</span></span><span class="sig-name descname"><span class="pre">FixedNoiseGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#FixedNoiseGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.FixedNoiseGP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BatchedMultiOutputGPyTorchModel</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ExactGP</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.gp_regression.SingleTaskGP" title="botorch.models.gp_regression.SingleTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">SingleTaskGP</span></code></a></p>
 <p>A single-task exact GP model using fixed noise levels.</p>
-<p>A single-task exact GP that uses fixed observation noise levels, differing from
-<cite>SingleTaskGP</cite> only in that noise levels are provided rather than inferred.
-This model also uses relatively strong priors on the Kernel hyperparameters,
-which work best when covariates are normalized to the unit cube and outcomes
-are standardized (zero mean, unit variance).</p>
-<p>This model works in batch mode (each batch having its own hyperparameters).</p>
-<p>An example of a case in which noise levels are known is online
-experimentation, where noise can be measured using the variability of
-different observations from the same arm, or provided by outside software.
-Another use case is simulation optimization, where the evaluation can
-provide variance estimates, perhaps from bootstrapping. In any case, these
-noise levels must be provided to <cite>FixedNoiseGP</cite> as <cite>train_Yvar</cite>.</p>
-<p><cite>FixedNoiseGP</cite> is also commonly used when the observations are known to be
-noise-free.  Noise-free observations can be modeled using arbitrarily small
-noise values, such as <cite>train_Yvar=torch.full_like(train_Y, 1e-6)</cite>.</p>
-<p><cite>FixedNoiseGP</cite> cannot predict noise levels out of sample. If this is needed,
-use <cite>HeteroskedasticSingleTaskGP</cite>, which will create another model for the
-observation noise.</p>
-<p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">train_Y</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">FixedNoiseGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">)</span>
-</pre></div>
-</div>
+<p>DEPRECATED: <cite>FixedNoiseGP</cite> has been merged into <cite>SingleTaskGP</cite>. Please use
+<cite>SingleTaskGP</cite> with <cite>train_Yvar</cite> instead.
+Will be removed in a future release (~v0.12).</p>
+<p>DEPRECATED. See SingleTaskGP.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>train_X</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x d</cite> tensor of training features.</p></li>
-<li><p><strong>train_Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
-<li><p><strong>train_Yvar</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of observed measurement
-noise.</p></li>
-<li><p><strong>covar_module</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>) – The module computing the covariance (Kernel) matrix.
-If omitted, use a <cite>MaternKernel</cite>.</p></li>
-<li><p><strong>mean_module</strong> (<em>Optional</em><em>[</em><em>Mean</em><em>]</em>) – The mean function to be used. If omitted, use a
-<cite>ConstantMean</cite>.</p></li>
-<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><em>OutcomeTransform</em><em>]</em>) – An outcome transform that is applied to the
-training data during instantiation and to the posterior during
-inference (that is, the <cite>Posterior</cite> obtained by calling
-<cite>.posterior</cite> on the model will be on the original scale).</p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>InputTransform</em><em>]</em>) – An input transfrom that is applied in the model’s
-forward pass.</p></li>
+<li><p><strong>train_X</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>train_Y</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>train_Yvar</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>covar_module</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>) – </p></li>
+<li><p><strong>mean_module</strong> (<em>Optional</em><em>[</em><em>Mean</em><em>]</em>) – </p></li>
+<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><em>OutcomeTransform</em><em>]</em>) – </p></li>
+<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>InputTransform</em><em>]</em>) – </p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.models.gp_regression.FixedNoiseGP.fantasize">
-<span class="sig-name descname"><span class="pre">fantasize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#FixedNoiseGP.fantasize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.FixedNoiseGP.fantasize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Construct a fantasy model.</p>
-<p>Constructs a fantasy model in the following fashion:
-(1) compute the model posterior at <cite>X</cite> (if <cite>observation_noise=True</cite>,
-this includes observation noise taken as the mean across the observation
-noise in the training data. If <cite>observation_noise</cite> is a Tensor, use
-it directly as the observation noise to add).
-(2) sample from this posterior (using <cite>sampler</cite>) to generate “fake”
-observations.
-(3) condition the model on the new fake observations.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x n’ x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
-the feature space, <cite>n’</cite> is the number of points per batch, and
-<cite>batch_shape</cite> is the batch shape (must be compatible with the
-batch shape of the model).</p></li>
-<li><p><strong>sampler</strong> (<em>MCSampler</em>) – The sampler used for sampling from the posterior at <cite>X</cite>.</p></li>
-<li><p><strong>observation_noise</strong> (<em>bool</em><em> | </em><em>Tensor</em>) – If True, include the mean across the observation
-noise in the training data as observation noise in the posterior
-from which the samples are drawn. If a Tensor, use it directly
-as the specified measurement noise.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The constructed fantasy model.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="#botorch.models.gp_regression.FixedNoiseGP" title="botorch.models.gp_regression.FixedNoiseGP"><em>FixedNoiseGP</em></a></p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.models.gp_regression.FixedNoiseGP.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#FixedNoiseGP.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.FixedNoiseGP.forward" title="Permalink to this definition">¶</a></dt>
-<dd><p>Defines the computation performed at every call.</p>
-<p>Should be overridden by all subclasses.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Although the recipe for forward pass needs to be defined within
-this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
-instead of this since the former takes care of running the
-registered hooks while the latter silently ignores them.</p>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – </p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>MultivariateNormal</em></p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.models.gp_regression.FixedNoiseGP.subset_output">
-<span class="sig-name descname"><span class="pre">subset_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idcs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#FixedNoiseGP.subset_output"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.FixedNoiseGP.subset_output" title="Permalink to this definition">¶</a></dt>
-<dd><p>Subset the model along the output dimension.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>idcs</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the model to.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The current model, subset to the specified output indices.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>BatchedMultiOutputGPyTorchModel</em></p>
-</dd>
-</dl>
-</dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.gp_regression.HeteroskedasticSingleTaskGP">
@@ -1000,7 +961,7 @@ experimentation and simulation optimization.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">se</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">se</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">train_Yvar</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="o">+</span> <span class="n">se</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand_like</span><span class="p">(</span><span class="n">train_Y</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">HeteroskedasticSingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">)</span>
 </pre></div>
@@ -1118,15 +1079,14 @@ between them, which can help you predict and optimize the high-fidelity function
 without having to do too many expensive high-fidelity evaluations.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="wu2019mf" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span>Wu2019mf<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id2" role="doc-backlink">1</a>,<a href="#id3" role="doc-backlink">2</a>)</span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id2" role="doc-backlink">Wu2019mf</a><span class="fn-bracket">]</span></span>
 <p>J. Wu, S. Toscano-Palmerin, P. I. Frazier, and A. G. Wilson. Practical
 multi-fidelity bayesian optimization for hyperparameter tuning. ArXiv 2019.</p>
 </div>
 </div>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.gp_regression_fidelity.</span></span><span class="sig-name descname"><span class="pre">SingleTaskMultiFidelityGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration_fidelity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fidelity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linear_truncated</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression_fidelity.html#SingleTaskMultiFidelityGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.gp_regression_fidelity.</span></span><span class="sig-name descname"><span class="pre">SingleTaskMultiFidelityGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration_fidelity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fidelities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fidelity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linear_truncated</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression_fidelity.html#SingleTaskMultiFidelityGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.gp_regression.SingleTaskGP" title="botorch.models.gp_regression.SingleTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">SingleTaskGP</span></code></a></p>
 <p>A single task multi-fidelity GP model.</p>
 <p>A SingleTaskGP model using a DownsamplingKernel for the data fidelity
@@ -1136,7 +1096,7 @@ fidelity parameter (if present).</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskMultiFidelityGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">data_fidelity</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskMultiFidelityGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">data_fidelities</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
 </pre></div>
 </div>
 <dl class="field-list simple">
@@ -1146,10 +1106,15 @@ fidelity parameter (if present).</p>
 where <cite>s</cite> is the dimension of the fidelity parameters (either one
 or two).</p></li>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
+<li><p><strong>train_Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – An optional <cite>batch_shape x n x m</cite> tensor of observed
+measurement noise.</p></li>
 <li><p><strong>iteration_fidelity</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The column index for the training iteration fidelity
 parameter (optional).</p></li>
+<li><p><strong>data_fidelities</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>int</em><em>]</em><em>]</em><em>]</em>) – The column indices for the downsampling fidelity parameter.
+If a list/tuple of indices is provided, a kernel will be constructed for
+each index (optional).</p></li>
 <li><p><strong>data_fidelity</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The column index for the downsampling fidelity parameter
-(optional).</p></li>
+(optional). Deprecated in favor of <cite>data_fidelities</cite>.</p></li>
 <li><p><strong>linear_truncated</strong> (<em>bool</em>) – If True, use a <cite>LinearTruncatedFidelityKernel</cite> instead
 of the default kernel.</p></li>
 <li><p><strong>nu</strong> (<em>float</em>) – The smoothness parameter for the Matern kernel: either 1/2, 3/2, or
@@ -1184,73 +1149,33 @@ forward pass.</p></li>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.gp_regression_fidelity.</span></span><span class="sig-name descname"><span class="pre">FixedNoiseMultiFidelityGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration_fidelity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fidelity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linear_truncated</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression_fidelity.html#FixedNoiseMultiFidelityGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.models.gp_regression.FixedNoiseGP" title="botorch.models.gp_regression.FixedNoiseGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">FixedNoiseGP</span></code></a></p>
-<p>A single task multi-fidelity GP model using fixed noise levels.</p>
-<p>A FixedNoiseGP model analogue to SingleTaskMultiFidelityGP, using a
-DownsamplingKernel for the data fidelity parameter (if present) and
-an ExponentialDecayKernel for the iteration fidelity parameter (if present).</p>
-<p>This kernel is described in <a class="reference internal" href="#wu2019mf" id="id3"><span>[Wu2019mf]</span></a>.</p>
-<p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">train_Y</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.01</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">FixedNoiseMultiFidelityGP</span><span class="p">(</span>
-<span class="gp">&gt;&gt;&gt; </span>    <span class="n">train_X</span><span class="p">,</span>
-<span class="gp">&gt;&gt;&gt; </span>    <span class="n">train_Y</span><span class="p">,</span>
-<span class="gp">&gt;&gt;&gt; </span>    <span class="n">train_Yvar</span><span class="p">,</span>
-<span class="gp">&gt;&gt;&gt; </span>    <span class="n">data_fidelity</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
-</pre></div>
-</div>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.gp_regression_fidelity.</span></span><span class="sig-name descname"><span class="pre">FixedNoiseMultiFidelityGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration_fidelity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fidelities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fidelity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linear_truncated</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression_fidelity.html#FixedNoiseMultiFidelityGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP" title="botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">SingleTaskMultiFidelityGP</span></code></a></p>
+<p>DEPRECATED: Use <cite>SingleTaskMultiFidelityGP</cite> instead.
+Will be removed in a future release (~v0.11).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>train_X</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x (d + s)</cite> tensor of training features,
-where <cite>s</cite> is the dimension of the fidelity parameters (either one
-or two).</p></li>
-<li><p><strong>train_Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
-<li><p><strong>train_Yvar</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of observed measurement noise.</p></li>
-<li><p><strong>iteration_fidelity</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The column index for the training iteration fidelity
-parameter (optional).</p></li>
-<li><p><strong>data_fidelity</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The column index for the downsampling fidelity parameter
-(optional).</p></li>
-<li><p><strong>linear_truncated</strong> (<em>bool</em>) – If True, use a <cite>LinearTruncatedFidelityKernel</cite> instead
-of the default kernel.</p></li>
-<li><p><strong>nu</strong> (<em>float</em>) – The smoothness parameter for the Matern kernel: either 1/2, 3/2, or
-5/2. Only used when <cite>linear_truncated=True</cite>.</p></li>
-<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><em>OutcomeTransform</em><em>]</em>) – An outcome transform that is applied to the
-training data during instantiation and to the posterior during
-inference (that is, the <cite>Posterior</cite> obtained by calling
-<cite>.posterior</cite> on the model will be on the original scale).</p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>InputTransform</em><em>]</em>) – An input transform that is applied in the model’s
-forward pass.</p></li>
+<li><p><strong>train_X</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>train_Y</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>train_Yvar</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>iteration_fidelity</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – </p></li>
+<li><p><strong>data_fidelities</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>int</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>data_fidelity</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – </p></li>
+<li><p><strong>linear_truncated</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>nu</strong> (<em>float</em>) – </p></li>
+<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><em>OutcomeTransform</em><em>]</em>) – </p></li>
+<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>InputTransform</em><em>]</em>) – </p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP.construct_inputs">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fidelity_features</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression_fidelity.html#FixedNoiseMultiFidelityGP.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP.construct_inputs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Construct <cite>Model</cite> keyword arguments from a dict of <cite>SupervisedDataset</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a>) – Dictionary of <cite>SupervisedDataset</cite>.</p></li>
-<li><p><strong>fidelity_features</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – Column indices of fidelity features.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
-</dd>
-</dl>
-</dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.models.gp_regression_mixed">
 <span id="gp-regression-models-for-mixed-parameter-spaces"></span><h3>GP Regression Models for Mixed Parameter Spaces<a class="headerlink" href="#module-botorch.models.gp_regression_mixed" title="Permalink to this heading">¶</a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.gp_regression_mixed.MixedSingleTaskGP">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.gp_regression_mixed.</span></span><span class="sig-name descname"><span class="pre">MixedSingleTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cat_dims</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cont_kernel_factory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression_mixed.html#MixedSingleTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression_mixed.MixedSingleTaskGP" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.gp_regression_mixed.</span></span><span class="sig-name descname"><span class="pre">MixedSingleTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cat_dims</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cont_kernel_factory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression_mixed.html#MixedSingleTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression_mixed.MixedSingleTaskGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.gp_regression.SingleTaskGP" title="botorch.models.gp_regression.SingleTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">SingleTaskGP</span></code></a></p>
 <p>A single-task exact GP model for mixed search spaces.</p>
 <p>This model is similar to <cite>SingleTaskGP</cite>, but supports mixed search spaces,
@@ -1290,6 +1215,8 @@ discrete optimization variables. We recommend using <cite>optimize_acqf_mixed.</
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
 <li><p><strong>cat_dims</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – A list of indices corresponding to the columns of
 the input <cite>X</cite> that should be considered categorical features.</p></li>
+<li><p><strong>train_Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – An optional <cite>batch_shape x n x m</cite> tensor of observed
+measurement noise.</p></li>
 <li><p><strong>cont_kernel_factory</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>torch.Size</em><em>, </em><em>int</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em><em>, </em><em>Kernel</em><em>]</em><em>]</em>) – A method that accepts  <cite>batch_shape</cite>, <cite>ard_num_dims</cite>,
 and <cite>active_dims</cite> arguments and returns an instantiated GPyTorch
 <cite>Kernel</cite> object to be used as the base kernel for the continuous
@@ -1425,23 +1352,23 @@ been added and all test-time caches have been updated.</p>
 <p>References</p>
 <div class="citation-list" role="list">
 <div class="citation" id="bonilla2007mtgp" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id4" role="doc-backlink">Bonilla2007MTGP</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id3" role="doc-backlink">Bonilla2007MTGP</a><span class="fn-bracket">]</span></span>
 <p>E. Bonilla, K. Chai and C. Williams. Multi-task Gaussian Process Prediction.
 Advances in Neural Information Processing Systems 20, NeurIPS 2007.</p>
 </div>
 <div class="citation" id="swersky2013mtbo" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id5" role="doc-backlink">Swersky2013MTBO</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id4" role="doc-backlink">Swersky2013MTBO</a><span class="fn-bracket">]</span></span>
 <p>K. Swersky, J. Snoek and R. Adams. Multi-Task Bayesian Optimization.
 Advances in Neural Information Processing Systems 26, NeurIPS 2013.</p>
 </div>
 <div class="citation" id="doucet2010sampl" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id7" role="doc-backlink">Doucet2010sampl</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id6" role="doc-backlink">Doucet2010sampl</a><span class="fn-bracket">]</span></span>
 <p>A. Doucet. A Note on Efficient Conditional Simulation of Gaussian Distributions.
 <a class="reference external" href="http://www.stats.ox.ac.uk/~doucet/doucet_simulationconditionalgaussian.pdf">http://www.stats.ox.ac.uk/~doucet/doucet_simulationconditionalgaussian.pdf</a>,
 Apr 2010.</p>
 </div>
 <div class="citation" id="maddox2021bohdo" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id8" role="doc-backlink">Maddox2021bohdo</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id7" role="doc-backlink">Maddox2021bohdo</a><span class="fn-bracket">]</span></span>
 <p>W. Maddox, M. Balandat, A. Wilson, and E. Bakshy. Bayesian Optimization with
 High-Dimensional Outputs. <a class="reference external" href="https://arxiv.org/abs/2106.12997">https://arxiv.org/abs/2106.12997</a>, Jun 2021.</p>
 </div>
@@ -1451,7 +1378,7 @@ High-Dimensional Outputs. <a class="reference external" href="https://arxiv.org/
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.multitask.</span></span><span class="sig-name descname"><span class="pre">MultiTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_covar_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#MultiTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ExactGP</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">MultiTaskGPyTorchModel</span></code>, <a class="reference internal" href="#botorch.models.model.FantasizeMixin" title="botorch.models.model.FantasizeMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">FantasizeMixin</span></code></a></p>
 <p>Multi-Task exact GP model using an ICM (intrinsic co-regionalization model)
-kernel. See <a class="reference internal" href="#bonilla2007mtgp" id="id4"><span>[Bonilla2007MTGP]</span></a> and <a class="reference internal" href="#swersky2013mtbo" id="id5"><span>[Swersky2013MTBO]</span></a> for a reference on the
+kernel. See <a class="reference internal" href="#bonilla2007mtgp" id="id3"><span>[Bonilla2007MTGP]</span></a> and <a class="reference internal" href="#swersky2013mtbo" id="id4"><span>[Swersky2013MTBO]</span></a> for a reference on the
 model and its use in Bayesian optimization.</p>
 <p>The model can be single-output or multi-output, determined by the <cite>output_tasks</cite>.
 This model uses relatively strong priors on the base Kernel hyperparameters, which
@@ -1577,7 +1504,8 @@ contain <cite>use_LKJ_prior</cite> indicator and should contain float value <cit
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.multitask.</span></span><span class="sig-name descname"><span class="pre">FixedNoiseMultiTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_covar_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#FixedNoiseMultiTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.multitask.FixedNoiseMultiTaskGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.multitask.MultiTaskGP" title="botorch.models.multitask.MultiTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiTaskGP</span></code></a></p>
 <p>Multi-Task GP model using an ICM kernel, with known observation noise.</p>
-<p>DEPRECATED: Please use <cite>MultiTaskGP</cite> with <cite>train_Yvar</cite> instead.</p>
+<p>DEPRECATED: Please use <cite>MultiTaskGP</cite> with <cite>train_Yvar</cite> instead.
+Will be removed in a future release (~v0.10).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1725,7 +1653,9 @@ of the feature space and <cite>q</cite> is the number of points considered
 jointly.</p></li>
 <li><p><strong>observation_noise</strong> (<em>bool</em><em> | </em><em>Tensor</em>) – If True, add the observation noise from the
 likelihood to the posterior. If a Tensor, use it directly as the
-observation noise (must be of shape <cite>(batch_shape) x q</cite>).</p></li>
+observation noise (must be of shape <cite>(batch_shape) x q</cite>). It is
+assumed to be in the outcome-transformed space if an outcome
+transform is used.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>PosteriorTransform</em><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
 <li><p><strong>output_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
@@ -1764,7 +1694,7 @@ If <cite>False</cite>, model is put in <cite>eval</cite> mode.</p>
 <p>References</p>
 <div class="citation-list" role="list">
 <div class="citation" id="zhe2019hogp" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id6" role="doc-backlink">Zhe2019hogp</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id5" role="doc-backlink">Zhe2019hogp</a><span class="fn-bracket">]</span></span>
 <p>S. Zhe, W. Xing, and R. M. Kirby. Scalable high-order gaussian process regression.
 Proceedings of Machine Learning Research, volume 89, Apr 2019.</p>
 </div>
@@ -1866,12 +1796,12 @@ noises associated with the targets (if applicable).</p></li>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.higher_order_gp.</span></span><span class="sig-name descname"><span class="pre">HigherOrderGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_modules</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_latent_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learn_latent_pars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latent_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#HigherOrderGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.higher_order_gp.HigherOrderGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BatchedMultiOutputGPyTorchModel</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ExactGP</span></code>, <a class="reference internal" href="#botorch.models.model.FantasizeMixin" title="botorch.models.model.FantasizeMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">FantasizeMixin</span></code></a></p>
 <p>A model for high-dimensional output regression.</p>
-<p>As described in <a class="reference internal" href="#zhe2019hogp" id="id6"><span>[Zhe2019hogp]</span></a>. “Higher-order” means that the predictions
+<p>As described in <a class="reference internal" href="#zhe2019hogp" id="id5"><span>[Zhe2019hogp]</span></a>. “Higher-order” means that the predictions
 are matrices (tensors) with at least two dimensions, such as images or
 grids of images, or measurements taken from a region of at least two
 dimensions.
-The posterior uses Matheron’s rule <a class="reference internal" href="#doucet2010sampl" id="id7"><span>[Doucet2010sampl]</span></a>
-as described in <a class="reference internal" href="#maddox2021bohdo" id="id8"><span>[Maddox2021bohdo]</span></a>.</p>
+The posterior uses Matheron’s rule <a class="reference internal" href="#doucet2010sampl" id="id6"><span>[Doucet2010sampl]</span></a>
+as described in <a class="reference internal" href="#maddox2021bohdo" id="id7"><span>[Maddox2021bohdo]</span></a>.</p>
 <p><cite>HigherOrderGP</cite> differs from a “vector” multi-output model in that it uses
 Kronecker algebra to obtain parsimonious covariance matrices for these
 outputs (see <cite>KroneckerMultiTaskGP</cite> for more information). For example,
@@ -2045,12 +1975,12 @@ the joint covariance across all data points.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="chu2005preference" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Chu2005preference<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id9" role="doc-backlink">1</a>,<a href="#id11" role="doc-backlink">2</a>,<a href="#id12" role="doc-backlink">3</a>)</span>
+<span class="backrefs">(<a href="#id8" role="doc-backlink">1</a>,<a href="#id10" role="doc-backlink">2</a>,<a href="#id11" role="doc-backlink">3</a>)</span>
 <p>Wei Chu, and Zoubin Ghahramani. Preference learning with Gaussian processes.
 Proceedings of the 22nd international conference on Machine learning. 2005.</p>
 </div>
 <div class="citation" id="brochu2010tutorial" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id10" role="doc-backlink">Brochu2010tutorial</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id9" role="doc-backlink">Brochu2010tutorial</a><span class="fn-bracket">]</span></span>
 <p>Eric Brochu, Vlad M. Cora, and Nando De Freitas.
 A tutorial on Bayesian optimization of expensive cost functions,
 with application to active user modeling and hierarchical reinforcement learning.
@@ -2059,15 +1989,15 @@ arXiv preprint arXiv:1012.2599 (2010).</p>
 </div>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.pairwise_gp.PairwiseGP">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.pairwise_gp.</span></span><span class="sig-name descname"><span class="pre">PairwiseGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datapoints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comparisons</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.pairwise_gp.</span></span><span class="sig-name descname"><span class="pre">PairwiseGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datapoints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comparisons</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">consolidate_rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">consolidate_atol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxfev</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">GP</span></code>, <a class="reference internal" href="#botorch.models.model.FantasizeMixin" title="botorch.models.model.FantasizeMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">FantasizeMixin</span></code></a></p>
 <p>Probit GP for preference learning with Laplace approximation</p>
 <p>A probit-likelihood GP that learns via pairwise comparison data, using a
 Laplace approximation of the posterior of the estimated utility values. By
 default it uses a scaled RBF kernel.</p>
-<p>Implementation is based on <a class="reference internal" href="#chu2005preference" id="id9"><span>[Chu2005preference]</span></a>.
-Also see <a class="reference internal" href="#brochu2010tutorial" id="id10"><span>[Brochu2010tutorial]</span></a> for additional reference.</p>
-<p>Note that in <a class="reference internal" href="#chu2005preference" id="id11"><span>[Chu2005preference]</span></a> the likelihood of a pairwise comparison
+<p>Implementation is based on <a class="reference internal" href="#chu2005preference" id="id8"><span>[Chu2005preference]</span></a>.
+Also see <a class="reference internal" href="#brochu2010tutorial" id="id9"><span>[Brochu2010tutorial]</span></a> for additional reference.</p>
+<p>Note that in <a class="reference internal" href="#chu2005preference" id="id10"><span>[Chu2005preference]</span></a> the likelihood of a pairwise comparison
 is <span class="math notranslate nohighlight">\(\left(\frac{f(x_1) - f(x_2)}{\sqrt{2}\sigma}\right)\)</span>, i.e. a scale is
 used in the denominator. To maintain consistency with usage of kernels
 elsewhere in BoTorch, we instead do not include <span class="math notranslate nohighlight">\(\sigma\)</span> in the code
@@ -2086,14 +2016,28 @@ generating comparisons [0, 1] and [2, 1].
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>datapoints</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x d</cite> tensor of training features.</p></li>
-<li><p><strong>comparisons</strong> (<em>Tensor</em>) – A <cite>batch_shape x m x 2</cite> training comparisons;
-comparisons[i] is a noisy indicator suggesting the utility value
-of comparisons[i, 0]-th is greater than comparisons[i, 1]-th.</p></li>
+<li><p><strong>datapoints</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – Either <cite>None</cite> or a <cite>batch_shape x n x d</cite> tensor of
+training features. If either <cite>datapoints</cite> or <cite>comparisons</cite> is
+<cite>None</cite>, construct a prior-only model.</p></li>
+<li><p><strong>comparisons</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – Either <cite>None</cite> or a <cite>batch_shape x m x 2</cite> tensor of
+training comparisons; comparisons[i] is a noisy indicator
+suggesting the utility value of comparisons[i, 0]-th is greater
+than comparisons[i, 1]-th. If either <cite>comparisons</cite> or
+<cite>datapoints</cite> is <cite>None</cite>, construct a prior-only model.</p></li>
 <li><p><strong>likelihood</strong> (<em>Optional</em><em>[</em><em>PairwiseLikelihood</em><em>]</em>) – A PairwiseLikelihood.</p></li>
 <li><p><strong>covar_module</strong> (<em>Optional</em><em>[</em><em>ScaleKernel</em><em>]</em>) – Covariance module.</p></li>
 <li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>InputTransform</em><em>]</em>) – An input transform that is applied in the model’s
 forward pass.</p></li>
+<li><p><strong>jitter</strong> (<em>float</em>) – Value added to diagonal for numerical stability in
+<cite>psd_safe_cholesky</cite>.</p></li>
+<li><p><strong>xtol</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Stopping creteria in scipy.optimize.fsolve used to find f_map
+in <cite>PairwiseGP._update</cite>. If None, default behavior is handled by
+<cite>PairwiseGP._update</cite>.</p></li>
+<li><p><strong>consolidate_rtol</strong> (<em>float</em>) – <cite>rtol</cite> passed to <cite>consolidate_duplicates</cite>.</p></li>
+<li><p><strong>consolidate_atol</strong> (<em>float</em>) – <cite>atol</cite> passed to <cite>consolidate_duplicates</cite>.</p></li>
+<li><p><strong>maxfev</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The maximum number of calls to the function in
+scipy.optimize.fsolve. If None, default behavior is handled by
+<cite>PairwiseGP._update</cite>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -2134,10 +2078,14 @@ shape <cite>broadcast(test_batch_shape, model.batch_shape) x q x m</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>datapoints</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite> dimension tensor X. If there are input
-transformations, assume the datapoints are not transformed</p></li>
-<li><p><strong>comparisons</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A tensor of size <cite>batch_shape x m x 2</cite>. (i, j) means
-f_i is preferred over f_j.</p></li>
+<li><p><strong>datapoints</strong> (<em>Tensor</em><em> | </em><em>None</em>) – Either <cite>None</cite> or a <cite>batch_shape x n x d</cite> dimension
+tensor X. If there are input transformations, assume the
+datapoints are not transformed. If either <cite>datapoints</cite> or
+<cite>comparisons</cite> is <cite>None</cite>, construct a prior-only model.</p></li>
+<li><p><strong>comparisons</strong> (<em>Tensor</em><em> | </em><em>None</em>) – Either <cite>None</cite> or a tensor of size <cite>batch_shape x m x
+2</cite>. (i, j) means f_i is preferred over f_j. If either
+<cite>comparisons</cite> or <cite>datapoints</cite> is <cite>None</cite>, construct a prior-only
+model.</p></li>
 <li><p><strong>strict</strong> (<em>bool</em>) – <cite>strict</cite> argument as in gpytorch.models.exact_gp for compatibility
 when using fit_gpytorch_model with input_transform.</p></li>
 <li><p><strong>update_model</strong> (<em>bool</em>) – True if we want to refit the model (see _update) after
@@ -2239,7 +2187,7 @@ pairwise comparisons</p>
 <li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x d</cite> dimension tensor X</p></li>
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A tensor of size <cite>batch_shape x m x 2</cite>. (i, j) means
 f_i is preferred over f_j</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – Not used.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2257,7 +2205,7 @@ original model conditioned on the new observations <cite>(X, Y)</cite>.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.pairwise_gp.</span></span><span class="sig-name descname"><span class="pre">PairwiseLaplaceMarginalLogLikelihood</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">likelihood</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseLaplaceMarginalLogLikelihood"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MarginalLogLikelihood</span></code></p>
 <p>Laplace-approximated marginal log likelihood/evidence for PairwiseGP</p>
-<p>See (12) from <a class="reference internal" href="#chu2005preference" id="id12"><span>[Chu2005preference]</span></a>.</p>
+<p>See (12) from <a class="reference internal" href="#chu2005preference" id="id11"><span>[Chu2005preference]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -2299,25 +2247,44 @@ so that it’s still compatible with fit_gpytorch_*.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.contextual.SACGP">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.contextual.</span></span><span class="sig-name descname"><span class="pre">SACGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decomposition</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/contextual.html#SACGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.contextual.SACGP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.models.gp_regression.FixedNoiseGP" title="botorch.models.gp_regression.FixedNoiseGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">FixedNoiseGP</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.gp_regression.SingleTaskGP" title="botorch.models.gp_regression.SingleTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">SingleTaskGP</span></code></a></p>
 <p>A GP using a Structural Additive Contextual(SAC) kernel.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_X</strong> (<em>Tensor</em>) – (n x d) X training data.</p></li>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – (n x 1) Y training data.</p></li>
-<li><p><strong>train_Yvar</strong> (<em>Tensor</em>) – (n x 1) Noise variances of each training Y.</p></li>
+<li><p><strong>train_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – (n x 1) Noise variances of each training Y. If None,
+we use an inferred noise likelihood.</p></li>
 <li><p><strong>decomposition</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Keys are context names. Values are the indexes of
 parameters belong to the context. The parameter indexes are in
 the same order across contexts.</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.contextual.SACGP.construct_inputs">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decomposition</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/contextual.html#SACGP.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.contextual.SACGP.construct_inputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct <cite>Model</cite> keyword arguments from a dict of <cite>SupervisedDataset</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a>) – A <cite>SupervisedDataset</cite> containing the training data.</p></li>
+<li><p><strong>decomposition</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Dictionary of context names and their indexes of the
+corresponding active context parameters.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.contextual.LCEAGP">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.contextual.</span></span><span class="sig-name descname"><span class="pre">LCEAGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decomposition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_embedding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cat_feature_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embs_feature_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embs_dim_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context_weight_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/contextual.html#LCEAGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.contextual.LCEAGP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.models.gp_regression.FixedNoiseGP" title="botorch.models.gp_regression.FixedNoiseGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">FixedNoiseGP</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.gp_regression.SingleTaskGP" title="botorch.models.gp_regression.SingleTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">SingleTaskGP</span></code></a></p>
 <p>A GP using a Latent Context Embedding Additive (LCE-A) Kernel.</p>
 <p>Note that the model does not support batch training. Input training
 data sets should have dim = 2.</p>
@@ -2326,9 +2293,12 @@ data sets should have dim = 2.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_X</strong> (<em>Tensor</em>) – (n x d) X training data.</p></li>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – (n x 1) Y training data.</p></li>
-<li><p><strong>train_Yvar</strong> (<em>Tensor</em>) – (n x 1) Noise variance of Y.</p></li>
+<li><p><strong>train_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – (n x 1) Noise variance of Y. If None,
+we use an inferred noise likelihood.</p></li>
 <li><p><strong>decomposition</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Keys are context names. Values are the indexes of
 parameters belong to the context.</p></li>
+<li><p><strong>train_embedding</strong> (<em>bool</em>) – Whether to train the embedding layer or not. If False,
+the model will use pre-trained embeddings in embs_feature_dict.</p></li>
 <li><p><strong>cat_feature_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Keys are context names and values are list of categorical
 features i.e. {“context_name” : [cat_0, …, cat_k]}, where k is the
 number of categorical variables. If None, we use context names in the
@@ -2339,26 +2309,67 @@ context.</p></li>
 equals the number of categorical features k. If None, the embedding
 dimension is set to 1 for each categorical variable.</p></li>
 <li><p><strong>context_weight_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Known population weights of each context.</p></li>
-<li><p><strong>train_embedding</strong> (<em>bool</em>) – </p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.contextual.LCEAGP.construct_inputs">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decomposition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_embedding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cat_feature_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embs_feature_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embs_dim_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context_weight_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/contextual.html#LCEAGP.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.contextual.LCEAGP.construct_inputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct <cite>Model</cite> keyword arguments from a dict of <cite>SupervisedDataset</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a>) – A <cite>SupervisedDataset</cite> containing the training data.</p></li>
+<li><p><strong>decomposition</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Dictionary of context names and their indexes of the
+corresponding active context parameters.</p></li>
+<li><p><strong>train_embedding</strong> (<em>bool</em>) – Whether to train the embedding layer or not.</p></li>
+<li><p><strong>cat_feature_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Keys are context names and values are list of categorical
+features i.e. {“context_name” : [cat_0, …, cat_k]}, where k is the
+number of categorical variables. If None, we use context names in the
+decomposition as the only categorical feature, i.e., k = 1.</p></li>
+<li><p><strong>embs_feature_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Pre-trained continuous embedding features of each
+context.</p></li>
+<li><p><strong>embs_dim_list</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Embedding dimension for each categorical variable. The length
+equals the number of categorical features k. If None, the embedding
+dimension is set to 1 for each categorical variable.</p></li>
+<li><p><strong>context_weight_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Known population weights of each context.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.models.contextual_multioutput">
 <span id="contextual-gp-models-with-context-rewards"></span><h3>Contextual GP Models with Context Rewards<a class="headerlink" href="#module-botorch.models.contextual_multioutput" title="Permalink to this heading">¶</a></h3>
+<p>References</p>
+<div class="citation-list" role="list">
+<div class="citation" id="feng2020hdcps" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a href="#id12" role="doc-backlink">Feng2020HDCPS</a><span class="fn-bracket">]</span></span>
+<p>Q. Feng, B. Latham, H. Mao and E. Backshy. High-Dimensional Contextual Policy
+Search with Unknown Context Rewards using Bayesian Optimization.
+Advances in Neural Information Processing Systems 33, NeurIPS 2020.</p>
+</div>
+</div>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.contextual_multioutput.LCEMGP">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.contextual_multioutput.</span></span><span class="sig-name descname"><span class="pre">LCEMGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context_cat_feature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context_emb_feature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embs_dim_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/contextual_multioutput.html#LCEMGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.contextual_multioutput.LCEMGP" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.contextual_multioutput.</span></span><span class="sig-name descname"><span class="pre">LCEMGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context_cat_feature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context_emb_feature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embs_dim_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/contextual_multioutput.html#LCEMGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.contextual_multioutput.LCEMGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.multitask.MultiTaskGP" title="botorch.models.multitask.MultiTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiTaskGP</span></code></a></p>
-<p>The Multi-Task GP with the latent context embedding multioutput
-(LCE-M) kernel.</p>
+<p>The Multi-Task GP with the latent context embedding multioutput (LCE-M)
+kernel. See <a class="reference internal" href="#feng2020hdcps" id="id12"><span>[Feng2020HDCPS]</span></a> for a reference on the model and its use in Bayesian
+optimization.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_X</strong> (<em>Tensor</em>) – (n x d) X training data.</p></li>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – (n x 1) Y training data.</p></li>
 <li><p><strong>task_feature</strong> (<em>int</em>) – Column index of train_X to get context indices.</p></li>
+<li><p><strong>train_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – An optional (n x 1) tensor of observed variances of each
+training Y. If None, we infer the noise. Note that the inferred noise
+is common across all tasks.</p></li>
 <li><p><strong>context_cat_feature</strong> (<em>Tensor</em><em> | </em><em>None</em>) – (n_contexts x k) one-hot encoded context
 features. Rows are ordered by context indices, where k is the
 number of categorical variables. If None, task indices will
@@ -2424,12 +2435,14 @@ registered hooks while the latter silently ignores them.</p>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.contextual_multioutput.LCEMGP" title="botorch.models.contextual_multioutput.LCEMGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">LCEMGP</span></code></a></p>
 <p>The Multi-Task GP the latent context embedding multioutput
 (LCE-M) kernel, with known observation noise.</p>
+<p>DEPRECATED: Please use <cite>LCEMGP</cite> with <cite>train_Yvar</cite> instead.
+Will be removed in a future release (~v0.11).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_X</strong> (<em>Tensor</em>) – (n x d) X training data.</p></li>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – (n x 1) Y training data.</p></li>
-<li><p><strong>train_Yvar</strong> (<em>Tensor</em>) – (n x 1) Noise variances of each training Y.</p></li>
+<li><p><strong>train_Yvar</strong> (<em>Tensor</em>) – (n x 1) Observed variances of each training Y.</p></li>
 <li><p><strong>task_feature</strong> (<em>int</em>) – Column index of train_X to get context indices.</p></li>
 <li><p><strong>context_cat_feature</strong> (<em>Tensor</em><em> | </em><em>None</em>) – (n_contexts x k) one-hot encoded context
 features. Rows are ordered by context indices, where k is the
@@ -2558,7 +2571,9 @@ of the feature space and <cite>q</cite> is the number of points considered
 jointly.</p></li>
 <li><p><strong>observation_noise</strong> – If True, add the observation noise from the
 likelihood to the posterior. If a Tensor, use it directly as the
-observation noise (must be of shape <cite>(batch_shape) x q</cite>).</p></li>
+observation noise (must be of shape <cite>(batch_shape) x q</cite>). It is
+assumed to be in the outcome-transformed space if an outcome
+transform is used.</p></li>
 <li><p><strong>posterior_transform</strong> – An optional PosteriorTransform.</p></li>
 </ul>
 </dd>
@@ -3139,7 +3154,7 @@ isn’t compatible with <cite>fit_gpytorch_model</cite>.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">f1</span><span class="p">(</span><span class="n">X1</span><span class="p">),</span> <span class="n">f2</span><span class="p">(</span><span class="n">X2</span><span class="p">))</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">train_Yvar</span> <span class="o">=</span> <span class="mf">0.01</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">train_Y</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mtsaas_gp</span> <span class="o">=</span> <span class="n">SaasFullyBayesianFixedNoiseMultiTaskGP</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mtsaas_gp</span> <span class="o">=</span> <span class="n">SaasFullyBayesianMultiTaskGP</span><span class="p">(</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">,</span> <span class="n">task_feature</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fit_fully_bayesian_model_nuts</span><span class="p">(</span><span class="n">mtsaas_gp</span><span class="p">)</span>
@@ -3208,8 +3223,9 @@ over input data at this point.</p>
 <span class="sig-name descname"><span class="pre">fantasize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#SaasFullyBayesianMultiTaskGP.fantasize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.fantasize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct a fantasy model.</p>
 <p>Constructs a fantasy model in the following fashion:
-(1) compute the model posterior at <cite>X</cite> (including observation noise if
-<cite>observation_noise=True</cite>).
+(1) compute the model posterior at <cite>X</cite>, including observation noise.
+If <cite>observation_noise</cite> is a Tensor, use it directly as the observation
+noise to add.
 (2) sample from this posterior (using <cite>sampler</cite>) to generate “fake”
 observations.
 (3) condition the model on the new fake observations.</p>
@@ -3221,7 +3237,14 @@ the feature space, <cite>n’</cite> is the number of points per batch, and
 <cite>batch_shape</cite> is the batch shape (must be compatible with the
 batch shape of the model).</p></li>
 <li><p><strong>sampler</strong> – The sampler used for sampling from the posterior at <cite>X</cite>.</p></li>
-<li><p><strong>observation_noise</strong> – If True, include observation noise.</p></li>
+<li><p><strong>observation_noise</strong> – A <cite>model_batch_shape x 1 x m</cite>-dim tensor or
+a <cite>model_batch_shape x n’ x m</cite>-dim tensor containing the average
+noise for each batch and output, where <cite>m</cite> is the number of outputs.
+<cite>noise</cite> must be in the outcome-transformed space if an outcome
+transform is used.
+If None and using an inferred noise likelihood, the noise will be the
+inferred noise level. If using a fixed noise likelihood, the mean across
+the observation noise in the training data is used as observation noise.</p></li>
 <li><p><strong>kwargs</strong> – Will be passed to <cite>model.condition_on_observations</cite></p></li>
 </ul>
 </dd>
@@ -5315,7 +5338,7 @@ is <cite>input_batch_shape</cite> against <cite>batch_shape</cite>.</p>
 <dd class="field-even"><p>A dictionary containing the extracted information.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em>[<em>Hashable</em>, <em>Tensor</em>]</p>
+<dd class="field-odd"><p><em>Dict</em>[str, <em>Tensor</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -5810,7 +5833,7 @@ duplicate entries of <cite>X</cite>. Supporting 2-d Tensor only.</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.models.utils.assorted.consolidate_duplicates">
-<span class="sig-prename descclassname"><span class="pre">botorch.models.utils.assorted.</span></span><span class="sig-name descname"><span class="pre">consolidate_duplicates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/utils/assorted.html#consolidate_duplicates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.utils.assorted.consolidate_duplicates" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.models.utils.assorted.</span></span><span class="sig-name descname"><span class="pre">consolidate_duplicates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/utils/assorted.html#consolidate_duplicates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.utils.assorted.consolidate_duplicates" title="Permalink to this definition">¶</a></dt>
 <dd><p>Drop duplicated Xs and update the indices tensor Y accordingly.
 Supporting 2d Tensor only as in batch mode block design is not guaranteed.</p>
 <dl class="field-list simple">

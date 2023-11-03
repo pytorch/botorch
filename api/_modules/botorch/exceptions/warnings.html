@@ -78,6 +78,16 @@
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Warning raised when a potential issue is detected with user provided inputs."""</span>
 
     <span class="k">pass</span></div>
+
+
+<span class="k">def</span> <span class="nf">_get_single_precision_warning</span><span class="p">(</span><span class="n">dtype_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"The model inputs are of type </span><span class="si">{</span><span class="n">dtype_str</span><span class="si">}</span><span class="s2">. It is strongly recommended "</span>
+        <span class="s2">"to use double precision in BoTorch, as this improves both "</span>
+        <span class="s2">"precision and stability and can help avoid numerical errors. "</span>
+        <span class="s2">"See https://github.com/pytorch/botorch/discussions/1444"</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">msg</span>
 </pre></div>
 </div>
 </div>

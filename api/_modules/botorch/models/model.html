@@ -47,6 +47,7 @@
     <span class="n">List</span><span class="p">,</span>
     <span class="n">Mapping</span><span class="p">,</span>
     <span class="n">Optional</span><span class="p">,</span>
+    <span class="n">Set</span><span class="p">,</span>
     <span class="n">TYPE_CHECKING</span><span class="p">,</span>
     <span class="n">TypeVar</span><span class="p">,</span>
     <span class="n">Union</span><span class="p">,</span>
@@ -55,7 +56,11 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span><span class="p">,</span> <span class="n">InputDataError</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BotorchTensorDimensionError</span><span class="p">,</span>
+    <span class="n">DeprecationError</span><span class="p">,</span>
+    <span class="n">InputDataError</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.logging</span> <span class="kn">import</span> <span class="n">shape_to_str</span>
 <span class="kn">from</span> <span class="nn">botorch.models.utils.assorted</span> <span class="kn">import</span> <span class="n">fantasize</span> <span class="k">as</span> <span class="n">fantasize_flag</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors</span> <span class="kn">import</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">PosteriorList</span>
@@ -63,6 +68,7 @@
 <span class="kn">from</span> <span class="nn">botorch.sampling.list_sampler</span> <span class="kn">import</span> <span class="n">ListSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">SupervisedDataset</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">is_fully_bayesian</span>
+<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.gaussian_likelihood</span> <span class="kn">import</span> <span class="n">FixedNoiseGaussianLikelihood</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span><span class="p">,</span> <span class="n">ModuleDict</span><span class="p">,</span> <span class="n">ModuleList</span>
 
@@ -105,7 +111,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">output_indices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">observation_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">observation_noise</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
@@ -124,7 +130,12 @@
 <span class="sd">                Can be used to speed up computation if only a subset of the</span>
 <span class="sd">                model's outputs are required for optimization. If omitted,</span>
 <span class="sd">                computes the posterior over all model outputs.</span>
-<span class="sd">            observation_noise: If True, add observation noise to the posterior.</span>
+<span class="sd">            observation_noise: For models with an inferred noise level, if True,</span>
+<span class="sd">                include observation noise. For models with an observed noise level,</span>
+<span class="sd">                this must be a `model_batch_shape x 1 x m`-dim tensor or</span>
+<span class="sd">                a `model_batch_shape x n' x m`-dim tensor containing the average</span>
+<span class="sd">                noise for each batch and output. `noise` must be in the</span>
+<span class="sd">                outcome-transformed space if an outcome transform is used.</span>
 <span class="sd">            posterior_transform: An optional PosteriorTransform.</span>
 
 <span class="sd">        Returns:</span>
@@ -265,7 +276,11 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_revert_to_original_inputs</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_set_transformed_inputs</span><span class="p">()</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dtypes_of_buffers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">t</span><span class="o">.</span><span class="n">dtype</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffers</span><span class="p">()</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">}</span></div>
 
 
 <div class="viewcode-block" id="FantasizeMixin"><a class="viewcode-back" href="../../../models.html#botorch.models.model.FantasizeMixin">[docs]</a><span class="k">class</span> <span class="nc">FantasizeMixin</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
@@ -328,14 +343,15 @@
         <span class="c1"># TODO: see if any of these can be imported only if TYPE_CHECKING</span>
         <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">sampler</span><span class="p">:</span> <span class="n">MCSampler</span><span class="p">,</span>
-        <span class="n">observation_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">observation_noise</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TFantasizeMixin</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct a fantasy model.</span>
 
 <span class="sd">        Constructs a fantasy model in the following fashion:</span>
-<span class="sd">        (1) compute the model posterior at `X` (including observation noise if</span>
-<span class="sd">        `observation_noise=True`).</span>
+<span class="sd">        (1) compute the model posterior at `X`, including observation noise.</span>
+<span class="sd">        If `observation_noise` is a Tensor, use it directly as the observation</span>
+<span class="sd">        noise to add.</span>
 <span class="sd">        (2) sample from this posterior (using `sampler`) to generate "fake"</span>
 <span class="sd">        observations.</span>
 <span class="sd">        (3) condition the model on the new fake observations.</span>
@@ -346,12 +362,32 @@
 <span class="sd">                `batch_shape` is the batch shape (must be compatible with the</span>
 <span class="sd">                batch shape of the model).</span>
 <span class="sd">            sampler: The sampler used for sampling from the posterior at `X`.</span>
-<span class="sd">            observation_noise: If True, include observation noise.</span>
+<span class="sd">            observation_noise: A `model_batch_shape x 1 x m`-dim tensor or</span>
+<span class="sd">                a `model_batch_shape x n' x m`-dim tensor containing the average</span>
+<span class="sd">                noise for each batch and output, where `m` is the number of outputs.</span>
+<span class="sd">                `noise` must be in the outcome-transformed space if an outcome</span>
+<span class="sd">                transform is used.</span>
+<span class="sd">                If None and using an inferred noise likelihood, the noise will be the</span>
+<span class="sd">                inferred noise level. If using a fixed noise likelihood, the mean across</span>
+<span class="sd">                the observation noise in the training data is used as observation noise.</span>
 <span class="sd">            kwargs: Will be passed to `model.condition_on_observations`</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The constructed fantasy model.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">observation_noise</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span> <span class="ow">and</span> <span class="n">observation_noise</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">DeprecationError</span><span class="p">(</span>
+                <span class="s2">"`fantasize` no longer accepts a boolean for `observation_noise`."</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">observation_noise</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">FixedNoiseGaussianLikelihood</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="c1"># make noise ... x n x m</span>
+                <span class="n">observation_noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">observation_noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">observation_noise</span> <span class="o">=</span> <span class="n">observation_noise</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="c1"># if the inputs are empty, expand the inputs</span>
         <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">output_shape</span> <span class="o">=</span> <span class="p">(</span>
@@ -360,16 +396,24 @@
                 <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span>
                 <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span><span class="p">])</span>
             <span class="p">)</span>
+            <span class="n">Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">output_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_on_observations</span><span class="p">(</span>
                 <span class="n">X</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">X</span><span class="p">),</span>
-                <span class="n">Y</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">output_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
+                <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span>
                 <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="n">propagate_grads</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"propagate_grads"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
         <span class="k">with</span> <span class="n">fantasize_flag</span><span class="p">():</span>
             <span class="k">with</span> <span class="n">settings</span><span class="o">.</span><span class="n">propagate_grads</span><span class="p">(</span><span class="n">propagate_grads</span><span class="p">):</span>
-                <span class="n">post_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="n">observation_noise</span><span class="p">)</span>
+                <span class="n">post_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
+                    <span class="n">X</span><span class="p">,</span>
+                    <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span>
+                    <span class="k">if</span> <span class="n">observation_noise</span> <span class="ow">is</span> <span class="kc">None</span>
+                    <span class="k">else</span> <span class="n">observation_noise</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="n">Y_fantasized</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">post_X</span><span class="p">)</span>  <span class="c1"># num_fantasies x batch_shape x n' x m</span>
+            <span class="k">if</span> <span class="n">observation_noise</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="s2">"noise"</span><span class="p">]</span> <span class="o">=</span> <span class="n">observation_noise</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">Y_fantasized</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_on_observations</span><span class="p">(</span>
                 <span class="n">X</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y_fantasized</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
             <span class="p">)</span></div></div>
@@ -420,7 +464,7 @@
         <span class="n">idcs</span> <span class="o">=</span> <span class="p">[</span><span class="n">idx</span> <span class="o">%</span> <span class="n">cum_output_sizes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">idcs</span><span class="p">]</span>
         <span class="n">group_indices</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">idcs</span><span class="p">:</span>
-            <span class="n">grp_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">idx</span> <span class="o">&lt;</span> <span class="n">cum_output_sizes</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">grp_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">idx</span> <span class="o">&lt;</span> <span class="n">cum_output_sizes</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
             <span class="n">sub_idx</span> <span class="o">=</span> <span class="n">idx</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">output_sizes</span><span class="p">[:</span><span class="n">grp_idx</span><span class="p">]))</span>
             <span class="n">group_indices</span><span class="p">[</span><span class="n">grp_idx</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sub_idx</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">group_indices</span>
@@ -452,7 +496,9 @@
 <span class="sd">                respective likelihoods to the posterior. If a Tensor of shape</span>
 <span class="sd">                `(batch_shape) x q x m`, use it directly as the observation</span>
 <span class="sd">                noise (with `observation_noise[...,i]` added to the posterior</span>
-<span class="sd">                of the `i`-th model).</span>
+<span class="sd">                of the `i`-th model). `observation_noise` is assumed</span>
+<span class="sd">                to be in the outcome-transformed space, if an outcome transform</span>
+<span class="sd">                is used by the model.</span>
 <span class="sd">            posterior_transform: An optional PosteriorTransform.</span>
 
 <span class="sd">        Returns:</span>
@@ -571,7 +617,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">sampler</span><span class="p">:</span> <span class="n">MCSampler</span><span class="p">,</span>
-        <span class="n">observation_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">observation_noise</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">evaluation_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
@@ -591,7 +637,12 @@
 <span class="sd">                batch shape of the model).</span>
 <span class="sd">            sampler: The sampler used for sampling from the posterior at `X`. If</span>
 <span class="sd">                evaluation_mask is not None, this must be a `ListSampler`.</span>
-<span class="sd">            observation_noise: If True, include observation noise.</span>
+<span class="sd">            observation_noise: A `model_batch_shape x 1 x m`-dim tensor or</span>
+<span class="sd">                a `model_batch_shape x n' x m`-dim tensor containing the average</span>
+<span class="sd">                noise for each batch and output, where `m` is the number of outputs.</span>
+<span class="sd">                `noise` must be in the outcome-transformed space if an outcome</span>
+<span class="sd">                transform is used. If None, then the noise will be the inferred</span>
+<span class="sd">                noise level.</span>
 <span class="sd">            evaluation_mask: A `n' x m`-dim tensor of booleans indicating which</span>
 <span class="sd">                outputs should be fantasized for a given design. This uses the same</span>
 <span class="sd">                evaluation mask for all batches.</span>
@@ -613,6 +664,8 @@
 
         <span class="n">fant_models</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">X_i</span> <span class="o">=</span> <span class="n">X</span>
+        <span class="k">if</span> <span class="n">observation_noise</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">observation_noise_i</span> <span class="o">=</span> <span class="n">observation_noise</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span><span class="p">):</span>
             <span class="c1"># get the inputs to fantasize at for output i</span>
             <span class="k">if</span> <span class="n">evaluation_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -622,12 +675,15 @@
                 <span class="c1"># samples from a single Sobol sequence or consider requiring that the</span>
                 <span class="c1"># sampling is IID to ensure good coverage.</span>
                 <span class="n">sampler_i</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">samplers</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">observation_noise</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">observation_noise_i</span> <span class="o">=</span> <span class="n">observation_noise</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">mask_i</span><span class="p">,</span> <span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">sampler_i</span> <span class="o">=</span> <span class="n">sampler</span>
+
             <span class="n">fant_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">fantasize</span><span class="p">(</span>
                 <span class="n">X</span><span class="o">=</span><span class="n">X_i</span><span class="p">,</span>
                 <span class="n">sampler</span><span class="o">=</span><span class="n">sampler_i</span><span class="p">,</span>
-                <span class="n">observation_noise</span><span class="o">=</span><span class="n">observation_noise</span><span class="p">,</span>
+                <span class="n">observation_noise</span><span class="o">=</span><span class="n">observation_noise_i</span><span class="p">,</span>
                 <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">fant_models</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fant_model</span><span class="p">)</span>
