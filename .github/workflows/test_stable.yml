@@ -91,3 +91,11 @@ jobs:
       smoke_test: false
       use_stable_pytorch_gpytorch: true
       use_stable_ax: false
+
+  run_tutorials_stable_smoke_test:
+    name: Run tutorials with smoke test on min req. versions of PyTorch & GPyTorch and latest Ax
+    uses: ./.github/workflows/reusable_tutorials.yml
+    with:
+      smoke_test: true
+      use_stable_pytorch_gpytorch: true
+      use_stable_ax: false
