@@ -3,6 +3,12 @@
 The release log for BoTorch.
 
 
+## [0.9.4] - Nov 6, 2023
+
+#### Compatibility
+* Re-establish compatibility with PyTorch 1.13.1 (#2083).
+
+
 ## [0.9.3] - Nov 2, 2023
 
 ### Highlights
