@@ -54,7 +54,6 @@ else:
 from typing import Optional
 
 from botorch.models.gpytorch import GPyTorchModel
-from botorch.utils.datasets import SupervisedDataset
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import RBFKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
@@ -358,6 +357,15 @@ class MyRunner(Runner):
     def run(self, trial):
         trial_metadata = {"name": str(trial.index)}
         return trial_metadata
+
+    def poll_exception(self, trial) -> str:
+        """
+        Returns the exception from a trial if present. In this case, we do not
+        expect that trials will have attached exceptions.
+        """
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not implement a `poll_exception` method."
+        )
 
 
 exp = Experiment(
