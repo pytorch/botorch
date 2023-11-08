@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 r"""
-A wrapper around AquisitionFunctions to fix certain features for optimization.
+A wrapper around AcquisitionFunctions to fix certain features for optimization.
 This is useful e.g. for performing contextual optimization.
 """
 
@@ -50,7 +50,7 @@ def get_device_of_sequence(values: Sequence[Union[Tensor, float]]) -> torch.dtyp
 
 
 class FixedFeatureAcquisitionFunction(AcquisitionFunction):
-    """A wrapper around AquisitionFunctions to fix a subset of features.
+    """A wrapper around AcquisitionFunctions to fix a subset of features.
 
     Example:
         >>> model = SingleTaskGP(train_X, train_Y)  # d = 5

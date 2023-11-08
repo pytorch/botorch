@@ -85,7 +85,7 @@ class OneShotAcquisitionFunction(AcquisitionFunction, ABC):
 
     @abstractmethod
     def get_augmented_q_batch_size(self, q: int) -> int:
-        r"""Get augmented q batch size for one-shot optimziation.
+        r"""Get augmented q batch size for one-shot optimization.
 
         Args:
             q: The number of candidates to consider jointly.

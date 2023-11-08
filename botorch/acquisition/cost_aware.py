@@ -104,7 +104,7 @@ class InverseCostWeightedUtility(CostAwareUtility):
         cost_objective: Optional[MCAcquisitionObjective] = None,
         min_cost: float = 1e-2,
     ) -> None:
-        r"""Cost-aware utility that weights increase in utiltiy by inverse cost.
+        r"""Cost-aware utility that weights increase in utility by inverse cost.
 
         Args:
             cost_model: A model of the cost of evaluating a candidate
@@ -122,7 +122,7 @@ class InverseCostWeightedUtility(CostAwareUtility):
             min_cost: A value used to clamp the cost samples so that they are not
                 too close to zero, which may cause numerical issues.
         Returns:
-            The inverse-cost-weighted utiltiy.
+            The inverse-cost-weighted utility.
         """
         super().__init__()
         if cost_objective is None:
@@ -166,10 +166,10 @@ class InverseCostWeightedUtility(CostAwareUtility):
         if X_evaluation_mask is not None:
             # TODO: support different evaluation masks for each X. This requires
             # either passing evaluation_mask to `cost_model.posterior`
-            # or assuming that evalauting `cost_model.posterior(X)` on all
+            # or assuming that evaluating `cost_model.posterior(X)` on all
             # `q` points and then only selecting the costs for relevant points
             # does not change the cost function for each point. This would not be
-            # true for instance if the incremental cost of evalauting an additional
+            # true for instance if the incremental cost of evaluating an additional
             # point decreased as the number of points increased.
             if not all(
                 torch.equal(X_evaluation_mask[0], X_evaluation_mask[i])

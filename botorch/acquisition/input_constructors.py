@@ -181,7 +181,7 @@ def _get_dataset_field(
 def get_acqf_input_constructor(
     acqf_cls: Type[AcquisitionFunction],
 ) -> Callable[..., Dict[str, Any]]:
-    r"""Get acqusition function input constructor from registry.
+    r"""Get acquisition function input constructor from registry.
 
     Args:
         acqf_cls: The AcquisitionFunction class (not instance) for which
@@ -860,7 +860,7 @@ def construct_inputs_EHVI(
         else alpha
     )
     # This selects the objectives (a subset of the outcomes) and set each
-    # objective threhsold to have the proper optimization direction.
+    # objective threshold to have the proper optimization direction.
     if objective is None:
         objective = IdentityAnalyticMultiOutputObjective()
     if isinstance(objective, RiskMeasureMCObjective):
@@ -921,7 +921,7 @@ def construct_inputs_qEHVI(
         Y_pmean = model.posterior(X).mean
     # For HV-based acquisition functions we pass the constraint transform directly
     if constraints is not None:
-        # Adjust `Y_pmean` to contrain feasible points only.
+        # Adjust `Y_pmean` to contain feasible points only.
         feas = torch.stack([c(Y_pmean) <= 0 for c in constraints], dim=-1).all(dim=-1)
         Y_pmean = Y_pmean[feas]
 
@@ -982,7 +982,7 @@ def construct_inputs_qNEHVI(
             assert_shared=True,
         )
     # This selects the objectives (a subset of the outcomes) and set each
-    # objective threhsold to have the proper optimization direction.
+    # objective threshold to have the proper optimization direction.
     if objective is None:
         objective = IdentityMCMultiOutputObjective()
 
@@ -1350,7 +1350,7 @@ def get_best_f_mc(
         if Y.shape[-1] > 1:
             raise UnsupportedError(
                 "Acquisition functions require an objective when "
-                "used with multi-output models (execpt for multi-objective"
+                "used with multi-output models (except for multi-objective"
                 "acquisition functions)."
             )
         objective = IdentityMCObjective()
@@ -1444,10 +1444,10 @@ def optimize_objective(
         inequality_constraints = []
         k, d = A.shape
         for i in range(k):
-            indicies = A[i, :].nonzero(as_tuple=False).squeeze()
-            coefficients = -A[i, indicies]
+            indices = A[i, :].nonzero(as_tuple=False).squeeze()
+            coefficients = -A[i, indices]
             rhs = -b[i, 0]
-            inequality_constraints.append((indicies, coefficients, rhs))
+            inequality_constraints.append((indices, coefficients, rhs))
 
     return optimize_acqf(
         acq_function=acq_function,

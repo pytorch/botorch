@@ -499,7 +499,7 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
             # TODO: Investigate differentiability of MVaR.
             warnings.warn(
                 "Got `samples` that requires grad, but computing MVaR involves "
-                "non-differentable operations and the results will not be "
+                "non-differentiable operations and the results will not be "
                 "differentiable. This may lead to errors down the line!",
                 RuntimeWarning,
             )
@@ -636,7 +636,7 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
 
     @property
     def baseline_Y(self) -> Optional[Tensor]:
-        r"""Baseline outcomes used indetermining the normalization bounds."""
+        r"""Baseline outcomes used in determining the normalization bounds."""
         return self._baseline_Y
 
     @baseline_Y.setter

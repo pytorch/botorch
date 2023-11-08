@@ -558,7 +558,7 @@ class LearnedObjective(MCAcquisitionObjective):
                 return a `Posterior` object with single outcome representing the
                 utility values of the input.
             sampler: Sampler for the preference model to account for uncertainty in
-                preferece when calculating the objective; it's not the one used
+                preference when calculating the objective; it's not the one used
                 in MC acquisition functions. If None,
                 it uses `IIDNormalSampler(sample_shape=torch.Size([1]))`.
         """

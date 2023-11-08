@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 r"""
-A general implementation of multi-step look-ahead acquistion function with configurable
+A general implementation of multi-step look-ahead acquisition function with configurable
 value functions. See [Jiang2020multistep]_.
 
 .. [Jiang2020multistep]
@@ -214,13 +214,13 @@ class qMultiStepLookahead(MCAcquisitionFunction, OneShotAcquisitionFunction):
             s.batch_range_override = (tbatch_dim_start, -2)
 
     def get_augmented_q_batch_size(self, q: int) -> int:
-        r"""Get augmented q batch size for one-shot optimzation.
+        r"""Get augmented q batch size for one-shot optimization.
 
         Args:
             q: The number of candidates to consider jointly.
 
         Returns:
-            The augmented size for one-shot optimzation (including variables
+            The augmented size for one-shot optimization (including variables
             parameterizing the fantasy solutions): `q_0 + f_1 q_1 + f_2 f_1 q_2 + ...`
         """
         return q + self._num_auxiliary
@@ -549,7 +549,7 @@ def _construct_inner_samplers(
                 )
             if q is not None and mcs is not None:
                 warnings.warn(
-                    "inner_mc_samples is ignored for analytic acquistion functions",
+                    "inner_mc_samples is ignored for analytic acquisition functions",
                     BotorchWarning,
                 )
             inner_samplers.append(None)

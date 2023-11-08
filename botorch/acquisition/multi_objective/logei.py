@@ -95,7 +95,7 @@ class qLogExpectedHypervolumeImprovement(
             constraints: A list of callables, each mapping a Tensor of dimension
                 `sample_shape x batch-shape x q x m` to a Tensor of dimension
                 `sample_shape x batch-shape x q`, where negative values imply
-                feasibility. The acqusition function will compute expected feasible
+                feasibility. The acquisition function will compute expected feasible
                 hypervolume.
             X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points that have
                 points that have been submitted for function evaluation but have not yet
@@ -270,7 +270,7 @@ class qLogExpectedHypervolumeImprovement(
         self, obj_subsets: Tensor, view_shape: Union[Tuple, torch.Size]
     ) -> Tensor:
         # smooth out the clamp and take the log (previous step 3)
-        # substract cell lower bounds, clamp min at zero, but first
+        # subtract cell lower bounds, clamp min at zero, but first
         # make obj_subsets broadcastable with cell bounds:
         # mc_samples x batch_shape x (num_cells = 1) x q_choose_i x i x m
         obj_subsets = obj_subsets.unsqueeze(-4)
@@ -374,7 +374,7 @@ class qLogNoisyExpectedHypervolumeImprovement(
             constraints: A list of callables, each mapping a Tensor of dimension
                 `sample_shape x batch-shape x q x m` to a Tensor of dimension
                 `sample_shape x batch-shape x q`, where negative values imply
-                feasibility. The acqusition function will compute expected feasible
+                feasibility. The acquisition function will compute expected feasible
                 hypervolume.
             X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points that
                 have points that have been submitted for function evaluation, but
