@@ -374,6 +374,8 @@ class FantasizeMixin(ABC):
                 + torch.Size([0, self.num_outputs])
             )
             Y = torch.empty(output_shape, dtype=X.dtype, device=X.device)
+            if observation_noise is not None:
+                kwargs["noise"] = observation_noise.expand(Y.shape[1:])
             return self.condition_on_observations(
                 X=self.transform_inputs(X),
                 Y=Y,
