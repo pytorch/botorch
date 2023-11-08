@@ -299,7 +299,7 @@ class L1PenaltyObjective(torch.nn.Module):
 class PenalizedMCObjective(GenericMCObjective):
     r"""Penalized MC objective.
 
-    Allows to construct a penaltized MC-objective by adding a penalty term to
+    Allows to construct a penalized MC-objective by adding a penalty term to
     the original objective.
 
         mc_acq(X) = objective(X) + penalty_objective(X)

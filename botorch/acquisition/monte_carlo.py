@@ -639,7 +639,7 @@ class qProbabilityOfImprovement(SampleReducingMCAcquisitionFunction):
     Estimates the probability of improvement over the current best observed
     value by sampling from the joint posterior distribution of the q-batch.
     MC-based estimates of a probability involves taking expectation of an
-    indicator function; to support auto-differntiation, the indicator is
+    indicator function; to support auto-differentiation, the indicator is
     replaced with a sigmoid function with temperature parameter `tau`.
 
     `qPI(X) = P(max Y >= best_f), Y ~ f(X), X = (x_1,...,x_q)`

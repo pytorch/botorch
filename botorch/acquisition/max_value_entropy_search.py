@@ -177,7 +177,7 @@ class MaxValueBase(AcquisitionFunction, ABC):
     ) -> Tensor:
         r"""Draw samples from the posterior over maximum values.
 
-        These samples are used to compute Monte Carlo approximations of expecations
+        These samples are used to compute Monte Carlo approximations of expectations
         over the posterior over the function maximum.
 
         Args:
@@ -257,7 +257,7 @@ class DiscreteMaxValueBase(MaxValueBase):
     ) -> Tensor:
         r"""Draw samples from the posterior over maximum values on a discrete set.
 
-        These samples are used to compute Monte Carlo approximations of expecations
+        These samples are used to compute Monte Carlo approximations of expectations
         over the posterior over the function maximum.
 
         Args:
@@ -596,14 +596,14 @@ class qLowerBoundMaxValueEntropy(DiscreteMaxValueBase):
         # batch_shape x 1
         check_no_nans(rhos_squared)
 
-        # calculate quality contribution to the GIBBON acqusition function
+        # calculate quality contribution to the GIBBON acquisition function
         inner_term = 1 - rhos_squared * ratio * (normalized_mvs + ratio)
         acq = -0.5 * inner_term.clamp_min(CLAMP_LB).log()
         # average over posterior max samples
         acq = acq.mean(dim=1).unsqueeze(0)
 
         if self.X_pending is None:
-            # for q=1, no replusion term required
+            # for q=1, no repulsion term required
             return acq
 
         # for q>1 GIBBON requires repulsion terms r_i, where
@@ -613,11 +613,11 @@ class qLowerBoundMaxValueEntropy(DiscreteMaxValueBase):
 
         # Each predictive covariance matrix can be expressed as
         # V_i = [[v_i, A_i], [A_i,B]] for a shared m x m tensor B.
-        # So we can efficientely calculate |V_i| using the formula for
+        # So we can efficiently calculate |V_i| using the formula for
         # determinant of block matricies, i.e.
         # |V_i| = (v_i - A_i^T * B^{-1} * A_i) * |B|
         # As the |B| term does not depend on X and we later take its log,
-        # it provides only a translation of the acqusition function surface
+        # it provides only a translation of the acquisition function surface
         # and can thus be ignored.
 
         if self.posterior_transform is not None:

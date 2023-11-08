@@ -184,7 +184,7 @@ class qExpectedHypervolumeImprovement(
             constraints: A list of callables, each mapping a Tensor of dimension
                 `sample_shape x batch-shape x q x m` to a Tensor of dimension
                 `sample_shape x batch-shape x q`, where negative values imply
-                feasibility. The acqusition function will compute expected feasible
+                feasibility. The acquisition function will compute expected feasible
                 hypervolume.
             X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points that have
                 points that have been submitted for function evaluation but have not yet
@@ -291,7 +291,7 @@ class qExpectedHypervolumeImprovement(
             overlap_vertices = torch.min(
                 overlap_vertices.unsqueeze(-3), self.cell_upper_bounds.view(view_shape)
             )
-            # substract cell lower bounds, clamp min at zero
+            # subtract cell lower bounds, clamp min at zero
             lengths_i = (
                 overlap_vertices - self.cell_lower_bounds.view(view_shape)
             ).clamp_min(0.0)
@@ -370,7 +370,7 @@ class qNoisyExpectedHypervolumeImprovement(
             constraints: A list of callables, each mapping a Tensor of dimension
                 `sample_shape x batch-shape x q x m` to a Tensor of dimension
                 `sample_shape x batch-shape x q`, where negative values imply
-                feasibility. The acqusition function will compute expected feasible
+                feasibility. The acquisition function will compute expected feasible
                 hypervolume.
             X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points that
                 have points that have been submitted for function evaluation, but

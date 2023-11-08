@@ -38,7 +38,7 @@ SIGMA_JITTER = 1e-8
 
 
 class AnalyticExpectedUtilityOfBestOption(AnalyticAcquisitionFunction):
-    r"""Analytic Prefential Expected Utility of Best Options, i.e., Analytical EUBO"""
+    r"""Analytic Preferential Expected Utility of Best Options, i.e., Analytical EUBO"""
 
     def __init__(
         self,

@@ -427,7 +427,7 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
                 `X_actual = X[..., :-num_fantasies, :]`
                 `X_actual.shape = b x q x d`
 
-                In addition, `X` may be augmented with fidelity parameteres as
+                In addition, `X` may be augmented with fidelity parameters as
                 part of thee `d`-dimension. Projecting fidelities to the target
                 fidelity is handled by `project`.
 

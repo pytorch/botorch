@@ -986,7 +986,7 @@ def _log_ei_helper(u: Tensor) -> Tensor:
     # To this end, a second branch is necessary, depending on whether or not u is
     # smaller than approximately the negative inverse square root of the machine
     # precision. Below this point, numerical issues in computing log(1 - exp(w)) occur
-    # as w approches zero from below, even though the relative contribution to log_ei
+    # as w approaches zero from below, even though the relative contribution to log_ei
     # vanishes in machine precision at that point.
     neg_inv_sqrt_eps = -1e6 if u.dtype == torch.float64 else -1e3
 

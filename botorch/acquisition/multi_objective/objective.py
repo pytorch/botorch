@@ -258,7 +258,7 @@ class UnstandardizeMCMultiOutputObjective(IdentityMCMultiOutputObjective):
 
 
 class AnalyticMultiOutputObjective(torch.nn.Module):
-    r"""Abstract base class for multi-output analyic objectives.
+    r"""Abstract base class for multi-output analytic objectives.
 
     DEPRECATED - This will be removed in the next version.
 

@@ -6,7 +6,7 @@
 
 r"""
 Abstract class for acquisition functions leveraging a cached Cholesky
-decomposition of the posterior covaiance over f(X_baseline).
+decomposition of the posterior covariance over f(X_baseline).
 """
 from __future__ import annotations
 
@@ -107,9 +107,9 @@ class CachedCholeskyMCSamplerMixin(MCSamplerMixin):
           `MultitaskMultivariateNormal`, since we construct `lazy_covar` in that
           case.
         2) If the root decomposition has not been found in the cache, compute it.
-        3) Write it to the cache of `lazy_covar`. Note that this will become inacessible
-          if `posterior.mvn` is a `MultitaskMultivariateNormal`, since in that case
-          `lazy_covar`'s scope is only this function.
+        3) Write it to the cache of `lazy_covar`. Note that this will become
+          inaccessible if `posterior.mvn` is a `MultitaskMultivariateNormal`,
+          since in that case `lazy_covar`'s scope is only this function.
 
         Args:
             posterior: The posterior over f(X_baseline).

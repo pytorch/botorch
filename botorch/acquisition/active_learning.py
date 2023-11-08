@@ -106,7 +106,7 @@ class qNegIntegratedPosteriorVariance(AnalyticAcquisitionFunction):
         else:
             # While we only need marginal variances, we can evaluate for q>1
             # b/c for GPyTorch models lazy evaluation can make this quite a bit
-            # faster than evaluting in t-batch mode with q-batch size of 1
+            # faster than evaluating in t-batch mode with q-batch size of 1
             mc_points = self.mc_points.view(*bdims, -1, X.size(-1))
 
         # evaluate the posterior at the grid points
