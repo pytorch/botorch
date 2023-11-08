@@ -44,7 +44,7 @@ from botorch.models.utils.gpytorch_modules import (
     MIN_INFERRED_NOISE_LEVEL,
 )
 from botorch.posteriors.multitask import MultitaskGPPosterior
-from botorch.utils.datasets import SupervisedDataset
+from botorch.utils.datasets import MultiTaskDataset, SupervisedDataset
 from gpytorch.constraints import GreaterThan
 from gpytorch.distributions.multitask_multivariate_normal import (
     MultitaskMultivariateNormal,
@@ -271,7 +271,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
     @classmethod
     def construct_inputs(
         cls,
-        training_data: Dict[str, SupervisedDataset],
+        training_data: Union[SupervisedDataset, MultiTaskDataset],
         task_feature: int,
         output_tasks: Optional[List[int]] = None,
         task_covar_prior: Optional[Prior] = None,
@@ -279,10 +279,10 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         rank: Optional[int] = None,
         **kwargs,
     ) -> Dict[str, Any]:
-        r"""Construct `Model` keyword arguments from dictionary of `SupervisedDataset`.
+        r"""Construct `Model` keyword arguments from a dataset and other args.
 
         Args:
-            training_data: Dictionary of `SupervisedDataset`.
+            training_data: A `SupervisedDataset` or a `MultiTaskDataset`.
             task_feature: Column index of embedded task indicator features. For details,
                 see `parse_training_data`.
             output_tasks: A list of task indices for which to compute model
@@ -303,7 +303,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
             if not prior_config.get("use_LKJ_prior"):
                 raise ValueError("Currently only config for LKJ prior is supported.")
 
-            num_tasks = len(training_data)
+            num_tasks = training_data.X[task_feature].unique().numel()
             sd_prior = GammaPrior(1.0, 0.15)
             sd_prior._event_shape = torch.Size([num_tasks])
             eta = prior_config.get("eta", 0.5)
