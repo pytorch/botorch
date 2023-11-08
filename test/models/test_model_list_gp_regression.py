@@ -430,31 +430,48 @@ class TestModelListGP(BotorchTestCase):
                     (3, 2), 0.3, dtype=x1.dtype, device=x1.device
                 )
                 observation_noise[:, 1] = 0.4
-                fm = modellist.fantasize(
-                    torch.rand(3, 2),
-                    sampler=ListSampler(sampler1, sampler2),
-                    evaluation_mask=eval_mask,
-                    observation_noise=observation_noise,
-                )
-                self.assertIsInstance(fm, ModelListGP)
-                for i in range(2):
-                    fm_i = fm.models[i]
-                    self.assertIsInstance(fm_i, SingleTaskGP)
-                    self.assertIsInstance(fm_i.likelihood, FixedNoiseGaussianLikelihood)
-                    num_points = 7 - i
-                    self.assertEqual(
-                        fm_i.train_inputs[0].shape, torch.Size([2, num_points, 2])
+                for obs_noise in (None, observation_noise):
+                    fm = modellist.fantasize(
+                        torch.rand(3, 2),
+                        sampler=ListSampler(sampler1, sampler2),
+                        evaluation_mask=eval_mask,
+                        observation_noise=obs_noise,
                     )
-                    self.assertEqual(
-                        fm_i.train_targets.shape, torch.Size([2, num_points])
-                    )
-                    # check observation_noise
-                    self.assertTrue(
-                        torch.equal(
-                            fm_i.likelihood.noise[..., -num_designs_per_output[i] :],
-                            observation_noise[-num_designs_per_output[i] :, i],
+                    self.assertIsInstance(fm, ModelListGP)
+                    for i in range(2):
+                        fm_i = fm.models[i]
+                        self.assertIsInstance(fm_i, SingleTaskGP)
+                        self.assertIsInstance(
+                            fm_i.likelihood, FixedNoiseGaussianLikelihood
                         )
-                    )
+                        num_points = 7 - i
+                        self.assertEqual(
+                            fm_i.train_inputs[0].shape, torch.Size([2, num_points, 2])
+                        )
+                        self.assertEqual(
+                            fm_i.train_targets.shape, torch.Size([2, num_points])
+                        )
+                        # check observation_noise
+                        if obs_noise is not None:
+                            self.assertTrue(
+                                torch.equal(
+                                    fm_i.likelihood.noise[
+                                        ..., -num_designs_per_output[i] :
+                                    ],
+                                    observation_noise[-num_designs_per_output[i] :, i],
+                                )
+                            )
+                        else:
+                            self.assertTrue(
+                                torch.allclose(
+                                    fm_i.likelihood.noise[
+                                        ..., -num_designs_per_output[i] :
+                                    ],
+                                    modellist.models[i]
+                                    .likelihood.noise[..., -num_designs_per_output[i] :]
+                                    .mean(),
+                                )
+                            )
 
     def test_fantasize_with_outcome_transform(self) -> None:
         """
