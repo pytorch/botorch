@@ -313,7 +313,7 @@ def _make_linear_constraints(
 
 
 def _make_nonlinear_constraints(
-    f_np_wrapper: Callable, nlc: Callable, shapeX: torch.Size
+    f_np_wrapper: Callable, nlc: Callable, intra: bool, shapeX: torch.Size
 ) -> List:
     shapeX = _validate_linear_constraints_shape_input(shapeX)
     b, q, _ = shapeX
@@ -322,19 +322,26 @@ def _make_nonlinear_constraints(
     def get_intrapoint_constraint(b: int, q: int, nlc: Callable) -> Callable:
         return lambda x: nlc(x[b, q])
 
-    for i in range(b):
-        for j in range(q):
-            f_obj, f_grad = _make_f_and_grad_nonlinear_inequality_constraints(
-                f_np_wrapper=f_np_wrapper,
-                nlc=get_intrapoint_constraint(b=i, q=j, nlc=nlc),
-            )
-            constraints.append(
-                {
-                    "type": "ineq",
-                    "fun": f_obj,
-                    "jac": f_grad,
-                }
-            )
+    if intra:
+        for i in range(b):
+            for j in range(q):
+                f_obj, f_grad = _make_f_and_grad_nonlinear_inequality_constraints(
+                    f_np_wrapper=f_np_wrapper,
+                    nlc=get_intrapoint_constraint(b=i, q=j, nlc=nlc),
+                )
+                constraints.append(
+                    {
+                        "type": "ineq",
+                        "fun": f_obj,
+                        "jac": f_grad,
+                    }
+                )
+    else:
+        f_obj, f_grad = _make_f_and_grad_nonlinear_inequality_constraints(
+            f_np_wrapper=f_np_wrapper,
+            nlc=nlc,
+        )
+        constraints.append({"type": "ineq", "fun": f_obj, "jac": f_grad})
 
     return constraints
 
@@ -501,29 +508,30 @@ def make_scipy_nonlinear_inequality_constraints(
         values and Jacobians and a string indicating the associated constraint
         type ("eq", "ineq"), as expected by `scipy.minimize`.
     """
-    if not isinstance(nonlinear_inequality_constraints, list):
-        raise ValueError(
-            "`nonlinear_inequality_constraints` must be a list of callables, "
-            f"got {type(nonlinear_inequality_constraints)}."
-        )
 
     scipy_nonlinear_inequality_constraints = []
-    for constraint in nonlinear_inequality_constraints:
-        nlc = constraint[0]
+    for nlc in nonlinear_inequality_constraints:
+        if not isinstance(nlc, tuple):
+            raise ValueError(
+                f"A nonlinear constraint has to be a tuple, got {type(nlc)}."
+            )
+        if len(nlc) != 2:
+            raise ValueError(
+                "A nonlinear constraint has to be a tuple of length 2, "
+                f"got length {len(nlc)}."
+            )
+
         # TODO: not sure about this on this position, has to be applied later
         # from my perspective
-        if _arrayify(nlc(x0)).item() < NLC_TOL:
+        if _arrayify(nlc[0](x0)).item() < NLC_TOL:
             raise ValueError(
                 "`batch_initial_conditions` must satisfy the non-linear inequality "
                 "constraints."
             )
 
-        if constraint[1] is True:
-            scipy_nonlinear_inequality_constraints += _make_nonlinear_constraints(
-                f_np_wrapper=f_np_wrapper, nlc=nlc, shapeX=shapeX
-            )
-        else:
-            raise ValueError()
+        scipy_nonlinear_inequality_constraints += _make_nonlinear_constraints(
+            f_np_wrapper=f_np_wrapper, nlc=nlc[0], intra=nlc[1], shapeX=shapeX
+        )
 
         # f_obj, f_grad = _make_f_and_grad_nonlinear_inequality_constraints(
         #     f_np_wrapper=f_np_wrapper, nlc=nlc

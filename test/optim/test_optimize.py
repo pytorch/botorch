@@ -913,7 +913,7 @@ class TestOptimizeAcqf(BotorchTestCase):
             # Constraints must be passed in as lists
             with self.assertRaisesRegex(
                 ValueError,
-                "`nonlinear_inequality_constraints` must be a list of callables, "
+                "`nonlinear_inequality_constraints` must be a list of tuples, "
                 "got <class 'function'>.",
             ):
                 optimize_acqf(
@@ -924,6 +924,21 @@ class TestOptimizeAcqf(BotorchTestCase):
                     num_restarts=num_restarts,
                     batch_initial_conditions=batch_initial_conditions,
                 )
+
+            # # Constraint has to be a tuple
+            # with self.assertRaisesRegex(
+            #     ValueError,
+            #     "`nonlinear_inequality_constraints` must be a list of tuples, "
+            #     "got <class 'function'>.",
+            # ):
+            #     optimize_acqf(
+            #         acq_function=mock_acq_function,
+            #         bounds=bounds,
+            #         q=1,
+            #         nonlinear_inequality_constraints=[nlc1],
+            #         num_restarts=num_restarts,
+            #         batch_initial_conditions=batch_initial_conditions,
+            #     )
 
             # batch_initial_conditions must be feasible
             with self.assertRaisesRegex(
