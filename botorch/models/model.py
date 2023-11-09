@@ -20,7 +20,6 @@ from typing import (
     Any,
     Callable,
     Dict,
-    Hashable,
     List,
     Mapping,
     Optional,
@@ -180,7 +179,7 @@ class Model(Module, ABC):
     @classmethod
     def construct_inputs(
         cls,
-        training_data: Union[SupervisedDataset, Dict[Hashable, SupervisedDataset]],
+        training_data: SupervisedDataset,
         **kwargs: Any,
     ) -> Dict[str, Any]:
         r"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`."""

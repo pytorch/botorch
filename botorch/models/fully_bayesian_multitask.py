@@ -8,7 +8,7 @@ r"""Multi-task Gaussian Process Regression models with fully Bayesian inference.
 """
 
 
-from typing import Any, Dict, List, Mapping, NoReturn, Optional, Tuple
+from typing import Any, Dict, List, Mapping, NoReturn, Optional, Tuple, Union
 
 import pyro
 import torch
@@ -24,7 +24,7 @@ from botorch.models.multitask import MultiTaskGP
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.posteriors.fully_bayesian import FullyBayesianPosterior, MCMC_DIM
-from botorch.utils.datasets import SupervisedDataset
+from botorch.utils.datasets import MultiTaskDataset, SupervisedDataset
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels import MaternKernel
 from gpytorch.kernels.kernel import Kernel
@@ -381,15 +381,15 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
     @classmethod
     def construct_inputs(
         cls,
-        training_data: Dict[str, SupervisedDataset],
+        training_data: Union[SupervisedDataset, MultiTaskDataset],
         task_feature: int,
         rank: Optional[int] = None,
         **kwargs: Any,
     ) -> Dict[str, Any]:
-        r"""Construct `Model` keyword arguments from dictionary of `SupervisedDataset`.
+        r"""Construct `Model` keyword arguments from a dataset and other args.
 
         Args:
-            training_data: Dictionary of `SupervisedDataset`.
+            training_data: A `SupervisedDataset` or a `MultiTaskDataset`.
             task_feature: Column index of embedded task indicator features. For details,
                 see `parse_training_data`.
             rank: The rank of the cross-task covariance matrix.
