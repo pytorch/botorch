@@ -93,8 +93,8 @@ class TestGenerationUtils(BotorchTestCase):
             reduced_data = torch.tensor([[4.0, 2.0, 3.0]], device=self.device)
             if old_nlcs:
                 self.assertAllClose(
-                    old_nlcs[0](complete_data),
-                    new_nlcs[0](reduced_data),
+                    old_nlcs[0][0](complete_data),
+                    new_nlcs[0][0](reduced_data),
                 )
             else:
                 self.assertEqual(old_nlcs, new_nlcs)
@@ -102,7 +102,7 @@ class TestGenerationUtils(BotorchTestCase):
         def nlc(x):
             return x[..., 2]
 
-        old_nlcs = [nlc]
+        old_nlcs = [(nlc, True)]
 
         for (
             lower_bounds,

@@ -319,14 +319,14 @@ def _make_nonlinear_constraints(
     b, q, _ = shapeX
     constraints = []
 
-    def get_interpoint_constraint(b: int, q: int, nlc: Callable) -> Callable:
+    def get_intrapoint_constraint(b: int, q: int, nlc: Callable) -> Callable:
         return lambda x: nlc(x[b, q])
 
     for i in range(b):
         for j in range(q):
             f_obj, f_grad = _make_f_and_grad_nonlinear_inequality_constraints(
                 f_np_wrapper=f_np_wrapper,
-                nlc=get_interpoint_constraint(b=i, q=j, nlc=nlc),
+                nlc=get_intrapoint_constraint(b=i, q=j, nlc=nlc),
             )
             constraints.append(
                 {
@@ -340,7 +340,7 @@ def _make_nonlinear_constraints(
 
 
 def _generate_unfixed_nonlin_constraints(
-    constraints: Optional[List[Callable[[Tensor], Tensor]]],
+    constraints: Optional[List[Tuple[Callable[[Tensor], Tensor], bool]]],
     fixed_features: Dict[int, float],
     dimension: int,
 ) -> Optional[List[Callable[[Tensor], Tensor]]]:
@@ -374,7 +374,8 @@ def _generate_unfixed_nonlin_constraints(
         return new_nonlin_constraint
 
     return [
-        _wrap_nonlin_constraint(constraint=constraint) for constraint in constraints
+        (_wrap_nonlin_constraint(constraint=constraint[0]), constraint[1])
+        for constraint in constraints
     ]
 
 
@@ -507,16 +508,22 @@ def make_scipy_nonlinear_inequality_constraints(
         )
 
     scipy_nonlinear_inequality_constraints = []
-    for nlc in nonlinear_inequality_constraints:
+    for constraint in nonlinear_inequality_constraints:
+        nlc = constraint[0]
+        # TODO: not sure about this on this position, has to be applied later
+        # from my perspective
         if _arrayify(nlc(x0)).item() < NLC_TOL:
             raise ValueError(
                 "`batch_initial_conditions` must satisfy the non-linear inequality "
                 "constraints."
             )
 
-        scipy_nonlinear_inequality_constraints += _make_nonlinear_constraints(
-            f_np_wrapper=f_np_wrapper, nlc=nlc, shapeX=shapeX
-        )
+        if constraint[1] is True:
+            scipy_nonlinear_inequality_constraints += _make_nonlinear_constraints(
+                f_np_wrapper=f_np_wrapper, nlc=nlc, shapeX=shapeX
+            )
+        else:
+            raise ValueError()
 
         # f_obj, f_grad = _make_f_and_grad_nonlinear_inequality_constraints(
         #     f_np_wrapper=f_np_wrapper, nlc=nlc

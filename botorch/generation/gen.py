@@ -47,7 +47,7 @@ def gen_candidates_scipy(
     upper_bounds: Optional[Union[float, Tensor]] = None,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    nonlinear_inequality_constraints: Optional[List[Callable]] = None,
+    nonlinear_inequality_constraints: Optional[List[Tuple[Callable, bool]]] = None,
     options: Optional[Dict[str, Any]] = None,
     fixed_features: Optional[Dict[int, Optional[float]]] = None,
     timeout_sec: Optional[float] = None,
@@ -69,11 +69,14 @@ def gen_candidates_scipy(
         equality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
-        nonlinear_inequality_constraints: A list of callables with that represent
-            non-linear inequality constraints of the form `callable(x) >= 0`. Each
+        nonlinear_inequality_constraints: A list of tuples, one tuple per
+            constraint, first element of the tuple is a callable that represents
+            a non-linear inequality constraint of the form `callable(x) >= 0`. Each
             callable is expected to take a `(num_restarts) x q x d`-dim tensor as
             an input and return a `(num_restarts) x q`-dim tensor with the
-            constraint values. The constraints will later be passed to SLSQP.
+            constraint values. The second element is a boolean indicating it is
+            an intrapoint or interpoint constraint. `True` for intrapoint,
+            `False` for interpoint. The constraints will later be passed to SLSQP.
         options: Options used to control the optimization including "method"
             and "maxiter". Select method for `scipy.minimize` using the
             "method" key. By default uses L-BFGS-B for box-constrained problems
@@ -249,8 +252,10 @@ def gen_candidates_scipy(
     # SLSQP sometimes fails in the line search or may just fail to find a feasible
     # candidate in which case we just return the starting point. This happens rarely,
     # so it shouldn't be an issue given enough restarts.
+    # TODO: this needs to be updated with the two options
     if nonlinear_inequality_constraints and any(
-        nlc(candidates.view(-1)) < NLC_TOL for nlc in nonlinear_inequality_constraints
+        constraint[0](candidates.view(-1)) < NLC_TOL
+        for constraint in nonlinear_inequality_constraints
     ):
         candidates = torch.from_numpy(x0).to(candidates).reshape(shapeX)
         warnings.warn(
