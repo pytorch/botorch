@@ -11,9 +11,9 @@ from itertools import product
 import torch
 from botorch.acquisition import FixedFeatureAcquisitionFunction
 from botorch.generation.utils import (
+    _convert_nonlinear_inequality_constraints,
     _flip_sub_unique,
     _remove_fixed_features_from_optimization,
-    _convert_nonlinear_inequality_constraints,
 )
 from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction
 

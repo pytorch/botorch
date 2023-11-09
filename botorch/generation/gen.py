@@ -20,8 +20,8 @@ import torch
 from botorch.acquisition import AcquisitionFunction
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.generation.utils import (
-    _remove_fixed_features_from_optimization,
     _convert_nonlinear_inequality_constraints,
+    _remove_fixed_features_from_optimization,
 )
 from botorch.logging import _get_logger
 from botorch.optim.parameter_constraints import (
