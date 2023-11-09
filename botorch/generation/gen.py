@@ -19,7 +19,10 @@ import numpy as np
 import torch
 from botorch.acquisition import AcquisitionFunction
 from botorch.exceptions.warnings import OptimizationWarning
-from botorch.generation.utils import _remove_fixed_features_from_optimization
+from botorch.generation.utils import (
+    _remove_fixed_features_from_optimization,
+    _convert_nonlinear_inequality_constraints,
+)
 from botorch.logging import _get_logger
 from botorch.optim.parameter_constraints import (
     _arrayify,
@@ -38,30 +41,6 @@ from torch.optim import Optimizer
 logger = _get_logger()
 
 TGenCandidates = Callable[[Tensor, AcquisitionFunction, Any], Tuple[Tensor, Tensor]]
-
-
-def convert_nonlinear_inequality_constraints(
-    nonlinear_inequality_constraints: List[Union[Callable, Tuple[Callable, bool]]]
-) -> List[Tuple[Callable, bool]]:
-    """Convert legacy defintions of nonlinear inequality constraints into the new
-    format. Assumes intra-point constraints.
-    """
-    nlcs = []
-    if not isinstance(nonlinear_inequality_constraints, list):
-        raise ValueError(
-            "`nonlinear_inequality_constraints` must be a list of tuples, "
-            f"got {type(nonlinear_inequality_constraints)}."
-        )
-
-    # return nonlinear_inequality_constraints
-    for nlc in nonlinear_inequality_constraints:
-        if callable(nlc):
-            # old style --> covert
-            nlcs.append((nlc, True))
-        else:
-            nlcs.append(nlc)
-
-    return nlcs
 
 
 def gen_candidates_scipy(
@@ -153,7 +132,7 @@ def gen_candidates_scipy(
             reduced_domain = None not in fixed_features.values()
 
     if nonlinear_inequality_constraints:
-        nonlinear_inequality_constraints = convert_nonlinear_inequality_constraints(
+        nonlinear_inequality_constraints = _convert_nonlinear_inequality_constraints(
             nonlinear_inequality_constraints
         )
 

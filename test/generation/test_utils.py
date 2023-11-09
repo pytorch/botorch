@@ -13,11 +13,33 @@ from botorch.acquisition import FixedFeatureAcquisitionFunction
 from botorch.generation.utils import (
     _flip_sub_unique,
     _remove_fixed_features_from_optimization,
+    _convert_nonlinear_inequality_constraints,
 )
 from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction
 
 
 class TestGenerationUtils(BotorchTestCase):
+    def test_convert_nonlinear_inequality_constraints(self):
+        for dtype in (torch.float, torch.double):
+
+            def nlc(x):
+                return x[..., 2]
+
+            def nlc2(x):
+                return x[..., 3]
+
+            nlcs = [nlc]
+            new_nlcs = _convert_nonlinear_inequality_constraints(nlcs)
+            self.assertEqual(new_nlcs, [(nlc, True)])
+
+            nlcs = [(nlc, False)]
+            new_nlcs = _convert_nonlinear_inequality_constraints(nlcs)
+            self.assertEqual(new_nlcs, [(nlc, False)])
+
+            nlcs = [(nlc, False), nlc2]
+            new_nlcs = _convert_nonlinear_inequality_constraints(nlcs)
+            self.assertEqual(new_nlcs, [(nlc, False), (nlc2, True)])
+
     def test_flip_sub_unique(self):
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
