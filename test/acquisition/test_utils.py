@@ -6,9 +6,11 @@
 
 import itertools
 from unittest import mock
+from unittest.mock import patch
 
 import torch
-from botorch.acquisition.objective import GenericMCObjective
+
+from botorch.acquisition.objective import GenericMCObjective, LearnedObjective
 from botorch.acquisition.utils import (
     compute_best_feasible_objective,
     expand_trace_observations,
@@ -18,11 +20,13 @@ from botorch.acquisition.utils import (
     project_to_sample_points,
     project_to_target_fidelity,
     prune_inferior_points,
+    repeat_to_match_aug_dim,
 )
 from botorch.exceptions.errors import DeprecationError, UnsupportedError
 from botorch.models import SingleTaskGP
 
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
+from gpytorch.distributions import MultivariateNormal
 
 
 class TestGetAcquisitionFunctionDeprecation(BotorchTestCase):
@@ -418,3 +422,58 @@ class TestGetOptimalSamples(BotorchTestCase):
         # asserting that the solutions found by minimization the samples are smaller
         # than those found by maximization
         self.assertTrue(torch.all(f_opt_min < f_opt))
+
+
+class TestPreferenceUtils(BotorchTestCase):
+    def test_repeat_to_match_aug_dim(self):
+        """test repeat_to_match_aug_dim to ensure it repeat the elements
+        in the correct order
+        """
+        num_outcome_samples, n, q, d = 3, 2, 4, 5
+        model = SingleTaskGP(train_X=torch.rand(n, d), train_Y=torch.rand(n, 1))
+        obj = LearnedObjective(pref_model=model)
+        samples = torch.rand(num_outcome_samples, q, d)
+
+        # Save a reference to the original posterior method
+        original_posterior_method = SingleTaskGP.posterior
+
+        def nearly_zero_covar_posterior(self, *args, **kwargs):
+            original_posterior = original_posterior_method(self, *args, **kwargs)
+
+            # Modify the distribution
+            original_posterior.distribution = MultivariateNormal(
+                mean=original_posterior.distribution.mean,
+                covariance_matrix=torch.diag_embed(
+                    torch.full_like(
+                        original_posterior.distribution.mean, fill_value=1e-15
+                    )
+                ),
+            )
+
+            # Return the modified posterior
+            return original_posterior
+
+        # Patch the posterior call such that sampling from the model's output will give
+        # basically the same samples. This way, we are able to tell which preference
+        # sample comes from which outcome sample.
+        # When `samples` of shape `num_samples x ...` being passed through obj,
+        # the returned augmented sample is of shape
+        # `(num_pref_sample * num_samples) x ...`.
+        # If num_samples = 3 and num_pref_sample = 2,
+        # along the first dimension of objective, objective values should correspond to
+        # index [0, 1, 2, 0, 1, 2] of `samples`.
+        with patch.object(SingleTaskGP, "posterior", new=nearly_zero_covar_posterior):
+            objective = obj(samples)
+
+        repeated_samples = repeat_to_match_aug_dim(samples=samples, objective=objective)
+
+        self.assertAllClose(
+            objective,
+            torch.roll(objective, shifts=num_outcome_samples, dims=0),
+            rtol=1e-3,
+        )
+        self.assertAllClose(
+            repeated_samples,
+            torch.roll(repeated_samples, shifts=num_outcome_samples, dims=0),
+            rtol=1e-3,
+        )

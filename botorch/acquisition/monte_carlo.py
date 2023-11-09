@@ -40,6 +40,7 @@ from botorch.acquisition.objective import (
 from botorch.acquisition.utils import (
     compute_best_feasible_objective,
     prune_inferior_points,
+    repeat_to_match_aug_dim,
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
@@ -119,7 +120,9 @@ class MCAcquisitionFunction(AcquisitionFunction, MCSamplerMixin, ABC):
             X=X, posterior_transform=self.posterior_transform
         )
         samples = self.get_posterior_samples(posterior)
-        return samples, self.objective(samples=samples, X=X)
+        obj = self.objective(samples=samples, X=X)
+        samples = repeat_to_match_aug_dim(samples=samples, objective=obj)
+        return samples, obj
 
     @abstractmethod
     def forward(self, X: Tensor) -> Tensor:
@@ -601,15 +604,16 @@ class qNoisyExpectedImprovement(
             # assigning baseline buffers so `best_f` can be computed in _sample_forward
             self.baseline_obj, obj = obj_full[..., :-q], obj_full[..., -q:]
             self.baseline_samples = samples_full[..., :-q, :]
-            return samples, obj
+        else:
+            # handle one-to-many input transforms
+            n_plus_q = X_full.shape[-2]
+            n_w = posterior._extended_shape()[-2] // n_plus_q
+            q_in = q * n_w
+            self._set_sampler(q_in=q_in, posterior=posterior)
+            samples = self._get_f_X_samples(posterior=posterior, q_in=q_in)
+            obj = self.objective(samples, X=X_full[..., -q:, :])
 
-        # handle one-to-many input transforms
-        n_plus_q = X_full.shape[-2]
-        n_w = posterior._extended_shape()[-2] // n_plus_q
-        q_in = q * n_w
-        self._set_sampler(q_in=q_in, posterior=posterior)
-        samples = self._get_f_X_samples(posterior=posterior, q_in=q_in)
-        obj = self.objective(samples, X=X_full[..., -q:, :])
+        samples = repeat_to_match_aug_dim(samples=samples, objective=obj)
         return samples, obj
 
     def _compute_best_feasible_objective(self, samples: Tensor, obj: Tensor) -> Tensor:

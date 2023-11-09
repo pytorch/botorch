@@ -13,6 +13,7 @@ from botorch import settings
 from botorch.acquisition import LearnedObjective
 from botorch.acquisition.objective import (
     ConstrainedMCObjective,
+    DEFAULT_NUM_PREF_SAMPLES,
     ExpectationPosteriorTransform,
     GenericMCObjective,
     IdentityMCObjective,
@@ -474,12 +475,13 @@ class TestLearnedObjective(BotorchTestCase):
             pref_obj = LearnedObjective(pref_model=pref_model)
             first_call_output = pref_obj(test_X)
             self.assertEqual(
-                first_call_output.shape, torch.Size([og_sample_shape, batch_size, n])
+                first_call_output.shape,
+                torch.Size([og_sample_shape * DEFAULT_NUM_PREF_SAMPLES, batch_size, n]),
             )
             # Making sure the sampler has correct base_samples shape
             self.assertEqual(
                 pref_obj.sampler.base_samples.shape,
-                torch.Size([1, og_sample_shape, 1, n]),
+                torch.Size([DEFAULT_NUM_PREF_SAMPLES, og_sample_shape, 1, n]),
             )
             # Passing through a same-shaped X again shouldn't change the base sample
             previous_base_samples = pref_obj.sampler.base_samples
@@ -510,7 +512,8 @@ class TestLearnedObjective(BotorchTestCase):
             mean_pref_model = PosteriorMeanModel(model=pref_model)
             pref_obj = LearnedObjective(pref_model=mean_pref_model)
             self.assertEqual(
-                pref_obj(test_X).shape, torch.Size([og_sample_shape, batch_size, n])
+                pref_obj(test_X).shape,
+                torch.Size([og_sample_shape, batch_size, n]),
             )
 
             # the order of samples shouldn't matter
