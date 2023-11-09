@@ -8,10 +8,18 @@ from botorch.test_functions.multi_objective_multi_fidelity import (
     MOMFBraninCurrin,
     MOMFPark,
 )
-from botorch.utils.testing import BotorchTestCase, MultiObjectiveTestProblemBaseTestCase
+from botorch.utils.testing import (
+    BaseTestProblemTestCaseMixIn,
+    BotorchTestCase,
+    MultiObjectiveTestProblemTestCaseMixin,
+)
 
 
-class TestMOMFBraninCurrin(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
+class TestMOMFBraninCurrin(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+):
     functions = [MOMFBraninCurrin()]
     bounds = [[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]
 
@@ -24,7 +32,11 @@ class TestMOMFBraninCurrin(MultiObjectiveTestProblemBaseTestCase, BotorchTestCas
             )
 
 
-class TestMOMFPark(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
+class TestMOMFPark(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+):
     functions = [MOMFPark()]
     bounds = [[0.0, 0.0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0, 1.0]]
 

@@ -14,6 +14,8 @@ from unittest import mock
 import numpy as np
 import torch
 from botorch.exceptions.errors import BotorchError
+from botorch.models.gp_regression import SingleTaskGP
+from botorch.sampling.pathwise import draw_matheron_paths
 from botorch.utils.sampling import (
     _convert_bounds_to_inequality_constraints,
     batched_multinomial,
@@ -24,6 +26,7 @@ from botorch.utils.sampling import (
     HitAndRunPolytopeSampler,
     manual_seed,
     normalize_linear_constraints,
+    optimize_posterior_samples,
     PolytopeSampler,
     sample_hypersphere,
     sample_simplex,
@@ -219,64 +222,6 @@ class TestSampleUtils(BotorchTestCase):
         x = find_interior_point(A=A, b=b)
         self.assertAlmostEqual(x.item(), 5.0, places=4)
 
-    def test_get_polytope_samples_wrong_inequality_constraints_dtype(self):
-        for dtype in (torch.float, torch.double):
-            with self.subTest(dtype=dtype):
-                tkwargs = {"device": self.device, "dtype": dtype}
-                bounds = torch.zeros(2, 4, **tkwargs)
-                inequality_constraints = [
-                    (
-                        torch.tensor([3], dtype=torch.float, device=self.device),
-                        torch.tensor([-4], **tkwargs),
-                        -3,
-                    )
-                ]
-
-                msg = (
-                    "Normalizing `inequality_constraints` failed. Check that the first "
-                    "element of `inequality_constraints` is the correct dtype following"
-                    " the previous IndexError."
-                )
-                msg_orig = "tensors used as indices must be long, byte or bool tensors"
-
-                with self.assertRaisesRegex(ValueError, msg), self.assertRaisesRegex(
-                    IndexError, msg_orig
-                ):
-                    get_polytope_samples(
-                        n=5,
-                        bounds=bounds,
-                        inequality_constraints=inequality_constraints,
-                    )
-
-    def test_get_polytope_samples_wrong_equality_constraints_dtype(self):
-        for dtype in (torch.float, torch.double):
-            with self.subTest(dtype=dtype):
-                tkwargs = {"device": self.device, "dtype": dtype}
-                bounds = torch.zeros(2, 4, **tkwargs)
-
-                equality_constraints = [
-                    (
-                        torch.tensor([0], dtype=torch.float, device=self.device),
-                        torch.tensor([1], **tkwargs),
-                        0.5,
-                    )
-                ]
-                msg = (
-                    "Normalizing `equality_constraints` failed. Check that the first "
-                    "element of `equality_constraints` is the correct dtype following "
-                    "the previous IndexError."
-                )
-                msg_orig = "tensors used as indices must be long, byte or bool tensors"
-
-                with self.assertRaisesRegex(ValueError, msg), self.assertRaisesRegex(
-                    IndexError, msg_orig
-                ):
-                    get_polytope_samples(
-                        n=5,
-                        bounds=bounds,
-                        equality_constraints=equality_constraints,
-                    )
-
     def test_get_polytope_samples(self):
         tkwargs = {"device": self.device}
         for dtype in (torch.float, torch.double):
@@ -361,11 +306,11 @@ class TestSampleUtils(BotorchTestCase):
 
 
 class PolytopeSamplerTestBase:
-
     sampler_class: Type[PolytopeSampler]
     sampler_kwargs: Dict[str, Any] = {}
 
     def setUp(self):
+        super().setUp()
         self.bounds = torch.zeros(2, 3, device=self.device)
         self.bounds[1] = 1
         self.A = torch.tensor(
@@ -403,6 +348,29 @@ class PolytopeSamplerTestBase:
                 self.assertEqual(((A @ more_samples.t() - b) > 0).sum().item(), 0)
                 self.assertTrue((more_samples <= bounds[1]).all())
                 self.assertTrue((more_samples >= bounds[0]).all())
+
+    def test_sample_polytope_with_seed(self):
+        for dtype in (torch.float, torch.double):
+            A = self.A.to(dtype)
+            b = self.b.to(dtype)
+            x0 = self.x0.to(dtype)
+            bounds = self.bounds.to(dtype)
+            for interior_point in [x0, None]:
+                sampler1 = self.sampler_class(
+                    inequality_constraints=(A, b),
+                    bounds=bounds,
+                    interior_point=interior_point,
+                    **self.sampler_kwargs,
+                )
+                sampler2 = self.sampler_class(
+                    inequality_constraints=(A, b),
+                    bounds=bounds,
+                    interior_point=interior_point,
+                    **self.sampler_kwargs,
+                )
+                samples1 = sampler1.draw(n=10, seed=42)
+                samples2 = sampler2.draw(n=10, seed=42)
+                self.assertTrue(torch.allclose(samples1, samples2))
 
     def test_sample_polytope_with_eq_constraints(self):
         for dtype in (torch.float, torch.double):
@@ -505,13 +473,11 @@ class PolytopeSamplerTestBase:
 
 
 class TestHitAndRunPolytopeSampler(PolytopeSamplerTestBase, BotorchTestCase):
-
     sampler_class = HitAndRunPolytopeSampler
     sampler_kwargs = {"n_burnin": 2}
 
 
 class TestDelaunayPolytopeSampler(PolytopeSamplerTestBase, BotorchTestCase):
-
     sampler_class = DelaunayPolytopeSampler
 
     def test_sample_polytope_unbounded(self):
@@ -528,3 +494,42 @@ class TestDelaunayPolytopeSampler(PolytopeSamplerTestBase, BotorchTestCase):
                     interior_point=self.x0,
                     **self.sampler_kwargs,
                 )
+
+
+class TestOptimizePosteriorSamples(BotorchTestCase):
+    def test_optimize_posterior_samples(self):
+        # Restrict the random seed to prevent flaky failures.
+        seed = torch.randint(high=5, size=(1,)).item()
+        torch.manual_seed(seed)
+        dims = 2
+        dtype = torch.float64
+        eps = 1e-6
+        for_testing_speed_kwargs = {"raw_samples": 512, "num_restarts": 10}
+        nums_optima = (1, 7)
+        batch_shapes = ((), (3,), (5, 2))
+        for num_optima, batch_shape in itertools.product(nums_optima, batch_shapes):
+            bounds = torch.tensor([[0, 1]] * dims, dtype=dtype).T
+            X = torch.rand(*batch_shape, 13, dims, dtype=dtype)
+            Y = torch.pow(X - 0.5, 2).sum(dim=-1, keepdim=True)
+
+            # having a noiseless model all but guarantees that the found optima
+            # will be better than the observations
+            model = SingleTaskGP(X, Y, torch.full_like(Y, eps))
+            paths = draw_matheron_paths(
+                model=model, sample_shape=torch.Size([num_optima])
+            )
+            X_opt, f_opt = optimize_posterior_samples(
+                paths, bounds, **for_testing_speed_kwargs
+            )
+
+            correct_X_shape = (num_optima,) + batch_shape + (dims,)
+            correct_f_shape = (num_optima,) + batch_shape + (1,)
+
+            self.assertEqual(X_opt.shape, correct_X_shape)
+            self.assertEqual(f_opt.shape, correct_f_shape)
+            self.assertTrue(torch.all(X_opt >= bounds[0]))
+            self.assertTrue(torch.all(X_opt <= bounds[1]))
+
+            # Check that the all found optima are larger than the observations
+            # This is not 100% deterministic, but just about.
+            self.assertTrue(torch.all((f_opt > Y.max(dim=-2).values)))

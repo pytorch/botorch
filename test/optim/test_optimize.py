@@ -7,6 +7,7 @@
 import itertools
 import warnings
 from inspect import signature
+from itertools import product
 from unittest import mock
 
 import numpy as np
@@ -33,6 +34,7 @@ from botorch.optim.parameter_constraints import (
     _arrayify,
     _make_f_and_grad_nonlinear_inequality_constraints,
 )
+from botorch.optim.utils.timeout import minimize_with_timeout
 from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction
 from scipy.optimize import OptimizeResult
 from torch import Tensor
@@ -64,7 +66,7 @@ class SquaredAcquisitionFunction(AcquisitionFunction):
         super().__init__(model=model)
 
     def forward(self, X):
-        return torch.norm(X, dim=-1).squeeze(-1)
+        return torch.linalg.norm(X, dim=-1).squeeze(-1)
 
 
 class MockOneShotEvaluateAcquisitionFunction(MockOneShotAcquisitionFunction):
@@ -256,9 +258,8 @@ class TestOptimizeAcqf(BotorchTestCase):
         mock_gen_batch_initial_conditions,
         timeout_sec=None,
     ):
-        for mock_gen_candidates in (
-            mock_gen_candidates_scipy,
-            mock_gen_candidates_torch,
+        for mock_gen_candidates, timeout_sec in product(
+            [mock_gen_candidates_scipy, mock_gen_candidates_torch], [None, 1e-4]
         ):
             if mock_gen_candidates == mock_gen_candidates_torch:
                 mock_signature.return_value = signature(gen_candidates_torch)
@@ -269,7 +270,7 @@ class TestOptimizeAcqf(BotorchTestCase):
             num_restarts = 2
             raw_samples = 10
             options = {}
-            for dtype in (torch.float, torch.double):
+            for dtype, use_rounding in ((torch.float, True), (torch.double, False)):
                 mock_acq_function = MockAcquisitionFunction()
                 mock_gen_batch_initial_conditions.side_effect = [
                     torch.zeros(num_restarts, 1, 3, device=self.device, dtype=dtype)
@@ -285,18 +286,25 @@ class TestOptimizeAcqf(BotorchTestCase):
                     for i in range(q)
                 ]
                 mock_gen_candidates.side_effect = gcs_return_vals
-                expected_candidates = torch.cat(
-                    [cands[0] for cands, _ in gcs_return_vals], dim=-2
-                ).round()
                 bounds = torch.stack(
                     [
                         torch.zeros(3, device=self.device, dtype=dtype),
                         4 * torch.ones(3, device=self.device, dtype=dtype),
                     ]
                 )
-                inequality_constraints = [
-                    (torch.tensor([2]), torch.tensor([4]), torch.tensor(5))
-                ]
+                if mock_gen_candidates is mock_gen_candidates_scipy:
+                    # x[2] * 4 >= 5
+                    inequality_constraints = [
+                        (torch.tensor([2]), torch.tensor([4]), torch.tensor(5))
+                    ]
+                    equality_constraints = [
+                        (torch.tensor([0, 1]), torch.ones(2), torch.tensor(4.0))
+                    ]
+                # gen_candidates_torch does not support constraints
+                else:
+                    inequality_constraints = None
+                    equality_constraints = None
+
                 mock_gen_candidates.reset_mock()
                 candidates, acq_value = optimize_acqf(
                     acq_function=mock_acq_function,
@@ -306,18 +314,24 @@ class TestOptimizeAcqf(BotorchTestCase):
                     raw_samples=raw_samples,
                     options=options,
                     inequality_constraints=inequality_constraints,
-                    post_processing_func=rounding_func,
+                    equality_constraints=equality_constraints,
+                    post_processing_func=rounding_func if use_rounding else None,
                     sequential=True,
                     timeout_sec=timeout_sec,
                     gen_candidates=mock_gen_candidates,
                 )
                 self.assertEqual(mock_gen_candidates.call_count, q)
-                self.assertTrue(torch.equal(candidates, expected_candidates))
-                self.assertTrue(
-                    torch.equal(
-                        acq_value, torch.cat([acqval for _, acqval in gcs_return_vals])
-                    )
+                base_candidates = torch.cat(
+                    [cands[0] for cands, _ in gcs_return_vals], dim=-2
                 )
+                if use_rounding:
+                    expected_candidates = base_candidates.round()
+                    expected_val = mock_acq_function(expected_candidates.unsqueeze(-2))
+                else:
+                    expected_candidates = base_candidates
+                    expected_val = torch.cat([acqval for _, acqval in gcs_return_vals])
+                self.assertTrue(torch.equal(candidates, expected_candidates))
+                self.assertTrue(torch.equal(acq_value, expected_val))
             # verify error when using a OneShotAcquisitionFunction
             with self.assertRaises(NotImplementedError):
                 optimize_acqf(
@@ -358,12 +372,73 @@ class TestOptimizeAcqf(BotorchTestCase):
                     q=q,
                     num_restarts=num_restarts,
                     raw_samples=raw_samples,
-                    batch_initial_conditions=mock_gen_batch_initial_conditions,
+                    batch_initial_conditions=torch.zeros((1, 1, 3)),
                     sequential=True,
                 )
 
-    def test_optimize_acqf_sequential_timeout(self):
-        self.test_optimize_acqf_sequential(timeout_sec=1e-4)
+    @mock.patch(
+        "botorch.generation.gen.minimize_with_timeout",
+        wraps=minimize_with_timeout,
+    )
+    @mock.patch("botorch.optim.utils.timeout.optimize.minimize")
+    def test_optimize_acqf_timeout(
+        self, mock_minimize, mock_minimize_with_timeout
+    ) -> None:
+        """
+        Check that the right value of `timeout_sec` is passed to `minimize_with_timeout`
+        """
+
+        num_restarts = 2
+        q = 3
+        dim = 4
+
+        for timeout_sec, sequential, expected_call_count, expected_timeout_arg in [
+            (1.0, True, num_restarts * q, 1.0 / (num_restarts * q)),
+            (0.0, True, num_restarts * q, 0.0),
+            (1.0, False, num_restarts, 1.0 / num_restarts),
+            (0.0, False, num_restarts, 0.0),
+        ]:
+            with self.subTest(
+                timeout_sec=timeout_sec,
+                sequential=sequential,
+                expected_call_count=expected_call_count,
+                expected_timeout_arg=expected_timeout_arg,
+            ):
+                mock_minimize.return_value = OptimizeResult(
+                    {
+                        "x": np.zeros(dim if sequential else dim * q),
+                        "success": True,
+                        "status": 0,
+                    },
+                )
+
+                optimize_acqf(
+                    timeout_sec=timeout_sec,
+                    q=q,
+                    sequential=sequential,
+                    num_restarts=num_restarts,
+                    acq_function=SinOneOverXAcqusitionFunction(),
+                    bounds=torch.stack([-1 * torch.ones(dim), torch.ones(dim)]),
+                    raw_samples=7,
+                    options={"batch_limit": 1},
+                )
+                self.assertEqual(
+                    mock_minimize_with_timeout.call_count, expected_call_count
+                )
+                timeout_times = torch.tensor(
+                    [
+                        elt.kwargs["timeout_sec"]
+                        for elt in mock_minimize_with_timeout.mock_calls
+                    ]
+                )
+                self.assertGreaterEqual(timeout_times.min(), 0)
+                self.assertAllClose(
+                    timeout_times,
+                    torch.full_like(timeout_times, expected_timeout_arg),
+                    rtol=float("inf"),
+                    atol=1e-8,
+                )
+                mock_minimize_with_timeout.reset_mock()
 
     def test_optimize_acqf_sequential_notimplemented(self):
         # Sequential acquisition function optimization only supported
@@ -787,6 +862,32 @@ class TestOptimizeAcqf(BotorchTestCase):
                 torch.allclose(acq_value, torch.tensor(2.45, **tkwargs), atol=1e-3)
             )
 
+            with torch.random.fork_rng():
+                torch.manual_seed(0)
+                batch_initial_conditions = torch.rand(num_restarts, 1, 3, **tkwargs)
+                batch_initial_conditions[..., 0] = 2
+
+            # test with fixed features
+            candidates, acq_value = optimize_acqf(
+                acq_function=mock_acq_function,
+                bounds=bounds,
+                q=1,
+                nonlinear_inequality_constraints=[nlc1, nlc2],
+                batch_initial_conditions=batch_initial_conditions,
+                num_restarts=num_restarts,
+                fixed_features={0: 2},
+            )
+            self.assertEqual(candidates[0, 0], 2.0)
+            self.assertTrue(
+                torch.allclose(
+                    torch.sort(candidates).values,
+                    torch.tensor([[0, 2, 2]], **tkwargs),
+                )
+            )
+            self.assertTrue(
+                torch.allclose(acq_value, torch.tensor(2.8284, **tkwargs), atol=1e-3)
+            )
+
             # Test that an ic_generator object with the same API as
             # gen_batch_initial_conditions returns candidates of the
             # required shape.
@@ -803,22 +904,6 @@ class TestOptimizeAcqf(BotorchTestCase):
                     ic_generator=ic_generator,
                 )
                 self.assertEqual(candidates.size(), torch.Size([1, 3]))
-
-            # Make sure fixed features aren't supported
-            with self.assertRaisesRegex(
-                NotImplementedError,
-                "Fixed features are not supported when non-linear inequality "
-                "constraints are given.",
-            ):
-                optimize_acqf(
-                    acq_function=mock_acq_function,
-                    bounds=bounds,
-                    q=1,
-                    nonlinear_inequality_constraints=[nlc1, nlc2, nlc3, nlc4],
-                    batch_initial_conditions=batch_initial_conditions,
-                    num_restarts=num_restarts,
-                    fixed_features={0: 0.1},
-                )
 
             # Constraints must be passed in as lists
             with self.assertRaisesRegex(
@@ -951,9 +1036,8 @@ class TestOptimizeAcqf(BotorchTestCase):
                 if mock_gen_candidates == mock_gen_candidates_torch:
                     self.assertEqual(len(ws), 3)
                     message = (
-                        "Keyword arguments ['nonlinear_inequality_constraints',"
-                        " 'equality_constraints', 'inequality_constraints'] will"
-                        " be ignored because they are not allowed parameters for"
+                        "Keyword arguments ['nonlinear_inequality_constraints']"
+                        " will be ignored because they are not allowed parameters for"
                         " function gen_candidates. Allowed parameters are "
                         " ['initial_conditions', 'acquisition_function', "
                         "'lower_bounds', 'upper_bounds', 'optimizer', 'options',"
@@ -1679,3 +1763,23 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
             )
             self.assertEqual(len(X), 20)
             self.assertAllClose(torch.unique(X, dim=0), X)
+
+    def test_no_precision_loss_with_fixed_features(self) -> None:
+
+        acqf = SquaredAcquisitionFunction()
+
+        val = 1e-1
+        fixed_features_list = [{0: val}]
+
+        bounds = torch.stack(
+            [torch.zeros(2, dtype=torch.float64), torch.ones(2, dtype=torch.float64)]
+        )
+        candidate, _ = optimize_acqf_mixed(
+            acqf,
+            bounds=bounds,
+            q=1,
+            num_restarts=1,
+            raw_samples=1,
+            fixed_features_list=fixed_features_list,
+        )
+        self.assertEqual(candidate[0, 0].item(), val)

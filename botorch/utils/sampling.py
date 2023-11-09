@@ -18,16 +18,21 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-from typing import Generator, Iterable, List, Optional, Tuple
+from typing import Any, Generator, Iterable, List, Optional, Tuple, TYPE_CHECKING
 
 import numpy as np
 import scipy
 import torch
 from botorch.exceptions.errors import BotorchError
 from botorch.sampling.qmc import NormalQMCEngine
+from botorch.utils.transforms import unnormalize
 from scipy.spatial import Delaunay, HalfspaceIntersection
 from torch import LongTensor, Tensor
 from torch.quasirandom import SobolEngine
+
+
+if TYPE_CHECKING:
+    from botorch.sampling.pathwise.paths import SamplePath  # pragma: no cover
 
 
 @contextmanager
@@ -161,7 +166,7 @@ def sample_hypersphere(
     else:
         with manual_seed(seed=seed):
             rnd = torch.randn(n, d, dtype=dtype)
-    samples = rnd / torch.norm(rnd, dim=-1, keepdim=True)
+    samples = rnd / torch.linalg.norm(rnd, dim=-1, keepdim=True)
     if device is not None:
         samples = samples.to(device)
     return samples
@@ -244,7 +249,9 @@ def sample_polytope(
     # pre-sample samples from hypersphere
     d = x0.size(0)
     # uniform samples from unit ball in d dims
-    Rs = sample_hypersphere(d=d, n=n_tot, dtype=A.dtype, device=A.device).unsqueeze(-1)
+    Rs = sample_hypersphere(
+        d=d, n=n_tot, dtype=A.dtype, device=A.device, seed=seed
+    ).unsqueeze(-1)
 
     # compute matprods in batch
     ARs = (A @ Rs).squeeze(-1)
@@ -788,24 +795,10 @@ def get_polytope_samples(
     """
     # create tensors representing linear inequality constraints
     # of the form Ax >= b.
-    # TODO: remove this error handling functionality in a few releases.
-    # Context: BoTorch inadvertently supported indices with unusual dtypes.
-    # This is now not supported.
-    index_dtype_error = (
-        "Normalizing {var_name} failed. Check that the first "
-        "element of {var_name} is the correct dtype following "
-        "the previous IndexError."
-    )
     if inequality_constraints:
         # normalize_linear_constraints is called to solve this issue:
         # https://github.com/pytorch/botorch/issues/1225
-        try:
-            # non-standard dtypes used to be supported for indices in constraints;
-            # this is no longer true
-            constraints = normalize_linear_constraints(bounds, inequality_constraints)
-        except IndexError as e:
-            msg = index_dtype_error.format(var_name="`inequality_constraints`")
-            raise ValueError(msg) from e
+        constraints = normalize_linear_constraints(bounds, inequality_constraints)
 
         A, b = sparse_to_dense_constraints(
             d=bounds.shape[-1],
@@ -818,16 +811,7 @@ def get_polytope_samples(
     else:
         dense_inequality_constraints = None
     if equality_constraints:
-        try:
-            # non-standard dtypes used to be supported for indices in constraints;
-            # this is no longer true
-            constraints = normalize_linear_constraints(bounds, equality_constraints)
-        except IndexError as e:
-            msg = index_dtype_error.format(var_name="`equality_constraints`")
-            raise ValueError(msg) from e
-
-        # normalize_linear_constraints is called to solve this issue:
-        # https://github.com/pytorch/botorch/issues/1225
+        constraints = normalize_linear_constraints(bounds, equality_constraints)
         dense_equality_constraints = sparse_to_dense_constraints(
             d=bounds.shape[-1], constraints=constraints
         )
@@ -873,3 +857,71 @@ def sparse_to_dense_constraints(
         A[i, indices.long()] = coefficients
         b[i] = rhs
     return A, b
+
+
+def optimize_posterior_samples(
+    paths: SamplePath,
+    bounds: Tensor,
+    candidates: Optional[Tensor] = None,
+    raw_samples: Optional[int] = 1024,
+    num_restarts: int = 20,
+    maximize: bool = True,
+    **kwargs: Any,
+) -> Tuple[Tensor, Tensor]:
+    r"""Cheaply maximizes posterior samples by random querying followed by vanilla
+    gradient descent on the best num_restarts points.
+
+    Args:
+        paths: Random Fourier Feature-based sample paths from the GP
+        bounds: The bounds on the search space.
+        candidates: A priori good candidates (typically previous design points)
+            which acts as extra initial guesses for the optimization routine.
+        raw_samples: The number of samples with which to query the samples initially.
+        num_restarts: The number of points selected for gradient-based optimization.
+        maximize: Boolean indicating whether to maimize or minimize
+
+    Returns:
+        A two-element tuple containing:
+            - X_opt: A `num_optima x [batch_size] x d`-dim tensor of optimal inputs x*.
+            - f_opt: A `num_optima x [batch_size] x 1`-dim tensor of optimal outputs f*.
+    """
+    if maximize:
+
+        def path_func(x):
+            return paths(x)
+
+    else:
+
+        def path_func(x):
+            return -paths(x)
+
+    candidate_set = unnormalize(
+        SobolEngine(dimension=bounds.shape[1], scramble=True).draw(raw_samples), bounds
+    )
+
+    # queries all samples on all candidates - output shape
+    # raw_samples * num_optima * num_models
+    candidate_queries = path_func(candidate_set)
+    argtop_k = torch.topk(candidate_queries, num_restarts, dim=-1).indices
+    X_top_k = candidate_set[argtop_k, :]
+
+    # to avoid circular import, the import occurs here
+    from botorch.generation.gen import gen_candidates_torch
+
+    X_top_k, f_top_k = gen_candidates_torch(
+        X_top_k, path_func, lower_bounds=bounds[0], upper_bounds=bounds[1], **kwargs
+    )
+    f_opt, arg_opt = f_top_k.max(dim=-1, keepdim=True)
+
+    # For each sample (and possibly for every model in the batch of models), this
+    # retrieves the argmax. We flatten, pick out the indices and then reshape to
+    # the original batch shapes (so instead of pickig out the argmax of a
+    # (3, 7, num_restarts, D)) along the num_restarts dim, we pick it out of a
+    # (21  , num_restarts, D)
+    final_shape = candidate_queries.shape[:-1]
+    X_opt = X_top_k.reshape(final_shape.numel(), num_restarts, -1)[
+        torch.arange(final_shape.numel()), arg_opt.flatten()
+    ].reshape(*final_shape, -1)
+    if not maximize:
+        f_opt = -f_opt
+    return X_opt, f_opt

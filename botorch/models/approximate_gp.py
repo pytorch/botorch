@@ -32,21 +32,24 @@ from __future__ import annotations
 import copy
 import warnings
 
-from typing import Optional, Type, Union
+from typing import Optional, Type, TypeVar, Union
 
 import torch
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.models.utils import validate_input_scaling
+from botorch.models.utils.gpytorch_modules import (
+    get_gaussian_likelihood_with_gamma_prior,
+    get_matern_kernel_with_gamma_prior,
+)
 from botorch.models.utils.inducing_point_allocators import (
     GreedyVarianceReduction,
     InducingPointAllocator,
 )
 from botorch.posteriors.gpytorch import GPyTorchPosterior
-from gpytorch.constraints import GreaterThan
 from gpytorch.distributions import MultivariateNormal
-from gpytorch.kernels import Kernel, MaternKernel, ScaleKernel
+from gpytorch.kernels import Kernel
 from gpytorch.likelihoods import (
     GaussianLikelihood,
     Likelihood,
@@ -54,7 +57,6 @@ from gpytorch.likelihoods import (
 )
 from gpytorch.means import ConstantMean, Mean
 from gpytorch.models import ApproximateGP
-from gpytorch.priors import GammaPrior
 from gpytorch.utils.memoize import clear_cache_hook
 from gpytorch.variational import (
     _VariationalDistribution,
@@ -64,9 +66,10 @@ from gpytorch.variational import (
     VariationalStrategy,
 )
 from torch import Tensor
+from torch.nn import Module
 
 
-MIN_INFERRED_NOISE_LEVEL = 1e-4
+TApproxModel = TypeVar("TApproxModel", bound="ApproximateGPyTorchModel")
 
 
 class ApproximateGPyTorchModel(GPyTorchModel):
@@ -119,6 +122,19 @@ class ApproximateGPyTorchModel(GPyTorchModel):
     @property
     def num_outputs(self):
         return self._desired_num_outputs
+
+    def eval(self: TApproxModel) -> TApproxModel:
+        r"""Puts the model in `eval` mode."""
+        return Module.eval(self)
+
+    def train(self: TApproxModel, mode: bool = True) -> TApproxModel:
+        r"""Put the model in `train` mode.
+
+        Args:
+            mode: A boolean denoting whether to put in `train` or `eval` mode.
+                If `False`, model is put in `eval` mode.
+        """
+        return Module.train(self, mode=mode)
 
     def posterior(
         self, X, output_indices=None, observation_noise=False, *args, **kwargs
@@ -175,7 +191,7 @@ class _SingleTaskVariationalGP(ApproximateGP):
         Args:
             train_X: Training inputs (due to the ability of the SVGP to sub-sample
                 this does not have to be all of the training inputs).
-            train_Y: Training targets (optional).
+            train_Y: Not used.
             num_outputs: Number of output responses per input.
             covar_module: Kernel function. If omitted, uses a `MaternKernel`.
             mean_module: Mean of GP model. If omitted, uses a `ConstantMean`.
@@ -201,15 +217,9 @@ class _SingleTaskVariationalGP(ApproximateGP):
         self._aug_batch_shape = aug_batch_shape
 
         if covar_module is None:
-            covar_module = ScaleKernel(
-                base_kernel=MaternKernel(
-                    nu=2.5,
-                    ard_num_dims=train_X.shape[-1],
-                    batch_shape=self._aug_batch_shape,
-                    lengthscale_prior=GammaPrior(3.0, 6.0),
-                ),
+            covar_module = get_matern_kernel_with_gamma_prior(
+                ard_num_dims=train_X.shape[-1],
                 batch_shape=self._aug_batch_shape,
-                outputscale_prior=GammaPrior(2.0, 0.15),
             ).to(train_X)
             self._subset_batch_dict = {
                 "mean_module.constant": -2,
@@ -368,16 +378,8 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
 
         if likelihood is None:
             if num_outputs == 1:
-                noise_prior = GammaPrior(1.1, 0.05)
-                noise_prior_mode = (noise_prior.concentration - 1) / noise_prior.rate
-                likelihood = GaussianLikelihood(
-                    noise_prior=noise_prior,
-                    batch_shape=self._aug_batch_shape,
-                    noise_constraint=GreaterThan(
-                        MIN_INFERRED_NOISE_LEVEL,
-                        transform=None,
-                        initial_value=noise_prior_mode,
-                    ),
+                likelihood = get_gaussian_likelihood_with_gamma_prior(
+                    batch_shape=self._aug_batch_shape
                 )
             else:
                 likelihood = MultitaskGaussianLikelihood(num_tasks=num_outputs)
@@ -400,7 +402,6 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
 
         model = _SingleTaskVariationalGP(
             train_X=transformed_X,
-            train_Y=train_Y,
             num_outputs=num_outputs,
             learn_inducing_points=learn_inducing_points,
             covar_module=covar_module,
@@ -425,6 +426,17 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
             self.model.train_targets = train_Y.squeeze(-1)
 
         self.to(train_X)
+
+    @property
+    def batch_shape(self) -> torch.Size:
+        r"""The batch shape of the model.
+
+        This is a batch shape from an I/O perspective. For a model with `m`
+        outputs, a `test_batch_shape x q x d`-shaped input `X` to the `posterior`
+        method returns a Posterior object over an output of shape
+        `broadcast(test_batch_shape, model.batch_shape) x q x m`.
+        """
+        return self._input_batch_shape
 
     def init_inducing_points(
         self,

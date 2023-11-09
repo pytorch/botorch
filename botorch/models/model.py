@@ -20,10 +20,10 @@ from typing import (
     Any,
     Callable,
     Dict,
-    Hashable,
     List,
     Mapping,
     Optional,
+    Set,
     TYPE_CHECKING,
     TypeVar,
     Union,
@@ -32,12 +32,19 @@ from typing import (
 import numpy as np
 import torch
 from botorch import settings
-from botorch.exceptions.errors import InputDataError
+from botorch.exceptions.errors import (
+    BotorchTensorDimensionError,
+    DeprecationError,
+    InputDataError,
+)
+from botorch.logging import shape_to_str
 from botorch.models.utils.assorted import fantasize as fantasize_flag
 from botorch.posteriors import Posterior, PosteriorList
 from botorch.sampling.base import MCSampler
-from botorch.utils.datasets import BotorchDataset
+from botorch.sampling.list_sampler import ListSampler
+from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.transforms import is_fully_bayesian
+from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 from torch import Tensor
 from torch.nn import Module, ModuleDict, ModuleList
 
@@ -80,7 +87,7 @@ class Model(Module, ABC):
         self,
         X: Tensor,
         output_indices: Optional[List[int]] = None,
-        observation_noise: bool = False,
+        observation_noise: Union[bool, Tensor] = False,
         posterior_transform: Optional[PosteriorTransform] = None,
         **kwargs: Any,
     ) -> Posterior:
@@ -99,7 +106,12 @@ class Model(Module, ABC):
                 Can be used to speed up computation if only a subset of the
                 model's outputs are required for optimization. If omitted,
                 computes the posterior over all model outputs.
-            observation_noise: If True, add observation noise to the posterior.
+            observation_noise: For models with an inferred noise level, if True,
+                include observation noise. For models with an observed noise level,
+                this must be a `model_batch_shape x 1 x m`-dim tensor or
+                a `model_batch_shape x n' x m`-dim tensor containing the average
+                noise for each batch and output. `noise` must be in the
+                outcome-transformed space if an outcome transform is used.
             posterior_transform: An optional PosteriorTransform.
 
         Returns:
@@ -167,10 +179,10 @@ class Model(Module, ABC):
     @classmethod
     def construct_inputs(
         cls,
-        training_data: Union[BotorchDataset, Dict[Hashable, BotorchDataset]],
+        training_data: SupervisedDataset,
         **kwargs: Any,
     ) -> Dict[str, Any]:
-        r"""Construct `Model` keyword arguments from a dict of `BotorchDataset`."""
+        r"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`."""
         from botorch.models.utils.parse_training_data import parse_training_data
 
         return parse_training_data(cls, training_data, **kwargs)
@@ -242,6 +254,10 @@ class Model(Module, ABC):
             self._set_transformed_inputs()
         return super().train(mode=mode)
 
+    @property
+    def dtypes_of_buffers(self) -> Set[torch.dtype]:
+        return {t.dtype for t in self.buffers() if t is not None}
+
 
 class FantasizeMixin(ABC):
     """
@@ -303,14 +319,15 @@ class FantasizeMixin(ABC):
         # TODO: see if any of these can be imported only if TYPE_CHECKING
         X: Tensor,
         sampler: MCSampler,
-        observation_noise: bool = True,
+        observation_noise: Optional[Tensor] = None,
         **kwargs: Any,
     ) -> TFantasizeMixin:
         r"""Construct a fantasy model.
 
         Constructs a fantasy model in the following fashion:
-        (1) compute the model posterior at `X` (including observation noise if
-        `observation_noise=True`).
+        (1) compute the model posterior at `X`, including observation noise.
+        If `observation_noise` is a Tensor, use it directly as the observation
+        noise to add.
         (2) sample from this posterior (using `sampler`) to generate "fake"
         observations.
         (3) condition the model on the new fake observations.
@@ -321,17 +338,60 @@ class FantasizeMixin(ABC):
                 `batch_shape` is the batch shape (must be compatible with the
                 batch shape of the model).
             sampler: The sampler used for sampling from the posterior at `X`.
-            observation_noise: If True, include observation noise.
+            observation_noise: A `model_batch_shape x 1 x m`-dim tensor or
+                a `model_batch_shape x n' x m`-dim tensor containing the average
+                noise for each batch and output, where `m` is the number of outputs.
+                `noise` must be in the outcome-transformed space if an outcome
+                transform is used.
+                If None and using an inferred noise likelihood, the noise will be the
+                inferred noise level. If using a fixed noise likelihood, the mean across
+                the observation noise in the training data is used as observation noise.
             kwargs: Will be passed to `model.condition_on_observations`
 
         Returns:
             The constructed fantasy model.
         """
+        if not isinstance(observation_noise, Tensor) and observation_noise is not None:
+            raise DeprecationError(
+                "`fantasize` no longer accepts a boolean for `observation_noise`."
+            )
+        elif observation_noise is None and isinstance(
+            self.likelihood, FixedNoiseGaussianLikelihood
+        ):
+            if self.num_outputs > 1:
+                # make noise ... x n x m
+                observation_noise = self.likelihood.noise.transpose(-1, -2)
+            else:
+                observation_noise = self.likelihood.noise.unsqueeze(-1)
+            observation_noise = observation_noise.mean(dim=-2, keepdim=True)
+        # if the inputs are empty, expand the inputs
+        if X.shape[-2] == 0:
+            output_shape = (
+                sampler.sample_shape
+                + X.shape[:-2]
+                + self.batch_shape
+                + torch.Size([0, self.num_outputs])
+            )
+            Y = torch.empty(output_shape, dtype=X.dtype, device=X.device)
+            if observation_noise is not None:
+                kwargs["noise"] = observation_noise.expand(Y.shape[1:])
+            return self.condition_on_observations(
+                X=self.transform_inputs(X),
+                Y=Y,
+                **kwargs,
+            )
         propagate_grads = kwargs.pop("propagate_grads", False)
         with fantasize_flag():
             with settings.propagate_grads(propagate_grads):
-                post_X = self.posterior(X, observation_noise=observation_noise)
+                post_X = self.posterior(
+                    X,
+                    observation_noise=True
+                    if observation_noise is None
+                    else observation_noise,
+                )
             Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x n' x m
+            if observation_noise is not None:
+                kwargs["noise"] = observation_noise.expand(Y_fantasized.shape[1:])
             return self.condition_on_observations(
                 X=self.transform_inputs(X), Y=Y_fantasized, **kwargs
             )
@@ -368,7 +428,7 @@ class ModelList(Model):
         r"""Convert global subset indices to indices for the individual models.
 
         Args:
-            idcs: A list of inidices to which the `ModelList` model is to be
+            idcs: A list of indices to which the `ModelList` model is to be
                 subset to.
 
         Returns:
@@ -382,7 +442,7 @@ class ModelList(Model):
         idcs = [idx % cum_output_sizes[-1] for idx in idcs]
         group_indices: Dict[int, List[int]] = defaultdict(list)
         for idx in idcs:
-            grp_idx = int(np.argwhere(idx < cum_output_sizes)[0])
+            grp_idx = np.argwhere(idx < cum_output_sizes)[0].item()
             sub_idx = idx - int(np.sum(output_sizes[:grp_idx]))
             group_indices[grp_idx].append(sub_idx)
         return group_indices
@@ -391,7 +451,7 @@ class ModelList(Model):
         self,
         X: Tensor,
         output_indices: Optional[List[int]] = None,
-        observation_noise: bool = False,
+        observation_noise: Union[bool, Tensor] = False,
         posterior_transform: Optional[Callable[[PosteriorList], Posterior]] = None,
         **kwargs: Any,
     ) -> Posterior:
@@ -410,7 +470,13 @@ class ModelList(Model):
                 Can be used to speed up computation if only a subset of the
                 model's outputs are required for optimization. If omitted,
                 computes the posterior over all model outputs.
-            observation_noise: If True, add observation noise to the posterior.
+            observation_noise: If True, add the observation noise from the
+                respective likelihoods to the posterior. If a Tensor of shape
+                `(batch_shape) x q x m`, use it directly as the observation
+                noise (with `observation_noise[...,i]` added to the posterior
+                of the `i`-th model). `observation_noise` is assumed
+                to be in the outcome-transformed space, if an outcome transform
+                is used by the model.
             posterior_transform: An optional PosteriorTransform.
 
         Returns:
@@ -418,12 +484,21 @@ class ModelList(Model):
             over `q` points and `m` outputs each.
         """
         group_indices = self._get_group_subset_indices(idcs=output_indices)
-        posteriors = [
-            self.models[i].posterior(
-                X=X, output_indices=idcs, observation_noise=observation_noise
+        posteriors = []
+        for i, idcs in group_indices.items():
+            if isinstance(observation_noise, Tensor):
+                if idcs is None:
+                    start_idx = sum(m.num_outputs for m in self.models[:i])
+                    end_idx = start_idx + self.models[i].num_outputs
+                    idcs = list(range(start_idx, end_idx))
+                obs_noise = observation_noise[..., idcs]
+            else:
+                obs_noise = observation_noise
+            posteriors.append(
+                self.models[i].posterior(
+                    X=X, output_indices=idcs, observation_noise=obs_noise
+                )
             )
-            for i, idcs in group_indices.items()
-        ]
         posterior = PosteriorList(*posteriors)
         if posterior_transform is not None:
             posterior = posterior_transform(posterior)
@@ -515,6 +590,82 @@ class ModelList(Model):
                 }
                 m.load_state_dict(filtered_dict)
         super().load_state_dict(state_dict=state_dict, strict=strict)
+
+    def fantasize(
+        self,
+        X: Tensor,
+        sampler: MCSampler,
+        observation_noise: Optional[Tensor] = None,
+        evaluation_mask: Optional[Tensor] = None,
+        **kwargs: Any,
+    ) -> Model:
+        r"""Construct a fantasy model.
+
+        Constructs a fantasy model in the following fashion:
+        (1) compute the model posterior at `X` (including observation noise if
+        `observation_noise=True`).
+        (2) sample from this posterior (using `sampler`) to generate "fake"
+        observations.
+        (3) condition the model on the new fake observations.
+
+        Args:
+            X: A `batch_shape x n' x d`-dim Tensor, where `d` is the dimension of
+                the feature space, `n'` is the number of points per batch, and
+                `batch_shape` is the batch shape (must be compatible with the
+                batch shape of the model).
+            sampler: The sampler used for sampling from the posterior at `X`. If
+                evaluation_mask is not None, this must be a `ListSampler`.
+            observation_noise: A `model_batch_shape x 1 x m`-dim tensor or
+                a `model_batch_shape x n' x m`-dim tensor containing the average
+                noise for each batch and output, where `m` is the number of outputs.
+                `noise` must be in the outcome-transformed space if an outcome
+                transform is used. If None, then the noise will be the inferred
+                noise level.
+            evaluation_mask: A `n' x m`-dim tensor of booleans indicating which
+                outputs should be fantasized for a given design. This uses the same
+                evaluation mask for all batches.
+
+        Returns:
+            The constructed fantasy model.
+        """
+        if evaluation_mask is not None:
+            if evaluation_mask.ndim != 2 or evaluation_mask.shape != torch.Size(
+                [X.shape[-2], self.num_outputs]
+            ):
+                raise BotorchTensorDimensionError(
+                    f"Expected evaluation_mask of shape `{X.shape[0]} "
+                    f"x {self.num_outputs}`, but got "
+                    f"{shape_to_str(evaluation_mask.shape)}."
+                )
+            if not isinstance(sampler, ListSampler):
+                raise ValueError("Decoupled fantasization requires a list of samplers.")
+
+        fant_models = []
+        X_i = X
+        if observation_noise is None:
+            observation_noise_i = observation_noise
+        for i in range(self.num_outputs):
+            # get the inputs to fantasize at for output i
+            if evaluation_mask is not None:
+                mask_i = evaluation_mask[:, i]
+                X_i = X[..., mask_i, :]
+                # TODO (T158701749): implement a QMC DecoupledSampler that draws all
+                # samples from a single Sobol sequence or consider requiring that the
+                # sampling is IID to ensure good coverage.
+                sampler_i = sampler.samplers[i]
+                if observation_noise is not None:
+                    observation_noise_i = observation_noise[..., mask_i, i : i + 1]
+            else:
+                sampler_i = sampler
+
+            fant_model = self.models[i].fantasize(
+                X=X_i,
+                sampler=sampler_i,
+                observation_noise=observation_noise_i,
+                **kwargs,
+            )
+            fant_models.append(fant_model)
+        return self.__class__(*fant_models)
 
 
 class ModelDict(ModuleDict):

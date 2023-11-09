@@ -15,6 +15,7 @@ from botorch.acquisition.cost_aware import (
     InverseCostWeightedUtility,
 )
 from botorch.exceptions.warnings import CostAwareWarning
+from botorch.models.deterministic import GenericDeterministicModel
 from botorch.sampling import IIDNormalSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 
@@ -95,3 +96,32 @@ class TestCostAwareUtilities(BotorchTestCase):
                         ratios, deltas / mean.clamp_min(1.5).squeeze(-1).sum(dim=-1)
                     )
                 )
+
+                # test evaluation_mask
+                multi_output_mean = torch.cat([mean, 2 * mean], dim=-1)
+
+                def cost_fn(X):
+                    return multi_output_mean
+
+                mm = GenericDeterministicModel(f=cost_fn, num_outputs=2)
+                icwu = InverseCostWeightedUtility(mm)
+                eval_mask = torch.zeros(3, 2, dtype=torch.bool, device=self.device)
+                eval_mask[:, 1] = True  # 1 objective is evaluated
+                ratios = icwu(X, deltas, X_evaluation_mask=eval_mask)
+
+                self.assertTrue(
+                    torch.equal(ratios, deltas / multi_output_mean[..., 1].sum(dim=-1))
+                )
+                eval_mask[:, 0] = True  # both objectives are evaluated
+                ratios = icwu(X, deltas, X_evaluation_mask=eval_mask)
+                self.assertAllClose(
+                    ratios, deltas / multi_output_mean.sum(dim=(-1, -2))
+                )
+                # test eval_mask where not all rows are the same
+                eval_mask[0, 1] = False
+                msg = (
+                    "Currently, all candidates must be evaluated "
+                    "on the same outputs."
+                )
+                with self.assertRaisesRegex(NotImplementedError, msg):
+                    icwu(X, deltas, X_evaluation_mask=eval_mask)

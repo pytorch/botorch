@@ -55,10 +55,10 @@ Optimization simply use Ax.
 ## Installation
 
 **Installation Requirements**
-- Python >= 3.8
-- PyTorch >= 1.12
-- gpytorch == 1.9.1
-- linear_operator == 0.3.0
+- Python >= 3.9
+- PyTorch >= 1.13.1
+- gpytorch == 1.11
+- linear_operator == 0.5.1
 - pyro-ppl >= 1.8.4
 - scipy
 - multiple-dispatch
@@ -153,7 +153,9 @@ For more details see our [Documentation](https://botorch.org/docs/introduction) 
   from botorch.fit import fit_gpytorch_mll
   from gpytorch.mlls import ExactMarginalLogLikelihood
 
-  train_X = torch.rand(10, 2)
+  # Double precision is highly recommended for GPs.
+  # See https://github.com/pytorch/botorch/discussions/1444
+  train_X = torch.rand(10, 2, dtype=torch.double)
   Y = 1 - (train_X - 0.5).norm(dim=-1, keepdim=True)  # explicit output dimension
   Y += 0.1 * torch.rand_like(Y)
   train_Y = (Y - Y.mean()) / Y.std()

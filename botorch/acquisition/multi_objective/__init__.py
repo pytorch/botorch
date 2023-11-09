@@ -22,7 +22,6 @@ from botorch.acquisition.multi_objective.objective import (
     IdentityAnalyticMultiOutputObjective,
     IdentityMCMultiOutputObjective,
     MCMultiOutputObjective,
-    UnstandardizeAnalyticMultiOutputObjective,
     UnstandardizeMCMultiOutputObjective,
     WeightedMCMultiOutputObjective,
 )
@@ -46,7 +45,6 @@ __all__ = [
     "MCMultiOutputObjective",
     "MultiObjectiveAnalyticAcquisitionFunction",
     "MultiObjectiveMCAcquisitionFunction",
-    "UnstandardizeAnalyticMultiOutputObjective",
     "UnstandardizeMCMultiOutputObjective",
     "WeightedMCMultiOutputObjective",
 ]

@@ -6,14 +6,18 @@
 
 import torch
 from botorch.acquisition.analytic import ExpectedImprovement
-from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
+from botorch.acquisition.fixed_feature import (
+    FixedFeatureAcquisitionFunction,
+    get_device_of_sequence,
+    get_dtype_of_sequence,
+)
 from botorch.acquisition.monte_carlo import qExpectedImprovement
 from botorch.models import SingleTaskGP
-from botorch.utils.testing import BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction
 
 
 class TestFixedFeatureAcquisitionFunction(BotorchTestCase):
-    def test_fixed_features(self):
+    def test_fixed_features(self) -> None:
         train_X = torch.rand(5, 3, device=self.device)
         train_Y = train_X.norm(dim=-1, keepdim=True)
         model = SingleTaskGP(train_X, train_Y).to(device=self.device).eval()
@@ -132,3 +136,63 @@ class TestFixedFeatureAcquisitionFunction(BotorchTestCase):
         )
         with self.assertRaises(ValueError):
             EI_ff.X_pending
+
+    def test_values_dtypes(self) -> None:
+        acqf = MockAcquisitionFunction()
+
+        for input, d, expected_dtype in [
+            (torch.tensor([0.0], dtype=torch.float32), 1, torch.float32),
+            (torch.tensor([0.0], dtype=torch.float64), 1, torch.float64),
+            (
+                [
+                    torch.tensor([0.0], dtype=torch.float32),
+                    torch.tensor([0.0], dtype=torch.float64),
+                ],
+                2,
+                torch.float64,
+            ),
+            ([0.0], 1, torch.float64),
+            ([torch.tensor(0.0, dtype=torch.float32), 0.0], 2, torch.float64),
+        ]:
+            with self.subTest(input=input, d=d, expected_dtype=expected_dtype):
+                self.assertEqual(get_dtype_of_sequence(input), expected_dtype)
+                ff = FixedFeatureAcquisitionFunction(
+                    acqf, d=d, columns=[2], values=input
+                )
+                self.assertEqual(ff.values.dtype, expected_dtype)
+
+    def test_values_devices(self) -> None:
+
+        acqf = MockAcquisitionFunction()
+        cpu = torch.device("cpu")
+        cuda = torch.device("cuda")
+
+        test_cases = [
+            (torch.tensor([0.0], device=cpu), 1, cpu),
+            ([0.0], 1, cpu),
+            ([0.0, torch.tensor([0.0], device=cpu)], 2, cpu),
+        ]
+
+        # Can only properly test this when running CUDA tests
+        if self.device == torch.cuda:
+            test_cases = test_cases + [
+                (torch.tensor([0.0], device=cuda), 1, cuda),
+                (
+                    [
+                        torch.tensor([0.0], dtype=cpu),
+                        torch.tensor([0.0], dtype=cuda),
+                    ],
+                    2,
+                    cuda,
+                ),
+                ([0.0], 1, cpu),
+                ([torch.tensor(0.0, dtype=cuda), 0.0], 2, cuda),
+            ]
+
+        for input, d, expected_device in test_cases:
+            with self.subTest(input=input, d=d, expected_device=expected_device):
+                self.assertEqual(get_device_of_sequence(input), expected_device)
+                ff = FixedFeatureAcquisitionFunction(
+                    acqf, d=d, columns=[2], values=input
+                )
+                self.assertEqual(ff.values.device, expected_device)

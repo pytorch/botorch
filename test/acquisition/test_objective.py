@@ -6,6 +6,7 @@
 
 import itertools
 import warnings
+from typing import Optional
 
 import torch
 from botorch import settings
@@ -15,16 +16,18 @@ from botorch.acquisition.objective import (
     ExpectationPosteriorTransform,
     GenericMCObjective,
     IdentityMCObjective,
+    LEARNED_OBJECTIVE_PREF_MODEL_MIXED_DTYPE_WARN,
     LinearMCObjective,
     MCAcquisitionObjective,
     PosteriorTransform,
     ScalarizedPosteriorTransform,
 )
 from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.warnings import _get_single_precision_warning, InputDataWarning
 from botorch.models.deterministic import PosteriorMeanModel
 from botorch.models.pairwise_gp import PairwiseGP
+from botorch.models.transforms.input import Normalize
 from botorch.posteriors import GPyTorchPosterior
-from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils import apply_constraints
 from botorch.utils.testing import _get_test_posterior, BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
@@ -289,9 +292,8 @@ class TestConstrainedMCObjective(BotorchTestCase):
                 objective=generic_obj, constraints=[feasible_con]
             )
             samples = torch.randn(1, device=self.device, dtype=dtype)
-            constrained_obj = generic_obj(samples)
             constrained_obj = apply_constraints(
-                obj=constrained_obj,
+                obj=generic_obj(samples),
                 constraints=[feasible_con],
                 samples=samples,
                 infeasible_cost=0.0,
@@ -302,9 +304,8 @@ class TestConstrainedMCObjective(BotorchTestCase):
                 objective=generic_obj, constraints=[infeasible_con]
             )
             samples = torch.randn(2, device=self.device, dtype=dtype)
-            constrained_obj = generic_obj(samples)
             constrained_obj = apply_constraints(
-                obj=constrained_obj,
+                obj=generic_obj(samples),
                 constraints=[infeasible_con],
                 samples=samples,
                 infeasible_cost=0.0,
@@ -315,9 +316,8 @@ class TestConstrainedMCObjective(BotorchTestCase):
                 objective=generic_obj, constraints=[feasible_con, infeasible_con]
             )
             samples = torch.randn(2, 1, device=self.device, dtype=dtype)
-            constrained_obj = generic_obj(samples)
             constrained_obj = apply_constraints(
-                obj=constrained_obj,
+                obj=generic_obj(samples),
                 constraints=[feasible_con, infeasible_con],
                 samples=samples,
                 infeasible_cost=torch.tensor([0.0], device=self.device, dtype=dtype),
@@ -329,9 +329,8 @@ class TestConstrainedMCObjective(BotorchTestCase):
                 eta=torch.tensor([1, 10]),
             )
             samples = torch.randn(2, 1, device=self.device, dtype=dtype)
-            constrained_obj = generic_obj(samples)
             constrained_obj = apply_constraints(
-                obj=constrained_obj,
+                obj=generic_obj(samples),
                 constraints=[feasible_con, infeasible_con],
                 samples=samples,
                 eta=torch.tensor([1, 10]),
@@ -345,9 +344,8 @@ class TestConstrainedMCObjective(BotorchTestCase):
                 infeasible_cost=5.0,
             )
             samples = torch.randn(3, 2, device=self.device, dtype=dtype)
-            constrained_obj = generic_obj(samples)
             constrained_obj = apply_constraints(
-                obj=constrained_obj,
+                obj=generic_obj(samples),
                 constraints=[feasible_con, infeasible_con],
                 samples=samples,
                 infeasible_cost=5.0,
@@ -361,9 +359,8 @@ class TestConstrainedMCObjective(BotorchTestCase):
                 eta=torch.tensor([1, 10]),
             )
             samples = torch.randn(3, 2, device=self.device, dtype=dtype)
-            constrained_obj = generic_obj(samples)
             constrained_obj = apply_constraints(
-                obj=constrained_obj,
+                obj=generic_obj(samples),
                 constraints=[feasible_con, infeasible_con],
                 samples=samples,
                 infeasible_cost=5.0,
@@ -377,9 +374,8 @@ class TestConstrainedMCObjective(BotorchTestCase):
                 infeasible_cost=torch.tensor([5.0], device=self.device, dtype=dtype),
             )
             samples = torch.randn(4, 3, 2, device=self.device, dtype=dtype)
-            constrained_obj = generic_obj(samples)
             constrained_obj = apply_constraints(
-                obj=constrained_obj,
+                obj=generic_obj(samples),
                 constraints=[feasible_con, infeasible_con],
                 samples=samples,
                 infeasible_cost=5.0,
@@ -406,74 +402,184 @@ class TestIdentityMCObjective(BotorchTestCase):
 
 
 class TestLinearMCObjective(BotorchTestCase):
-    def test_linear_mc_objective(self):
+    def test_linear_mc_objective(self) -> None:
+        # Test passes for each seed
+        torch.manual_seed(torch.randint(high=1000, size=(1,)))
         for dtype in (torch.float, torch.double):
             weights = torch.rand(3, device=self.device, dtype=dtype)
             obj = LinearMCObjective(weights=weights)
             samples = torch.randn(4, 2, 3, device=self.device, dtype=dtype)
-            self.assertTrue(
-                torch.allclose(obj(samples), (samples * weights).sum(dim=-1))
-            )
+            atol = 1e-8 if dtype == torch.double else 3e-8
+            rtol = 1e-5 if dtype == torch.double else 4e-5
+            self.assertAllClose(obj(samples), samples @ weights, atol=atol, rtol=rtol)
             samples = torch.randn(5, 4, 2, 3, device=self.device, dtype=dtype)
-            self.assertTrue(
-                torch.allclose(obj(samples), (samples * weights).sum(dim=-1))
+            self.assertAllClose(
+                obj(samples),
+                samples @ weights,
+                atol=atol,
+                rtol=rtol,
             )
             # make sure this errors if sample output dimensions are incompatible
-            with self.assertRaises(RuntimeError):
+            shape_mismatch_msg = "Output shape of samples not equal to that of weights"
+            with self.assertRaisesRegex(RuntimeError, shape_mismatch_msg):
                 obj(samples=torch.randn(2, device=self.device, dtype=dtype))
-            with self.assertRaises(RuntimeError):
+            with self.assertRaisesRegex(RuntimeError, shape_mismatch_msg):
                 obj(samples=torch.randn(1, device=self.device, dtype=dtype))
             # make sure we can't construct objectives with multi-dim. weights
-            with self.assertRaises(ValueError):
+            weights_1d_msg = "weights must be a one-dimensional tensor."
+            with self.assertRaisesRegex(ValueError, expected_regex=weights_1d_msg):
                 LinearMCObjective(
                     weights=torch.rand(2, 3, device=self.device, dtype=dtype)
                 )
-            with self.assertRaises(ValueError):
+            with self.assertRaisesRegex(ValueError, expected_regex=weights_1d_msg):
                 LinearMCObjective(
                     weights=torch.tensor(1.0, device=self.device, dtype=dtype)
                 )
 
 
 class TestLearnedObjective(BotorchTestCase):
-    def test_learned_preference_objective(self):
-        X_dim = 2
-        train_X = torch.rand(2, X_dim)
+    def setUp(self, suppress_input_warnings: bool = False) -> None:
+        super().setUp(suppress_input_warnings=suppress_input_warnings)
+        self.x_dim = 2
+
+    def _get_pref_model(
+        self,
+        dtype: Optional[torch.dtype] = None,
+        input_transform: Optional[Normalize] = None,
+    ) -> PairwiseGP:
+        train_X = torch.rand((2, self.x_dim), dtype=dtype)
         train_comps = torch.LongTensor([[0, 1]])
-        pref_model = PairwiseGP(train_X, train_comps)
+        pref_model = PairwiseGP(train_X, train_comps, input_transform=input_transform)
+        return pref_model
+
+    def test_learned_preference_objective(self) -> None:
+        pref_model = self._get_pref_model(dtype=torch.float64)
 
         og_sample_shape = 3
+        large_sample_shape = 256
         batch_size = 2
         n = 8
-        test_X = torch.rand(torch.Size((og_sample_shape, batch_size, n, X_dim)))
+        test_X = torch.rand(
+            torch.Size((og_sample_shape, batch_size, n, self.x_dim)),
+            dtype=torch.float64,
+        )
+        large_X = torch.rand(
+            torch.Size((large_sample_shape, batch_size, n, self.x_dim)),
+            dtype=torch.float64,
+        )
 
         # test default setting where sampler =
         # IIDNormalSampler(sample_shape=torch.Size([1]))
-        pref_obj = LearnedObjective(pref_model=pref_model)
-        self.assertEqual(
-            pref_obj(test_X).shape, torch.Size([og_sample_shape, batch_size, n])
-        )
+        with self.subTest("default sampler"):
+            pref_obj = LearnedObjective(pref_model=pref_model)
+            first_call_output = pref_obj(test_X)
+            self.assertEqual(
+                first_call_output.shape, torch.Size([og_sample_shape, batch_size, n])
+            )
+            # Making sure the sampler has correct base_samples shape
+            self.assertEqual(
+                pref_obj.sampler.base_samples.shape,
+                torch.Size([1, og_sample_shape, 1, n]),
+            )
+            # Passing through a same-shaped X again shouldn't change the base sample
+            previous_base_samples = pref_obj.sampler.base_samples
+            another_test_X = torch.rand_like(test_X)
+            pref_obj(another_test_X)
+            self.assertIs(pref_obj.sampler.base_samples, previous_base_samples)
 
-        # test when sampler has num_samples = 16
-        num_samples = 16
-        pref_obj = LearnedObjective(
-            pref_model=pref_model,
-            sampler=SobolQMCNormalSampler(sample_shape=torch.Size([num_samples])),
-        )
-        self.assertEqual(
-            pref_obj(test_X).shape,
-            torch.Size([num_samples * og_sample_shape, batch_size, n]),
-        )
+        # test when sampler has multiple preference samples
+        with self.subTest("Multiple samples"):
+            num_samples = 256
+            pref_obj = LearnedObjective(
+                pref_model=pref_model,
+                sample_shape=torch.Size([num_samples]),
+            )
+            self.assertEqual(
+                pref_obj(test_X).shape,
+                torch.Size([num_samples * og_sample_shape, batch_size, n]),
+            )
+
+            avg_obj_val = pref_obj(large_X).mean(dim=0)
+            flipped_avg_obj_val = pref_obj(large_X.flip(dims=[0])).mean(dim=0)
+            # Check if they are approximately close.
+            # The variance is large hence the loose atol.
+            self.assertAllClose(avg_obj_val, flipped_avg_obj_val, atol=1e-2)
 
         # test posterior mean
-        mean_pref_model = PosteriorMeanModel(model=pref_model)
-        pref_obj = LearnedObjective(pref_model=mean_pref_model)
-        self.assertEqual(
-            pref_obj(test_X).shape, torch.Size([og_sample_shape, batch_size, n])
-        )
+        with self.subTest("PosteriorMeanModel"):
+            mean_pref_model = PosteriorMeanModel(model=pref_model)
+            pref_obj = LearnedObjective(pref_model=mean_pref_model)
+            self.assertEqual(
+                pref_obj(test_X).shape, torch.Size([og_sample_shape, batch_size, n])
+            )
+
+            # the order of samples shouldn't matter
+            avg_obj_val = pref_obj(large_X).mean(dim=0)
+            flipped_avg_obj_val = pref_obj(large_X.flip(dims=[0])).mean(dim=0)
+            # When we use the posterior mean objective, they should be very close
+            self.assertAllClose(avg_obj_val, flipped_avg_obj_val)
 
         # cannot use a deterministic model together with a sampler
-        with self.assertRaises(AssertionError):
+        with self.subTest("deterministic model"), self.assertRaises(AssertionError):
             LearnedObjective(
                 pref_model=mean_pref_model,
-                sampler=SobolQMCNormalSampler(sample_shape=torch.Size([num_samples])),
+                sample_shape=torch.Size([num_samples]),
             )
+
+    def test_dtype_compatibility_with_PairwiseGP(self) -> None:
+        og_sample_shape = 3
+        batch_size = 2
+        n = 8
+
+        test_X = torch.rand(
+            torch.Size((og_sample_shape, batch_size, n, self.x_dim)),
+        )
+
+        for pref_model_dtype, test_x_dtype, expected_output_dtype in [
+            (torch.float64, torch.float64, torch.float64),
+            (torch.float32, torch.float32, torch.float32),
+            (torch.float64, torch.float32, torch.float64),
+        ]:
+            with self.subTest(
+                "numerical behavior",
+                pref_model_dtype=pref_model_dtype,
+                test_x_dtype=test_x_dtype,
+                expected_output_dtype=expected_output_dtype,
+            ):
+                # Ignore a single-precision warning in PairwiseGP
+                # and mixed-precision warning tested below
+                with warnings.catch_warnings():
+                    warnings.filterwarnings(
+                        "ignore",
+                        category=InputDataWarning,
+                        message=_get_single_precision_warning(str(torch.float32)),
+                    )
+                    pref_model = self._get_pref_model(
+                        dtype=pref_model_dtype,
+                        input_transform=Normalize(d=2),
+                    )
+                pref_obj = LearnedObjective(pref_model=pref_model)
+                with warnings.catch_warnings():
+                    warnings.filterwarnings(
+                        "ignore",
+                        category=InputDataWarning,
+                        message=LEARNED_OBJECTIVE_PREF_MODEL_MIXED_DTYPE_WARN,
+                    )
+                    first_call_output = pref_obj(test_X.to(dtype=test_x_dtype))
+                    second_call_output = pref_obj(test_X.to(dtype=test_x_dtype))
+
+                self.assertEqual(first_call_output.dtype, expected_output_dtype)
+                self.assertTrue(torch.equal(first_call_output, second_call_output))
+
+        with self.subTest("mixed precision warning"):
+            # should warn and test should pass
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=InputDataWarning)
+                pref_model = self._get_pref_model(
+                    dtype=torch.float64, input_transform=Normalize(d=2)
+                )
+            pref_obj = LearnedObjective(pref_model=pref_model)
+            with self.assertWarnsRegex(
+                InputDataWarning, LEARNED_OBJECTIVE_PREF_MODEL_MIXED_DTYPE_WARN
+            ):
+                first_call_output = pref_obj(test_X)

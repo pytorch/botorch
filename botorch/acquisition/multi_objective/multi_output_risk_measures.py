@@ -63,7 +63,6 @@ class MultiOutputRiskMeasureMCObjective(
         self,
         n_w: int,
         preprocessing_function: Optional[Callable[[Tensor], Tensor]] = None,
-        weights: Optional[Union[List[float], Tensor]] = None,
     ) -> None:
         r"""Transform the posterior samples to samples of a risk measure.
 
@@ -75,13 +74,8 @@ class MultiOutputRiskMeasureMCObjective(
                 maximization. For constrained optimization, this should also
                 apply feasibility-weighting to samples. Given a `batch x m`-dim
                 tensor of samples, this should return a `batch x m'`-dim tensor.
-            weights: An optional `m`-dim tensor or list of weights for scaling
-                multi-output samples before calculating the risk measure.
-                Deprecated, use `preprocessing_function` instead.
         """
-        super().__init__(
-            n_w=n_w, preprocessing_function=preprocessing_function, weights=weights
-        )
+        super().__init__(n_w=n_w, preprocessing_function=preprocessing_function)
 
     def _prepare_samples(self, samples: Tensor) -> Tensor:
         r"""Prepare samples for risk measure calculations by scaling and
@@ -256,7 +250,7 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
         alpha: float,
         expectation: bool = False,
         preprocessing_function: Optional[Callable[[Tensor], Tensor]] = None,
-        weights: Optional[Union[List[float], Tensor]] = None,
+        *,
         pad_to_n_w: bool = False,
         filter_dominated: bool = True,
     ) -> None:
@@ -275,9 +269,6 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
                 maximization. For constrained optimization, this should also
                 apply feasibility-weighting to samples. Given a `batch x m`-dim
                 tensor of samples, this should return a `batch x m'`-dim tensor.
-            weights: An optional `m`-dim tensor or list of weights for scaling
-                multi-output samples before calculating the risk measure.
-                Deprecated, use `preprocessing_function` instead.
             pad_to_n_w: If True, instead of padding up to `k'`, which is the size of
                 the largest MVaR set across all batches, we pad the MVaR set up to
                 `n_w`. This produces a return tensor of known size, however, it may
@@ -291,9 +282,7 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
                 calculating the hypervolume. Disabling this is not recommended
                 if `expectation=True`.
         """
-        super().__init__(
-            n_w=n_w, preprocessing_function=preprocessing_function, weights=weights
-        )
+        super().__init__(n_w=n_w, preprocessing_function=preprocessing_function)
         if not 0 < alpha <= 1:
             raise ValueError("`alpha` must be in (0.0, 1.0]")
         self.alpha = alpha
@@ -439,7 +428,9 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
             y_grid = torch.stack(
                 [
                     torch.stack(
-                        torch.meshgrid([Y_sorted[b, :, i] for i in range(m)]),
+                        torch.meshgrid(
+                            [Y_sorted[b, :, i] for i in range(m)], indexing="ij"
+                        ),
                         dim=-1,
                     ).view(-1, m)
                     for b in range(batch)
@@ -508,7 +499,7 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
             # TODO: Investigate differentiability of MVaR.
             warnings.warn(
                 "Got `samples` that requires grad, but computing MVaR involves "
-                "non-differentable operations and the results will not be "
+                "non-differentiable operations and the results will not be "
                 "differentiable. This may lead to errors down the line!",
                 RuntimeWarning,
             )
@@ -645,7 +636,7 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
 
     @property
     def baseline_Y(self) -> Optional[Tensor]:
-        r"""Baseline outcomes used indetermining the normalization bounds."""
+        r"""Baseline outcomes used in determining the normalization bounds."""
         return self._baseline_Y
 
     @baseline_Y.setter

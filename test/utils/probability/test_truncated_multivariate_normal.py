@@ -28,7 +28,8 @@ class TestTruncatedMultivariateNormal(BotorchTestCase):
         upper_quantile_min: float = 0.1,  # MC methods will not produce any samples.
         num_log_probs: int = 4,
         seed: int = 1,
-    ):
+    ) -> None:
+        super().setUp()
         self.seed_generator = count(seed)
         self.num_log_probs = num_log_probs
 

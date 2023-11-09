@@ -15,32 +15,12 @@ from functools import wraps
 from typing import Any, Callable, List, Optional, TYPE_CHECKING
 
 import torch
+from botorch.utils.safe_math import logmeanexp
 from torch import Tensor
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction  # pragma: no cover
     from botorch.model import Model  # pragma: no cover
-
-
-def squeeze_last_dim(Y: Tensor) -> Tensor:
-    r"""Squeeze the last dimension of a Tensor.
-
-    Args:
-        Y: A `... x d`-dim Tensor.
-
-    Returns:
-        The input tensor with last dimension squeezed.
-
-    Example:
-        >>> Y = torch.rand(4, 3)
-        >>> Y_squeezed = squeeze_last_dim(Y)
-    """
-    warnings.warn(
-        "`botorch.utils.transforms.squeeze_last_dim` is deprecated. "
-        "Simply use `.squeeze(-1)1 instead.",
-        DeprecationWarning,
-    )
-    return Y.squeeze(-1)
 
 
 def standardize(Y: Tensor) -> Tensor:
@@ -194,32 +174,22 @@ def is_fully_bayesian(model: Model) -> bool:
     Returns:
         True if at least one model is a `SaasFullyBayesianSingleTaskGP`
     """
-    from botorch.models import ModelList, ModelListGP
+    from botorch.models import ModelList
     from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
     from botorch.models.fully_bayesian_multitask import SaasFullyBayesianMultiTaskGP
 
-    full_bayesian_model_cls = [
+    full_bayesian_model_cls = (
         SaasFullyBayesianSingleTaskGP,
         SaasFullyBayesianMultiTaskGP,
-    ]
+    )
 
-    if any(
-        isinstance(model, m_cls) or getattr(model, "is_fully_bayesian", False)
-        for m_cls in full_bayesian_model_cls
+    if isinstance(model, full_bayesian_model_cls) or getattr(
+        model, "is_fully_bayesian", False
     ):
         return True
     elif isinstance(model, ModelList):
         for m in model.models:
-            if any(
-                isinstance(m, m_cls) or getattr(model, "is_fully_bayesian", False)
-                for m_cls in full_bayesian_model_cls
-            ):
-                return True
-            elif isinstance(m, ModelListGP) and any(
-                isinstance(m_sub, m_cls)
-                for m_sub in m.models
-                for m_cls in full_bayesian_model_cls
-            ):
+            if is_fully_bayesian(m):
                 return True
     return False
 
@@ -286,7 +256,10 @@ def t_batch_mode_transform(
             X = X if X.dim() > 2 else X.unsqueeze(0)
             output = method(acqf, X, *args, **kwargs)
             if hasattr(acqf, "model") and is_fully_bayesian(acqf.model):
-                output = output.mean(dim=-1)
+                # IDEA: this could be wrapped into SampleReducingMCAcquisitionFunction
+                output = (
+                    output.mean(dim=-1) if not acqf._log else logmeanexp(output, dim=-1)
+                )
             if assert_output_shape and not _verify_output_shape(
                 acqf=acqf,
                 X=X,

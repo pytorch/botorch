@@ -109,6 +109,8 @@ class KernelFeatureMap(FeatureMap):
         """
         super().__init__()
         self.kernel = kernel
+        self.register_buffer("weight", weight)
+        self.register_buffer("bias", bias)
         self.weight = weight
         self.bias = bias
         self.input_transform = input_transform

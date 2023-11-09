@@ -27,13 +27,19 @@ constraints, but still generate candidates subject to those constraints.
 ### Outcome Constraints
 
 In the context of Bayesian Optimization, outcome constraints usually mean
-constraints on some (black-box) outcome that needs to be modeled, just like
+constraints on a (black-box) outcome that needs to be modeled, just like
 the objective function is modeled by a surrogate model. Various approaches
-for handling these types of constraints have been proposed, a popular one that
-is also adopted by BoTorch (and available in the form of `ConstrainedMCObjective`)
-is to use variant of expected improvement in which the improvement in the objective
-is weighted by the probability of feasibility under the (modeled) outcome
-constraint ([^Gardner2014], [^Letham2017]).
+for handling these types of constraints have been proposed. A popular one that
+is also adopted by BoTorch for Monte Carlo acquistion functions is to multiply
+the acquisition utility by the feasibility indicator of the modeled outcome
+([^Gardner2014], [^Letham2017]). The approach can be utilized by passing
+`constraints` to the constructors of compatible acquisition functions,
+e.g. any `SampleReducingMCAcqquisitionFunction` with a positive acquisition utility,
+like expected improvement.
+Notably, if the constraint and objective models are statistically independent,
+the constrained expected improvement variant is mathematically equivalent to the
+unconstrained expected improvement of the objective, multiplied by the probability of
+feasibility under the modeled outcome constraint.
 
 See the [Closed-Loop Optimization](../tutorials/closed_loop_botorch_only)
 tutorial for an example of using outcome constraints in BoTorch.

@@ -62,6 +62,7 @@ class MixedSingleTaskGP(SingleTaskGP):
         train_X: Tensor,
         train_Y: Tensor,
         cat_dims: List[int],
+        train_Yvar: Optional[Tensor] = None,
         cont_kernel_factory: Optional[
             Callable[[torch.Size, int, List[int]], Kernel]
         ] = None,
@@ -76,6 +77,8 @@ class MixedSingleTaskGP(SingleTaskGP):
             train_Y: A `batch_shape x n x m` tensor of training observations.
             cat_dims: A list of indices corresponding to the columns of
                 the input `X` that should be considered categorical features.
+            train_Yvar: An optional `batch_shape x n x m` tensor of observed
+                measurement noise.
             cont_kernel_factory: A method that accepts  `batch_shape`, `ard_num_dims`,
                 and `active_dims` arguments and returns an instantiated GPyTorch
                 `Kernel` object to be used as the base kernel for the continuous
@@ -116,7 +119,7 @@ class MixedSingleTaskGP(SingleTaskGP):
                     lengthscale_constraint=GreaterThan(1e-04),
                 )
 
-        if likelihood is None:
+        if likelihood is None and train_Yvar is None:
             # This Gamma prior is quite close to the Horseshoe prior
             min_noise = 1e-5 if train_X.dtype == torch.float else 1e-6
             likelihood = GaussianLikelihood(
@@ -171,6 +174,7 @@ class MixedSingleTaskGP(SingleTaskGP):
         super().__init__(
             train_X=train_X,
             train_Y=train_Y,
+            train_Yvar=train_Yvar,
             likelihood=likelihood,
             covar_module=covar_module,
             outcome_transform=outcome_transform,
@@ -185,15 +189,16 @@ class MixedSingleTaskGP(SingleTaskGP):
         likelihood: Optional[Likelihood] = None,
         **kwargs: Any,
     ) -> Dict[str, Any]:
-        r"""Construct `Model` keyword arguments from a dict of `BotorchDataset`.
+        r"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`.
 
         Args:
             training_data: A `SupervisedDataset` containing the training data.
             categorical_features: Column indices of categorical features.
             likelihood: Optional likelihood used to constuct the model.
         """
+        base_inputs = super().construct_inputs(training_data=training_data, **kwargs)
         return {
-            **super().construct_inputs(training_data=training_data, **kwargs),
+            **base_inputs,
             "cat_dims": categorical_features,
             "likelihood": likelihood,
         }

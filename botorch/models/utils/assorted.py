@@ -193,8 +193,8 @@ def check_standardization(
         Ymean, Ystd = torch.mean(Y, dim=-2), torch.std(Y, dim=-2)
         if torch.abs(Ymean).max() > atol_mean or torch.abs(Ystd - 1).max() > atol_std:
             msg = (
-                "Input data is not standardized. Please consider scaling the "
-                "input to zero mean and unit variance."
+                f"Input data is not standardized (mean = {Ymean}, std = {Ystd}). "
+                "Please consider scaling the input to zero mean and unit variance."
             )
             if raise_on_fail:
                 raise InputDataError(msg)
@@ -317,7 +317,7 @@ def detect_duplicates(
 
 
 def consolidate_duplicates(
-    X: Tensor, Y: Tensor, rtol: float = 0, atol: float = 1e-8
+    X: Tensor, Y: Tensor, rtol: float = 0.0, atol: float = 1e-8
 ) -> Tuple[Tensor, Tensor, Tensor]:
     """Drop duplicated Xs and update the indices tensor Y accordingly.
     Supporting 2d Tensor only as in batch mode block design is not guaranteed.

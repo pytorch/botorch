@@ -74,7 +74,6 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
         inner_sampler: Optional[MCSampler] = None,
         X_pending: Optional[Tensor] = None,
         current_value: Optional[Tensor] = None,
-        **kwargs: Any,
     ) -> None:
         r"""q-Knowledge Gradient (one-shot optimization).
 
@@ -126,18 +125,10 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
         elif objective is not None and not isinstance(
             objective, MCAcquisitionObjective
         ):
-            # TODO: clean this up after removing AcquisitionObjective.
-            if posterior_transform is None:
-                posterior_transform = self._deprecate_acqf_objective(
-                    posterior_transform=posterior_transform,
-                    objective=objective,
-                )
-                objective = None
-            else:
-                raise RuntimeError(
-                    "Got both a non-MC objective (DEPRECATED) and a posterior "
-                    "transform. Use only a posterior transform instead."
-                )
+            raise UnsupportedError(
+                "Objectives that are not an `MCAcquisitionObjective` are not supported."
+            )
+
         if objective is None and model.num_outputs != 1:
             if posterior_transform is None:
                 raise UnsupportedError(
@@ -193,7 +184,8 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
 
         # construct the fantasy model of shape `num_fantasies x b`
         fantasy_model = self.model.fantasize(
-            X=X_actual, sampler=self.sampler, observation_noise=True
+            X=X_actual,
+            sampler=self.sampler,
         )
 
         # get the value function
@@ -242,7 +234,8 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
 
         # construct the fantasy model of shape `num_fantasies x b`
         fantasy_model = self.model.fantasize(
-            X=X, sampler=self.sampler, observation_noise=True
+            X=X,
+            sampler=self.sampler,
         )
 
         # get the value function
@@ -338,7 +331,6 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
         expand: Callable[[Tensor], Tensor] = lambda X: X,
         valfunc_cls: Optional[Type[AcquisitionFunction]] = None,
         valfunc_argfac: Optional[Callable[[Model], Dict[str, Any]]] = None,
-        **kwargs: Any,
     ) -> None:
         r"""Multi-Fidelity q-Knowledge Gradient (one-shot optimization).
 
@@ -435,7 +427,7 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
                 `X_actual = X[..., :-num_fantasies, :]`
                 `X_actual.shape = b x q x d`
 
-                In addition, `X` may be augmented with fidelity parameteres as
+                In addition, `X` may be augmented with fidelity parameters as
                 part of thee `d`-dimension. Projecting fidelities to the target
                 fidelity is handled by `project`.
 
@@ -461,7 +453,8 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
         # construct the fantasy model of shape `num_fantasies x b`
         # expand X (to potentially add trace observations)
         fantasy_model = self.model.fantasize(
-            X=self.expand(X_eval), sampler=self.sampler, observation_noise=True
+            X=self.expand(X_eval),
+            sampler=self.sampler,
         )
         # get the value function
         value_function = _get_value_function(

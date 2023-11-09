@@ -25,15 +25,17 @@ from botorch.models.model import FantasizeMixin
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform, Standardize
 from botorch.models.utils import gpt_posterior_settings
+from botorch.models.utils.gpytorch_modules import (
+    get_gaussian_likelihood_with_gamma_prior,
+)
 from botorch.posteriors import (
     GPyTorchPosterior,
     HigherOrderGPPosterior,
     TransformedPosterior,
 )
-from gpytorch.constraints import GreaterThan
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import Kernel, MaternKernel
-from gpytorch.likelihoods import GaussianLikelihood, Likelihood
+from gpytorch.likelihoods import Likelihood
 from gpytorch.models import ExactGP
 from gpytorch.priors.torch_priors import GammaPrior, MultivariateNormalPrior
 from gpytorch.settings import fast_pred_var, skip_posterior_variances
@@ -47,9 +49,6 @@ from linear_operator.operators import (
 from linear_operator.settings import _fast_solves
 from torch import Tensor
 from torch.nn import ModuleList, Parameter, ParameterList
-
-
-MIN_INFERRED_NOISE_LEVEL = 1e-4
 
 
 class FlattenedStandardize(Standardize):
@@ -232,17 +231,8 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         self._input_batch_shape = batch_shape
 
         if likelihood is None:
-
-            noise_prior = GammaPrior(1.1, 0.05)
-            noise_prior_mode = (noise_prior.concentration - 1) / noise_prior.rate
-            likelihood = GaussianLikelihood(
-                noise_prior=noise_prior,
-                batch_shape=self._aug_batch_shape,
-                noise_constraint=GreaterThan(
-                    MIN_INFERRED_NOISE_LEVEL,
-                    transform=None,
-                    initial_value=noise_prior_mode,
-                ),
+            likelihood = get_gaussian_likelihood_with_gamma_prior(
+                batch_shape=self._aug_batch_shape
             )
         else:
             self._is_custom_likelihood = True
@@ -487,7 +477,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
             # we now compute the data covariances for the training data, the testing
             # data, the joint covariances, and the test train cross-covariance
             train_train_covar = self.prediction_strategy.lik_train_train_covar.detach()
-            base_train_train_covar = train_train_covar.lazy_tensor
+            base_train_train_covar = train_train_covar.linear_op
 
             data_train_covar = base_train_train_covar.linear_ops[0]
             data_covar = self.covar_modules[0]
@@ -571,7 +561,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         )
         full_test_train_covar_tuple = (test_train_covar,) + jcm_linops
 
-        train_evals, train_evecs = full_train_train_covar.symeig(eigenvectors=True)
+        train_evals, train_evecs = full_train_train_covar.eigh()
         # (\kron \Lambda_i + \sigma^2 I)^{-1}
         train_inv_evals = DiagLinearOperator(
             1.0 / (train_evals + self.likelihood.noise)
@@ -589,5 +579,5 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         #  (\kron K_i S_i * K_i S_i) \tilde{\Lambda}^{-1}
         test_train_pred_covar = test_train_hadamard.matmul(train_inv_evals).sum(dim=-1)
 
-        pred_variances = full_test_test_covar.diag() - test_train_pred_covar
+        pred_variances = full_test_test_covar.diagonal() - test_train_pred_covar
         return pred_variances

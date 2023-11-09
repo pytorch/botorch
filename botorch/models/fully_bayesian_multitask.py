@@ -8,7 +8,7 @@ r"""Multi-task Gaussian Process Regression models with fully Bayesian inference.
 """
 
 
-from typing import Any, Dict, List, NoReturn, Optional, Tuple
+from typing import Any, Dict, List, Mapping, NoReturn, Optional, Tuple, Union
 
 import pyro
 import torch
@@ -20,11 +20,11 @@ from botorch.models.fully_bayesian import (
     reshape_and_detach,
     SaasPyroModel,
 )
-from botorch.models.multitask import FixedNoiseMultiTaskGP
+from botorch.models.multitask import MultiTaskGP
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.posteriors.fully_bayesian import FullyBayesianPosterior, MCMC_DIM
-from botorch.utils.datasets import SupervisedDataset
+from botorch.utils.datasets import MultiTaskDataset, SupervisedDataset
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels import MaternKernel
 from gpytorch.kernels.kernel import Kernel
@@ -47,7 +47,7 @@ class MultitaskSaasPyroModel(SaasPyroModel):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        train_Yvar: Tensor,
+        train_Yvar: Optional[Tensor],
         task_feature: int,
         task_rank: Optional[int] = None,
     ):
@@ -56,16 +56,12 @@ class MultitaskSaasPyroModel(SaasPyroModel):
         Args:
             train_X: Training inputs (n x (d + 1))
             train_Y: Training targets (n x 1)
-            train_Yvar: Observed noise variance (n x 1).
+            train_Yvar: Observed noise variance (n x 1). If None, we infer the noise.
+                Note that the inferred noise is common across all tasks.
             task_feature: The index of the task feature (`-d <= task_feature <= d`).
             task_rank: The num of learned task embeddings to be used in the task kernel.
                 If omitted, set it to be 1.
         """
-        if (train_Yvar is None) or (torch.isnan(train_Yvar).all()):
-            # TODO: revisit inferred noise for batched MTGP
-            raise NotImplementedError(
-                "Currently do not support inferred noise for multitask GP with MCMC!"
-            )
         super().set_inputs(train_X, train_Y, train_Yvar)
         # obtain a list of task indicies
         all_tasks = train_X[:, task_feature].unique().to(dtype=torch.long).tolist()
@@ -167,7 +163,7 @@ class MultitaskSaasPyroModel(SaasPyroModel):
         return mean_module, covar_module, likelihood, task_covar_module, latent_features
 
 
-class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
+class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
     r"""A fully Bayesian multi-task GP model with the SAAS prior.
 
     This model assumes that the inputs have been normalized to [0, 1]^d and that the
@@ -186,7 +182,7 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
         >>> ])
         >>> train_Y = torch.cat(f1(X1), f2(X2)).unsqueeze(-1)
         >>> train_Yvar = 0.01 * torch.ones_like(train_Y)
-        >>> mtsaas_gp = SaasFullyBayesianFixedNoiseMultiTaskGP(
+        >>> mtsaas_gp = SaasFullyBayesianMultiTaskGP(
         >>>     train_X, train_Y, train_Yvar, task_feature=-1,
         >>> )
         >>> fit_fully_bayesian_model_nuts(mtsaas_gp)
@@ -197,7 +193,7 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        train_Yvar: Tensor,
+        train_Yvar: Optional[Tensor],
         task_feature: int,
         output_tasks: Optional[List[int]] = None,
         rank: Optional[int] = None,
@@ -210,10 +206,20 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
         Args:
             train_X: Training inputs (n x (d + 1))
             train_Y: Training targets (n x 1)
-            train_Yvar: Observed noise variance (n x 1).
+            train_Yvar: Observed noise variance (n x 1). If None, we infer the noise.
+                Note that the inferred noise is common across all tasks.
             task_feature: The index of the task feature (`-d <= task_feature <= d`).
+            output_tasks: A list of task indices for which to compute model
+                outputs for. If omitted, return outputs for all task indices.
             rank: The num of learned task embeddings to be used in the task kernel.
                 If omitted, set it to be 1.
+            outcome_transform: An outcome transform that is applied to the
+                training data during instantiation and to the posterior during
+                inference (that is, the `Posterior` obtained by calling
+                `.posterior` on the model will be on the original scale).
+            input_transform: An input transform that is applied to the inputs `X`
+                in the model's forward pass.
+            pyro_model: Optional `PyroModel`, defaults to `MultitaskSaasPyroModel`.
         """
         if not (
             train_X.ndim == train_Y.ndim == 2
@@ -223,23 +229,18 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
             raise ValueError(
                 "Expected train_X to have shape n x d and train_Y to have shape n x 1"
             )
-        if train_Yvar is None:
-            raise NotImplementedError(
-                "Inferred Noise is not supported in multitask SAAS GP."
+        if train_Yvar is not None and train_Y.shape != train_Yvar.shape:
+            raise ValueError(
+                "Expected train_Yvar to be None or have the same shape as train_Y"
             )
-        else:
-            if train_Y.shape != train_Yvar.shape:
-                raise ValueError(
-                    "Expected train_Yvar to be None or have the same shape as train_Y"
-                )
         with torch.no_grad():
             transformed_X = self.transform_inputs(
                 X=train_X, input_transform=input_transform
             )
         if outcome_transform is not None:
             train_Y, train_Yvar = outcome_transform(train_Y, train_Yvar)
-
-        train_Yvar = train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL)
+        if train_Yvar is not None:  # Clamp after transforming
+            train_Yvar = train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL)
 
         super().__init__(
             train_X=train_X,
@@ -254,6 +255,7 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
         self.covar_module = None
         self.likelihood = None
         self.task_covar_module = None
+        self.register_buffer("latent_features", None)
         if pyro_model is None:
             pyro_model = MultitaskSaasPyroModel()
         pyro_model.set_inputs(
@@ -295,7 +297,8 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
     def batch_shape(self) -> torch.Size:
         r"""Batch shape of the model, equal to the number of MCMC samples.
         Note that `SaasFullyBayesianMultiTaskGP` does not support batching
-        over input data at this point."""
+        over input data at this point.
+        """
         self._check_if_fitted()
         return torch.Size([self.num_mcmc_samples])
 
@@ -314,7 +317,7 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
         r"""Load the MCMC hyperparameter samples into the model.
 
         This method will be called by `fit_fully_bayesian_model_nuts` when the model
-        has been fitted in order to create a batched SingleTaskGP model.
+        has been fitted in order to create a batched MultiTaskGP model.
         """
         (
             self.mean_module,
@@ -324,8 +327,6 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
             self.latent_features,
         ) = self.pyro_model.load_mcmc_samples(mcmc_samples=mcmc_samples)
 
-    # pyre-fixme[14]: Inconsistent override of
-    # BatchedMultiOutputGPyTorchModel.posterior
     def posterior(
         self,
         X: Tensor,
@@ -350,7 +351,6 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
         posterior = FullyBayesianPosterior(distribution=posterior.distribution)
         return posterior
 
-    # pyre-fixme[14]: Inconsistent override
     def forward(self, X: Tensor) -> MultivariateNormal:
         self._check_if_fitted()
         X = X.unsqueeze(MCMC_DIM)
@@ -379,25 +379,71 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
         return MultivariateNormal(mean_x, covar)
 
     @classmethod
-    # pyre-fixme[14]: Inconsistent override of `MultiTaskGP.construct_inputs`
     def construct_inputs(
         cls,
-        training_data: Dict[str, SupervisedDataset],
+        training_data: Union[SupervisedDataset, MultiTaskDataset],
         task_feature: int,
         rank: Optional[int] = None,
         **kwargs: Any,
     ) -> Dict[str, Any]:
-        r"""Construct `Model` keyword arguments from dictionary of `SupervisedDataset`.
+        r"""Construct `Model` keyword arguments from a dataset and other args.
 
         Args:
-            training_data: Dictionary of `SupervisedDataset`.
+            training_data: A `SupervisedDataset` or a `MultiTaskDataset`.
             task_feature: Column index of embedded task indicator features. For details,
                 see `parse_training_data`.
             rank: The rank of the cross-task covariance matrix.
         """
-
         inputs = super().construct_inputs(
             training_data=training_data, task_feature=task_feature, rank=rank, **kwargs
         )
         inputs.pop("task_covar_prior")
+        if "train_Yvar" not in inputs:
+            inputs["train_Yvar"] = None
         return inputs
+
+    def load_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True):
+        r"""Custom logic for loading the state dict.
+
+        The standard approach of calling `load_state_dict` currently doesn't play well
+        with the `SaasFullyBayesianMultiTaskGP` since the `mean_module`, `covar_module`
+        and `likelihood` aren't initialized until the model has been fitted. The reason
+        for this is that we don't know the number of MCMC samples until NUTS is called.
+        Given the state dict, we can initialize a new model with some dummy samples and
+        then load the state dict into this model. This currently only works for a
+        `MultitaskSaasPyroModel` and supporting more Pyro models likely requires moving
+        the model construction logic into the Pyro model itself.
+
+        TODO: If this were to inherif from `SaasFullyBayesianSingleTaskGP`, we could
+        simplify this method and eliminate some others.
+        """
+        if not isinstance(self.pyro_model, MultitaskSaasPyroModel):
+            raise NotImplementedError(  # pragma: no cover
+                "load_state_dict only works for MultitaskSaasPyroModel"
+            )
+        raw_mean = state_dict["mean_module.raw_constant"]
+        num_mcmc_samples = len(raw_mean)
+        dim = self.pyro_model.train_X.shape[-1] - 1  # Removing 1 for the task feature.
+        task_rank = self.pyro_model.task_rank
+        tkwargs = {"device": raw_mean.device, "dtype": raw_mean.dtype}
+        # Load some dummy samples
+        mcmc_samples = {
+            "mean": torch.ones(num_mcmc_samples, **tkwargs),
+            "lengthscale": torch.ones(num_mcmc_samples, dim, **tkwargs),
+            "outputscale": torch.ones(num_mcmc_samples, **tkwargs),
+            "task_lengthscale": torch.ones(num_mcmc_samples, task_rank, **tkwargs),
+            "latent_features": torch.ones(
+                num_mcmc_samples, self._rank, task_rank, **tkwargs
+            ),
+        }
+        if self.pyro_model.train_Yvar is None:
+            mcmc_samples["noise"] = torch.ones(num_mcmc_samples, **tkwargs)
+        (
+            self.mean_module,
+            self.covar_module,
+            self.likelihood,
+            self.task_covar_module,
+            self.latent_features,
+        ) = self.pyro_model.load_mcmc_samples(mcmc_samples=mcmc_samples)
+        # Load the actual samples from the state dict
+        super().load_state_dict(state_dict=state_dict, strict=strict)

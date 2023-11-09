@@ -151,3 +151,13 @@ class TestDominatedPartitioning(BotorchTestCase):
                 torch.Size([2, 1, pareto_Y.shape[-1]]),
             )
             self.assertEqual(partitioning.compute_hypervolume().item(), 0)
+
+        # Test that updating the partitioning does not lead to a buffer error.
+        partitioning = DominatedPartitioning(
+            ref_point=torch.zeros(3), Y=-torch.ones(1, 3)
+        )
+        self.assertTrue(
+            torch.equal(partitioning.hypercell_bounds, torch.zeros(2, 1, 3))
+        )
+        partitioning.update(Y=torch.ones(1, 3))
+        self.assertEqual(partitioning.compute_hypervolume().item(), 1)

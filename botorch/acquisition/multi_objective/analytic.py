@@ -43,7 +43,6 @@ class MultiObjectiveAnalyticAcquisitionFunction(AcquisitionFunction):
         self,
         model: Model,
         posterior_transform: Optional[PosteriorTransform] = None,
-        **kwargs,
     ) -> None:
         r"""Constructor for the MultiObjectiveAnalyticAcquisitionFunction base class.
 
@@ -52,10 +51,6 @@ class MultiObjectiveAnalyticAcquisitionFunction(AcquisitionFunction):
             posterior_transform: A PosteriorTransform (optional).
         """
         super().__init__(model=model)
-        posterior_transform = self._deprecate_acqf_objective(
-            posterior_transform=posterior_transform,
-            objective=kwargs.get("objective"),
-        )
         if posterior_transform is None or isinstance(
             posterior_transform, PosteriorTransform
         ):
@@ -158,7 +153,7 @@ class ExpectedHypervolumeImprovement(MultiObjectiveAnalyticAcquisitionFunction):
         )
         self.normal = Normal(0, 1)
 
-    def psi(self, lower: Tensor, upper: Tensor, mu: Tensor, sigma: Tensor) -> None:
+    def psi(self, lower: Tensor, upper: Tensor, mu: Tensor, sigma: Tensor) -> Tensor:
         r"""Compute Psi function.
 
         For each cell i and outcome k:
@@ -185,7 +180,7 @@ class ExpectedHypervolumeImprovement(MultiObjectiveAnalyticAcquisitionFunction):
             1 - self.normal.cdf(u)
         )
 
-    def nu(self, lower: Tensor, upper: Tensor, mu: Tensor, sigma: Tensor) -> None:
+    def nu(self, lower: Tensor, upper: Tensor, mu: Tensor, sigma: Tensor) -> Tensor:
         r"""Compute Nu function.
 
         For each cell i and outcome k:

@@ -125,3 +125,15 @@ class TestNumpyUtils(BotorchTestCase):
         }
         array = get_bounds_as_ndarray(parameters=params, bounds=bounds)
         self.assertTrue(np.array_equal(test, array))
+
+        # Test with n-dim tensor bounds.
+        bounds = {
+            "a": (None, torch.tensor(1, device=self.device)),
+            "c": (
+                torch.tensor([0, 0], device=self.device),
+                torch.tensor([1, 1], device=self.device),
+            ),
+        }
+        test[2:, 1] = 1
+        array = get_bounds_as_ndarray(parameters=params, bounds=bounds)
+        self.assertTrue(np.array_equal(test, array))

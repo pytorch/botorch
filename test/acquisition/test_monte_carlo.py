@@ -6,6 +6,7 @@
 
 import warnings
 from copy import deepcopy
+from functools import partial
 from itertools import product
 from math import pi
 from unittest import mock
@@ -19,22 +20,32 @@ from botorch.acquisition.monte_carlo import (
     qProbabilityOfImprovement,
     qSimpleRegret,
     qUpperConfidenceBound,
+    SampleReducingMCAcquisitionFunction,
 )
 from botorch.acquisition.objective import (
+    ConstrainedMCObjective,
     GenericMCObjective,
+    IdentityMCObjective,
     PosteriorTransform,
     ScalarizedPosteriorTransform,
 )
+from botorch.acquisition.utils import prune_inferior_points
 from botorch.exceptions import BotorchWarning, UnsupportedError
 from botorch.models import SingleTaskGP
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.low_rank import sample_cached_cholesky
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from botorch.utils.transforms import standardize
+from torch import Tensor
 
 
 class DummyMCAcquisitionFunction(MCAcquisitionFunction):
     def forward(self, X):
+        pass
+
+
+class DummyReducingMCAcquisitionFunction(SampleReducingMCAcquisitionFunction):
+    def _sample_forward(self, X):
         pass
 
 
@@ -48,26 +59,40 @@ class DummyNonScalarizingPosteriorTransform(PosteriorTransform):
         pass  # pragma: no cover
 
 
+def infeasible_con(samples: Tensor) -> Tensor:
+    return torch.ones_like(samples[..., 0])
+
+
+def feasible_con(samples: Tensor) -> Tensor:
+    return -torch.ones_like(samples[..., 0])
+
+
 class TestMCAcquisitionFunction(BotorchTestCase):
     def test_abstract_raises(self):
-        with self.assertRaises(TypeError):
-            MCAcquisitionFunction()
+        for acqf_class in (MCAcquisitionFunction, SampleReducingMCAcquisitionFunction):
+            with self.assertRaises(TypeError):
+                acqf_class()
+
         # raise if model is multi-output, but no outcome transform or objective
         # are given
         no = "botorch.utils.testing.MockModel.num_outputs"
         with mock.patch(no, new_callable=mock.PropertyMock) as mock_num_outputs:
             mock_num_outputs.return_value = 2
             mm = MockModel(MockPosterior())
-            with self.assertRaises(UnsupportedError):
-                DummyMCAcquisitionFunction(model=mm)
-        # raise if model is multi-output, but outcome transform does not
-        # scalarize and no objetive is given
-        with mock.patch(no, new_callable=mock.PropertyMock) as mock_num_outputs:
-            mock_num_outputs.return_value = 2
-            mm = MockModel(MockPosterior())
-            ptf = DummyNonScalarizingPosteriorTransform()
-            with self.assertRaises(UnsupportedError):
-                DummyMCAcquisitionFunction(model=mm, posterior_transform=ptf)
+            for dummy in (
+                DummyMCAcquisitionFunction,
+                DummyReducingMCAcquisitionFunction,
+            ):
+                with self.assertRaises(UnsupportedError):
+                    dummy(model=mm)
+                # raise if model is multi-output, but outcome transform does not
+                # scalarize and no objetive is given
+                with mock.patch(no, new_callable=mock.PropertyMock) as mock_num_outputs:
+                    mock_num_outputs.return_value = 2
+                    mm = MockModel(MockPosterior())
+                    ptf = DummyNonScalarizingPosteriorTransform()
+                    with self.assertRaises(UnsupportedError):
+                        dummy(model=mm, posterior_transform=ptf)
 
 
 class TestQExpectedImprovement(BotorchTestCase):
@@ -217,6 +242,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                 model=mm_noisy,
                 X_baseline=X_baseline,
                 sampler=sampler,
+                prune_baseline=False,
                 cache_root=False,
             )
             res = acqf(X)
@@ -228,6 +254,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                 model=mm_noisy,
                 X_baseline=X_baseline,
                 sampler=sampler,
+                prune_baseline=False,
                 cache_root=False,
             )
             res = acqf(X)
@@ -243,6 +270,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                 model=mm_noisy,
                 X_baseline=X_baseline,
                 sampler=sampler,
+                prune_baseline=False,
                 cache_root=False,
             )
             res = acqf(X)
@@ -263,6 +291,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                 model=mm_noisy_pending,
                 X_baseline=X_baseline,
                 sampler=sampler,
+                prune_baseline=False,
                 cache_root=False,
             )
             acqf.set_X_pending()
@@ -298,6 +327,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                 model=mm_noisy,
                 X_baseline=X_baseline,
                 sampler=sampler,
+                prune_baseline=False,
                 cache_root=False,
             )
             res = acqf(X)
@@ -310,6 +340,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                 model=mm_noisy,
                 X_baseline=X_baseline,
                 sampler=sampler,
+                prune_baseline=False,
                 cache_root=False,
             )
             res = acqf(X)  # 1-dim batch
@@ -334,6 +365,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                 model=mm_noisy,
                 X_baseline=X_baseline,
                 sampler=sampler,
+                prune_baseline=False,
                 cache_root=False,
             )
             res = acqf(X)
@@ -347,30 +379,56 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
     def test_prune_baseline(self):
         no = "botorch.utils.testing.MockModel.num_outputs"
         prune = "botorch.acquisition.monte_carlo.prune_inferior_points"
+        constraints = [lambda Y: Y[..., 1] + 0.1]
+        # only the last sample if feasible and it has the worst objective value
+
         for dtype in (torch.float, torch.double):
-            X_baseline = torch.zeros(1, 1, device=self.device, dtype=dtype)
-            X_pruned = torch.rand(1, 1, device=self.device, dtype=dtype)
+            samples = torch.tensor(
+                [[1.0, 1.0], [0.0, 0.0], [-1.0, -1.0]],
+                device=self.device,
+                dtype=dtype,
+            )
+            mm = MockModel(
+                MockPosterior(
+                    samples=samples,
+                )
+            )
+            X_baseline = torch.zeros(3, 1, device=self.device, dtype=dtype)
             with mock.patch(no, new_callable=mock.PropertyMock) as mock_num_outputs:
-                mock_num_outputs.return_value = 1
-                mm = MockModel(MockPosterior(samples=X_baseline))
-                with mock.patch(prune, return_value=X_pruned) as mock_prune:
+                mock_num_outputs.return_value = 2
+                with mock.patch(prune, wraps=prune_inferior_points) as mock_prune:
                     acqf = qNoisyExpectedImprovement(
                         model=mm,
                         X_baseline=X_baseline,
                         prune_baseline=True,
                         cache_root=False,
+                        objective=GenericMCObjective(objective=lambda Y: Y[..., 0]),
+                        constraints=constraints,
                     )
                 mock_prune.assert_called_once()
-                self.assertTrue(torch.equal(acqf.X_baseline, X_pruned))
-                with mock.patch(prune, return_value=X_pruned) as mock_prune:
+                self.assertIs(mock_prune.call_args[1]["constraints"], constraints)
+                self.assertTrue(torch.equal(acqf.X_baseline, X_baseline[[-1]]))
+                # test marginalize_dim
+                samples2 = torch.stack([samples, samples * 2], dim=0)
+                mm = MockModel(
+                    MockPosterior(
+                        samples=samples2,
+                    )
+                )
+                with mock.patch(prune, wraps=prune_inferior_points) as mock_prune:
                     acqf = qNoisyExpectedImprovement(
                         model=mm,
                         X_baseline=X_baseline,
                         prune_baseline=True,
-                        marginalize_dim=-3,
                         cache_root=False,
+                        marginalize_dim=-3,
+                        objective=GenericMCObjective(objective=lambda Y: Y[..., 0]),
+                        constraints=constraints,
                     )
+                    mock_prune.assert_called_once()
                     _, kwargs = mock_prune.call_args
+                    self.assertIs(kwargs["constraints"], constraints)
+                    self.assertTrue(torch.equal(acqf.X_baseline, X_baseline[[-1]]))
                     self.assertEqual(kwargs["marginalize_dim"], -3)
 
     def test_cache_root(self):
@@ -480,7 +538,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                 ) as mock_sample_cached:
                     torch.manual_seed(0)
                     val2 = acqf_no_cache(test_X2)
-                mock_sample_cached.assert_not_called()
+                    mock_sample_cached.assert_not_called()
                 self.assertAllClose(val, val2, **all_close_kwargs)
                 val2.sum().backward()
                 self.assertAllClose(X_grad, test_X2.grad, **all_close_kwargs)
@@ -515,7 +573,36 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                 )
             )
 
-    # TODO: Test different objectives (incl. constraints)
+        # testing constraints
+        n, d, m = 8, 1, 3
+        X_baseline = torch.rand(n, d)
+        model = SingleTaskGP(X_baseline, torch.randn(n, m))  # batched model
+        nei_args = {
+            "model": model,
+            "X_baseline": X_baseline,
+            "prune_baseline": False,
+            "cache_root": True,
+            "posterior_transform": ScalarizedPosteriorTransform(weights=torch.ones(m)),
+            "sampler": SobolQMCNormalSampler(sample_shape=torch.Size([5])),
+        }
+        acqf = qNoisyExpectedImprovement(**nei_args)
+        X = torch.randn_like(X_baseline)
+        for con in [feasible_con, infeasible_con]:
+            with self.subTest(con=con):
+                target = "botorch.acquisition.utils.get_infeasible_cost"
+                infcost = torch.tensor([3], device=self.device, dtype=dtype)
+                with mock.patch(target, return_value=infcost):
+                    cacqf = qNoisyExpectedImprovement(**nei_args, constraints=[con])
+
+                _, obj = cacqf._get_samples_and_objectives(X)
+                best_feas_f = cacqf.compute_best_f(obj)
+                if con is feasible_con:
+                    self.assertAllClose(best_feas_f, acqf.compute_best_f(obj))
+                else:
+                    self.assertAllClose(
+                        best_feas_f, torch.full_like(obj[..., [0]], -infcost.item())
+                    )
+        # TODO: Test different objectives (incl. constraints)
 
 
 class TestQProbabilityOfImprovement(BotorchTestCase):
@@ -856,3 +943,114 @@ class TestQUpperConfidenceBound(BotorchTestCase):
                 )
 
     # TODO: Test different objectives (incl. constraints)
+
+
+class TestMCAcquisitionFunctionWithConstraints(BotorchTestCase):
+    def test_mc_acquisition_function_with_constraints(self):
+        for dtype in (torch.float, torch.double):
+            with self.subTest(dtype=dtype):
+                num_samples, n, q, d, m = 5, 4, 1, 3, 1
+                X = torch.randn(n, q, d, device=self.device, dtype=dtype)
+                samples = torch.randn(
+                    num_samples, n, q, m, device=self.device, dtype=dtype
+                )
+                mm = MockModel(MockPosterior(samples=samples))
+                nei_args = {
+                    "model": mm,
+                    "X_baseline": X,
+                    "prune_baseline": False,
+                }
+                for acqf_constructor in [
+                    partial(qProbabilityOfImprovement, model=mm, best_f=0.0),
+                    partial(qExpectedImprovement, model=mm, best_f=0.0),
+                    # cache_root=True not supported by MockModel, see test_cache_root
+                    partial(qNoisyExpectedImprovement, cache_root=False, **nei_args),
+                    partial(qNoisyExpectedImprovement, cache_root=True, **nei_args),
+                ]:
+                    acqf = acqf_constructor()
+                    mm._posterior._samples = (
+                        torch.cat((samples, samples), dim=-2)
+                        if isinstance(acqf, qNoisyExpectedImprovement)
+                        else samples
+                    )
+                    with self.subTest(acqf_class=type(acqf)):
+                        for con in [feasible_con, infeasible_con]:
+                            cacqf = acqf_constructor(constraints=[con])
+                            # for NEI test
+                            target = "botorch.acquisition.utils.get_infeasible_cost"
+                            inf_cost = torch.tensor(3, device=self.device, dtype=dtype)
+                            with mock.patch(target, return_value=inf_cost):
+                                vals = cacqf(X)
+                            # NOTE: this is only true for q = 1
+                            expected_vals = acqf(X) * (con(samples) < 0).squeeze()
+                            self.assertAllClose(vals, expected_vals)
+
+                        with self.assertRaisesRegex(
+                            ValueError,
+                            "ConstrainedMCObjective as well as constraints passed",
+                        ):
+                            acqf_constructor(
+                                constraints=[feasible_con],
+                                objective=ConstrainedMCObjective(
+                                    objective=IdentityMCObjective,
+                                    constraints=[feasible_con],
+                                ),
+                            )
+                # Forcing negative samples, which will throw an error with simple
+                # regret because the acquisition utility is negative.
+                samples = -torch.rand(n, q, m, device=self.device, dtype=dtype)
+                mm = MockModel(MockPosterior(samples=samples))
+                cacqf = qSimpleRegret(model=mm, constraints=[feasible_con])
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "Constraint-weighting requires unconstrained "
+                    "acquisition values to be non-negative",
+                ):
+                    cacqf(X)
+
+                # Test highlighting both common and different behavior of the old
+                # `ConstrainedMCObjective` and new `constraints` implementation.
+                # 1. Highlighting difference:
+                q = 1
+                samples = torch.randn(n, q, m, device=self.device, dtype=dtype)
+                mm = MockModel(MockPosterior(samples=samples))
+                constrained_objective = ConstrainedMCObjective(
+                    objective=IdentityMCObjective(),
+                    constraints=[infeasible_con],
+                    infeasible_cost=0.0,
+                )
+                # The old `ConstrainedMCObjective`-based implementation does not scale
+                # the best_f value by the feasibility indicator, while the new
+                # `constraints`-based implementation does. Therefore, the old version
+                # yields an acquisition value of 1, even though the constraint is not
+                # satisfied.
+                best_f = -1.0
+                old_acqf = qExpectedImprovement(
+                    model=mm, best_f=best_f, objective=constrained_objective
+                )
+                new_acqf = qExpectedImprovement(
+                    model=mm, best_f=best_f, constraints=[infeasible_con]
+                )
+                old_val = old_acqf(X)
+                self.assertAllClose(old_val, torch.ones_like(old_val))
+                new_val = new_acqf(X)
+                self.assertAllClose(new_val, torch.zeros_like(new_val))
+
+                # 2. Highlighting commonality:
+                # When best_f = 0 and infeasible_cost = 0, both implementations yield
+                # the same results.
+                constrained_objective = ConstrainedMCObjective(
+                    objective=IdentityMCObjective(),
+                    constraints=[feasible_con],
+                    infeasible_cost=0.0,
+                )
+                best_f = 0.0
+                old_acqf = qExpectedImprovement(
+                    model=mm, best_f=best_f, objective=constrained_objective
+                )
+                new_acqf = qExpectedImprovement(
+                    model=mm, best_f=best_f, constraints=[feasible_con]
+                )
+                old_val = old_acqf(X)
+                new_val = new_acqf(X)
+                self.assertAllClose(new_val, old_val)

@@ -65,7 +65,7 @@ class TestLossClosures(BotorchTestCase):
 
     def test_data_loader(self):
         for mll in self.mlls.values():
-            if type(mll) != ExactMarginalLogLikelihood:
+            if type(mll) is not ExactMarginalLogLikelihood:
                 continue
 
             dataset = TensorDataset(*mll.model.train_inputs, mll.model.train_targets)

@@ -15,6 +15,11 @@ from abc import ABC, abstractmethod
 from typing import Any, Tuple
 
 import torch
+from botorch.utils.probability.utils import (
+    log_ndtr,
+    log_phi,
+    standard_normal_log_hazard,
+)
 from gpytorch.likelihoods import Likelihood
 from torch import Tensor
 from torch.distributions import Bernoulli
@@ -120,16 +125,16 @@ class PairwiseProbitLikelihood(PairwiseLikelihood):
 
     def _calc_z_derived(self, z: Tensor) -> Tuple[Tensor, Tensor, Tensor]:
         """Calculate auxiliary statistics derived from z, including log pdf,
-        log cdf, and the hazard function (pdf divided by cdf)"""
-        std_norm = torch.distributions.normal.Normal(
-            torch.zeros(1, dtype=z.dtype, device=z.device),
-            torch.ones(1, dtype=z.dtype, device=z.device),
-        )
-        z_logpdf = std_norm.log_prob(z)
-        z_cdf = std_norm.cdf(z)
-        z_logcdf = torch.log(z_cdf)
-        hazard = torch.exp(z_logpdf - z_logcdf)
-        return z_logpdf, z_logcdf, hazard
+        log cdf, and the hazard function (pdf divided by cdf)
+
+        Args:
+            z: A Tensor of arbitrary shape.
+
+        Returns:
+            Tensors with standard normal logpdf(z), logcdf(z), and hazard function
+            values evaluated at -z.
+        """
+        return log_phi(z), log_ndtr(z), standard_normal_log_hazard(-z).exp()
 
     def p(self, utility: Tensor, D: Tensor, log: bool = False) -> Tensor:
         z = self._calc_z(utility=utility, D=D)
@@ -148,7 +153,6 @@ class PairwiseProbitLikelihood(PairwiseLikelihood):
         _, _, h = self._calc_z_derived(z)
         h_factor = h / math.sqrt(2)
         grad = (h_factor.unsqueeze(-2) @ (-D)).squeeze(-2)
-
         return grad
 
     def negative_log_hessian_sum(self, utility: Tensor, D: Tensor) -> Tensor:

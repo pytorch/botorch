@@ -4,8 +4,10 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import gc
 
 import torch
+from botorch.exceptions.errors import UnsupportedError
 from botorch.models.approximate_gp import SingleTaskVariationalGP
 from botorch.models.utils.inducing_point_allocators import (
     _pivoted_cholesky_init,
@@ -16,7 +18,7 @@ from botorch.models.utils.inducing_point_allocators import (
 )
 from botorch.utils.testing import BotorchTestCase
 
-from gpytorch.kernels import MaternKernel
+from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import VariationalELBO
 
@@ -111,6 +113,29 @@ class TestGreedyVarianceReduction(BotorchTestCase):
 
     def test_initialization(self):
         self.assertIsInstance(self.ipa, GreedyVarianceReduction)
+
+    def test_allocate_inducing_points_doesnt_leak(self) -> None:
+        """
+        Run 'allocate_inducing_points' and check that all tensors allocated
+        in that function are garbabe-collected.
+        """
+
+        def _get_n_tensors_tracked_by_gc() -> int:
+            gc.collect()
+            return sum(1 for elt in gc.get_objects() if isinstance(elt, torch.Tensor))
+
+        def f() -> None:
+            """Construct and use a GreedyVarianceReduction allocator."""
+            x = torch.rand(7, 3).to(self.device)
+            kernel = ScaleKernel(MaternKernel())
+            allocator = GreedyVarianceReduction()
+            allocator.allocate_inducing_points(x, kernel, 4, x.shape[:-2])
+
+        n_tensors_before = _get_n_tensors_tracked_by_gc()
+        f()
+        n_tensors_after = _get_n_tensors_tracked_by_gc()
+
+        self.assertEqual(n_tensors_before, n_tensors_after)
 
     def test_inducing_points_shape_and_repeatability(self):
 
@@ -262,12 +287,29 @@ class TestGreedyImprovementReduction(BotorchTestCase):
 
 class TestPivotedCholeskyInit(BotorchTestCase):
     def test_raises_for_quality_function_with_invalid_shape(self):
-        with self.assertRaises(ValueError):
-            inputs = torch.rand(15, 1, device=self.device)
+        inputs = torch.rand(15, 1, device=self.device)
+        with torch.no_grad():
             train_train_kernel = (
                 MaternKernel().to(self.device)(inputs).evaluate_kernel()
             )
-            quality_scores = torch.ones([10, 1], device=self.device)
+        quality_scores = torch.ones([10, 1], device=self.device)
+        with self.assertRaisesRegex(ValueError, ".*requires a quality score"):
+            _pivoted_cholesky_init(
+                train_inputs=inputs,
+                kernel_matrix=train_train_kernel,
+                max_length=10,
+                quality_scores=quality_scores,
+            )
+
+    def test_raises_for_kernel_with_grad(self) -> None:
+        inputs = torch.rand(15, 1, device=self.device)
+        train_train_kernel = MaternKernel().to(self.device)(inputs).evaluate_kernel()
+        quality_scores = torch.ones(15, device=self.device)
+        with self.assertRaisesRegex(
+            UnsupportedError,
+            "`_pivoted_cholesky_init` does not support using a `kernel_matrix` "
+            "with `requires_grad=True`.",
+        ):
             _pivoted_cholesky_init(
                 train_inputs=inputs,
                 kernel_matrix=train_train_kernel,

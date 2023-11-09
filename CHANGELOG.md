@@ -2,6 +2,156 @@
 
 The release log for BoTorch.
 
+
+## [0.9.4] - Nov 6, 2023
+
+#### Compatibility
+* Re-establish compatibility with PyTorch 1.13.1 (#2083).
+
+
+## [0.9.3] - Nov 2, 2023
+
+### Highlights
+* Additional "Log" acquisition functions for multi-objective optimization with better numerical behavior, which often leads to significantly improved BO performance over their non-"Log" counterparts:
+  * `qLogEHVI` (#2036).
+  * `qLogNEHVI` (#2045, #2046, #2048, #2051).
+  * Support fully Bayesian models with `LogEI`-type acquisition functions (#2058).
+* `FixedNoiseGP` and `FixedNoiseMultiFidelityGP` have been deprecated, their functionalities merged into `SingleTaskGP` and `SingleTaskMultiFidelityGP`, respectively (#2052, #2053).
+* Removed deprecated legacy model fitting functions: `numpy_converter`, `fit_gpytorch_scipy`, `fit_gpytorch_torch`, `_get_extra_mll_args` (#1995, #2050).
+
+#### New Features
+* Support multiple data fidelity dimensions in `SingleTaskMultiFidelityGP` and (deprecated) `FixedNoiseMultiFidelityGP` models (#1956).
+* Add `logsumexp` and `fatmax` to handle infinities and control asymptotic behavior in "Log" acquisition functions (#1999).
+* Add outcome and feature names to datasets, implement `MultiTaskDataset` (#2015, #2019).
+* Add constrained Hartmann and constrained Gramacy synthetic test problems (#2022, #2026, #2027).
+* Support observed noise in `MixedSingleTaskGP` (#2054).
+* Add `PosteriorStandardDeviation` acquisition function (#2060).
+
+#### Bug fixes
+* Fix input constructors for `qMaxValueEntropy` and `qMultiFidelityKnowledgeGradient` (#1989).
+* Fix precision issue that arises from inconsistent data types in `LearnedObjective` (#2006).
+* Fix fantasization with `FixedNoiseGP` and outcome transforms and use `FantasizeMixin` (#2011).
+* Fix `LearnedObjective` base sample shape (#2021).
+* Apply constraints in `prune_inferior_points` (#2069).
+* Support non-batch evaluation of `PenalizedMCObjective` (#2073).
+* Fix `Dataset` equality checks (#2077).
+
+#### Other changes
+* Don't allow unused `**kwargs` in input_constructors except for a defined set of exceptions (#1872, #1985).
+* Merge inferred and fixed noise LCE-M models (#1993).
+* Fix import structure in `botorch.acquisition.utils` (#1986).
+* Remove deprecated functionality: `weights` argument of `RiskMeasureMCObjective` and `squeeze_last_dim` (#1994).
+* Make `X`, `Y`, `Yvar` into properties in datasets (#2004).
+* Make synthetic constrained test functions subclass from `SyntheticTestFunction` (#2029).
+* Add `construct_inputs` to contextual GP models `LCEAGP` and `SACGP` (#2057).
+
+
+## [0.9.2] - Aug 10, 2023
+
+#### Bug fixes
+* Hot fix (#1973) for a few issues:
+  * A naming mismatch between Ax's modular `BotorchModel` and the BoTorch's acquisition input constructors, leading to outcome constraints in Ax not being used with single-objective acquisition functions in Ax's modular `BotorchModel`. The naming has been updated in Ax and consistent naming is now used in input constructors for single and multi-objective acquisition functions in BoTorch.
+  * A naming mismatch in the acquisition input constructor `constraints` in `qNoisyLogExpectedImprovement`, which kept constraints from being used.
+  * A bug in `compute_best_feasible_objective` that could lead to `-inf` incumbent values.
+* Fix setting seed in `get_polytope_samples` (#1968)
+
+#### Other changes
+* Merge `SupervisedDataset` and `FixedNoiseDataset` (#1945).
+* Constrained tutorial updates (#1967, #1970).
+* Resolve issues with missing pytorch binaries with py3.11 on Mac (#1966).
+
+
+## [0.9.1] - Aug 1, 2023
+
+* Require linear_operator == 0.5.1 (#1963).
+
+
+## [0.9.0] - Aug 1, 2023
+
+#### Compatibility
+* Require Python >= 3.9.0 (#1924).
+* Require PyTorch >= 1.13.1 (#1960).
+* Require linear_operator == 0.5.0 (#1961).
+* Require GPyTorch == 1.11 (#1961).
+
+#### Highlights
+* Introduce `OrthogonalAdditiveKernel` (#1869).
+* Speed up LCE-A kernel by over an order of magnitude (#1910).
+* Introduce `optimize_acqf_homotopy`, for optimizing acquisition functions with homotopy (#1915).
+* Introduce `PriorGuidedAcquisitionFunction` (PiBO) (#1920).
+* Introduce `qLogExpectedImprovement`, which provides more accurate numerics than `qExpectedImprovement` and can lead to significant optimization improvements (#1936).
+* Similarly, introduce `qLogNoisyExpectedImprovement`, which is analogous to `qNoisyExpectedImprovement` (#1937).
+
+#### New Features
+* Add constrained synthetic test functions `PressureVesselDesign`, `WeldedBeam`, `SpeedReducer`, and `TensionCompressionString` (#1832).
+* Support decoupled fantasization (#1853) and decoupled evaluations in cost-aware utilities (#1949).
+* Add `PairwiseBayesianActiveLearningByDisagreement`, an active learning acquisition function for PBO and BOPE (#1855).
+* Support custom mean and likelihood in `MultiTaskGP` (#1909).
+* Enable candidate generation (via `optimize_acqf`) with both `non_linear_constraints` and `fixed_features` (#1912).
+* Introduce `L0PenaltyApproxObjective` to support L0 regularization (#1916).
+* Enable batching in `PriorGuidedAcquisitionFunction` (#1925).
+
+#### Other changes
+* Deprecate `FixedNoiseMultiTaskGP`; allow `train_Yvar` optionally in `MultiTaskGP` (#1818).
+* Implement `load_state_dict` for SAAS multi-task GP (#1825).
+* Improvements to `LinearEllipticalSliceSampler` (#1859, #1878, #1879, #1883).
+* Allow passing in task features as part of X in MTGP.posterior (#1868).
+* Improve numerical stability of log densities in pairwise GPs (#1919).
+* Python 3.11 compliance (#1927).
+* Enable using constraints with `SampleReducingMCAcquisitionFunction`s when using `input_constructor`s and `get_acquisition_function` (#1932).
+* Enable use of `qLogExpectedImprovement` and `qLogNoisyExpectedImprovement` with Ax (#1941).
+
+#### Bug Fixes
+* Enable pathwise sampling modules to be converted to GPU  (#1821).
+* Allow `Standardize` modules to be loaded once trained (#1874).
+* Fix memory leak in Inducing Point Allocators (#1890).
+* Correct einsum computation in `LCEAKernel` (#1918).
+* Properly whiten bounds in MVNXPB (#1933).
+* Make `FixedFeatureAcquisitionFunction` convert floats to double-precision tensors rather than single-precision (#1944).
+* Fix memory leak in `FullyBayesianPosterior` (#1951).
+* Make `AnalyticExpectedUtilityOfBestOption` input constructor work correctionly with multi-task GPs (#1955).
+
+
+## [0.8.5] - May 8, 2023
+
+#### New Features
+* Support inferred noise in `SaasFullyBayesianMultiTaskGP` (#1809).
+
+#### Other Changes
+* More informative error message when `Standardize` has wrong batch shape (#1807).
+* Make GIBBON robust to numerical instability (#1814).
+* Add `sample_multiplier` in EUBO's `acqf_input_constructor` (#1816).
+
+#### Bug Fixes
+* Only do checks for `_optimize_acqf_sequential_q` when it will be used (#1808).
+* Fix an issue where `PairwiseGP` comparisons might be implicitly modified (#1811).
+
+
+## [0.8.4] - Apr 24, 2023
+
+#### Compatibility
+* Require GPyTorch == 1.10 and linear_operator == 0.4.0 (#1803).
+
+#### New Features
+* Polytope sampling for linear constraints along the q-dimension (#1757).
+* Single-objective joint entropy search with additional conditioning, various improvements to entropy-based acquisition functions (#1738).
+
+#### Other changes
+* Various updates to improve numerical stability of `PairwiseGP` (#1754, #1755).
+* Change batch range for `FullyBayesianPosterior` (1176a38352b69d01def0a466233e6633c17d6862, #1773).
+* Make `gen_batch_initial_conditions` more flexible (#1779).
+* Deprecate `objective` in favor of `posterior_transform` for `MultiObjectiveAnalyticAcquisitionFunction` (#1781).
+* Use `prune_baseline=True` as default for `qNoisyExpectedImprovement` (#1796).
+* Add `batch_shape` property to `SingleTaskVariationalGP` (#1799).
+* Change minimum inferred noise level for `SaasFullyBayesianSingleTaskGP` (#1800).
+
+#### Bug fixes
+* Add `output_task` to `MultiTaskGP.construct_inputs` (#1753).
+* Fix custom bounds handling in test problems (#1760).
+* Remove incorrect `BotorchTensorDimensionWarning` (#1790).
+* Fix handling of non-Container-typed positional arguments in `SupervisedDatasetMeta` (#1663).
+
+
 ## [0.8.3] - Mar 15, 2023
 
 #### New Features

@@ -15,10 +15,11 @@ from typing import Callable, List, Optional, TYPE_CHECKING, Union
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedError
+from botorch.exceptions.warnings import InputDataWarning
 from botorch.models.model import Model
 from botorch.models.transforms.outcome import Standardize
 from botorch.posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
-from botorch.sampling import IIDNormalSampler, MCSampler
+from botorch.sampling import IIDNormalSampler
 from botorch.utils import apply_constraints
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from linear_operator.operators.dense_linear_operator import to_linear_operator
@@ -28,16 +29,6 @@ from torch.nn import Module
 if TYPE_CHECKING:
     from botorch.posteriors.posterior import Posterior  # pragma: no cover
     from botorch.posteriors.posterior_list import PosteriorList  # pragma: no cover
-
-
-class AcquisitionObjective(Module, ABC):
-    r"""Abstract base class for objectives.
-
-    DEPRECATED - This will be removed in the next version.
-
-    :meta private:
-    """
-    ...
 
 
 class PosteriorTransform(Module, ABC):
@@ -134,23 +125,6 @@ class ScalarizedPosteriorTransform(PosteriorTransform):
         return scalarize_posterior(
             posterior=posterior, weights=self.weights, offset=self.offset
         )
-
-
-class ScalarizedObjective(ScalarizedPosteriorTransform, AcquisitionObjective):
-    """DEPRECATED - Use ScalarizedPosteriorTransform instead."""
-
-    def __init__(self, weights: Tensor, offset: float = 0.0) -> None:
-        r"""
-        Args:
-            weights: A one-dimensional tensor with `m` elements representing the
-                linear weights on the outputs.
-            offset: An offset to be added to posterior mean.
-        """
-        warnings.warn(
-            "ScalarizedObjective is deprecated and will be removed in the next "
-            "version. Use ScalarizedPosteriorTransform instead."
-        )
-        super().__init__(weights=weights, offset=offset)
 
 
 class ExpectationPosteriorTransform(PosteriorTransform):
@@ -288,6 +262,7 @@ class UnstandardizePosteriorTransform(PosteriorTransform):
         self.outcome_transform.means = Y_mean.unsqueeze(0)
         self.outcome_transform.stdvs = Y_std_unsqueezed
         self.outcome_transform._stdvs_sq = Y_std_unsqueezed.pow(2)
+        self.outcome_transform._is_trained = torch.tensor(True)
         self.outcome_transform.eval()
 
     def evaluate(self, Y: Tensor) -> Tensor:
@@ -451,7 +426,7 @@ class GenericMCObjective(MCAcquisitionObjective):
             self.objective = objective
 
     def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
-        r"""Evaluate the feasibility-weigthed objective on the samples.
+        r"""Evaluate the objective on the samples.
 
         Args:
             samples: A `sample_shape x batch_shape x q x m`-dim Tensors of
@@ -460,8 +435,7 @@ class GenericMCObjective(MCAcquisitionObjective):
                 the objective depends on the inputs explicitly.
 
         Returns:
-            A `sample_shape x batch_shape x q`-dim Tensor of objective values
-            weighted by feasibility (assuming maximization).
+            A `sample_shape x batch_shape x q`-dim Tensor of objective values.
         """
         return self.objective(samples, X=X)
 
@@ -488,6 +462,9 @@ class ConstrainedMCObjective(GenericMCObjective):
         >>> constrained_objective = ConstrainedMCObjective(objective, [constraint])
         >>> samples = sampler(posterior)
         >>> objective = constrained_objective(samples)
+
+    TODO: Deprecate this as default way to handle constraints with MC acquisition
+    functions once we have data on how well SampleReducingMCAcquisitionFunction works.
     """
 
     def __init__(
@@ -518,7 +495,7 @@ class ConstrainedMCObjective(GenericMCObjective):
         """
         super().__init__(objective=objective)
         self.constraints = constraints
-        if type(eta) != Tensor:
+        if type(eta) is not Tensor:
             eta = torch.full((len(constraints),), eta)
         self.register_buffer("eta", eta)
         self.register_buffer("infeasible_cost", torch.as_tensor(infeasible_cost))
@@ -546,6 +523,12 @@ class ConstrainedMCObjective(GenericMCObjective):
         )
 
 
+LEARNED_OBJECTIVE_PREF_MODEL_MIXED_DTYPE_WARN = (
+    "pref_model has double-precision data, but single-precision data "
+    "was passed to the LearnedObjective. Upcasting to double."
+)
+
+
 class LearnedObjective(MCAcquisitionObjective):
     r"""Learned preference objective constructed from a preference model.
 
@@ -564,7 +547,8 @@ class LearnedObjective(MCAcquisitionObjective):
     def __init__(
         self,
         pref_model: Model,
-        sampler: Optional[MCSampler] = None,
+        sample_shape: Optional[torch.Size] = None,
+        seed: Optional[int] = None,
     ):
         r"""
         Args:
@@ -574,20 +558,20 @@ class LearnedObjective(MCAcquisitionObjective):
                 return a `Posterior` object with single outcome representing the
                 utility values of the input.
             sampler: Sampler for the preference model to account for uncertainty in
-                preferece when calculating the objective; it's not the one used
+                preference when calculating the objective; it's not the one used
                 in MC acquisition functions. If None,
                 it uses `IIDNormalSampler(sample_shape=torch.Size([1]))`.
         """
         super().__init__()
         self.pref_model = pref_model
         if isinstance(pref_model, DeterministicModel):
-            assert sampler is None
+            assert sample_shape is None
             self.sampler = None
         else:
-            if sampler is None:
-                self.sampler = IIDNormalSampler(sample_shape=torch.Size([1]))
-            else:
-                self.sampler = sampler
+            if sample_shape is None:
+                sample_shape = torch.Size([1])
+            self.sampler = IIDNormalSampler(sample_shape=sample_shape, seed=seed)
+            self.sampler.batch_range_override = (1, -1)
 
     def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         r"""Sample each element of samples.
@@ -600,11 +584,21 @@ class LearnedObjective(MCAcquisitionObjective):
             A `(sample_size * num_samples) x batch_shape x N`-dim Tensor of
             objective values sampled from utility posterior using `pref_model`.
         """
-        post = self.pref_model.posterior(samples)
+        if samples.dtype != torch.float64 and any(
+            d == torch.float64 for d in self.pref_model.dtypes_of_buffers
+        ):
+            warnings.warn(
+                LEARNED_OBJECTIVE_PREF_MODEL_MIXED_DTYPE_WARN,
+                InputDataWarning,
+                stacklevel=2,
+            )
+            samples = samples.to(torch.float64)
+
+        posterior = self.pref_model.posterior(samples)
         if isinstance(self.pref_model, DeterministicModel):
             # return preference posterior mean
-            return post.mean.squeeze(-1)
+            return posterior.mean.squeeze(-1)
         else:
-            # return preference posterior sample mean
-            samples = self.sampler(post).squeeze(-1)
+            # return preference posterior augmented samples
+            samples = self.sampler(posterior).squeeze(-1)
             return samples.reshape(-1, *samples.shape[2:])  # batch_shape x N

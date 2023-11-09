@@ -5,7 +5,13 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
-from botorch.models.kernels.contextual_lcea import LCEAKernel
+from botorch.models.kernels.contextual_lcea import (
+    get_order,
+    get_permutation,
+    is_contiguous,
+    LCEAKernel,
+)
+
 from botorch.models.kernels.contextual_sac import SACKernel
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels.matern_kernel import MaternKernel
@@ -27,7 +33,7 @@ class ContextualKernelTest(BotorchTestCase):
         x2 = torch.rand(5, 4)
         res = kernel(x1, x2).to_dense()
         res_diag = kernel(x1, x2, diag=True)
-        self.assertLess(torch.norm(res_diag - res.diag()), 1e-4)
+        self.assertLess(torch.linalg.norm(res_diag - res.diag()), 1e-4)
 
         # test raise of ValueError
         with self.assertRaises(ValueError):
@@ -36,25 +42,26 @@ class ContextualKernelTest(BotorchTestCase):
     def testLCEAKernel(self):
         decomposition = {"1": [0, 3], "2": [1, 2]}
         num_contexts = len(decomposition)
-
         kernel = LCEAKernel(decomposition=decomposition, batch_shape=torch.Size([]))
         # test init
         self.assertListEqual(kernel.context_list, ["1", "2"])
-        self.assertDictEqual(kernel.decomposition, decomposition)
 
         self.assertIsInstance(kernel.base_kernel, MaternKernel)
         self.assertIsInstance(kernel.task_covar_module, MaternKernel)
+        self.assertEqual(kernel.permutation, [0, 3, 1, 2])
 
         # test raise of ValueError
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(
+            ValueError, "The number of parameters needs to be same across all contexts."
+        ):
             LCEAKernel(
-                decomposition={"1": [0, 3], "2": [1]}, batch_shape=torch.Size([])
+                decomposition={"1": [0, 1], "2": [2]}, batch_shape=torch.Size([])
             )
 
         # test set_outputscale_list
         kernel.initialize(outputscale_list=[0.5, 0.5])
         actual_value = torch.tensor([0.5, 0.5]).view_as(kernel.outputscale_list)
-        self.assertLess(torch.norm(kernel.outputscale_list - actual_value), 1e-5)
+        self.assertLess(torch.linalg.norm(kernel.outputscale_list - actual_value), 1e-5)
 
         self.assertTrue(kernel.train_embedding)
         self.assertEqual(kernel.num_contexts, num_contexts)
@@ -76,17 +83,34 @@ class ContextualKernelTest(BotorchTestCase):
         self.assertEqual(kernel.outputscale_list.shape, torch.Size([num_contexts]))
 
         # test diag works well for lazy tensor
-        x1 = torch.rand(5, 4)
-        x2 = torch.rand(5, 4)
+        num_obs, num_contexts, input_dim = 5, 2, 2
+        x1 = torch.rand(num_obs, num_contexts * input_dim)
+        x2 = torch.rand(num_obs, num_contexts * input_dim)
         res = kernel(x1, x2).to_dense()
         res_diag = kernel(x1, x2, diag=True)
-        self.assertLess(torch.norm(res_diag - res.diag()), 1e-4)
+        self.assertAllClose(res_diag, res.diag(), atol=1e-4)
 
         # test batch evaluation
-        x1 = torch.rand(3, 5, 4)
-        x2 = torch.rand(3, 5, 4)
+        batch_dim = 3
+        x1 = torch.rand(batch_dim, num_obs, num_contexts * input_dim)
+        x2 = torch.rand(batch_dim, num_obs, num_contexts * input_dim)
         res = kernel(x1, x2).to_dense()
-        self.assertEqual(res.shape, torch.Size([3, 5, 5]))
+        self.assertEqual(res.shape, torch.Size([batch_dim, num_obs, num_obs]))
+
+        # testing efficient `einsum` with naive `sum` implementation
+        context_covar = kernel._eval_context_covar()
+        if x1.dim() > context_covar.dim():
+            context_covar = context_covar.expand(
+                x1.shape[:-1] + torch.Size([x2.shape[-2]]) + context_covar.shape
+            )
+        base_covar_perm = kernel._eval_base_covar_perm(x1, x2)
+        expected_res = (context_covar * base_covar_perm).sum(dim=-2).sum(dim=-1)
+        self.assertAllClose(expected_res, res)
+
+        # diagonal batch evaluation
+        res_diag = kernel(x1, x2, diag=True).to_dense()
+        expected_res_diag = torch.diagonal(expected_res, dim1=-1, dim2=-2)
+        self.assertAllClose(expected_res_diag, res_diag)
 
         # test input context_weight,
         # test input embs_dim_list (one categorical feature)
@@ -181,3 +205,23 @@ class ContextualKernelTest(BotorchTestCase):
         self.assertEqual(
             context_covar6.shape, torch.Size([3, num_contexts, num_contexts])
         )
+
+    def test_get_permutation(self):
+        decomp = {"a": [0, 1], "b": [2, 3]}
+        permutation = get_permutation(decomp)
+        self.assertIsNone(permutation)
+        # order mismatch
+        decomp = {"a": [1, 0], "b": [2, 3]}
+        permutation = get_permutation(decomp)
+        self.assertEqual(permutation, [0, 1, 2, 3])
+        # non-contiguous
+        decomp = {"a": [0, 2], "b": [1, 3]}
+        permutation = get_permutation(decomp)
+        self.assertEqual(permutation, [0, 2, 1, 3])
+
+    def test_is_contiguous(self):
+        self.assertFalse(is_contiguous([0, 2]))
+        self.assertTrue(is_contiguous([0, 1]))
+
+    def test_get_order(self):
+        self.assertEqual(get_order([1, 10, 3]), [1, 1, 0])

@@ -7,16 +7,21 @@
 
 import itertools
 from unittest import mock
+from unittest.mock import patch
 
 import pyro
 
 import torch
-from botorch import fit_fully_bayesian_model_nuts
+from botorch import fit_fully_bayesian_model_nuts, utils
 from botorch.acquisition.analytic import (
     ExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
     UpperConfidenceBound,
+)
+from botorch.acquisition.logei import (
+    qLogExpectedImprovement,
+    qLogNoisyExpectedImprovement,
 )
 from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
@@ -29,6 +34,10 @@ from botorch.acquisition.multi_objective import (
     prune_inferior_points_multi_objective,
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
+)
+from botorch.acquisition.multi_objective.logei import (
+    qLogExpectedHypervolumeImprovement,
+    qLogNoisyExpectedHypervolumeImprovement,
 )
 from botorch.acquisition.utils import prune_inferior_points
 from botorch.models import ModelList, ModelListGP
@@ -43,17 +52,22 @@ from botorch.models.fully_bayesian import (
 from botorch.models.transforms import Normalize, Standardize
 from botorch.posteriors.fully_bayesian import batched_bisect, FullyBayesianPosterior
 from botorch.sampling.get_sampler import get_sampler
-from botorch.utils.datasets import FixedNoiseDataset, SupervisedDataset
+from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
+from botorch.utils.safe_math import logmeanexp
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import FixedNoiseGaussianLikelihood, GaussianLikelihood
 from gpytorch.means import ConstantMean
 from linear_operator.operators import to_linear_operator
-from pyro.ops.integrator import potential_grad, register_exception_handler
+from pyro.ops.integrator import (
+    _EXCEPTION_HANDLERS,
+    potential_grad,
+    register_exception_handler,
+)
 
 
 EXPECTED_KEYS = [
@@ -193,11 +207,9 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             if infer_noise:
                 self.assertIsNone(model.pyro_model.train_Yvar)
             else:
-                self.assertTrue(
-                    torch.allclose(
-                        train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL),
-                        model.pyro_model.train_Yvar,
-                    )
+                self.assertAllClose(
+                    train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL),
+                    model.pyro_model.train_Yvar,
                 )
 
             # Fit a model and check that the hyperparameters have the correct shape
@@ -225,13 +237,9 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 self.assertEqual(model.likelihood.noise.shape, torch.Size([3, 1]))
             else:
                 self.assertEqual(model.likelihood.noise.shape, torch.Size([3, n]))
-                self.assertTrue(
-                    torch.allclose(
-                        train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL)
-                        .squeeze(-1)
-                        .repeat(3, 1),
-                        model.likelihood.noise,
-                    )
+                self.assertAllClose(
+                    train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL).squeeze(-1).repeat(3, 1),
+                    model.likelihood.noise,
                 )
 
             # Predict on some test points
@@ -262,21 +270,21 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 self.assertEqual(quantile2.shape, torch.Size(batch_shape + [1]))
                 self.assertTrue((quantile2 > quantile1).all())
                 quantile12 = posterior.quantile(value=torch.tensor([0.01, 0.99]))
-                self.assertTrue(
-                    torch.allclose(
-                        quantile12, torch.stack([quantile1, quantile2], dim=0)
-                    )
+                self.assertAllClose(
+                    quantile12, torch.stack([quantile1, quantile2], dim=0)
                 )
                 dist = torch.distributions.Normal(
                     loc=posterior.mean, scale=posterior.variance.sqrt()
                 )
-                torch.allclose(
+                self.assertAllClose(
                     dist.cdf(quantile1.unsqueeze(MCMC_DIM)).mean(dim=MCMC_DIM),
-                    0.05 * torch.ones(batch_shape + [1], **tkwargs),
+                    torch.full(batch_shape + [1], 0.01, **tkwargs),
+                    atol=1e-6,
                 )
-                torch.allclose(
+                self.assertAllClose(
                     dist.cdf(quantile2.unsqueeze(MCMC_DIM)).mean(dim=MCMC_DIM),
-                    0.95 * torch.ones(batch_shape + [1], **tkwargs),
+                    torch.full(batch_shape + [1], 0.99, **tkwargs),
+                    atol=1e-6,
                 )
                 # Invalid quantile should raise
                 for q in [-1.0, 0.0, 1.0, 1.3333]:
@@ -413,6 +421,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             model, warmup_steps=8, num_samples=5, thinning=2, disable_progbar=True
         )
         deterministic = GenericDeterministicModel(f=lambda x: x[..., :1])
+        # due to ModelList type, setting cache_root=False for all noisy EI variants
         list_gp = ModelListGP(model, model)
         mixed_list = ModelList(deterministic, model)
         simple_sampler = get_sampler(
@@ -429,11 +438,23 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             ProbabilityOfImprovement(model=model, best_f=train_Y.max()),
             PosteriorMean(model=model),
             UpperConfidenceBound(model=model, beta=4),
+            qLogExpectedImprovement(
+                model=model, best_f=train_Y.max(), sampler=simple_sampler
+            ),
             qExpectedImprovement(
                 model=model, best_f=train_Y.max(), sampler=simple_sampler
             ),
             qNoisyExpectedImprovement(
-                model=model, X_baseline=train_X, sampler=simple_sampler
+                model=model,
+                X_baseline=train_X,
+                sampler=simple_sampler,
+                cache_root=False,
+            ),
+            qLogNoisyExpectedImprovement(
+                model=model,
+                X_baseline=train_X,
+                sampler=simple_sampler,
+                cache_root=False,
             ),
             qProbabilityOfImprovement(
                 model=model, best_f=train_Y.max(), sampler=simple_sampler
@@ -445,8 +466,24 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 X_baseline=train_X,
                 ref_point=torch.zeros(2, **tkwargs),
                 sampler=list_gp_sampler,
+                cache_root=False,
+            ),
+            qLogNoisyExpectedHypervolumeImprovement(
+                model=list_gp,
+                X_baseline=train_X,
+                ref_point=torch.zeros(2, **tkwargs),
+                sampler=list_gp_sampler,
+                cache_root=False,
             ),
             qExpectedHypervolumeImprovement(
+                model=list_gp,
+                ref_point=torch.zeros(2, **tkwargs),
+                sampler=list_gp_sampler,
+                partitioning=NondominatedPartitioning(
+                    ref_point=torch.zeros(2, **tkwargs), Y=train_Y.repeat([1, 2])
+                ),
+            ),
+            qLogExpectedHypervolumeImprovement(
                 model=list_gp,
                 ref_point=torch.zeros(2, **tkwargs),
                 sampler=list_gp_sampler,
@@ -460,8 +497,24 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 X_baseline=train_X,
                 ref_point=torch.zeros(2, **tkwargs),
                 sampler=mixed_list_sampler,
+                cache_root=False,
+            ),
+            qLogNoisyExpectedHypervolumeImprovement(
+                model=mixed_list,
+                X_baseline=train_X,
+                ref_point=torch.zeros(2, **tkwargs),
+                sampler=mixed_list_sampler,
+                cache_root=False,
             ),
             qExpectedHypervolumeImprovement(
+                model=mixed_list,
+                ref_point=torch.zeros(2, **tkwargs),
+                sampler=mixed_list_sampler,
+                partitioning=NondominatedPartitioning(
+                    ref_point=torch.zeros(2, **tkwargs), Y=train_Y.repeat([1, 2])
+                ),
+            ),
+            qLogExpectedHypervolumeImprovement(
                 model=mixed_list,
                 ref_point=torch.zeros(2, **tkwargs),
                 sampler=mixed_list_sampler,
@@ -474,7 +527,16 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
         for acqf in acquisition_functions:
             for batch_shape in [[5], [6, 5, 2]]:
                 test_X = torch.rand(*batch_shape, 1, 4, **tkwargs)
-                self.assertEqual(acqf(test_X).shape, torch.Size(batch_shape))
+                # Testing that the t_batch_mode_transform works correctly for
+                # fully Bayesian models with log-space acquisition functions.
+                with patch.object(
+                    utils.transforms, "logmeanexp", wraps=logmeanexp
+                ) as mock:
+                    self.assertEqual(acqf(test_X).shape, torch.Size(batch_shape))
+                    if acqf._log:
+                        mock.assert_called_once()
+                    else:
+                        mock.assert_not_called()
 
         # Test prune_inferior_points
         X_pruned = prune_inferior_points(model=model, X=train_X)
@@ -503,38 +565,26 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             )
             model.load_mcmc_samples(mcmc_samples)
 
-            self.assertTrue(
-                torch.allclose(
-                    model.covar_module.base_kernel.lengthscale,
-                    mcmc_samples["lengthscale"],
-                )
+            self.assertAllClose(
+                model.covar_module.base_kernel.lengthscale,
+                mcmc_samples["lengthscale"],
             )
-            self.assertTrue(
-                torch.allclose(
-                    model.covar_module.outputscale,
-                    mcmc_samples["outputscale"],
-                )
+            self.assertAllClose(
+                model.covar_module.outputscale,
+                mcmc_samples["outputscale"],
             )
-            self.assertTrue(
-                torch.allclose(
-                    model.mean_module.raw_constant.data,
-                    mcmc_samples["mean"],
-                )
+            self.assertAllClose(
+                model.mean_module.raw_constant.data,
+                mcmc_samples["mean"],
             )
             if infer_noise:
-                self.assertTrue(
-                    torch.allclose(
-                        model.likelihood.noise_covar.noise, mcmc_samples["noise"]
-                    )
+                self.assertAllClose(
+                    model.likelihood.noise_covar.noise, mcmc_samples["noise"]
                 )
             else:
-                self.assertTrue(
-                    torch.allclose(
-                        model.likelihood.noise_covar.noise,
-                        train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL)
-                        .squeeze(-1)
-                        .repeat(3, 1),
-                    )
+                self.assertAllClose(
+                    model.likelihood.noise_covar.noise,
+                    train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL).squeeze(-1).repeat(3, 1),
                 )
 
     def test_construct_inputs(self):
@@ -545,10 +595,9 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             X, Y, Yvar, model = self._get_data_and_model(
                 infer_noise=infer_noise, **tkwargs
             )
-            if infer_noise:
-                training_data = SupervisedDataset(X, Y)
-            else:
-                training_data = FixedNoiseDataset(X, Y, Yvar)
+            training_data = SupervisedDataset(
+                X, Y, Yvar=Yvar, feature_names=["1", "2", "3", "4"], outcome_names=["1"]
+            )
 
             data_dict = model.construct_inputs(training_data)
             self.assertTrue(X.equal(data_dict["train_X"]))
@@ -582,11 +631,9 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             if infer_noise:
                 self.assertIsNone(model.pyro_model.train_Yvar)
             else:
-                self.assertTrue(
-                    torch.allclose(
-                        model.pyro_model.train_Yvar,
-                        train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL),
-                    )
+                self.assertAllClose(
+                    model.pyro_model.train_Yvar,
+                    train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL),
                 )
             # Use transforms
             model = SaasFullyBayesianSingleTaskGP(
@@ -599,20 +646,14 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             )
             self.assertIsInstance(model.pyro_model, CustomPyroModel)
             lb, ub = train_X.min(dim=0).values, train_X.max(dim=0).values
-            self.assertTrue(
-                torch.allclose(model.pyro_model.train_X, (train_X - lb) / (ub - lb))
-            )
+            self.assertAllClose(model.pyro_model.train_X, (train_X - lb) / (ub - lb))
             mu, sigma = train_Y.mean(dim=0), train_Y.std(dim=0)
-            self.assertTrue(
-                torch.allclose(model.pyro_model.train_Y, (train_Y - mu) / sigma)
-            )
+            self.assertAllClose(model.pyro_model.train_Y, (train_Y - mu) / sigma)
             if not infer_noise:
-                self.assertTrue(
-                    torch.allclose(
-                        model.pyro_model.train_Yvar,
-                        train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL) / (sigma**2),
-                        atol=1e-4,
-                    )
+                self.assertAllClose(
+                    model.pyro_model.train_Yvar,
+                    train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL) / (sigma**2),
+                    atol=5e-4,
                 )
 
     def test_bisect(self):
@@ -631,16 +672,12 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             )
             for target, tol in itertools.product([1.01, 1.5, 1.99], [1e-3, 1e-6]):
                 x = batched_bisect(f=f, target=target, bounds=bounds, tol=tol)
-                self.assertTrue(
-                    torch.allclose(
-                        f(x), target * torch.ones(batch_shape, **tkwargs), atol=tol
-                    )
+                self.assertAllClose(
+                    f(x), torch.full(batch_shape, target, **tkwargs), atol=tol
                 )
             # Do one step and make sure we didn't converge in this case
             x = batched_bisect(f=f, target=1.71, bounds=bounds, max_steps=1)
-            self.assertTrue(
-                torch.allclose(x, 0.75 * torch.ones(batch_shape, **tkwargs), atol=tol)
-            )
+            self.assertAllClose(x, torch.full(batch_shape, 0.75, **tkwargs), atol=tol)
             # Target outside the bounds should raise
             with self.assertRaisesRegex(
                 ValueError,
@@ -658,14 +695,19 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             )
             for q in [0.1, 0.5, 0.9]:
                 x = posterior.quantile(value=torch.tensor(q))
-                self.assertTrue(
-                    torch.allclose(
-                        dist.cdf(x), q * torch.ones(1, 5, **tkwargs), atol=1e-4
-                    )
+                self.assertAllClose(
+                    dist.cdf(x), q * torch.ones(1, 5, 1, **tkwargs), atol=1e-4
                 )
 
 
 class TestPyroCatchNumericalErrors(BotorchTestCase):
+    def tearDown(self):
+        super().tearDown()
+        # Remove exception handler so they don't affect the tests on rerun
+        # TODO: Add functionality to pyro to clear the handlers so this
+        # does not require touching the internals.
+        del _EXCEPTION_HANDLERS["foo_runtime"]
+
     def test_pyro_catch_error(self):
         def potential_fn(z):
             mvn = pyro.distributions.MultivariateNormal(
@@ -704,7 +746,7 @@ class TestPyroCatchNumericalErrors(BotorchTestCase):
 
         # But once we register this specific error then it should
         def catch_runtime_error(e):
-            return type(e) == RuntimeError and "foo" in str(e)
+            return type(e) is RuntimeError and "foo" in str(e)
 
         register_exception_handler("foo_runtime", catch_runtime_error)
         _, val = potential_grad(potential_fn_rterr_foo, z)

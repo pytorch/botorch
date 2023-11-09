@@ -1444,7 +1444,10 @@ class SRN(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
 
 class WeldedBeam(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     r"""
-    The Welded Beam test problem.
+    The Welded Beam multi-objective test problem. Similar to `WeldedBeamSO` in
+    `botorch.test_function.synthetic`, but with an additional output, somewhat
+    modified constraints, and a different domain.
+
     Implementation from
     https://github.com/msu-coinlab/pymoo/blob/master/pymoo/problems/multi/welded_beam.py
     Note that this implementation assumes minimization, so please choose negate=True.
@@ -1462,35 +1465,44 @@ class WeldedBeam(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     _ref_point = [40, 0.015]
 
     def evaluate_true(self, X: Tensor) -> Tensor:
-        f1 = 1.10471 * X[..., 0] ** 2 * X[..., 1] + 0.04811 * X[..., 2] * X[..., 3] * (
-            14.0 + X[..., 1]
-        )
-        f2 = 2.1952 / (X[..., 3] * X[..., 2] ** 3)
+        # We could do the following, but the constraints are using somewhat
+        # different numbers (see below).
+        # f1 = WeldedBeam.evaluate_true(self, X)
+        x1, x2, x3, x4 = X.unbind(-1)
+        f1 = 1.10471 * (x1**2) * x2 + 0.04811 * x3 * x4 * (14.0 + x2)
+        f2 = 2.1952 / (x4 * x3**3)
         return torch.stack([f1, f2], dim=-1)
 
     def evaluate_slack_true(self, X: Tensor) -> Tensor:
-        P = 6000
-        L = 14
-        t_max = 13600
-        s_max = 30000
+        x1, x2, x3, x4 = X.unbind(-1)
+        P = 6000.0
+        L = 14.0
+        t_max = 13600.0
+        s_max = 30000.0
 
-        R = torch.sqrt(0.25 * (X[..., 1] ** 2 + (X[..., 0] + X[..., 2]) ** 2))
-        M = P * (L + X[..., 1] / 2)
-        J = (
-            2
-            * math.sqrt(0.5)
-            * X[..., 0]
-            * X[..., 1]
-            * (X[..., 1] ** 2 / 12 + 0.25 * (X[..., 0] + X[..., 2]) ** 2)
-        )
-        t1 = P / (math.sqrt(2) * X[..., 0] * X[..., 1])
+        # Ideally, we could just do the following, but the numbers in the
+        # single-outcome WeldedBeam are different (see below)
+        # g1_, g2_, g3_, _, _, g6_ = WeldedBeam.evaluate_slack_true(self, X)
+        # g1 = g1_ / t_max
+        # g2 = g2_ / s_max
+        # g3 = 1 / (5 - 0.125) * g3_
+        # g4 = 1 / P * g6_
+
+        R = torch.sqrt(0.25 * (x2**2 + (x1 + x3) ** 2))
+        M = P * (L + x2 / 2)
+        # This `J` is different than the one in [CoelloCoello2002constraint]_
+        # by a factor of 2 (sqrt(2) instead of sqrt(0.5))
+        J = 2 * math.sqrt(0.5) * x1 * x2 * (x2**2 / 12 + 0.25 * (x1 + x3) ** 2)
+        t1 = P / (math.sqrt(2) * x1 * x2)
         t2 = M * R / J
-        t = torch.sqrt(t1**2 + t2**2 + t1 * t2 * X[..., 1] / R)
-        s = 6 * P * L / (X[..., 3] * X[..., 2] ** 2)
-        P_c = 64746.022 * (1 - 0.0282346 * X[..., 2]) * X[..., 2] * X[..., 3] ** 3
+        t = torch.sqrt(t1**2 + t1 * t2 * x2 / R + t2**2)
+        s = 6 * P * L / (x4 * x3**2)
+        # These numbers are also different from [CoelloCoello2002constraint]_
+        P_c = 64746.022 * (1 - 0.0282346 * x3) * x3 * x4**3
 
-        g1 = (1 / t_max) * (t - t_max)
-        g2 = (1 / s_max) * (s - s_max)
-        g3 = (1 / (5 - 0.125)) * (X[..., 0] - X[..., 3])
-        g4 = (1 / P) * (P - P_c)
-        return -torch.stack([g1, g2, g3, g4], dim=-1)
+        g1 = (t - t_max) / t_max
+        g2 = (s - s_max) / s_max
+        g3 = 1 / (5 - 0.125) * (x1 - x4)
+        g4 = (P - P_c) / P
+
+        return torch.stack([g1, g2, g3, g4], dim=-1)

@@ -229,7 +229,7 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
 
         # K_{train, train}^{-1} (y - Y_x)
         # internally, this solve is done using Kronecker algebra and is fast.
-        kinv_rhs = self.train_train_covar.inv_matmul(train_rhs)
+        kinv_rhs = self.train_train_covar.solve(train_rhs)
         # multiply by cross-covariance
         test_updated_samples = self.test_train_covar.matmul(kinv_rhs)
 

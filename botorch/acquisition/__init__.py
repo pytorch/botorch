@@ -16,8 +16,11 @@ from botorch.acquisition.analytic import (
     AnalyticAcquisitionFunction,
     ConstrainedExpectedImprovement,
     ExpectedImprovement,
+    LogExpectedImprovement,
+    LogNoisyExpectedImprovement,
     NoisyExpectedImprovement,
     PosteriorMean,
+    PosteriorStandardDeviation,
     ProbabilityOfImprovement,
     qAnalyticProbabilityOfImprovement,
     UpperConfidenceBound,
@@ -26,11 +29,18 @@ from botorch.acquisition.cost_aware import (
     GenericCostAwareUtility,
     InverseCostWeightedUtility,
 )
+from botorch.acquisition.decoupled import DecoupledAcquisitionFunction
+from botorch.acquisition.factory import get_acquisition_function
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
 from botorch.acquisition.input_constructors import get_acqf_input_constructor
 from botorch.acquisition.knowledge_gradient import (
     qKnowledgeGradient,
     qMultiFidelityKnowledgeGradient,
+)
+from botorch.acquisition.logei import (
+    LogImprovementMCAcquisitionFunction,
+    qLogExpectedImprovement,
+    qLogNoisyExpectedImprovement,
 )
 from botorch.acquisition.max_value_entropy_search import (
     MaxValueBase,
@@ -46,6 +56,7 @@ from botorch.acquisition.monte_carlo import (
     qProbabilityOfImprovement,
     qSimpleRegret,
     qUpperConfidenceBound,
+    SampleReducingMCAcquisitionFunction,
 )
 from botorch.acquisition.multi_step_lookahead import qMultiStepLookahead
 from botorch.acquisition.objective import (
@@ -55,31 +66,42 @@ from botorch.acquisition.objective import (
     LearnedObjective,
     LinearMCObjective,
     MCAcquisitionObjective,
-    ScalarizedObjective,
     ScalarizedPosteriorTransform,
 )
-from botorch.acquisition.preference import AnalyticExpectedUtilityOfBestOption
+from botorch.acquisition.preference import (
+    AnalyticExpectedUtilityOfBestOption,
+    PairwiseBayesianActiveLearningByDisagreement,
+)
+from botorch.acquisition.prior_guided import PriorGuidedAcquisitionFunction
 from botorch.acquisition.proximal import ProximalAcquisitionFunction
-from botorch.acquisition.utils import get_acquisition_function
 
 __all__ = [
     "AcquisitionFunction",
     "AnalyticAcquisitionFunction",
     "AnalyticExpectedUtilityOfBestOption",
     "ConstrainedExpectedImprovement",
+    "DecoupledAcquisitionFunction",
     "ExpectedImprovement",
+    "LogExpectedImprovement",
+    "LogNoisyExpectedImprovement",
     "FixedFeatureAcquisitionFunction",
     "GenericCostAwareUtility",
     "InverseCostWeightedUtility",
     "NoisyExpectedImprovement",
     "OneShotAcquisitionFunction",
+    "PairwiseBayesianActiveLearningByDisagreement",
     "PairwiseMCPosteriorVariance",
     "PosteriorMean",
+    "PosteriorStandardDeviation",
+    "PriorGuidedAcquisitionFunction",
     "ProbabilityOfImprovement",
     "ProximalAcquisitionFunction",
     "UpperConfidenceBound",
     "qAnalyticProbabilityOfImprovement",
     "qExpectedImprovement",
+    "LogImprovementMCAcquisitionFunction",
+    "qLogExpectedImprovement",
+    "qLogNoisyExpectedImprovement",
     "qKnowledgeGradient",
     "MaxValueBase",
     "qMultiFidelityKnowledgeGradient",
@@ -99,8 +121,8 @@ __all__ = [
     "LearnedObjective",
     "LinearMCObjective",
     "MCAcquisitionFunction",
+    "SampleReducingMCAcquisitionFunction",
     "MCAcquisitionObjective",
-    "ScalarizedObjective",
     "ScalarizedPosteriorTransform",
     "get_acquisition_function",
     "get_acqf_input_constructor",

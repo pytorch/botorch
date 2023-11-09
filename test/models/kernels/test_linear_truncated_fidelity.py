@@ -56,10 +56,10 @@ class TestLinearTruncatedFidelityKernel(BotorchTestCase, BaseKernelTestCase):
             matern_term = matern_ker(x1, x2).to_dense()
             actual = t * matern_term
             res = kernel(x1, x2).to_dense()
-            self.assertLess(torch.norm(res - actual), 1e-4)
+            self.assertLess(torch.linalg.norm(res - actual), 1e-4)
             # test diagonal mode
             res_diag = kernel(x1, x2, diag=True)
-            self.assertLess(torch.norm(res_diag - actual.diag()), 1e-4)
+            self.assertLess(torch.linalg.norm(res_diag - actual.diag()), 1e-4)
         # make sure that we error out if last_dim_is_batch=True
         with self.assertRaises(NotImplementedError):
             kernel(x1, x2, diag=True, last_dim_is_batch=True)
@@ -105,11 +105,12 @@ class TestLinearTruncatedFidelityKernel(BotorchTestCase, BaseKernelTestCase):
             matern_term = matern_ker(x1, x2).to_dense()
             actual = t * matern_term
             res = kernel(x1, x2).to_dense()
-            self.assertLess(torch.norm(res - actual), 1e-4)
+            self.assertLess(torch.linalg.norm(res - actual), 1e-4)
             # test diagonal mode
             res_diag = kernel(x1, x2, diag=True)
             self.assertLess(
-                torch.norm(res_diag - torch.diagonal(actual, dim1=-1, dim2=-2)), 1e-4
+                torch.linalg.norm(res_diag - torch.diagonal(actual, dim1=-1, dim2=-2)),
+                1e-4,
             )
         # make sure that we error out if last_dim_is_batch=True
         with self.assertRaises(NotImplementedError):
@@ -150,7 +151,7 @@ class TestLinearTruncatedFidelityKernel(BotorchTestCase, BaseKernelTestCase):
         kernel = LinearTruncatedFidelityKernel(fidelity_dims=[1, 2], dimension=3)
         kernel.initialize(power=1)
         actual_value = torch.tensor(1, dtype=torch.float).view_as(kernel.power)
-        self.assertLess(torch.norm(kernel.power - actual_value), 1e-5)
+        self.assertLess(torch.linalg.norm(kernel.power - actual_value), 1e-5)
 
     def test_initialize_power_batch(self):
         kernel = LinearTruncatedFidelityKernel(
@@ -159,7 +160,7 @@ class TestLinearTruncatedFidelityKernel(BotorchTestCase, BaseKernelTestCase):
         power_init = torch.tensor([1, 2], dtype=torch.float)
         kernel.initialize(power=power_init)
         actual_value = power_init.view_as(kernel.power)
-        self.assertLess(torch.norm(kernel.power - actual_value), 1e-5)
+        self.assertLess(torch.linalg.norm(kernel.power - actual_value), 1e-5)
 
     def test_raise_init_errors(self):
         with self.assertRaises(UnsupportedError):
@@ -180,7 +181,8 @@ class TestLinearTruncatedFidelityKernel(BotorchTestCase, BaseKernelTestCase):
         kernel_basic = LinearTruncatedFidelityKernel(fidelity_dims=[1, 2], dimension=4)
         covar_mat_actual = kernel_basic(x[:, [0, 2, 4, 6]]).evaluate_kernel().to_dense()
         self.assertLess(
-            torch.norm(covar_mat - covar_mat_actual) / covar_mat_actual.norm(), 1e-4
+            torch.linalg.norm(covar_mat - covar_mat_actual) / covar_mat_actual.norm(),
+            1e-4,
         )
 
     def test_active_dims_range(self):
@@ -193,7 +195,8 @@ class TestLinearTruncatedFidelityKernel(BotorchTestCase, BaseKernelTestCase):
         kernel_basic = LinearTruncatedFidelityKernel(fidelity_dims=[1, 2], dimension=6)
         covar_mat_actual = kernel_basic(x[:, active_dims]).evaluate_kernel().to_dense()
         self.assertLess(
-            torch.norm(covar_mat - covar_mat_actual) / covar_mat_actual.norm(), 1e-4
+            torch.linalg.norm(covar_mat - covar_mat_actual) / covar_mat_actual.norm(),
+            1e-4,
         )
 
     def test_error_on_fidelity_only(self):

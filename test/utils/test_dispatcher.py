@@ -23,6 +23,7 @@ def _helper_test_source(val):
 
 class TestDispatcher(BotorchTestCase):
     def setUp(self):
+        super().setUp()
         self.dispatcher = Dispatcher(name="test")
 
     def test_encoder(self):
@@ -63,8 +64,8 @@ class TestDispatcher(BotorchTestCase):
                 self.assertEqual(self.dispatcher[args], _pow)
 
                 retval = self.dispatcher(*args)
-                test_type = float if (type_a == float or type_b == float) else int
-                self.assertTrue(type(retval) == test_type)
+                test_type = float if (type_a is float or type_b is float) else int
+                self.assertIs(type(retval), test_type)
                 self.assertEqual(retval, test_type(8))
 
     def test_notImplemented(self):

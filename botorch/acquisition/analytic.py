@@ -24,7 +24,7 @@ import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions import UnsupportedError
-from botorch.models.gp_regression import FixedNoiseGP
+from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
 from botorch.utils.constants import get_constants_like
@@ -38,10 +38,10 @@ from botorch.utils.probability.utils import (
 )
 from botorch.utils.safe_math import log1mexp, logmeanexp
 from botorch.utils.transforms import convert_to_target_pre_hook, t_batch_mode_transform
+from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 from torch import Tensor
 from torch.nn.functional import pad
 
-_sqrt_2pi = math.sqrt(2 * math.pi)
 # the following two numbers are needed for _log_ei_helper
 _neg_inv_sqrt2 = -(2**-0.5)
 _log_sqrt_pi_div_2 = math.log(math.pi / 2) / 2
@@ -58,7 +58,6 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
         self,
         model: Model,
         posterior_transform: Optional[PosteriorTransform] = None,
-        **kwargs,
     ) -> None:
         r"""Base constructor for analytic acquisition functions.
 
@@ -69,10 +68,6 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
                 single-output posterior is required.
         """
         super().__init__(model=model)
-        posterior_transform = self._deprecate_acqf_objective(
-            posterior_transform=posterior_transform,
-            objective=kwargs.get("objective"),
-        )
         if posterior_transform is None:
             if model.num_outputs != 1:
                 raise UnsupportedError(
@@ -140,13 +135,14 @@ class LogProbabilityOfImprovement(AnalyticAcquisitionFunction):
         >>> log_pi = LogPI(test_X)
     """
 
+    _log: bool = True
+
     def __init__(
         self,
         model: Model,
         best_f: Union[float, Tensor],
         posterior_transform: Optional[PosteriorTransform] = None,
         maximize: bool = True,
-        **kwargs,
     ):
         r"""Single-outcome Probability of Improvement.
 
@@ -159,7 +155,7 @@ class LogProbabilityOfImprovement(AnalyticAcquisitionFunction):
                 single-output posterior is required.
             maximize: If True, consider the problem a maximization problem.
         """
-        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
+        super().__init__(model=model, posterior_transform=posterior_transform)
         self.register_buffer("best_f", torch.as_tensor(best_f))
         self.maximize = maximize
 
@@ -201,7 +197,6 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
         best_f: Union[float, Tensor],
         posterior_transform: Optional[PosteriorTransform] = None,
         maximize: bool = True,
-        **kwargs,
     ):
         r"""Single-outcome Probability of Improvement.
 
@@ -214,7 +209,7 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
                 single-output posterior is required.
             maximize: If True, consider the problem a maximization problem.
         """
-        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
+        super().__init__(model=model, posterior_transform=posterior_transform)
         self.register_buffer("best_f", torch.as_tensor(best_f))
         self.maximize = maximize
 
@@ -250,7 +245,6 @@ class qAnalyticProbabilityOfImprovement(AnalyticAcquisitionFunction):
         best_f: Union[float, Tensor],
         posterior_transform: Optional[PosteriorTransform] = None,
         maximize: bool = True,
-        **kwargs,
     ) -> None:
         """qPI using an analytic approximation.
 
@@ -263,7 +257,7 @@ class qAnalyticProbabilityOfImprovement(AnalyticAcquisitionFunction):
                 single-output posterior is required.
             maximize: If True, consider the problem a maximization problem.
         """
-        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
+        super().__init__(model=model, posterior_transform=posterior_transform)
         self.maximize = maximize
         if not torch.is_tensor(best_f):
             best_f = torch.tensor(best_f)
@@ -328,7 +322,6 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
         best_f: Union[float, Tensor],
         posterior_transform: Optional[PosteriorTransform] = None,
         maximize: bool = True,
-        **kwargs,
     ):
         r"""Single-outcome Expected Improvement (analytic).
 
@@ -341,7 +334,7 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
                 single-output posterior is required.
             maximize: If True, consider the problem a maximization problem.
         """
-        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
+        super().__init__(model=model, posterior_transform=posterior_transform)
         self.register_buffer("best_f", torch.as_tensor(best_f))
         self.maximize = maximize
 
@@ -372,6 +365,8 @@ class LogExpectedImprovement(AnalyticAcquisitionFunction):
     to avoid numerical issues in the computation of the acquisition value and its
     gradient in regions where improvement is predicted to be virtually impossible.
 
+    See [Ament2023logei]_ for details. Formally,
+
     `LogEI(x) = log(E(max(f(x) - best_f, 0))),`
 
     where the expectation is taken over the value of stochastic function `f` at `x`.
@@ -382,13 +377,14 @@ class LogExpectedImprovement(AnalyticAcquisitionFunction):
         >>> ei = LogEI(test_X)
     """
 
+    _log: bool = True
+
     def __init__(
         self,
         model: Model,
         best_f: Union[float, Tensor],
         posterior_transform: Optional[PosteriorTransform] = None,
         maximize: bool = True,
-        **kwargs,
     ):
         r"""Logarithm of single-outcome Expected Improvement (analytic).
 
@@ -401,7 +397,7 @@ class LogExpectedImprovement(AnalyticAcquisitionFunction):
                 single-output posterior is required.
             maximize: If True, consider the problem a maximization problem.
         """
-        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
+        super().__init__(model=model, posterior_transform=posterior_transform)
         self.register_buffer("best_f", torch.as_tensor(best_f))
         self.maximize = maximize
 
@@ -434,7 +430,10 @@ class LogConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
     multi-outcome, with the index of the objective and constraints passed to
     the constructor.
 
+    See [Ament2023logei]_ for details. Formally,
+
     `LogConstrainedEI(x) = log(EI(x)) + Sum_i log(P(y_i \in [lower_i, upper_i]))`,
+
     where `y_i ~ constraint_i(x)` and `lower_i`, `upper_i` are the lower and
     upper bounds for the i-th constraint, respectively.
 
@@ -446,6 +445,8 @@ class LogConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
         >>> LogCEI = LogConstrainedExpectedImprovement(model, 0.2, 1, constraints)
         >>> cei = LogCEI(test_X)
     """
+
+    _log: bool = True
 
     def __init__(
         self,
@@ -580,17 +581,23 @@ class LogNoisyExpectedImprovement(AnalyticAcquisitionFunction):
     `q=1`. Assumes that the posterior distribution of the model is Gaussian.
     The model must be single-outcome.
 
+    See [Ament2023logei]_ for details. Formally,
+
     `LogNEI(x) = log(E(max(y - max Y_base), 0))), (y, Y_base) ~ f((x, X_base))`,
+
     where `X_base` are previously observed points.
 
-    Note: This acquisition function currently relies on using a FixedNoiseGP (required
-    for noiseless fantasies).
+    Note: This acquisition function currently relies on using a SingleTaskGP
+    with known observation noise. In other words, `train_Yvar` must be passed
+    to the model. (required for noiseless fantasies).
 
     Example:
-        >>> model = FixedNoiseGP(train_X, train_Y, train_Yvar=train_Yvar)
+        >>> model = SingleTaskGP(train_X, train_Y, train_Yvar=train_Yvar)
         >>> LogNEI = LogNoisyExpectedImprovement(model, train_X)
         >>> nei = LogNEI(test_X)
     """
+
+    _log: bool = True
 
     def __init__(
         self,
@@ -599,7 +606,6 @@ class LogNoisyExpectedImprovement(AnalyticAcquisitionFunction):
         num_fantasies: int = 20,
         maximize: bool = True,
         posterior_transform: Optional[PosteriorTransform] = None,
-        **kwargs,
     ) -> None:
         r"""Single-outcome Noisy Log Expected Improvement (via fantasies).
 
@@ -612,10 +618,6 @@ class LogNoisyExpectedImprovement(AnalyticAcquisitionFunction):
                 complexity and performance).
             maximize: If True, consider the problem a maximization problem.
         """
-        if not isinstance(model, FixedNoiseGP):
-            raise UnsupportedError(
-                "Only FixedNoiseGPs are currently supported for fantasy LogNEI"
-            )
         # sample fantasies
         from botorch.sampling.normal import SobolQMCNormalSampler
 
@@ -632,9 +634,7 @@ class LogNoisyExpectedImprovement(AnalyticAcquisitionFunction):
         fantasy_model = _get_noiseless_fantasy_model(
             model=model, batch_X_observed=batch_X_observed, Y_fantasized=Y_fantasized
         )
-        super().__init__(
-            model=fantasy_model, posterior_transform=posterior_transform, **kwargs
-        )
+        super().__init__(model=fantasy_model, posterior_transform=posterior_transform)
         best_f, _ = Y_fantasized.max(dim=-1) if maximize else Y_fantasized.min(dim=-1)
         self.best_f, self.maximize = best_f, maximize
 
@@ -668,11 +668,12 @@ class NoisyExpectedImprovement(ExpectedImprovement):
     `NEI(x) = E(max(y - max Y_baseline), 0)), (y, Y_baseline) ~ f((x, X_baseline))`,
     where `X_baseline` are previously observed points.
 
-    Note: This acquisition function currently relies on using a FixedNoiseGP (required
-    for noiseless fantasies).
+    Note: This acquisition function currently relies on using a SingleTaskGP
+    with known observation noise. In other words, `train_Yvar` must be passed
+    to the model. (required for noiseless fantasies).
 
     Example:
-        >>> model = FixedNoiseGP(train_X, train_Y, train_Yvar=train_Yvar)
+        >>> model = SingleTaskGP(train_X, train_Y, train_Yvar=train_Yvar)
         >>> NEI = NoisyExpectedImprovement(model, train_X)
         >>> nei = NEI(test_X)
     """
@@ -695,10 +696,6 @@ class NoisyExpectedImprovement(ExpectedImprovement):
                 complexity and performance).
             maximize: If True, consider the problem a maximization problem.
         """
-        if not isinstance(model, FixedNoiseGP):
-            raise UnsupportedError(
-                "Only FixedNoiseGPs are currently supported for fantasy NEI"
-            )
         # sample fantasies
         from botorch.sampling.normal import SobolQMCNormalSampler
 
@@ -758,7 +755,6 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
         beta: Union[float, Tensor],
         posterior_transform: Optional[PosteriorTransform] = None,
         maximize: bool = True,
-        **kwargs,
     ) -> None:
         r"""Single-outcome Upper Confidence Bound.
 
@@ -772,7 +768,7 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
                 single-output posterior is required.
             maximize: If True, consider the problem a maximization problem.
         """
-        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
+        super().__init__(model=model, posterior_transform=posterior_transform)
         self.register_buffer("beta", torch.as_tensor(beta))
         self.maximize = maximize
 
@@ -852,7 +848,6 @@ class ScalarizedPosteriorMean(AnalyticAcquisitionFunction):
         model: Model,
         weights: Tensor,
         posterior_transform: Optional[PosteriorTransform] = None,
-        **kwargs,
     ) -> None:
         r"""Scalarized Posterior Mean.
 
@@ -864,7 +859,7 @@ class ScalarizedPosteriorMean(AnalyticAcquisitionFunction):
                 a PosteriorTransform that transforms the multi-output posterior into a
                 single-output posterior is required.
         """
-        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
+        super().__init__(model=model, posterior_transform=posterior_transform)
         self.register_buffer("weights", weights)
 
     @t_batch_mode_transform()
@@ -880,6 +875,73 @@ class ScalarizedPosteriorMean(AnalyticAcquisitionFunction):
             points `X`.
         """
         return self._mean_and_sigma(X, compute_sigma=False)[0] @ self.weights
+
+
+class PosteriorStandardDeviation(AnalyticAcquisitionFunction):
+    r"""Single-outcome Posterior Standard Deviation.
+
+    An acquisition function for pure exploration.
+    Only supports the case of q=1. Requires the model's posterior to have
+    `mean` and `variance` properties. The model must be either single-outcome
+    or combined with a `posterior_transform` to produce a single-output posterior.
+
+    Example:
+        >>> import torch
+        >>> from botorch.models.gp_regression import SingleTaskGP
+        >>> from botorch.models.transforms.input import Normalize
+        >>> from botorch.models.transforms.outcome import Standardize
+        >>>
+        >>> # Set up a model
+        >>> train_X = torch.rand(20, 2, dtype=torch.float64)
+        >>> train_Y = torch.sin(train_X).sum(dim=1, keepdim=True)
+        >>> model = SingleTaskGP(
+        ...     train_X, train_Y, outcome_transform=Standardize(m=1),
+        ...     input_transform=Normalize(d=2),
+        ... )
+        >>> # Now set up the acquisition function
+        >>> PSTD = PosteriorStandardDeviation(model)
+        >>> test_X = torch.zeros((1, 2), dtype=torch.float64)
+        >>> std = PSTD(test_X)
+        >>> std.item()
+        0.16341639895667773
+    """
+
+    def __init__(
+        self,
+        model: Model,
+        posterior_transform: Optional[PosteriorTransform] = None,
+        maximize: bool = True,
+    ) -> None:
+        r"""Single-outcome Posterior Mean.
+
+        Args:
+            model: A fitted single-outcome GP model (must be in batch mode if
+                candidate sets X will be)
+            posterior_transform: A PosteriorTransform. If using a multi-output model,
+                a PosteriorTransform that transforms the multi-output posterior into a
+                single-output posterior is required.
+            maximize: If True, consider the problem a maximization problem. Note
+                that if `maximize=False`, the posterior standard deviation is negated.
+                As a consequence,
+                `optimize_acqf(PosteriorStandardDeviation(gp, maximize=False))`
+                actually returns -1 * minimum of the posterior standard deviation.
+        """
+        super().__init__(model=model, posterior_transform=posterior_transform)
+        self.maximize = maximize
+
+    @t_batch_mode_transform(expected_q=1)
+    def forward(self, X: Tensor) -> Tensor:
+        r"""Evaluate the posterior standard deviation on the candidate set X.
+
+        Args:
+            X: A `(b1 x ... bk) x 1 x d`-dim batched tensor of `d`-dim design points.
+
+        Returns:
+            A `(b1 x ... bk)`-dim tensor of Posterior Mean values at the
+            given design points `X`.
+        """
+        _, std = self._mean_and_sigma(X)
+        return std if self.maximize else -std
 
 
 # --------------- Helper functions for analytic acquisition functions. ---------------
@@ -924,7 +986,7 @@ def _log_ei_helper(u: Tensor) -> Tensor:
     # To this end, a second branch is necessary, depending on whether or not u is
     # smaller than approximately the negative inverse square root of the machine
     # precision. Below this point, numerical issues in computing log(1 - exp(w)) occur
-    # as w approches zero from below, even though the relative contribution to log_ei
+    # as w approaches zero from below, even though the relative contribution to log_ei
     # vanishes in machine precision at that point.
     neg_inv_sqrt_eps = -1e6 if u.dtype == torch.float64 else -1e3
 
@@ -982,15 +1044,15 @@ def _log_abs_u_Phi_div_phi(u: Tensor) -> Tensor:
 
 
 def _get_noiseless_fantasy_model(
-    model: FixedNoiseGP, batch_X_observed: Tensor, Y_fantasized: Tensor
-) -> FixedNoiseGP:
+    model: SingleTaskGP, batch_X_observed: Tensor, Y_fantasized: Tensor
+) -> SingleTaskGP:
     r"""Construct a fantasy model from a fitted model and provided fantasies.
 
     The fantasy model uses the hyperparameters from the original fitted model and
     assumes the fantasies are noiseless.
 
     Args:
-        model: a fitted FixedNoiseGP
+        model: A fitted SingleTaskGP with known observation noise.
         batch_X_observed: A `b x n x d` tensor of inputs where `b` is the number of
             fantasies.
         Y_fantasized: A `b x n` tensor of fantasized targets where `b` is the number of
@@ -999,11 +1061,18 @@ def _get_noiseless_fantasy_model(
     Returns:
         The fantasy model.
     """
-    # initialize a copy of FixedNoiseGP on the original training inputs
-    # this makes FixedNoiseGP a non-batch GP, so that the same hyperparameters
+    if not isinstance(model, SingleTaskGP) or not isinstance(
+        model.likelihood, FixedNoiseGaussianLikelihood
+    ):
+        raise UnsupportedError(
+            "Only SingleTaskGP models with known observation noise "
+            "are currently supported for fantasy-based NEI & LogNEI."
+        )
+    # initialize a copy of SingleTaskGP on the original training inputs
+    # this makes SingleTaskGP a non-batch GP, so that the same hyperparameters
     # are used across all batches (by default, a GP with batched training data
     # uses independent hyperparameters for each batch).
-    fantasy_model = FixedNoiseGP(
+    fantasy_model = SingleTaskGP(
         train_X=model.train_inputs[0],
         train_Y=model.train_targets.unsqueeze(-1),
         train_Yvar=model.likelihood.noise_covar.noise.unsqueeze(-1),

@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
+import warnings
 
 import torch
 from botorch.acquisition.multi_objective.multi_output_risk_measures import (
@@ -14,12 +15,13 @@ from botorch.acquisition.multi_objective.objective import (
     FeasibilityWeightedMCMultiOutputObjective,
     IdentityMCMultiOutputObjective,
     MCMultiOutputObjective,
-    UnstandardizeAnalyticMultiOutputObjective,
     UnstandardizeMCMultiOutputObjective,
-    UnstandardizePosteriorTransform,
     WeightedMCMultiOutputObjective,
 )
-from botorch.acquisition.objective import IdentityMCObjective
+from botorch.acquisition.objective import (
+    IdentityMCObjective,
+    UnstandardizePosteriorTransform,
+)
 from botorch.exceptions.errors import BotorchError, BotorchTensorDimensionError
 from botorch.models.transforms.outcome import Standardize
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
@@ -93,7 +95,12 @@ class TestFeasibilityWeightedMCMultiOutputObjective(BotorchTestCase):
             self.assertTrue(feas_obj._verify_output_shape)
 
             # With an objective.
-            dummy_obj = MultiOutputExpectation(n_w=1, weights=[2.0])
+            preprocessing_function = WeightedMCMultiOutputObjective(
+                weights=torch.tensor([2.0])
+            )
+            dummy_obj = MultiOutputExpectation(
+                n_w=1, preprocessing_function=preprocessing_function
+            )
             dummy_obj._verify_output_shape = False  # for testing
             feas_obj = FeasibilityWeightedMCMultiOutputObjective(
                 model=mm,
@@ -136,6 +143,13 @@ class TestFeasibilityWeightedMCMultiOutputObjective(BotorchTestCase):
 
 class TestUnstandardizeMultiOutputObjective(BotorchTestCase):
     def test_unstandardize_mo_objective(self):
+        warnings.filterwarnings(
+            "ignore",
+            message=(
+                "UnstandardizeAnalyticMultiOutputObjective is deprecated. "
+                "Use UnstandardizePosteriorTransform instead."
+            ),
+        )
         Y_mean = torch.ones(2)
         Y_std = torch.ones(2)
         with self.assertRaises(BotorchTensorDimensionError):
@@ -144,7 +158,6 @@ class TestUnstandardizeMultiOutputObjective(BotorchTestCase):
             )
         for objective_class in (
             UnstandardizeMCMultiOutputObjective,
-            UnstandardizeAnalyticMultiOutputObjective,
             UnstandardizePosteriorTransform,
         ):
             with self.assertRaises(BotorchTensorDimensionError):
@@ -161,10 +174,7 @@ class TestUnstandardizeMultiOutputObjective(BotorchTestCase):
                 if objective_class == UnstandardizeMCMultiOutputObjective:
                     kwargs["outcomes"] = outcomes
                 objective = objective_class(Y_mean=Y_mean, Y_std=Y_std, **kwargs)
-                if (
-                    objective_class == UnstandardizeAnalyticMultiOutputObjective
-                    or objective_class == UnstandardizePosteriorTransform
-                ):
+                if objective_class == UnstandardizePosteriorTransform:
                     objective = objective_class(Y_mean=Y_mean, Y_std=Y_std)
                     if outcomes is None:
                         # passing outcomes is not currently supported
@@ -178,6 +188,7 @@ class TestUnstandardizeMultiOutputObjective(BotorchTestCase):
                         tf.means = Y_mean
                         tf.stdvs = Y_std
                         tf._stdvs_sq = Y_std.pow(2)
+                        tf._is_trained = torch.tensor(True)
                         tf.eval()
                         expected_posterior = tf.untransform_posterior(mock_posterior)
                         self.assertTrue(

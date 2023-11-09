@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 r"""
-A general implementation of multi-step look-ahead acquistion function with configurable
+A general implementation of multi-step look-ahead acquisition function with configurable
 value functions. See [Jiang2020multistep]_.
 
 .. [Jiang2020multistep]
@@ -115,19 +115,12 @@ class qMultiStepLookahead(MCAcquisitionFunction, OneShotAcquisitionFunction):
                 will be applied on fantasy batch dimensions as well, meaning that base
                 samples are the same in all subtrees starting from the same level.
         """
-        if not isinstance(objective, MCAcquisitionObjective):
-            # TODO: clean this up after removing AcquisitionObjective.
-            if posterior_transform is None:
-                posterior_transform = self._deprecate_acqf_objective(
-                    posterior_transform=posterior_transform,
-                    objective=objective,
-                )
-                objective = None
-            else:
-                raise RuntimeError(
-                    "Got both a non-MC objective (DEPRECATED) and a posterior "
-                    "transform. Use only a posterior transform instead."
-                )
+        if objective is not None and not isinstance(objective, MCAcquisitionObjective):
+            raise UnsupportedError(
+                "`qMultiStepLookahead` got a non-MC `objective`. This is not supported."
+                " Use `posterior_transform` and `objective=None` instead."
+            )
+
         super(MCAcquisitionFunction, self).__init__(model=model)
         self.batch_sizes = batch_sizes
         if not ((num_fantasies is None) ^ (samplers is None)):
@@ -156,7 +149,6 @@ class qMultiStepLookahead(MCAcquisitionFunction, OneShotAcquisitionFunction):
             batch_sizes=batch_sizes,
             valfunc_cls=valfunc_cls,
             objective=objective,
-            posterior_transform=posterior_transform,
             inner_mc_samples=inner_mc_samples,
         )
         if valfunc_argfacs is None:
@@ -222,13 +214,13 @@ class qMultiStepLookahead(MCAcquisitionFunction, OneShotAcquisitionFunction):
             s.batch_range_override = (tbatch_dim_start, -2)
 
     def get_augmented_q_batch_size(self, q: int) -> int:
-        r"""Get augmented q batch size for one-shot optimzation.
+        r"""Get augmented q batch size for one-shot optimization.
 
         Args:
             q: The number of candidates to consider jointly.
 
         Returns:
-            The augmented size for one-shot optimzation (including variables
+            The augmented size for one-shot optimization (including variables
             parameterizing the fantasy solutions): `q_0 + f_1 q_1 + f_2 f_1 q_2 + ...`
         """
         return q + self._num_auxiliary
@@ -330,7 +322,7 @@ def _step(
     valfunc_argfacs: List[Optional[TAcqfArgConstructor]],
     inner_samplers: List[Optional[MCSampler]],
     objective: MCAcquisitionObjective,
-    posterior_transform: PosteriorTransform,
+    posterior_transform: Optional[PosteriorTransform],
     running_val: Optional[Tensor] = None,
     sample_weights: Optional[Tensor] = None,
     step_index: int = 0,
@@ -407,7 +399,7 @@ def _step(
     # construct fantasy model (with batch shape f_{j+1} x ... x f_1 x batch_shape)
     prop_grads = step_index > 0  # need to propagate gradients for steps > 0
     fantasy_model = model.fantasize(
-        X=X, sampler=samplers[0], observation_noise=True, propagate_grads=prop_grads
+        X=X, sampler=samplers[0], propagate_grads=prop_grads
     )
 
     # augment sample weights appropriately
@@ -435,7 +427,7 @@ def _compute_stage_value(
     valfunc_cls: Optional[Type[AcquisitionFunction]],
     X: Tensor,
     objective: MCAcquisitionObjective,
-    posterior_transform: PosteriorTransform,
+    posterior_transform: Optional[PosteriorTransform],
     inner_sampler: Optional[MCSampler] = None,
     arg_fac: Optional[TAcqfArgConstructor] = None,
 ) -> Optional[Tensor]:
@@ -512,7 +504,6 @@ def _construct_inner_samplers(
     valfunc_cls: List[Optional[Type[AcquisitionFunction]]],
     inner_mc_samples: List[Optional[int]],
     objective: Optional[MCAcquisitionObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
 ) -> List[Optional[MCSampler]]:
     r"""Check validity of inputs and construct inner samplers.
 
@@ -527,11 +518,10 @@ def _construct_inner_samplers(
             respective stage.
         inner_mc_samples: A list `[n_0, ..., n_k]` containing the number of MC
             samples to be used for evaluating the stage value function. Ignored if
-            the objective is `None` or a `ScalarizedObjective`.
+            the objective is `None`.
         objective: The objective under which the output is evaluated. If `None`, use
             the model output (requires a single-output model or a posterior transform).
             Otherwise the objective is MC-evaluated (using `inner_sampler`).
-        posterior_transform: A PosteriorTransform (optional).
 
     Returns:
         A list with `k + 1` elements that are either `MCSampler`s or `None.
@@ -559,7 +549,7 @@ def _construct_inner_samplers(
                 )
             if q is not None and mcs is not None:
                 warnings.warn(
-                    "inner_mc_samples is ignored for analytic acquistion functions",
+                    "inner_mc_samples is ignored for analytic acquisition functions",
                     BotorchWarning,
                 )
             inner_samplers.append(None)
@@ -595,7 +585,6 @@ def _get_induced_fantasy_model(
         fantasy_model = model.fantasize(
             X=Xs[0],
             sampler=samplers[0],
-            observation_noise=True,
         )
 
         return _get_induced_fantasy_model(

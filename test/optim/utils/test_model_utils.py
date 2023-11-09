@@ -14,9 +14,8 @@ from unittest.mock import MagicMock, patch
 
 import torch
 from botorch import settings
-from botorch.models import ModelListGP, SingleTaskGP
+from botorch.models import SingleTaskGP
 from botorch.optim.utils import (
-    _get_extra_mll_args,
     get_data_loader,
     get_name_filter,
     get_parameters,
@@ -30,8 +29,6 @@ from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
-from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
-from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 from gpytorch.priors import UniformPrior
 from gpytorch.priors.prior import Prior
 from gpytorch.priors.torch_priors import GammaPrior
@@ -49,38 +46,6 @@ class DummyPriorRuntimeError(Prior):
 
     def rsample(self, sample_shape=torch.Size()):  # noqa: B008
         raise RuntimeError("Another runtime error.")
-
-
-class TestGetExtraMllArgs(BotorchTestCase):
-    def test_get_extra_mll_args(self):
-        train_X = torch.rand(3, 5)
-        train_Y = torch.rand(3, 1)
-        model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
-
-        # test ExactMarginalLogLikelihood
-        exact_mll = ExactMarginalLogLikelihood(model.likelihood, model)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=DeprecationWarning)
-            exact_extra_args = _get_extra_mll_args(mll=exact_mll)
-        self.assertEqual(len(exact_extra_args), 1)
-        self.assertTrue(torch.equal(exact_extra_args[0], train_X))
-
-        # test SumMarginalLogLikelihood
-        model2 = ModelListGP(model)
-        sum_mll = SumMarginalLogLikelihood(model2.likelihood, model2)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=DeprecationWarning)
-            sum_mll_extra_args = _get_extra_mll_args(mll=sum_mll)
-        self.assertEqual(len(sum_mll_extra_args), 1)
-        self.assertEqual(len(sum_mll_extra_args[0]), 1)
-        self.assertTrue(torch.equal(sum_mll_extra_args[0][0], train_X))
-
-        # test unsupported MarginalLogLikelihood type
-        unsupported_mll = MarginalLogLikelihood(model.likelihood, model)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=DeprecationWarning)
-            unsupported_mll_extra_args = _get_extra_mll_args(mll=unsupported_mll)
-        self.assertEqual(unsupported_mll_extra_args, [])
 
 
 class TestGetDataLoader(BotorchTestCase):
@@ -116,6 +81,7 @@ class TestGetDataLoader(BotorchTestCase):
 
 class TestGetParameters(BotorchTestCase):
     def setUp(self):
+        super().setUp()
         self.module = GaussianLikelihood(
             noise_constraint=GreaterThan(1e-6, initial_value=0.123),
         )
@@ -123,16 +89,34 @@ class TestGetParameters(BotorchTestCase):
     def test_get_parameters(self):
         self.assertEqual(0, len(get_parameters(self.module, requires_grad=False)))
 
-        params = get_parameters(self.module)
-        self.assertTrue(1 == len(params))
-        self.assertEqual(next(iter(params)), "noise_covar.raw_noise")
-        self.assertTrue(
-            self.module.noise_covar.raw_noise.equal(next(iter(params.values())))
-        )
+        # No name filter
+        for name_filter in [None, lambda x: "n" in x]:
+            with self.subTest("none filtered", name_filter=name_filter):
+                params = get_parameters(self.module, name_filter=name_filter)
+                self.assertEqual(1, len(params))
+                self.assertEqual(next(iter(params)), "noise_covar.raw_noise")
+                self.assertTrue(
+                    self.module.noise_covar.raw_noise.equal(next(iter(params.values())))
+                )
+
+        with self.subTest("all params filtered"):
+            params = get_parameters(self.module, name_filter=lambda x: "z" in x)
+            self.assertEqual(params, {})
+
+            params = get_parameters(self.module, name_filter=lambda x: "n" in x)
+            self.assertEqual(1, len(params))
+            self.assertEqual(next(iter(params)), "noise_covar.raw_noise")
+
+            # requires_grad case
+            params = get_parameters(
+                self.module, requires_grad=False, name_filter=lambda x: "n" in x
+            )
+            self.assertEqual(params, {})
 
     def test_get_parameters_and_bounds(self):
         param_dict, bounds_dict = get_parameters_and_bounds(self.module)
-        self.assertTrue(1 == len(param_dict) == len(bounds_dict))
+        self.assertEqual(1, len(param_dict))
+        self.assertEqual(1, len(bounds_dict))
 
         name, bounds = next(iter(bounds_dict.items()))
         self.assertEqual(name, "noise_covar.raw_noise")
@@ -144,20 +128,30 @@ class TestGetParameters(BotorchTestCase):
         )
         param_dict2, bounds_dict2 = get_parameters_and_bounds(mock_module)
         self.assertEqual(param_dict, param_dict2)
-        self.assertTrue(len(bounds_dict2) == 0)
+        self.assertEqual(len(bounds_dict2), 0)
 
 
 class TestGetNameFilter(BotorchTestCase):
-    def test_get_name_filter(self):
+    def test__get_name_filter__raises_on_invalid_pattern_type(self) -> None:
         with self.assertRaisesRegex(TypeError, "Expected `patterns` to contain"):
             get_name_filter(("foo", re.compile("bar"), 1))
 
-        names = ascii_lowercase
-        name_filter = get_name_filter(iter(names[1::2]))
-        self.assertEqual(names[::2], "".join(filter(name_filter, names)))
+    def test__get_name_filter(self) -> None:
+        items = tuple(zip(ascii_lowercase, range(len(ascii_lowercase))))
+        aceg_etc = ascii_lowercase[::2]
+        bdfh_etc = ascii_lowercase[1::2]
 
-        items = tuple(zip(names, range(len(names))))
-        self.assertEqual(items[::2], tuple(filter(name_filter, items)))
+        test_cases = [
+            ("names (str check)", bdfh_etc),
+            ("patterns (regex check)", [re.compile(f"[{bdfh_etc}]")]),
+        ]
+        for arg_type, patterns in test_cases:
+            with self.subTest(arg_type, patterns=patterns):
+                name_filter = get_name_filter(patterns)
+                self.assertEqual(
+                    aceg_etc, "".join(filter(name_filter, ascii_lowercase))
+                )
+                self.assertEqual(items[::2], tuple(filter(name_filter, items)))
 
 
 class TestSampleAllPriors(BotorchTestCase):

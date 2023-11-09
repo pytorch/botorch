@@ -7,7 +7,8 @@
 from itertools import product
 
 import torch
-from botorch.acquisition.joint_entropy_search import qLowerBoundJointEntropySearch
+from botorch.acquisition.joint_entropy_search import qJointEntropySearch
+from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
@@ -48,15 +49,25 @@ def get_model(train_X, train_Y, use_model_list, standardize_model):
     return model
 
 
-class TestQLowerBoundJointEntropySearch(BotorchTestCase):
-    def test_lower_bound_joint_entropy_search(self):
+class TestQJointEntropySearch(BotorchTestCase):
+    def test_joint_entropy_search(self):
         torch.manual_seed(1)
         tkwargs = {"device": self.device}
-        estimation_types = ("0", "LB", "LB2", "MC")
+        estimation_types = ("LB", "MC")
+
         num_objectives = 1
-        for (dtype, estimation_type, use_model_list, standardize_model,) in product(
+        for (
+            dtype,
+            estimation_type,
+            use_model_list,
+            standardize_model,
+            maximize,
+            condition_noiseless,
+        ) in product(
             (torch.float, torch.double),
             estimation_types,
+            (False, True),
+            (False, True),
             (False, True),
             (False, True),
         ):
@@ -76,13 +87,16 @@ class TestQLowerBoundJointEntropySearch(BotorchTestCase):
             X_pending_list = [None, torch.rand(2, input_dim, **tkwargs)]
             for i in range(len(X_pending_list)):
                 X_pending = X_pending_list[i]
-                acq = qLowerBoundJointEntropySearch(
+
+                acq = qJointEntropySearch(
                     model=model,
                     optimal_inputs=optimal_inputs,
                     optimal_outputs=optimal_outputs,
                     estimation_type=estimation_type,
                     num_samples=64,
                     X_pending=X_pending,
+                    condition_noiseless=condition_noiseless,
+                    maximize=maximize,
                 )
                 self.assertIsInstance(acq.sampler, SobolQMCNormalSampler)
 
@@ -97,3 +111,27 @@ class TestQLowerBoundJointEntropySearch(BotorchTestCase):
                     acq_X = acq(test_Xs[j])
                     # assess shape
                     self.assertTrue(acq_X.shape == test_Xs[j].shape[:-2])
+
+        with self.assertRaises(ValueError):
+            acq = qJointEntropySearch(
+                model=model,
+                optimal_inputs=optimal_inputs,
+                optimal_outputs=optimal_outputs,
+                estimation_type="NO_EST",
+                num_samples=64,
+                X_pending=X_pending,
+                condition_noiseless=condition_noiseless,
+                maximize=maximize,
+            )
+            acq_X = acq(test_Xs[j])
+
+        # Support with fully bayesian models is not yet implemented. Thus, we
+        # throw an error for now.
+        fully_bayesian_model = SaasFullyBayesianSingleTaskGP(train_X, train_Y)
+        with self.assertRaises(NotImplementedError):
+            acq = qJointEntropySearch(
+                model=fully_bayesian_model,
+                optimal_inputs=optimal_inputs,
+                optimal_outputs=optimal_outputs,
+                estimation_type="LB",
+            )

@@ -114,7 +114,9 @@ class qMultiObjectiveMaxValueEntropy(
         self.model = batched_multi_output_to_single_output(
             batch_mo_model=batched_mo_model
         )
-        self.fantasies_sampler = SobolQMCNormalSampler(num_fantasies)
+        self.fantasies_sampler = SobolQMCNormalSampler(
+            sample_shape=torch.Size([num_fantasies])
+        )
         self.num_fantasies = num_fantasies
         # weight is used in _compute_information_gain
         self.maximize = True
@@ -144,7 +146,8 @@ class qMultiObjectiveMaxValueEntropy(
         if X_pending is not None:
             # fantasize the model
             fantasy_model = self._init_model.fantasize(
-                X=X_pending, sampler=self.fantasies_sampler, observation_noise=True
+                X=X_pending,
+                sampler=self.fantasies_sampler,
             )
             self.mo_model = fantasy_model
             # convert model to batched single outcome model.

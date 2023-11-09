@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import dataclasses
 
-import time
 import warnings
 
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
@@ -97,33 +96,6 @@ class OptimizeAcqfInputs:
                 "bounds should be a `2 x d` tensor, current shape: "
                 f"{list(self.bounds.shape)}."
             )
-        # validate that linear constraints across the q-dim and
-        # self.sequential are not present together
-        if self.inequality_constraints is not None and self.sequential is True:
-            for constraint in self.inequality_constraints:
-                if len(constraint[0].shape) > 1:
-                    raise UnsupportedError(
-                        "Linear inequality constraints across the q-dimension are not "
-                        "supported for sequential optimization."
-                    )
-        if self.equality_constraints is not None and self.sequential is True:
-            for constraint in self.equality_constraints:
-                if len(constraint[0].shape) > 1:
-                    raise UnsupportedError(
-                        "Linear equality constraints across the q-dimension are not "
-                        "supported for sequential optimization."
-                    )
-
-        # TODO: Validate constraints if provided:
-        # https://github.com/pytorch/botorch/pull/1231
-        if self.batch_initial_conditions is not None and self.sequential:
-            raise UnsupportedError(
-                "`batch_initial_conditions` is not supported for sequential "
-                "optimization. Either avoid specifying "
-                "`batch_initial_conditions` to use the custom initializer or "
-                "use the `ic_generator` kwarg to generate initial conditions "
-                "for the case of nonlinear inequality constraints."
-            )
 
         d = self.bounds.shape[1]
         if self.batch_initial_conditions is not None:
@@ -150,17 +122,6 @@ class OptimizeAcqfInputs:
                 raise ValueError(
                     "Must specify `raw_samples` when "
                     "`batch_initial_conditions` is None`."
-                )
-
-        if self.sequential and self.q > 1:
-            if not self.return_best_only:
-                raise NotImplementedError(
-                    "`return_best_only=False` only supported for joint optimization."
-                )
-            if isinstance(self.acq_function, OneShotAcquisitionFunction):
-                raise NotImplementedError(
-                    "sequential optimization currently not supported for one-shot "
-                    "acquisition functions. Must have `sequential=False`."
                 )
 
     def get_ic_generator(self) -> TGenInitialConditions:
@@ -211,17 +172,63 @@ def _optimize_acqf_all_features_fixed(
     return X, acq_value
 
 
+def _validate_sequential_inputs(opt_inputs: OptimizeAcqfInputs) -> None:
+    # validate that linear constraints across the q-dim and
+    # self.sequential are not present together
+    if opt_inputs.inequality_constraints is not None:
+        for constraint in opt_inputs.inequality_constraints:
+            if len(constraint[0].shape) > 1:
+                raise UnsupportedError(
+                    "Linear inequality constraints across the q-dimension are not "
+                    "supported for sequential optimization."
+                )
+    if opt_inputs.equality_constraints is not None:
+        for constraint in opt_inputs.equality_constraints:
+            if len(constraint[0].shape) > 1:
+                raise UnsupportedError(
+                    "Linear equality constraints across the q-dimension are not "
+                    "supported for sequential optimization."
+                )
+
+    # TODO: Validate constraints if provided:
+    # https://github.com/pytorch/botorch/pull/1231
+    if opt_inputs.batch_initial_conditions is not None:
+        raise UnsupportedError(
+            "`batch_initial_conditions` is not supported for sequential "
+            "optimization. Either avoid specifying "
+            "`batch_initial_conditions` to use the custom initializer or "
+            "use the `ic_generator` kwarg to generate initial conditions "
+            "for the case of nonlinear inequality constraints."
+        )
+
+    if not opt_inputs.return_best_only:
+        raise NotImplementedError(
+            "`return_best_only=False` only supported for joint optimization."
+        )
+    if isinstance(opt_inputs.acq_function, OneShotAcquisitionFunction):
+        raise NotImplementedError(
+            "sequential optimization currently not supported for one-shot "
+            "acquisition functions. Must have `sequential=False`."
+        )
+
+
 def _optimize_acqf_sequential_q(
-    opt_inputs: OptimizeAcqfInputs, timeout_sec: Optional[float], start_time: float
+    opt_inputs: OptimizeAcqfInputs,
 ) -> Tuple[Tensor, Tensor]:
     """
     Helper function for `optimize_acqf` when sequential=True and q > 1.
-    """
-    if timeout_sec is not None:
-        # When using sequential optimization, we allocate the total timeout
-        # evenly across the individual acquisition optimizations.
-        timeout_sec = (timeout_sec - start_time) / opt_inputs.q
 
+    For each of `q` times, generate a single candidate greedily, then add it to
+    the list of pending points.
+    """
+    _validate_sequential_inputs(opt_inputs)
+    # When using sequential optimization, we allocate the total timeout
+    # evenly across the individual acquisition optimizations.
+    timeout_sec = (
+        opt_inputs.timeout_sec / opt_inputs.q
+        if opt_inputs.timeout_sec is not None
+        else None
+    )
     candidate_list, acq_value_list = [], []
     base_X_pending = opt_inputs.acq_function.X_pending
 
@@ -235,9 +242,7 @@ def _optimize_acqf_sequential_q(
     )
     for i in range(opt_inputs.q):
 
-        candidate, acq_value = _optimize_acqf_batch(
-            new_inputs, start_time=start_time, timeout_sec=timeout_sec
-        )
+        candidate, acq_value = _optimize_acqf_batch(new_inputs)
 
         candidate_list.append(candidate)
         acq_value_list.append(acq_value)
@@ -252,9 +257,7 @@ def _optimize_acqf_sequential_q(
     return candidates, torch.stack(acq_value_list)
 
 
-def _optimize_acqf_batch(
-    opt_inputs: OptimizeAcqfInputs, start_time: float, timeout_sec: Optional[float]
-) -> Tuple[Tensor, Tensor]:
+def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> Tuple[Tensor, Tensor]:
     options = opt_inputs.options or {}
 
     initial_conditions_provided = opt_inputs.batch_initial_conditions is not None
@@ -282,21 +285,17 @@ def _optimize_acqf_batch(
         if not opt_inputs.nonlinear_inequality_constraints
         else 1,
     )
-    has_parameter_constraints = (
-        opt_inputs.inequality_constraints is not None
-        or opt_inputs.equality_constraints is not None
-        or opt_inputs.nonlinear_inequality_constraints is not None
-    )
 
-    def _optimize_batch_candidates(
-        timeout_sec: Optional[float],
-    ) -> Tuple[Tensor, Tensor, List[Warning]]:
+    def _optimize_batch_candidates() -> Tuple[Tensor, Tensor, List[Warning]]:
         batch_candidates_list: List[Tensor] = []
         batch_acq_values_list: List[Tensor] = []
         batched_ics = batch_initial_conditions.split(batch_limit)
         opt_warnings = []
-        if timeout_sec is not None:
-            timeout_sec = (timeout_sec - start_time) / len(batched_ics)
+        timeout_sec = (
+            opt_inputs.timeout_sec / len(batched_ics)
+            if opt_inputs.timeout_sec is not None
+            else None
+        )
 
         bounds = opt_inputs.bounds
         gen_kwargs: Dict[str, Any] = {
@@ -307,19 +306,16 @@ def _optimize_acqf_batch(
             "timeout_sec": timeout_sec,
         }
 
-        if has_parameter_constraints:
-            # only add parameter constraints to gen_kwargs if they are specified
-            # to avoid unnecessary warnings in _filter_kwargs
-            gen_kwargs.update(
-                {
-                    "inequality_constraints": opt_inputs.inequality_constraints,
-                    "equality_constraints": opt_inputs.equality_constraints,
-                    # the line is too long
-                    "nonlinear_inequality_constraints": (
-                        opt_inputs.nonlinear_inequality_constraints
-                    ),
-                }
-            )
+        # only add parameter constraints to gen_kwargs if they are specified
+        # to avoid unnecessary warnings in _filter_kwargs
+        for constraint_name in [
+            "inequality_constraints",
+            "equality_constraints",
+            "nonlinear_inequality_constraints",
+        ]:
+            if (constraint := getattr(opt_inputs, constraint_name)) is not None:
+                gen_kwargs[constraint_name] = constraint
+
         filtered_gen_kwargs = _filter_kwargs(opt_inputs.gen_candidates, **gen_kwargs)
 
         for i, batched_ics_ in enumerate(batched_ics):
@@ -345,7 +341,7 @@ def _optimize_acqf_batch(
             batch_acq_values = torch.cat(batch_acq_values_list).flatten()
         return batch_candidates, batch_acq_values, opt_warnings
 
-    batch_candidates, batch_acq_values, ws = _optimize_batch_candidates(timeout_sec)
+    batch_candidates, batch_acq_values, ws = _optimize_batch_candidates()
 
     optimization_warning_raised = any(
         (issubclass(w.category, OptimizationWarning) for w in ws)
@@ -379,9 +375,7 @@ def _optimize_acqf_batch(
                 **opt_inputs.ic_gen_kwargs,
             )
 
-            batch_candidates, batch_acq_values, ws = _optimize_batch_candidates(
-                timeout_sec
-            )
+            batch_candidates, batch_acq_values, ws = _optimize_batch_candidates()
 
             optimization_warning_raised = any(
                 (issubclass(w.category, OptimizationWarning) for w in ws)
@@ -395,6 +389,12 @@ def _optimize_acqf_batch(
 
     if opt_inputs.post_processing_func is not None:
         batch_candidates = opt_inputs.post_processing_func(batch_candidates)
+        with torch.no_grad():
+            acq_values_list = [
+                opt_inputs.acq_function(cand)
+                for cand in batch_candidates.split(batch_limit, dim=0)
+            ]
+            batch_acq_values = torch.cat(acq_values_list, dim=0)
 
     if opt_inputs.return_best_only:
         best = torch.argmax(batch_acq_values.view(-1), dim=0)
@@ -447,10 +447,19 @@ def optimize_acqf(
         options: Options for candidate generation.
         inequality_constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
-            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`. `indices` and
+            `coefficients` should be torch tensors. See the docstring of
+            `make_scipy_linear_constraints` for an example. When q=1, or when
+            applying the same constraint to each candidate in the batch,
+            `indices` should be a 1-d tensor. For inter-point constraints,
+            `indices` must be a 2-d Tensor, where in each row `indices[i] =
+            (k_i, l_i)` the first index `k_i` corresponds to the `k_i`-th
+            element of the `q`-batch and the second index `l_i` corresponds to
+            the `l_i`-th feature of that element.
         equality_constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an equality constraint of the form
-            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
+            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`. See the docstring of
+            `make_scipy_linear_constraints` for an example.
         nonlinear_inequality_constraints: A list of callables with that represent
             non-linear inequality constraints of the form `callable(x) >= 0`. Each
             callable is expected to take a `(num_restarts) x q x d`-dim tensor as an
@@ -555,21 +564,12 @@ def _optimize_acqf(opt_inputs: OptimizeAcqfInputs) -> Tuple[Tensor, Tensor]:
             acq_function=opt_inputs.acq_function,
         )
 
-    start_time: float = time.monotonic()
-    timeout_sec = opt_inputs.timeout_sec
-
     # Perform sequential optimization via successive conditioning on pending points
     if opt_inputs.sequential and opt_inputs.q > 1:
-        return _optimize_acqf_sequential_q(
-            opt_inputs=opt_inputs,
-            timeout_sec=timeout_sec,
-            start_time=start_time,
-        )
+        return _optimize_acqf_sequential_q(opt_inputs=opt_inputs)
 
     # Batch optimization (including the case q=1)
-    return _optimize_acqf_batch(
-        opt_inputs=opt_inputs, start_time=start_time, timeout_sec=timeout_sec
-    )
+    return _optimize_acqf_batch(opt_inputs=opt_inputs)
 
 
 def optimize_acqf_cyclic(

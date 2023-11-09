@@ -10,10 +10,12 @@ import torch
 from botorch.utils.probability import ndtr, utils
 from botorch.utils.probability.utils import (
     log_erfc,
+    log_erfcx,
     log_ndtr,
     log_phi,
     log_prob_normal_in,
     phi,
+    standard_normal_log_hazard,
 )
 from botorch.utils.testing import BotorchTestCase
 from numpy.polynomial.legendre import leggauss as numpy_leggauss
@@ -151,7 +153,9 @@ class TestProbabilityUtils(BotorchTestCase):
         with self.assertRaisesRegex(ValueError, "at most 1-dimensional"):
             utils.swap_along_dim_(values.view(-1), i=i_lidx, j=j, dim=0)
 
-    def test_gaussian_probabilities(self):
+    def test_gaussian_probabilities(self) -> None:
+        # test passes for each possible seed
+        torch.manual_seed(torch.randint(high=1000, size=(1,)))
         # testing Gaussian probability functions
         for dtype in (torch.float, torch.double):
             rtol = 1e-12 if dtype == torch.double else 1e-6
@@ -159,57 +163,56 @@ class TestProbabilityUtils(BotorchTestCase):
             n = 16
             x = 3 * torch.randn(n, device=self.device, dtype=dtype)
             # first, test consistency between regular and log versions
-            self.assertTrue(
-                torch.allclose(phi(x), log_phi(x).exp(), atol=atol, rtol=rtol)
-            )
-            self.assertTrue(
-                torch.allclose(ndtr(x), log_ndtr(x).exp(), atol=atol, rtol=rtol)
-            )
+            self.assertAllClose(phi(x), log_phi(x).exp(), atol=atol, rtol=rtol)
+            self.assertAllClose(ndtr(x), log_ndtr(x).exp(), atol=atol, rtol=rtol)
 
-            # test correctness of log_erfc(x) against log(erfc(x)) for positive and
-            # negative x
-            n = 16
-            x = torch.rand(n, dtype=dtype, device=self.device)
-            x = torch.cat((-x, x))
-            x.requires_grad = True
-            log_erfc_x = log_erfc(x)
-            special_log_erfc_x = torch.special.erfc(x).log()
-            self.assertTrue(
-                torch.allclose(log_erfc_x, special_log_erfc_x, atol=atol, rtol=rtol)
-            )
-            # testing backward passes
-            log_erfc_x.sum().backward()
-            x_grad = x.grad
-            x.grad[:] = 0
-            special_log_erfc_x.sum().backward()
-            special_x_grad = x.grad
-            self.assertTrue(
-                torch.allclose(x_grad, special_x_grad, atol=atol, rtol=rtol)
-            )
+            # test correctness of log_erfc and log_erfcx
+            for special_f, custom_log_f in zip(
+                (torch.special.erfc, torch.special.erfcx), (log_erfc, log_erfcx)
+            ):
+                with self.subTest(custom_log_f.__name__):
+                    # first, testing for moderate values
+                    n = 16
+                    x = torch.rand(n, dtype=dtype, device=self.device)
+                    x = torch.cat((-x, x))
+                    x.requires_grad = True
+                    custom_log_fx = custom_log_f(x)
+                    special_log_fx = special_f(x).log()
+                    self.assertAllClose(
+                        custom_log_fx, special_log_fx, atol=atol, rtol=rtol
+                    )
+                    # testing backward passes
+                    custom_log_fx.sum().backward()
+                    x_grad = x.grad
+                    x.grad[:] = 0
+                    special_log_fx.sum().backward()
+                    special_x_grad = x.grad
+                    self.assertAllClose(x_grad, special_x_grad, atol=atol, rtol=rtol)
 
-            # testing robustness of log_erfc for large inputs
-            # large positive numbers are difficult for a naive implementation
-            x = torch.tensor(
-                [1e100 if dtype == torch.float64 else 1e10],
-                dtype=dtype,
-                device=self.device,
-            )
-            x = torch.cat((-x, x))  # looking at both tails
-            x.requires_grad = True
-            log_erfc_x = log_erfc(x)
-            self.assertTrue(
-                torch.allclose(
-                    log_erfc_x.exp(), torch.special.erfc(x), atol=atol, rtol=rtol
-                )
-            )
-            self.assertFalse(log_erfc_x.isnan().any())
-            self.assertFalse(log_erfc_x.isinf().any())
-            # we can't just take the log of erfc because it will be -inf in the tail
-            self.assertTrue(torch.special.erfc(x).log().isinf().any())
-            # testing that gradients are usable floats
-            log_erfc_x.sum().backward()
-            self.assertFalse(x.grad.isnan().any())
-            self.assertFalse(x.grad.isinf().any())
+                    # testing robustness of log_erfc for large inputs
+                    # large positive numbers are difficult for a naive implementation
+                    x = torch.tensor(
+                        [1e100 if dtype == torch.float64 else 1e10],
+                        dtype=dtype,
+                        device=self.device,
+                    )
+                    x = torch.cat((-x, x))  # looking at both tails
+                    x.requires_grad = True
+                    custom_log_fx = custom_log_f(x)
+                    self.assertAllClose(
+                        custom_log_fx.exp(),
+                        special_f(x),
+                        atol=atol,
+                        rtol=rtol,
+                    )
+                    self.assertFalse(custom_log_fx.isnan().any())
+                    self.assertFalse(custom_log_fx.isinf().any())
+                    # we can't just take the log of erfc because the tail will be -inf
+                    self.assertTrue(special_f(x).log().isinf().any())
+                    # testing that gradients are usable floats
+                    custom_log_fx.sum().backward()
+                    self.assertFalse(x.grad.isnan().any())
+                    self.assertFalse(x.grad.isinf().any())
 
             # test limit behavior of log_ndtr
             digits = 100 if dtype == torch.float64 else 20
@@ -286,14 +289,35 @@ class TestProbabilityUtils(BotorchTestCase):
             self.assertTrue((a.grad.diff() < 0).all())
 
             # testing error raising for invalid inputs
-            with self.assertRaises(ValueError):
-                a = torch.randn(3, 4, dtype=dtype, device=self.device)
-                b = torch.randn(3, 4, dtype=dtype, device=self.device)
-                a[2, 3] = b[2, 3]
+            a = torch.randn(3, 4, dtype=dtype, device=self.device)
+            b = torch.randn(3, 4, dtype=dtype, device=self.device)
+            a[2, 3] = b[2, 3]
+            with self.assertRaisesRegex(
+                ValueError,
+                "Received input tensors a, b for which not all a < b.",
+            ):
                 log_prob_normal_in(a, b)
 
-        with self.assertRaises(TypeError):
+            # testing gaussian hazard function
+            n = 16
+            x = torch.rand(n, dtype=dtype, device=self.device)
+            x = torch.cat((-x, x))
+            log_hx = standard_normal_log_hazard(x)
+            expected_log_hx = log_phi(x) - log_ndtr(-x)
+            self.assertAllClose(
+                expected_log_hx,
+                log_hx,
+                atol=1e-8 if dtype == torch.double else 1e-7,
+            )  # correctness
+            # NOTE: Could extend tests here similarly to log_erfc(x) tests above, but
+            # since the hazard functions are built on log_erfcx, not urgent.
+
+        float16_msg = (
+            "only supports torch.float32 and torch.float64 dtypes, but received "
+            "x.dtype = torch.float16."
+        )
+        with self.assertRaisesRegex(TypeError, expected_regex=float16_msg):
             log_erfc(torch.tensor(1.0, dtype=torch.float16, device=self.device))
 
-        with self.assertRaises(TypeError):
+        with self.assertRaisesRegex(TypeError, expected_regex=float16_msg):
             log_ndtr(torch.tensor(1.0, dtype=torch.float16, device=self.device))

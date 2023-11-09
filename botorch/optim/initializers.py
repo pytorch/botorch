@@ -20,12 +20,12 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 from botorch import settings
+from botorch.acquisition import analytic, monte_carlo, multi_objective
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.knowledge_gradient import (
     _get_value_function,
     qKnowledgeGradient,
 )
-from botorch.acquisition.utils import is_nonnegative
 from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedError
 from botorch.exceptions.warnings import (
     BadInitialCandidatesWarning,
@@ -189,10 +189,10 @@ def sample_q_batches_from_polytope(
             thinning: The amount of thinning (number of steps to take between
             returning samples).
         seed: The random seed.
-        inequality constraints: A list of tuples (indices, coefficients, rhs),
+        inequality_constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`.
-        equality constraints: A list of tuples (indices, coefficients, rhs),
+        equality_constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
 
@@ -338,7 +338,8 @@ def gen_batch_initial_conditions(
             n = raw_samples * factor
             if generator is not None:
                 X_rnd = generator(n, q, seed)
-            elif inequality_constraints is None and equality_constraints is None:
+            # check if no constraints are provided
+            elif not (inequality_constraints or equality_constraints):
                 if effective_dim <= SobolEngine.MAXDIM:
                     X_rnd = draw_sobol_samples(bounds=bounds_cpu, n=n, q=q, seed=seed)
                 else:
@@ -1039,3 +1040,34 @@ def sample_perturbed_subset_dims(
     # Create candidate points
     X_cand[mask] = pert[mask]
     return X_cand
+
+
+def is_nonnegative(acq_function: AcquisitionFunction) -> bool:
+    r"""Determine whether a given acquisition function is non-negative.
+
+    Args:
+        acq_function: The `AcquisitionFunction` instance.
+
+    Returns:
+        True if `acq_function` is non-negative, False if not, or if the behavior
+        is unknown (for custom acquisition functions).
+
+    Example:
+        >>> qEI = qExpectedImprovement(model, best_f=0.1)
+        >>> is_nonnegative(qEI)  # returns True
+    """
+    return isinstance(
+        acq_function,
+        (
+            analytic.ExpectedImprovement,
+            analytic.ConstrainedExpectedImprovement,
+            analytic.ProbabilityOfImprovement,
+            analytic.NoisyExpectedImprovement,
+            monte_carlo.qExpectedImprovement,
+            monte_carlo.qNoisyExpectedImprovement,
+            monte_carlo.qProbabilityOfImprovement,
+            multi_objective.analytic.ExpectedHypervolumeImprovement,
+            multi_objective.monte_carlo.qExpectedHypervolumeImprovement,
+            multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement,
+        ),
+    )

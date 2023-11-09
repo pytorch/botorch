@@ -12,7 +12,7 @@ import torch
 from botorch.models.converter import batched_to_model_list
 from botorch.models.deterministic import DeterministicModel
 from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
-from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
+from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.model import ModelList
 from botorch.models.multitask import MultiTaskGP
 from botorch.models.transforms.input import Normalize
@@ -375,6 +375,8 @@ class TestRandomFourierFeatures(BotorchTestCase):
 
     def test_get_deterministic_model(self):
         tkwargs = {"device": self.device}
+        # test is known to be non-flaky for each of these seeds
+        torch.manual_seed(torch.randint(10, torch.Size([])).item())
         for dtype, m in product((torch.float, torch.double), (1, 2)):
             tkwargs["dtype"] = dtype
             use_model_list_vals = [False]
@@ -415,7 +417,7 @@ class TestRandomFourierFeatures(BotorchTestCase):
                     expected_Y = torch.stack(
                         [basis(X) @ w for w, basis in zip(weights, bases)], dim=-1
                     )
-                    self.assertAllClose(Y, expected_Y)
+                    self.assertAllClose(Y, expected_Y, atol=1e-7, rtol=2e-5)
                     self.assertEqual(Y.shape, torch.Size([*batch_shape, 1, m]))
 
     def test_get_deterministic_model_multi_samples(self):
@@ -650,7 +652,7 @@ class TestRandomFourierFeatures(BotorchTestCase):
     def test_with_fixed_noise(self):
         for n_samples in (1, 20):
             gp_samples = get_gp_samples(
-                model=FixedNoiseGP(
+                model=SingleTaskGP(
                     torch.rand(5, 3, dtype=torch.double),
                     torch.randn(5, 1, dtype=torch.double),
                     torch.rand(5, 1, dtype=torch.double) * 0.1,

@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 r"""
-Helpers for handling outcome constraints.
+Helpers for handling input or outcome constraints.
 """
 
 from __future__ import annotations
@@ -61,3 +61,37 @@ def get_outcome_constraint_transforms(
         return lhs - rhs
 
     return [partial(_oc, a, rhs) for a, rhs in zip(A, b)]
+
+
+def get_monotonicity_constraints(
+    d: int,
+    descending: bool = False,
+    dtype: Optional[torch.dtype] = None,
+    device: Optional[torch.device] = None,
+) -> Tuple[Tensor, Tensor]:
+    """Returns a system of linear inequalities `(A, b)` that generically encodes order
+    constraints on the elements of a `d`-dimsensional space, i.e. `A @ x < b` implies
+    `x[i] < x[i + 1]` for a `d`-dimensional vector `x`.
+
+    Idea: Could encode `A` as sparse matrix, if it is supported well.
+
+    Args:
+        d: Dimensionality of the constraint space, i.e. number of monotonic parameters.
+        descending: If True, forces the elements of a vector to be monotonically de-
+            creasing and be monotonically increasing otherwise.
+        dtype: The dtype of the returned Tensors.
+        device: The device of the returned Tensors.
+
+    Returns:
+        A tuple of Tensors `(A, b)` representing the monotonicity constraint as a system
+        of linear inequalities `A @ x < b`. `A` is `(d - 1) x d`-dimensional and `b` is
+        `(d - 1) x 1`-dimensional.
+    """
+    A = torch.zeros(d - 1, d, dtype=dtype, device=device)
+    idx = torch.arange(d - 1)
+    A[idx, idx] = 1
+    A[idx, idx + 1] = -1
+    b = torch.zeros(d - 1, 1, dtype=dtype, device=device)
+    if descending:
+        A = -A
+    return A, b

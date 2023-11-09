@@ -118,12 +118,17 @@ class TestOutcomeTransforms(BotorchTestCase):
     def test_standardize(self):
         # test error on incompatible dim
         tf = Standardize(m=1)
-        with self.assertRaises(
-            RuntimeError, msg="Wrong output dimension. Y.size(-1) is 2; expected 1."
+        with self.assertRaisesRegex(
+            RuntimeError, r"Wrong output dimension. Y.size\(-1\) is 2; expected 1."
         ):
             tf(torch.zeros(3, 2, device=self.device), None)
         # test error on incompatible batch shape
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(
+            RuntimeError,
+            r"Expected Y.shape\[:-2\] to be torch.Size\(\[\]\), matching the "
+            "`batch_shape` argument to `Standardize`, but got "
+            r"Y.shape\[:-2\]=torch.Size\(\[2\]\).",
+        ):
             tf(torch.zeros(2, 3, 1, device=self.device), None)
 
         ms = (1, 2)
@@ -265,10 +270,10 @@ class TestOutcomeTransforms(BotorchTestCase):
             tf_big = Standardize(m=4)
             Y = torch.arange(4, device=self.device, dtype=dtype).reshape((1, 4))
             tf_big(Y)
-            with self.assertRaises(
+            with self.assertRaisesRegex(
                 RuntimeError,
-                msg="Incompatible output dimensions encountered. Transform has output "
-                f"dimension {tf._m} and posterior has "
+                "Incompatible output dimensions encountered. Transform has output "
+                f"dimension {tf_big._m} and posterior has "
                 f"{posterior._extended_shape()[-1]}.",
             ):
                 tf_big.untransform_posterior(posterior2)
@@ -336,6 +341,27 @@ class TestOutcomeTransforms(BotorchTestCase):
             # error on untransform_posterior
             with self.assertRaises(NotImplementedError):
                 tf.untransform_posterior(None)
+
+    def test_standardize_state_dict(self):
+        for m in (1, 2):
+            with self.subTest(m=2):
+                transform = Standardize(m=m)
+                self.assertFalse(transform._is_trained)
+                self.assertTrue(transform.training)
+                Y = torch.rand(2, m)
+                transform(Y)
+                state_dict = transform.state_dict()
+                new_transform = Standardize(m=m)
+                self.assertFalse(new_transform._is_trained)
+                new_transform.load_state_dict(state_dict)
+                self.assertTrue(new_transform._is_trained)
+                # test deprecation error when loading state dict without _is_trained
+                state_dict.pop("_is_trained")
+                with self.assertWarnsRegex(
+                    DeprecationWarning,
+                    "Key '_is_trained' not found in state_dict. Setting to True.",
+                ):
+                    new_transform.load_state_dict(state_dict)
 
     def test_log(self):
         ms = (1, 2)

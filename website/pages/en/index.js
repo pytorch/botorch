@@ -119,7 +119,7 @@ from botorch.utils import standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 train_X = torch.rand(10, 2)
-Y = 1 - torch.norm(train_X - 0.5, dim=-1, keepdim=True)
+Y = 1 - torch.linalg.norm(train_X - 0.5, dim=-1, keepdim=True)
 Y = Y + 0.1 * torch.randn_like(Y)  # add some noise
 train_Y = standardize(Y)
 

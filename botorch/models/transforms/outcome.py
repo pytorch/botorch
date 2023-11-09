@@ -22,9 +22,11 @@ References
 
 from __future__ import annotations
 
+import warnings
+
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from typing import List, Optional, Tuple, Union
+from typing import Any, List, Mapping, Optional, Tuple, Union
 
 import torch
 from botorch.models.transforms.utils import (
@@ -245,13 +247,27 @@ class Standardize(OutcomeTransform):
                 standardization (if lower, only de-mean the data).
         """
         super().__init__()
-        self.register_buffer("means", None)
-        self.register_buffer("stdvs", None)
-        self.register_buffer("_stdvs_sq", None)
+        self.register_buffer("means", torch.zeros(*batch_shape, 1, m))
+        self.register_buffer("stdvs", torch.ones(*batch_shape, 1, m))
+        self.register_buffer("_stdvs_sq", torch.ones(*batch_shape, 1, m))
+        self.register_buffer("_is_trained", torch.tensor(False))
         self._outputs = normalize_indices(outputs, d=m)
         self._m = m
         self._batch_shape = batch_shape
         self._min_stdv = min_stdv
+
+    def load_state_dict(
+        self, state_dict: Mapping[str, Any], strict: bool = True
+    ) -> None:
+        r"""Custom logic for loading the state dict."""
+        if "_is_trained" not in state_dict:
+            warnings.warn(
+                "Key '_is_trained' not found in state_dict. Setting to True. "
+                "In a future release, this will result in an error.",
+                DeprecationWarning,
+            )
+            state_dict = {**state_dict, "_is_trained": torch.tensor(True)}
+        super().load_state_dict(state_dict, strict=strict)
 
     def forward(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
@@ -275,7 +291,11 @@ class Standardize(OutcomeTransform):
         """
         if self.training:
             if Y.shape[:-2] != self._batch_shape:
-                raise RuntimeError("wrong batch shape")
+                raise RuntimeError(
+                    f"Expected Y.shape[:-2] to be {self._batch_shape}, matching "
+                    "the `batch_shape` argument to `Standardize`, but got "
+                    f"Y.shape[:-2]={Y.shape[:-2]}."
+                )
             if Y.size(-1) != self._m:
                 raise RuntimeError(
                     f"Wrong output dimension. Y.size(-1) is {Y.size(-1)}; expected "
@@ -291,6 +311,7 @@ class Standardize(OutcomeTransform):
             self.means = means
             self.stdvs = stdvs
             self._stdvs_sq = stdvs.pow(2)
+            self._is_trained = torch.tensor(True)
 
         Y_tf = (Y - self.means) / self.stdvs
         Yvar_tf = Yvar / self._stdvs_sq if Yvar is not None else None
@@ -321,10 +342,10 @@ class Standardize(OutcomeTransform):
             batch_shape=self._batch_shape,
             min_stdv=self._min_stdv,
         )
-        if self.means is not None:
-            new_tf.means = self.means[..., nlzd_idcs]
-            new_tf.stdvs = self.stdvs[..., nlzd_idcs]
-            new_tf._stdvs_sq = self._stdvs_sq[..., nlzd_idcs]
+        new_tf.means = self.means[..., nlzd_idcs]
+        new_tf.stdvs = self.stdvs[..., nlzd_idcs]
+        new_tf._stdvs_sq = self._stdvs_sq[..., nlzd_idcs]
+        new_tf._is_trained = self._is_trained
         if not self.training:
             new_tf.eval()
         return new_tf
@@ -345,7 +366,7 @@ class Standardize(OutcomeTransform):
             - The un-standardized outcome observations.
             - The un-standardized observation noise (if applicable).
         """
-        if self.means is None:
+        if not self._is_trained:
             raise RuntimeError(
                 "`Standardize` transforms must be called on outcome data "
                 "(e.g. `transform(Y)`) before calling `untransform`, since "
@@ -378,7 +399,7 @@ class Standardize(OutcomeTransform):
                 "Standardize does not yet support output selection for "
                 "untransform_posterior"
             )
-        if self.means is None:
+        if not self._is_trained:
             raise RuntimeError(
                 "`Standardize` transforms must be called on outcome data "
                 "(e.g. `transform(Y)`) before calling `untransform_posterior`, since "

@@ -226,7 +226,7 @@ class MultitaskGPPosterior(GPyTorchPosterior):
             train_diff.reshape(*train_diff.shape[:-2], -1) - updated_obs_samples
         )
         train_covar_plus_noise = self.train_train_covar + self.train_noise
-        obs_solve = train_covar_plus_noise.inv_matmul(obs_minus_samples.unsqueeze(-1))
+        obs_solve = train_covar_plus_noise.solve(obs_minus_samples.unsqueeze(-1))
 
         # and multiply the test-observed matrix against the result of the solve
         updated_samples = self.test_train_covar.matmul(obs_solve).squeeze(-1)

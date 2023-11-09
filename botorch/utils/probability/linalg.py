@@ -189,7 +189,7 @@ class PivotedCholesky:
         for name in ("tril", "perm", "diag"):
             a = getattr(self, name)
             b = getattr(other, name)
-            if type(a) != type(b):
+            if type(a) is not type(b):
                 raise NotImplementedError(f"Types of field {name} do not match.")
 
             if a is not None:

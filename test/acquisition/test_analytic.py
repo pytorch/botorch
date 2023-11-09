@@ -21,20 +21,21 @@ from botorch.acquisition.analytic import (
     LogProbabilityOfImprovement,
     NoisyExpectedImprovement,
     PosteriorMean,
+    PosteriorStandardDeviation,
     ProbabilityOfImprovement,
     ScalarizedPosteriorMean,
     UpperConfidenceBound,
 )
 from botorch.acquisition.objective import (
     IdentityMCObjective,
-    ScalarizedObjective,
     ScalarizedPosteriorTransform,
 )
 from botorch.exceptions import UnsupportedError
-from botorch.models import FixedNoiseGP, SingleTaskGP
+from botorch.models import SingleTaskGP
 from botorch.posteriors import GPyTorchPosterior
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
+from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 
 
 NEI_NOISE = [
@@ -66,18 +67,6 @@ class TestAnalyticAcquisitionFunction(BotorchTestCase):
         mm = MockModel(MockPosterior(mean=mean, variance=variance))
         with self.assertRaises(UnsupportedError):
             DummyAnalyticAcquisitionFunction(model=mm)
-
-    def test_deprecate_acqf_objective(self):
-        mean = torch.zeros(1, 2)
-        variance = torch.ones(1, 2)
-        mm = MockModel(MockPosterior(mean=mean, variance=variance))
-        obj = ScalarizedObjective(weights=torch.ones(2))
-        # check for deprecation warning
-        with self.assertWarns(DeprecationWarning):
-            acqf = DummyAnalyticAcquisitionFunction(model=mm, objective=obj)
-        # check that posterior transform was created and assigned
-        self.assertIsInstance(acqf.posterior_transform, ScalarizedPosteriorTransform)
-        self.assertFalse(hasattr(acqf, "objective"))
 
 
 class TestExpectedImprovement(BotorchTestCase):
@@ -302,6 +291,48 @@ class TestPosteriorMean(BotorchTestCase):
             mm2 = MockModel(MockPosterior(mean=mean2))
             with self.assertRaises(UnsupportedError):
                 PosteriorMean(model=mm2)
+
+
+class TestPosteriorStandardDeviation(BotorchTestCase):
+    def test_posterior_stddev(self):
+        for dtype in (torch.float, torch.double):
+            mean = torch.rand(3, 1, device=self.device, dtype=dtype)
+            std = torch.rand_like(mean)
+            mm = MockModel(MockPosterior(mean=mean, variance=std.square()))
+
+            acqf = PosteriorStandardDeviation(model=mm)
+            X = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
+            pm = acqf(X)
+            self.assertTrue(torch.equal(pm, std.view(-1)))
+
+            acqf = PosteriorStandardDeviation(model=mm, maximize=False)
+            X = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
+            pm = acqf(X)
+            self.assertTrue(torch.equal(pm, -std.view(-1)))
+
+            # check for proper error if multi-output model
+            mean2 = torch.rand(1, 2, device=self.device, dtype=dtype)
+            std2 = torch.rand_like(mean2)
+            mm2 = MockModel(MockPosterior(mean=mean2, variance=std2.square()))
+            with self.assertRaises(UnsupportedError):
+                PosteriorStandardDeviation(model=mm2)
+
+    def test_posterior_stddev_batch(self):
+        for dtype in (torch.float, torch.double):
+            mean = torch.rand(3, 1, 1, device=self.device, dtype=dtype)
+            std = torch.rand_like(mean)
+            mm = MockModel(MockPosterior(mean=mean, variance=std.square()))
+            acqf = PosteriorStandardDeviation(model=mm)
+            X = torch.empty(3, 1, 1, device=self.device, dtype=dtype)
+            pm = acqf(X)
+            self.assertTrue(torch.equal(pm, std.view(-1)))
+            # check for proper error if multi-output model
+            mean2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
+            std2 = torch.rand_like(mean2)
+            mm2 = MockModel(MockPosterior(mean=mean2, variance=std2.square()))
+            msg = "Must specify a posterior transform when using a multi-output model."
+            with self.assertRaisesRegex(UnsupportedError, msg):
+                PosteriorStandardDeviation(model=mm2)
 
 
 class TestProbabilityOfImprovement(BotorchTestCase):
@@ -795,7 +826,7 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
         noise = torch.tensor(NEI_NOISE, device=self.device, dtype=dtype)
         train_y += noise
         train_yvar = torch.full_like(train_y, 0.25**2)
-        model = FixedNoiseGP(train_X=train_x, train_Y=train_y, train_Yvar=train_yvar)
+        model = SingleTaskGP(train_X=train_x, train_Y=train_y, train_Yvar=train_yvar)
         model.load_state_dict(state_dict)
         model.to(train_x)
         model.eval()
@@ -811,7 +842,8 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
             # before assigning, check that the attributes exist
             self.assertTrue(hasattr(LogNEI, "model"))
             self.assertTrue(hasattr(LogNEI, "best_f"))
-            self.assertTrue(isinstance(LogNEI.model, FixedNoiseGP))
+            self.assertIsInstance(LogNEI.model, SingleTaskGP)
+            self.assertIsInstance(LogNEI.model.likelihood, FixedNoiseGaussianLikelihood)
             LogNEI.model = nEI.model  # let the two share their values and fantasies
             LogNEI.best_f = nEI.best_f
 
@@ -850,11 +882,11 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
             # regime where the naive implementation looses accuracy.
             atol = 2e-5 if dtype == torch.float32 else 1e-12
             rtol = atol
-            self.assertTrue(
-                torch.allclose(X_test.grad[0], X_test_log.grad[0], atol=atol, rtol=rtol)
+            self.assertAllClose(
+                X_test.grad[0], X_test_log.grad[0], atol=atol, rtol=rtol
             )
 
-            # test non-FixedNoiseGP model
+            # test inferred noise model
             other_model = SingleTaskGP(X_observed, model.train_targets.unsqueeze(-1))
             for constructor in (
                 NoisyExpectedImprovement,

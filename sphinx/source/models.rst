@@ -123,6 +123,9 @@ Kernels
 .. automodule:: botorch.models.kernels.contextual_sac
 .. autoclass:: SACKernel
 
+.. automodule:: botorch.models.kernels.orthogonal_additive_kernel
+.. autoclass:: OrthogonalAdditiveKernel
+
 Likelihoods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.likelihoods.pairwise
@@ -158,6 +161,11 @@ Utilities
 Dataset Parsing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.utils.parse_training_data
+    :members:
+
+GPyTorch Module Constructors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.utils.gpytorch_modules
     :members:
 
 Model Conversion

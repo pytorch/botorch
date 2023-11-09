@@ -176,18 +176,20 @@ class MVNXPB:
             if pivot is not None and torch.any(pivot > i):
                 self.pivot_(pivot=pivot)
 
-            # Initialize `i`-th plug-in value as univariate conditional expectation
+            # Compute whitened bounds conditional on preceding plug-ins
             Lii = L[..., i, i].clone()
             if should_update_chol:
-                Lii = Lii.clip(min=0).sqrt()
+                Lii = Lii.clip(min=0).sqrt()  # conditional stddev
             inv_Lii = Lii.reciprocal()
-            if i == 0:
-                lb, ub = bounds[..., i, :].clone().unbind(dim=-1)
-            else:
-                db = (L[..., i, :i].clone() * y[..., :i].clone()).sum(-1, keepdim=True)
-                lb, ub = (bounds[..., i, :].clone() - db).unbind(dim=-1)
+            bounds_i = bounds[..., i, :].clone()
+            if i != 0:
+                bounds_i = bounds_i - torch.sum(
+                    L[..., i, :i].clone() * y[..., :i].clone(), dim=-1, keepdim=True
+                )
+            lb, ub = (inv_Lii.unsqueeze(-1) * bounds_i).unbind(dim=-1)
 
-            Phi_i = Phi(inv_Lii * ub) - Phi(inv_Lii * lb)
+            # Initialize `i`-th plug-in value as univariate conditional expectation
+            Phi_i = Phi(ub) - Phi(lb)
             small = Phi_i <= i * eps
             y[..., i] = case_dispatcher(  # used to select next pivot
                 out=(phi(lb) - phi(ub)) / Phi_i,
@@ -224,7 +226,7 @@ class MVNXPB:
                 # Replace 1D expectations with 2D ones `L[blk, blk]^{-1} y[..., blk]`
                 mask = blk_prob > zero
                 y[..., h] = torch.where(mask, zh, zero)
-                y[..., i] = torch.where(mask, (std_i * zi - Lih * zh) / Lii, zero)
+                y[..., i] = torch.where(mask, inv_Lii * (std_i * zi - Lih * zh), zero)
 
                 # Update running approximation to log probability
                 self.log_prob = self.log_prob + safe_log(blk_prob)
@@ -300,7 +302,7 @@ class MVNXPB:
             if _self is None and _other is None:
                 continue
 
-            if type(_self) != type(_other):
+            if type(_self) is not type(_other):
                 raise TypeError(
                     f"Concatenation failed: `self.{key}` has type {type(_self)}, "
                     f"but `other.{key}` is of type {type(_self)}."

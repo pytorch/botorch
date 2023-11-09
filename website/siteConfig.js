@@ -35,6 +35,9 @@ const siteConfig = {
   // Google analytics
   gaTrackingId: 'G-CXN3PGE3CC',
 
+  // Use global site tags (gtag.js) to be compatible with Google Analytics 4
+  gaGtag: true,
+
   // links that will be used in the header navigation bar
   headerLinks: [
     {doc: 'introduction', label: 'Docs'},

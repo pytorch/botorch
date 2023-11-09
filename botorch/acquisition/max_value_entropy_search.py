@@ -177,7 +177,7 @@ class MaxValueBase(AcquisitionFunction, ABC):
     ) -> Tensor:
         r"""Draw samples from the posterior over maximum values.
 
-        These samples are used to compute Monte Carlo approximations of expecations
+        These samples are used to compute Monte Carlo approximations of expectations
         over the posterior over the function maximum.
 
         Args:
@@ -257,7 +257,7 @@ class DiscreteMaxValueBase(MaxValueBase):
     ) -> Tensor:
         r"""Draw samples from the posterior over maximum values on a discrete set.
 
-        These samples are used to compute Monte Carlo approximations of expecations
+        These samples are used to compute Monte Carlo approximations of expectations
         over the posterior over the function maximum.
 
         Args:
@@ -326,7 +326,6 @@ class qMaxValueEntropy(DiscreteMaxValueBase, MCSamplerMixin):
         maximize: bool = True,
         X_pending: Optional[Tensor] = None,
         train_inputs: Optional[Tensor] = None,
-        **kwargs: Any,
     ) -> None:
         r"""Single-outcome max-value entropy search acquisition function.
 
@@ -390,7 +389,8 @@ class qMaxValueEntropy(DiscreteMaxValueBase, MCSamplerMixin):
         if X_pending is not None:
             # fantasize the model and use this as the new model
             self.model = init_model.fantasize(
-                X=X_pending, sampler=self.fantasies_sampler, observation_noise=True
+                X=X_pending,
+                sampler=self.fantasies_sampler,
             )
         else:
             self.model = init_model
@@ -596,14 +596,14 @@ class qLowerBoundMaxValueEntropy(DiscreteMaxValueBase):
         # batch_shape x 1
         check_no_nans(rhos_squared)
 
-        # calculate quality contribution to the GIBBON acqusition function
+        # calculate quality contribution to the GIBBON acquisition function
         inner_term = 1 - rhos_squared * ratio * (normalized_mvs + ratio)
         acq = -0.5 * inner_term.clamp_min(CLAMP_LB).log()
         # average over posterior max samples
         acq = acq.mean(dim=1).unsqueeze(0)
 
         if self.X_pending is None:
-            # for q=1, no replusion term required
+            # for q=1, no repulsion term required
             return acq
 
         # for q>1 GIBBON requires repulsion terms r_i, where
@@ -613,11 +613,11 @@ class qLowerBoundMaxValueEntropy(DiscreteMaxValueBase):
 
         # Each predictive covariance matrix can be expressed as
         # V_i = [[v_i, A_i], [A_i,B]] for a shared m x m tensor B.
-        # So we can efficientely calculate |V_i| using the formula for
+        # So we can efficiently calculate |V_i| using the formula for
         # determinant of block matricies, i.e.
         # |V_i| = (v_i - A_i^T * B^{-1} * A_i) * |B|
         # As the |B| term does not depend on X and we later take its log,
-        # it provides only a translation of the acqusition function surface
+        # it provides only a translation of the acquisition function surface
         # and can thus be ignored.
 
         if self.posterior_transform is not None:
@@ -647,11 +647,19 @@ class qLowerBoundMaxValueEntropy(DiscreteMaxValueBase):
         # 1 x m x m
 
         # use determinant of block matrix formula
-        V_determinant = variance_m - inv_quad(B, A.transpose(1, 2)).unsqueeze(1)
+        inv_quad_term = inv_quad(B, A.transpose(1, 2)).unsqueeze(1)
+        # NOTE: Even when using Cholesky to compute inv_quad, `V_determinant` can be
+        # negative due to numerical issues. To avoid this, we clamp the variance
+        # so that `V_determinant` > 0, while still allowing gradients to be
+        # propagated through `inv_quad_term`, as well as through `variance_m`
+        # in the expression for `r` below.
+        # choosing eps to be small while avoiding numerical underflow
+        eps = 1e-6 if inv_quad_term.dtype == torch.float32 else 1e-12
+        V_determinant = variance_m.clamp(inv_quad_term * (1 + eps)) - inv_quad_term
         # batch_shape x 1
 
         # Take logs and convert covariances to correlations.
-        r = V_determinant.log() - variance_m.log()
+        r = V_determinant.log() - variance_m.log()  # = log(1 - inv_quad / var)
         r = 0.5 * r.transpose(0, 1)
         return acq + r
 
@@ -689,7 +697,6 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
         cost_aware_utility: Optional[CostAwareUtility] = None,
         project: Callable[[Tensor], Tensor] = lambda X: X,
         expand: Callable[[Tensor], Tensor] = lambda X: X,
-        **kwargs: Any,
     ) -> None:
         r"""Single-outcome max-value entropy search acquisition function.
 

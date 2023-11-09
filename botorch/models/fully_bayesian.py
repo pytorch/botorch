@@ -42,6 +42,7 @@ from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.models.utils import validate_input_scaling
+from botorch.models.utils.gpytorch_modules import MIN_INFERRED_NOISE_LEVEL
 from botorch.posteriors.fully_bayesian import FullyBayesianPosterior, MCMC_DIM
 from gpytorch.constraints import GreaterThan
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
@@ -58,17 +59,16 @@ from gpytorch.models.exact_gp import ExactGP
 from pyro.ops.integrator import register_exception_handler
 from torch import Tensor
 
-MIN_INFERRED_NOISE_LEVEL = 1e-6
 
 _sqrt5 = math.sqrt(5)
 
 
 def _handle_torch_linalg(exception: Exception) -> bool:
-    return type(exception) == torch.linalg.LinAlgError
+    return type(exception) is torch.linalg.LinAlgError
 
 
 def _handle_valerr_in_dist_init(exception: Exception) -> bool:
-    if not type(exception) == ValueError:
+    if type(exception) is not ValueError:
         return False
     return "satisfy the constraint PositiveDefinite()" in str(exception)
 

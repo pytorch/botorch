@@ -4,7 +4,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import warnings
 from typing import Any
 
 import torch
@@ -24,7 +23,6 @@ from botorch.utils.transforms import (
     match_batch_shape,
     normalize,
     normalize_indices,
-    squeeze_last_dim,
     standardize,
     t_batch_mode_transform,
     unnormalize,
@@ -298,15 +296,6 @@ class TorchNormalizeIndices(BotorchTestCase):
             nlzd_indices = normalize_indices([-4], 3)
 
 
-class TestSqueezeLastDim(BotorchTestCase):
-    def test_squeeze_last_dim(self):
-        Y = torch.rand(2, 1, 1)
-        with warnings.catch_warnings(record=True) as ws:
-            Y_squeezed = squeeze_last_dim(Y=Y)
-            self.assertTrue(any(issubclass(w.category, DeprecationWarning) for w in ws))
-        self.assertTrue(torch.equal(Y_squeezed, Y.squeeze(-1)))
-
-
 class TestIsFullyBayesian(BotorchTestCase):
     def test_is_fully_bayesian(self):
         X, Y = torch.rand(3, 2), torch.randn(3, 1)
@@ -325,3 +314,11 @@ class TestIsFullyBayesian(BotorchTestCase):
         self.assertTrue(is_fully_bayesian(model=ModelList(saas, saas)))
         self.assertTrue(is_fully_bayesian(model=ModelList(saas, deterministic)))
         self.assertFalse(is_fully_bayesian(model=ModelList(vanilla_gp, deterministic)))
+        # Nested ModelList
+        self.assertTrue(is_fully_bayesian(model=ModelList(ModelList(saas), saas)))
+        self.assertTrue(
+            is_fully_bayesian(model=ModelList(ModelList(saas), deterministic))
+        )
+        self.assertFalse(
+            is_fully_bayesian(model=ModelList(ModelList(vanilla_gp), deterministic))
+        )

@@ -15,7 +15,7 @@ from botorch.exceptions import (
     BotorchTensorDimensionError,
     BotorchTensorDimensionWarning,
 )
-from botorch.exceptions.errors import InputDataError
+from botorch.exceptions.errors import DeprecationError, InputDataError
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.gpytorch import (
     BatchedMultiOutputGPyTorchModel,
@@ -209,19 +209,22 @@ class TestGPyTorchModel(BotorchTestCase):
             self.assertIsInstance(cm, SimpleGPyTorchModel)
             self.assertEqual(cm.train_targets.shape, torch.Size([2, 7]))
             cm = model.fantasize(
-                torch.rand(2, 1, **tkwargs), sampler=sampler, observation_noise=True
-            )
-            self.assertIsInstance(cm, SimpleGPyTorchModel)
-            self.assertEqual(cm.train_targets.shape, torch.Size([2, 7]))
-            cm = model.fantasize(
                 torch.rand(2, 1, **tkwargs),
                 sampler=sampler,
                 observation_noise=torch.rand(2, 1, **tkwargs),
             )
             self.assertIsInstance(cm, SimpleGPyTorchModel)
             self.assertEqual(cm.train_targets.shape, torch.Size([2, 7]))
+            # test that boolean observation noise is deprecated
+            msg = "`fantasize` no longer accepts a boolean for `observation_noise`."
+            with self.assertRaisesRegex(DeprecationError, msg):
+                model.fantasize(
+                    torch.rand(2, 1, **tkwargs),
+                    sampler=sampler,
+                    observation_noise=True,
+                )
 
-    def test_validate_tensor_args(self):
+    def test_validate_tensor_args(self) -> None:
         n, d = 3, 2
         for batch_shape, output_dim_shape, dtype in itertools.product(
             (torch.Size(), torch.Size([2])),
@@ -234,24 +237,43 @@ class TestGPyTorchModel(BotorchTestCase):
             Y = torch.empty(batch_shape + torch.Size([n]) + output_dim_shape, **tkwargs)
             if len(output_dim_shape) > 0:
                 # check that no exception is raised
-                GPyTorchModel._validate_tensor_args(X, Y)
-                with settings.debug(True), self.assertWarns(
-                    BotorchTensorDimensionWarning
-                ):
-                    GPyTorchModel._validate_tensor_args(X, Y, strict=False)
+                for strict in [False, True]:
+                    GPyTorchModel._validate_tensor_args(X, Y, strict=strict)
             else:
-                with self.assertRaises(BotorchTensorDimensionError):
+                expected_message = (
+                    "An explicit output dimension is required for targets."
+                )
+                with self.assertRaisesRegex(
+                    BotorchTensorDimensionError, expected_message
+                ):
                     GPyTorchModel._validate_tensor_args(X, Y)
-                with settings.debug(True), self.assertWarns(
-                    BotorchTensorDimensionWarning
+                with self.assertWarnsRegex(
+                    BotorchTensorDimensionWarning,
+                    (
+                        "Non-strict enforcement of botorch tensor conventions. "
+                        "The following error would have been raised with strict "
+                        "enforcement: "
+                    )
+                    + expected_message,
                 ):
                     GPyTorchModel._validate_tensor_args(X, Y, strict=False)
             # test using different batch_shape
             if len(batch_shape) > 0:
-                with self.assertRaises(BotorchTensorDimensionError):
+                expected_message = (
+                    "Expected X and Y to have the same number of dimensions"
+                )
+                with self.assertRaisesRegex(
+                    BotorchTensorDimensionError, expected_message
+                ):
                     GPyTorchModel._validate_tensor_args(X, Y[0])
-                with settings.debug(True), self.assertWarns(
-                    BotorchTensorDimensionWarning
+                with settings.debug(True), self.assertWarnsRegex(
+                    BotorchTensorDimensionWarning,
+                    (
+                        "Non-strict enforcement of botorch tensor conventions. "
+                        "The following error would have been raised with strict "
+                        "enforcement: "
+                    )
+                    + expected_message,
                 ):
                     GPyTorchModel._validate_tensor_args(X, Y[0], strict=False)
             # with Yvar
@@ -259,8 +281,13 @@ class TestGPyTorchModel(BotorchTestCase):
                 Yvar = torch.empty(torch.Size([n]) + output_dim_shape, **tkwargs)
                 GPyTorchModel._validate_tensor_args(X, Y, Yvar)
                 Yvar = torch.empty(n, 5, **tkwargs)
-                with self.assertRaises(BotorchTensorDimensionError):
-                    GPyTorchModel._validate_tensor_args(X, Y, Yvar)
+                for strict in [False, True]:
+                    with self.assertRaisesRegex(
+                        BotorchTensorDimensionError,
+                        "An explicit output dimension is required for "
+                        "observation noise.",
+                    ):
+                        GPyTorchModel._validate_tensor_args(X, Y, Yvar, strict=strict)
 
     def test_fantasize_flag(self):
         train_X = torch.rand(5, 1)
@@ -272,7 +299,7 @@ class TestGPyTorchModel(BotorchTestCase):
         self.assertFalse(model.last_fantasize_flag)
         model.posterior(test_X)
         self.assertFalse(model.last_fantasize_flag)
-        model.fantasize(test_X, SobolQMCNormalSampler(2))
+        model.fantasize(test_X, SobolQMCNormalSampler(sample_shape=torch.Size([2])))
         self.assertTrue(model.last_fantasize_flag)
         model.last_fantasize_flag = False
         with fantasize():
@@ -360,11 +387,6 @@ class TestBatchedMultiOutputGPyTorchModel(BotorchTestCase):
             # test fantasize
             sampler = SobolQMCNormalSampler(sample_shape=torch.Size([2]))
             cm = model.fantasize(torch.rand(2, 1, **tkwargs), sampler=sampler)
-            self.assertIsInstance(cm, SimpleBatchedMultiOutputGPyTorchModel)
-            self.assertEqual(cm.train_targets.shape, torch.Size([2, 2, 7]))
-            cm = model.fantasize(
-                torch.rand(2, 1, **tkwargs), sampler=sampler, observation_noise=True
-            )
             self.assertIsInstance(cm, SimpleBatchedMultiOutputGPyTorchModel)
             self.assertEqual(cm.train_targets.shape, torch.Size([2, 2, 7]))
             cm = model.fantasize(
@@ -485,12 +507,14 @@ class TestModelListGPyTorchModel(BotorchTestCase):
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertEqual(posterior.mean.shape, torch.Size([2, 2]))
             posterior = model.posterior(
-                test_X, observation_noise=torch.rand(2, **tkwargs)
+                test_X, observation_noise=torch.rand(2, 2, **tkwargs)
             )
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertEqual(posterior.mean.shape, torch.Size([2, 2]))
             posterior = model.posterior(
-                test_X, output_indices=[0], observation_noise=torch.rand(2, **tkwargs)
+                test_X,
+                output_indices=[0],
+                observation_noise=torch.rand(2, 2, **tkwargs),
             )
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertEqual(posterior.mean.shape, torch.Size([2, 1]))
