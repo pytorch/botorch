@@ -271,6 +271,7 @@ class TestDatasets(BotorchTestCase):
         self.assertIs(mt_dataset.datasets["y"], dataset_1)
         self.assertIs(mt_dataset.datasets["z"], dataset_2)
         self.assertIsNone(mt_dataset.Yvar)
+        self.assertFalse(mt_dataset.has_heterogeneous_features)
         expected_X = torch.cat(
             [
                 torch.cat([dataset_1.X, torch.ones(3, 1)], dim=-1),
@@ -341,6 +342,18 @@ class TestDatasets(BotorchTestCase):
                 task_feature_index=-1,
                 target_task_value=0,
             )
+
+        # With heterogeneous feature sets.
+        dataset_5 = make_dataset(d=1, outcome_names=["z"])
+        mt_dataset = MultiTaskDataset(
+            datasets=[dataset_1, dataset_5],
+            target_outcome_name="y",
+        )
+        self.assertTrue(mt_dataset.has_heterogeneous_features)
+        with self.assertRaisesRegex(
+            UnsupportedError, "datasets with heterogeneous feature sets"
+        ):
+            mt_dataset.X
 
     def test_contextual_datasets(self):
         num_contexts = 3
