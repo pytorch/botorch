@@ -174,6 +174,9 @@ class GPyTorchModel(Model, ABC):
         # `model.forward()` at the training time
         X = self.transform_inputs(X)
         with gpt_posterior_settings():
+            # NOTE: BoTorch's GPyTorchModels also inherit from GPyTorch's ExactGP, thus
+            # self(X) calls GPyTorch's ExactGP's __call__, which computes the posterior,
+            # rather than e.g. SingleTaskGP's forward, which computes the prior.
             mvn = self(X)
             if observation_noise is not False:
                 if isinstance(observation_noise, torch.Tensor):
@@ -374,6 +377,9 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
                 X, output_dim_idx = add_output_dim(
                     X=X, original_batch_shape=self._input_batch_shape
                 )
+            # NOTE: BoTorch's GPyTorchModels also inherit from GPyTorch's ExactGP, thus
+            # self(X) calls GPyTorch's ExactGP's __call__, which computes the posterior,
+            # rather than e.g. SingleTaskGP's forward, which computes the prior.
             mvn = self(X)
             if observation_noise is not False:
                 if self._num_outputs > 1:
