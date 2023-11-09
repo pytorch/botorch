@@ -129,7 +129,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># While we only need marginal variances, we can evaluate for q&gt;1</span>
             <span class="c1"># b/c for GPyTorch models lazy evaluation can make this quite a bit</span>
-            <span class="c1"># faster than evaluting in t-batch mode with q-batch size of 1</span>
+            <span class="c1"># faster than evaluating in t-batch mode with q-batch size of 1</span>
             <span class="n">mc_points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mc_points</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">bdims</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
 
         <span class="c1"># evaluate the posterior at the grid points</span>

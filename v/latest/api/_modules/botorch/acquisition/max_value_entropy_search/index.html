@@ -200,7 +200,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Draw samples from the posterior over maximum values.</span>
 
-<span class="sd">        These samples are used to compute Monte Carlo approximations of expecations</span>
+<span class="sd">        These samples are used to compute Monte Carlo approximations of expectations</span>
 <span class="sd">        over the posterior over the function maximum.</span>
 
 <span class="sd">        Args:</span>
@@ -280,7 +280,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Draw samples from the posterior over maximum values on a discrete set.</span>
 
-<span class="sd">        These samples are used to compute Monte Carlo approximations of expecations</span>
+<span class="sd">        These samples are used to compute Monte Carlo approximations of expectations</span>
 <span class="sd">        over the posterior over the function maximum.</span>
 
 <span class="sd">        Args:</span>
@@ -619,14 +619,14 @@
         <span class="c1"># batch_shape x 1</span>
         <span class="n">check_no_nans</span><span class="p">(</span><span class="n">rhos_squared</span><span class="p">)</span>
 
-        <span class="c1"># calculate quality contribution to the GIBBON acqusition function</span>
+        <span class="c1"># calculate quality contribution to the GIBBON acquisition function</span>
         <span class="n">inner_term</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">rhos_squared</span> <span class="o">*</span> <span class="n">ratio</span> <span class="o">*</span> <span class="p">(</span><span class="n">normalized_mvs</span> <span class="o">+</span> <span class="n">ratio</span><span class="p">)</span>
         <span class="n">acq</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">inner_term</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="n">CLAMP_LB</span><span class="p">)</span><span class="o">.</span><span class="n">log</span><span class="p">()</span>
         <span class="c1"># average over posterior max samples</span>
         <span class="n">acq</span> <span class="o">=</span> <span class="n">acq</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">X_pending</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># for q=1, no replusion term required</span>
+            <span class="c1"># for q=1, no repulsion term required</span>
             <span class="k">return</span> <span class="n">acq</span>
 
         <span class="c1"># for q&gt;1 GIBBON requires repulsion terms r_i, where</span>
@@ -636,11 +636,11 @@
 
         <span class="c1"># Each predictive covariance matrix can be expressed as</span>
         <span class="c1"># V_i = [[v_i, A_i], [A_i,B]] for a shared m x m tensor B.</span>
-        <span class="c1"># So we can efficientely calculate |V_i| using the formula for</span>
+        <span class="c1"># So we can efficiently calculate |V_i| using the formula for</span>
         <span class="c1"># determinant of block matricies, i.e.</span>
         <span class="c1"># |V_i| = (v_i - A_i^T * B^{-1} * A_i) * |B|</span>
         <span class="c1"># As the |B| term does not depend on X and we later take its log,</span>
-        <span class="c1"># it provides only a translation of the acqusition function surface</span>
+        <span class="c1"># it provides only a translation of the acquisition function surface</span>
         <span class="c1"># and can thus be ignored.</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>

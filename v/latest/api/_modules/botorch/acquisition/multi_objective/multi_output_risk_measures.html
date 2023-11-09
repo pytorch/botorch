@@ -522,7 +522,7 @@
             <span class="c1"># TODO: Investigate differentiability of MVaR.</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
                 <span class="s2">"Got `samples` that requires grad, but computing MVaR involves "</span>
-                <span class="s2">"non-differentable operations and the results will not be "</span>
+                <span class="s2">"non-differentiable operations and the results will not be "</span>
                 <span class="s2">"differentiable. This may lead to errors down the line!"</span><span class="p">,</span>
                 <span class="ne">RuntimeWarning</span><span class="p">,</span>
             <span class="p">)</span>
@@ -659,7 +659,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">baseline_Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Baseline outcomes used indetermining the normalization bounds."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Baseline outcomes used in determining the normalization bounds."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_baseline_Y</span>
 
     <span class="nd">@baseline_Y</span><span class="o">.</span><span class="n">setter</span>

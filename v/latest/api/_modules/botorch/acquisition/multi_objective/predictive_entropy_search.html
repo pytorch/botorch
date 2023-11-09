@@ -100,7 +100,7 @@
 <span class="sd">        Problem (a) occurs because we have to compute the variable:</span>
 <span class="sd">        `alpha = (mean(x_n) - mean(x_p)) / std(x_n - x_p)`, which becomes very</span>
 <span class="sd">        large when `x_n` is better than `x_p` with high-probability. This leads to a</span>
-<span class="sd">        log(0) error when we compute `log(1 - cdf(alpha))`. We have pre-emptively</span>
+<span class="sd">        log(0) error when we compute `log(1 - cdf(alpha))`. We have preemptively</span>
 <span class="sd">        clamped some values depending on `1`alpha` in order to mitigate this.</span>
 
 <span class="sd">        Problem (b) occurs because we have to compute matrix inverses for the</span>

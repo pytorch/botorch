@@ -32,17 +32,14 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Type</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">botorch.models.multitask</span> <span class="kn">import</span> <span class="n">MultiTaskGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.pairwise_gp</span> <span class="kn">import</span> <span class="n">PairwiseGP</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">RankingDataset</span><span class="p">,</span> <span class="n">SupervisedDataset</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.dispatcher</span> <span class="kn">import</span> <span class="n">Dispatcher</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">cat</span><span class="p">,</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.nn.functional</span> <span class="kn">import</span> <span class="n">pad</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <span class="k">def</span> <span class="nf">_encoder</span><span class="p">(</span><span class="n">arg</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">:</span>
@@ -55,13 +52,13 @@
 
 <div class="viewcode-block" id="parse_training_data"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.parse_training_data.parse_training_data">[docs]</a><span class="k">def</span> <span class="nf">parse_training_data</span><span class="p">(</span>
     <span class="n">consumer</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="n">training_data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">SupervisedDataset</span><span class="p">]],</span>
+    <span class="n">training_data</span><span class="p">:</span> <span class="n">SupervisedDataset</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""Prepares a (collection of) datasets for consumption by a given object.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Prepares a dataset for consumption by a given object.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        training_datas: A SupervisedDataset or dictionary thereof.</span>
+<span class="sd">        training_datas: A SupervisedDataset.</span>
 <span class="sd">        consumer: The object that will consume the parsed data, or type thereof.</span>
 
 <span class="sd">    Returns:</span>
@@ -95,65 +92,6 @@
         <span class="s2">"datapoints"</span><span class="p">:</span> <span class="n">datapoints</span><span class="p">,</span>
         <span class="s2">"comparisons"</span><span class="p">:</span> <span class="n">comparisons</span><span class="p">,</span>
     <span class="p">}</span>
-
-
-<span class="nd">@dispatcher</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_parse_model_dict</span><span class="p">(</span>
-    <span class="n">consumer</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
-    <span class="n">training_data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">SupervisedDataset</span><span class="p">],</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">training_data</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
-            <span class="s2">"Default training data parsing logic does not support "</span>
-            <span class="s2">"passing multiple datasets to single task models."</span>
-        <span class="p">)</span>
-    <span class="k">return</span> <span class="n">dispatcher</span><span class="p">(</span><span class="n">consumer</span><span class="p">,</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">training_data</span><span class="o">.</span><span class="n">values</span><span class="p">())))</span>
-
-
-<span class="nd">@dispatcher</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">MultiTaskGP</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_parse_multitask_dict</span><span class="p">(</span>
-    <span class="n">consumer</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
-    <span class="n">training_data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">SupervisedDataset</span><span class="p">],</span>
-    <span class="o">*</span><span class="p">,</span>
-    <span class="n">task_feature</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="n">task_feature_container</span><span class="p">:</span> <span class="n">Hashable</span> <span class="o">=</span> <span class="s2">"train_X"</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-    <span class="n">cache</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">training_data</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
-        <span class="n">parse</span> <span class="o">=</span> <span class="n">parse_training_data</span><span class="p">(</span><span class="n">consumer</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">task_feature_container</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">parse</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Missing required term `</span><span class="si">{</span><span class="n">task_feature_container</span><span class="si">}</span><span class="s2">`."</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">cache</span> <span class="ow">and</span> <span class="n">cache</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">!=</span> <span class="n">parse</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
-                <span class="s2">"Cannot combine datasets with heterogeneous parsed formats."</span>
-            <span class="p">)</span>
-
-        <span class="c1"># Add task indicator features to specified container</span>
-        <span class="n">X</span> <span class="o">=</span> <span class="n">parse</span><span class="p">[</span><span class="n">task_feature_container</span><span class="p">]</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">i</span> <span class="o">=</span> <span class="n">d</span> <span class="o">+</span> <span class="n">task_feature</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">task_feature</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">task_feature</span>
-        <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">d</span> <span class="o">&lt;</span> <span class="n">i</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid `task_feature`: out-of-bounds."</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">X</span> <span class="o">=</span> <span class="n">pad</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="n">task_id</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="n">d</span><span class="p">:</span>
-            <span class="n">X</span> <span class="o">=</span> <span class="n">pad</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="n">task_id</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">A</span><span class="p">,</span> <span class="n">B</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">split</span><span class="p">([</span><span class="n">i</span><span class="p">,</span> <span class="n">d</span> <span class="o">-</span> <span class="n">i</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">X</span> <span class="o">=</span> <span class="n">cat</span><span class="p">([</span><span class="n">pad</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="n">task_id</span><span class="p">),</span> <span class="n">B</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">parse</span><span class="p">[</span><span class="n">task_feature_container</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span>
-
-        <span class="k">if</span> <span class="n">cache</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">parse</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="n">cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">cache</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="p">[</span><span class="n">val</span><span class="p">]</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">parse</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-
-    <span class="k">return</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">cat</span><span class="p">(</span><span class="n">tensors</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">tensors</span> <span class="ow">in</span> <span class="n">cache</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 </pre></div>
 </div>
 </div>

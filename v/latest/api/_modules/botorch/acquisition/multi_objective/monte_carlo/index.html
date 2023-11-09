@@ -207,7 +207,7 @@
 <span class="sd">            constraints: A list of callables, each mapping a Tensor of dimension</span>
 <span class="sd">                `sample_shape x batch-shape x q x m` to a Tensor of dimension</span>
 <span class="sd">                `sample_shape x batch-shape x q`, where negative values imply</span>
-<span class="sd">                feasibility. The acqusition function will compute expected feasible</span>
+<span class="sd">                feasibility. The acquisition function will compute expected feasible</span>
 <span class="sd">                hypervolume.</span>
 <span class="sd">            X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points that have</span>
 <span class="sd">                points that have been submitted for function evaluation but have not yet</span>
@@ -314,7 +314,7 @@
             <span class="n">overlap_vertices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span>
                 <span class="n">overlap_vertices</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_upper_bounds</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">view_shape</span><span class="p">)</span>
             <span class="p">)</span>
-            <span class="c1"># substract cell lower bounds, clamp min at zero</span>
+            <span class="c1"># subtract cell lower bounds, clamp min at zero</span>
             <span class="n">lengths_i</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">overlap_vertices</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_lower_bounds</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">view_shape</span><span class="p">)</span>
             <span class="p">)</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
@@ -393,7 +393,7 @@
 <span class="sd">            constraints: A list of callables, each mapping a Tensor of dimension</span>
 <span class="sd">                `sample_shape x batch-shape x q x m` to a Tensor of dimension</span>
 <span class="sd">                `sample_shape x batch-shape x q`, where negative values imply</span>
-<span class="sd">                feasibility. The acqusition function will compute expected feasible</span>
+<span class="sd">                feasibility. The acquisition function will compute expected feasible</span>
 <span class="sd">                hypervolume.</span>
 <span class="sd">            X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points that</span>
 <span class="sd">                have points that have been submitted for function evaluation, but</span>

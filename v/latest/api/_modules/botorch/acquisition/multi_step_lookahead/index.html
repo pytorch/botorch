@@ -28,7 +28,7 @@
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
 <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">A general implementation of multi-step look-ahead acquistion function with configurable</span>
+<span class="sd">A general implementation of multi-step look-ahead acquisition function with configurable</span>
 <span class="sd">value functions. See [Jiang2020multistep]_.</span>
 
 <span class="sd">.. [Jiang2020multistep]</span>
@@ -237,13 +237,13 @@
             <span class="n">s</span><span class="o">.</span><span class="n">batch_range_override</span> <span class="o">=</span> <span class="p">(</span><span class="n">tbatch_dim_start</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
 
 <div class="viewcode-block" id="qMultiStepLookahead.get_augmented_q_batch_size"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_augmented_q_batch_size">[docs]</a>    <span class="k">def</span> <span class="nf">get_augmented_q_batch_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Get augmented q batch size for one-shot optimzation.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Get augmented q batch size for one-shot optimization.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            q: The number of candidates to consider jointly.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            The augmented size for one-shot optimzation (including variables</span>
+<span class="sd">            The augmented size for one-shot optimization (including variables</span>
 <span class="sd">            parameterizing the fantasy solutions): `q_0 + f_1 q_1 + f_2 f_1 q_2 + ...`</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="n">q</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_auxiliary</span></div>
@@ -572,7 +572,7 @@
                 <span class="p">)</span>
             <span class="k">if</span> <span class="n">q</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">mcs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                    <span class="s2">"inner_mc_samples is ignored for analytic acquistion functions"</span><span class="p">,</span>
+                    <span class="s2">"inner_mc_samples is ignored for analytic acquisition functions"</span><span class="p">,</span>
                     <span class="n">BotorchWarning</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="n">inner_samplers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>

@@ -1009,7 +1009,7 @@
     <span class="c1"># To this end, a second branch is necessary, depending on whether or not u is</span>
     <span class="c1"># smaller than approximately the negative inverse square root of the machine</span>
     <span class="c1"># precision. Below this point, numerical issues in computing log(1 - exp(w)) occur</span>
-    <span class="c1"># as w approches zero from below, even though the relative contribution to log_ei</span>
+    <span class="c1"># as w approaches zero from below, even though the relative contribution to log_ei</span>
     <span class="c1"># vanishes in machine precision at that point.</span>
     <span class="n">neg_inv_sqrt_eps</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1e6</span> <span class="k">if</span> <span class="n">u</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">float64</span> <span class="k">else</span> <span class="o">-</span><span class="mf">1e3</span>
 

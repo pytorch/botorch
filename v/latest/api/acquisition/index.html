@@ -73,7 +73,7 @@ been submitted for evaluation but have not yet been evaluated.</p>
 <section id="module-botorch.acquisition.cached_cholesky">
 <span id="cached-cholesky-acquisition-function-api"></span><h3>Cached Cholesky Acquisition Function API<a class="headerlink" href="#module-botorch.acquisition.cached_cholesky" title="Permalink to this heading">¶</a></h3>
 <p>Abstract class for acquisition functions leveraging a cached Cholesky
-decomposition of the posterior covaiance over f(X_baseline).</p>
+decomposition of the posterior covariance over f(X_baseline).</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.acquisition.cached_cholesky.supports_cache_root">
 <span class="sig-prename descclassname"><span class="pre">botorch.acquisition.cached_cholesky.</span></span><span class="sig-name descname"><span class="pre">supports_cache_root</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/cached_cholesky.html#supports_cache_root"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.cached_cholesky.supports_cache_root" title="Permalink to this definition">¶</a></dt>
@@ -1287,7 +1287,7 @@ efficiency for large batches.</p>
 <p>Estimates the probability of improvement over the current best observed
 value by sampling from the joint posterior distribution of the q-batch.
 MC-based estimates of a probability involves taking expectation of an
-indicator function; to support auto-differntiation, the indicator is
+indicator function; to support auto-differentiation, the indicator is
 replaced with a sigmoid function with temperature parameter <cite>tau</cite>.</p>
 <p><cite>qPI(X) = P(max Y &gt;= best_f), Y ~ f(X), X = (x_1,…,x_q)</cite></p>
 <p class="rubric">Example</p>
@@ -2056,7 +2056,7 @@ Defaults to <cite>IdentityMCMultiOutputObjective()</cite>.</p></li>
 <li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
 <cite>sample_shape x batch-shape x q x m</cite> to a Tensor of dimension
 <cite>sample_shape x batch-shape x q</cite>, where negative values imply
-feasibility. The acqusition function will compute expected feasible
+feasibility. The acquisition function will compute expected feasible
 hypervolume.</p></li>
 <li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape x m x d</cite>-dim Tensor of <cite>m</cite> design points that have
 points that have been submitted for function evaluation but have not yet
@@ -2128,7 +2128,7 @@ Defaults to <cite>IdentityMultiOutputObjective()</cite>.</p></li>
 <li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
 <cite>sample_shape x batch-shape x q x m</cite> to a Tensor of dimension
 <cite>sample_shape x batch-shape x q</cite>, where negative values imply
-feasibility. The acqusition function will compute expected feasible
+feasibility. The acquisition function will compute expected feasible
 hypervolume.</p></li>
 <li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape x m x d</cite>-dim Tensor of <cite>m</cite> design points that have
 points that have been submitted for function evaluation but have not yet
@@ -2316,7 +2316,7 @@ points <cite>x_p</cite>.</p>
 <p>Problem (a) occurs because we have to compute the variable:
 <cite>alpha = (mean(x_n) - mean(x_p)) / std(x_n - x_p)</cite>, which becomes very
 large when <cite>x_n</cite> is better than <cite>x_p</cite> with high-probability. This leads to a
-log(0) error when we compute <cite>log(1 - cdf(alpha))</cite>. We have pre-emptively
+log(0) error when we compute <cite>log(1 - cdf(alpha))</cite>. We have preemptively
 clamped some values depending on <cite>1`alpha</cite> in order to mitigate this.</p>
 <p>Problem (b) occurs because we have to compute matrix inverses for the
 two-dimensional marginals (x_n, x_p). To address this we manually add jitter
@@ -2649,7 +2649,7 @@ the current solutions of the inner optimization problem.</p>
 <cite>X_fantasies.shape = b x num_fantasies x d</cite></p>
 <p><cite>X_actual = X[…, :-num_fantasies, :]</cite>
 <cite>X_actual.shape = b x q x d</cite></p>
-<p>In addition, <cite>X</cite> may be augmented with fidelity parameteres as
+<p>In addition, <cite>X</cite> may be augmented with fidelity parameters as
 part of thee <cite>d</cite>-dimension. Projecting fidelities to the target
 fidelity is handled by <cite>project</cite>.</p>
 </p>
@@ -2711,7 +2711,7 @@ design points <cite>X</cite>.</p>
 </section>
 <section id="module-botorch.acquisition.multi_step_lookahead">
 <span id="multi-step-lookahead-acquisition-functions"></span><h3>Multi-Step Lookahead Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.multi_step_lookahead" title="Permalink to this heading">¶</a></h3>
-<p>A general implementation of multi-step look-ahead acquistion function with configurable
+<p>A general implementation of multi-step look-ahead acquisition function with configurable
 value functions. See <a class="reference internal" href="#jiang2020multistep" id="id32"><span>[Jiang2020multistep]</span></a>.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="jiang2020multistep" role="doc-biblioentry">
@@ -2800,13 +2800,13 @@ is the number of candidates jointly considered in look-ahead step
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_augmented_q_batch_size">
 <span class="sig-name descname"><span class="pre">get_augmented_q_batch_size</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_step_lookahead.html#qMultiStepLookahead.get_augmented_q_batch_size"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_augmented_q_batch_size" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get augmented q batch size for one-shot optimzation.</p>
+<dd><p>Get augmented q batch size for one-shot optimization.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>q</strong> (<em>int</em>) – The number of candidates to consider jointly.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The augmented size for one-shot optimzation (including variables
+<dd class="field-even"><p>The augmented size for one-shot optimization (including variables
 parameterizing the fantasy solutions): <cite>q_0 + f_1 q_1 + f_2 f_1 q_2 + …</cite></p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -3519,7 +3519,7 @@ Theory and applications, 2011.</p>
 <dt class="sig sig-object py" id="botorch.acquisition.preference.AnalyticExpectedUtilityOfBestOption">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.preference.</span></span><span class="sig-name descname"><span class="pre">AnalyticExpectedUtilityOfBestOption</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pref_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous_winner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/preference.html#AnalyticExpectedUtilityOfBestOption"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.preference.AnalyticExpectedUtilityOfBestOption" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.analytic.AnalyticAcquisitionFunction" title="botorch.acquisition.analytic.AnalyticAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnalyticAcquisitionFunction</span></code></a></p>
-<p>Analytic Prefential Expected Utility of Best Options, i.e., Analytical EUBO</p>
+<p>Analytic Preferential Expected Utility of Best Options, i.e., Analytical EUBO</p>
 <p>Analytic implementation of Expected Utility of the Best Option under the
 Laplace model (assumes a PairwiseGP is used as the preference model) as
 proposed in <a class="reference internal" href="#lin2022preference" id="id44"><span>[Lin2022preference]</span></a>.</p>
@@ -4019,7 +4019,7 @@ function. Given an input tensor of size
 return a <cite>Posterior</cite> object with single outcome representing the
 utility values of the input.</p></li>
 <li><p><strong>sampler</strong> – Sampler for the preference model to account for uncertainty in
-preferece when calculating the objective; it’s not the one used
+preference when calculating the objective; it’s not the one used
 in MC acquisition functions. If None,
 it uses <cite>IIDNormalSampler(sample_shape=torch.Size([1]))</cite>.</p></li>
 <li><p><strong>sample_shape</strong> (<em>Optional</em><em>[</em><em>torch.Size</em><em>]</em>) – </p></li>
@@ -4324,7 +4324,7 @@ dimension).</p>
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.objective.</span></span><span class="sig-name descname"><span class="pre">AnalyticMultiOutputObjective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#AnalyticMultiOutputObjective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
-<p>Abstract base class for multi-output analyic objectives.</p>
+<p>Abstract base class for multi-output analytic objectives.</p>
 <p>DEPRECATED - This will be removed in the next version.</p>
 <p>Initialize objective.</p>
 <dl class="field-list simple">
@@ -4424,7 +4424,7 @@ samples <cite>C = (c_1, …, c_N)</cite> from the posterior of the cost model an
 performs the inverse weighting on the sample level:
 <cite>weighted utility = mean(u_1 / c_1, …, u_N / c_N)</cite>.</p>
 <p>The cost is additive across multiple elements of a q-batch.</p>
-<p>Cost-aware utility that weights increase in utiltiy by inverse cost.</p>
+<p>Cost-aware utility that weights increase in utility by inverse cost.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -4445,7 +4445,7 @@ too close to zero, which may cause numerical issues.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The inverse-cost-weighted utiltiy.</p>
+<dd class="field-even"><p>The inverse-cost-weighted utility.</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -5093,7 +5093,7 @@ instead of sampling from the model, these are used.</p></li>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MARS.baseline_Y">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">baseline_Y</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MARS.baseline_Y" title="Permalink to this definition">¶</a></dt>
-<dd><p>Baseline outcomes used indetermining the normalization bounds.</p>
+<dd><p>Baseline outcomes used in determining the normalization bounds.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MARS.chebyshev_objective">
@@ -5107,7 +5107,7 @@ instead of sampling from the model, these are used.</p></li>
 <h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this heading">¶</a></h2>
 <section id="module-botorch.acquisition.fixed_feature">
 <span id="fixed-feature-acquisition-function"></span><h3>Fixed Feature Acquisition Function<a class="headerlink" href="#module-botorch.acquisition.fixed_feature" title="Permalink to this heading">¶</a></h3>
-<p>A wrapper around AquisitionFunctions to fix certain features for optimization.
+<p>A wrapper around AcquisitionFunctions to fix certain features for optimization.
 This is useful e.g. for performing contextual optimization.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.acquisition.fixed_feature.get_dtype_of_sequence">
@@ -5142,7 +5142,7 @@ otherwise.</p>
 <dt class="sig sig-object py" id="botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.fixed_feature.</span></span><span class="sig-name descname"><span class="pre">FixedFeatureAcquisitionFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/fixed_feature.html#FixedFeatureAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></p>
-<p>A wrapper around AquisitionFunctions to fix a subset of features.</p>
+<p>A wrapper around AcquisitionFunctions to fix a subset of features.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>  <span class="c1"># d = 5</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">qEI</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">best_f</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
@@ -5201,7 +5201,7 @@ constructors programmatically from a consistent input format.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.acquisition.input_constructors.get_acqf_input_constructor">
 <span class="sig-prename descclassname"><span class="pre">botorch.acquisition.input_constructors.</span></span><span class="sig-name descname"><span class="pre">get_acqf_input_constructor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acqf_cls</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/input_constructors.html#get_acqf_input_constructor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.input_constructors.get_acqf_input_constructor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get acqusition function input constructor from registry.</p>
+<dd><p>Get acquisition function input constructor from registry.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>acqf_cls</strong> (<em>Type</em><em>[</em><em>AcquisitionFunction</em><em>]</em>) – The AcquisitionFunction class (not instance) for which
@@ -6282,7 +6282,7 @@ The first dimension corresponds to the dimension of MC samples.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.penalized.</span></span><span class="sig-name descname"><span class="pre">PenalizedMCObjective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objective</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalty_objective</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization_parameter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expand_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#PenalizedMCObjective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.penalized.PenalizedMCObjective" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.objective.GenericMCObjective" title="botorch.acquisition.objective.GenericMCObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericMCObjective</span></code></a></p>
 <p>Penalized MC objective.</p>
-<p>Allows to construct a penaltized MC-objective by adding a penalty term to
+<p>Allows to construct a penalized MC-objective by adding a penalty term to
 the original objective.</p>
 <blockquote>
 <div><p>mc_acq(X) = objective(X) + penalty_objective(X)</p>
