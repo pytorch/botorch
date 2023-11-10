@@ -484,8 +484,36 @@ def _make_f_and_grad_nonlinear_inequality_constraints(
     return f_obj, f_grad
 
 
+def nonlinear_constraint_is_fulfilled(
+    nonlinear_inequality_constraint: Callable, intra: bool, x: Tensor
+) -> bool:
+    """Checks if a nonlinear inequality constraint is fulfilled.
+
+    Args:
+        nonlinear_inequality_constraint (Callable): Callable to evaluate the
+            constraint.
+        intra (bool): If True, the constraint is an intra-point constraint that
+            is applied pointwise and is broadcasted over the q-batch. Else, the
+            constraint has to evaluated over the whole q-batch.
+        x (Tensor): Tensor of shape (b x q x d).
+
+    Returns:
+        bool: True if the constraint is fulfilled, else False.
+    """
+    if not intra:  # this is an interpoint constraint
+        if _arrayify(nonlinear_inequality_constraint(x)).item() < NLC_TOL:
+            return False
+    else:  # this is an intrapoint constraint
+        b, q, _ = x.shape
+        for i in range(b):  # b is in current implementation always 1
+            for j in range(q):
+                if _arrayify(nonlinear_inequality_constraint(x[i, j])).item() < NLC_TOL:
+                    return False
+    return True
+
+
 def make_scipy_nonlinear_inequality_constraints(
-    nonlinear_inequality_constraints: List[Callable],
+    nonlinear_inequality_constraints: List[Tuple[Callable, bool]],
     f_np_wrapper: Callable,
     x0: Tensor,
     shapeX: torch.Size,
@@ -521,9 +549,7 @@ def make_scipy_nonlinear_inequality_constraints(
                 f"got length {len(nlc)}."
             )
 
-        # TODO: not sure about this on this position, has to be applied later
-        # from my perspective
-        if _arrayify(nlc[0](x0)).item() < NLC_TOL:
+        if not nonlinear_constraint_is_fulfilled(nlc[0], nlc[1], x0.reshape(shapeX)):
             raise ValueError(
                 "`batch_initial_conditions` must satisfy the non-linear inequality "
                 "constraints."
@@ -532,15 +558,4 @@ def make_scipy_nonlinear_inequality_constraints(
         scipy_nonlinear_inequality_constraints += _make_nonlinear_constraints(
             f_np_wrapper=f_np_wrapper, nlc=nlc[0], intra=nlc[1], shapeX=shapeX
         )
-
-        # f_obj, f_grad = _make_f_and_grad_nonlinear_inequality_constraints(
-        #     f_np_wrapper=f_np_wrapper, nlc=nlc
-        # )
-        # scipy_nonlinear_inequality_constraints.append(
-        #     {
-        #         "type": "ineq",
-        #         "fun": f_obj,
-        #         "jac": f_grad,
-        #     }
-        # )
     return scipy_nonlinear_inequality_constraints

@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from itertools import product
+from typing import Callable
 
 import numpy as np
 import torch
@@ -16,8 +17,11 @@ from botorch.optim.parameter_constraints import (
     _make_linear_constraints,
     eval_lin_constraint,
     lin_constraint_jac,
+    _make_nonlinear_constraints,
     make_scipy_bounds,
     make_scipy_linear_constraints,
+    make_scipy_nonlinear_inequality_constraints,
+    nonlinear_constraint_is_fulfilled,
 )
 from botorch.utils.testing import BotorchTestCase
 from scipy.optimize import Bounds
@@ -46,6 +50,118 @@ class TestParameterConstraints(BotorchTestCase):
             dummy_array, flat_idxr=[0, 2], coeffs=np.array([1.0, -2.0]), n=3
         )
         self.assertTrue(all(np.equal(res, np.array([1.0, 0.0, -2.0]))))
+
+    def test_make_nonlinear_constraints(self):
+        def nlc(x):
+            return 4 - x.sum()
+
+        def f_np_wrapper(x: np.ndarray, f: Callable):
+            """Given a torch callable, compute value + grad given a numpy array."""
+            X = (
+                torch.from_numpy(x)
+                .to(self.device)
+                .view(shapeX)
+                .contiguous()
+                .requires_grad_(True)
+            )
+            loss = f(X).sum()
+            # compute gradient w.r.t. the inputs (does not accumulate in leaves)
+            gradf = _arrayify(torch.autograd.grad(loss, X)[0].contiguous().view(-1))
+            fval = loss.item()
+            return fval, gradf
+
+        shapeX = torch.Size((1, 2, 4))
+        x = np.random.rand(shapeX.numel())
+        # intra
+        constraints = _make_nonlinear_constraints(
+            f_np_wrapper=f_np_wrapper, nlc=nlc, intra=True, shapeX=shapeX
+        )
+        self.assertEqual(len(constraints), 2)
+        self.assertTrue(
+            all(set(c.keys()) == {"fun", "jac", "type"} for c in constraints)
+        )
+        self.assertTrue(all(c["type"] == "ineq" for c in constraints))
+        self.assertEqual(constraints[0]["fun"](x), 4.0 - x[:4].sum())
+        self.assertEqual(constraints[1]["fun"](x), 4.0 - x[4:].sum())
+        jac_exp = np.zeros(shapeX.numel())
+        jac_exp[:4] = -1
+        self.assertTrue(np.allclose(constraints[0]["jac"](x), jac_exp))
+        jac_exp = np.zeros(shapeX.numel())
+        jac_exp[4:] = -1
+        self.assertTrue(np.allclose(constraints[1]["jac"](x), jac_exp))
+        # inter
+        constraints = _make_nonlinear_constraints(
+            f_np_wrapper=f_np_wrapper, nlc=nlc, intra=False, shapeX=shapeX
+        )
+        self.assertEqual(len(constraints), 1)
+        self.assertTrue(
+            all(set(c.keys()) == {"fun", "jac", "type"} for c in constraints)
+        )
+        self.assertTrue(all(c["type"] == "ineq" for c in constraints))
+        self.assertTrue(np.allclose(constraints[0]["fun"](x), 4.0 - x.sum()))
+        jac_exp = np.ones(shapeX.numel()) * -1.0
+        self.assertTrue(np.allclose(constraints[0]["jac"](x), jac_exp))
+
+    def test_make_scipy_nonlinear_inequality_constraints(self):
+        def nlc(x):
+            return 4 - x.sum()
+
+        def f_np_wrapper(x: np.ndarray, f: Callable):
+            """Given a torch callable, compute value + grad given a numpy array."""
+            X = (
+                torch.from_numpy(x)
+                .to(self.device)
+                .view(shapeX)
+                .contiguous()
+                .requires_grad_(True)
+            )
+            loss = f(X).sum()
+            # compute gradient w.r.t. the inputs (does not accumulate in leaves)
+            gradf = _arrayify(torch.autograd.grad(loss, X)[0].contiguous().view(-1))
+            fval = loss.item()
+            return fval, gradf
+
+        shapeX = torch.Size((1, 2, 4))
+        x = torch.ones(shapeX.numel(), device=self.device)
+
+        with self.assertRaisesRegex(
+            ValueError, f"A nonlinear constraint has to be a tuple, got {type(nlc)}."
+        ):
+            make_scipy_nonlinear_inequality_constraints([nlc], f_np_wrapper, x, shapeX)
+        with self.assertRaisesRegex(
+            ValueError,
+            "A nonlinear constraint has to be a tuple of length 2, got length 1.",
+        ):
+            make_scipy_nonlinear_inequality_constraints(
+                [(nlc,)], f_np_wrapper, x, shapeX
+            )
+        with self.assertRaisesRegex(
+            ValueError,
+            "`batch_initial_conditions` must satisfy the non-linear inequality "
+            "constraints.",
+        ):
+            make_scipy_nonlinear_inequality_constraints(
+                [(nlc, False)], f_np_wrapper, x, shapeX
+            )
+        # empty list
+        res = make_scipy_nonlinear_inequality_constraints([], f_np_wrapper, x, shapeX)
+        self.assertEqual(res, [])
+        # only inter
+        x = torch.zeros(shapeX.numel(), device=self.device)
+        res = make_scipy_nonlinear_inequality_constraints(
+            [(nlc, False)], f_np_wrapper, x, shapeX
+        )
+        self.assertEqual(len(res), 1)
+        # only intra
+        res = make_scipy_nonlinear_inequality_constraints(
+            [(nlc, True)], f_np_wrapper, x, shapeX
+        )
+        self.assertEqual(len(res), 2)
+        # intra and inter
+        res = make_scipy_nonlinear_inequality_constraints(
+            [(nlc, True), (nlc, False)], f_np_wrapper, x, shapeX
+        )
+        self.assertEqual(len(res), 3)
 
     def test_make_linear_constraints(self):
         # equality constraints, 1d indices
@@ -215,6 +331,35 @@ class TestParameterConstraints(BotorchTestCase):
                 inequality_constraints=[(indices, coefficients, 1.0)],
                 equality_constraints=[(indices, coefficients, 1.0)],
             )
+
+    def test_nonlinear_constraint_is_fulfilled(self):
+        def nlc(x):
+            return 4 - x.sum()
+
+        self.assertTrue(
+            nonlinear_constraint_is_fulfilled(
+                nlc, True, torch.tensor([[[1.5, 1.5], [1.5, 1.5]]], device=self.device)
+            )
+        )
+        self.assertFalse(
+            nonlinear_constraint_is_fulfilled(
+                nlc,
+                True,
+                torch.tensor(
+                    [[[1.5, 1.5], [1.5, 1.5], [3.5, 1.5]]], device=self.device
+                ),
+            )
+        )
+        self.assertTrue(
+            nonlinear_constraint_is_fulfilled(
+                nlc, False, torch.tensor([[[1.0, 1.0], [1.0, 1.0]]], device=self.device)
+            )
+        )
+        self.assertFalse(
+            nonlinear_constraint_is_fulfilled(
+                nlc, False, torch.tensor([[[1.5, 1.5], [1.5, 1.5]]], device=self.device)
+            )
+        )
 
     def test_generate_unfixed_nonlin_constraints(self):
         def nlc1(x):

@@ -29,7 +29,7 @@ from botorch.optim.parameter_constraints import (
     make_scipy_bounds,
     make_scipy_linear_constraints,
     make_scipy_nonlinear_inequality_constraints,
-    NLC_TOL,
+    nonlinear_constraint_is_fulfilled,
 )
 from botorch.optim.stopping import ExpMAStoppingCriterion
 from botorch.optim.utils import columnwise_clamp, fix_features
@@ -260,16 +260,17 @@ def gen_candidates_scipy(
     # SLSQP sometimes fails in the line search or may just fail to find a feasible
     # candidate in which case we just return the starting point. This happens rarely,
     # so it shouldn't be an issue given enough restarts.
-    # TODO: this needs to be updated with the two options
-    if nonlinear_inequality_constraints and any(
-        constraint[0](candidates.view(-1)) < NLC_TOL
-        for constraint in nonlinear_inequality_constraints
-    ):
-        candidates = torch.from_numpy(x0).to(candidates).reshape(shapeX)
-        warnings.warn(
-            "SLSQP failed to converge to a solution the satisfies the non-linear "
-            "constraints. Returning the feasible starting point."
-        )
+    if nonlinear_inequality_constraints:
+        for constraint in nonlinear_inequality_constraints:
+            if not nonlinear_constraint_is_fulfilled(
+                constraint[0], constraint[1], candidates
+            ):
+                candidates = torch.from_numpy(x0).to(candidates).reshape(shapeX)
+                warnings.warn(
+                    "SLSQP failed to converge to a solution the satisfies the non-linear "
+                    "constraints. Returning the feasible starting point."
+                )
+                break
 
     clamped_candidates = columnwise_clamp(
         X=candidates, lower=lower_bounds, upper=upper_bounds, raise_on_violation=True
