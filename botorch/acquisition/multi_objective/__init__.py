@@ -8,6 +8,10 @@ from botorch.acquisition.multi_objective.analytic import (
     ExpectedHypervolumeImprovement,
     MultiObjectiveAnalyticAcquisitionFunction,
 )
+from botorch.acquisition.multi_objective.hypervolume_knowledge_gradient import (
+    qHypervolumeKnowledgeGradient,
+    qMultiFidelityHypervolumeKnowledgeGradient,
+)
 from botorch.acquisition.multi_objective.max_value_entropy_search import (
     qMultiObjectiveMaxValueEntropy,
 )
@@ -35,6 +39,8 @@ __all__ = [
     "get_default_partitioning_alpha",
     "prune_inferior_points_multi_objective",
     "qExpectedHypervolumeImprovement",
+    "qHypervolumeKnowledgeGradient",
+    "qMultiFidelityHypervolumeKnowledgeGradient",
     "qNoisyExpectedHypervolumeImprovement",
     "MOMF",
     "qMultiObjectiveMaxValueEntropy",
