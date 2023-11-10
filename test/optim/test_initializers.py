@@ -20,6 +20,10 @@ from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
     qNoisyExpectedImprovement,
 )
+from botorch.acquisition.multi_objective.hypervolume_knowledge_gradient import (
+    qHypervolumeKnowledgeGradient,
+    qMultiFidelityHypervolumeKnowledgeGradient,
+)
 from botorch.acquisition.multi_objective.monte_carlo import (
     qNoisyExpectedHypervolumeImprovement,
 )
@@ -27,9 +31,11 @@ from botorch.exceptions import BadInitialCandidatesWarning, SamplingWarning
 from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning
 from botorch.models import SingleTaskGP
+from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.optim import initialize_q_batch, initialize_q_batch_nonneg
 from botorch.optim.initializers import (
     gen_batch_initial_conditions,
+    gen_one_shot_hvkg_initial_conditions,
     gen_one_shot_kg_initial_conditions,
     gen_value_function_initial_conditions,
     sample_perturbed_subset_dims,
@@ -808,6 +814,88 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                 options={"sample_around_best": True},
             )
 
+    def test_gen_batch_initial_conditions_fixed_X_fantasies(self):
+        bounds = torch.stack([torch.zeros(2), torch.ones(2)])
+        mock_acqf = MockAcquisitionFunction()
+        mock_acqf.objective = lambda y: y.squeeze(-1)
+        for dtype in (torch.float, torch.double):
+            bounds = bounds.to(device=self.device, dtype=dtype)
+            mock_acqf.X_baseline = bounds  # for testing sample_around_best
+            mock_acqf.model = MockModel(MockPosterior(mean=bounds[:, :1]))
+            fixed_X_fantasies = torch.rand(3, 2, dtype=dtype, device=self.device)
+            for nonnegative, seed, init_batch_limit, ffs, sample_around_best in product(
+                [True, False], [None, 1234], [None, 1], [None, {0: 0.5}], [True, False]
+            ):
+                with mock.patch.object(
+                    MockAcquisitionFunction,
+                    "__call__",
+                    wraps=mock_acqf.__call__,
+                ) as mock_acqf_call:
+                    batch_initial_conditions = gen_batch_initial_conditions(
+                        acq_function=mock_acqf,
+                        bounds=bounds,
+                        q=1,
+                        num_restarts=2,
+                        raw_samples=10,
+                        fixed_features=ffs,
+                        options={
+                            "nonnegative": nonnegative,
+                            "eta": 0.01,
+                            "alpha": 0.1,
+                            "seed": seed,
+                            "init_batch_limit": init_batch_limit,
+                            "sample_around_best": sample_around_best,
+                        },
+                        fixed_X_fantasies=fixed_X_fantasies,
+                    )
+                    expected_shape = torch.Size([2, 4, 2])
+                    self.assertEqual(batch_initial_conditions.shape, expected_shape)
+                    self.assertEqual(batch_initial_conditions.device, bounds.device)
+                    self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
+                    self.assertLess(
+                        _get_max_violation_of_bounds(batch_initial_conditions, bounds),
+                        1e-6,
+                    )
+                    batch_shape = (
+                        torch.Size([])
+                        if init_batch_limit is None
+                        else torch.Size([init_batch_limit])
+                    )
+                    raw_samps = mock_acqf_call.call_args[0][0]
+                    batch_shape = (
+                        torch.Size([20 if sample_around_best else 10])
+                        if init_batch_limit is None
+                        else torch.Size([init_batch_limit])
+                    )
+                    expected_raw_samps_shape = batch_shape + torch.Size([4, 2])
+                    self.assertEqual(raw_samps.shape, expected_raw_samps_shape)
+
+                    if ffs is not None:
+                        for idx, val in ffs.items():
+                            self.assertTrue(
+                                torch.all(batch_initial_conditions[..., 0, idx] == val)
+                            )
+                    self.assertTrue(
+                        torch.equal(
+                            batch_initial_conditions[:, 1:],
+                            fixed_X_fantasies.unsqueeze(0).expand(2, 3, 2),
+                        )
+                    )
+        # test wrong shape
+        msg = (
+            "`fixed_X_fantasies` and `bounds` must both have the same trailing"
+            " dimension `d`, but have 3 and 2, respectively."
+        )
+        with self.assertRaisesRegex(BotorchTensorDimensionError, msg):
+            gen_batch_initial_conditions(
+                acq_function=mock_acqf,
+                bounds=bounds,
+                q=1,
+                num_restarts=2,
+                raw_samples=10,
+                fixed_X_fantasies=torch.rand(3, 3, dtype=dtype, device=self.device),
+            )
+
 
 class TestGenOneShotKGInitialConditions(BotorchTestCase):
     def test_gen_one_shot_kg_initial_conditions(self):
@@ -863,6 +951,115 @@ class TestGenOneShotKGInitialConditions(BotorchTestCase):
                     )
                 )
                 self.assertTrue(torch.all(ics[..., -n_value:, :] == 1))
+
+
+class TestGenOneShotHVKGInitialConditions(BotorchTestCase):
+    def test_gen_one_shot_hvkg_initial_conditions(self):
+        num_fantasies = 8
+        num_restarts = 4
+        raw_samples = 16
+        tkwargs = {"device": self.device}
+        for dtype in (torch.float, torch.double):
+            tkwargs["dtype"] = dtype
+            X = torch.rand(4, 2, **tkwargs)
+            Y1 = torch.rand(4, 1, **tkwargs)
+            Y2 = torch.rand(4, 1, **tkwargs)
+            m1 = SingleTaskGP(X, Y1)
+            m2 = SingleTaskGP(X, Y2)
+            model = ModelListGP(m1, m2)
+            for acqf_class in (
+                qHypervolumeKnowledgeGradient,
+                qMultiFidelityHypervolumeKnowledgeGradient,
+            ):
+                is_mf_kg = acqf_class is qMultiFidelityHypervolumeKnowledgeGradient
+                mf_kwargs = {"target_fidelities": {1: 1.0}} if is_mf_kg else {}
+                hvkg = acqf_class(
+                    model=model,
+                    ref_point=torch.zeros(2, **tkwargs),
+                    num_fantasies=num_fantasies,
+                    **mf_kwargs,
+                )
+                bounds = torch.tensor([[0, 0], [1, 1]], device=self.device, dtype=dtype)
+                # test option error
+                with self.assertRaises(ValueError):
+                    gen_one_shot_hvkg_initial_conditions(
+                        acq_function=hvkg,
+                        bounds=bounds,
+                        q=1,
+                        num_restarts=num_restarts,
+                        raw_samples=raw_samples,
+                        options={"frac_random": 2.0},
+                    )
+                # test generation logic
+                q = 2
+                mock_fantasy_cands = torch.ones(20, 10, 2)
+                mock_fantasy_vals = torch.randn(20)
+
+                def mock_gen_ics(*args, **kwargs):
+                    fixed_X_fantasies = kwargs.get("fixed_X_fantasies")
+                    if fixed_X_fantasies is None:
+                        return torch.rand(
+                            kwargs["num_restarts"], q + hvkg.num_pseudo_points, 2
+                        )
+                    rand_candidates = torch.rand(
+                        1,
+                        q,
+                        2,
+                        dtype=fixed_X_fantasies.dtype,
+                        device=fixed_X_fantasies.device,
+                    )
+                    return torch.cat(
+                        [
+                            rand_candidates,
+                            fixed_X_fantasies.unsqueeze(0),
+                        ],
+                        dim=-2,
+                    )
+
+                for frac_random in (0.1, 0.5, 0.99):
+                    with ExitStack() as es:
+                        mock_gbics = es.enter_context(
+                            mock.patch(
+                                (
+                                    "botorch.optim.initializers."
+                                    "gen_batch_initial_conditions"
+                                ),
+                                wraps=mock_gen_ics,
+                            )
+                        )
+                        mock_optacqf = es.enter_context(
+                            mock.patch(
+                                "botorch.optim.optimize.optimize_acqf",
+                                return_value=(
+                                    mock_fantasy_cands[..., :1]
+                                    if is_mf_kg
+                                    else mock_fantasy_cands,
+                                    mock_fantasy_vals,
+                                ),
+                            )
+                        )
+                        ics = gen_one_shot_hvkg_initial_conditions(
+                            acq_function=hvkg,
+                            bounds=bounds,
+                            q=q,
+                            num_restarts=num_restarts,
+                            raw_samples=raw_samples,
+                            options={"frac_random": frac_random},
+                        )
+                        if frac_random == 0.5:
+                            expected_call_count = 3
+                        elif frac_random == 0.99:
+                            expected_call_count = 1
+                        else:
+                            expected_call_count = 4
+                        self.assertEqual(mock_gbics.call_count, expected_call_count)
+                        mock_optacqf.assert_called_once()
+                        n_value = int(round((1 - frac_random) * num_restarts))
+                        # check that there are the expected number of optimized points
+                        self.assertTrue(
+                            (ics == 1).all(dim=-1).sum()
+                            == n_value * hvkg.num_pseudo_points
+                        )
 
 
 class TestGenValueFunctionInitialConditions(BotorchTestCase):
