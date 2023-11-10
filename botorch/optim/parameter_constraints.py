@@ -332,13 +332,7 @@ def _make_nonlinear_constraints(
                     f_np_wrapper=f_np_wrapper,
                     nlc=get_intrapoint_constraint(b=i, q=j, nlc=nlc),
                 )
-                constraints.append(
-                    {
-                        "type": "ineq",
-                        "fun": f_obj,
-                        "jac": f_grad,
-                    }
-                )
+                constraints.append({"type": "ineq", "fun": f_obj, "jac": f_grad})
     else:
         for i in range(b):
             f_obj, f_grad = _make_f_and_grad_nonlinear_inequality_constraints(
