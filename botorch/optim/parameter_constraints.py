@@ -543,24 +543,24 @@ def make_scipy_nonlinear_inequality_constraints(
     """
 
     scipy_nonlinear_inequality_constraints = []
-    for nlc in nonlinear_inequality_constraints:
-        if not isinstance(nlc, tuple):
+    for constraint in nonlinear_inequality_constraints:
+        if not isinstance(constraint, tuple):
             raise ValueError(
-                f"A nonlinear constraint has to be a tuple, got {type(nlc)}."
+                f"A nonlinear constraint has to be a tuple, got {type(constraint)}."
             )
-        if len(nlc) != 2:
+        if len(constraint) != 2:
             raise ValueError(
                 "A nonlinear constraint has to be a tuple of length 2, "
-                f"got length {len(nlc)}."
+                f"got length {len(constraint)}."
             )
-
-        if not nonlinear_constraint_is_fulfilled(nlc[0], nlc[1], x0.reshape(shapeX)):
+        nlc, is_intra = constraint
+        if not nonlinear_constraint_is_fulfilled(nlc, is_intra, x0.reshape(shapeX)):
             raise ValueError(
                 "`batch_initial_conditions` must satisfy the non-linear inequality "
                 "constraints."
             )
 
         scipy_nonlinear_inequality_constraints += _make_nonlinear_constraints(
-            f_np_wrapper=f_np_wrapper, nlc=nlc[0], intra=nlc[1], shapeX=shapeX
+            f_np_wrapper=f_np_wrapper, nlc=nlc, intra=is_intra, shapeX=shapeX
         )
     return scipy_nonlinear_inequality_constraints
