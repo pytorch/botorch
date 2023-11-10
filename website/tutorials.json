@@ -67,6 +67,10 @@
     {
       "id": "robust_multi_objective_bo",
       "title": "Robust multi-objective Bayesian optimization under input noise"
+    },
+    {
+      "id": "decoupled_mobo",
+      "title": "Multi-objective Bayesian optimization with decoupled evaluations"
     }
   ],
   "Bite-Sized Tutorials": [
