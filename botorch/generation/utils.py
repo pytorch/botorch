@@ -11,13 +11,13 @@ from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
-from torch import Tensor
 
 from botorch.acquisition import AcquisitionFunction, FixedFeatureAcquisitionFunction
 from botorch.optim.parameter_constraints import (
     _generate_unfixed_lin_constraints,
     _generate_unfixed_nonlin_constraints,
 )
+from torch import Tensor
 
 
 def _convert_nonlinear_inequality_constraints(
