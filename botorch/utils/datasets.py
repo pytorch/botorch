@@ -280,6 +280,10 @@ class MultiTaskDataset(SupervisedDataset):
     """This is a multi-task dataset that is constructed from the datasets of
     individual tasks. It offers functionality to combine parts of individual
     datasets to construct the inputs necessary for the `MultiTaskGP` models.
+
+    The datasets of individual tasks are allowed to represent different sets
+    of features. When there are heterogeneous feature sets, calling
+    `MultiTaskDataset.X` will result in an error.
     """
 
     def __init__(
@@ -308,6 +312,11 @@ class MultiTaskDataset(SupervisedDataset):
         self._validate_datasets(datasets=datasets)
         self.feature_names = self.datasets[target_outcome_name].feature_names
         self.outcome_names = [target_outcome_name]
+
+        # Check if the datasets have identical feature sets.
+        self.has_heterogeneous_features = any(
+            datasets[0].feature_names != ds.feature_names for ds in datasets[1:]
+        )
 
     @classmethod
     def from_joint_dataset(
@@ -427,6 +436,11 @@ class MultiTaskDataset(SupervisedDataset):
         If appending the task features, 0 is reserved for the target task and the
         remaining tasks are populated with 1, 2, ..., len(datasets) - 1.
         """
+        if self.has_heterogeneous_features:
+            raise UnsupportedError(
+                "Concatenating `X`s from datasets with heterogeneous feature sets "
+                "is not supported."
+            )
         all_Xs = []
         next_task = 1
         for outcome, ds in self.datasets.items():
