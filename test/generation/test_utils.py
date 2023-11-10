@@ -9,6 +9,7 @@ from __future__ import annotations
 from itertools import product
 
 import torch
+
 from botorch.acquisition import FixedFeatureAcquisitionFunction
 from botorch.generation.utils import (
     _convert_nonlinear_inequality_constraints,
@@ -29,7 +30,8 @@ class TestGenerationUtils(BotorchTestCase):
                 return x[..., 3]
 
             nlcs = [nlc]
-            new_nlcs = _convert_nonlinear_inequality_constraints(nlcs)
+            with self.assertWarns(DeprecationWarning):
+                new_nlcs = _convert_nonlinear_inequality_constraints(nlcs)
             self.assertEqual(new_nlcs, [(nlc, True)])
 
             nlcs = [(nlc, False)]
@@ -37,7 +39,8 @@ class TestGenerationUtils(BotorchTestCase):
             self.assertEqual(new_nlcs, [(nlc, False)])
 
             nlcs = [(nlc, False), nlc2]
-            new_nlcs = _convert_nonlinear_inequality_constraints(nlcs)
+            with self.assertWarns(DeprecationWarning):
+                new_nlcs = _convert_nonlinear_inequality_constraints(nlcs)
             self.assertEqual(new_nlcs, [(nlc, False), (nlc2, True)])
 
     def test_flip_sub_unique(self):

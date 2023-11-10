@@ -6,16 +6,18 @@
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
+from torch import Tensor
+
 from botorch.acquisition import AcquisitionFunction, FixedFeatureAcquisitionFunction
 from botorch.optim.parameter_constraints import (
     _generate_unfixed_lin_constraints,
     _generate_unfixed_nonlin_constraints,
 )
-from torch import Tensor
 
 
 def _convert_nonlinear_inequality_constraints(
@@ -34,8 +36,14 @@ def _convert_nonlinear_inequality_constraints(
     # return nonlinear_inequality_constraints
     for nlc in nonlinear_inequality_constraints:
         if callable(nlc):
-            # old style --> covert
+            # old style --> convert
             nlcs.append((nlc, True))
+            warnings.warn(
+                "The `nonlinear_inequality_constraints` argument is expected "
+                "take a list of tuples. Passing a list of callables "
+                "will result in an error in future versions.",
+                DeprecationWarning,
+            )
         else:
             nlcs.append(nlc)
 
