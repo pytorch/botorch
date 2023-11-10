@@ -267,8 +267,8 @@ def gen_candidates_scipy(
             ):
                 candidates = torch.from_numpy(x0).to(candidates).reshape(shapeX)
                 warnings.warn(
-                    "SLSQP failed to converge to a solution the satisfies the non-linear "
-                    "constraints. Returning the feasible starting point."
+                    "SLSQP failed to converge to a solution the satisfies the "
+                    "non-linear constraints. Returning the feasible starting point."
                 )
                 break
 
