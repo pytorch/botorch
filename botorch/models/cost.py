@@ -86,3 +86,40 @@ class AffineFidelityCostModel(DeterministicModel):
             "...f,f", X[..., self.fidelity_dims], self.weights.to(X)
         )
         return self.fixed_cost + lin_cost.unsqueeze(-1)
+
+
+class FixedCostModel(DeterministicModel):
+    r"""Deterministic, fixed cost model.
+
+    For each (q-batch) element of a candidate set `X`, this module computes a
+    fixed cost per objective.
+    """
+
+    def __init__(
+        self,
+        fixed_cost: Tensor,
+    ) -> None:
+        r"""
+        Args:
+            fixed_cost: A `m`-dim tensor containing the fixed cost of evaluating each
+                objective.
+        """
+        super().__init__()
+        self.register_buffer("fixed_cost", fixed_cost)
+        self._num_outputs = fixed_cost.shape[-1]
+
+    def forward(self, X: Tensor) -> Tensor:
+        r"""Evaluate the cost on a candidate set X.
+
+        Computes the fixed cost of evaluating each objective for each element
+        of the q-batch.
+
+        Args:
+            X: A `batch_shape x q x d'`-dim tensor of candidate points.
+
+        Returns:
+            A `batch_shape x q x m`-dim tensor of costs.
+        """
+        view_shape = [1] * (X.ndim - 1) + [self._num_outputs]
+        expand_shape = X.shape[:-1] + torch.Size([self._num_outputs])
+        return self.fixed_cost.view(view_shape).expand(expand_shape)
