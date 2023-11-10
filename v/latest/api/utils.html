@@ -429,6 +429,9 @@ Will be removed in a future release (~v0.11).</p>
 <p>This is a multi-task dataset that is constructed from the datasets of
 individual tasks. It offers functionality to combine parts of individual
 datasets to construct the inputs necessary for the <cite>MultiTaskGP</cite> models.</p>
+<p>The datasets of individual tasks are allowed to represent different sets
+of features. When there are heterogeneous feature sets, calling
+<cite>MultiTaskDataset.X</cite> will result in an error.</p>
 <p>Construct a <cite>MultiTaskDataset</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>

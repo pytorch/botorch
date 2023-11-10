@@ -303,6 +303,10 @@
 <span class="w">    </span><span class="sd">"""This is a multi-task dataset that is constructed from the datasets of</span>
 <span class="sd">    individual tasks. It offers functionality to combine parts of individual</span>
 <span class="sd">    datasets to construct the inputs necessary for the `MultiTaskGP` models.</span>
+
+<span class="sd">    The datasets of individual tasks are allowed to represent different sets</span>
+<span class="sd">    of features. When there are heterogeneous feature sets, calling</span>
+<span class="sd">    `MultiTaskDataset.X` will result in an error.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -331,6 +335,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_datasets</span><span class="p">(</span><span class="n">datasets</span><span class="o">=</span><span class="n">datasets</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">feature_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="n">target_outcome_name</span><span class="p">]</span><span class="o">.</span><span class="n">feature_names</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">outcome_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">target_outcome_name</span><span class="p">]</span>
+
+        <span class="c1"># Check if the datasets have identical feature sets.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">has_heterogeneous_features</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="n">datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">feature_names</span> <span class="o">!=</span> <span class="n">ds</span><span class="o">.</span><span class="n">feature_names</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="p">)</span>
 
 <div class="viewcode-block" id="MultiTaskDataset.from_joint_dataset"><a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.MultiTaskDataset.from_joint_dataset">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">from_joint_dataset</span><span class="p">(</span>
@@ -450,6 +459,11 @@
 <span class="sd">        If appending the task features, 0 is reserved for the target task and the</span>
 <span class="sd">        remaining tasks are populated with 1, 2, ..., len(datasets) - 1.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_heterogeneous_features</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                <span class="s2">"Concatenating `X`s from datasets with heterogeneous feature sets "</span>
+                <span class="s2">"is not supported."</span>
+            <span class="p">)</span>
         <span class="n">all_Xs</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">next_task</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="k">for</span> <span class="n">outcome</span><span class="p">,</span> <span class="n">ds</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
