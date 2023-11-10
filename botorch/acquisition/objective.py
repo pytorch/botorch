@@ -30,6 +30,8 @@ if TYPE_CHECKING:
     from botorch.posteriors.posterior import Posterior  # pragma: no cover
     from botorch.posteriors.posterior_list import PosteriorList  # pragma: no cover
 
+DEFAULT_NUM_PREF_SAMPLES = 16
+
 
 class PosteriorTransform(Module, ABC):
     r"""
@@ -554,13 +556,18 @@ class LearnedObjective(MCAcquisitionObjective):
         Args:
             pref_model: A BoTorch model, which models the latent preference/utility
                 function. Given an input tensor of size
-                `sample_size x batch_shape x N x d`, its `posterior` method should
+                `sample_size x batch_shape x q x d`, its `posterior` method should
                 return a `Posterior` object with single outcome representing the
                 utility values of the input.
-            sampler: Sampler for the preference model to account for uncertainty in
-                preference when calculating the objective; it's not the one used
-                in MC acquisition functions. If None,
-                it uses `IIDNormalSampler(sample_shape=torch.Size([1]))`.
+            sample_shape: Determines the number of preference-model samples drawn
+                *per outcome-model sample* when the `LearnedObjective` is called.
+                Note that this is an additional layer of sampling relative to what
+                is needed when evaluating most MC acquisition functions in order to
+                account for uncertainty in the preference model. If `None`, it will
+                default to `torch.Size([16])`, so that 16 samples will be drawn
+                from the preference model at each outcome sample. This number is
+                relatively high because sampling from the preference model is general
+                cheap relative to generating the outcome model posterior.
         """
         super().__init__()
         self.pref_model = pref_model
@@ -569,7 +576,11 @@ class LearnedObjective(MCAcquisitionObjective):
             self.sampler = None
         else:
             if sample_shape is None:
-                sample_shape = torch.Size([1])
+                sample_shape = torch.Size([DEFAULT_NUM_PREF_SAMPLES])
+            # using an IIDNormalSampler instead of a SobolQMCNormalSampler by default
+            # because SobolQMCNormalSampler can support up to 21201 total samples and
+            # becomes noticeably slower than uniform sampling when the sample size is
+            # large.
             self.sampler = IIDNormalSampler(sample_shape=sample_shape, seed=seed)
             self.sampler.batch_range_override = (1, -1)
 
@@ -577,11 +588,11 @@ class LearnedObjective(MCAcquisitionObjective):
         r"""Sample each element of samples.
 
         Args:
-            samples: A `sample_size x batch_shape x N x d`-dim Tensors of
+            samples: A `sample_size x batch_shape x q x d`-dim Tensors of
                 samples from a model posterior.
 
         Returns:
-            A `(sample_size * num_samples) x batch_shape x N`-dim Tensor of
+            A `(sample_size * num_samples) x batch_shape x q`-dim Tensor of
             objective values sampled from utility posterior using `pref_model`.
         """
         if samples.dtype != torch.float64 and any(

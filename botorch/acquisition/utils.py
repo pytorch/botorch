@@ -37,6 +37,27 @@ def get_acquisition_function(*args, **kwargs) -> None:
     )
 
 
+def repeat_to_match_aug_dim(samples: Tensor, objective: Tensor) -> Tensor:
+    """Repeat samples to match the potentially augmented sample dimension of objective.
+    See LearnedObjective for an example of why this is needed.
+
+    Args:
+        samples: A `sample_size x batch_shape x N`-dim Tensor
+        objective: A `(augmented_sample * sample_size) x batch_shape x N`-dim Tensor
+            augmented_sample could be 1
+
+    Returns:
+        A tensor of shape (augmented_sample * sample_size) x batch_shape x N
+    """
+    augmented_sample_num = objective.shape[0] // samples.shape[0]
+    # using repeat here as obj might be constructed as
+    # obj.reshape(-1, *samples.shape[2:]) where the first 2 dimensions are
+    # of shape `augmented_samples x sample_shape`.
+    repeat_size = (augmented_sample_num,) + (1,) * (samples.ndim - 1)
+    samples = samples.repeat(*repeat_size)
+    return samples
+
+
 def compute_best_feasible_objective(
     samples: Tensor,
     obj: Tensor,
@@ -105,6 +126,7 @@ def compute_best_feasible_objective(
             X=X_baseline,
         ).item()
 
+    is_feasible = repeat_to_match_aug_dim(samples=is_feasible, objective=obj)
     obj = torch.where(is_feasible, obj, infeasible_value)
     with torch.no_grad():
         return obj.amax(dim=-1, keepdim=True)
