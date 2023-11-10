@@ -16,19 +16,32 @@ from botorch.acquisition.acquisition import (
     AcquisitionFunction,
     OneShotAcquisitionFunction,
 )
+from botorch.acquisition.knowledge_gradient import qKnowledgeGradient
+from botorch.acquisition.monte_carlo import qExpectedImprovement
+from botorch.acquisition.multi_objective.hypervolume_knowledge_gradient import (
+    qHypervolumeKnowledgeGradient,
+)
 from botorch.exceptions import InputDataError, UnsupportedError
 from botorch.generation.gen import gen_candidates_scipy, gen_candidates_torch
+from botorch.models import SingleTaskGP
+from botorch.models.model_list_gp_regression import ModelListGP
+from botorch.optim.initializers import (
+    gen_one_shot_hvkg_initial_conditions,
+    gen_one_shot_kg_initial_conditions,
+)
 from botorch.optim.optimize import (
     _filter_infeasible,
     _filter_invalid,
     _gen_batch_initial_conditions_local_search,
     _generate_neighbors,
+    gen_batch_initial_conditions,
     optimize_acqf,
     optimize_acqf_cyclic,
     optimize_acqf_discrete,
     optimize_acqf_discrete_local_search,
     optimize_acqf_list,
     optimize_acqf_mixed,
+    OptimizeAcqfInputs,
 )
 from botorch.optim.parameter_constraints import (
     _arrayify,
@@ -1783,3 +1796,61 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
             fixed_features_list=fixed_features_list,
         )
         self.assertEqual(candidate[0, 0].item(), val)
+
+
+class TestOptimizeAcqfInputs(BotorchTestCase):
+    def test_get_ic_generator(self):
+        X = torch.rand(4, 3)
+        Y1 = torch.rand(4, 1)
+        Y2 = torch.rand(4, 1)
+        m1 = SingleTaskGP(X, Y1)
+        m2 = SingleTaskGP(X, Y2)
+        model = ModelListGP(m1, m2)
+        bounds = torch.zeros(2, 3)
+        bounds[1] = 1
+        kwargs = {
+            "raw_samples": 2,
+            "options": None,
+            "inequality_constraints": None,
+            "equality_constraints": None,
+            "nonlinear_inequality_constraints": None,
+            "fixed_features": None,
+            "post_processing_func": None,
+            "batch_initial_conditions": None,
+            "return_best_only": False,
+            "gen_candidates": gen_candidates_scipy,
+            "sequential": False,
+        }
+        acqf = qExpectedImprovement(model=m1, best_f=0.0)
+        opt_inputs = OptimizeAcqfInputs(
+            acq_function=acqf, bounds=bounds, q=1, num_restarts=1, **kwargs
+        )
+        ic_generator = opt_inputs.get_ic_generator()
+        self.assertIs(ic_generator, gen_batch_initial_conditions)
+        acqf = qHypervolumeKnowledgeGradient(model=model, ref_point=torch.zeros(2))
+        opt_inputs = OptimizeAcqfInputs(
+            acq_function=acqf, bounds=bounds, q=1, num_restarts=1, **kwargs
+        )
+        ic_generator = opt_inputs.get_ic_generator()
+        self.assertIs(ic_generator, gen_one_shot_hvkg_initial_conditions)
+
+        acqf = qKnowledgeGradient(model=m1)
+        opt_inputs = OptimizeAcqfInputs(
+            acq_function=acqf, bounds=bounds, q=1, num_restarts=1, **kwargs
+        )
+        ic_generator = opt_inputs.get_ic_generator()
+        self.assertIs(ic_generator, gen_one_shot_kg_initial_conditions)
+
+        def my_gen():
+            pass
+
+        opt_inputs = OptimizeAcqfInputs(
+            acq_function=acqf,
+            bounds=bounds,
+            q=1,
+            num_restarts=1,
+            ic_generator=my_gen,
+            **kwargs,
+        )
+        ic_generator = opt_inputs.get_ic_generator()
+        self.assertIs(ic_generator, my_gen)

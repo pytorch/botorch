@@ -656,7 +656,9 @@ class ModelList(Model):
                 if observation_noise is not None:
                     observation_noise_i = observation_noise[..., mask_i, i : i + 1]
             else:
-                sampler_i = sampler
+                sampler_i = (
+                    sampler.samplers[i] if isinstance(sampler, ListSampler) else sampler
+                )
 
             fant_model = self.models[i].fantasize(
                 X=X_i,
