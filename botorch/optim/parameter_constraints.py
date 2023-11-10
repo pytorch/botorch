@@ -322,6 +322,9 @@ def _make_nonlinear_constraints(
     def get_intrapoint_constraint(b: int, q: int, nlc: Callable) -> Callable:
         return lambda x: nlc(x[b, q])
 
+    def get_interpoint_constraint(b: int, nlc: Callable) -> Callable:
+        return lambda x: nlc(x[b])
+
     if intra:
         for i in range(b):
             for j in range(q):
@@ -337,11 +340,12 @@ def _make_nonlinear_constraints(
                     }
                 )
     else:
-        f_obj, f_grad = _make_f_and_grad_nonlinear_inequality_constraints(
-            f_np_wrapper=f_np_wrapper,
-            nlc=nlc,
-        )
-        constraints.append({"type": "ineq", "fun": f_obj, "jac": f_grad})
+        for i in range(b):
+            f_obj, f_grad = _make_f_and_grad_nonlinear_inequality_constraints(
+                f_np_wrapper=f_np_wrapper,
+                nlc=get_interpoint_constraint(b=i, nlc=nlc),
+            )
+            constraints.append({"type": "ineq", "fun": f_obj, "jac": f_grad})
 
     return constraints
 
@@ -500,12 +504,13 @@ def nonlinear_constraint_is_fulfilled(
     Returns:
         bool: True if the constraint is fulfilled, else False.
     """
+    b, q, _ = x.shape
     if not intra:  # this is an interpoint constraint
-        if _arrayify(nonlinear_inequality_constraint(x)).item() < NLC_TOL:
-            return False
+        for i in range(b):
+            if _arrayify(nonlinear_inequality_constraint(x[i])).item() < NLC_TOL:
+                return False
     else:  # this is an intrapoint constraint
-        b, q, _ = x.shape
-        for i in range(b):  # b is in current implementation always 1
+        for i in range(b):
             for j in range(q):
                 if _arrayify(nonlinear_inequality_constraint(x[i, j])).item() < NLC_TOL:
                     return False

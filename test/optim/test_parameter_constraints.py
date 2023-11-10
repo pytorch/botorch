@@ -70,37 +70,45 @@ class TestParameterConstraints(BotorchTestCase):
             fval = loss.item()
             return fval, gradf
 
-        shapeX = torch.Size((1, 2, 4))
+        shapeX = torch.Size((3, 2, 4))
+        b, q, d = shapeX
         x = np.random.rand(shapeX.numel())
         # intra
         constraints = _make_nonlinear_constraints(
             f_np_wrapper=f_np_wrapper, nlc=nlc, intra=True, shapeX=shapeX
         )
-        self.assertEqual(len(constraints), 2)
+        self.assertEqual(len(constraints), b * q)
         self.assertTrue(
             all(set(c.keys()) == {"fun", "jac", "type"} for c in constraints)
         )
         self.assertTrue(all(c["type"] == "ineq" for c in constraints))
-        self.assertEqual(constraints[0]["fun"](x), 4.0 - x[:4].sum())
-        self.assertEqual(constraints[1]["fun"](x), 4.0 - x[4:].sum())
+        self.assertEqual(constraints[0]["fun"](x), 4.0 - x[:d].sum())
+        self.assertEqual(constraints[1]["fun"](x), 4.0 - x[d : 2 * d].sum())
         jac_exp = np.zeros(shapeX.numel())
         jac_exp[:4] = -1
         self.assertTrue(np.allclose(constraints[0]["jac"](x), jac_exp))
         jac_exp = np.zeros(shapeX.numel())
-        jac_exp[4:] = -1
+        jac_exp[4:8] = -1
         self.assertTrue(np.allclose(constraints[1]["jac"](x), jac_exp))
         # inter
         constraints = _make_nonlinear_constraints(
             f_np_wrapper=f_np_wrapper, nlc=nlc, intra=False, shapeX=shapeX
         )
-        self.assertEqual(len(constraints), 1)
+        self.assertEqual(len(constraints), 3)
         self.assertTrue(
             all(set(c.keys()) == {"fun", "jac", "type"} for c in constraints)
         )
         self.assertTrue(all(c["type"] == "ineq" for c in constraints))
-        self.assertTrue(np.allclose(constraints[0]["fun"](x), 4.0 - x.sum()))
-        jac_exp = np.ones(shapeX.numel()) * -1.0
+        self.assertTrue(np.allclose(constraints[0]["fun"](x), 4.0 - x[: q * d].sum()))
+        self.assertTrue(
+            np.allclose(constraints[1]["fun"](x), 4.0 - x[q * d : 2 * q * d].sum())
+        )
+        jac_exp = np.zeros(shapeX.numel())
+        jac_exp[: q * d] = -1.0
         self.assertTrue(np.allclose(constraints[0]["jac"](x), jac_exp))
+        jac_exp = np.zeros(shapeX.numel())
+        jac_exp[q * d : 2 * q * d] = -1.0
+        self.assertTrue(np.allclose(constraints[1]["jac"](x), jac_exp))
 
     def test_make_scipy_nonlinear_inequality_constraints(self):
         def nlc(x):
@@ -121,7 +129,8 @@ class TestParameterConstraints(BotorchTestCase):
             fval = loss.item()
             return fval, gradf
 
-        shapeX = torch.Size((1, 2, 4))
+        shapeX = torch.Size((3, 2, 4))
+        b, q, _ = shapeX
         x = torch.ones(shapeX.numel(), device=self.device)
 
         with self.assertRaisesRegex(
@@ -151,17 +160,17 @@ class TestParameterConstraints(BotorchTestCase):
         res = make_scipy_nonlinear_inequality_constraints(
             [(nlc, False)], f_np_wrapper, x, shapeX
         )
-        self.assertEqual(len(res), 1)
+        self.assertEqual(len(res), b)
         # only intra
         res = make_scipy_nonlinear_inequality_constraints(
             [(nlc, True)], f_np_wrapper, x, shapeX
         )
-        self.assertEqual(len(res), 2)
+        self.assertEqual(len(res), b * q)
         # intra and inter
         res = make_scipy_nonlinear_inequality_constraints(
             [(nlc, True), (nlc, False)], f_np_wrapper, x, shapeX
         )
-        self.assertEqual(len(res), 3)
+        self.assertEqual(len(res), b * q + b)
 
     def test_make_linear_constraints(self):
         # equality constraints, 1d indices
@@ -350,14 +359,44 @@ class TestParameterConstraints(BotorchTestCase):
                 ),
             )
         )
+        self.assertFalse(
+            nonlinear_constraint_is_fulfilled(
+                nlc,
+                True,
+                torch.tensor(
+                    [[[1.5, 1.5], [1.5, 1.5]], [[1.5, 1.5], [1.5, 3.5]]],
+                    device=self.device,
+                ),
+            )
+        )
         self.assertTrue(
             nonlinear_constraint_is_fulfilled(
                 nlc, False, torch.tensor([[[1.0, 1.0], [1.0, 1.0]]], device=self.device)
             )
         )
+        self.assertTrue(
+            nonlinear_constraint_is_fulfilled(
+                nlc,
+                False,
+                torch.tensor(
+                    [[[1.0, 1.0], [1.0, 1.0]], [[1.0, 1.0], [1.0, 1.0]]],
+                    device=self.device,
+                ),
+            )
+        )
         self.assertFalse(
             nonlinear_constraint_is_fulfilled(
                 nlc, False, torch.tensor([[[1.5, 1.5], [1.5, 1.5]]], device=self.device)
+            )
+        )
+        self.assertFalse(
+            nonlinear_constraint_is_fulfilled(
+                nlc,
+                False,
+                torch.tensor(
+                    [[[1.0, 1.0], [1.0, 1.0]], [[1.5, 1.5], [1.5, 1.5]]],
+                    device=self.device,
+                ),
             )
         )
 
