@@ -74,6 +74,11 @@ Multi-Objective Analytic Acquisition Functions
     :members:
     :exclude-members: MultiObjectiveAnalyticAcquisitionFunction
 
+Multi-Objective Hypervolume Knowledge Gradient Acquisition Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.multi_objective.hypervolume_knowledge_gradient
+    :members:
+
 Multi-Objective Joint Entropy Search Acquisition Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.multi_objective.joint_entropy_search
