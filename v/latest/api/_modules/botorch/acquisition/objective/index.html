@@ -53,6 +53,8 @@
     <span class="kn">from</span> <span class="nn">botorch.posteriors.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>  <span class="c1"># pragma: no cover</span>
     <span class="kn">from</span> <span class="nn">botorch.posteriors.posterior_list</span> <span class="kn">import</span> <span class="n">PosteriorList</span>  <span class="c1"># pragma: no cover</span>
 
+<span class="n">DEFAULT_NUM_PREF_SAMPLES</span> <span class="o">=</span> <span class="mi">16</span>
+
 
 <span class="k">class</span> <span class="nc">PosteriorTransform</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
@@ -577,13 +579,18 @@
 <span class="sd">        Args:</span>
 <span class="sd">            pref_model: A BoTorch model, which models the latent preference/utility</span>
 <span class="sd">                function. Given an input tensor of size</span>
-<span class="sd">                `sample_size x batch_shape x N x d`, its `posterior` method should</span>
+<span class="sd">                `sample_size x batch_shape x q x d`, its `posterior` method should</span>
 <span class="sd">                return a `Posterior` object with single outcome representing the</span>
 <span class="sd">                utility values of the input.</span>
-<span class="sd">            sampler: Sampler for the preference model to account for uncertainty in</span>
-<span class="sd">                preference when calculating the objective; it's not the one used</span>
-<span class="sd">                in MC acquisition functions. If None,</span>
-<span class="sd">                it uses `IIDNormalSampler(sample_shape=torch.Size([1]))`.</span>
+<span class="sd">            sample_shape: Determines the number of preference-model samples drawn</span>
+<span class="sd">                *per outcome-model sample* when the `LearnedObjective` is called.</span>
+<span class="sd">                Note that this is an additional layer of sampling relative to what</span>
+<span class="sd">                is needed when evaluating most MC acquisition functions in order to</span>
+<span class="sd">                account for uncertainty in the preference model. If `None`, it will</span>
+<span class="sd">                default to `torch.Size([16])`, so that 16 samples will be drawn</span>
+<span class="sd">                from the preference model at each outcome sample. This number is</span>
+<span class="sd">                relatively high because sampling from the preference model is general</span>
+<span class="sd">                cheap relative to generating the outcome model posterior.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pref_model</span> <span class="o">=</span> <span class="n">pref_model</span>
@@ -592,7 +599,11 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">sample_shape</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">sample_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">sample_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">DEFAULT_NUM_PREF_SAMPLES</span><span class="p">])</span>
+            <span class="c1"># using an IIDNormalSampler instead of a SobolQMCNormalSampler by default</span>
+            <span class="c1"># because SobolQMCNormalSampler can support up to 21201 total samples and</span>
+            <span class="c1"># becomes noticeably slower than uniform sampling when the sample size is</span>
+            <span class="c1"># large.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="o">=</span> <span class="n">IIDNormalSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">batch_range_override</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
@@ -600,11 +611,11 @@
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample each element of samples.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            samples: A `sample_size x batch_shape x N x d`-dim Tensors of</span>
+<span class="sd">            samples: A `sample_size x batch_shape x q x d`-dim Tensors of</span>
 <span class="sd">                samples from a model posterior.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A `(sample_size * num_samples) x batch_shape x N`-dim Tensor of</span>
+<span class="sd">            A `(sample_size * num_samples) x batch_shape x q`-dim Tensor of</span>
 <span class="sd">            objective values sampled from utility posterior using `pref_model`.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">samples</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float64</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span>

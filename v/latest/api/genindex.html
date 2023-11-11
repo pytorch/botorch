@@ -331,6 +331,13 @@
 </li>
 </ul></li>
 <li>
+    botorch.acquisition.multi_objective.hypervolume_knowledge_gradient
+
+      <ul>
+<li><a href="acquisition.html#module-botorch.acquisition.multi_objective.hypervolume_knowledge_gradient">module</a>
+</li>
+</ul></li>
+<li>
     botorch.acquisition.multi_objective.joint_entropy_search
 
       <ul>
@@ -1617,6 +1624,8 @@
 <ul>
 <li><a href="acquisition.html#botorch.acquisition.max_value_entropy_search.qMultiFidelityMaxValueEntropy.cost_sampler">(botorch.acquisition.max_value_entropy_search.qMultiFidelityMaxValueEntropy property)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qHypervolumeKnowledgeGradient.cost_sampler">(botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qHypervolumeKnowledgeGradient property)</a>
+</li>
 </ul></li>
 <li><a href="exceptions.html#botorch.exceptions.warnings.CostAwareWarning">CostAwareWarning</a>
 </li>
@@ -2164,6 +2173,8 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.extract_candidates">extract_candidates() (botorch.acquisition.knowledge_gradient.qKnowledgeGradient method)</a>
 <ul>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qHypervolumeKnowledgeGradient.extract_candidates">(botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qHypervolumeKnowledgeGradient method)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.extract_candidates">(botorch.acquisition.multi_step_lookahead.qMultiStepLookahead method)</a>
 </li>
 </ul></li>
@@ -2226,6 +2237,8 @@
 <li><a href="optim.html#botorch.optim.utils.acquisition_utils.fix_features">fix_features() (in module botorch.optim.utils.acquisition_utils)</a>
 </li>
 <li><a href="optim.html#botorch.optim.optimize.OptimizeAcqfInputs.fixed_features">fixed_features (botorch.optim.optimize.OptimizeAcqfInputs attribute)</a>
+</li>
+<li><a href="models.html#botorch.models.cost.FixedCostModel">FixedCostModel (class in botorch.models.cost)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction">FixedFeatureAcquisitionFunction (class in botorch.acquisition.fixed_feature)</a>
 </li>
@@ -2300,6 +2313,10 @@
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement.forward">(botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction.forward">(botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction method)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qHypervolumeKnowledgeGradient.forward">(botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qHypervolumeKnowledgeGradient method)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qMultiFidelityHypervolumeKnowledgeGradient.forward">(botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qMultiFidelityHypervolumeKnowledgeGradient method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.joint_entropy_search.LowerBoundMultiObjectiveEntropySearch.forward">(botorch.acquisition.multi_objective.joint_entropy_search.LowerBoundMultiObjectiveEntropySearch method)</a>
 </li>
@@ -2402,6 +2419,8 @@
 <li><a href="models.html#botorch.models.contextual_multioutput.LCEMGP.forward">(botorch.models.contextual_multioutput.LCEMGP method)</a>
 </li>
 <li><a href="models.html#botorch.models.cost.AffineFidelityCostModel.forward">(botorch.models.cost.AffineFidelityCostModel method)</a>
+</li>
+<li><a href="models.html#botorch.models.cost.FixedCostModel.forward">(botorch.models.cost.FixedCostModel method)</a>
 </li>
 <li><a href="models.html#botorch.models.deterministic.AffineDeterministicModel.forward">(botorch.models.deterministic.AffineDeterministicModel method)</a>
 </li>
@@ -2523,6 +2542,8 @@
 </li>
 <li><a href="cross_validation.html#botorch.cross_validation.gen_loo_cv_folds">gen_loo_cv_folds() (in module botorch.cross_validation)</a>
 </li>
+<li><a href="optim.html#botorch.optim.initializers.gen_one_shot_hvkg_initial_conditions">gen_one_shot_hvkg_initial_conditions() (in module botorch.optim.initializers)</a>
+</li>
 <li><a href="optim.html#botorch.optim.initializers.gen_one_shot_kg_initial_conditions">gen_one_shot_kg_initial_conditions() (in module botorch.optim.initializers)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.base.MultiObjectiveTestProblem.gen_pareto_front">gen_pareto_front() (botorch.test_functions.base.MultiObjectiveTestProblem method)</a>
@@ -2565,6 +2586,8 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.get_augmented_q_batch_size">get_augmented_q_batch_size() (botorch.acquisition.knowledge_gradient.qKnowledgeGradient method)</a>
 <ul>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qHypervolumeKnowledgeGradient.get_augmented_q_batch_size">(botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qHypervolumeKnowledgeGradient method)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_augmented_q_batch_size">(botorch.acquisition.multi_step_lookahead.qMultiStepLookahead method)</a>
 </li>
 </ul></li>
@@ -2604,10 +2627,10 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.fixed_feature.get_dtype_of_sequence">get_dtype_of_sequence() (in module botorch.acquisition.fixed_feature)</a>
 </li>
-<li><a href="utils.html#botorch.utils.gp_sampling.get_eval_gp_sample_callable">get_eval_gp_sample_callable() (in module botorch.utils.gp_sampling)</a>
-</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="utils.html#botorch.utils.gp_sampling.get_eval_gp_sample_callable">get_eval_gp_sample_callable() (in module botorch.utils.gp_sampling)</a>
+</li>
 <li><a href="models.html#botorch.models.higher_order_gp.HigherOrderGP.get_fantasy_model">get_fantasy_model() (botorch.models.higher_order_gp.HigherOrderGP method)</a>
 </li>
 <li><a href="utils.html#botorch.utils.feasible_volume.get_feasible_samples">get_feasible_samples() (in module botorch.utils.feasible_volume)</a>
@@ -3152,6 +3175,8 @@
 <li><a href="acquisition.html#module-botorch.acquisition.monte_carlo">botorch.acquisition.monte_carlo</a>
 </li>
 <li><a href="acquisition.html#module-botorch.acquisition.multi_objective.analytic">botorch.acquisition.multi_objective.analytic</a>
+</li>
+<li><a href="acquisition.html#module-botorch.acquisition.multi_objective.hypervolume_knowledge_gradient">botorch.acquisition.multi_objective.hypervolume_knowledge_gradient</a>
 </li>
 <li><a href="acquisition.html#module-botorch.acquisition.multi_objective.joint_entropy_search">botorch.acquisition.multi_objective.joint_entropy_search</a>
 </li>
@@ -3926,6 +3951,8 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.monte_carlo.qExpectedImprovement">qExpectedImprovement (class in botorch.acquisition.monte_carlo)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qHypervolumeKnowledgeGradient">qHypervolumeKnowledgeGradient (class in botorch.acquisition.multi_objective.hypervolume_knowledge_gradient)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.joint_entropy_search.qJointEntropySearch">qJointEntropySearch (class in botorch.acquisition.joint_entropy_search)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient">qKnowledgeGradient (class in botorch.acquisition.knowledge_gradient)</a>
@@ -3944,10 +3971,12 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.max_value_entropy_search.qMaxValueEntropy">qMaxValueEntropy (class in botorch.acquisition.max_value_entropy_search)</a>
 </li>
-<li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient">qMultiFidelityKnowledgeGradient (class in botorch.acquisition.knowledge_gradient)</a>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qMultiFidelityHypervolumeKnowledgeGradient">qMultiFidelityHypervolumeKnowledgeGradient (class in botorch.acquisition.multi_objective.hypervolume_knowledge_gradient)</a>
 </li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient">qMultiFidelityKnowledgeGradient (class in botorch.acquisition.knowledge_gradient)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.max_value_entropy_search.qMultiFidelityLowerBoundMaxValueEntropy">qMultiFidelityLowerBoundMaxValueEntropy (class in botorch.acquisition.max_value_entropy_search)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.max_value_entropy_search.qMultiFidelityMaxValueEntropy">qMultiFidelityMaxValueEntropy (class in botorch.acquisition.max_value_entropy_search)</a>
@@ -4006,6 +4035,8 @@
 <li><a href="utils.html#botorch.utils.multi_objective.hypervolume.MultiList.reinsert">reinsert() (botorch.utils.multi_objective.hypervolume.MultiList method)</a>
 </li>
 <li><a href="utils.html#botorch.utils.multi_objective.hypervolume.MultiList.remove">remove() (botorch.utils.multi_objective.hypervolume.MultiList method)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.utils.repeat_to_match_aug_dim">repeat_to_match_aug_dim() (in module botorch.acquisition.utils)</a>
 </li>
 <li><a href="utils.html#botorch.utils.context_managers.requires_grad_ctx">requires_grad_ctx() (in module botorch.utils.context_managers)</a>
 </li>

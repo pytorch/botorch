@@ -45,9 +45,15 @@
 <span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">analytic</span><span class="p">,</span> <span class="n">monte_carlo</span><span class="p">,</span> <span class="n">multi_objective</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.fixed_feature</span> <span class="kn">import</span> <span class="n">FixedFeatureAcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.knowledge_gradient</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">_get_value_function</span><span class="p">,</span>
     <span class="n">qKnowledgeGradient</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.hypervolume_knowledge_gradient</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_get_hv_value_function</span><span class="p">,</span>
+    <span class="n">qHypervolumeKnowledgeGradient</span><span class="p">,</span>
+    <span class="n">qMultiFidelityHypervolumeKnowledgeGradient</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="p">(</span>
@@ -268,6 +274,7 @@
     <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">generator</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fixed_X_fantasies</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Generate a batch of initial conditions for random-restart optimziation.</span>
 
@@ -301,6 +308,11 @@
 <span class="sd">        generator: Callable for generating samples that are then further</span>
 <span class="sd">            processed. It receives `n`, `q` and `seed` as arguments and</span>
 <span class="sd">            returns a tensor of shape `n x q x d`.</span>
+<span class="sd">        fixed_X_fantasies: A fixed set of fantasy points to concatenate to</span>
+<span class="sd">            the `q` candidates being initialized along the `-2` dimension. The</span>
+<span class="sd">            shape should be `num_pseudo_points x d`. E.g., this should be</span>
+<span class="sd">            `num_fantasies x d` for KG and `num_fantasies*num_pareto x d`</span>
+<span class="sd">            for HVKG.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A `num_restarts x q x d` tensor of initial conditions.</span>
@@ -402,6 +414,22 @@
                         <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
                     <span class="p">)</span>
             <span class="n">X_rnd</span> <span class="o">=</span> <span class="n">fix_features</span><span class="p">(</span><span class="n">X_rnd</span><span class="p">,</span> <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">fixed_X_fantasies</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">d_f</span> <span class="o">:=</span> <span class="n">fixed_X_fantasies</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">!=</span> <span class="p">(</span><span class="n">d_r</span> <span class="o">:=</span> <span class="n">X_rnd</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+                    <span class="k">raise</span> <span class="n">BotorchTensorDimensionError</span><span class="p">(</span>
+                        <span class="s2">"`fixed_X_fantasies` and `bounds` must both have the same "</span>
+                        <span class="sa">f</span><span class="s2">"trailing dimension `d`, but have </span><span class="si">{</span><span class="n">d_f</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">d_r</span><span class="si">}</span><span class="s2">, "</span>
+                        <span class="s2">"respectively."</span>
+                    <span class="p">)</span>
+                <span class="n">X_rnd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="n">X_rnd</span><span class="p">,</span>
+                        <span class="n">fixed_X_fantasies</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+                        <span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                        <span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">X_rnd</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">*</span><span class="n">fixed_X_fantasies</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span>
+                    <span class="p">],</span>
+                    <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
                 <span class="k">if</span> <span class="n">batch_limit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">batch_limit</span> <span class="o">=</span> <span class="n">X_rnd</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -448,7 +476,7 @@
 <span class="sd">    This function generates initial conditions for optimizing one-shot KG using</span>
 <span class="sd">    the maximizer of the posterior objective. Intutively, the maximizer of the</span>
 <span class="sd">    fantasized posterior will often be close to a maximizer of the current</span>
-<span class="sd">    posterior. This function uses that fact to generate the initital conditions</span>
+<span class="sd">    posterior. This function uses that fact to generate the initial conditions</span>
 <span class="sd">    for the fantasy points. Specifically, a fraction of `1 - frac_random` (see</span>
 <span class="sd">    options) is generated by sampling from the set of maximizers of the</span>
 <span class="sd">    posterior objective (obtained via random restart optimization) according to</span>
@@ -459,7 +487,7 @@
 <span class="sd">    strategy in `gen_batch_initial_conditions`.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        acq_function: The qKnowledgeGradient instance to be optimized.</span>
+<span class="sd">        acq_function: The qHypervolumeKnowledgeGradient instance to be optimized.</span>
 <span class="sd">        bounds: A `2 x d` tensor of lower and upper bounds for each column of</span>
 <span class="sd">            task features.</span>
 <span class="sd">        q: The number of candidates to consider.</span>
@@ -490,10 +518,10 @@
 <span class="sd">        of points (candidate points plus fantasy points).</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; qKG = qKnowledgeGradient(model, num_fantasies=64)</span>
+<span class="sd">        &gt;&gt;&gt; qHVKG = qHypervolumeKnowledgeGradient(model, ref_point=num_fantasies=64)</span>
 <span class="sd">        &gt;&gt;&gt; bounds = torch.tensor([[0., 0.], [1., 1.]])</span>
-<span class="sd">        &gt;&gt;&gt; Xinit = gen_one_shot_kg_initial_conditions(</span>
-<span class="sd">        &gt;&gt;&gt;     qKG, bounds, q=3, num_restarts=10, raw_samples=512,</span>
+<span class="sd">        &gt;&gt;&gt; Xinit = gen_one_shot_hvkg_initial_conditions(</span>
+<span class="sd">        &gt;&gt;&gt;     qHVKG, bounds, q=3, num_restarts=10, raw_samples=512,</span>
 <span class="sd">        &gt;&gt;&gt;     options={"frac_random": 0.25},</span>
 <span class="sd">        &gt;&gt;&gt; )</span>
 <span class="sd">    """</span>
@@ -549,6 +577,204 @@
     <span class="c1"># set the respective initial conditions to the sampled optimizers</span>
     <span class="n">ics</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="n">n_value</span><span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">fantasy_cands</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">num_restarts</span><span class="p">,</span> <span class="n">n_value</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ics</span></div>
+
+
+<div class="viewcode-block" id="gen_one_shot_hvkg_initial_conditions"><a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.gen_one_shot_hvkg_initial_conditions">[docs]</a><span class="k">def</span> <span class="nf">gen_one_shot_hvkg_initial_conditions</span><span class="p">(</span>
+    <span class="n">acq_function</span><span class="p">:</span> <span class="n">qHypervolumeKnowledgeGradient</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">num_restarts</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">raw_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Generate a batch of smart initializations for qHypervolumeKnowledgeGradient.</span>
+
+<span class="sd">    This function generates initial conditions for optimizing one-shot HVKG using</span>
+<span class="sd">    the hypervolume maximizing set (of fixed size) under the posterior mean.</span>
+<span class="sd">    Intutively, the hypervolume maximizing set of the fantasized posterior mean</span>
+<span class="sd">    will often be close to a hypervolume maximizing set under the current posterior</span>
+<span class="sd">    mean. This function uses that fact to generate the initial conditions</span>
+<span class="sd">    for the fantasy points. Specifically, a fraction of `1 - frac_random` (see</span>
+<span class="sd">    options) of the restarts are generated by learning the hypervolume maximizing sets</span>
+<span class="sd">    under the current posterior mean, where each hypervolume maximizing set is</span>
+<span class="sd">    obtained from maximizing the hypervolume from a different starting point. Given</span>
+<span class="sd">    a hypervolume maximizing set, the `q` candidate points are selected using to the</span>
+<span class="sd">    standard initialization strategy in `gen_batch_initial_conditions`, with the fixed</span>
+<span class="sd">    hypervolume maximizing set. The remaining `frac_random` restarts fantasy points</span>
+<span class="sd">    as well as all `q` candidate points are chosen according to the standard</span>
+<span class="sd">    initialization strategy in `gen_batch_initial_conditions`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        acq_function: The qKnowledgeGradient instance to be optimized.</span>
+<span class="sd">        bounds: A `2 x d` tensor of lower and upper bounds for each column of</span>
+<span class="sd">            task features.</span>
+<span class="sd">        q: The number of candidates to consider.</span>
+<span class="sd">        num_restarts: The number of starting points for multistart acquisition</span>
+<span class="sd">            function optimization.</span>
+<span class="sd">        raw_samples: The number of raw samples to consider in the initialization</span>
+<span class="sd">            heuristic.</span>
+<span class="sd">        fixed_features: A map `{feature_index: value}` for features that</span>
+<span class="sd">            should be fixed to a particular value during generation.</span>
+<span class="sd">        options: Options for initial condition generation. These contain all</span>
+<span class="sd">            settings for the standard heuristic initialization from</span>
+<span class="sd">            `gen_batch_initial_conditions`. In addition, they contain</span>
+<span class="sd">            `frac_random` (the fraction of fully random fantasy points),</span>
+<span class="sd">            `num_inner_restarts` and `raw_inner_samples` (the number of random</span>
+<span class="sd">            restarts and raw samples for solving the posterior objective</span>
+<span class="sd">            maximization problem, respectively) and `eta` (temperature parameter</span>
+<span class="sd">            for sampling heuristic from posterior objective maximizers).</span>
+<span class="sd">        inequality constraints: A list of tuples (indices, coefficients, rhs),</span>
+<span class="sd">            with each tuple encoding an inequality constraint of the form</span>
+<span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs`.</span>
+<span class="sd">        equality constraints: A list of tuples (indices, coefficients, rhs),</span>
+<span class="sd">            with each tuple encoding an inequality constraint of the form</span>
+<span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `num_restarts x q' x d` tensor that can be used as initial conditions</span>
+<span class="sd">        for `optimize_acqf()`. Here `q' = q + num_fantasies` is the total number</span>
+<span class="sd">        of points (candidate points plus fantasy points).</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; qHVKG = qHypervolumeKnowledgeGradient(model, ref_point)</span>
+<span class="sd">        &gt;&gt;&gt; bounds = torch.tensor([[0., 0.], [1., 1.]])</span>
+<span class="sd">        &gt;&gt;&gt; Xinit = gen_one_shot_hvkg_initial_conditions(</span>
+<span class="sd">        &gt;&gt;&gt;     qHVKG, bounds, q=3, num_restarts=10, raw_samples=512,</span>
+<span class="sd">        &gt;&gt;&gt;     options={"frac_random": 0.25},</span>
+<span class="sd">        &gt;&gt;&gt; )</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
+
+    <span class="n">options</span> <span class="o">=</span> <span class="n">options</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">frac_random</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"frac_random"</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">frac_random</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"frac_random must take on values in (0,1). Value: </span><span class="si">{</span><span class="n">frac_random</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+
+    <span class="n">value_function</span> <span class="o">=</span> <span class="n">_get_hv_value_function</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">acq_function</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">ref_point</span><span class="o">=</span><span class="n">acq_function</span><span class="o">.</span><span class="n">ref_point</span><span class="p">,</span>
+        <span class="n">objective</span><span class="o">=</span><span class="n">acq_function</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
+        <span class="n">sampler</span><span class="o">=</span><span class="n">acq_function</span><span class="o">.</span><span class="n">inner_sampler</span><span class="p">,</span>
+        <span class="n">use_posterior_mean</span><span class="o">=</span><span class="n">acq_function</span><span class="o">.</span><span class="n">use_posterior_mean</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">is_mf_hvkg</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">acq_function</span><span class="p">,</span> <span class="n">qMultiFidelityHypervolumeKnowledgeGradient</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">is_mf_hvkg</span><span class="p">:</span>
+        <span class="n">dim</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">fidelity_dims</span><span class="p">,</span> <span class="n">fidelity_targets</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">acq_function</span><span class="o">.</span><span class="n">target_fidelities</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+        <span class="n">value_function</span> <span class="o">=</span> <span class="n">FixedFeatureAcquisitionFunction</span><span class="p">(</span>
+            <span class="n">acq_function</span><span class="o">=</span><span class="n">value_function</span><span class="p">,</span>
+            <span class="n">d</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span>
+            <span class="n">columns</span><span class="o">=</span><span class="n">fidelity_dims</span><span class="p">,</span>
+            <span class="n">values</span><span class="o">=</span><span class="n">fidelity_targets</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">non_fidelity_dims</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">))</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">fidelity_dims</span><span class="p">))</span>
+
+    <span class="n">num_optim_restarts</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">num_restarts</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">frac_random</span><span class="p">)))</span>
+    <span class="n">fantasy_cands</span><span class="p">,</span> <span class="n">fantasy_vals</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
+        <span class="n">acq_function</span><span class="o">=</span><span class="n">value_function</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">[:,</span> <span class="n">non_fidelity_dims</span><span class="p">]</span> <span class="k">if</span> <span class="n">is_mf_hvkg</span> <span class="k">else</span> <span class="n">bounds</span><span class="p">,</span>
+        <span class="n">q</span><span class="o">=</span><span class="n">acq_function</span><span class="o">.</span><span class="n">num_pareto</span><span class="p">,</span>
+        <span class="n">num_restarts</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"num_inner_restarts"</span><span class="p">,</span> <span class="mi">20</span><span class="p">),</span>
+        <span class="n">raw_samples</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"raw_inner_samples"</span><span class="p">,</span> <span class="mi">1024</span><span class="p">),</span>
+        <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">,</span>
+        <span class="n">return_best_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
+        <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
+        <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
+        <span class="n">sequential</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># sampling from the optimizers</span>
+    <span class="n">eta</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"eta"</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">num_optim_restarts</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">probs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">eta</span> <span class="o">*</span> <span class="n">standardize</span><span class="p">(</span><span class="n">fantasy_vals</span><span class="p">))</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">multinomial</span><span class="p">(</span>
+            <span class="n">probs</span><span class="p">,</span>
+            <span class="n">num_optim_restarts</span> <span class="o">*</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">num_fantasies</span><span class="p">,</span>
+            <span class="n">replacement</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">optim_ics</span> <span class="o">=</span> <span class="n">fantasy_cands</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">is_mf_hvkg</span><span class="p">:</span>
+            <span class="c1"># add fixed features</span>
+            <span class="n">optim_ics</span> <span class="o">=</span> <span class="n">value_function</span><span class="o">.</span><span class="n">_construct_X_full</span><span class="p">(</span><span class="n">optim_ics</span><span class="p">)</span>
+        <span class="n">optim_ics</span> <span class="o">=</span> <span class="n">optim_ics</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+            <span class="n">num_optim_restarts</span><span class="p">,</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">num_pseudo_points</span><span class="p">,</span> <span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="p">)</span>
+
+    <span class="c1"># get random initial conditions</span>
+    <span class="n">num_random_restarts</span> <span class="o">=</span> <span class="n">num_restarts</span> <span class="o">-</span> <span class="n">num_optim_restarts</span>
+    <span class="k">if</span> <span class="n">num_random_restarts</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">q_aug</span> <span class="o">=</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">get_augmented_q_batch_size</span><span class="p">(</span><span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">)</span>
+        <span class="n">base_ics</span> <span class="o">=</span> <span class="n">gen_batch_initial_conditions</span><span class="p">(</span>
+            <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
+            <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+            <span class="n">q</span><span class="o">=</span><span class="n">q_aug</span><span class="p">,</span>
+            <span class="n">num_restarts</span><span class="o">=</span><span class="n">num_restarts</span><span class="p">,</span>
+            <span class="n">raw_samples</span><span class="o">=</span><span class="n">raw_samples</span><span class="p">,</span>
+            <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
+            <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
+            <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">num_optim_restarts</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">probs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">num_restarts</span><span class="p">,),</span>
+                <span class="mf">1.0</span> <span class="o">/</span> <span class="n">num_restarts</span><span class="p">,</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">optim_ics</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                <span class="n">device</span><span class="o">=</span><span class="n">optim_ics</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">optim_idxr</span> <span class="o">=</span> <span class="n">probs</span><span class="o">.</span><span class="n">multinomial</span><span class="p">(</span>
+                <span class="n">num_samples</span><span class="o">=</span><span class="n">num_optim_restarts</span><span class="p">,</span> <span class="n">replacement</span><span class="o">=</span><span class="kc">False</span>
+            <span class="p">)</span>
+            <span class="n">base_ics</span><span class="p">[</span><span class="n">optim_idxr</span><span class="p">,</span> <span class="n">q</span><span class="p">:]</span> <span class="o">=</span> <span class="n">optim_ics</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># optim_ics is num_restarts x num_pseudo_points x d</span>
+        <span class="c1"># add padding so that base_ics is num_restarts x q+num_pseudo_points x d</span>
+        <span class="n">q_padding</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+            <span class="n">optim_ics</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">q</span><span class="p">,</span>
+            <span class="n">optim_ics</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">optim_ics</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+            <span class="n">device</span><span class="o">=</span><span class="n">optim_ics</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">base_ics</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">q_padding</span><span class="p">,</span> <span class="n">optim_ics</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">num_optim_restarts</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">all_ics</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">num_random_restarts</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">optim_idcs</span> <span class="o">=</span> <span class="n">optim_idxr</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">optim_idcs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">num_restarts</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">num_restarts</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">optim_idcs</span><span class="p">:</span>
+                <span class="c1"># optimize the q points,</span>
+                <span class="c1"># given fixed, optimized fantasy designs</span>
+                <span class="n">ics</span> <span class="o">=</span> <span class="n">gen_batch_initial_conditions</span><span class="p">(</span>
+                    <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
+                    <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+                    <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span>
+                    <span class="n">num_restarts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                    <span class="n">raw_samples</span><span class="o">=</span><span class="n">raw_samples</span><span class="p">,</span>
+                    <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">,</span>
+                    <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
+                    <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
+                    <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
+                    <span class="n">fixed_X_fantasies</span><span class="o">=</span><span class="n">base_ics</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">q</span><span class="p">:],</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># ics are all randomly sampled</span>
+                <span class="n">ics</span> <span class="o">=</span> <span class="n">base_ics</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">all_ics</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ics</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">all_ics</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">base_ics</span></div>
 
 
 <div class="viewcode-block" id="gen_value_function_initial_conditions"><a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.gen_value_function_initial_conditions">[docs]</a><span class="k">def</span> <span class="nf">gen_value_function_initial_conditions</span><span class="p">(</span>

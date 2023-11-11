@@ -60,6 +60,27 @@
     <span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="repeat_to_match_aug_dim"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.repeat_to_match_aug_dim">[docs]</a><span class="k">def</span> <span class="nf">repeat_to_match_aug_dim</span><span class="p">(</span><span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Repeat samples to match the potentially augmented sample dimension of objective.</span>
+<span class="sd">    See LearnedObjective for an example of why this is needed.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        samples: A `sample_size x batch_shape x N`-dim Tensor</span>
+<span class="sd">        objective: A `(augmented_sample * sample_size) x batch_shape x N`-dim Tensor</span>
+<span class="sd">            augmented_sample could be 1</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A tensor of shape (augmented_sample * sample_size) x batch_shape x N</span>
+<span class="sd">    """</span>
+    <span class="n">augmented_sample_num</span> <span class="o">=</span> <span class="n">objective</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">//</span> <span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="c1"># using repeat here as obj might be constructed as</span>
+    <span class="c1"># obj.reshape(-1, *samples.shape[2:]) where the first 2 dimensions are</span>
+    <span class="c1"># of shape `augmented_samples x sample_shape`.</span>
+    <span class="n">repeat_size</span> <span class="o">=</span> <span class="p">(</span><span class="n">augmented_sample_num</span><span class="p">,)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)</span> <span class="o">*</span> <span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">samples</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="o">*</span><span class="n">repeat_size</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">samples</span></div>
+
+
 <div class="viewcode-block" id="compute_best_feasible_objective"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.compute_best_feasible_objective">[docs]</a><span class="k">def</span> <span class="nf">compute_best_feasible_objective</span><span class="p">(</span>
     <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -128,6 +149,7 @@
             <span class="n">X</span><span class="o">=</span><span class="n">X_baseline</span><span class="p">,</span>
         <span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
 
+    <span class="n">is_feasible</span> <span class="o">=</span> <span class="n">repeat_to_match_aug_dim</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">is_feasible</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">obj</span><span class="p">)</span>
     <span class="n">obj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">is_feasible</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">infeasible_value</span><span class="p">)</span>
     <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
         <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>

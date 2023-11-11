@@ -803,6 +803,38 @@ an element of a q-batch).</p></li>
 </dl>
 </dd></dl>
 </dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.models.cost.FixedCostModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.cost.</span></span><span class="sig-name descname"><span class="pre">FixedCostModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_cost</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/cost.html#FixedCostModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.cost.FixedCostModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">DeterministicModel</span></code></p>
+<p>Deterministic, fixed cost model.</p>
+<p>For each (q-batch) element of a candidate set <cite>X</cite>, this module computes a
+fixed cost per objective.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fixed_cost</strong> (<em>Tensor</em>) – A <cite>m</cite>-dim tensor containing the fixed cost of evaluating each
+objective.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.cost.FixedCostModel.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/cost.html#FixedCostModel.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.cost.FixedCostModel.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the cost on a candidate set X.</p>
+<p>Computes the fixed cost of evaluating each objective for each element
+of the q-batch.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x q x d’</cite>-dim tensor of candidate points.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape x q x m</cite>-dim tensor of costs.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
 </section>
 <section id="module-botorch.models.gp_regression">
 <span id="gp-regression-models"></span><h3>GP Regression Models<a class="headerlink" href="#module-botorch.models.gp_regression" title="Permalink to this heading">¶</a></h3>
