@@ -19,7 +19,11 @@ from botorch.acquisition.objective import (
     MCAcquisitionObjective,
     PosteriorTransform,
 )
-from botorch.exceptions.errors import DeprecationError, UnsupportedError
+from botorch.exceptions.errors import (
+    BotorchTensorDimensionError,
+    DeprecationError,
+    UnsupportedError,
+)
 from botorch.models.fully_bayesian import MCMC_DIM
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
@@ -317,21 +321,28 @@ def prune_inferior_points(
 
 
 def project_to_target_fidelity(
-    X: Tensor, target_fidelities: Optional[Dict[int, float]] = None
+    X: Tensor,
+    target_fidelities: Optional[Dict[int, float]] = None,
+    d: Optional[int] = None,
 ) -> Tensor:
     r"""Project `X` onto the target set of fidelities.
 
     This function assumes that the set of feasible fidelities is a box, so
     projecting here just means setting each fidelity parameter to its target
-    value.
+    value. If X does not contain the fidelity dimensions, this will insert
+    them and set them to their target values.
 
     Args:
-        X: A `batch_shape x q x d`-dim Tensor of with `q` `d`-dim design points
-            for each t-batch.
+        X: A `batch_shape x q x (d or d-d_f)`-dim Tensor of with `q` `d` or
+            `d-d_f`-dim design points for each t-batch, where d_f is the
+            number of fidelity dimensions. If the argument `d` is not provided,
+            `X` must include the fidelity dimensions and have a trailing`X` must
+            include the fidelity dimensions and have a trailing
         target_fidelities: A dictionary mapping a subset of columns of `X` (the
             fidelity parameters) to their respective target fidelity value. If
             omitted, assumes that the last column of X is the fidelity parameter
             with a target value of 1.0.
+        d: The total dimension `d`.
 
     Return:
         A `batch_shape x q x d`-dim Tensor `X_proj` with fidelity parameters
@@ -339,15 +350,36 @@ def project_to_target_fidelity(
     """
     if target_fidelities is None:
         target_fidelities = {-1: 1.0}
-    d = X.size(-1)
+    if d is None:
+        # assume X contains the fidelity dimensions
+        d = X.shape[-1]
     # normalize to positive indices
     tfs = {k if k >= 0 else d + k: v for k, v in target_fidelities.items()}
     ones = torch.ones(*X.shape[:-1], device=X.device, dtype=X.dtype)
-    # here we're looping through the feature dimension of X - this could be
-    # slow for large `d`, we should optimize this for that case
-    X_proj = torch.stack(
-        [X[..., i] if i not in tfs else tfs[i] * ones for i in range(d)], dim=-1
-    )
+    if X.shape[-1] == d:
+        # X contains fidelity dimensions
+        # here we're looping through the feature dimension of X - this could be
+        # slow for large `d`, we should optimize this for that case
+        X_proj = torch.stack(
+            [X[..., i] if i not in tfs else tfs[i] * ones for i in range(d)], dim=-1
+        )
+    elif X.shape[-1] == d - len(target_fidelities):
+        # need to insert fidelity dimensions
+        cols = []
+        X_idx = 0
+        for i in range(d):
+            if i not in tfs:
+                cols.append(X[..., X_idx])
+                X_idx += 1
+            else:
+                cols.append(tfs[i] * ones)
+        X_proj = torch.stack(cols, dim=-1)
+    else:
+        raise BotorchTensorDimensionError(
+            "X must have a last dimension with size `d` or `d-d_f`,"
+            f" but got {X.shape[-1]}."
+        )
+
     return X_proj
 
 

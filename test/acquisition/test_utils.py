@@ -22,7 +22,11 @@ from botorch.acquisition.utils import (
     prune_inferior_points,
     repeat_to_match_aug_dim,
 )
-from botorch.exceptions.errors import DeprecationError, UnsupportedError
+from botorch.exceptions.errors import (
+    BotorchTensorDimensionError,
+    DeprecationError,
+    UnsupportedError,
+)
 from botorch.models import SingleTaskGP
 
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
@@ -323,6 +327,18 @@ class TestFidelityUtils(BotorchTestCase):
             out.backward()
             self.assertTrue(torch.all(X.grad[..., [0, 2]] == 0))
             self.assertTrue(torch.equal(X.grad[..., [1, 3]], 2 * X[..., [1, 3]]))
+            # test X without fidelity dims
+            X_proj = project_to_target_fidelity(
+                X[..., :2], target_fidelities=target_fids, d=4
+            )
+            self.assertTrue(torch.equal(X_proj[..., :, [0]], 0.1 * ones))
+            self.assertTrue(torch.equal(X_proj[..., :, [2]], 0.5 * ones))
+            # test unexpected shape
+            msg = "X must have a last dimension with size `d` or `d-d_f`," " but got 3."
+            with self.assertRaisesRegex(BotorchTensorDimensionError, msg):
+                project_to_target_fidelity(
+                    X[..., :3], target_fidelities=target_fids, d=4
+                )
 
     def test_expand_trace_observations(self):
         for batch_shape, dtype in itertools.product(
