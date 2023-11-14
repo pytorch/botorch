@@ -73,7 +73,7 @@ EXPECTED_KEYS_NOISE = EXPECTED_KEYS + [
 class TestFullyBayesianMultiTaskGP(BotorchTestCase):
     def _get_data_and_model(
         self,
-        task_rank: Optional[int] = 1,
+        task_rank: Optional[int] = None,
         output_tasks: Optional[List[int]] = None,
         infer_noise: bool = False,
         **tkwargs
@@ -367,7 +367,7 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
         self.test_fit_model(dtype=torch.float)
 
     def test_fit_model_infer_noise(self):
-        self.test_fit_model(infer_noise=True, task_rank=4)
+        self.test_fit_model(infer_noise=True, task_rank=2)
 
     def test_transforms(self, infer_noise: bool = False):
         tkwargs = {"device": self.device, "dtype": torch.double}
