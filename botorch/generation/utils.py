@@ -33,19 +33,23 @@ def _convert_nonlinear_inequality_constraints(
             f"got {type(nonlinear_inequality_constraints)}."
         )
 
+    legacy = False
     # return nonlinear_inequality_constraints
     for nlc in nonlinear_inequality_constraints:
         if callable(nlc):
             # old style --> convert
             nlcs.append((nlc, True))
-            warnings.warn(
-                "The `nonlinear_inequality_constraints` argument is expected "
-                "take a list of tuples. Passing a list of callables "
-                "will result in an error in future versions.",
-                DeprecationWarning,
-            )
+            legacy = True
+
         else:
             nlcs.append(nlc)
+    if legacy:
+        warnings.warn(
+            "The `nonlinear_inequality_constraints` argument is expected "
+            "take a list of tuples. Passing a list of callables "
+            "will result in an error in future versions.",
+            DeprecationWarning,
+        )
 
     return nlcs
 
