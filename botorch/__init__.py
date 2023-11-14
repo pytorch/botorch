@@ -30,7 +30,7 @@ from botorch.logging import logger
 from botorch.utils import manual_seed
 
 try:
-    from botorch.version import version as __version__
+    pass
 except Exception:  # pragma: no cover
     __version__ = "Unknown"  # pragma: no cover
 
