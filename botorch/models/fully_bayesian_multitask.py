@@ -60,14 +60,14 @@ class MultitaskSaasPyroModel(SaasPyroModel):
                 Note that the inferred noise is common across all tasks.
             task_feature: The index of the task feature (`-d <= task_feature <= d`).
             task_rank: The num of learned task embeddings to be used in the task kernel.
-                If omitted, set it to be 1.
+                If omitted, use a full rank (i.e. number of tasks) kernel.
         """
         super().set_inputs(train_X, train_Y, train_Yvar)
         # obtain a list of task indicies
         all_tasks = train_X[:, task_feature].unique().to(dtype=torch.long).tolist()
         self.task_feature = task_feature
         self.num_tasks = len(all_tasks)
-        self.task_rank = task_rank or 1
+        self.task_rank = task_rank or self.num_tasks
         # assume there is one column for task feature
         self.ard_num_dims = self.train_X.shape[-1] - 1
 
@@ -212,7 +212,7 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
             output_tasks: A list of task indices for which to compute model
                 outputs for. If omitted, return outputs for all task indices.
             rank: The num of learned task embeddings to be used in the task kernel.
-                If omitted, set it to be 1.
+                If omitted, use a full rank (i.e. number of tasks) kernel.
             outcome_transform: An outcome transform that is applied to the
                 training data during instantiation and to the posterior during
                 inference (that is, the `Posterior` obtained by calling
@@ -248,6 +248,7 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
             train_Yvar=train_Yvar,
             task_feature=task_feature,
             output_tasks=output_tasks,
+            rank=rank,
         )
         self.to(train_X)
 
@@ -263,7 +264,7 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
             train_Y=train_Y,
             train_Yvar=train_Yvar,
             task_feature=task_feature,
-            task_rank=rank,
+            task_rank=self._rank,
         )
         self.pyro_model = pyro_model
         if outcome_transform is not None:
@@ -424,16 +425,15 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
         raw_mean = state_dict["mean_module.raw_constant"]
         num_mcmc_samples = len(raw_mean)
         dim = self.pyro_model.train_X.shape[-1] - 1  # Removing 1 for the task feature.
-        task_rank = self.pyro_model.task_rank
         tkwargs = {"device": raw_mean.device, "dtype": raw_mean.dtype}
         # Load some dummy samples
         mcmc_samples = {
             "mean": torch.ones(num_mcmc_samples, **tkwargs),
             "lengthscale": torch.ones(num_mcmc_samples, dim, **tkwargs),
             "outputscale": torch.ones(num_mcmc_samples, **tkwargs),
-            "task_lengthscale": torch.ones(num_mcmc_samples, task_rank, **tkwargs),
+            "task_lengthscale": torch.ones(num_mcmc_samples, self._rank, **tkwargs),
             "latent_features": torch.ones(
-                num_mcmc_samples, self._rank, task_rank, **tkwargs
+                num_mcmc_samples, self.num_tasks, self._rank, **tkwargs
             ),
         }
         if self.pyro_model.train_Yvar is None:
