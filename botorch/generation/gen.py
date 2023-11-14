@@ -261,9 +261,9 @@ def gen_candidates_scipy(
     # candidate in which case we just return the starting point. This happens rarely,
     # so it shouldn't be an issue given enough restarts.
     if nonlinear_inequality_constraints:
-        for constraint in nonlinear_inequality_constraints:
+        for con, is_intrapoint in nonlinear_inequality_constraints:
             if not nonlinear_constraint_is_fulfilled(
-                constraint[0], constraint[1], candidates
+                con, is_intrapoint=is_intrapoint, x=candidates
             ):
                 candidates = torch.from_numpy(x0).to(candidates).reshape(shapeX)
                 warnings.warn(

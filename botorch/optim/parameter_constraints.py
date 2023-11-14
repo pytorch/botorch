@@ -379,8 +379,8 @@ def _generate_unfixed_nonlin_constraints(
         return new_nonlin_constraint
 
     return [
-        (_wrap_nonlin_constraint(constraint=constraint[0]), constraint[1])
-        for constraint in constraints
+        (_wrap_nonlin_constraint(constraint=nlc), is_intrapoint)
+        for nlc, is_intrapoint in constraints
     ]
 
 
@@ -483,7 +483,7 @@ def _make_f_and_grad_nonlinear_inequality_constraints(
 
 
 def nonlinear_constraint_is_fulfilled(
-    nonlinear_inequality_constraint: Callable, intra: bool, x: Tensor
+    nonlinear_inequality_constraint: Callable, is_intrapoint: bool, x: Tensor
 ) -> bool:
     """Checks if a nonlinear inequality constraint is fulfilled.
 
@@ -499,16 +499,14 @@ def nonlinear_constraint_is_fulfilled(
         bool: True if the constraint is fulfilled, else False.
     """
     b, q, _ = x.shape
-    if not intra:  # this is an interpoint constraint
-        for i in range(b):
-            if _arrayify(nonlinear_inequality_constraint(x[i])).item() < NLC_TOL:
-                return False
-    else:  # this is an intrapoint constraint
-        for i in range(b):
-            for j in range(q):
-                if _arrayify(nonlinear_inequality_constraint(x[i, j])).item() < NLC_TOL:
-                    return False
-    return True
+    def check_x(x: Tensor) -> bool:
+        return _arrayify(nonlinear_inequality_constraint(x)).item() < NLC_TOL
+    
+    for x_ in x:
+        if is_intrapoint:
+            return all(check_x(x__) for for x__ in x_)
+         else:
+            return check_x(x_)
 
 
 def make_scipy_nonlinear_inequality_constraints(
@@ -547,8 +545,8 @@ def make_scipy_nonlinear_inequality_constraints(
                 "A nonlinear constraint has to be a tuple of length 2, "
                 f"got length {len(constraint)}."
             )
-        nlc, is_intra = constraint
-        if not nonlinear_constraint_is_fulfilled(nlc, is_intra, x0.reshape(shapeX)):
+        nlc, is_intrapoint = constraint
+        if not nonlinear_constraint_is_fulfilled(nlc, is_intrapoint=is_intrapoint, x= x0.reshape(shapeX)):
             raise ValueError(
                 "`batch_initial_conditions` must satisfy the non-linear inequality "
                 "constraints."
