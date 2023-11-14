@@ -6941,20 +6941,25 @@ under <cite>num_samples</cite> samples) probability of being the best point.</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.acquisition.utils.project_to_target_fidelity">
-<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.utils.</span></span><span class="sig-name descname"><span class="pre">project_to_target_fidelity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_fidelities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/utils.html#project_to_target_fidelity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.utils.project_to_target_fidelity" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.utils.</span></span><span class="sig-name descname"><span class="pre">project_to_target_fidelity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_fidelities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/utils.html#project_to_target_fidelity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.utils.project_to_target_fidelity" title="Permalink to this definition">¶</a></dt>
 <dd><p>Project <cite>X</cite> onto the target set of fidelities.</p>
 <p>This function assumes that the set of feasible fidelities is a box, so
 projecting here just means setting each fidelity parameter to its target
-value.</p>
+value. If X does not contain the fidelity dimensions, this will insert
+them and set them to their target values.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x q x d</cite>-dim Tensor of with <cite>q</cite> <cite>d</cite>-dim design points
-for each t-batch.</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x q x (d or d-d_f)</cite>-dim Tensor of with <cite>q</cite> <cite>d</cite> or
+<cite>d-d_f</cite>-dim design points for each t-batch, where d_f is the
+number of fidelity dimensions. If the argument <cite>d</cite> is not provided,
+<cite>X</cite> must include the fidelity dimensions and have a trailing`X` must
+include the fidelity dimensions and have a trailing</p></li>
 <li><p><strong>target_fidelities</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – A dictionary mapping a subset of columns of <cite>X</cite> (the
 fidelity parameters) to their respective target fidelity value. If
 omitted, assumes that the last column of X is the fidelity parameter
 with a target value of 1.0.</p></li>
+<li><p><strong>d</strong> (<em>int</em><em> | </em><em>None</em>) – The total dimension <cite>d</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

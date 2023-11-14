@@ -42,7 +42,11 @@
     <span class="n">MCAcquisitionObjective</span><span class="p">,</span>
     <span class="n">PosteriorTransform</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">DeprecationError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BotorchTensorDimensionError</span><span class="p">,</span>
+    <span class="n">DeprecationError</span><span class="p">,</span>
+    <span class="n">UnsupportedError</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.models.fully_bayesian</span> <span class="kn">import</span> <span class="n">MCMC_DIM</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
@@ -340,21 +344,28 @@
 
 
 <div class="viewcode-block" id="project_to_target_fidelity"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.project_to_target_fidelity">[docs]</a><span class="k">def</span> <span class="nf">project_to_target_fidelity</span><span class="p">(</span>
-    <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">target_fidelities</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">target_fidelities</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">d</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Project `X` onto the target set of fidelities.</span>
 
 <span class="sd">    This function assumes that the set of feasible fidelities is a box, so</span>
 <span class="sd">    projecting here just means setting each fidelity parameter to its target</span>
-<span class="sd">    value.</span>
+<span class="sd">    value. If X does not contain the fidelity dimensions, this will insert</span>
+<span class="sd">    them and set them to their target values.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        X: A `batch_shape x q x d`-dim Tensor of with `q` `d`-dim design points</span>
-<span class="sd">            for each t-batch.</span>
+<span class="sd">        X: A `batch_shape x q x (d or d-d_f)`-dim Tensor of with `q` `d` or</span>
+<span class="sd">            `d-d_f`-dim design points for each t-batch, where d_f is the</span>
+<span class="sd">            number of fidelity dimensions. If the argument `d` is not provided,</span>
+<span class="sd">            `X` must include the fidelity dimensions and have a trailing`X` must</span>
+<span class="sd">            include the fidelity dimensions and have a trailing</span>
 <span class="sd">        target_fidelities: A dictionary mapping a subset of columns of `X` (the</span>
 <span class="sd">            fidelity parameters) to their respective target fidelity value. If</span>
 <span class="sd">            omitted, assumes that the last column of X is the fidelity parameter</span>
 <span class="sd">            with a target value of 1.0.</span>
+<span class="sd">        d: The total dimension `d`.</span>
 
 <span class="sd">    Return:</span>
 <span class="sd">        A `batch_shape x q x d`-dim Tensor `X_proj` with fidelity parameters</span>
@@ -362,15 +373,36 @@
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">target_fidelities</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">target_fidelities</span> <span class="o">=</span> <span class="p">{</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span>
-    <span class="n">d</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># assume X contains the fidelity dimensions</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="c1"># normalize to positive indices</span>
     <span class="n">tfs</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span> <span class="k">if</span> <span class="n">k</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">d</span> <span class="o">+</span> <span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">target_fidelities</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
     <span class="n">ones</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-    <span class="c1"># here we're looping through the feature dimension of X - this could be</span>
-    <span class="c1"># slow for large `d`, we should optimize this for that case</span>
-    <span class="n">X_proj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
-        <span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tfs</span> <span class="k">else</span> <span class="n">tfs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">ones</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
-    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">d</span><span class="p">:</span>
+        <span class="c1"># X contains fidelity dimensions</span>
+        <span class="c1"># here we're looping through the feature dimension of X - this could be</span>
+        <span class="c1"># slow for large `d`, we should optimize this for that case</span>
+        <span class="n">X_proj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tfs</span> <span class="k">else</span> <span class="n">tfs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">ones</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">d</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">target_fidelities</span><span class="p">):</span>
+        <span class="c1"># need to insert fidelity dimensions</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">X_idx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tfs</span><span class="p">:</span>
+                <span class="n">cols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">X_idx</span><span class="p">])</span>
+                <span class="n">X_idx</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tfs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">ones</span><span class="p">)</span>
+        <span class="n">X_proj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">BotorchTensorDimensionError</span><span class="p">(</span>
+            <span class="s2">"X must have a last dimension with size `d` or `d-d_f`,"</span>
+            <span class="sa">f</span><span class="s2">" but got </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">."</span>
+        <span class="p">)</span>
+
     <span class="k">return</span> <span class="n">X_proj</span></div>
 
 
