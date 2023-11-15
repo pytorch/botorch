@@ -132,6 +132,11 @@ def gen_candidates_scipy(
             reduced_domain = None not in fixed_features.values()
 
     if nonlinear_inequality_constraints:
+        if not isinstance(nonlinear_inequality_constraints, list):
+            raise ValueError(
+                "`nonlinear_inequality_constraints` must be a list of tuples, "
+                f"got {type(nonlinear_inequality_constraints)}."
+            )
         nonlinear_inequality_constraints = _convert_nonlinear_inequality_constraints(
             nonlinear_inequality_constraints
         )

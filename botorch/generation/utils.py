@@ -27,12 +27,6 @@ def _convert_nonlinear_inequality_constraints(
     format. Assumes intra-point constraints.
     """
     nlcs = []
-    if not isinstance(nonlinear_inequality_constraints, list):
-        raise ValueError(
-            "`nonlinear_inequality_constraints` must be a list of tuples, "
-            f"got {type(nonlinear_inequality_constraints)}."
-        )
-
     legacy = False
     # return nonlinear_inequality_constraints
     for nlc in nonlinear_inequality_constraints:
