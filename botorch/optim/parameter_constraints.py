@@ -498,15 +498,18 @@ def nonlinear_constraint_is_fulfilled(
     Returns:
         bool: True if the constraint is fulfilled, else False.
     """
-    b, q, _ = x.shape
+
     def check_x(x: Tensor) -> bool:
-        return _arrayify(nonlinear_inequality_constraint(x)).item() < NLC_TOL
-    
+        return _arrayify(nonlinear_inequality_constraint(x)).item() >= NLC_TOL
+
     for x_ in x:
         if is_intrapoint:
-            return all(check_x(x__) for for x__ in x_)
-         else:
-            return check_x(x_)
+            if not all(check_x(x__) for x__ in x_):
+                return False
+        else:
+            if not check_x(x_):
+                return False
+    return True
 
 
 def make_scipy_nonlinear_inequality_constraints(
@@ -546,13 +549,15 @@ def make_scipy_nonlinear_inequality_constraints(
                 f"got length {len(constraint)}."
             )
         nlc, is_intrapoint = constraint
-        if not nonlinear_constraint_is_fulfilled(nlc, is_intrapoint=is_intrapoint, x= x0.reshape(shapeX)):
+        if not nonlinear_constraint_is_fulfilled(
+            nlc, is_intrapoint=is_intrapoint, x=x0.reshape(shapeX)
+        ):
             raise ValueError(
                 "`batch_initial_conditions` must satisfy the non-linear inequality "
                 "constraints."
             )
 
         scipy_nonlinear_inequality_constraints += _make_nonlinear_constraints(
-            f_np_wrapper=f_np_wrapper, nlc=nlc, intra=is_intra, shapeX=shapeX
+            f_np_wrapper=f_np_wrapper, nlc=nlc, intra=is_intrapoint, shapeX=shapeX
         )
     return scipy_nonlinear_inequality_constraints
