@@ -17,7 +17,7 @@ from botorch.models.model import Model, ModelList
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.multitask import MultiTaskGP
 from botorch.utils.sampling import manual_seed
-from botorch.utils.transforms import is_fully_bayesian
+from botorch.utils.transforms import is_ensemble
 from gpytorch.kernels import Kernel, MaternKernel, RBFKernel, ScaleKernel
 from linear_operator.utils.cholesky import psd_safe_cholesky
 from torch import Tensor
@@ -503,7 +503,7 @@ def get_gp_samples(
                 models[m].outcome_transform = _octf
             if _intf is not None:
                 base_gp_samples.models[m].input_transform = _intf
-        base_gp_samples.is_fully_bayesian = is_fully_bayesian(model=model)
+        base_gp_samples._is_ensemble = is_ensemble(model=model)
         return base_gp_samples
     elif n_samples > 1:
         base_gp_samples = get_deterministic_model_multi_samples(
@@ -522,5 +522,5 @@ def get_gp_samples(
     if octf is not None:
         base_gp_samples.outcome_transform = octf
         model.outcome_transform = octf
-    base_gp_samples.is_fully_bayesian = is_fully_bayesian(model=model)
+    base_gp_samples._is_ensemble = is_ensemble(model=model)
     return base_gp_samples

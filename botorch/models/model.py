@@ -70,17 +70,23 @@ class Model(Module, ABC):
     `Tensor` or `Module` type are automatically registered so they can be moved and/or
     cast with the `to` method, automatically differentiated, and used with CUDA.
 
-    Args:
+    Attributes:
         _has_transformed_inputs: A boolean denoting whether `train_inputs` are currently
             stored as transformed or not.
         _original_train_inputs: A Tensor storing the original train inputs for use in
             `_revert_to_original_inputs`. Note that this is necessary since
             transform / untransform cycle introduces numerical errors which lead
             to upstream errors during training.
+        _is_fully_bayesian: Returns `True` if this is a fully Bayesian model.
+        _is_ensemble: Returns `True` if this model consists of multiple models
+            that are stored in an additional batch dimension. This is true for the fully
+            Bayesian models.
     """  # noqa: E501
 
     _has_transformed_inputs: bool = False
     _original_train_inputs: Optional[Tensor] = None
+    _is_fully_bayesian = False
+    _is_ensemble = False
 
     @abstractmethod
     def posterior(

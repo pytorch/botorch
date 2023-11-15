@@ -27,7 +27,7 @@ from botorch.utils.gp_sampling import (
     RandomFourierFeatures,
 )
 from botorch.utils.testing import BotorchTestCase
-from botorch.utils.transforms import is_fully_bayesian
+from botorch.utils.transforms import is_ensemble
 from gpytorch.kernels import MaternKernel, PeriodicKernel, RBFKernel, ScaleKernel
 from torch.distributions import MultivariateNormal
 
@@ -686,7 +686,7 @@ class TestRandomFourierFeatures(BotorchTestCase):
             num_outputs=1,
             n_samples=1,
         )
-        self.assertTrue(is_fully_bayesian(gp_samples))
+        self.assertTrue(is_ensemble(gp_samples))
         # Non-batch evaluation.
         samples = gp_samples(torch.rand(2, 4, **tkwargs))
         self.assertEqual(samples.shape, torch.Size([4, 2, 1]))

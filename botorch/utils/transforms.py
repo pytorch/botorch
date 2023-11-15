@@ -165,33 +165,35 @@ def _verify_output_shape(acqf: Any, X: Tensor, output: Tensor) -> bool:
 
 
 def is_fully_bayesian(model: Model) -> bool:
-    r"""Check if at least one model is a SaasFullyBayesianSingleTaskGP
+    r"""Check if at least one model is a fully Bayesian model.
 
     Args:
         model: A BoTorch model (may be a `ModelList` or `ModelListGP`)
-        d: The dimension of the tensor to index.
 
     Returns:
-        True if at least one model is a `SaasFullyBayesianSingleTaskGP`
+       True if at least one model is a fully Bayesian model.
     """
     from botorch.models import ModelList
-    from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
-    from botorch.models.fully_bayesian_multitask import SaasFullyBayesianMultiTaskGP
 
-    full_bayesian_model_cls = (
-        SaasFullyBayesianSingleTaskGP,
-        SaasFullyBayesianMultiTaskGP,
-    )
+    if isinstance(model, ModelList):
+        return any(is_fully_bayesian(m) for m in model.models)
+    return getattr(model, "_is_fully_bayesian", False)
 
-    if isinstance(model, full_bayesian_model_cls) or getattr(
-        model, "is_fully_bayesian", False
-    ):
-        return True
-    elif isinstance(model, ModelList):
-        for m in model.models:
-            if is_fully_bayesian(m):
-                return True
-    return False
+
+def is_ensemble(model: Model) -> bool:
+    r"""Check if at least one model is an ensemble model.
+
+    Args:
+        model: A BoTorch model (may be a `ModelList` or `ModelListGP`)
+
+    Returns:
+       True if at least one model is an ensemble model.
+    """
+    from botorch.models import ModelList
+
+    if isinstance(model, ModelList):
+        return any(is_ensemble(m) for m in model.models)
+    return getattr(model, "_is_ensemble", False)
 
 
 def t_batch_mode_transform(
@@ -255,7 +257,7 @@ def t_batch_mode_transform(
             # add t-batch dim
             X = X if X.dim() > 2 else X.unsqueeze(0)
             output = method(acqf, X, *args, **kwargs)
-            if hasattr(acqf, "model") and is_fully_bayesian(acqf.model):
+            if hasattr(acqf, "model") and is_ensemble(acqf.model):
                 # IDEA: this could be wrapped into SampleReducingMCAcquisitionFunction
                 output = (
                     output.mean(dim=-1) if not acqf._log else logmeanexp(output, dim=-1)
