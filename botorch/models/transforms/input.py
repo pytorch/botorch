@@ -950,7 +950,10 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
                 of the Kumaraswamy distribution.
             concentration0_prior: A prior distribution on the concentration0 parameter
                 of the Kumaraswamy distribution.
-            batch_shape: The batch shape.
+            batch_shape: An optional batch shape, for learning independent warping
+                parameters for each batch of inputs. This should match the input batch
+                shape of the model (i.e., `train_X.shape[:-2]`).
+                NOTE: This is only supported for single-output models.
         """
         super().__init__()
         self.register_buffer("indices", torch.tensor(indices, dtype=torch.long))
