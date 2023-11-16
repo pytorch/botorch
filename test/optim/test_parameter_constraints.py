@@ -75,7 +75,7 @@ class TestParameterConstraints(BotorchTestCase):
         x = np.random.rand(shapeX.numel())
         # intra
         constraints = _make_nonlinear_constraints(
-            f_np_wrapper=f_np_wrapper, nlc=nlc, intra=True, shapeX=shapeX
+            f_np_wrapper=f_np_wrapper, nlc=nlc, is_intrapoint=True, shapeX=shapeX
         )
         self.assertEqual(len(constraints), b * q)
         self.assertTrue(
@@ -92,7 +92,7 @@ class TestParameterConstraints(BotorchTestCase):
         self.assertTrue(np.allclose(constraints[1]["jac"](x), jac_exp))
         # inter
         constraints = _make_nonlinear_constraints(
-            f_np_wrapper=f_np_wrapper, nlc=nlc, intra=False, shapeX=shapeX
+            f_np_wrapper=f_np_wrapper, nlc=nlc, is_intrapoint=False, shapeX=shapeX
         )
         self.assertEqual(len(constraints), 3)
         self.assertTrue(
