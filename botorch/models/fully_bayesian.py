@@ -43,7 +43,7 @@ from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.models.utils import validate_input_scaling
 from botorch.models.utils.gpytorch_modules import MIN_INFERRED_NOISE_LEVEL
-from botorch.posteriors.fully_bayesian import FullyBayesianPosterior, MCMC_DIM
+from botorch.posteriors.fully_bayesian import GaussianMixturePosterior, MCMC_DIM
 from gpytorch.constraints import GreaterThan
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
@@ -327,6 +327,9 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
         >>> posterior = saas_gp.posterior(test_X)
     """
 
+    _is_fully_bayesian = True
+    _is_ensemble = True
+
     def __init__(
         self,
         train_X: Tensor,
@@ -508,7 +511,7 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
         observation_noise: bool = False,
         posterior_transform: Optional[PosteriorTransform] = None,
         **kwargs: Any,
-    ) -> FullyBayesianPosterior:
+    ) -> GaussianMixturePosterior:
         r"""Computes the posterior over model outputs at the provided points.
 
         Args:
@@ -526,7 +529,8 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
             posterior_transform: An optional PosteriorTransform.
 
         Returns:
-            A `FullyBayesianPosterior` object. Includes observation noise if specified.
+            A `GaussianMixturePosterior` object. Includes observation noise
+                if specified.
         """
         self._check_if_fitted()
         posterior = super().posterior(
@@ -536,5 +540,5 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
             posterior_transform=posterior_transform,
             **kwargs,
         )
-        posterior = FullyBayesianPosterior(distribution=posterior.distribution)
+        posterior = GaussianMixturePosterior(distribution=posterior.distribution)
         return posterior

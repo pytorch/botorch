@@ -50,7 +50,7 @@ from botorch.models.fully_bayesian import (
     SaasPyroModel,
 )
 from botorch.models.transforms import Normalize, Standardize
-from botorch.posteriors.fully_bayesian import batched_bisect, FullyBayesianPosterior
+from botorch.posteriors.fully_bayesian import batched_bisect, GaussianMixturePosterior
 from botorch.sampling.get_sampler import get_sampler
 from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
@@ -246,7 +246,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             for batch_shape in [[5], [6, 5, 2]]:
                 test_X = torch.rand(*batch_shape, d, **tkwargs)
                 posterior = model.posterior(test_X)
-                self.assertIsInstance(posterior, FullyBayesianPosterior)
+                self.assertIsInstance(posterior, GaussianMixturePosterior)
                 # Mean/variance
                 expected_shape = (
                     *batch_shape[: MCMC_DIM + 2],
@@ -689,7 +689,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             variance = torch.rand(1, 5, **tkwargs)
             covar = torch.diag_embed(variance)
             mvn = MultivariateNormal(mean, to_linear_operator(covar))
-            posterior = FullyBayesianPosterior(distribution=mvn)
+            posterior = GaussianMixturePosterior(distribution=mvn)
             dist = torch.distributions.Normal(
                 loc=mean.unsqueeze(-1), scale=variance.unsqueeze(-1).sqrt()
             )

@@ -9,16 +9,22 @@ from typing import Any
 import torch
 from botorch.models import (
     GenericDeterministicModel,
+    HigherOrderGP,
     ModelList,
-    ModelListGP,
+    PairwiseGP,
     SaasFullyBayesianSingleTaskGP,
     SingleTaskGP,
 )
+from botorch.models.fully_bayesian_multitask import SaasFullyBayesianMultiTaskGP
+from botorch.models.gp_regression_fidelity import SingleTaskMultiFidelityGP
+from botorch.models.gp_regression_mixed import MixedSingleTaskGP
 from botorch.models.model import Model
+from botorch.models.multitask import MultiTaskGP
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from botorch.utils.transforms import (
     _verify_output_shape,
     concatenate_pending_points,
+    is_ensemble,
     is_fully_bayesian,
     match_batch_shape,
     normalize,
@@ -299,26 +305,82 @@ class TorchNormalizeIndices(BotorchTestCase):
 class TestIsFullyBayesian(BotorchTestCase):
     def test_is_fully_bayesian(self):
         X, Y = torch.rand(3, 2), torch.randn(3, 1)
-        saas = SaasFullyBayesianSingleTaskGP(train_X=X, train_Y=Y)
         vanilla_gp = SingleTaskGP(train_X=X, train_Y=Y)
         deterministic = GenericDeterministicModel(f=lambda x: x)
-        # Single model
-        self.assertTrue(is_fully_bayesian(model=saas))
-        self.assertFalse(is_fully_bayesian(model=vanilla_gp))
-        self.assertFalse(is_fully_bayesian(model=deterministic))
-        # ModelListGP
-        self.assertTrue(is_fully_bayesian(model=ModelListGP(saas, saas)))
-        self.assertTrue(is_fully_bayesian(model=ModelListGP(saas, vanilla_gp)))
-        self.assertFalse(is_fully_bayesian(model=ModelListGP(vanilla_gp, vanilla_gp)))
-        # ModelList
-        self.assertTrue(is_fully_bayesian(model=ModelList(saas, saas)))
-        self.assertTrue(is_fully_bayesian(model=ModelList(saas, deterministic)))
-        self.assertFalse(is_fully_bayesian(model=ModelList(vanilla_gp, deterministic)))
-        # Nested ModelList
-        self.assertTrue(is_fully_bayesian(model=ModelList(ModelList(saas), saas)))
-        self.assertTrue(
-            is_fully_bayesian(model=ModelList(ModelList(saas), deterministic))
+
+        fully_bayesian_models = (
+            SaasFullyBayesianSingleTaskGP(train_X=X, train_Y=Y),
+            SaasFullyBayesianMultiTaskGP(train_X=X, train_Y=Y, task_feature=-1),
         )
-        self.assertFalse(
-            is_fully_bayesian(model=ModelList(ModelList(vanilla_gp), deterministic))
+        for m in fully_bayesian_models:
+            self.assertTrue(is_fully_bayesian(model=m))
+            # ModelList
+            self.assertTrue(is_fully_bayesian(model=ModelList(m, m)))
+            self.assertTrue(is_fully_bayesian(model=ModelList(m, vanilla_gp)))
+            self.assertTrue(is_fully_bayesian(model=ModelList(m, deterministic)))
+            # Nested ModelList
+            self.assertTrue(is_fully_bayesian(model=ModelList(ModelList(m), m)))
+            self.assertTrue(
+                is_fully_bayesian(model=ModelList(ModelList(m), deterministic))
+            )
+
+        non_fully_bayesian_models = (
+            GenericDeterministicModel(f=lambda x: x),
+            SingleTaskGP(train_X=X, train_Y=Y),
+            MultiTaskGP(train_X=X, train_Y=Y, task_feature=-1),
+            HigherOrderGP(train_X=X, train_Y=Y),
+            SingleTaskMultiFidelityGP(train_X=X, train_Y=Y, data_fidelity=3),
+            MixedSingleTaskGP(train_X=X, train_Y=Y, cat_dims=[1]),
+            PairwiseGP(datapoints=X, comparisons=None),
         )
+        for m in non_fully_bayesian_models:
+            self.assertFalse(is_fully_bayesian(model=m))
+            # ModelList
+            self.assertFalse(is_fully_bayesian(model=ModelList(m, m)))
+            self.assertFalse(is_fully_bayesian(model=ModelList(m, vanilla_gp)))
+            self.assertFalse(is_fully_bayesian(model=ModelList(m, deterministic)))
+            # Nested ModelList
+            self.assertFalse(is_fully_bayesian(model=ModelList(ModelList(m), m)))
+            self.assertFalse(
+                is_fully_bayesian(model=ModelList(ModelList(m), deterministic))
+            )
+
+
+class TestIsEnsemble(BotorchTestCase):
+    def test_is_ensemble(self):
+        X, Y = torch.rand(3, 2), torch.randn(3, 1)
+        vanilla_gp = SingleTaskGP(train_X=X, train_Y=Y)
+        deterministic = GenericDeterministicModel(f=lambda x: x)
+
+        ensemble_models = (
+            SaasFullyBayesianSingleTaskGP(train_X=X, train_Y=Y),
+            SaasFullyBayesianMultiTaskGP(train_X=X, train_Y=Y, task_feature=-1),
+        )
+        for m in ensemble_models:
+            self.assertTrue(is_ensemble(model=m))
+            # ModelList
+            self.assertTrue(is_ensemble(model=ModelList(m, m)))
+            self.assertTrue(is_ensemble(model=ModelList(m, vanilla_gp)))
+            self.assertTrue(is_ensemble(model=ModelList(m, deterministic)))
+            # Nested ModelList
+            self.assertTrue(is_ensemble(model=ModelList(ModelList(m), m)))
+            self.assertTrue(is_ensemble(model=ModelList(ModelList(m), deterministic)))
+
+        non_ensemble_models = (
+            GenericDeterministicModel(f=lambda x: x),
+            SingleTaskGP(train_X=X, train_Y=Y),
+            MultiTaskGP(train_X=X, train_Y=Y, task_feature=-1),
+            HigherOrderGP(train_X=X, train_Y=Y),
+            SingleTaskMultiFidelityGP(train_X=X, train_Y=Y, data_fidelity=3),
+            MixedSingleTaskGP(train_X=X, train_Y=Y, cat_dims=[1]),
+            PairwiseGP(datapoints=X, comparisons=None),
+        )
+        for m in non_ensemble_models:
+            self.assertFalse(is_ensemble(model=m))
+            # ModelList
+            self.assertFalse(is_ensemble(model=ModelList(m, m)))
+            self.assertFalse(is_ensemble(model=ModelList(m, vanilla_gp)))
+            self.assertFalse(is_ensemble(model=ModelList(m, deterministic)))
+            # Nested ModelList
+            self.assertFalse(is_ensemble(model=ModelList(ModelList(m), m)))
+            self.assertFalse(is_ensemble(model=ModelList(ModelList(m), deterministic)))

@@ -36,7 +36,7 @@ from botorch.models.fully_bayesian_multitask import (
 )
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
-from botorch.posteriors import FullyBayesianPosterior
+from botorch.posteriors import GaussianMixturePosterior
 from botorch.sampling.get_sampler import get_sampler
 from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
@@ -252,12 +252,12 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
         for batch_shape in [[5], [5, 2], [5, 2, 6]]:
             test_X = torch.rand(*batch_shape, d, **tkwargs)
             posterior = model.posterior(test_X)
-            self.assertIsInstance(posterior, FullyBayesianPosterior)
-            self.assertIsInstance(posterior, FullyBayesianPosterior)
+            self.assertIsInstance(posterior, GaussianMixturePosterior)
+            self.assertIsInstance(posterior, GaussianMixturePosterior)
 
             test_X = torch.rand(*batch_shape, d, **tkwargs)
             posterior = model.posterior(test_X)
-            self.assertIsInstance(posterior, FullyBayesianPosterior)
+            self.assertIsInstance(posterior, GaussianMixturePosterior)
             # Mean/variance
             expected_shape = (
                 *batch_shape[: MCMC_DIM + 2],

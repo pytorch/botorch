@@ -31,7 +31,7 @@ from botorch.sampling.get_sampler import get_sampler
 from botorch.sampling.pathwise import draw_matheron_paths
 from botorch.utils.objective import compute_feasibility_indicator
 from botorch.utils.sampling import optimize_posterior_samples
-from botorch.utils.transforms import is_fully_bayesian, normalize_indices
+from botorch.utils.transforms import is_ensemble, normalize_indices
 from torch import Tensor
 
 
@@ -263,7 +263,7 @@ def prune_inferior_points(
         with `N_nz` the number of points in `X` that have non-zero (empirical,
         under `num_samples` samples) probability of being the best point.
     """
-    if marginalize_dim is None and is_fully_bayesian(model):
+    if marginalize_dim is None and is_ensemble(model):
         # TODO: Properly deal with marginalizing fully Bayesian models
         marginalize_dim = MCMC_DIM
 

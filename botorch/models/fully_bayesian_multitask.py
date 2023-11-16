@@ -23,7 +23,7 @@ from botorch.models.fully_bayesian import (
 from botorch.models.multitask import MultiTaskGP
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
-from botorch.posteriors.fully_bayesian import FullyBayesianPosterior, MCMC_DIM
+from botorch.posteriors.fully_bayesian import GaussianMixturePosterior, MCMC_DIM
 from botorch.utils.datasets import MultiTaskDataset, SupervisedDataset
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels import MaternKernel
@@ -189,6 +189,9 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
         >>> posterior = mtsaas_gp.posterior(test_X)
     """
 
+    _is_fully_bayesian = True
+    _is_ensemble = True
+
     def __init__(
         self,
         train_X: Tensor,
@@ -335,11 +338,12 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
         observation_noise: bool = False,
         posterior_transform: Optional[PosteriorTransform] = None,
         **kwargs: Any,
-    ) -> FullyBayesianPosterior:
+    ) -> GaussianMixturePosterior:
         r"""Computes the posterior over model outputs at the provided points.
 
         Returns:
-            A `FullyBayesianPosterior` object. Includes observation noise if specified.
+            A `GaussianMixturePosterior` object. Includes observation noise
+                if specified.
         """
         self._check_if_fitted()
         posterior = super().posterior(
@@ -349,7 +353,7 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
             posterior_transform=posterior_transform,
             **kwargs,
         )
-        posterior = FullyBayesianPosterior(distribution=posterior.distribution)
+        posterior = GaussianMixturePosterior(distribution=posterior.distribution)
         return posterior
 
     def forward(self, X: Tensor) -> MultivariateNormal:

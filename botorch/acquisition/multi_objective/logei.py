@@ -38,7 +38,7 @@ from botorch.utils.safe_math import (
 )
 from botorch.utils.transforms import (
     concatenate_pending_points,
-    is_fully_bayesian,
+    is_ensemble,
     match_batch_shape,
     t_batch_mode_transform,
 )
@@ -454,9 +454,9 @@ class qLogNoisyExpectedHypervolumeImprovement(
         # 1) X and X, and
         # 2) X and X_baseline.
         posterior = self.model.posterior(X_full)
-        # Account for possible one-to-many transform and the MCMC batch dimension in
-        # `SaasFullyBayesianSingleTaskGP`
-        event_shape_lag = 1 if is_fully_bayesian(self.model) else 2
+        # Account for possible one-to-many transform and the model batch dimensions in
+        # ensemble models.
+        event_shape_lag = 1 if is_ensemble(self.model) else 2
         n_w = (
             posterior._extended_shape()[X_full.dim() - event_shape_lag]
             // X_full.shape[-2]

@@ -34,9 +34,9 @@ from botorch.models.utils import (
     mod_batch_shape,
     multioutput_to_batch_mode_transform,
 )
-from botorch.posteriors.fully_bayesian import FullyBayesianPosterior
+from botorch.posteriors.fully_bayesian import GaussianMixturePosterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
-from botorch.utils.transforms import is_fully_bayesian
+from botorch.utils.transforms import is_ensemble
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 from torch import Tensor
@@ -619,7 +619,7 @@ class ModelListGPyTorchModel(ModelList, GPyTorchModel, ABC):
             - If no `posterior_transform` is provided and the component models have no
                 `outcome_transform`, or if the component models only use linear outcome
                 transforms like `Standardize` (i.e. not `Log`), returns a
-                `GPyTorchPosterior` or `FullyBayesianPosterior` object,
+                `GPyTorchPosterior` or `GaussianMixturePosterior` object,
                 representing `batch_shape` joint distributions over `q` points
                 and the outputs selected by `output_indices` each. Includes
                 measurement noise if `observation_noise` is specified.
@@ -650,16 +650,16 @@ class ModelListGPyTorchModel(ModelList, GPyTorchModel, ABC):
             mvns = [p.distribution for p in posterior.posteriors]
             # Combining MTMVNs into a single MTMVN is currently not supported.
             if not any(isinstance(m, MultitaskMultivariateNormal) for m in mvns):
-                # Return the result as a GPyTorchPosterior/FullyBayesianPosterior.
+                # Return the result as a GPyTorchPosterior/GaussianMixturePosterior.
                 mvn = (
                     mvns[0]
                     if len(mvns) == 1
                     else MultitaskMultivariateNormal.from_independent_mvns(mvns=mvns)
                 )
-                if any(is_fully_bayesian(m) for m in self.models):
+                if any(is_ensemble(m) for m in self.models):
                     # Mixing fully Bayesian and other GP models is currently
                     # not supported.
-                    posterior = FullyBayesianPosterior(distribution=mvn)
+                    posterior = GaussianMixturePosterior(distribution=mvn)
                 else:
                     posterior = GPyTorchPosterior(distribution=mvn)
         if posterior_transform is not None:
