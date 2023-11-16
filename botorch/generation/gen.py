@@ -72,14 +72,16 @@ def gen_candidates_scipy(
         equality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
-        nonlinear_inequality_constraints: A list of tuples, one tuple per
-            constraint, first element of the tuple is a callable that represents
-            a non-linear inequality constraint of the form `callable(x) >= 0`. Each
-            callable is expected to take a `(num_restarts) x q x d`-dim tensor as
-            an input and return a `(num_restarts) x q`-dim tensor with the
-            constraint values. The second element is a boolean indicating it is
-            an intrapoint or interpoint constraint. `True` for intrapoint,
-            `False` for interpoint. The constraints will later be passed to SLSQP.
+        nonlinear_inequality_constraints: A list of tuples representing the nonlinear
+            inequality constraints. First element is a callable representing a
+            constraint of the form >= 0 that takes in case of an intra-point constraint
+            an one-dimensional torch tensor of length `d` and returns a scalar. In case
+            of an inter-point constraint, it takes a two dimensional torch tensor of
+            type (q x d) and returns again a scalar. The second element is a boolean,
+            indicating if it is an intra-point or inter-point constraint. `True` for
+            intra-point. `False` for inter-point. For more information on intra-point
+            vs inter-point constraints, see the doc stringstring of
+            `inequality_constraints`. The constraints will later be passed to SLSQP.
         options: Options used to control the optimization including "method"
             and "maxiter". Select method for `scipy.minimize` using the
             "method" key. By default uses L-BFGS-B for box-constrained problems

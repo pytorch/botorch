@@ -313,8 +313,32 @@ def _make_linear_constraints(
 
 
 def _make_nonlinear_constraints(
-    f_np_wrapper: Callable, nlc: Callable, intra: bool, shapeX: torch.Size
-) -> List:
+    f_np_wrapper: Callable, nlc: Callable, is_intrapoint: bool, shapeX: torch.Size
+) -> List[ScipyConstraintDict]:
+    """Create nonlinear constraints to be used by `scipy.minimize`.
+
+    Args:
+        f_np_wrapper: A wrapper function that given a constraint evaluates
+            the value and gradient (using autograd) of a numpy input and returns both
+            the objective and the gradient.
+        nlc: Callable representing a constraint of the form >= 0 and takes
+            in case of an intra-point constraint an one-dimensional torch tensor of
+            length `d` and returns a scalar. In case of an inter-point constraint, it
+            takes a two dimensional torch tensor of type (q x d) and returns again a
+            scalar.
+        is_intrapoint: A Boolean indicating if a constraint is an intra-point or
+            inter-point constraint.
+        shapeX: Shape of the theedimensional batch X, that should be optimized.
+
+    Returns:
+        A list of constraint dictionaries with the following keys
+
+        - "type": Indicates the type of the constraint, here always "ineq".
+        - "fun": A callable evaluating the constraint value on `x`, a flattened
+            version of the input tensor `X`, returning a scalar.
+        - "jac": A callable evaluating the constraint's Jacobian on `x`, a flattened
+            version of the input tensor `X`, returning a numpy array.
+    """
     shapeX = _validate_linear_constraints_shape_input(shapeX)
     b, q, _ = shapeX
     constraints = []
@@ -325,7 +349,7 @@ def _make_nonlinear_constraints(
     def get_interpoint_constraint(b: int, nlc: Callable) -> Callable:
         return lambda x: nlc(x[b])
 
-    if intra:
+    if is_intrapoint:
         for i in range(b):
             for j in range(q):
                 f_obj, f_grad = _make_f_and_grad_nonlinear_inequality_constraints(
@@ -492,7 +516,8 @@ def nonlinear_constraint_is_fulfilled(
             constraint.
         intra (bool): If True, the constraint is an intra-point constraint that
             is applied pointwise and is broadcasted over the q-batch. Else, the
-            constraint has to evaluated over the whole q-batch.
+            constraint has to evaluated over the whole q-batch and is a an
+            inter-point constraint.
         x (Tensor): Tensor of shape (b x q x d).
 
     Returns:
@@ -521,15 +546,20 @@ def make_scipy_nonlinear_inequality_constraints(
     r"""Generate Scipy nonlinear inequality constraints from callables.
 
     Args:
-        nonlinear_inequality_constraints: List of callables for the nonlinear
-            inequality constraints. Each callable represents a constraint of the
-            form >= 0 and takes a torch tensor of size (p x q x dim) and returns a
-            torch tensor of size (p x q).
+        nonlinear_inequality_constraints: A list of tuples representing the nonlinear
+            inequality constraints. First element is a callable representing a
+            constraint of the form >= 0 that takes in case of an intra-point constraint
+            an one-dimensional torch tensor of length `d` and returns a scalar. In case
+            of an inter-point constraint, it takes a two dimensional torch tensor of
+            type (q x d) and returns again a scalar. The second element is a boolean,
+            indicating if it is an intra-point or inter-point constraint. `True` for
+            intra-point. `False` for inter-point.
         f_np_wrapper: A wrapper function that given a constraint evaluates the value
              and gradient (using autograd) of a numpy input and returns both the
              objective and the gradient.
         x0: The starting point for SLSQP. We return this starting point in (rare)
             cases where SLSQP fails and thus require it to be feasible.
+        shapeX: Shape of the theedimensional batch X, that should be optimized.
 
     Returns:
         A list of dictionaries containing callables for constraint function
@@ -558,6 +588,9 @@ def make_scipy_nonlinear_inequality_constraints(
             )
 
         scipy_nonlinear_inequality_constraints += _make_nonlinear_constraints(
-            f_np_wrapper=f_np_wrapper, nlc=nlc, intra=is_intrapoint, shapeX=shapeX
+            f_np_wrapper=f_np_wrapper,
+            nlc=nlc,
+            is_intrapoint=is_intrapoint,
+            shapeX=shapeX,
         )
     return scipy_nonlinear_inequality_constraints

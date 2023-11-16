@@ -449,24 +449,27 @@ def optimize_acqf(
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`. `indices` and
             `coefficients` should be torch tensors. See the docstring of
             `make_scipy_linear_constraints` for an example. When q=1, or when
-            applying the same constraint to each candidate in the batch,
-            `indices` should be a 1-d tensor. For inter-point constraints,
-            `indices` must be a 2-d Tensor, where in each row `indices[i] =
-            (k_i, l_i)` the first index `k_i` corresponds to the `k_i`-th
-            element of the `q`-batch and the second index `l_i` corresponds to
-            the `l_i`-th feature of that element.
+            applying the same constraint to each candidate in the batch
+            (intra-point constraint), `indices` should be a 1-d tensor.
+            For inter-point constraints in which the constraint is applied to the
+            whole batch of candidates, `indices` must be a 2-d Tensor, where
+            in each row `indices[i] =(k_i, l_i)` the first index `k_i` corresponds
+            to the `k_i`-th element of the `q`-batch and the second index `l_i`
+            corresponds to the `l_i`-th feature of that element.
         equality_constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an equality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`. See the docstring of
             `make_scipy_linear_constraints` for an example.
-        nonlinear_inequality_constraints: A list of tuples, one tuple per
-            constraint, first element of the tuple is a callable that represents
-            a non-linear inequality constraint of the form `callable(x) >= 0`. Each
-            callable is expected to take a `(num_restarts) x q x d`-dim tensor as
-            an input and return a `(num_restarts) x q`-dim tensor with the
-            constraint values. The second element is a boolean indicating it is
-            an intrapoint or interpoint constraint. `True` for intrapoint,
-            `False` for interpoint. The constraints will later be passed to SLSQP.
+        nonlinear_inequality_constraints: A list of tuples representing the nonlinear
+            inequality constraints. First element is a callable representing a
+            constraint of the form >= 0 that takes in case of an intra-point constraint
+            an one-dimensional torch tensor of length `d` and returns a scalar. In case
+            of an inter-point constraint, it takes a two dimensional torch tensor of
+            type (q x d) and returns again a scalar. The second element is a boolean,
+            indicating if it is an intra-point or inter-point constraint. `True` for
+            intra-point. `False` for inter-point. For more information on intra-point
+            vs inter-point constraints, see the doc stringstring of
+            `inequality_constraints`. The constraints will later be passed to SLSQP.
             You need to pass in `batch_initial_conditions` in this case.
             Using non-linear inequality constraints also requires that `batch_limit`
             is set to 1, which will be done automatically if not specified in
@@ -746,14 +749,16 @@ def optimize_acqf_list(
         equality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
-        nonlinear_inequality_constraints: A list of tuples, one tuple per
-            constraint, first element of the tuple is a callable that represents
-            a non-linear inequality constraint of the form `callable(x) >= 0`. Each
-            callable is expected to take a `(num_restarts) x q x d`-dim tensor as
-            an input and return a `(num_restarts) x q`-dim tensor with the
-            constraint values. The second element is a boolean indicating it is
-            an intrapoint or interpoint constraint. `True` for intrapoint,
-            `False` for interpoint. The constraints will later be passed to SLSQP.
+        nonlinear_inequality_constraints: A list of tuples representing the nonlinear
+            inequality constraints. First element is a callable representing a
+            constraint of the form >= 0 that takes in case of an intra-point constraint
+            an one-dimensional torch tensor of length `d` and returns a scalar. In case
+            of an inter-point constraint, it takes a two dimensional torch tensor of
+            type (q x d) and returns again a scalar. The second element is a boolean,
+            indicating if it is an intra-point or inter-point constraint. `True` for
+            intra-point. `False` for inter-point. For more information on intra-point
+            vs inter-point constraints, see the doc stringstring of
+            `inequality_constraints`. The constraints will later be passed to SLSQP.
             You need to pass in `batch_initial_conditions` in this case.
             Using non-linear inequality constraints also requires that `batch_limit`
             is set to 1, which will be done automatically if not specified in
@@ -881,14 +886,16 @@ def optimize_acqf_mixed(
         equality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
-        nonlinear_inequality_constraints: A list of tuples, one tuple per
-            constraint, first element of the tuple is a callable that represents
-            a non-linear inequality constraint of the form `callable(x) >= 0`. Each
-            callable is expected to take a `(num_restarts) x q x d`-dim tensor as
-            an input and return a `(num_restarts) x q`-dim tensor with the
-            constraint values. The second element is a boolean indicating it is
-            an intrapoint or interpoint constraint. `True` for intrapoint,
-            `False` for interpoint. The constraints will later be passed to SLSQP.
+        nonlinear_inequality_constraints: A list of tuples representing the nonlinear
+            inequality constraints. First element is a callable representing a
+            constraint of the form >= 0 that takes in case of an intra-point constraint
+            an one-dimensional torch tensor of length `d` and returns a scalar. In case
+            of an inter-point constraint, it takes a two dimensional torch tensor of
+            type (q x d) and returns again a scalar. The second element is a boolean,
+            indicating if it is an intra-point or inter-point constraint. `True` for
+            intra-point. `False` for inter-point. For more information on intra-point
+            vs inter-point constraints, see the doc stringstring of
+            `inequality_constraints`. The constraints will later be passed to SLSQP.
             You need to pass in `batch_initial_conditions` in this case.
             Using non-linear inequality constraints also requires that `batch_limit`
             is set to 1, which will be done automatically if not specified in
