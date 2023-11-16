@@ -973,7 +973,10 @@
 <span class="sd">                of the Kumaraswamy distribution.</span>
 <span class="sd">            concentration0_prior: A prior distribution on the concentration0 parameter</span>
 <span class="sd">                of the Kumaraswamy distribution.</span>
-<span class="sd">            batch_shape: The batch shape.</span>
+<span class="sd">            batch_shape: An optional batch shape, for learning independent warping</span>
+<span class="sd">                parameters for each batch of inputs. This should match the input batch</span>
+<span class="sd">                shape of the model (i.e., `train_X.shape[:-2]`).</span>
+<span class="sd">                NOTE: This is only supported for single-output models.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"indices"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">))</span>

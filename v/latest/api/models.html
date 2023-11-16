@@ -4812,7 +4812,10 @@ the inputs.</p></li>
 of the Kumaraswamy distribution.</p></li>
 <li><p><strong>concentration0_prior</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>) – A prior distribution on the concentration0 parameter
 of the Kumaraswamy distribution.</p></li>
-<li><p><strong>batch_shape</strong> (<em>Optional</em><em>[</em><em>torch.Size</em><em>]</em>) – The batch shape.</p></li>
+<li><p><strong>batch_shape</strong> (<em>Optional</em><em>[</em><em>torch.Size</em><em>]</em>) – An optional batch shape, for learning independent warping
+parameters for each batch of inputs. This should match the input batch
+shape of the model (i.e., <cite>train_X.shape[:-2]</cite>).
+NOTE: This is only supported for single-output models.</p></li>
 </ul>
 </dd>
 </dl>
