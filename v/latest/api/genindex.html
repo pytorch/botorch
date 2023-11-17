@@ -54,8 +54,16 @@
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.max_value_entropy_search.qMultiObjectiveMaxValueEntropy._default_sample_shape">_default_sample_shape (botorch.acquisition.multi_objective.max_value_entropy_search.qMultiObjectiveMaxValueEntropy attribute)</a>
 </li>
+<li><a href="models.html#botorch.models.model.Model._has_transformed_inputs">_has_transformed_inputs (botorch.models.model.Model attribute)</a>
+</li>
+<li><a href="models.html#botorch.models.model.Model._is_ensemble">_is_ensemble (botorch.models.model.Model attribute)</a>
+</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="models.html#botorch.models.model.Model._is_fully_bayesian">_is_fully_bayesian (botorch.models.model.Model attribute)</a>
+</li>
+<li><a href="models.html#botorch.models.model.Model._original_train_inputs">_original_train_inputs (botorch.models.model.Model attribute)</a>
+</li>
 <li><a href="models.html#botorch.models.utils.inducing_point_allocators._pivoted_cholesky_init">_pivoted_cholesky_init() (in module botorch.models.utils.inducing_point_allocators)</a>
 </li>
 </ul></td>
@@ -157,7 +165,7 @@
 </li>
 <li><a href="optim.html#botorch.optim.optimize.OptimizeAcqfInputs.batch_initial_conditions">batch_initial_conditions (botorch.optim.optimize.OptimizeAcqfInputs attribute)</a>
 </li>
-<li><a href="posteriors.html#botorch.posteriors.fully_bayesian.FullyBayesianPosterior.batch_range">batch_range (botorch.posteriors.fully_bayesian.FullyBayesianPosterior property)</a>
+<li><a href="posteriors.html#botorch.posteriors.fully_bayesian.GaussianMixturePosterior.batch_range">batch_range (botorch.posteriors.fully_bayesian.GaussianMixturePosterior property)</a>
 <ul>
 <li><a href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.batch_range">(botorch.posteriors.gpytorch.GPyTorchPosterior property)</a>
 </li>
@@ -1852,6 +1860,8 @@
 </li>
 <li><a href="posteriors.html#botorch.posteriors.fully_bayesian.FullyBayesianPosterior.distribution">distribution (botorch.posteriors.fully_bayesian.FullyBayesianPosterior attribute)</a>
 <ul>
+<li><a href="posteriors.html#botorch.posteriors.fully_bayesian.GaussianMixturePosterior.distribution">(botorch.posteriors.fully_bayesian.GaussianMixturePosterior attribute)</a>
+</li>
 <li><a href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.distribution">(botorch.posteriors.gpytorch.GPyTorchPosterior attribute)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.higher_order.HigherOrderGPPosterior.distribution">(botorch.posteriors.higher_order.HigherOrderGPPosterior attribute)</a>
@@ -2528,6 +2538,8 @@
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="sampling.html#botorch.sampling.pathwise.update_strategies.gaussian_update">gaussian_update() (in module botorch.sampling.pathwise.update_strategies)</a>
 </li>
+<li><a href="posteriors.html#botorch.posteriors.fully_bayesian.GaussianMixturePosterior">GaussianMixturePosterior (class in botorch.posteriors.fully_bayesian)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.penalized.GaussianPenalty">GaussianPenalty (class in botorch.acquisition.penalized)</a>
 </li>
 <li><a href="optim.html#botorch.optim.initializers.gen_batch_initial_conditions">gen_batch_initial_conditions() (in module botorch.optim.initializers)</a>
@@ -2830,6 +2842,8 @@
 </li>
 <li><a href="sampling.html#botorch.sampling.pathwise.utils.InverseLengthscaleTransform">InverseLengthscaleTransform (class in botorch.sampling.pathwise.utils)</a>
 </li>
+<li><a href="utils.html#botorch.utils.transforms.is_ensemble">is_ensemble() (in module botorch.utils.transforms)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.base.ConstrainedBaseTestProblem.is_feasible">is_feasible() (botorch.test_functions.base.ConstrainedBaseTestProblem method)</a>
 </li>
 <li><a href="utils.html#botorch.utils.transforms.is_fully_bayesian">is_fully_bayesian() (in module botorch.utils.transforms)</a>
@@ -3114,9 +3128,9 @@
 </li>
 <li><a href="models.html#botorch.models.gp_regression_mixed.MixedSingleTaskGP">MixedSingleTaskGP (class in botorch.models.gp_regression_mixed)</a>
 </li>
-<li><a href="posteriors.html#botorch.posteriors.fully_bayesian.FullyBayesianPosterior.mixture_mean">mixture_mean (botorch.posteriors.fully_bayesian.FullyBayesianPosterior property)</a>
+<li><a href="posteriors.html#botorch.posteriors.fully_bayesian.GaussianMixturePosterior.mixture_mean">mixture_mean (botorch.posteriors.fully_bayesian.GaussianMixturePosterior property)</a>
 </li>
-<li><a href="posteriors.html#botorch.posteriors.fully_bayesian.FullyBayesianPosterior.mixture_variance">mixture_variance (botorch.posteriors.fully_bayesian.FullyBayesianPosterior property)</a>
+<li><a href="posteriors.html#botorch.posteriors.fully_bayesian.GaussianMixturePosterior.mixture_variance">mixture_variance (botorch.posteriors.fully_bayesian.GaussianMixturePosterior property)</a>
 </li>
 <li><a href="utils.html#botorch.utils.testing.MockAcquisitionFunction">MockAcquisitionFunction (class in botorch.utils.testing)</a>
 </li>
@@ -3999,7 +4013,7 @@
 </li>
 <li><a href="models.html#botorch.models.utils.inducing_point_allocators.QualityFunction">QualityFunction (class in botorch.models.utils.inducing_point_allocators)</a>
 </li>
-<li><a href="posteriors.html#botorch.posteriors.fully_bayesian.FullyBayesianPosterior.quantile">quantile() (botorch.posteriors.fully_bayesian.FullyBayesianPosterior method)</a>
+<li><a href="posteriors.html#botorch.posteriors.fully_bayesian.GaussianMixturePosterior.quantile">quantile() (botorch.posteriors.fully_bayesian.GaussianMixturePosterior method)</a>
 <ul>
 <li><a href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.quantile">(botorch.posteriors.gpytorch.GPyTorchPosterior method)</a>
 </li>

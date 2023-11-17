@@ -1,23 +1,34 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-# # Simultaneous multi-objective multi-fidelity optimization  
+# # Multi-fidelity Multi-Objective optimization  
 
-# In this tutorial notebook we demonstrate how to perform multi-objective multi-fidelity (MOMF) optimization in BoTorch as described in [1]. The main concept in MOMF is a "fidelity objective" that is optimized along with the problem objectives. This fidelity objective can be thought of as a trust objective that rewards the optimization when going to higher fidelity. This emulates a real-world scenario where high fidelity data may sometimes yield similar values for other objectives but is still considered more trustworthy. Thus the MOMF explicitly optimizes for getting more trustworthy data while taking into account the higher computational costs associated with it.
+# In this tutorial notebook we demonstrate how to perform multi-objective multi-fidelity optimization in BoTorch using the multi-fidelity Hypervolume Knowledge Gradient (MF-HVKG) [3] and a method called Multi-Objective Multi-Fidelity (MOMF) [1]. 
 # 
-# We will optimize a synthetic function that is a modified multi-fidelity Branin-Currin. This is a 3 x 2 dimensional problem with one of the input dimension being the fidelity. For the MOMF, this results in a 3 x 3 optimization since it also takes the fidelity objective into account. In this case the fidelity objective is a linear function of fidelity, $ f(s)=s$, where $s$ is the fidelity. The MOMF algorithm can accept any discrete or continuous cost functions as an input. In this example, we choose an exponential dependency of the form $C(s)=\exp(s)$. The goal of the optimization is to find the Pareto front, which is a trade-off solution set for Multi-objective problems, at the highest fidelity. 
+# MF-HVKG performs one-step lookahead: it operates under the assumption that we can make one additional observation, and after receiving that additional observation, we will select the Pareto set of optimal designs. HVKG seeks to select the design `x` to evaluate that maximizes the value of information about the Pareto set by maximizing the hypervolume under the posterior mean (conditional on receiving on new observation for the design `x`).
 # 
-# In the second part of this tutorial, we compare the method with a multi-objective only optimization using qEHVI [2] with q set to 1 (note that MOMF also supports q>1 if the underlying MO acquisition function supports it). The MO-only optimization runs only at the highest fidelity while MOMF makes use of lower fidelity data to estimate the Pareto front at the highest fidelity.
+# MOMF is an alternative approach that introduces an additional "fidelity objective" that is optimized along with the problem objectives. This fidelity objective can be thought of as a trust objective that rewards the optimization when going to higher fidelity. Thus, the MOMF explicitly optimizes for getting more high-fidelity (trustworthy) data while taking into account the higher computational costs associated with it.
+# 
+# HVKG is generally more cost efficient [3], since it explicitly targets the goal of MF optimization: select design points and fidelities that enable identifying about the Pareto Frontier at the target fidelity in a cost-aware fashion. MOMF will typically result in faster candidate generation. If the application is high-throughput and requires fast candidate generation, MOMF will be preferable. Otherwise, MF-HVKG will likely give better sample efficiency and performance [3].
+# 
+# In this tutorial, we will optimize a synthetic function that is a modified multi-fidelity Branin-Currin [1]. This is a 3-dimesional, bi-objective problem with one of the input dimensions being the fidelity. For the MOMF, this results in a 3-objective problem since it also takes the fidelity objective into account. In this case the fidelity objective is a linear function of fidelity, $ f(s)=s$, where $s$ is the fidelity. The MOMF algorithm can accept any discrete or continuous cost functions as an input. In this example, we choose an exponential dependency of the form $C(s)=\exp(4.8s)$. The goal of the optimization is to find the Pareto front, which is a trade-off solution set for Multi-objective problems, at the highest fidelity. 
+# 
+# We also compare the MF methods with a single-fidelity baseline qNEHVI [2]. The MO-only optimization runs only at the highest fidelity while MF methods make use of lower fidelity data to estimate the Pareto front at the highest fidelity.
+# 
+# Note: pymoo is an optional dependency that is used for determining the Pareto set of optimal designs under the model posterior mean using NSGA-II (which is not a sample efficient method, but sample efficiency is not critical for this step). If pymoo is not available, the Pareto set of optimal designs is selected from a discrete set. This will work okay for low-dim (e.g. 
+#  dimensions) problems, but in general NSGA-II will yield far better results.
 # 
 # [1] [Irshad, Faran, Stefan Karsch, and Andreas Döpp. "Expected hypervolume improvement for simultaneous multi-objective and multi-fidelity optimization." arXiv preprint arXiv:2112.13901 (2021).](https://arxiv.org/abs/2112.13901)
 # 
-# [2] [S. Daulton, M. Balandat, and E. Bakshy. Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization. Advances in Neural Information Processing Systems 33, 2020.](https://arxiv.org/abs/2006.05078)
+# [2] [S. Daulton, M. Balandat, and E. Bakshy. Parallel Bayesian Optimization of Multiple Noisy Objectives. NeurIPS, 2021.](https://proceedings.neurips.cc/paper/2021/hash/11704817e347269b7254e744b5e22dac-Abstract.html)
+# 
+# [3] [S. Daulton, M. Balandat, and E. Bakshy. Hypervolume Knowledge Gradient for Multi-Objective Bayesian Optimization with Partial Information. ICML, 2023.](https://proceedings.mlr.press/v202/daulton23a.html)
 
 # In[1]:
 
 
 import os
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Callable, Dict, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -44,69 +55,40 @@ SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 from botorch.test_functions.multi_objective_multi_fidelity import MOMFBraninCurrin
 
-BC = MOMFBraninCurrin(negate=True)
-dim_x = BC.dim  # Input Dimension for MO-only optimization
-dim_yMO = BC.num_objectives  # Output Dimension for MO-only optimization
-dim_xMO = dim_x - 1  # Input Dimension for MOMF optimization
-dim_y = dim_yMO + 1  # Output Dimesnion for MOMF optimization
+BC = MOMFBraninCurrin(negate=True).to(**tkwargs)
+dim_x = BC.dim
+dim_y = BC.num_objectives
 
-ref_pointMO = [0] * dim_xMO  # Reference point for MO only Hypervolume calculation
-ref_point = [0] * dim_x  # Reference point for MOMF Hypervolume calculation
+ref_point = torch.zeros(dim_y, **tkwargs)
 
-BATCH_SIZE = 2  # For batch optimization, BATCH_SIZE should be greater than 1
-n_BATCH = 5 if SMOKE_TEST else 30  # Number of iterations within one optimization loop
-n_INIT = 5  # Number of initial points for MOMF
-n_INITMO = 1  # Number of initial points for MO-only optimization
-# Number of Monte Carlo samples, used to 
+
+BATCH_SIZE = 1  # For batch optimization, BATCH_SIZE should be greater than 1
+EVAL_BUDGET = 2.1 if SMOKE_TEST else 4 # in terms of the number of full-fidelity evaluations
+n_INIT = 2  # Initialization budget in terms of the number of full-fidelity evaluations
+# Number of Monte Carlo samples, used to
 MC_SAMPLES = 8 if SMOKE_TEST else 128
 # Number of restart points for multi-start optimization
 NUM_RESTARTS = 2 if SMOKE_TEST else 10
 # Number of raw samples for initial point selection heuristic
 RAW_SAMPLES = 4 if SMOKE_TEST else 512
 
-# Bounds for MO-only optimization
-standard_boundsMO = torch.tensor([[0.0] * dim_xMO, [1.0] * dim_xMO], **tkwargs)
-# Bounds for MOMF optimization
-standard_bounds = torch.tensor([[0.0] * dim_x, [1.0] * dim_x], **tkwargs)
-
-
-# ### Problem Setup 
-# The problem as described before is a modified multi-fidelity version of Branin-Currin (BC) function that results in a 3 x 2 problem. A simple fidelity objective is also defined here which is a linear function of the input fidelity. We also design a wrapper function around the BC that takes care of interfacing torch with numpy and appends the fidelity objective with the BC functions.
-# 
-
-# In[4]:
-
-
-def fid_obj(X: torch.Tensor) -> torch.Tensor:
-    """
-    A Fidelity Objective that can be thought of as a trust objective.
-    Higher Fidelity simulations are rewarded as being more
-    trustworthy. Here we consider just a linear fidelity objective.
-    """
-    fid_obj = 1 * X[..., -1]
-    return fid_obj
-
-
-def get_objective(x: torch.Tensor) -> torch.Tensor:
-    """Wrapper around the Objective function to take care of fid_obj stacking"""
-    y = BC(x)  # The Branin-Currin is called
-    fid = fid_obj(x)  # Getting the fidelity objective values
-    fid_out = fid.unsqueeze(-1)
-    # Concatenating objective values with fid_objective
-    y_out = torch.cat([y, fid_out], -1)
-    return y_out
+standard_bounds = torch.zeros(2, dim_x, **tkwargs)
+standard_bounds[1] = 1
+# mapping from index to target fidelity (highest fidelity)
+target_fidelities = {2: 1.0}
 
 
 # ### Helper functions to define Cost 
 # 
-# The cost_func function returns an exponential cost from the fidelity. The cost_callable is a wrapper around it that takes care of the input output shapes. This is given as a callable function to MOMF that internally divides the hypervolume by cost.
+# The cost_func function returns an exponential cost from the fidelity. The cost_callable is a wrapper around it that takes care of the input output shapes. This is provided to the MF algorithms which inversely weight the expected utility by the cost.
 
-# In[5]:
+# In[4]:
 
 
+from math import exp
 def cost_func(x):
     """A simple exponential cost function."""
-    exp_arg = torch.tensor(4, **tkwargs)
+    exp_arg = torch.tensor(4.8, **tkwargs)
     val = torch.exp(exp_arg * x)
     return val
 
@@ -114,7 +96,6 @@ def cost_func(x):
 # Displaying the min and max costs for this optimization
 print(f"Min Cost: {cost_func(0)}")
 print(f"Max Cost: {cost_func(1)}")
-
 
 def cost_callable(X: torch.Tensor) -> torch.Tensor:
     r"""Wrapper for the cost function that takes care of shaping
@@ -128,51 +109,88 @@ def cost_callable(X: torch.Tensor) -> torch.Tensor:
         from fidelity dimension using cost_func.
     """
 
-    cost = cost_func(torch.flatten(X)).reshape(X.shape)
-    cost = cost[..., [-1]]
-    return cost
+    return cost_func(X[..., -1:])
 
 
 # ### Model Initialization 
 # We use a multi-output SingleTaskGP to model the problem with a homoskedastic Gaussian likelihood with an inferred noise level. 
-# The model is initialized with 5 random points where the fidelity dimension of the initial points is sampled from a probability distribution : $p(s)=C(s)^{-1}$ 
+# The model is initialized with random points, where the fidelity is sampled from a probability distribution with a PDF that is inversely proportional to the cost: $p(s)=C(s)^{-1}$. The initialization is given a budget equivalent to 2 full-fidelity evaluations.
 
-# In[6]:
+# In[5]:
 
 
 from botorch.models.gp_regression import SingleTaskGP
+from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.transforms.outcome import Standardize
-from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
+from gpytorch.kernels import MaternKernel, ScaleKernel
+from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
+from gpytorch.priors import GammaPrior
+from botorch.utils.transforms import normalize
 
 
-def gen_init_data(dim_x: int, n_points: int) -> Tuple[torch.Tensor, torch.Tensor]:
+def inv_transform(u):
+    # define inverse transform to sample from the probability distribution with
+    # PDF proportional to 1/(c(x))
+    # u is a uniform(0,1) rv
+    return (
+        5 / 24 * torch.log(-exp(24 / 5) / (exp(24 / 5) * u - u - exp(24 / 5)))
+    )
+
+
+def gen_init_data(n: int):
+    r"""
+    Generates the initial data. Sample fidelities inversely proportional to cost.
     """
-    Generates training data with Fidelity dimension sampled
-    from a probability distribution that depends on Cost function
-    """
-    train_x = torch.rand(n_points, dim_x, **tkwargs)
-    # Array from which fidelity values are sampled
-    fid_samples = torch.linspace(0, 1, 101, **tkwargs)
-    # Probability calculated from the Cost function
-    prob = 1 / cost_func(fid_samples)
-    # Normalizing
-    prob = prob / torch.sum(prob)
-    # Generating indices to choose fidelity samples
-    idx = prob.multinomial(num_samples=n_points, replacement=True)
-    train_x[:, -1] = fid_samples[idx]
-    # Calls the objective wrapper to generate train_obj
-    train_obj = get_objective(train_x)
+    # total cost budget is n
+    train_x = torch.empty(
+        0, BC.bounds.shape[1], dtype=BC.bounds.dtype, device=BC.bounds.device
+    )
+    total_cost = 0
+    # assume target fidelity is 1
+    total_cost_limit = (
+        n
+        * cost_callable(
+            torch.ones(
+                1, BC.bounds.shape[1], dtype=BC.bounds.dtype, device=BC.bounds.device
+            )
+        ).item()
+    )
+    while total_cost < total_cost_limit:
+        new_x = torch.rand(
+            1, BC.bounds.shape[1], dtype=BC.bounds.dtype, device=BC.bounds.device
+        )
+        new_x[:, -1] = inv_transform(new_x[:, -1])
+        total_cost += cost_callable(new_x)
+        train_x = torch.cat([train_x, new_x], dim=0)
+    train_x = train_x[:-1]
+    train_obj = BC(train_x)
     return train_x, train_obj
 
 
-def initialize_model(
-    train_x: torch.Tensor, train_obj: torch.Tensor, state_dict: Optional[Dict[str, Any]]=None
-) -> Tuple[ExactMarginalLogLikelihood, SingleTaskGP]:
-    """Initializes a SingleTaskGP with Matern 5/2 Kernel and returns the model and its MLL."""
-    model = SingleTaskGP(
-        train_x, train_obj, outcome_transform=Standardize(m=train_obj.shape[-1])
-    )
-    mll = ExactMarginalLogLikelihood(model.likelihood, model)
+def initialize_model(train_x, train_obj, state_dict=None):
+    """Initializes a ModelList with Matern 5/2 Kernel and returns the model and its MLL.
+    
+    Note: a batched model could also be used here.
+    """
+    models = []
+    for i in range(train_obj.shape[-1]):
+        m = SingleTaskGP(
+            train_x,
+            train_obj[:, i : i + 1],
+            train_Yvar=torch.full_like(train_obj[:, i : i + 1], 1e-6),
+            outcome_transform=Standardize(m=1),
+            covar_module=ScaleKernel(
+                MaternKernel(
+                    nu=2.5,
+                    ard_num_dims=train_x.shape[-1],
+                    lengthscale_prior=GammaPrior(2.0, 2.0),
+                ),
+                outputscale_prior=GammaPrior(2.0, 0.15),
+            ),
+        )
+        models.append(m)
+    model = ModelListGP(*models)
+    mll = SumMarginalLogLikelihood(model.likelihood, model)
     if state_dict is not None:
         model.load_state_dict(state_dict=state_dict)
     return mll, model
@@ -183,7 +201,7 @@ def initialize_model(
 # 
 # A simple initialization heuristic is used to select the 20 restart initial locations from a set of 1024 random points. Multi-start optimization of the acquisition function is performed using LBFGS-B with exact gradients computed via auto-differentiation.
 
-# In[7]:
+# In[6]:
 
 
 from botorch.acquisition.multi_objective.multi_fidelity import MOMF
@@ -193,6 +211,29 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     FastNondominatedPartitioning,
 )
 from botorch.utils.transforms import unnormalize
+
+
+dim_y_momf = dim_y + 1  # Output Dimesnion for MOMF optimization
+ref_point_momf = torch.zeros(dim_y_momf, **tkwargs)
+
+def fid_obj(X: torch.Tensor) -> torch.Tensor:
+    """
+    A Fidelity Objective that can be thought of as a trust objective.
+    Higher Fidelity simulations are rewarded as being more
+    trustworthy. Here we consider just a linear fidelity objective.
+    """
+    fid_obj = 1 * X[..., -1]
+    return fid_obj
+
+
+def get_objective_momf(x: torch.Tensor) -> torch.Tensor:
+    """Wrapper around the Objective function to take care of fid_obj stacking"""
+    y = BC(x)  # The Branin-Currin is called
+    fid = fid_obj(x)  # Getting the fidelity objective values
+    fid_out = fid.unsqueeze(-1)
+    # Concatenating objective values with fid_objective
+    y_out = torch.cat([y, fid_out], -1)
+    return y_out
 
 
 def optimize_MOMF_and_get_obs(
@@ -219,7 +260,7 @@ def optimize_MOMF_and_get_obs(
         cost_call=cost_call,
     )
     # Optimization
-    candidates, _ = optimize_acqf(
+    candidates, vals = optimize_acqf(
         acq_function=acq_func,
         bounds=standard_bounds,
         q=BATCH_SIZE,
@@ -228,198 +269,176 @@ def optimize_MOMF_and_get_obs(
         options={"batch_limit": 5, "maxiter": 200, "nonnegative": True},
         sequential=True,
     )
+    # if the AF val is 0, set the fidelity parameter to zero
+    if vals.item() == 0.0:
+        candidates[:, -1] = 0.0
     # observe new values
     new_x = unnormalize(candidates.detach(), bounds=standard_bounds)
-    new_obj = get_objective(new_x)
+    new_obj = get_objective_momf(new_x)
     return new_x, new_obj
 
 
-# ### Running MOMF optimization 
+# ### Define helper functions for MF-HVKG
 # 
-# We run 30 iterations to optimize the multi-fidelity versions of the Branin-Currin functions. The optimization loop works in the following sequence. 
+# `get_current_value` optimizes the current posterior mean at the full fidelity to determine the hypervolume under the current model.
 # 
-# 1. At the start an initial data of 5 random points is generated and a model initialized using this data.
-# 2. The models are used to generate an acquisition function that is optimized to select new input parameters
-# 3. The objective function is evaluated at the suggested new_x and returns a new_obj.
-# 4. The models are updated with the new points and then are used again to make the next prediction.
+# `optimize_HVKG_and_get_obs` creates the MF-HVKG acquisition function, optimizes it, and returns the new design and corresponding observation.
 # 
+
+# In[7]:
+
+
+import time
+
+from botorch.acquisition.cost_aware import InverseCostWeightedUtility
+from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
+from botorch.acquisition.multi_objective.hypervolume_knowledge_gradient import (
+    _get_hv_value_function,
+    qMultiFidelityHypervolumeKnowledgeGradient,
+)
+from botorch.acquisition.utils import project_to_target_fidelity
+from botorch.models.deterministic import GenericDeterministicModel
+from torch import Tensor
+
+NUM_INNER_MC_SAMPLES = 32
+NUM_PARETO = 10
+NUM_FANTASIES = 8
+
+
+def get_current_value(
+    model: SingleTaskGP,
+    ref_point: torch.Tensor,
+    bounds: torch.Tensor,
+    normalized_target_fidelities: Dict[int, float],
+):
+    """Helper to get the hypervolume of the current hypervolume
+    maximizing set.
+    """
+    fidelity_dims, fidelity_targets = zip(*normalized_target_fidelities.items())
+    # optimize
+    non_fidelity_dims = list(set(range(dim_x)) - set(fidelity_dims))
+    curr_val_acqf = FixedFeatureAcquisitionFunction(
+        acq_function=_get_hv_value_function(
+            model=model,
+            ref_point=ref_point,
+            sampler=SobolQMCNormalSampler(
+                sample_shape=torch.Size([NUM_INNER_MC_SAMPLES]),
+                resample=False,
+                collapse_batch_dims=True,
+            ),
+            use_posterior_mean=True,
+        ),
+        d=dim_x,
+        columns=fidelity_dims,
+        values=fidelity_targets,
+    )
+    # optimize
+    _, current_value = optimize_acqf(
+        acq_function=curr_val_acqf,
+        bounds=bounds[:, non_fidelity_dims],
+        q=NUM_PARETO,
+        num_restarts=1,
+        raw_samples=1024,
+        return_best_only=True,
+        options={"nonnegative": True},
+    )
+    return current_value
+
+
+normalized_target_fidelities = {}
+for idx, fidelity in target_fidelities.items():
+    lb = standard_bounds[0, idx].item()
+    ub = standard_bounds[1, idx].item()
+    normalized_target_fidelities[idx] = (fidelity - lb) / (ub - lb)
+project_d = dim_x
+
+
+def project(X: Tensor) -> Tensor:
+
+    return project_to_target_fidelity(
+        X=X,
+        d=project_d,
+        target_fidelities=normalized_target_fidelities,
+    )
+
+
+def optimize_HVKG_and_get_obs(
+    model: SingleTaskGP,
+    ref_point: torch.Tensor,
+    standard_bounds: torch.Tensor,
+    BATCH_SIZE: int,
+    cost_call: Callable[[torch.Tensor], torch.Tensor],
+):
+    """Utility to initialize and optimize HVKG."""
+    cost_model = GenericDeterministicModel(cost_call)
+    cost_aware_utility = InverseCostWeightedUtility(cost_model=cost_model)
+    current_value = get_current_value(
+        model=model,
+        ref_point=ref_point,
+        bounds=standard_bounds,
+        normalized_target_fidelities=normalized_target_fidelities,
+    )
+
+    acq_func = qMultiFidelityHypervolumeKnowledgeGradient(
+        model=model,
+        ref_point=ref_point,  # use known reference point
+        num_fantasies=NUM_FANTASIES,
+        num_pareto=NUM_PARETO,
+        current_value=current_value,
+        cost_aware_utility=cost_aware_utility,
+        target_fidelities=normalized_target_fidelities,
+        project=project,
+    )
+    # Optimization
+    candidates, vals = optimize_acqf(
+        acq_function=acq_func,
+        bounds=standard_bounds,
+        q=BATCH_SIZE,
+        num_restarts=1,
+        raw_samples=RAW_SAMPLES,  # used for intialization heuristic
+        options={"batch_limit": 5},
+    )
+    # if the AF val is 0, set the fidelity parameter to zero
+    if vals.item() == 0.0:
+        candidates[:, -1] = 0.0
+    # observe new values
+    new_x = unnormalize(candidates.detach(), bounds=BC.bounds)
+    new_obj = BC(new_x)
+    return new_x, new_obj
+
+
+# ### Define helper function to initialize and optimize qNEHVI
 
 # In[8]:
 
 
-from botorch import fit_gpytorch_mll
-from tqdm import tqdm, trange
-
-
-# In[9]:
-
-
-get_ipython().run_cell_magic('time', '', '\n# Intializing train_x to zero\ntrain_x = torch.zeros(n_INIT + n_BATCH * BATCH_SIZE, dim_x, **tkwargs)\n# Intializing train_obj to zero\ntrain_obj = torch.zeros(n_INIT + n_BATCH * BATCH_SIZE, dim_y, **tkwargs)\ntorch.manual_seed(0)\ntrain_x[:n_INIT, :], train_obj[:n_INIT, :] = gen_init_data(dim_x, n_INIT)\n\n# Generate Sampler\nmomf_sampler = SobolQMCNormalSampler(sample_shape=torch.Size([MC_SAMPLES]))\n\n# run N_BATCH rounds of BayesOpt after the initial random batch\n\nfor iteration in tqdm(range(0, n_BATCH)):\n    # Updating indices used to store new observations\n    lower_index = n_INIT + iteration * BATCH_SIZE\n    upper_index = n_INIT + iteration * BATCH_SIZE + BATCH_SIZE\n\n    # reinitialize the models so they are ready for fitting on next iteration\n    mll, model = initialize_model(train_x[:lower_index, :], train_obj[:lower_index, :])\n\n    fit_gpytorch_mll(mll=mll)  # Fit the model\n    \n    # optimize acquisition functions and get new observations\n    new_x, new_obj = optimize_MOMF_and_get_obs(\n        model=model,\n        train_obj=train_obj[:upper_index, :],\n        sampler=momf_sampler,\n        ref_point=ref_point,\n        standard_bounds=standard_bounds,\n        BATCH_SIZE=BATCH_SIZE,\n        cost_call=cost_callable\n    )\n    # Updating train_x and train_obj\n    train_x[lower_index:upper_index, :] = new_x\n    train_obj[lower_index:upper_index, :] = new_obj\n')
-
-
-# ### Result:  Evaluating the Pareto front at the highest fidelity from MOMF
-# 
-# After the optimization we are interested in evaluating the final Pareto front. For this we train a GP model with the data acquired by the MOMF optimization. After this we generate $10^4$ random test points between between [0,1] with the fidelity dimension set to 1 to approximate the Pareto front. Two helper functions are defined to achieve this objective where one function generates the test data and the other extracts the Pareto front at the highest fidelity for a given training and testing data.
-# 
-# **Note: This works reasonably well only for lower dimensional search spaces**
-
-# In[10]:
-
-
-from botorch.utils.multi_objective.pareto import is_non_dominated
-from botorch.utils.multi_objective.box_decompositions import DominatedPartitioning
-
-
-def gen_test_points(n_points: int, dim_x: int) -> torch.Tensor:
-    """
-    Function to generate random points with fidelity dimension set to 1.
-    Used to evaluate Pareto front from MOMF
-    """
-    test_x = torch.rand(size=(n_points, dim_x), **tkwargs)
-    test_x[:, -1] = 1
-    return test_x
-
-
-def get_pareto(
-    train_x: torch.Tensor, train_obj: torch.Tensor, test_x: torch.Tensor
-) -> Tuple[float, torch.Tensor]:
-    """
-    Function that takes in training and testing data with a reference point.
-    
-    It computes the posterior mean at the testing points based on the model.
-    From these points, the non-dominated set is calculated and used to compute
-    the hypervolume.
-    """
-    mll, model = initialize_model(train_x, train_obj)
-    fit_gpytorch_mll(mll)
-    with torch.no_grad():
-        # Compute posterior mean over outputs at testing data
-        means = model.posterior(test_x).mean
-    # Calculating Non-dominated points
-    pareto_mask = is_non_dominated(means)
-    pareto_front = means[pareto_mask]
-    # Computing Hypervolume
-    box_decomp = DominatedPartitioning(
-        torch.tensor(ref_pointMO,**tkwargs), pareto_front
-    )
-    hyper_volume = box_decomp.compute_hypervolume().item()
-    return hyper_volume, pareto_front
-
-
-# In[11]:
-
-
-# Using the above two functions to generate the final Pareto front.
-n_points = 10**4
-test_x = gen_test_points(n_points, dim_x)
-
-hypervolume, final_PF = get_pareto(train_x, train_obj[:, :-1], test_x)
-hypervolume
-
-
-# Plotting the final Pareto front.
-
-# In[12]:
-
-
-fig, axes = plt.subplots(1, 1, figsize=(4, 4), dpi=200)
-axes.plot(
-    final_PF[:, 0].detach().cpu().numpy(),
-    final_PF[:, 1].detach().cpu().numpy(),
-    "o",
-    markersize=3.5,
-    label="MOMF",
-)
-axes.set_title("Branin-Currin Pareto Front", fontsize="12")
-axes.set_xlabel("Branin", fontsize="10")
-axes.set_ylabel("Currin", fontsize="10")
-axes.set_xlim(0, 1)
-axes.set_ylim(0, 1)
-axes.tick_params(labelsize=10)
-axes.legend(loc="lower right", fontsize="7", frameon=True, ncol=1)
-plt.tight_layout()
-
-
-# # Comparison of MOMF with single-fidelity multi-objective optimization using qEHVI 
-# 
-# In this section, we draw a comparison of the MOMF with qEHVI. This section parallels the last, again running 30 iterations and defining helper functions for qEHVI similar to those used for MOMF. 
-# 
-# **Note: Most of the material for qEHVI example has been taken from [3]**
-# 
-# [3] [Constrained, Parallel, Multi-Objective BO in BoTorch with qNEHVI, and qParEGO](https://botorch.org/tutorials/constrained_multi_objective_bo)
-
-# Here we define a wrapper function for single-fidelity multi-objective qEHVI optimization that appends a column of ones (representing highest fidelity) around the Branin-Currin function.
-
-# In[13]:
-
-
-def get_obj_MO(X: torch.Tensor) -> torch.Tensor:
-    """
-    Get the Branin-Currin objective at X.
-
-    Since MO-only optimization only evaluates at the highest fidelity,
-    a column of ones is added to the input to be consistent with the
-    objective function definition.
-    """
-    h_fid = torch.ones(*X.shape[:-1], 1, **tkwargs)
-    X = torch.cat([X, h_fid], dim=-1)
-    y = BC(X)
-    return y
-
-
-# ### Data Initialization qEHVI 
-# 
-# For qEHVI, we initialize with one point to keep the initial cost low. We do not aim to make the initial costs the same, but for all cases the initial costs of the MOMF are lower when the fidelity is drawn in a probabilistic fashion.
-
-# In[14]:
-
-
-def gen_init_data_MO(dim_x: int, points: int) -> Tuple[torch.Tensor, torch.Tensor]:
-    """Generate random training data."""
-    train_x = torch.rand(size=(points, dim_x), **tkwargs)
-    train_obj = get_obj_MO(train_x)
-    return train_x, train_obj
-
-
-# ### Helper function to optimize acquisition function 
-# This is a helper function that initializes and optimizes the acquisition function qEHVI and returns the new_x and new_obj. The problem is called from within this helper function.
-# 
-# A simple initialization heuristic is used to select the 20 restart initial locations from a set of 1024 random points. Multi-start optimization of the acquisition function is performed using LBFGS-B with exact gradients computed via auto-differentiation.
-
-# In[15]:
-
-
 from botorch.acquisition.multi_objective.monte_carlo import (
-    qExpectedHypervolumeImprovement,
+    qNoisyExpectedHypervolumeImprovement,
 )
 
 
-def optimize_MO_and_get_obs(
+def optimize_qNEHVI_and_get_obs(
     model: SingleTaskGP,
-    train_obj: torch.Tensor,
+    train_x,
     sampler: SobolQMCNormalSampler,
     ref_point: torch.Tensor,
     standard_bounds: torch.Tensor,
-    BATCH_SIZE_MO: int
+    q: int
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
-    Optimize the qEHVI acquisition function and return a new candidate and observation.
+    Optimize the qNEHVI acquisition function and return a new candidate and observation.
     """
-    # partition non-dominated space into disjoint rectangles
-    partitioning = FastNondominatedPartitioning(
-        ref_point=torch.tensor(ref_point, **tkwargs), Y=train_obj
-    )
-    acq_func = qExpectedHypervolumeImprovement(
+    acq_func = qNoisyExpectedHypervolumeImprovement(
         model=model,
-        ref_point=ref_point,  # use a known reference point
-        partitioning=partitioning,
+        ref_point=BC.ref_point,  # use a known reference point
         sampler=sampler,
+        X_baseline=normalize(train_x, bounds=BC.bounds[:,:2]), # exclude fidelity dim
     )
     # optimize
     candidates, _ = optimize_acqf(
         acq_function=acq_func,
         bounds=standard_bounds,
-        q=BATCH_SIZE_MO,
+        q=q,
         num_restarts=NUM_RESTARTS,
         raw_samples=RAW_SAMPLES,  # used for intialization heuristic
         options={"batch_limit": 5, "maxiter": 200, "nonnegative": True},
@@ -427,152 +446,354 @@ def optimize_MO_and_get_obs(
     )
     # observe new values
     new_x = unnormalize(candidates.detach(), bounds=standard_bounds)
-    new_obj = get_obj_MO(new_x)
+    new_x = torch.cat([new_x, torch.ones(q, 1, **tkwargs)], dim=-1)
+    new_obj = BC(new_x)
     return new_x, new_obj
 
 
-# ### Running qEHVI optimization for multiple Trials
+# ### Running MOMF optimization 
 # 
-# We run 30 iterations to optimize the Branin-Currin functions using qEHVI. The Bayesian loop works almost the same as the one we ran early with MOMF:
+# We run MOMF to optimize the multi-fidelity versions of the Branin-Currin functions. The optimization loop works in the following sequence. 
 # 
-# 1. An initial data is generated and a model initialized using this data.
-# 2. The models are used to generated an acquisition function that gives us a suggestion for new input parameters
+# 1. At the start with an initialization equivalent to 2 full fidelity evaluations.
+# 2. The models are used to generate an acquisition function that is optimized to select new input parameters
 # 3. The objective function is evaluated at the suggested new_x and returns a new_obj.
 # 4. The models are updated with the new points and then are used again to make the next prediction.
+# 
+# The evaluation budget for the optimization is set to 4 full fidelity evaluations.
+# 
+# Note: running this takes some time.
+# 
 
-# In[16]:
+# In[9]:
+
+
+from botorch import fit_gpytorch_mll
+
+
+# In[ ]:
 
 
 # Intializing train_x to zero
-train_xMO = torch.zeros(
-    n_INITMO + n_BATCH * BATCH_SIZE, dim_xMO, **tkwargs
-)
-# Intializing train_obj to zero
-train_objMO = (
-    torch.zeros(n_INITMO + n_BATCH * BATCH_SIZE, dim_yMO, **tkwargs)
-)
+verbose = False
 torch.manual_seed(0)
-train_xMO[:n_INITMO, :], train_objMO[:n_INITMO, :] = gen_init_data_MO(
-    dim_xMO, n_INITMO
-)
-mll_MO, model_MO = initialize_model(
-    train_xMO[:n_INITMO, :], train_objMO[:n_INITMO, :]
-)
-
+train_x_momf, _ = gen_init_data(n_INIT)
+train_obj_momf = get_objective_momf(train_x_momf)
 # Generate Sampler
-sampler = SobolQMCNormalSampler(sample_shape=torch.Size([MC_SAMPLES]))
+momf_sampler = SobolQMCNormalSampler(sample_shape=torch.Size([MC_SAMPLES]))
 
-for iteration in tqdm(range(0, n_BATCH)):
-    # run N_BATCH rounds of BayesOpt after the initial random batch
-    fit_gpytorch_mll(mll=mll_MO)  # Fit the model
+# run N_BATCH rounds of BayesOpt after the initial random batch
+iteration = 0
+total_cost = cost_callable(train_x_momf).sum().item()
+while total_cost < EVAL_BUDGET * cost_func(1):
+    if verbose:
+        print(f"cost: {total_cost}")
 
-    # Updating indices used to store new observations
-    lower_index = n_INITMO + iteration * BATCH_SIZE
-    upper_index = n_INITMO + iteration * BATCH_SIZE + BATCH_SIZE
+    # reinitialize the models so they are ready for fitting on next iteration
+    mll, model = initialize_model(normalize(train_x_momf, BC.bounds), train_obj_momf)
+
+    fit_gpytorch_mll(mll=mll)  # Fit the model
+
     # optimize acquisition functions and get new observations
-    new_x, new_obj = optimize_MO_and_get_obs(
-        model=model_MO,
-        train_obj=train_objMO[:upper_index, :],
-        sampler=sampler,
-        ref_point=ref_pointMO,
-        standard_bounds=standard_boundsMO,
-        BATCH_SIZE_MO=BATCH_SIZE,
+    new_x, new_obj = optimize_MOMF_and_get_obs(
+        model=model,
+        train_obj=train_obj_momf,
+        sampler=momf_sampler,
+        ref_point=ref_point_momf,
+        standard_bounds=standard_bounds,
+        BATCH_SIZE=BATCH_SIZE,
+        cost_call=cost_callable,
     )
     # Updating train_x and train_obj
-    train_xMO[lower_index:upper_index, :] = new_x
-    train_objMO[lower_index:upper_index, :] = new_obj
+    train_x_momf = torch.cat([train_x_momf, new_x], dim=0)
+    train_obj_momf = torch.cat([train_obj_momf, new_obj], dim=0)
+    iteration += 1
+    total_cost += cost_callable(new_x).sum().item()
+
+
+# ### Run MF-HVKG
+
+# In[ ]:
+
+
+torch.manual_seed(0)
+train_x_kg, train_obj_kg = gen_init_data(n_INIT)
+MF_n_INIT = train_x_kg.shape[0]
+iteration = 0
+total_cost = cost_callable(train_x_kg).sum().item()
+while total_cost < EVAL_BUDGET * cost_func(1):
+    if verbose:
+        print(f"cost: {total_cost}")
+
     # reinitialize the models so they are ready for fitting on next iteration
-    mll_MO, model_MO = initialize_model(train_xMO[:upper_index, :], train_objMO[:upper_index, :])
+    mll, model = initialize_model(normalize(train_x_kg, BC.bounds), train_obj_kg)
 
-
-# ### Evaluating the hypervolume for each iteration
-# 
-# As before, we are interested in the Pareto front at the highest fidelity after the MOMF. In this section we only show the evolution of the mean hypervolume for both MOMF and qEHVI. The calculation for the MOMF is done in a similar fashion as before, but now for each iteration.
-
-# The following code loops over the number of trials and the number of iterations within a single trial. It works in the following steps: 
-# 1. At the start of each iteration a model is trained on the MOMF data.
-# 2. We generate a posterior mean from the model and calculated the dominated set from these 10000 points.
-# 3. This dominated set is used to estimate the hypervolume and then the next iteration is started where the model now takes n+1 data points
-# 
-# **The test points used here are already generated before for evaluation of MOMF**
-# 
-
-# In[17]:
-
-
-get_ipython().run_cell_magic('time', '', '# Generating the final Pareto front by fitting a GP to MOMF data and evaluating the\n# GP posterior at the highest fidelity with 10000 random points\n\n# Array that contains hypervolume for n_TRIALS\nhv_MOMF = np.zeros(train_obj.shape[0])\n# Loop to get evolution of hypervolume during MOMF optimization.\nfor i in trange(n_INIT, train_obj.shape[0]):\n    hv_MOMF[i], _ = get_pareto(train_x[:i, :], train_obj[:i, :-1], test_x)\n')
-
-
-# For the qEHVI the hypervolume calculation is more straightforward. We calculated at each iteration the set of non-dominated points from the training data and use that to estimate the hypervolume.
-
-# In[18]:
-
-
-# Since the MO data is already at highest fidelity,
-# we can calculate the evolution of hypervolume directly from data
-
-hv_MO = np.zeros(train_objMO.shape[0])
-# Loop to get evolution of hypervolume per iteration
-for i in range(train_objMO.shape[0]):
-    # Calculating Non-dominated points
-    pareto_maskMO = is_non_dominated(train_objMO[:i, :])
-    # Used to calculate hypervolume
-    box_decomp = DominatedPartitioning(
-        torch.tensor(ref_pointMO, **tkwargs),
-        train_objMO[:i, :][pareto_maskMO],
+    fit_gpytorch_mll(mll=mll)  # Fit the model
+    # optimize acquisition functions and get new observations
+    new_x, new_obj = optimize_HVKG_and_get_obs(
+        model=model,
+        ref_point=ref_point,
+        standard_bounds=standard_bounds,
+        BATCH_SIZE=BATCH_SIZE,
+        cost_call=cost_callable,
     )
-    hv_MO[i] = box_decomp.compute_hypervolume().item()
+    # Updating train_x and train_obj
+    train_x_kg = torch.cat([train_x_kg, new_x], dim=0)
+    train_obj_kg = torch.cat([train_obj_kg, new_obj], dim=0)
+    iteration += 1
+    total_cost += cost_callable(new_x).sum().item()
 
 
-# In[19]:
+# ### Run qNEHVI
+
+# In[ ]:
 
 
-# Cost calculation for both MOMF and MO
-cost_single = cost_func(train_x[:, -1])
-cost_MOMF = torch.cumsum(cost_single, axis=0)
-# Generating ones equal to number of iterations for MO only-optimization
-ones = torch.ones(train_objMO.shape[0], **tkwargs)
-cost_singleMO = cost_func(ones)
-cost_MO = torch.cumsum(cost_singleMO, axis=0)
+torch.manual_seed(0)
+train_x_qnehvi = torch.rand(2,3, **tkwargs) # 2 initial points
+train_x_qnehvi[:,-1] = 1  # full fidelity
+train_obj_qnehvi = BC(train_x_qnehvi)
+
+iteration = 0
+total_cost = cost_callable(train_x_qnehvi).sum().item()
+while total_cost < EVAL_BUDGET * cost_func(1):
+    if verbose:
+        print(f"cost: {total_cost}")
+
+    # reinitialize the models so they are ready for fitting on next iteration
+    # exclude fidelity dim from inputs
+    mll, model = initialize_model(
+        normalize(train_x_qnehvi[:,:2], BC.bounds[:,:2]),
+        train_obj_qnehvi,
+    )
+
+    fit_gpytorch_mll(mll=mll)  # Fit the model
+    # optimize acquisition functions and get new observations
+    new_x, new_obj = optimize_qNEHVI_and_get_obs(
+        model=model,
+        train_x=train_x_qnehvi[:,:2],
+        ref_point=ref_point,
+        sampler=SobolQMCNormalSampler(sample_shape=torch.Size([MC_SAMPLES])),
+        standard_bounds=standard_bounds[:,:2], # exclude fidelity dim
+        q=BATCH_SIZE,
+    )
+    # Updating train_x and train_obj
+    train_x_qnehvi = torch.cat([train_x_qnehvi, new_x], dim=0)
+    train_obj_qnehvi = torch.cat([train_obj_qnehvi, new_obj], dim=0)
+    iteration += 1
+    total_cost += cost_callable(new_x).sum().item()
 
 
-# In[20]:
-
-
-# Converting to Numpy arrays for plotting
-cost_MOMF = cost_MOMF.cpu().numpy()
-cost_MO = cost_MO.cpu().numpy()
-# The approximate max hypervolume taken by evaluating the BC function offline with random 50000 points
-true_hv = 0.5235514158034145
-
-
-# For plotting purposes we calculate the cost of both MOMF and MO using the last dimension of the training input data.
-
-# ### Results
+# ### Result:  Evaluating the Pareto front at the highest fidelity using NSGA-II on the posterior mean
 # 
-# The following plot shows, for each iteration and for both MOMF and qEHVI, the hypervolume (as a percentage of the true hypervolume) and the cost (shown on a log scale).
 
-# In[21]:
+# In[37]:
 
 
-fig, ax = plt.subplots(1, 1, figsize=(4, 4), dpi=200)
-ax.plot(
-    cost_MOMF[n_INIT :],
-    hv_MOMF[n_INIT : ] / true_hv * 100,
-    label="MOMF"
+import numpy as np
+from botorch.utils.multi_objective.box_decompositions import DominatedPartitioning
+from botorch.utils.multi_objective.pareto import (
+    _is_non_dominated_loop,
+    is_non_dominated,
 )
-ax.plot(
-    cost_MO[n_INITMO:],
-    hv_MO[n_INITMO:] / true_hv * 100,
-    label="EHVI"
-)
+from gpytorch import settings
 
-ax.set_title("Branin-Currin", fontsize="12")
-ax.set_xlabel("Total Cost Log Scale", fontsize="10")
-ax.set_ylabel("Hypervolume (%)", fontsize="10")
-ax.set_ylim(0, 100)
-ax.tick_params(labelsize=10)
-ax.legend(loc="lower right", fontsize="7", frameon=True, ncol=1)
-plt.xscale("log")
-plt.tight_layout()
+try:
+    from pymoo.algorithms.nsga2 import NSGA2
+    from pymoo.model.problem import Problem
+    from pymoo.optimize import minimize
+    from pymoo.util.termination.max_gen import MaximumGenerationTermination
+
+    def get_pareto(
+        model,
+        non_fidelity_indices,
+        project,
+        population_size=250,
+        max_gen=100,
+        is_mf_model=True,
+    ):
+        """Optimize the posterior mean using NSGA-II."""
+        tkwargs = {
+            "dtype": BC.ref_point.dtype,
+            "device": BC.ref_point.device,
+        }
+        dim = len(non_fidelity_indices)
+
+        class PosteriorMeanPymooProblem(Problem):
+            def __init__(self):
+                super().__init__(
+                    n_var=dim,
+                    n_obj=BC.num_objectives,
+                    type_var=np.double,
+                )
+                self.xl = np.zeros(dim)
+                self.xu = np.ones(dim)
+
+            def _evaluate(self, x, out, *args, **kwargs):
+                X = torch.from_numpy(x).to(**tkwargs)
+                if is_mf_model:
+                    X = project(X)
+                with torch.no_grad():
+                    with settings.cholesky_max_tries(9):
+                        # eval in batch mode
+                        y = model.posterior(X.unsqueeze(-2)).mean.squeeze(-2)
+                out["F"] = -y.cpu().numpy()
+
+        pymoo_problem = PosteriorMeanPymooProblem()
+        algorithm = NSGA2(
+            pop_size=population_size,
+            eliminate_duplicates=True,
+        )
+        res = minimize(
+            pymoo_problem,
+            algorithm,
+            termination=MaximumGenerationTermination(max_gen),
+            seed=0,  # fix seed
+            verbose=False,
+        )
+        X = torch.tensor(
+            res.X,
+            **tkwargs,
+        )
+        # project to full fidelity
+        if is_mf_model:
+            if project is not None:
+                X = project(X)
+        # determine Pareto set of designs under model
+        with torch.no_grad():
+            preds = model.posterior(X.unsqueeze(-2)).mean.squeeze(-2)
+        pareto_mask = is_non_dominated(preds)
+        X = X[pareto_mask]
+        # evaluate Pareto set of designs on true function and compute hypervolume
+        if not is_mf_model:
+            X = project(X)
+        X = unnormalize(X, BC.bounds)
+        Y = BC(X)
+        # compute HV
+        partitioning = FastNondominatedPartitioning(ref_point=BC.ref_point, Y=Y)
+        return partitioning.compute_hypervolume().item()
+
+except ImportError:
+    NUM_DISCRETE_POINTS = 100 if SMOKE_TEST else 100000
+    CHUNK_SIZE = 512
+
+    def get_pareto(
+        model,
+        non_fidelity_indices,
+        project,
+        population_size=250,
+        max_gen=100,
+        is_mf_model=True,
+    ):
+        """Optimize the posterior mean over a discrete set."""
+        tkwargs = {
+            "dtype": BC.ref_point.dtype,
+            "device": BC.ref_point.device,
+        }
+        dim_x = BC.dim
+
+        discrete_set = torch.rand(NUM_DISCRETE_POINTS, dim_x - 1, **tkwargs)
+        if is_mf_model:
+            discrete_set = project(discrete_set)
+        discrete_set[:, -1] = 1.0  # set to target fidelity
+        with torch.no_grad():
+            preds_list = []
+            for start in range(0, NUM_DISCRETE_POINTS, CHUNK_SIZE):
+                preds = model.posterior(
+                    discrete_set[start : start + CHUNK_SIZE].unsqueeze(-2)
+                ).mean.squeeze(-2)
+                preds_list.append(preds)
+            preds = torch.cat(preds_list, dim=0)
+            pareto_mask = _is_non_dominated_loop(preds)
+            pareto_X = discrete_set[pareto_mask]
+        if not is_mf_model:
+            pareto_X = project(pareto_X)
+        pareto_X = unnormalize(pareto_X, BC.bounds)
+        Y = BC(pareto_X)
+        # compute HV
+        partitioning = FastNondominatedPartitioning(ref_point=BC.ref_point, Y=Y)
+        return partitioning.compute_hypervolume().item()
+
+
+# ## Evaluate MF-HVKG
+# 
+# We evaluate performance after every 5 evaluations (this is to speed things up, since there are many observations).
+
+# In[ ]:
+
+
+hvs_kg = []
+costs = []
+for i in range(MF_n_INIT, train_x_kg.shape[0] + 1, 5):
+
+    mll, model = initialize_model(
+        normalize(train_x_kg[:i], BC.bounds), train_obj_kg[:i]
+    )
+    fit_gpytorch_mll(mll)
+    hypervolume = get_pareto(
+        model, project=project, non_fidelity_indices=[0, 1]
+    )
+    hvs_kg.append(hypervolume)
+    costs.append(cost_callable(train_x_kg[:i]).sum().item())
+
+
+# ## Evaluate MOMF
+# 
+# We evaluate performance after every evaluation (there are not as many evaluations since MOMF queries higher fidelities more frequently).
+
+# In[ ]:
+
+
+hvs_momf = []
+costs_momf = []
+for i in range(MF_n_INIT, train_x_momf.shape[0] + 1):
+
+    mll, model = initialize_model(
+        normalize(train_x_momf[:i], BC.bounds), train_obj_momf[:i, :2]
+    )
+    fit_gpytorch_mll(mll)
+    hypervolume = get_pareto(model, project=project, non_fidelity_indices=[0, 1])
+    hvs_momf.append(hypervolume)
+    costs_momf.append(cost_callable(train_x_momf[:i]).sum().item())
+
+
+# ## Evaluate qNEHVI
+
+# In[ ]:
+
+
+hvs_qnehvi = []
+costs_qnehvi = []
+for i in range(2, train_x_qnehvi.shape[0] + 1):
+
+    mll, model = initialize_model(
+        normalize(train_x_qnehvi[:i, :2], BC.bounds[:, :2]), train_obj_qnehvi[:i]
+    )
+    fit_gpytorch_mll(mll)
+    hypervolume = get_pareto(
+        model, project=project, non_fidelity_indices=[0, 1], is_mf_model=False
+    )
+    hvs_qnehvi.append(hypervolume)
+    costs_qnehvi.append(cost_callable(train_x_qnehvi[:i]).sum().item())
+
+
+# ### Plot log inference hypervolume regret (under the model) vs cost
+# 
+# Log inference hypervolume regret, defined as the logarithm of the difference between the maximum hypervolume dominated by the Pareto frontier and the hypervolume corresponding to the Pareto set identified by each algorithm, is a performance evaluation criterion for multi-information source multi-objective optimization [3].
+
+# In[36]:
+
+
+plt.plot(costs_qnehvi, np.log10(BC.max_hv - np.array(hvs_qnehvi)), '--', marker='o', ms=10, label="qNEHVI")
+plt.plot(costs_momf, np.log10(BC.max_hv - np.array(hvs_momf)), '--', marker='s', ms=10, label="MOMF")
+plt.plot(costs, np.log10(BC.max_hv - np.array(hvs_kg)), '--', marker='d', ms=10, label="HVKG")
+plt.ylabel("Log Inference Hypervolume Regret")
+plt.xlabel("Cost")
+plt.legend()
+
+
+# In[ ]:
+
+
+
 

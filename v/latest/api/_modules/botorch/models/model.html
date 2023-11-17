@@ -93,17 +93,23 @@
 <span class="sd">    `Tensor` or `Module` type are automatically registered so they can be moved and/or</span>
 <span class="sd">    cast with the `to` method, automatically differentiated, and used with CUDA.</span>
 
-<span class="sd">    Args:</span>
+<span class="sd">    Attributes:</span>
 <span class="sd">        _has_transformed_inputs: A boolean denoting whether `train_inputs` are currently</span>
 <span class="sd">            stored as transformed or not.</span>
 <span class="sd">        _original_train_inputs: A Tensor storing the original train inputs for use in</span>
 <span class="sd">            `_revert_to_original_inputs`. Note that this is necessary since</span>
 <span class="sd">            transform / untransform cycle introduces numerical errors which lead</span>
 <span class="sd">            to upstream errors during training.</span>
+<span class="sd">        _is_fully_bayesian: Returns `True` if this is a fully Bayesian model.</span>
+<span class="sd">        _is_ensemble: Returns `True` if this model consists of multiple models</span>
+<span class="sd">            that are stored in an additional batch dimension. This is true for the fully</span>
+<span class="sd">            Bayesian models.</span>
 <span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
 
     <span class="n">_has_transformed_inputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">_original_train_inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_is_fully_bayesian</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">_is_ensemble</span> <span class="o">=</span> <span class="kc">False</span>
 
 <div class="viewcode-block" id="Model.posterior"><a class="viewcode-back" href="../../../models.html#botorch.models.model.Model.posterior">[docs]</a>    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>

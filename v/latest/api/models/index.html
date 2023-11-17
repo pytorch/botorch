@@ -45,17 +45,43 @@ on custom NN Modules.</p>
 <cite>Tensor</cite> or <cite>Module</cite> type are automatically registered so they can be moved and/or
 cast with the <cite>to</cite> method, automatically differentiated, and used with CUDA.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>_has_transformed_inputs</strong> – A boolean denoting whether <cite>train_inputs</cite> are currently
-stored as transformed or not.</p></li>
-<li><p><strong>_original_train_inputs</strong> – A Tensor storing the original train inputs for use in
-<cite>_revert_to_original_inputs</cite>. Note that this is necessary since
-transform / untransform cycle introduces numerical errors which lead
-to upstream errors during training.</p></li>
-</ul>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.models.model.Model._has_transformed_inputs">
+<span class="sig-name descname"><span class="pre">_has_transformed_inputs</span></span><a class="headerlink" href="#botorch.models.model.Model._has_transformed_inputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>A boolean denoting whether <cite>train_inputs</cite> are currently
+stored as transformed or not.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.models.model.Model._original_train_inputs">
+<span class="sig-name descname"><span class="pre">_original_train_inputs</span></span><a class="headerlink" href="#botorch.models.model.Model._original_train_inputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Tensor storing the original train inputs for use in
+<cite>_revert_to_original_inputs</cite>. Note that this is necessary since
+transform / untransform cycle introduces numerical errors which lead
+to upstream errors during training.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor | None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.models.model.Model._is_fully_bayesian">
+<span class="sig-name descname"><span class="pre">_is_fully_bayesian</span></span><a class="headerlink" href="#botorch.models.model.Model._is_fully_bayesian" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns <cite>True</cite> if this is a fully Bayesian model.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.models.model.Model._is_ensemble">
+<span class="sig-name descname"><span class="pre">_is_ensemble</span></span><a class="headerlink" href="#botorch.models.model.Model._is_ensemble" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns <cite>True</cite> if this model consists of multiple models
+that are stored in an additional batch dimension. This is true for the fully
+Bayesian models.</p>
+</dd></dl>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.model.Model.posterior">
@@ -3081,10 +3107,14 @@ observation noise (must be of shape <cite>(batch_shape) x q x m</cite>).</p></li
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A <cite>FullyBayesianPosterior</cite> object. Includes observation noise if specified.</p>
+<dd class="field-even"><p><dl class="simple">
+<dt>A <cite>GaussianMixturePosterior</cite> object. Includes observation noise</dt><dd><p>if specified.</p>
+</dd>
+</dl>
+</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.fully_bayesian.FullyBayesianPosterior" title="botorch.posteriors.fully_bayesian.FullyBayesianPosterior"><em>FullyBayesianPosterior</em></a></p>
+<dd class="field-odd"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.fully_bayesian.GaussianMixturePosterior" title="botorch.posteriors.fully_bayesian.GaussianMixturePosterior"><em>GaussianMixturePosterior</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3309,7 +3339,11 @@ has been fitted in order to create a batched MultiTaskGP model.</p>
 <dd><p>Computes the posterior over model outputs at the provided points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A <cite>FullyBayesianPosterior</cite> object. Includes observation noise if specified.</p>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A <cite>GaussianMixturePosterior</cite> object. Includes observation noise</dt><dd><p>if specified.</p>
+</dd>
+</dl>
+</p>
 </dd>
 <dt class="field-even">Parameters<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
@@ -3321,7 +3355,7 @@ has been fitted in order to create a batched MultiTaskGP model.</p>
 </ul>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.fully_bayesian.FullyBayesianPosterior" title="botorch.posteriors.fully_bayesian.FullyBayesianPosterior"><em>FullyBayesianPosterior</em></a></p>
+<dd class="field-odd"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.fully_bayesian.GaussianMixturePosterior" title="botorch.posteriors.fully_bayesian.GaussianMixturePosterior"><em>GaussianMixturePosterior</em></a></p>
 </dd>
 </dl>
 </dd></dl>

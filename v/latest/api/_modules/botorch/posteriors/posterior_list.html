@@ -38,7 +38,8 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.posteriors.fully_bayesian</span> <span class="kn">import</span> <span class="n">FullyBayesianPosterior</span><span class="p">,</span> <span class="n">MCMC_DIM</span>
+<span class="kn">from</span> <span class="nn">botorch.posteriors</span> <span class="kn">import</span> <span class="n">FullyBayesianPosterior</span>
+<span class="kn">from</span> <span class="nn">botorch.posteriors.fully_bayesian</span> <span class="kn">import</span> <span class="n">GaussianMixturePosterior</span><span class="p">,</span> <span class="n">MCMC_DIM</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
@@ -46,8 +47,8 @@
 <div class="viewcode-block" id="PosteriorList"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.posterior_list.PosteriorList">[docs]</a><span class="k">class</span> <span class="nc">PosteriorList</span><span class="p">(</span><span class="n">Posterior</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A Posterior represented by a list of independent Posteriors.</span>
 
-<span class="sd">    When at least one of the posteriors is a `FullyBayesianPosterior`, the other</span>
-<span class="sd">    posteriors are expanded to match the size of the `FullyBayesianPosterior`.</span>
+<span class="sd">    When at least one of the posteriors is a `GaussianMixturePosterior`, the other</span>
+<span class="sd">    posteriors are expanded to match the size of the `GaussianMixturePosterior`.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">posteriors</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -67,16 +68,16 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">posteriors</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">posteriors</span><span class="p">)</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">_is_fully_bayesian</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Check if any of the posteriors is a `FullyBayesianPosterior`."""</span>
-        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">FullyBayesianPosterior</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">posteriors</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_is_gaussian_mixture</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Check if any of the posteriors is a `GaussianMixturePosterior`."""</span>
+        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">GaussianMixturePosterior</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">posteriors</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_get_mcmc_batch_dimension</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Return the number of MCMC samples in the corresponding batch dimension."""</span>
         <span class="n">mcmc_samples</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">p</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">MCMC_DIM</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">posteriors</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">FullyBayesianPosterior</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="p">(</span><span class="n">GaussianMixturePosterior</span><span class="p">,</span> <span class="n">FullyBayesianPosterior</span><span class="p">))</span>
         <span class="p">]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">mcmc_samples</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
@@ -93,12 +94,12 @@
 
     <span class="k">def</span> <span class="nf">_reshape_and_cat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Reshape, if needed, and concatenate (across dim=-1) a list of tensors."""</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_fully_bayesian</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_gaussian_mixture</span><span class="p">:</span>
             <span class="n">mcmc_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_mcmc_batch_dimension</span><span class="p">()</span>
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
                 <span class="p">[</span>
                     <span class="n">x</span>
-                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">FullyBayesianPosterior</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">GaussianMixturePosterior</span><span class="p">)</span>
                     <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reshape_tensor</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">mcmc_samples</span><span class="o">=</span><span class="n">mcmc_samples</span><span class="p">)</span>
                     <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">tensors</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">posteriors</span><span class="p">)</span>
                 <span class="p">],</span>
@@ -135,16 +136,18 @@
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Returns the shape of the samples produced by the posterior with</span>
 <span class="sd">        the given `sample_shape`.</span>
 
-<span class="sd">        If there's at least one `FullyBayesianPosterior`, the MCMC dimension</span>
+<span class="sd">        If there's at least one `GaussianMixturePosterior`, the MCMC dimension</span>
 <span class="sd">        is included the `_extended_shape`.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_fully_bayesian</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_gaussian_mixture</span><span class="p">:</span>
             <span class="n">mcmc_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_mcmc_batch_dimension</span><span class="p">()])</span>
             <span class="n">extend_dim</span> <span class="o">=</span> <span class="n">MCMC_DIM</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># The dimension to inject MCMC shape.</span>
         <span class="n">extended_shapes</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">posteriors</span><span class="p">:</span>
             <span class="n">es</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">_extended_shape</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_fully_bayesian</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">FullyBayesianPosterior</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_gaussian_mixture</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">p</span><span class="p">,</span> <span class="n">GaussianMixturePosterior</span>
+            <span class="p">):</span>
                 <span class="c1"># Extend the shapes of non-fully Bayesian ones to match.</span>
                 <span class="n">extended_shapes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">es</span><span class="p">[:</span><span class="n">extend_dim</span><span class="p">]</span> <span class="o">+</span> <span class="n">mcmc_shape</span> <span class="o">+</span> <span class="n">es</span><span class="p">[</span><span class="n">extend_dim</span><span class="p">:])</span>
             <span class="k">else</span><span class="p">:</span>

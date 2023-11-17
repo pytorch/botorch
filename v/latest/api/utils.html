@@ -2326,16 +2326,29 @@ contained within <cite>bounds</cite>.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.transforms.is_fully_bayesian">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.transforms.</span></span><span class="sig-name descname"><span class="pre">is_fully_bayesian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#is_fully_bayesian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.transforms.is_fully_bayesian" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check if at least one model is a SaasFullyBayesianSingleTaskGP</p>
+<dd><p>Check if at least one model is a fully Bayesian model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A BoTorch model (may be a <cite>ModelList</cite> or <cite>ModelListGP</cite>)</p></li>
-<li><p><strong>d</strong> – The dimension of the tensor to index.</p></li>
-</ul>
+<dd class="field-odd"><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A BoTorch model (may be a <cite>ModelList</cite> or <cite>ModelListGP</cite>)</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>True if at least one model is a <cite>SaasFullyBayesianSingleTaskGP</cite></p>
+<dd class="field-even"><p>True if at least one model is a fully Bayesian model.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.transforms.is_ensemble">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.transforms.</span></span><span class="sig-name descname"><span class="pre">is_ensemble</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#is_ensemble"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.transforms.is_ensemble" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if at least one model is an ensemble model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A BoTorch model (may be a <cite>ModelList</cite> or <cite>ModelListGP</cite>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if at least one model is an ensemble model.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
