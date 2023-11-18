@@ -178,8 +178,8 @@ from botorch.models.deterministic import GenericDeterministicModel
 from botorch.sampling.list_sampler import ListSampler
 from botorch.sampling.normal import IIDNormalSampler
 
-NUM_PARETO = 10
-NUM_FANTASIES = 8
+NUM_PARETO = 2 if SMOKE_TEST else 10
+NUM_FANTASIES = 2 if SMOKE_TEST else 8
 NUM_HVKG_RESTARTS = 1
 
 

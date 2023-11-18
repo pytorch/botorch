@@ -299,8 +299,8 @@ I1110 064940.231 _utils_internal.py:239] NCCL_DEBUG is INFO from /etc/nccl.conf
 <span class="kn">from</span> <span class="nn">botorch.sampling.list_sampler</span> <span class="kn">import</span> <span class="n">ListSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.normal</span> <span class="kn">import</span> <span class="n">IIDNormalSampler</span>
 
-<span class="n">NUM_PARETO</span> <span class="o">=</span> <span class="mi">10</span>
-<span class="n">NUM_FANTASIES</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">NUM_PARETO</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">10</span>
+<span class="n">NUM_FANTASIES</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">8</span>
 <span class="n">NUM_HVKG_RESTARTS</span> <span class="o">=</span> <span class="mi">1</span>
 
 

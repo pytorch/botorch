@@ -13,8 +13,6 @@
 # 
 # In this tutorial, we will optimize a synthetic function that is a modified multi-fidelity Branin-Currin [1]. This is a 3-dimesional, bi-objective problem with one of the input dimensions being the fidelity. For the MOMF, this results in a 3-objective problem since it also takes the fidelity objective into account. In this case the fidelity objective is a linear function of fidelity, $ f(s)=s$, where $s$ is the fidelity. The MOMF algorithm can accept any discrete or continuous cost functions as an input. In this example, we choose an exponential dependency of the form $C(s)=\exp(4.8s)$. The goal of the optimization is to find the Pareto front, which is a trade-off solution set for Multi-objective problems, at the highest fidelity. 
 # 
-# We also compare the MF methods with a single-fidelity baseline qNEHVI [2]. The MO-only optimization runs only at the highest fidelity while MF methods make use of lower fidelity data to estimate the Pareto front at the highest fidelity.
-# 
 # Note: pymoo is an optional dependency that is used for determining the Pareto set of optimal designs under the model posterior mean using NSGA-II (which is not a sample efficient method, but sample efficiency is not critical for this step). If pymoo is not available, the Pareto set of optimal designs is selected from a discrete set. This will work okay for low-dim (e.g. 
 #  dimensions) problems, but in general NSGA-II will yield far better results.
 # 
@@ -24,7 +22,7 @@
 # 
 # [3] [S. Daulton, M. Balandat, and E. Bakshy. Hypervolume Knowledge Gradient for Multi-Objective Bayesian Optimization with Partial Information. ICML, 2023.](https://proceedings.mlr.press/v202/daulton23a.html)
 
-# In[1]:
+# In[9]:
 
 
 import os
@@ -38,7 +36,7 @@ import torch
 # ### Set dtype and device 
 # Setting up the global variable that determine the device to run the optimization. The optimization is much faster when it runs on GPU.
 
-# In[2]:
+# In[10]:
 
 
 tkwargs = {  # Tkwargs is a dictionary contaning data about data type and data device
@@ -50,7 +48,7 @@ SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 # ### Define the problem and optimization settings
 
-# In[3]:
+# In[11]:
 
 
 from botorch.test_functions.multi_objective_multi_fidelity import MOMFBraninCurrin
@@ -63,9 +61,10 @@ ref_point = torch.zeros(dim_y, **tkwargs)
 
 
 BATCH_SIZE = 1  # For batch optimization, BATCH_SIZE should be greater than 1
-EVAL_BUDGET = 2.1 if SMOKE_TEST else 4 # in terms of the number of full-fidelity evaluations
+# This evaluation budget is set to be very low to make the notebook run fast. This should be much higher.
+EVAL_BUDGET = 2.05  # in terms of the number of full-fidelity evaluations
 n_INIT = 2  # Initialization budget in terms of the number of full-fidelity evaluations
-# Number of Monte Carlo samples, used to
+# Number of Monte Carlo samples, used to approximate MOMF
 MC_SAMPLES = 8 if SMOKE_TEST else 128
 # Number of restart points for multi-start optimization
 NUM_RESTARTS = 2 if SMOKE_TEST else 10
@@ -82,7 +81,7 @@ target_fidelities = {2: 1.0}
 # 
 # The cost_func function returns an exponential cost from the fidelity. The cost_callable is a wrapper around it that takes care of the input output shapes. This is provided to the MF algorithms which inversely weight the expected utility by the cost.
 
-# In[4]:
+# In[12]:
 
 
 from math import exp
@@ -116,7 +115,7 @@ def cost_callable(X: torch.Tensor) -> torch.Tensor:
 # We use a multi-output SingleTaskGP to model the problem with a homoskedastic Gaussian likelihood with an inferred noise level. 
 # The model is initialized with random points, where the fidelity is sampled from a probability distribution with a PDF that is inversely proportional to the cost: $p(s)=C(s)^{-1}$. The initialization is given a budget equivalent to 2 full-fidelity evaluations.
 
-# In[5]:
+# In[13]:
 
 
 from botorch.models.gp_regression import SingleTaskGP
@@ -201,7 +200,7 @@ def initialize_model(train_x, train_obj, state_dict=None):
 # 
 # A simple initialization heuristic is used to select the 20 restart initial locations from a set of 1024 random points. Multi-start optimization of the acquisition function is performed using LBFGS-B with exact gradients computed via auto-differentiation.
 
-# In[6]:
+# In[14]:
 
 
 from botorch.acquisition.multi_objective.multi_fidelity import MOMF
@@ -285,10 +284,8 @@ def optimize_MOMF_and_get_obs(
 # `optimize_HVKG_and_get_obs` creates the MF-HVKG acquisition function, optimizes it, and returns the new design and corresponding observation.
 # 
 
-# In[7]:
+# In[15]:
 
-
-import time
 
 from botorch.acquisition.cost_aware import InverseCostWeightedUtility
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
@@ -407,51 +404,7 @@ def optimize_HVKG_and_get_obs(
     return new_x, new_obj
 
 
-# ### Define helper function to initialize and optimize qNEHVI
-
-# In[8]:
-
-
-from botorch.acquisition.multi_objective.monte_carlo import (
-    qNoisyExpectedHypervolumeImprovement,
-)
-
-
-def optimize_qNEHVI_and_get_obs(
-    model: SingleTaskGP,
-    train_x,
-    sampler: SobolQMCNormalSampler,
-    ref_point: torch.Tensor,
-    standard_bounds: torch.Tensor,
-    q: int
-) -> Tuple[torch.Tensor, torch.Tensor]:
-    """
-    Optimize the qNEHVI acquisition function and return a new candidate and observation.
-    """
-    acq_func = qNoisyExpectedHypervolumeImprovement(
-        model=model,
-        ref_point=BC.ref_point,  # use a known reference point
-        sampler=sampler,
-        X_baseline=normalize(train_x, bounds=BC.bounds[:,:2]), # exclude fidelity dim
-    )
-    # optimize
-    candidates, _ = optimize_acqf(
-        acq_function=acq_func,
-        bounds=standard_bounds,
-        q=q,
-        num_restarts=NUM_RESTARTS,
-        raw_samples=RAW_SAMPLES,  # used for intialization heuristic
-        options={"batch_limit": 5, "maxiter": 200, "nonnegative": True},
-        sequential=True,
-    )
-    # observe new values
-    new_x = unnormalize(candidates.detach(), bounds=standard_bounds)
-    new_x = torch.cat([new_x, torch.ones(q, 1, **tkwargs)], dim=-1)
-    new_obj = BC(new_x)
-    return new_x, new_obj
-
-
-# ### Running MOMF optimization 
+# ### Define helper functions for MF-HVKG
 # 
 # We run MOMF to optimize the multi-fidelity versions of the Branin-Currin functions. The optimization loop works in the following sequence. 
 # 
@@ -465,13 +418,13 @@ def optimize_qNEHVI_and_get_obs(
 # Note: running this takes some time.
 # 
 
-# In[9]:
+# In[16]:
 
 
 from botorch import fit_gpytorch_mll
 
 
-# In[ ]:
+# In[17]:
 
 
 # Intializing train_x to zero
@@ -513,7 +466,7 @@ while total_cost < EVAL_BUDGET * cost_func(1):
 
 # ### Run MF-HVKG
 
-# In[ ]:
+# In[18]:
 
 
 torch.manual_seed(0)
@@ -544,54 +497,12 @@ while total_cost < EVAL_BUDGET * cost_func(1):
     total_cost += cost_callable(new_x).sum().item()
 
 
-# ### Run qNEHVI
-
-# In[ ]:
-
-
-torch.manual_seed(0)
-train_x_qnehvi = torch.rand(2,3, **tkwargs) # 2 initial points
-train_x_qnehvi[:,-1] = 1  # full fidelity
-train_obj_qnehvi = BC(train_x_qnehvi)
-
-iteration = 0
-total_cost = cost_callable(train_x_qnehvi).sum().item()
-while total_cost < EVAL_BUDGET * cost_func(1):
-    if verbose:
-        print(f"cost: {total_cost}")
-
-    # reinitialize the models so they are ready for fitting on next iteration
-    # exclude fidelity dim from inputs
-    mll, model = initialize_model(
-        normalize(train_x_qnehvi[:,:2], BC.bounds[:,:2]),
-        train_obj_qnehvi,
-    )
-
-    fit_gpytorch_mll(mll=mll)  # Fit the model
-    # optimize acquisition functions and get new observations
-    new_x, new_obj = optimize_qNEHVI_and_get_obs(
-        model=model,
-        train_x=train_x_qnehvi[:,:2],
-        ref_point=ref_point,
-        sampler=SobolQMCNormalSampler(sample_shape=torch.Size([MC_SAMPLES])),
-        standard_bounds=standard_bounds[:,:2], # exclude fidelity dim
-        q=BATCH_SIZE,
-    )
-    # Updating train_x and train_obj
-    train_x_qnehvi = torch.cat([train_x_qnehvi, new_x], dim=0)
-    train_obj_qnehvi = torch.cat([train_obj_qnehvi, new_obj], dim=0)
-    iteration += 1
-    total_cost += cost_callable(new_x).sum().item()
-
-
 # ### Result:  Evaluating the Pareto front at the highest fidelity using NSGA-II on the posterior mean
 # 
 
-# In[37]:
+# In[19]:
 
 
-import numpy as np
-from botorch.utils.multi_objective.box_decompositions import DominatedPartitioning
 from botorch.utils.multi_objective.pareto import (
     _is_non_dominated_loop,
     is_non_dominated,
@@ -719,7 +630,7 @@ except ImportError:
 # 
 # We evaluate performance after every 5 evaluations (this is to speed things up, since there are many observations).
 
-# In[ ]:
+# In[20]:
 
 
 hvs_kg = []
@@ -741,7 +652,7 @@ for i in range(MF_n_INIT, train_x_kg.shape[0] + 1, 5):
 # 
 # We evaluate performance after every evaluation (there are not as many evaluations since MOMF queries higher fidelities more frequently).
 
-# In[ ]:
+# In[21]:
 
 
 hvs_momf = []
@@ -757,36 +668,24 @@ for i in range(MF_n_INIT, train_x_momf.shape[0] + 1):
     costs_momf.append(cost_callable(train_x_momf[:i]).sum().item())
 
 
-# ## Evaluate qNEHVI
-
-# In[ ]:
-
-
-hvs_qnehvi = []
-costs_qnehvi = []
-for i in range(2, train_x_qnehvi.shape[0] + 1):
-
-    mll, model = initialize_model(
-        normalize(train_x_qnehvi[:i, :2], BC.bounds[:, :2]), train_obj_qnehvi[:i]
-    )
-    fit_gpytorch_mll(mll)
-    hypervolume = get_pareto(
-        model, project=project, non_fidelity_indices=[0, 1], is_mf_model=False
-    )
-    hvs_qnehvi.append(hypervolume)
-    costs_qnehvi.append(cost_callable(train_x_qnehvi[:i]).sum().item())
-
-
 # ### Plot log inference hypervolume regret (under the model) vs cost
 # 
 # Log inference hypervolume regret, defined as the logarithm of the difference between the maximum hypervolume dominated by the Pareto frontier and the hypervolume corresponding to the Pareto set identified by each algorithm, is a performance evaluation criterion for multi-information source multi-objective optimization [3].
 
-# In[36]:
+# In[22]:
 
 
-plt.plot(costs_qnehvi, np.log10(BC.max_hv - np.array(hvs_qnehvi)), '--', marker='o', ms=10, label="qNEHVI")
-plt.plot(costs_momf, np.log10(BC.max_hv - np.array(hvs_momf)), '--', marker='s', ms=10, label="MOMF")
-plt.plot(costs, np.log10(BC.max_hv - np.array(hvs_kg)), '--', marker='d', ms=10, label="HVKG")
+plt.plot(
+    costs_momf,
+    np.log10(BC.max_hv - np.array(hvs_momf)),
+    "--",
+    marker="s",
+    ms=10,
+    label="MOMF",
+)
+plt.plot(
+    costs, np.log10(BC.max_hv - np.array(hvs_kg)), "--", marker="d", ms=10, label="HVKG"
+)
 plt.ylabel("Log Inference Hypervolume Regret")
 plt.xlabel("Cost")
 plt.legend()
