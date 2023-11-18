@@ -144,8 +144,11 @@ class GaussianMixturePosterior(GPyTorchPosterior):
 class FullyBayesianPosterior(GaussianMixturePosterior):
     """For backwards compatibility."""
 
-    warn(
-        "`FullyBayesianPosterior` is marked for deprecation, consider using "
-        "`GaussianMixturePosterior` instead.",
-        DeprecationWarning,
-    )
+    def __init__(self, distribution: MultivariateNormal) -> None:
+        """DEPRECATED."""
+        warn(
+            "`FullyBayesianPosterior` is marked for deprecation, consider using "
+            "`GaussianMixturePosterior` instead.",
+            DeprecationWarning,
+        )
+        super().__init__(distribution=distribution)

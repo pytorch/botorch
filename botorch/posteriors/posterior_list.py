@@ -11,11 +11,9 @@ Abstract base module for all botorch posteriors.
 from __future__ import annotations
 
 from functools import cached_property
-
 from typing import Any, List, Optional
 
 import torch
-from botorch.posteriors import FullyBayesianPosterior
 from botorch.posteriors.fully_bayesian import GaussianMixturePosterior, MCMC_DIM
 from botorch.posteriors.posterior import Posterior
 from torch import Tensor
@@ -54,7 +52,7 @@ class PosteriorList(Posterior):
         mcmc_samples = [
             p.mean.shape[MCMC_DIM]
             for p in self.posteriors
-            if isinstance(p, (GaussianMixturePosterior, FullyBayesianPosterior))
+            if isinstance(p, GaussianMixturePosterior)
         ]
         if len(set(mcmc_samples)) > 1:
             raise NotImplementedError(
