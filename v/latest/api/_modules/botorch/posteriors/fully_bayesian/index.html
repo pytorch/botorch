@@ -167,11 +167,14 @@
 <div class="viewcode-block" id="FullyBayesianPosterior"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.fully_bayesian.FullyBayesianPosterior">[docs]</a><span class="k">class</span> <span class="nc">FullyBayesianPosterior</span><span class="p">(</span><span class="n">GaussianMixturePosterior</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""For backwards compatibility."""</span>
 
-    <span class="n">warn</span><span class="p">(</span>
-        <span class="s2">"`FullyBayesianPosterior` is marked for deprecation, consider using "</span>
-        <span class="s2">"`GaussianMixturePosterior` instead."</span><span class="p">,</span>
-        <span class="ne">DeprecationWarning</span><span class="p">,</span>
-    <span class="p">)</span></div>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">distribution</span><span class="p">:</span> <span class="n">MultivariateNormal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""DEPRECATED."""</span>
+        <span class="n">warn</span><span class="p">(</span>
+            <span class="s2">"`FullyBayesianPosterior` is marked for deprecation, consider using "</span>
+            <span class="s2">"`GaussianMixturePosterior` instead."</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="n">distribution</span><span class="p">)</span></div>
 </pre></div>
 </div>
 </div>
