@@ -41,25 +41,50 @@ def get_acquisition_function(*args, **kwargs) -> None:
     )
 
 
-def repeat_to_match_aug_dim(samples: Tensor, objective: Tensor) -> Tensor:
-    """Repeat samples to match the potentially augmented sample dimension of objective.
-    See LearnedObjective for an example of why this is needed.
+def repeat_to_match_aug_dim(target_tensor: Tensor, reference_tensor: Tensor) -> Tensor:
+    """Repeat target_tensor until it has the same first dimension as reference_tensor
+    This works regardless of the batch shapes and q.
+    This is useful as we sometimes modify sample shapes such as in LearnedObjective.
 
     Args:
-        samples: A `sample_size x batch_shape x N`-dim Tensor
-        objective: A `(augmented_sample * sample_size) x batch_shape x N`-dim Tensor
-            augmented_sample could be 1
+        target_tensor: A `sample_size x batch_shape x q x m`-dim Tensor
+        reference_tensor: A `(augmented_sample * sample_size) x batch_shape x q`-dim
+            Tensor. `augmented_sample` could be 1.
 
     Returns:
-        A tensor of shape (augmented_sample * sample_size) x batch_shape x N
-    """
-    augmented_sample_num = objective.shape[0] // samples.shape[0]
+        The content of `target_tensor` potentially repeated so that its first dimension
+        matches that of `reference_tensor`.
+        The shape will be `(augmented_sample * sample_size) x batch_shape x q x m`.
+
+    Example:
+        >>> import torch
+        >>> target_tensor = torch.arange(3).repeat(2, 1).T
+        >>> target_tensor
+        tensor([[0, 0],
+                [1, 1],
+                [2, 2]])
+        >>> repeat_to_match_aug_dim(target_tensor, torch.zeros(6))
+        tensor([[0, 0],
+                [1, 1],
+                [2, 2],
+                [0, 0],
+                [1, 1],
+                [2, 2]])"""
+
+    augmented_sample_num, remainder = divmod(
+        reference_tensor.shape[0], target_tensor.shape[0]
+    )
+    if remainder != 0:
+        raise ValueError(
+            "The first dimension of reference_tensor must "
+            "be a multiple of target_tensor's."
+        )
+
     # using repeat here as obj might be constructed as
     # obj.reshape(-1, *samples.shape[2:]) where the first 2 dimensions are
     # of shape `augmented_samples x sample_shape`.
-    repeat_size = (augmented_sample_num,) + (1,) * (samples.ndim - 1)
-    samples = samples.repeat(*repeat_size)
-    return samples
+    repeat_size = (augmented_sample_num,) + (1,) * (target_tensor.ndim - 1)
+    return target_tensor.repeat(*repeat_size)
 
 
 def compute_best_feasible_objective(
@@ -130,7 +155,9 @@ def compute_best_feasible_objective(
             X=X_baseline,
         ).item()
 
-    is_feasible = repeat_to_match_aug_dim(samples=is_feasible, objective=obj)
+    is_feasible = repeat_to_match_aug_dim(
+        target_tensor=is_feasible, reference_tensor=obj
+    )
     obj = torch.where(is_feasible, obj, infeasible_value)
     with torch.no_grad():
         return obj.amax(dim=-1, keepdim=True)
