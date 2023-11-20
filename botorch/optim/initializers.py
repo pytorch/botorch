@@ -670,7 +670,7 @@ def gen_one_shot_hvkg_initial_conditions(
     # sampling from the optimizers
     eta = options.get("eta", 2.0)
     if num_optim_restarts > 0:
-        probs = torch.nn.functional.softmax(eta * standardize(fantasy_vals), dim=-1)
+        probs = torch.nn.functional.softmax(eta * standardize(fantasy_vals), dim=0)
         idx = torch.multinomial(
             probs,
             num_optim_restarts * acq_function.num_fantasies,
