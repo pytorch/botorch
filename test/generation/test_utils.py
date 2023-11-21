@@ -9,8 +9,10 @@ from __future__ import annotations
 from itertools import product
 
 import torch
+
 from botorch.acquisition import FixedFeatureAcquisitionFunction
 from botorch.generation.utils import (
+    _convert_nonlinear_inequality_constraints,
     _flip_sub_unique,
     _remove_fixed_features_from_optimization,
 )
@@ -18,6 +20,27 @@ from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction
 
 
 class TestGenerationUtils(BotorchTestCase):
+    def test_convert_nonlinear_inequality_constraints(self):
+        def nlc(x):
+            return x[..., 2]
+
+        def nlc2(x):
+            return x[..., 3]
+
+        nlcs = [nlc]
+        with self.assertWarns(DeprecationWarning):
+            new_nlcs = _convert_nonlinear_inequality_constraints(nlcs)
+        self.assertEqual(new_nlcs, [(nlc, True)])
+
+        nlcs = [(nlc, False)]
+        new_nlcs = _convert_nonlinear_inequality_constraints(nlcs)
+        self.assertEqual(new_nlcs, [(nlc, False)])
+
+        nlcs = [(nlc, False), nlc2]
+        with self.assertWarns(DeprecationWarning):
+            new_nlcs = _convert_nonlinear_inequality_constraints(nlcs)
+        self.assertEqual(new_nlcs, [(nlc, False), (nlc2, True)])
+
     def test_flip_sub_unique(self):
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
@@ -93,8 +116,8 @@ class TestGenerationUtils(BotorchTestCase):
             reduced_data = torch.tensor([[4.0, 2.0, 3.0]], device=self.device)
             if old_nlcs:
                 self.assertAllClose(
-                    old_nlcs[0](complete_data),
-                    new_nlcs[0](reduced_data),
+                    old_nlcs[0][0](complete_data),
+                    new_nlcs[0][0](reduced_data),
                 )
             else:
                 self.assertEqual(old_nlcs, new_nlcs)
@@ -102,7 +125,7 @@ class TestGenerationUtils(BotorchTestCase):
         def nlc(x):
             return x[..., 2]
 
-        old_nlcs = [nlc]
+        old_nlcs = [(nlc, True)]
 
         for (
             lower_bounds,

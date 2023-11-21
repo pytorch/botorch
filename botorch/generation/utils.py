@@ -6,16 +6,45 @@
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
+
 from botorch.acquisition import AcquisitionFunction, FixedFeatureAcquisitionFunction
 from botorch.optim.parameter_constraints import (
     _generate_unfixed_lin_constraints,
     _generate_unfixed_nonlin_constraints,
 )
 from torch import Tensor
+
+
+def _convert_nonlinear_inequality_constraints(
+    nonlinear_inequality_constraints: List[Union[Callable, Tuple[Callable, bool]]]
+) -> List[Tuple[Callable, bool]]:
+    """Convert legacy defintions of nonlinear inequality constraints into the new
+    format. Assumes intra-point constraints.
+    """
+    nlcs = []
+    legacy = False
+    # return nonlinear_inequality_constraints
+    for nlc in nonlinear_inequality_constraints:
+        if callable(nlc):
+            # old style --> convert
+            nlcs.append((nlc, True))
+            legacy = True
+        else:
+            nlcs.append(nlc)
+    if legacy:
+        warnings.warn(
+            "The `nonlinear_inequality_constraints` argument is expected "
+            "take a list of tuples. Passing a list of callables "
+            "will result in an error in future versions.",
+            DeprecationWarning,
+        )
+
+    return nlcs
 
 
 def _flip_sub_unique(x: Tensor, k: int) -> Tensor:

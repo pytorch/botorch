@@ -73,7 +73,7 @@ class OptimizeAcqfInputs:
     options: Optional[Dict[str, Union[bool, float, int, str]]]
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]]
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]]
-    nonlinear_inequality_constraints: Optional[List[Callable]]
+    nonlinear_inequality_constraints: Optional[List[Tuple[Callable, bool]]]
     fixed_features: Optional[Dict[int, float]]
     post_processing_func: Optional[Callable[[Tensor], Tensor]]
     batch_initial_conditions: Optional[Tensor]
@@ -247,7 +247,6 @@ def _optimize_acqf_sequential_q(
         timeout_sec=timeout_sec,
     )
     for i in range(opt_inputs.q):
-
         candidate, acq_value = _optimize_acqf_batch(new_inputs)
 
         candidate_list.append(candidate)
@@ -424,7 +423,7 @@ def optimize_acqf(
     options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    nonlinear_inequality_constraints: Optional[List[Callable]] = None,
+    nonlinear_inequality_constraints: Optional[List[Tuple[Callable, bool]]] = None,
     fixed_features: Optional[Dict[int, float]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
     batch_initial_conditions: Optional[Tensor] = None,
@@ -456,24 +455,32 @@ def optimize_acqf(
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`. `indices` and
             `coefficients` should be torch tensors. See the docstring of
             `make_scipy_linear_constraints` for an example. When q=1, or when
-            applying the same constraint to each candidate in the batch,
-            `indices` should be a 1-d tensor. For inter-point constraints,
-            `indices` must be a 2-d Tensor, where in each row `indices[i] =
-            (k_i, l_i)` the first index `k_i` corresponds to the `k_i`-th
-            element of the `q`-batch and the second index `l_i` corresponds to
-            the `l_i`-th feature of that element.
+            applying the same constraint to each candidate in the batch
+            (intra-point constraint), `indices` should be a 1-d tensor.
+            For inter-point constraints, in which the constraint is applied to the
+            whole batch of candidates, `indices` must be a 2-d tensor, where
+            in each row `indices[i] =(k_i, l_i)` the first index `k_i` corresponds
+            to the `k_i`-th element of the `q`-batch and the second index `l_i`
+            corresponds to the `l_i`-th feature of that element.
         equality_constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an equality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`. See the docstring of
             `make_scipy_linear_constraints` for an example.
-        nonlinear_inequality_constraints: A list of callables with that represent
-            non-linear inequality constraints of the form `callable(x) >= 0`. Each
-            callable is expected to take a `(num_restarts) x q x d`-dim tensor as an
-            input and return a `(num_restarts) x q`-dim tensor with the constraint
-            values. The constraints will later be passed to SLSQP. You need to pass in
-            `batch_initial_conditions` in this case. Using non-linear inequality
-            constraints also requires that `batch_limit` is set to 1, which will be
-            done automatically if not specified in `options`.
+        nonlinear_inequality_constraints: A list of tuples representing the nonlinear
+            inequality constraints. The first element in the tuple is a callable
+            representing a constraint of the form `callable(x) >= 0`. In case of an
+            intra-point constraint, `callable()`takes in an one-dimensional tensor of
+            shape `d` and returns a scalar. In case of an inter-point constraint,
+            `callable()` takes a two dimensional tensor of shape `q x d` and again
+            returns a scalar. The second element is a boolean, indicating if it is an
+            intra-point or inter-point constraint (`True` for intra-point. `False` for
+            inter-point). For more information on intra-point vs inter-point
+            constraints, see the docstring of the `inequality_constraints` argument to
+            `optimize_acqf()`. The constraints will later be passed to the scipy
+            solver. You need to pass in `batch_initial_conditions` in this case.
+            Using non-linear inequality constraints also requires that `batch_limit`
+            is set to 1, which will be done automatically if not specified in
+            `options`.
         fixed_features: A map `{feature_index: value}` for features that
             should be fixed to a particular value during generation.
         post_processing_func: A function that post-processes an optimization
@@ -557,7 +564,6 @@ def optimize_acqf(
 
 
 def _optimize_acqf(opt_inputs: OptimizeAcqfInputs) -> Tuple[Tensor, Tensor]:
-
     # Handle the trivial case when all features are fixed
     if (
         opt_inputs.fixed_features is not None
@@ -722,7 +728,7 @@ def optimize_acqf_list(
     options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    nonlinear_inequality_constraints: Optional[List[Callable]] = None,
+    nonlinear_inequality_constraints: Optional[List[Tuple[Callable, bool]]] = None,
     fixed_features: Optional[Dict[int, float]] = None,
     fixed_features_list: Optional[List[Dict[int, float]]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
@@ -750,14 +756,21 @@ def optimize_acqf_list(
         equality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
-        nonlinear_inequality_constraints: A list of callables with that represent
-            non-linear inequality constraints of the form `callable(x) >= 0`. Each
-            callable is expected to take a `(num_restarts) x q x d`-dim tensor as an
-            input and return a `(num_restarts) x q`-dim tensor with the constraint
-            values. The constraints will later be passed to SLSQP. You need to pass in
-            `batch_initial_conditions` in this case. Using non-linear inequality
-            constraints also requires that `batch_limit` is set to 1, which will be
-            done automatically if not specified in `options`.
+        nonlinear_inequality_constraints: A list of tuples representing the nonlinear
+            inequality constraints. The first element in the tuple is a callable
+            representing a constraint of the form `callable(x) >= 0`. In case of an
+            intra-point constraint, `callable()`takes in an one-dimensional tensor of
+            shape `d` and returns a scalar. In case of an inter-point constraint,
+            `callable()` takes a two dimensional tensor of shape `q x d` and again
+            returns a scalar. The second element is a boolean, indicating if it is an
+            intra-point or inter-point constraint (`True` for intra-point. `False` for
+            inter-point). For more information on intra-point vs inter-point
+            constraints, see the docstring of the `inequality_constraints` argument to
+            `optimize_acqf()`. The constraints will later be passed to the scipy
+            solver. You need to pass in `batch_initial_conditions` in this case.
+            Using non-linear inequality constraints also requires that `batch_limit`
+            is set to 1, which will be done automatically if not specified in
+            `options`.
         fixed_features: A map `{feature_index: value}` for features that
             should be fixed to a particular value during generation.
         fixed_features_list: A list of maps `{feature_index: value}`. The i-th
@@ -849,7 +862,7 @@ def optimize_acqf_mixed(
     options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    nonlinear_inequality_constraints: Optional[List[Callable]] = None,
+    nonlinear_inequality_constraints: Optional[List[Tuple[Callable, bool]]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
     batch_initial_conditions: Optional[Tensor] = None,
     ic_generator: Optional[TGenInitialConditions] = None,
@@ -881,14 +894,21 @@ def optimize_acqf_mixed(
         equality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
-        nonlinear_inequality_constraints: A list of callables with that represent
-            non-linear inequality constraints of the form `callable(x) >= 0`. Each
-            callable is expected to take a `(num_restarts) x q x d`-dim tensor as an
-            input and return a `(num_restarts) x q`-dim tensor with the constraint
-            values. The constraints will later be passed to SLSQP. You need to pass in
-            `batch_initial_conditions` in this case. Using non-linear inequality
-            constraints also requires that `batch_limit` is set to 1, which will be
-            done automatically if not specified in `options`.
+        nonlinear_inequality_constraints: A list of tuples representing the nonlinear
+            inequality constraints. The first element in the tuple is a callable
+            representing a constraint of the form `callable(x) >= 0`. In case of an
+            intra-point constraint, `callable()`takes in an one-dimensional tensor of
+            shape `d` and returns a scalar. In case of an inter-point constraint,
+            `callable()` takes a two dimensional tensor of shape `q x d` and again
+            returns a scalar. The second element is a boolean, indicating if it is an
+            intra-point or inter-point constraint (`True` for intra-point. `False` for
+            inter-point). For more information on intra-point vs inter-point
+            constraints, see the docstring of the `inequality_constraints` argument to
+            `optimize_acqf()`. The constraints will later be passed to the scipy
+            solver. You need to pass in `batch_initial_conditions` in this case.
+            Using non-linear inequality constraints also requires that `batch_limit`
+            is set to 1, which will be done automatically if not specified in
+            `options`.
         post_processing_func: A function that post-processes an optimization
             result appropriately (i.e., according to `round-trip`
             transformations).
@@ -1101,7 +1121,7 @@ def _filter_infeasible(
 ):
     """Remove all points from `X` that don't satisfy the constraints."""
     is_feasible = torch.ones(X.shape[0], dtype=torch.bool, device=X.device)
-    for (inds, weights, bound) in inequality_constraints:
+    for inds, weights, bound in inequality_constraints:
         is_feasible &= (X[..., inds] * weights).sum(dim=-1) >= bound
     return X[is_feasible]
 
