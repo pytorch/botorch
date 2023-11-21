@@ -69,7 +69,8 @@ def repeat_to_match_aug_dim(target_tensor: Tensor, reference_tensor: Tensor) -> 
                 [2, 2],
                 [0, 0],
                 [1, 1],
-                [2, 2]])"""
+                [2, 2]])
+    """
 
     augmented_sample_num, remainder = divmod(
         reference_tensor.shape[0], target_tensor.shape[0]
