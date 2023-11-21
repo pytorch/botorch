@@ -22,7 +22,7 @@
 # 
 # [3] [S. Daulton, M. Balandat, and E. Bakshy. Hypervolume Knowledge Gradient for Multi-Objective Bayesian Optimization with Partial Information. ICML, 2023.](https://proceedings.mlr.press/v202/daulton23a.html)
 
-# In[9]:
+# In[1]:
 
 
 import os
@@ -36,7 +36,7 @@ import torch
 # ### Set dtype and device 
 # Setting up the global variable that determine the device to run the optimization. The optimization is much faster when it runs on GPU.
 
-# In[10]:
+# In[2]:
 
 
 tkwargs = {  # Tkwargs is a dictionary contaning data about data type and data device
@@ -48,7 +48,7 @@ SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 # ### Define the problem and optimization settings
 
-# In[11]:
+# In[3]:
 
 
 from botorch.test_functions.multi_objective_multi_fidelity import MOMFBraninCurrin
@@ -81,7 +81,7 @@ target_fidelities = {2: 1.0}
 # 
 # The cost_func function returns an exponential cost from the fidelity. The cost_callable is a wrapper around it that takes care of the input output shapes. This is provided to the MF algorithms which inversely weight the expected utility by the cost.
 
-# In[12]:
+# In[4]:
 
 
 from math import exp
@@ -115,7 +115,7 @@ def cost_callable(X: torch.Tensor) -> torch.Tensor:
 # We use a multi-output SingleTaskGP to model the problem with a homoskedastic Gaussian likelihood with an inferred noise level. 
 # The model is initialized with random points, where the fidelity is sampled from a probability distribution with a PDF that is inversely proportional to the cost: $p(s)=C(s)^{-1}$. The initialization is given a budget equivalent to 2 full-fidelity evaluations.
 
-# In[13]:
+# In[5]:
 
 
 from botorch.models.gp_regression import SingleTaskGP
@@ -200,7 +200,7 @@ def initialize_model(train_x, train_obj, state_dict=None):
 # 
 # A simple initialization heuristic is used to select the 20 restart initial locations from a set of 1024 random points. Multi-start optimization of the acquisition function is performed using LBFGS-B with exact gradients computed via auto-differentiation.
 
-# In[14]:
+# In[6]:
 
 
 from botorch.acquisition.multi_objective.multi_fidelity import MOMF
@@ -249,7 +249,7 @@ def optimize_MOMF_and_get_obs(
     fashion returning a new candidate and evaluation
     """
     partitioning = FastNondominatedPartitioning(
-        ref_point=torch.tensor(ref_point, **tkwargs), Y=train_obj
+        ref_point=ref_point, Y=train_obj
     )
     acq_func = MOMF(
         model=model,
@@ -284,7 +284,7 @@ def optimize_MOMF_and_get_obs(
 # `optimize_HVKG_and_get_obs` creates the MF-HVKG acquisition function, optimizes it, and returns the new design and corresponding observation.
 # 
 
-# In[15]:
+# In[7]:
 
 
 from botorch.acquisition.cost_aware import InverseCostWeightedUtility
@@ -418,13 +418,13 @@ def optimize_HVKG_and_get_obs(
 # Note: running this takes some time.
 # 
 
-# In[16]:
+# In[8]:
 
 
 from botorch import fit_gpytorch_mll
 
 
-# In[17]:
+# In[9]:
 
 
 # Intializing train_x to zero
@@ -466,7 +466,7 @@ while total_cost < EVAL_BUDGET * cost_func(1):
 
 # ### Run MF-HVKG
 
-# In[18]:
+# In[10]:
 
 
 torch.manual_seed(0)
@@ -500,7 +500,7 @@ while total_cost < EVAL_BUDGET * cost_func(1):
 # ### Result:  Evaluating the Pareto front at the highest fidelity using NSGA-II on the posterior mean
 # 
 
-# In[19]:
+# In[11]:
 
 
 from botorch.utils.multi_objective.pareto import (
@@ -510,11 +510,19 @@ from botorch.utils.multi_objective.pareto import (
 from gpytorch import settings
 
 try:
-    from pymoo.algorithms.nsga2 import NSGA2
-    from pymoo.model.problem import Problem
     from pymoo.optimize import minimize
-    from pymoo.util.termination.max_gen import MaximumGenerationTermination
-
+    
+    # Note: These are the pymoo 0.6+ imports, if you happen to be stuck on 
+    # an older pymoo version you need to replace them with the ones below.
+    from pymoo.algorithms.moo.nsga2 import NSGA2
+    from pymoo.core.problem import Problem
+    from pymoo.termination.max_gen import MaximumGenerationTermination
+    
+    # from pymoo.algorithms.nsga2 import NSGA2
+    # from pymoo.model.problem import Problem
+    # from pymoo.util.termination.max_gen import MaximumGenerationTermination
+    
+    
     def get_pareto(
         model,
         non_fidelity_indices,
@@ -630,7 +638,7 @@ except ImportError:
 # 
 # We evaluate performance after every 5 evaluations (this is to speed things up, since there are many observations).
 
-# In[20]:
+# In[12]:
 
 
 hvs_kg = []
@@ -652,7 +660,7 @@ for i in range(MF_n_INIT, train_x_kg.shape[0] + 1, 5):
 # 
 # We evaluate performance after every evaluation (there are not as many evaluations since MOMF queries higher fidelities more frequently).
 
-# In[21]:
+# In[13]:
 
 
 hvs_momf = []
@@ -672,7 +680,7 @@ for i in range(MF_n_INIT, train_x_momf.shape[0] + 1):
 # 
 # Log inference hypervolume regret, defined as the logarithm of the difference between the maximum hypervolume dominated by the Pareto frontier and the hypervolume corresponding to the Pareto set identified by each algorithm, is a performance evaluation criterion for multi-information source multi-objective optimization [3].
 
-# In[22]:
+# In[14]:
 
 
 plt.plot(
@@ -689,10 +697,4 @@ plt.plot(
 plt.ylabel("Log Inference Hypervolume Regret")
 plt.xlabel("Cost")
 plt.legend()
-
-
-# In[ ]:
-
-
-
 
