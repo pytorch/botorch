@@ -580,7 +580,7 @@ def make_scipy_nonlinear_inequality_constraints(
                 f"got length {len(constraint)}."
             )
         nlc, is_intrapoint = constraint
-        if not nonlinear_constraint_is_fulfilled(
+        if not nonlinear_constraint_is_feasible(
             nlc, is_intrapoint=is_intrapoint, x=x0.reshape(shapeX)
         ):
             raise ValueError(

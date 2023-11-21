@@ -29,7 +29,7 @@ from botorch.optim.parameter_constraints import (
     make_scipy_bounds,
     make_scipy_linear_constraints,
     make_scipy_nonlinear_inequality_constraints,
-    nonlinear_constraint_is_fulfilled,
+    nonlinear_constraint_is_feasible,
 )
 from botorch.optim.stopping import ExpMAStoppingCriterion
 from botorch.optim.utils import columnwise_clamp, fix_features
@@ -276,7 +276,7 @@ def gen_candidates_scipy(
     # so it shouldn't be an issue given enough restarts.
     if nonlinear_inequality_constraints:
         for con, is_intrapoint in nonlinear_inequality_constraints:
-            if not nonlinear_constraint_is_fulfilled(
+            if not nonlinear_constraint_is_feasible(
                 con, is_intrapoint=is_intrapoint, x=candidates
             ):
                 candidates = torch.from_numpy(x0).to(candidates).reshape(shapeX)

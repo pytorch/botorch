@@ -21,7 +21,7 @@ from botorch.optim.parameter_constraints import (
     make_scipy_bounds,
     make_scipy_linear_constraints,
     make_scipy_nonlinear_inequality_constraints,
-    nonlinear_constraint_is_fulfilled,
+    nonlinear_constraint_is_feasible,
 )
 from botorch.utils.testing import BotorchTestCase
 from scipy.optimize import Bounds
@@ -341,17 +341,17 @@ class TestParameterConstraints(BotorchTestCase):
                 equality_constraints=[(indices, coefficients, 1.0)],
             )
 
-    def test_nonlinear_constraint_is_fulfilled(self):
+    def test_nonlinear_constraint_is_feasible(self):
         def nlc(x):
             return 4 - x.sum()
 
         self.assertTrue(
-            nonlinear_constraint_is_fulfilled(
+            nonlinear_constraint_is_feasible(
                 nlc, True, torch.tensor([[[1.5, 1.5], [1.5, 1.5]]], device=self.device)
             )
         )
         self.assertFalse(
-            nonlinear_constraint_is_fulfilled(
+            nonlinear_constraint_is_feasible(
                 nlc,
                 True,
                 torch.tensor(
@@ -360,7 +360,7 @@ class TestParameterConstraints(BotorchTestCase):
             )
         )
         self.assertFalse(
-            nonlinear_constraint_is_fulfilled(
+            nonlinear_constraint_is_feasible(
                 nlc,
                 True,
                 torch.tensor(
@@ -370,12 +370,12 @@ class TestParameterConstraints(BotorchTestCase):
             )
         )
         self.assertTrue(
-            nonlinear_constraint_is_fulfilled(
+            nonlinear_constraint_is_feasible(
                 nlc, False, torch.tensor([[[1.0, 1.0], [1.0, 1.0]]], device=self.device)
             )
         )
         self.assertTrue(
-            nonlinear_constraint_is_fulfilled(
+            nonlinear_constraint_is_feasible(
                 nlc,
                 False,
                 torch.tensor(
@@ -385,12 +385,12 @@ class TestParameterConstraints(BotorchTestCase):
             )
         )
         self.assertFalse(
-            nonlinear_constraint_is_fulfilled(
+            nonlinear_constraint_is_feasible(
                 nlc, False, torch.tensor([[[1.5, 1.5], [1.5, 1.5]]], device=self.device)
             )
         )
         self.assertFalse(
-            nonlinear_constraint_is_fulfilled(
+            nonlinear_constraint_is_feasible(
                 nlc,
                 False,
                 torch.tensor(
