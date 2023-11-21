@@ -221,8 +221,6 @@ class TestQExpectedImprovement(BotorchTestCase):
             acqf(X)
             self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
 
-    # TODO: Test different objectives (incl. constraints)
-
 
 class TestQNoisyExpectedImprovement(BotorchTestCase):
     def test_q_noisy_expected_improvement(self):

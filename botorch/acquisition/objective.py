@@ -605,6 +605,9 @@ class LearnedObjective(MCAcquisitionObjective):
             )
             samples = samples.to(torch.float64)
 
+        if samples.ndim < 3:
+            raise ValueError("samples should have at least 3 dimensions.")
+
         posterior = self.pref_model.posterior(samples)
         if isinstance(self.pref_model, DeterministicModel):
             # return preference posterior mean

@@ -459,13 +459,13 @@ class TestLearnedObjective(BotorchTestCase):
         og_sample_shape = 3
         large_sample_shape = 256
         batch_size = 2
-        n = 8
+        q = 8
         test_X = torch.rand(
-            torch.Size((og_sample_shape, batch_size, n, self.x_dim)),
+            torch.Size((og_sample_shape, batch_size, q, self.x_dim)),
             dtype=torch.float64,
         )
         large_X = torch.rand(
-            torch.Size((large_sample_shape, batch_size, n, self.x_dim)),
+            torch.Size((large_sample_shape, batch_size, q, self.x_dim)),
             dtype=torch.float64,
         )
 
@@ -476,18 +476,23 @@ class TestLearnedObjective(BotorchTestCase):
             first_call_output = pref_obj(test_X)
             self.assertEqual(
                 first_call_output.shape,
-                torch.Size([og_sample_shape * DEFAULT_NUM_PREF_SAMPLES, batch_size, n]),
+                torch.Size([og_sample_shape * DEFAULT_NUM_PREF_SAMPLES, batch_size, q]),
             )
             # Making sure the sampler has correct base_samples shape
             self.assertEqual(
                 pref_obj.sampler.base_samples.shape,
-                torch.Size([DEFAULT_NUM_PREF_SAMPLES, og_sample_shape, 1, n]),
+                torch.Size([DEFAULT_NUM_PREF_SAMPLES, og_sample_shape, 1, q]),
             )
             # Passing through a same-shaped X again shouldn't change the base sample
             previous_base_samples = pref_obj.sampler.base_samples
             another_test_X = torch.rand_like(test_X)
             pref_obj(another_test_X)
             self.assertIs(pref_obj.sampler.base_samples, previous_base_samples)
+
+            with self.assertRaisesRegex(
+                ValueError, "samples should have at least 3 dimensions."
+            ):
+                pref_obj(torch.rand(q, self.x_dim))
 
         # test when sampler has multiple preference samples
         with self.subTest("Multiple samples"):
@@ -498,7 +503,7 @@ class TestLearnedObjective(BotorchTestCase):
             )
             self.assertEqual(
                 pref_obj(test_X).shape,
-                torch.Size([num_samples * og_sample_shape, batch_size, n]),
+                torch.Size([num_samples * og_sample_shape, batch_size, q]),
             )
 
             avg_obj_val = pref_obj(large_X).mean(dim=0)
@@ -513,7 +518,7 @@ class TestLearnedObjective(BotorchTestCase):
             pref_obj = LearnedObjective(pref_model=mean_pref_model)
             self.assertEqual(
                 pref_obj(test_X).shape,
-                torch.Size([og_sample_shape, batch_size, n]),
+                torch.Size([og_sample_shape, batch_size, q]),
             )
 
             # the order of samples shouldn't matter

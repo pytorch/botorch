@@ -1363,7 +1363,7 @@ def get_best_f_mc(
         objective=objective,
         posterior_transform=posterior_transform,
         X_baseline=X_baseline,
-    )
+    ).squeeze()
 
 
 def optimize_objective(

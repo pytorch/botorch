@@ -56,7 +56,7 @@ def repeat_to_match_aug_dim(target_tensor: Tensor, reference_tensor: Tensor) -> 
         matches that of `reference_tensor`.
         The shape will be `(augmented_sample * sample_size) x batch_shape x q x m`.
 
-    Example:
+    Examples:
         >>> import torch
         >>> target_tensor = torch.arange(3).repeat(2, 1).T
         >>> target_tensor
@@ -71,7 +71,6 @@ def repeat_to_match_aug_dim(target_tensor: Tensor, reference_tensor: Tensor) -> 
                 [1, 1],
                 [2, 2]])
     """
-
     augmented_sample_num, remainder = divmod(
         reference_tensor.shape[0], target_tensor.shape[0]
     )
