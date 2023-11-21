@@ -329,7 +329,7 @@ def _make_nonlinear_constraints(
         is_intrapoint: A Boolean indicating if a constraint is an intra-point or
             inter-point constraint (see the docstring of the `inequality_constraints`
             argument to `optimize_acqf()`).
-        shapeX: Shape of the theedimensional batch X, that should be optimized.
+        shapeX: Shape of the three-dimensional batch X, that should be optimized.
 
     Returns:
         A list of constraint dictionaries with the following keys
@@ -548,19 +548,23 @@ def make_scipy_nonlinear_inequality_constraints(
 
     Args:
         nonlinear_inequality_constraints: A list of tuples representing the nonlinear
-            inequality constraints. First element is a callable representing a
-            constraint of the form >= 0 that takes in case of an intra-point constraint
-            an one-dimensional torch tensor of length `d` and returns a scalar. In case
-            of an inter-point constraint, it takes a two dimensional torch tensor of
-            type (q x d) and returns again a scalar. The second element is a boolean,
-            indicating if it is an intra-point or inter-point constraint. `True` for
-            intra-point. `False` for inter-point.
+            inequality constraints. The first element in the tuple is a callable
+            representing a constraint of the form `callable(x) >= 0`. In case of an
+            intra-point constraint, `callable()`takes in an one-dimensional tensor of
+            shape `d` and returns a scalar. In case of an inter-point constraint,
+            `callable()` takes a two dimensional tensor of shape `q x d` and again
+            returns a scalar. The second element is a boolean, indicating if it is an
+            intra-point or inter-point constraint (`True` for intra-point. `False` for
+            inter-point). For more information on intra-point vs inter-point
+            constraints, see the docstring of the `inequality_constraints` argument to
+            `optimize_acqf()`. The constraints will later be passed to the scipy
+            solver.
         f_np_wrapper: A wrapper function that given a constraint evaluates the value
              and gradient (using autograd) of a numpy input and returns both the
              objective and the gradient.
         x0: The starting point for SLSQP. We return this starting point in (rare)
             cases where SLSQP fails and thus require it to be feasible.
-        shapeX: Shape of the theedimensional batch X, that should be optimized.
+        shapeX: Shape of the three-dimensional batch X, that should be optimized.
 
     Returns:
         A list of dictionaries containing callables for constraint function

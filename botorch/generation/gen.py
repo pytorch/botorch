@@ -73,16 +73,17 @@ def gen_candidates_scipy(
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
         nonlinear_inequality_constraints: A list of tuples representing the nonlinear
-            inequality constraints. The first element in the tuple is a callable representing
-            a constraint of the form `callable(x) >= 0`. In case of an intra-point constraint,
-            `callable()`takes in an one-dimensional tensor of shape `d` and returns a
-            scalar. In case of an inter-point constraint, `callable()` takes a two dimensional
-            tensor of shape `q x d` and again returns a scalar. The second element is a
-            boolean, indicating if it is an intra-point or inter-point constraint (`True` for
-            intra-point. `False` for inter-point). For more information on intra-point
-            vs inter-point constraints, see the docstring of the `inequality_constraints`
-            argument to `optimize_acqf()`. The constraints will later be passed to the
-            scipy solver.
+            inequality constraints. The first element in the tuple is a callable
+            representing a constraint of the form `callable(x) >= 0`. In case of an
+            intra-point constraint, `callable()`takes in an one-dimensional tensor of
+            shape `d` and returns a scalar. In case of an inter-point constraint,
+            `callable()` takes a two dimensional tensor of shape `q x d` and again
+            returns a scalar. The second element is a boolean, indicating if it is an
+            intra-point or inter-point constraint (`True` for intra-point. `False` for
+            inter-point). For more information on intra-point vs inter-point
+            constraints, see the docstring of the `inequality_constraints` argument to
+            `optimize_acqf()`. The constraints will later be passed to the scipy
+            solver.
         options: Options used to control the optimization including "method"
             and "maxiter". Select method for `scipy.minimize` using the
             "method" key. By default uses L-BFGS-B for box-constrained problems
