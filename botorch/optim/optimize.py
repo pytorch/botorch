@@ -451,8 +451,8 @@ def optimize_acqf(
             `make_scipy_linear_constraints` for an example. When q=1, or when
             applying the same constraint to each candidate in the batch
             (intra-point constraint), `indices` should be a 1-d tensor.
-            For inter-point constraints in which the constraint is applied to the
-            whole batch of candidates, `indices` must be a 2-d Tensor, where
+            For inter-point constraints, in which the constraint is applied to the
+            whole batch of candidates, `indices` must be a 2-d tensor, where
             in each row `indices[i] =(k_i, l_i)` the first index `k_i` corresponds
             to the `k_i`-th element of the `q`-batch and the second index `l_i`
             corresponds to the `l_i`-th feature of that element.

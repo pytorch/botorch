@@ -34,7 +34,6 @@ def _convert_nonlinear_inequality_constraints(
             # old style --> convert
             nlcs.append((nlc, True))
             legacy = True
-
         else:
             nlcs.append(nlc)
     if legacy:

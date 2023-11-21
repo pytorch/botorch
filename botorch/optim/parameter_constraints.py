@@ -321,13 +321,14 @@ def _make_nonlinear_constraints(
         f_np_wrapper: A wrapper function that given a constraint evaluates
             the value and gradient (using autograd) of a numpy input and returns both
             the objective and the gradient.
-        nlc: Callable representing a constraint of the form >= 0 and takes
-            in case of an intra-point constraint an one-dimensional torch tensor of
-            length `d` and returns a scalar. In case of an inter-point constraint, it
-            takes a two dimensional torch tensor of type (q x d) and returns again a
-            scalar.
+        nlc: Callable representing a constraint of the form `callable(x) >= 0`. In case
+            of an intra-point constraint, `callable()`takes in an one-dimensional tensor
+            of shape `d` and returns a scalar. In case of an inter-point constraint,
+            `callable()` takes a two dimensional tensor of shape `q x d` and again
+            returns a scalar.
         is_intrapoint: A Boolean indicating if a constraint is an intra-point or
-            inter-point constraint.
+            inter-point constraint (see the docstring of the `inequality_constraints`
+            argument to `optimize_acqf()`).
         shapeX: Shape of the theedimensional batch X, that should be optimized.
 
     Returns:
@@ -506,19 +507,19 @@ def _make_f_and_grad_nonlinear_inequality_constraints(
     return f_obj, f_grad
 
 
-def nonlinear_constraint_is_fulfilled(
+def nonlinear_constraint_is_feasible(
     nonlinear_inequality_constraint: Callable, is_intrapoint: bool, x: Tensor
 ) -> bool:
     """Checks if a nonlinear inequality constraint is fulfilled.
 
     Args:
-        nonlinear_inequality_constraint (Callable): Callable to evaluate the
+        nonlinear_inequality_constraint: Callable to evaluate the
             constraint.
-        intra (bool): If True, the constraint is an intra-point constraint that
+        intra: If True, the constraint is an intra-point constraint that
             is applied pointwise and is broadcasted over the q-batch. Else, the
             constraint has to evaluated over the whole q-batch and is a an
             inter-point constraint.
-        x (Tensor): Tensor of shape (b x q x d).
+        x: Tensor of shape (b x q x d).
 
     Returns:
         bool: True if the constraint is fulfilled, else False.
