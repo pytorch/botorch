@@ -121,7 +121,6 @@ class MCAcquisitionFunction(AcquisitionFunction, MCSamplerMixin, ABC):
         )
         samples = self.get_posterior_samples(posterior)
         obj = self.objective(samples=samples, X=X)
-        samples = repeat_to_match_aug_dim(samples=samples, objective=obj)
         return samples, obj
 
     @abstractmethod
@@ -286,6 +285,7 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
             A Tensor with shape `sample_sample x batch_shape x q`.
         """
         samples, obj = self._get_samples_and_objectives(X)
+        samples = repeat_to_match_aug_dim(target_tensor=samples, reference_tensor=obj)
         acqval = self._sample_forward(obj)  # `sample_sample x batch_shape x q`
         return self._apply_constraints(acqval=acqval, samples=samples)
 
@@ -613,7 +613,6 @@ class qNoisyExpectedImprovement(
             samples = self._get_f_X_samples(posterior=posterior, q_in=q_in)
             obj = self.objective(samples, X=X_full[..., -q:, :])
 
-        samples = repeat_to_match_aug_dim(samples=samples, objective=obj)
         return samples, obj
 
     def _compute_best_feasible_objective(self, samples: Tensor, obj: Tensor) -> Tensor:

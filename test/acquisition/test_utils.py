@@ -445,6 +445,23 @@ class TestPreferenceUtils(BotorchTestCase):
         """test repeat_to_match_aug_dim to ensure it repeat the elements
         in the correct order
         """
+        # simple working case
+        target_tensor = torch.arange(3).repeat(2, 1).T
+        repeated_tensor = repeat_to_match_aug_dim(target_tensor, torch.zeros(6))
+        self.assertEqual(repeated_tensor.shape, torch.Size([6, 2]))
+
+        # simple invalid cases
+        target_tensor = torch.rand(6, 2, 3)
+        reference_tensor = torch.rand(5, 2, 3)
+        with self.assertRaisesRegex(
+            ValueError,
+            "The first dimension of reference_tensor must be a multiple of",
+        ):
+            repeat_to_match_aug_dim(
+                target_tensor=target_tensor, reference_tensor=reference_tensor
+            )
+
+        # similarting real use cases
         num_outcome_samples, n, q, d = 3, 2, 4, 5
         model = SingleTaskGP(train_X=torch.rand(n, d), train_Y=torch.rand(n, 1))
         obj = LearnedObjective(pref_model=model)
@@ -481,7 +498,9 @@ class TestPreferenceUtils(BotorchTestCase):
         with patch.object(SingleTaskGP, "posterior", new=nearly_zero_covar_posterior):
             objective = obj(samples)
 
-        repeated_samples = repeat_to_match_aug_dim(samples=samples, objective=objective)
+        repeated_samples = repeat_to_match_aug_dim(
+            target_tensor=samples, reference_tensor=objective
+        )
 
         self.assertAllClose(
             objective,
