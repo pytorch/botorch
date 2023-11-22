@@ -111,7 +111,8 @@ def add_output_dim(X: Tensor, original_batch_shape: torch.Size) -> Tuple[Tensor,
         except RuntimeError:
             raise RuntimeError(
                 "The trailing batch dimensions of X must match the trailing "
-                "batch dimensions of the training inputs."
+                f"batch dimensions of the training inputs. Got {X.shape=} "
+                f"and {original_batch_shape=}."
             )
     # insert `m` dimension
     X = X.unsqueeze(-3)

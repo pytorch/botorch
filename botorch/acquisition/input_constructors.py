@@ -1321,6 +1321,24 @@ def get_best_f_mc(
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     model: Optional[Model] = None,
 ) -> Tensor:
+    """
+    Computes the maximum value of the objective over the training data.
+
+    Args:
+        training_data: Has fields Y, which is evaluated by `objective`, and X,
+            which is used as `X_baseline`. `Y` is of shape
+            `batch_shape x q x m`.
+        objective: The objective under which to evaluate the training data. If
+            omitted, uses `IdentityMCObjective`.
+        posterior_transform: An optional PosteriorTransform to apply to `Y`
+            before computing the objective.
+        constraints: For assessing feasibility.
+        model: Used by `compute_best_feasible_objective` when there are no
+            feasible observations.
+
+    Returns:
+        A Tensor of shape `batch_shape`.
+    """
     if isinstance(training_data, dict) and not _field_is_shared(
         training_data, fieldname="X"
     ):
@@ -1337,7 +1355,7 @@ def get_best_f_mc(
         training_data,
         fieldname="Y",
         join_rule=lambda field_tensors: torch.cat(field_tensors, dim=-1),
-    )  # batch_shape x n x d
+    )  # batch_shape x q x m
 
     if posterior_transform is not None:
         # retain the original tensor dimension since objective expects explicit
@@ -1354,7 +1372,15 @@ def get_best_f_mc(
                 "acquisition functions)."
             )
         objective = IdentityMCObjective()
-    obj = objective(Y, X=X_baseline)  # batch_shape x n
+    # `Y` is of shape `(batch_shape) x q x m`; `MCAcquisitionObjective`s expect
+    # inputs `sample_shape x (batch_shape) x q x m`.
+    # For most objectives, `obj` will have shape `1 x (batch_shape) x q`, but
+    # with a `LearnedObjective` it can be `num_samples x (batch_shape) x q`.
+    obj = objective(Y.unsqueeze(0), X=X_baseline)
+    if obj.shape[0] > 1:
+        obj = obj.mean(dim=0)
+    else:
+        obj = obj.squeeze(0)
     return compute_best_feasible_objective(
         samples=Y,
         obj=obj,
