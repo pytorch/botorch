@@ -76,10 +76,9 @@ class TestObjectiveAndConstraintIntegration(BotorchTestCase):
 
         pref_sample_shapes = [1, 8]
         test_acqf_classes_and_kws = [
-            # Not yet working
-            # (qExpectedImprovement, {}),
-            # (qProbabilityOfImprovement, {}),
-            # (qLogExpectedImprovement, {}),
+            (qExpectedImprovement, {}),
+            (qProbabilityOfImprovement, {}),
+            (qLogExpectedImprovement, {}),
             (qNoisyExpectedImprovement, {"prune_baseline": prune_baseline}),
             (qLogNoisyExpectedImprovement, {"prune_baseline": prune_baseline}),
         ]
