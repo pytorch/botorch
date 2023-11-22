@@ -26,19 +26,20 @@
 # 
 # [1] [Z.J. Lin, R. Astudillo, P.I. Frazier, and E. Bakshy, Preference Exploration for Efficient Bayesian Optimization with Multiple Outcomes. AISTATS, 2022.](https://arxiv.org/abs/2203.11382)
 
-# In[ ]:
+# In[1]:
 
 
 import os
-import warnings
+from typing import Tuple
 
 import matplotlib as mpl
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
 import torch
-from botorch.acquisition import GenericMCObjective, LearnedObjective
-from botorch.acquisition.monte_carlo import qNoisyExpectedImprovement, qSimpleRegret
+from botorch.acquisition import MCAcquisitionObjective, GenericMCObjective, LearnedObjective
+from botorch.acquisition.logei import qLogNoisyExpectedImprovement
+from botorch.acquisition.monte_carlo import qSimpleRegret
 from botorch.acquisition.preference import AnalyticExpectedUtilityOfBestOption
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.deterministic import FixedSingleSampleModel
@@ -54,8 +55,6 @@ from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikeliho
 
 
 get_ipython().run_line_magic('matplotlib', 'inline')
-# Suppress potential optimization warnings for cleaner notebook
-warnings.filterwarnings("ignore")
 
 # Set plotting colors
 colors = ["tab:blue", "tab:orange", "tab:green", "tab:red"]
@@ -71,7 +70,7 @@ SMOKE_TEST = os.environ.get("SMOKE_TEST")
 # For the utility function $g_\mathrm{true}$, we use the negative L1 distance from a Pareto-optimal point the outcome space:
 # $Y^* = f(X^*)$ where $X^* = [0.5, 0.5, 0.5, 0.5, 0.5]$. 
 
-# In[3]:
+# In[2]:
 
 
 def neg_l1_dist(Y):
@@ -86,14 +85,14 @@ def neg_l1_dist(Y):
 
 if SMOKE_TEST:
     NUM_RESTARTS = 2
-    NUM_PREF_SAMPLES = 1
-    NUM_OUTCOME_SAMPLES = 4
-    RAW_SAMPLES = 8
+    NUM_OUTCOME_SAMPLES = 2
+    RAW_SAMPLES = 4
     BATCH_LIMIT = 2
 else:
     NUM_RESTARTS = 8
-    NUM_PREF_SAMPLES = 1
-    NUM_OUTCOME_SAMPLES = 64
+    # Since BOPE samples from both the outcome and preference models, we take
+    # fewer samples than usual from the outcome model for speed.
+    NUM_OUTCOME_SAMPLES = 32  
     RAW_SAMPLES = 64
     BATCH_LIMIT = 4
 
@@ -105,10 +104,10 @@ util_func = neg_l1_dist
 
 # Here we define a collection of helper functions for BOPE:
 
-# In[4]:
+# In[3]:
 
 
-def fit_outcome_model(X, Y, X_bounds):
+def fit_outcome_model(X: torch.Tensor, Y: torch.Tensor) -> SingleTaskGP:
     """Fit the outcome model f"""
     outcome_model = SingleTaskGP(
         train_X=X,
@@ -121,28 +120,30 @@ def fit_outcome_model(X, Y, X_bounds):
     return outcome_model
 
 
-def fit_pref_model(Y, comps):
-    """Fit the preference model g"""
+def fit_pref_model(Y: torch.Tensor, comps: torch.Tensor) -> PairwiseGP:
+    """Fit the preference model g."""
     model = PairwiseGP(Y, comps, input_transform=Normalize(d=Y.shape[-1]))
     mll = PairwiseLaplaceMarginalLogLikelihood(model.likelihood, model)
     fit_gpytorch_mll(mll)
     return model
 
 
-def gen_rand_X(problem, n):
-    """Generate n quasi-random Sobol points in the design space"""
+def gen_rand_X(problem, n: int) -> torch.Tensor:
+    """Generate n quasi-random Sobol points in the design space."""
     return draw_sobol_samples(bounds=problem.bounds, n=1, q=n).squeeze(0)
 
 
-def generate_random_exp_data(problem, n):
+def generate_random_exp_data(problem, n: int) -> Tuple[torch.Tensor, torch.Tensor]:
     """Generate n observations of (X, Y) Pairs"""
     X = gen_rand_X(problem, n)
     Y = problem(X)
     return X, Y
 
 
-def generate_random_pref_data(outcome_model, n):
-    """Generate n pairwise comparison data between 2n points"""
+def generate_random_pref_data(
+    outcome_model: SingleTaskGP, n: int
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Generate n pairwise comparison data between 2n points."""
     X = gen_rand_X(problem, 2 * n)
     Y = outcome_model.posterior(X).sample().squeeze(0)
     util = util_func(Y)
@@ -150,8 +151,8 @@ def generate_random_pref_data(outcome_model, n):
     return Y, comps
 
 
-def gen_comps(util):
-    """Given an 1-d tensor of utility, create pairwise comparisons between adjacent items"""
+def gen_comps(util: torch.Tensor) -> torch.Tensor:
+    """Given an 1-d tensor of utility, create pairwise comparisons between adjacent items."""
     util = util.reshape(-1, 2)
     comps = torch.arange(util.numel()).reshape(-1, 2)
     flip = util[:, 0] < util[:, 1]
@@ -161,9 +162,14 @@ def gen_comps(util):
 
 
 def run_pref_learn(
-    outcome_model, train_Y, train_comps, n_comps, pe_strategy, verbose=False
-):
-    """Perform preference exploration with a given PE strategy for n_comps rounds"""
+    outcome_model: SingleTaskGP,
+    train_Y: torch.Tensor,
+    train_comps: torch.Tensor,
+    n_comps: int,
+    pe_strategy: str,
+    verbose: bool = False,
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Perform preference exploration with a given PE strategy for n_comps rounds."""
     for i in range(n_comps):
         if verbose:
             print(f"Running {i+1}/{n_comps} preference learning using {pe_strategy}")
@@ -199,13 +205,18 @@ def run_pref_learn(
     return train_Y, train_comps
 
 
-def gen_exp_cand(outcome_model, objective, q, acqf_name):
+def gen_exp_cand(
+    outcome_model: SingleTaskGP,
+    objective: MCAcquisitionObjective,
+    q: int,
+    acqf_name: str,
+) -> torch.Tensor:
     """Given an outcome model and an objective, generate q experimental candidates
     using specified acquisition function."""
     sampler = SobolQMCNormalSampler(sample_shape=torch.Size([NUM_OUTCOME_SAMPLES]))
     if acqf_name == "qNEI":
         # generate experimental candidates with qNEI/qNEIUU
-        acq_func = qNoisyExpectedImprovement(
+        acq_func = qLogNoisyExpectedImprovement(
             model=outcome_model,
             objective=objective,
             X_baseline=X,
@@ -235,11 +246,16 @@ def gen_exp_cand(outcome_model, objective, q, acqf_name):
     return candidates
 
 
-def find_max_posterior_mean(outcome_model, train_Y, train_comps, verbose=False):
+def find_max_posterior_mean(
+    outcome_model: SingleTaskGP,
+    train_Y: torch.Tensor,
+    train_comps: torch.Tensor,
+    verbose: bool = False,
+):
     """Helper function that find the max posterior mean under current outcome and
     preference model"""
     pref_model = fit_pref_model(train_Y, train_comps)
-    pref_obj = LearnedObjective(pref_model=pref_model, sample_shape=torch.Size([NUM_PREF_SAMPLES]))
+    pref_obj = LearnedObjective(pref_model=pref_model)
     post_mean_cand_X = gen_exp_cand(
         outcome_model, pref_obj, q=1, acqf_name="posterior_mean"
     )
@@ -275,12 +291,14 @@ def find_max_posterior_mean(outcome_model, train_Y, train_comps, verbose=False):
 # Then we move on to the second experimentation stage by generating a candidate using qNEIUU by
 # leveraging both the outcome model and the learned preference model.
 # 
-# We additionally examine two other experimental canadidate generation strategies:
-# In the first one, we assume the true utility function is known and generate experiment candidate(s) using qNEI.
-# This represents the performance upper bound of PE strategies.
-# For the second experiment canadidate generation strategy, we use random design points to generate new candidates.
+# We additionally examine two other experimental candidate generation strategies:
+# * "True utility": We assume the true utility function is known and generate experiment candidate(s) using qLogNEI. This represents the performance upper bound of PE strategies.
+# * "Random experiment": We use random design points to generate new candidates.
+# 
+# In this tutorial, we only run one replication of this benchmark; while in general we would expect "True utility" to outperform $\text{EUBO}\mathrm{-}\zeta$ and $\text{EUBO}\mathrm{-}\zeta$ to outperform
+# the other strategies, this is not guaranteed for a optimization.
 
-# In[5]:
+# In[4]:
 
 
 verbose = False
@@ -289,85 +307,70 @@ every_n_comps = 3
 # Total number of checking the maximum posterior mean
 n_check_post_mean = 5
 n_outcome_model_initialization_points = 8
-n_reps = 1
 within_session_results = []
 exp_candidate_results = []
 
-for i in range(n_reps):
-    print(f"Run {i}")
-    # Experimentation stage: initial exploration batch
-    torch.manual_seed(i)
-    np.random.seed(i)
-    X, Y = generate_random_exp_data(problem, n_outcome_model_initialization_points)
-    outcome_model = fit_outcome_model(X, Y, problem.bounds)
+# Experimentation stage: initial exploration batch
+torch.manual_seed(0)
+np.random.seed(0)
+X, Y = generate_random_exp_data(problem, n_outcome_model_initialization_points)
+outcome_model = fit_outcome_model(X, Y)
 
-    # Preference exploration stage: initialize the preference model with comparsions
-    # between pairs of outcomes estimated using random design points
-    init_train_Y, init_train_comps = generate_random_pref_data(outcome_model, n=1)
+# Preference exploration stage: initialize the preference model with comparsions
+# between pairs of outcomes estimated using random design points
+init_train_Y, init_train_comps = generate_random_pref_data(outcome_model, n=1)
 
-    # Perform preference exploration using either Random-f or EUBO-zeta
-    for pe_strategy in ["EUBO-zeta", "Random-f"]:
-        train_Y, train_comps = init_train_Y.clone(), init_train_comps.clone()
-        within_result = find_max_posterior_mean(outcome_model, train_Y, train_comps)
-        within_result.update({"run_id": i, "pe_strategy": pe_strategy})
+# Perform preference exploration using either Random-f or EUBO-zeta
+for pe_strategy in ["EUBO-zeta", "Random-f"]:
+    train_Y, train_comps = init_train_Y.clone(), init_train_comps.clone()
+    within_result = find_max_posterior_mean(outcome_model, train_Y, train_comps)
+    within_result.update({"pe_strategy": pe_strategy})
+    within_session_results.append(within_result)
+
+    for j in range(n_check_post_mean):
+        train_Y, train_comps = run_pref_learn(
+            outcome_model,
+            train_Y,
+            train_comps,
+            n_comps=every_n_comps,
+            pe_strategy=pe_strategy,
+            verbose=verbose,
+        )
+        if verbose:
+            print(
+                f"Checking posterior mean after {(j+1) * every_n_comps} comps using PE strategy {pe_strategy}"
+            )
+        within_result = find_max_posterior_mean(
+            outcome_model, train_Y, train_comps, verbose=verbose
+        )
+        within_result.update({"pe_strategy": pe_strategy})
         within_session_results.append(within_result)
 
-        for j in range(n_check_post_mean):
-            train_Y, train_comps = run_pref_learn(
-                outcome_model,
-                train_Y,
-                train_comps,
-                n_comps=every_n_comps,
-                pe_strategy=pe_strategy,
-                verbose=verbose,
-            )
-            if verbose:
-                print(
-                    f"Checking posterior mean after {(j+1) * every_n_comps} comps using PE strategy {pe_strategy}"
-                )
-            within_result = find_max_posterior_mean(
-                outcome_model, train_Y, train_comps, verbose=verbose
-            )
-            within_result.update({"run_id": i, "pe_strategy": pe_strategy})
-            within_session_results.append(within_result)
-
-        # Going back to the experimentation stage: generate an additional batch of experimental evaluations
-        # with the learned preference model and qNEIUU
-        pref_model = fit_pref_model(train_Y, train_comps)
-        pref_obj = LearnedObjective(pref_model=pref_model, sample_shape=torch.Size([NUM_PREF_SAMPLES]))
-        exp_cand_X = gen_exp_cand(outcome_model, pref_obj, q=1, acqf_name="qNEI")
-        qneiuu_util = util_func(problem(exp_cand_X)).item()
-        print(f"{pe_strategy} qNEIUU candidate utility: {qneiuu_util:.3f}")
-        exp_result = {
-            "util": qneiuu_util,
-            "strategy": pe_strategy,
-            "run_id": i,
-        }
-        exp_candidate_results.append(exp_result)
-
-    # Generate a batch of experimental evaluations using oracle and random baselines
-    # True utility
-    true_obj = GenericMCObjective(util_func)
-    true_obj_cand_X = gen_exp_cand(outcome_model, true_obj, q=1, acqf_name="qNEI")
-    true_obj_util = util_func(problem(true_obj_cand_X)).item()
-    print(f"True objective utility: {true_obj_util:.3f}")
-    exp_result = {
-        "util": true_obj_util,
-        "strategy": "True Utility",
-        "run_id": i,
-    }
+    # Going back to the experimentation stage: generate an additional batch of experimental evaluations
+    # with the learned preference model and qNEIUU
+    pref_model = fit_pref_model(train_Y, train_comps)
+    pref_obj = LearnedObjective(pref_model=pref_model)
+    exp_cand_X = gen_exp_cand(outcome_model, pref_obj, q=1, acqf_name="qNEI")
+    qneiuu_util = util_func(problem(exp_cand_X)).item()
+    print(f"{pe_strategy} qNEIUU candidate utility: {qneiuu_util:.3f}")
+    exp_result = {"util": qneiuu_util, "strategy": pe_strategy}
     exp_candidate_results.append(exp_result)
 
-    # Random experiment
-    _, random_Y = generate_random_exp_data(problem, 1)
-    random_util = util_func(random_Y).item()
-    print(f"Random experiment utility: {random_util:.3f}")
-    exp_result = {
-        "util": random_util,
-        "strategy": "Random Experiment",
-        "run_id": i,
-    }
-    exp_candidate_results.append(exp_result)
+# Generate a batch of experimental evaluations using oracle and random baselines
+# True utility
+true_obj = GenericMCObjective(util_func)
+true_obj_cand_X = gen_exp_cand(outcome_model, true_obj, q=1, acqf_name="qNEI")
+true_obj_util = util_func(problem(true_obj_cand_X)).item()
+print(f"True objective utility: {true_obj_util:.3f}")
+exp_result = {"util": true_obj_util, "strategy": "True Utility"}
+exp_candidate_results.append(exp_result)
+
+# Random experiment
+_, random_Y = generate_random_exp_data(problem, 1)
+random_util = util_func(random_Y).item()
+print(f"Random experiment utility: {random_util:.3f}")
+exp_result = {"util": random_util, "strategy": "Random Experiment"}
+exp_candidate_results.append(exp_result)
 
 
 # ## Plot the Results
@@ -382,24 +385,15 @@ for i in range(n_reps):
 # with increasing number of pairwise comparisons.
 # As we can see in this plot, the preference model learned using $\text{EUBO}\mathrm{-}\zeta$ is able to identify the maximum utility more efficiently.
 
-# In[6]:
+# In[5]:
 
-
-# Prepare PE data for plots
-within_df = (
-     pd.DataFrame(within_session_results)
-    .groupby(["n_comps", "pe_strategy"])
-    .agg({"util": ["mean"]})
-    ['util']
-    .reset_index()
-)
 
 # Plotting
 plt.figure(figsize=(8, 6))
-for name, group in within_df.groupby("pe_strategy", sort=True):
-    plt.errorbar(
-        x=group["n_comps"],
-        y=group["mean"],
+for name, group in pd.DataFrame(within_session_results).groupby("pe_strategy", sort=True):
+    plt.plot(
+        group["n_comps"],
+        group["util"],
         label=name,
         linewidth=1.5,
     )
@@ -408,34 +402,26 @@ plt.ylabel("Max value identified")
 plt.legend(title="PE Strategy")
 
 
-# In the following cell, we show the average utility values achieved using different methods in the 2nd experimentation stage.
+# In the following cell, we show the utility values achieved using different methods in the 2nd experimentation stage.
 # 
-# We see that $\text{EUBO}\mathrm{-}\zeta$, as a one-step Bayesian optimal PE strategy, performs very similarly to the true utility strategy.
-# 
-# On the other hand, despite that $\text{Random}\mathrm{-}f$ is a relatively straightforward PE strategy,
+# In repeated iterations -- not done here for speed and succinctness -- we find that
+# $\text{EUBO}\mathrm{-}\zeta$, as a one-step Bayesian optimal PE strategy, performs very similarly to the true utility strategy on average.
+# On the other hand, even though $\text{Random}\mathrm{-}f$ is a relatively straightforward PE strategy,
 # it is still able to suggest experimental candidates with generally higher utility values than the random experiment baseline.
+# 
+# For more rigorous performance comparisons, see [1].
 
-# In[7]:
+# In[6]:
 
-
-# Prepare the 2nd experimentation batch data for plot
-exp_df = (
-    pd.DataFrame(exp_candidate_results)
-    .groupby("strategy")
-    ["util"]
-    .mean()
-    .reset_index()
-)
 
 # Plotting
 plt.figure(figsize=(8, 6))
-for _, (name, mean) in exp_df.iterrows():
-    plt.errorbar(
-        x=name,
-        y=mean,
-        fmt="o",
-        markersize=10,
-        label=name,
+for result in exp_candidate_results:
+    plt.scatter(
+        [result["strategy"]],
+        [result["util"]],
+        s=100,
+        label=result["strategy"],
     )
 
 plt.xlabel("Experimentation Strategy")

@@ -6807,24 +6807,43 @@ function to optimize is fixed and not stochastic).</p></li>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.acquisition.utils.repeat_to_match_aug_dim">
-<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.utils.</span></span><span class="sig-name descname"><span class="pre">repeat_to_match_aug_dim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/utils.html#repeat_to_match_aug_dim"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.utils.repeat_to_match_aug_dim" title="Permalink to this definition">¶</a></dt>
-<dd><p>Repeat samples to match the potentially augmented sample dimension of objective.
-See LearnedObjective for an example of why this is needed.</p>
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.utils.</span></span><span class="sig-name descname"><span class="pre">repeat_to_match_aug_dim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_tensor</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/utils.html#repeat_to_match_aug_dim"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.utils.repeat_to_match_aug_dim" title="Permalink to this definition">¶</a></dt>
+<dd><p>Repeat target_tensor until it has the same first dimension as reference_tensor
+This works regardless of the batch shapes and q.
+This is useful as we sometimes modify sample shapes such as in LearnedObjective.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>samples</strong> (<em>Tensor</em>) – A <cite>sample_size x batch_shape x N</cite>-dim Tensor</p></li>
-<li><p><strong>objective</strong> (<em>Tensor</em>) – A <cite>(augmented_sample * sample_size) x batch_shape x N</cite>-dim Tensor
-augmented_sample could be 1</p></li>
+<li><p><strong>target_tensor</strong> (<em>Tensor</em>) – A <cite>sample_size x batch_shape x q x m</cite>-dim Tensor</p></li>
+<li><p><strong>reference_tensor</strong> (<em>Tensor</em>) – A <cite>(augmented_sample * sample_size) x batch_shape x q</cite>-dim
+Tensor. <cite>augmented_sample</cite> could be 1.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A tensor of shape (augmented_sample * sample_size) x batch_shape x N</p>
+<dd class="field-even"><p>The content of <cite>target_tensor</cite> potentially repeated so that its first dimension
+matches that of <cite>reference_tensor</cite>.
+The shape will be <cite>(augmented_sample * sample_size) x batch_shape x q x m</cite>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">target_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">target_tensor</span>
+<span class="go">tensor([[0, 0],</span>
+<span class="go">        [1, 1],</span>
+<span class="go">        [2, 2]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">repeat_to_match_aug_dim</span><span class="p">(</span><span class="n">target_tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">6</span><span class="p">))</span>
+<span class="go">tensor([[0, 0],</span>
+<span class="go">        [1, 1],</span>
+<span class="go">        [2, 2],</span>
+<span class="go">        [0, 0],</span>
+<span class="go">        [1, 1],</span>
+<span class="go">        [2, 2]])</span>
+</pre></div>
+</div>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.acquisition.utils.compute_best_feasible_objective">

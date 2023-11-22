@@ -45,11 +45,18 @@ with each tuple encoding an inequality constraint of the form
 <li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>.</p></li>
-<li><p><strong>nonlinear_inequality_constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>] </em><em>| </em><em>None</em>) – A list of callables with that represent
-non-linear inequality constraints of the form <cite>callable(x) &gt;= 0</cite>. Each
-callable is expected to take a <cite>(num_restarts) x q x d</cite>-dim tensor as
-an input and return a <cite>(num_restarts) x q</cite>-dim tensor with the
-constraint values. The constraints will later be passed to SLSQP.</p></li>
+<li><p><strong>nonlinear_inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Callable</em><em>, </em><em>bool</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples representing the nonlinear
+inequality constraints. The first element in the tuple is a callable
+representing a constraint of the form <cite>callable(x) &gt;= 0</cite>. In case of an
+intra-point constraint, <cite>callable()`takes in an one-dimensional tensor of
+shape `d</cite> and returns a scalar. In case of an inter-point constraint,
+<cite>callable()</cite> takes a two dimensional tensor of shape <cite>q x d</cite> and again
+returns a scalar. The second element is a boolean, indicating if it is an
+intra-point or inter-point constraint (<cite>True</cite> for intra-point. <cite>False</cite> for
+inter-point). For more information on intra-point vs inter-point
+constraints, see the docstring of the <cite>inequality_constraints</cite> argument to
+<cite>optimize_acqf()</cite>. The constraints will later be passed to the scipy
+solver.</p></li>
 <li><p><strong>options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Options used to control the optimization including “method”
 and “maxiter”. Select method for <cite>scipy.minimize</cite> using the
 “method” key. By default uses L-BFGS-B for box-constrained problems

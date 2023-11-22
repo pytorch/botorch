@@ -96,7 +96,7 @@
     <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span>
     <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span>
     <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span>
-    <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">]]</span>
+    <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]]</span>
     <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
     <span class="n">post_processing_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span>
     <span class="n">batch_initial_conditions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span>
@@ -270,7 +270,6 @@
         <span class="n">timeout_sec</span><span class="o">=</span><span class="n">timeout_sec</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">opt_inputs</span><span class="o">.</span><span class="n">q</span><span class="p">):</span>
-
         <span class="n">candidate</span><span class="p">,</span> <span class="n">acq_value</span> <span class="o">=</span> <span class="n">_optimize_acqf_batch</span><span class="p">(</span><span class="n">new_inputs</span><span class="p">)</span>
 
         <span class="n">candidate_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
@@ -447,7 +446,7 @@
     <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">post_processing_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">batch_initial_conditions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -479,24 +478,32 @@
 <span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs`. `indices` and</span>
 <span class="sd">            `coefficients` should be torch tensors. See the docstring of</span>
 <span class="sd">            `make_scipy_linear_constraints` for an example. When q=1, or when</span>
-<span class="sd">            applying the same constraint to each candidate in the batch,</span>
-<span class="sd">            `indices` should be a 1-d tensor. For inter-point constraints,</span>
-<span class="sd">            `indices` must be a 2-d Tensor, where in each row `indices[i] =</span>
-<span class="sd">            (k_i, l_i)` the first index `k_i` corresponds to the `k_i`-th</span>
-<span class="sd">            element of the `q`-batch and the second index `l_i` corresponds to</span>
-<span class="sd">            the `l_i`-th feature of that element.</span>
+<span class="sd">            applying the same constraint to each candidate in the batch</span>
+<span class="sd">            (intra-point constraint), `indices` should be a 1-d tensor.</span>
+<span class="sd">            For inter-point constraints, in which the constraint is applied to the</span>
+<span class="sd">            whole batch of candidates, `indices` must be a 2-d tensor, where</span>
+<span class="sd">            in each row `indices[i] =(k_i, l_i)` the first index `k_i` corresponds</span>
+<span class="sd">            to the `k_i`-th element of the `q`-batch and the second index `l_i`</span>
+<span class="sd">            corresponds to the `l_i`-th feature of that element.</span>
 <span class="sd">        equality_constraints: A list of tuples (indices, coefficients, rhs),</span>
 <span class="sd">            with each tuple encoding an equality constraint of the form</span>
 <span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`. See the docstring of</span>
 <span class="sd">            `make_scipy_linear_constraints` for an example.</span>
-<span class="sd">        nonlinear_inequality_constraints: A list of callables with that represent</span>
-<span class="sd">            non-linear inequality constraints of the form `callable(x) &gt;= 0`. Each</span>
-<span class="sd">            callable is expected to take a `(num_restarts) x q x d`-dim tensor as an</span>
-<span class="sd">            input and return a `(num_restarts) x q`-dim tensor with the constraint</span>
-<span class="sd">            values. The constraints will later be passed to SLSQP. You need to pass in</span>
-<span class="sd">            `batch_initial_conditions` in this case. Using non-linear inequality</span>
-<span class="sd">            constraints also requires that `batch_limit` is set to 1, which will be</span>
-<span class="sd">            done automatically if not specified in `options`.</span>
+<span class="sd">        nonlinear_inequality_constraints: A list of tuples representing the nonlinear</span>
+<span class="sd">            inequality constraints. The first element in the tuple is a callable</span>
+<span class="sd">            representing a constraint of the form `callable(x) &gt;= 0`. In case of an</span>
+<span class="sd">            intra-point constraint, `callable()`takes in an one-dimensional tensor of</span>
+<span class="sd">            shape `d` and returns a scalar. In case of an inter-point constraint,</span>
+<span class="sd">            `callable()` takes a two dimensional tensor of shape `q x d` and again</span>
+<span class="sd">            returns a scalar. The second element is a boolean, indicating if it is an</span>
+<span class="sd">            intra-point or inter-point constraint (`True` for intra-point. `False` for</span>
+<span class="sd">            inter-point). For more information on intra-point vs inter-point</span>
+<span class="sd">            constraints, see the docstring of the `inequality_constraints` argument to</span>
+<span class="sd">            `optimize_acqf()`. The constraints will later be passed to the scipy</span>
+<span class="sd">            solver. You need to pass in `batch_initial_conditions` in this case.</span>
+<span class="sd">            Using non-linear inequality constraints also requires that `batch_limit`</span>
+<span class="sd">            is set to 1, which will be done automatically if not specified in</span>
+<span class="sd">            `options`.</span>
 <span class="sd">        fixed_features: A map `{feature_index: value}` for features that</span>
 <span class="sd">            should be fixed to a particular value during generation.</span>
 <span class="sd">        post_processing_func: A function that post-processes an optimization</span>
@@ -580,7 +587,6 @@
 
 
 <span class="k">def</span> <span class="nf">_optimize_acqf</span><span class="p">(</span><span class="n">opt_inputs</span><span class="p">:</span> <span class="n">OptimizeAcqfInputs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-
     <span class="c1"># Handle the trivial case when all features are fixed</span>
     <span class="k">if</span> <span class="p">(</span>
         <span class="n">opt_inputs</span><span class="o">.</span><span class="n">fixed_features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -745,7 +751,7 @@
     <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">fixed_features_list</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">post_processing_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -773,14 +779,21 @@
 <span class="sd">        equality constraints: A list of tuples (indices, coefficients, rhs),</span>
 <span class="sd">            with each tuple encoding an inequality constraint of the form</span>
 <span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`</span>
-<span class="sd">        nonlinear_inequality_constraints: A list of callables with that represent</span>
-<span class="sd">            non-linear inequality constraints of the form `callable(x) &gt;= 0`. Each</span>
-<span class="sd">            callable is expected to take a `(num_restarts) x q x d`-dim tensor as an</span>
-<span class="sd">            input and return a `(num_restarts) x q`-dim tensor with the constraint</span>
-<span class="sd">            values. The constraints will later be passed to SLSQP. You need to pass in</span>
-<span class="sd">            `batch_initial_conditions` in this case. Using non-linear inequality</span>
-<span class="sd">            constraints also requires that `batch_limit` is set to 1, which will be</span>
-<span class="sd">            done automatically if not specified in `options`.</span>
+<span class="sd">        nonlinear_inequality_constraints: A list of tuples representing the nonlinear</span>
+<span class="sd">            inequality constraints. The first element in the tuple is a callable</span>
+<span class="sd">            representing a constraint of the form `callable(x) &gt;= 0`. In case of an</span>
+<span class="sd">            intra-point constraint, `callable()`takes in an one-dimensional tensor of</span>
+<span class="sd">            shape `d` and returns a scalar. In case of an inter-point constraint,</span>
+<span class="sd">            `callable()` takes a two dimensional tensor of shape `q x d` and again</span>
+<span class="sd">            returns a scalar. The second element is a boolean, indicating if it is an</span>
+<span class="sd">            intra-point or inter-point constraint (`True` for intra-point. `False` for</span>
+<span class="sd">            inter-point). For more information on intra-point vs inter-point</span>
+<span class="sd">            constraints, see the docstring of the `inequality_constraints` argument to</span>
+<span class="sd">            `optimize_acqf()`. The constraints will later be passed to the scipy</span>
+<span class="sd">            solver. You need to pass in `batch_initial_conditions` in this case.</span>
+<span class="sd">            Using non-linear inequality constraints also requires that `batch_limit`</span>
+<span class="sd">            is set to 1, which will be done automatically if not specified in</span>
+<span class="sd">            `options`.</span>
 <span class="sd">        fixed_features: A map `{feature_index: value}` for features that</span>
 <span class="sd">            should be fixed to a particular value during generation.</span>
 <span class="sd">        fixed_features_list: A list of maps `{feature_index: value}`. The i-th</span>
@@ -872,7 +885,7 @@
     <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">post_processing_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">batch_initial_conditions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">ic_generator</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TGenInitialConditions</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -904,14 +917,21 @@
 <span class="sd">        equality constraints: A list of tuples (indices, coefficients, rhs),</span>
 <span class="sd">            with each tuple encoding an inequality constraint of the form</span>
 <span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`</span>
-<span class="sd">        nonlinear_inequality_constraints: A list of callables with that represent</span>
-<span class="sd">            non-linear inequality constraints of the form `callable(x) &gt;= 0`. Each</span>
-<span class="sd">            callable is expected to take a `(num_restarts) x q x d`-dim tensor as an</span>
-<span class="sd">            input and return a `(num_restarts) x q`-dim tensor with the constraint</span>
-<span class="sd">            values. The constraints will later be passed to SLSQP. You need to pass in</span>
-<span class="sd">            `batch_initial_conditions` in this case. Using non-linear inequality</span>
-<span class="sd">            constraints also requires that `batch_limit` is set to 1, which will be</span>
-<span class="sd">            done automatically if not specified in `options`.</span>
+<span class="sd">        nonlinear_inequality_constraints: A list of tuples representing the nonlinear</span>
+<span class="sd">            inequality constraints. The first element in the tuple is a callable</span>
+<span class="sd">            representing a constraint of the form `callable(x) &gt;= 0`. In case of an</span>
+<span class="sd">            intra-point constraint, `callable()`takes in an one-dimensional tensor of</span>
+<span class="sd">            shape `d` and returns a scalar. In case of an inter-point constraint,</span>
+<span class="sd">            `callable()` takes a two dimensional tensor of shape `q x d` and again</span>
+<span class="sd">            returns a scalar. The second element is a boolean, indicating if it is an</span>
+<span class="sd">            intra-point or inter-point constraint (`True` for intra-point. `False` for</span>
+<span class="sd">            inter-point). For more information on intra-point vs inter-point</span>
+<span class="sd">            constraints, see the docstring of the `inequality_constraints` argument to</span>
+<span class="sd">            `optimize_acqf()`. The constraints will later be passed to the scipy</span>
+<span class="sd">            solver. You need to pass in `batch_initial_conditions` in this case.</span>
+<span class="sd">            Using non-linear inequality constraints also requires that `batch_limit`</span>
+<span class="sd">            is set to 1, which will be done automatically if not specified in</span>
+<span class="sd">            `options`.</span>
 <span class="sd">        post_processing_func: A function that post-processes an optimization</span>
 <span class="sd">            result appropriately (i.e., according to `round-trip`</span>
 <span class="sd">            transformations).</span>
@@ -1124,7 +1144,7 @@
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Remove all points from `X` that don't satisfy the constraints."""</span>
     <span class="n">is_feasible</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
-    <span class="k">for</span> <span class="p">(</span><span class="n">inds</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">bound</span><span class="p">)</span> <span class="ow">in</span> <span class="n">inequality_constraints</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">inds</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">bound</span> <span class="ow">in</span> <span class="n">inequality_constraints</span><span class="p">:</span>
         <span class="n">is_feasible</span> <span class="o">&amp;=</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">inds</span><span class="p">]</span> <span class="o">*</span> <span class="n">weights</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">bound</span>
     <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">is_feasible</span><span class="p">]</span>
 

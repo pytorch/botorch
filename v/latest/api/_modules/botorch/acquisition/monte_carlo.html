@@ -144,7 +144,6 @@
         <span class="p">)</span>
         <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_posterior_samples</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
         <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
-        <span class="n">samples</span> <span class="o">=</span> <span class="n">repeat_to_match_aug_dim</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">obj</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">samples</span><span class="p">,</span> <span class="n">obj</span>
 
 <div class="viewcode-block" id="MCAcquisitionFunction.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.MCAcquisitionFunction.forward">[docs]</a>    <span class="nd">@abstractmethod</span>
@@ -309,6 +308,7 @@
 <span class="sd">            A Tensor with shape `sample_sample x batch_shape x q`.</span>
 <span class="sd">        """</span>
         <span class="n">samples</span><span class="p">,</span> <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_samples_and_objectives</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="n">repeat_to_match_aug_dim</span><span class="p">(</span><span class="n">target_tensor</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">reference_tensor</span><span class="o">=</span><span class="n">obj</span><span class="p">)</span>
         <span class="n">acqval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_forward</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>  <span class="c1"># `sample_sample x batch_shape x q`</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_constraints</span><span class="p">(</span><span class="n">acqval</span><span class="o">=</span><span class="n">acqval</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">)</span>
 
@@ -636,7 +636,6 @@
             <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_f_X_samples</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span> <span class="n">q_in</span><span class="o">=</span><span class="n">q_in</span><span class="p">)</span>
             <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X_full</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="n">q</span><span class="p">:,</span> <span class="p">:])</span>
 
-        <span class="n">samples</span> <span class="o">=</span> <span class="n">repeat_to_match_aug_dim</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">obj</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">samples</span><span class="p">,</span> <span class="n">obj</span>
 
     <span class="k">def</span> <span class="nf">_compute_best_feasible_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>

@@ -164,7 +164,7 @@ One of <cite>step_limit</cite>, <cite>stopping_criterion</cite>, or <cite>timeou
 <li><p><strong>options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em> | </em><em>str</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 <li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 <li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>nonlinear_inequality_constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>nonlinear_inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Callable</em><em>, </em><em>bool</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 <li><p><strong>fixed_features</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 <li><p><strong>post_processing_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 <li><p><strong>batch_initial_conditions</strong> (<em>Tensor</em><em> | </em><em>None</em>) – </p></li>
@@ -213,7 +213,7 @@ One of <cite>step_limit</cite>, <cite>stopping_criterion</cite>, or <cite>timeou
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.optim.optimize.OptimizeAcqfInputs.nonlinear_inequality_constraints">
-<span class="sig-name descname"><span class="pre">nonlinear_inequality_constraints</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.optim.optimize.OptimizeAcqfInputs.nonlinear_inequality_constraints" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">nonlinear_inequality_constraints</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.optim.optimize.OptimizeAcqfInputs.nonlinear_inequality_constraints" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.optim.optimize.OptimizeAcqfInputs.fixed_features">
@@ -295,24 +295,32 @@ with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite>. <cite>indices</cite> and
 <cite>coefficients</cite> should be torch tensors. See the docstring of
 <cite>make_scipy_linear_constraints</cite> for an example. When q=1, or when
-applying the same constraint to each candidate in the batch,
-<cite>indices</cite> should be a 1-d tensor. For inter-point constraints,
-<cite>indices</cite> must be a 2-d Tensor, where in each row <cite>indices[i] =
-(k_i, l_i)</cite> the first index <cite>k_i</cite> corresponds to the <cite>k_i</cite>-th
-element of the <cite>q</cite>-batch and the second index <cite>l_i</cite> corresponds to
-the <cite>l_i</cite>-th feature of that element.</p></li>
+applying the same constraint to each candidate in the batch
+(intra-point constraint), <cite>indices</cite> should be a 1-d tensor.
+For inter-point constraints, in which the constraint is applied to the
+whole batch of candidates, <cite>indices</cite> must be a 2-d tensor, where
+in each row <cite>indices[i] =(k_i, l_i)</cite> the first index <cite>k_i</cite> corresponds
+to the <cite>k_i</cite>-th element of the <cite>q</cite>-batch and the second index <cite>l_i</cite>
+corresponds to the <cite>l_i</cite>-th feature of that element.</p></li>
 <li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an equality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>. See the docstring of
 <cite>make_scipy_linear_constraints</cite> for an example.</p></li>
-<li><p><strong>nonlinear_inequality_constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>] </em><em>| </em><em>None</em>) – A list of callables with that represent
-non-linear inequality constraints of the form <cite>callable(x) &gt;= 0</cite>. Each
-callable is expected to take a <cite>(num_restarts) x q x d</cite>-dim tensor as an
-input and return a <cite>(num_restarts) x q</cite>-dim tensor with the constraint
-values. The constraints will later be passed to SLSQP. You need to pass in
-<cite>batch_initial_conditions</cite> in this case. Using non-linear inequality
-constraints also requires that <cite>batch_limit</cite> is set to 1, which will be
-done automatically if not specified in <cite>options</cite>.</p></li>
+<li><p><strong>nonlinear_inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Callable</em><em>, </em><em>bool</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples representing the nonlinear
+inequality constraints. The first element in the tuple is a callable
+representing a constraint of the form <cite>callable(x) &gt;= 0</cite>. In case of an
+intra-point constraint, <cite>callable()`takes in an one-dimensional tensor of
+shape `d</cite> and returns a scalar. In case of an inter-point constraint,
+<cite>callable()</cite> takes a two dimensional tensor of shape <cite>q x d</cite> and again
+returns a scalar. The second element is a boolean, indicating if it is an
+intra-point or inter-point constraint (<cite>True</cite> for intra-point. <cite>False</cite> for
+inter-point). For more information on intra-point vs inter-point
+constraints, see the docstring of the <cite>inequality_constraints</cite> argument to
+<cite>optimize_acqf()</cite>. The constraints will later be passed to the scipy
+solver. You need to pass in <cite>batch_initial_conditions</cite> in this case.
+Using non-linear inequality constraints also requires that <cite>batch_limit</cite>
+is set to 1, which will be done automatically if not specified in
+<cite>options</cite>.</p></li>
 <li><p><strong>fixed_features</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – A map <cite>{feature_index: value}</cite> for features that
 should be fixed to a particular value during generation.</p></li>
 <li><p><strong>post_processing_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A function that post-processes an optimization
@@ -483,14 +491,21 @@ with each tuple encoding an inequality constraint of the form
 <li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite></p></li>
-<li><p><strong>nonlinear_inequality_constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>] </em><em>| </em><em>None</em>) – A list of callables with that represent
-non-linear inequality constraints of the form <cite>callable(x) &gt;= 0</cite>. Each
-callable is expected to take a <cite>(num_restarts) x q x d</cite>-dim tensor as an
-input and return a <cite>(num_restarts) x q</cite>-dim tensor with the constraint
-values. The constraints will later be passed to SLSQP. You need to pass in
-<cite>batch_initial_conditions</cite> in this case. Using non-linear inequality
-constraints also requires that <cite>batch_limit</cite> is set to 1, which will be
-done automatically if not specified in <cite>options</cite>.</p></li>
+<li><p><strong>nonlinear_inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Callable</em><em>, </em><em>bool</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples representing the nonlinear
+inequality constraints. The first element in the tuple is a callable
+representing a constraint of the form <cite>callable(x) &gt;= 0</cite>. In case of an
+intra-point constraint, <cite>callable()`takes in an one-dimensional tensor of
+shape `d</cite> and returns a scalar. In case of an inter-point constraint,
+<cite>callable()</cite> takes a two dimensional tensor of shape <cite>q x d</cite> and again
+returns a scalar. The second element is a boolean, indicating if it is an
+intra-point or inter-point constraint (<cite>True</cite> for intra-point. <cite>False</cite> for
+inter-point). For more information on intra-point vs inter-point
+constraints, see the docstring of the <cite>inequality_constraints</cite> argument to
+<cite>optimize_acqf()</cite>. The constraints will later be passed to the scipy
+solver. You need to pass in <cite>batch_initial_conditions</cite> in this case.
+Using non-linear inequality constraints also requires that <cite>batch_limit</cite>
+is set to 1, which will be done automatically if not specified in
+<cite>options</cite>.</p></li>
 <li><p><strong>fixed_features</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – A map <cite>{feature_index: value}</cite> for features that
 should be fixed to a particular value during generation.</p></li>
 <li><p><strong>fixed_features_list</strong> (<em>List</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of maps <cite>{feature_index: value}</cite>. The i-th
@@ -556,14 +571,21 @@ with each tuple encoding an inequality constraint of the form
 <li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite></p></li>
-<li><p><strong>nonlinear_inequality_constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>] </em><em>| </em><em>None</em>) – A list of callables with that represent
-non-linear inequality constraints of the form <cite>callable(x) &gt;= 0</cite>. Each
-callable is expected to take a <cite>(num_restarts) x q x d</cite>-dim tensor as an
-input and return a <cite>(num_restarts) x q</cite>-dim tensor with the constraint
-values. The constraints will later be passed to SLSQP. You need to pass in
-<cite>batch_initial_conditions</cite> in this case. Using non-linear inequality
-constraints also requires that <cite>batch_limit</cite> is set to 1, which will be
-done automatically if not specified in <cite>options</cite>.</p></li>
+<li><p><strong>nonlinear_inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Callable</em><em>, </em><em>bool</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples representing the nonlinear
+inequality constraints. The first element in the tuple is a callable
+representing a constraint of the form <cite>callable(x) &gt;= 0</cite>. In case of an
+intra-point constraint, <cite>callable()`takes in an one-dimensional tensor of
+shape `d</cite> and returns a scalar. In case of an inter-point constraint,
+<cite>callable()</cite> takes a two dimensional tensor of shape <cite>q x d</cite> and again
+returns a scalar. The second element is a boolean, indicating if it is an
+intra-point or inter-point constraint (<cite>True</cite> for intra-point. <cite>False</cite> for
+inter-point). For more information on intra-point vs inter-point
+constraints, see the docstring of the <cite>inequality_constraints</cite> argument to
+<cite>optimize_acqf()</cite>. The constraints will later be passed to the scipy
+solver. You need to pass in <cite>batch_initial_conditions</cite> in this case.
+Using non-linear inequality constraints also requires that <cite>batch_limit</cite>
+is set to 1, which will be done automatically if not specified in
+<cite>options</cite>.</p></li>
 <li><p><strong>post_processing_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A function that post-processes an optimization
 result appropriately (i.e., according to <cite>round-trip</cite>
 transformations).</p></li>
@@ -2032,21 +2054,55 @@ element of the q-batch, for each of the 3 t-batches:</p>
 </dl>
 </dd></dl>
 <dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.parameter_constraints.nonlinear_constraint_is_feasible">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.parameter_constraints.</span></span><span class="sig-name descname"><span class="pre">nonlinear_constraint_is_feasible</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nonlinear_inequality_constraint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_intrapoint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/parameter_constraints.html#nonlinear_constraint_is_feasible"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.parameter_constraints.nonlinear_constraint_is_feasible" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if a nonlinear inequality constraint is fulfilled.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nonlinear_inequality_constraint</strong> (<em>Callable</em>) – Callable to evaluate the
+constraint.</p></li>
+<li><p><strong>intra</strong> – If True, the constraint is an intra-point constraint that
+is applied pointwise and is broadcasted over the q-batch. Else, the
+constraint has to evaluated over the whole q-batch and is a an
+inter-point constraint.</p></li>
+<li><p><strong>x</strong> (<em>Tensor</em>) – Tensor of shape (b x q x d).</p></li>
+<li><p><strong>is_intrapoint</strong> (<em>bool</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if the constraint is fulfilled, else False.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
 <dt class="sig sig-object py" id="botorch.optim.parameter_constraints.make_scipy_nonlinear_inequality_constraints">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.parameter_constraints.</span></span><span class="sig-name descname"><span class="pre">make_scipy_nonlinear_inequality_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nonlinear_inequality_constraints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_np_wrapper</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/parameter_constraints.html#make_scipy_nonlinear_inequality_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.parameter_constraints.make_scipy_nonlinear_inequality_constraints" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.parameter_constraints.</span></span><span class="sig-name descname"><span class="pre">make_scipy_nonlinear_inequality_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nonlinear_inequality_constraints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_np_wrapper</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shapeX</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/parameter_constraints.html#make_scipy_nonlinear_inequality_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.parameter_constraints.make_scipy_nonlinear_inequality_constraints" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate Scipy nonlinear inequality constraints from callables.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>nonlinear_inequality_constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>]</em>) – List of callables for the nonlinear
-inequality constraints. Each callable represents a constraint of the
-form &gt;= 0 and takes a torch tensor of size (p x q x dim) and returns a
-torch tensor of size (p x q).</p></li>
+<li><p><strong>nonlinear_inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Callable</em><em>, </em><em>bool</em><em>]</em><em>]</em>) – A list of tuples representing the nonlinear
+inequality constraints. The first element in the tuple is a callable
+representing a constraint of the form <cite>callable(x) &gt;= 0</cite>. In case of an
+intra-point constraint, <cite>callable()`takes in an one-dimensional tensor of
+shape `d</cite> and returns a scalar. In case of an inter-point constraint,
+<cite>callable()</cite> takes a two dimensional tensor of shape <cite>q x d</cite> and again
+returns a scalar. The second element is a boolean, indicating if it is an
+intra-point or inter-point constraint (<cite>True</cite> for intra-point. <cite>False</cite> for
+inter-point). For more information on intra-point vs inter-point
+constraints, see the docstring of the <cite>inequality_constraints</cite> argument to
+<cite>optimize_acqf()</cite>. The constraints will later be passed to the scipy
+solver.</p></li>
 <li><p><strong>f_np_wrapper</strong> (<em>Callable</em>) – A wrapper function that given a constraint evaluates the value
 and gradient (using autograd) of a numpy input and returns both the
 objective and the gradient.</p></li>
 <li><p><strong>x0</strong> (<em>Tensor</em>) – The starting point for SLSQP. We return this starting point in (rare)
 cases where SLSQP fails and thus require it to be feasible.</p></li>
+<li><p><strong>shapeX</strong> (<em>Size</em>) – Shape of the three-dimensional batch X, that should be optimized.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
