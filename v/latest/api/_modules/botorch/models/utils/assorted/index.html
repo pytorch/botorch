@@ -134,7 +134,8 @@
         <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                 <span class="s2">"The trailing batch dimensions of X must match the trailing "</span>
-                <span class="s2">"batch dimensions of the training inputs."</span>
+                <span class="sa">f</span><span class="s2">"batch dimensions of the training inputs. Got </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="si">=}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"and </span><span class="si">{</span><span class="n">original_batch_shape</span><span class="si">=}</span><span class="s2">."</span>
             <span class="p">)</span>
     <span class="c1"># insert `m` dimension</span>
     <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span>
