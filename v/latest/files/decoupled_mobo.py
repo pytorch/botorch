@@ -397,7 +397,7 @@ warnings.filterwarnings("ignore", category=BadInitialCandidatesWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 MC_SAMPLES = 128 if not SMOKE_TEST else 16
-COST_BUDGET = 90 if not SMOKE_TEST else 60
+COST_BUDGET = 90 if not SMOKE_TEST else 54
 torch.manual_seed(0)
 verbose = True
 N_INIT = 2 * problem.dim + 1

@@ -537,7 +537,7 @@ I1110 064940.231 _utils_internal.py:239] NCCL_DEBUG is INFO from /etc/nccl.conf
 <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">RuntimeWarning</span><span class="p">)</span>
 
 <span class="n">MC_SAMPLES</span> <span class="o">=</span> <span class="mi">128</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">16</span>
-<span class="n">COST_BUDGET</span> <span class="o">=</span> <span class="mi">90</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">60</span>
+<span class="n">COST_BUDGET</span> <span class="o">=</span> <span class="mi">90</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">54</span>
 <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">verbose</span> <span class="o">=</span> <span class="kc">True</span>
 <span class="n">N_INIT</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">problem</span><span class="o">.</span><span class="n">dim</span> <span class="o">+</span> <span class="mi">1</span>

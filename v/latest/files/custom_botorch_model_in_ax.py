@@ -3,19 +3,18 @@
 
 # ## Using a custom BoTorch model with Ax
 # 
-# In this tutorial, we illustrate how to use a custom BoTorch model within Ax's `botorch_modular` API. This allows us to harness the convenience of Ax for running Bayesian Optimization loops, while at the same time maintaining full flexibility in terms of the modeling.
+# In this tutorial, we illustrate how to use a custom BoTorch model within Ax's `botorch_modular` API. This allows us to harness the convenience of Ax for running Bayesian Optimization loops while maintaining full flexibility in modeling.
 # 
-# Acquisition functions and strategies for optimizing acquisitions can be swapped out in much the same fashion. See for example the tutorial for [Implementing a custom acquisition function](./custom_acquisition).
+# Acquisition functions and their optimizers can be swapped out in much the same fashion. See for example the tutorial for [Implementing a custom acquisition function](./custom_acquisition).
 # 
 # If you want to do something non-standard, or would like to have full insight into every aspect of the implementation, please see [this tutorial](./closed_loop_botorch_only) for how to write your own full optimization loop in BoTorch.
 # 
-# Next cell sets up a decorator solely to speed up the testing of the notebook. You can safely ignore this cell and the use of the decorator throughout the tutorial.
 
 # In[1]:
 
 
 import os
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 
 from ax.utils.testing.mock import fast_botorch_optimize_context_manager
 import plotly.io as pio
@@ -29,24 +28,13 @@ SMOKE_TEST = os.environ.get("SMOKE_TEST")
 NUM_EVALS = 10 if SMOKE_TEST else 30
 
 
-@contextmanager
-def dummy_context_manager():
-    yield
-
-
-if SMOKE_TEST:
-    fast_smoke_test = fast_botorch_optimize_context_manager
-else:
-    fast_smoke_test = dummy_context_manager
-
-
 # ### Implementing the custom model
 # 
-# For this tutorial, we implement a very simple gpytorch Exact GP Model that uses an RBF kernel (with ARD) and infers a (homoskedastic) noise level.
+# For this tutorial, we implement a very simple GPyTorch `ExactGP` model that uses an RBF kernel (with ARD) and infers a homoskedastic noise level.
 # 
-# Model definition is straightforward - here we implement a gpytorch `ExactGP` that also inherits from `GPyTorchModel` -- this adds all the api calls that botorch expects in its various modules. 
+# Model definition is straightforward. Here we implement a GPyTorch `ExactGP` that inherits from `GPyTorchModel`; together these two superclasses add all the API calls that BoTorch expects in its various modules. 
 # 
-# *Note:* botorch also allows implementing other custom models as long as they follow the minimal `Model` API. For more information, please see the [Model Documentation](../docs/models).
+# *Note:* BoTorch allows implementing any custom model that follows the `Model` API. For more information, please see the [Model Documentation](../docs/models).
 
 # In[2]:
 
@@ -84,7 +72,7 @@ class SimpleCustomGP(ExactGP, GPyTorchModel):
 
 # ### Instantiate a `BoTorchModel` in Ax
 # 
-# A `BoTorchModel` in Ax encapsulates both the surrogate (commonly referred to as `Model` in BoTorch) and an acquisition function. Here, we will only specify the custom surrogate and let Ax choose the default acquisition function.
+# A `BoTorchModel` in Ax encapsulates both the surrogate -- which `Ax` calls a `Surrogate` and BoTorch calls a `Model` -- and an acquisition function. Here, we will only specify the custom surrogate and let Ax choose the default acquisition function.
 # 
 # Most models should work with the base `Surrogate` in Ax, except for BoTorch `ModelListGP`, which works with `ListSurrogate`.
 # Note that the `Model` (e.g., the `SimpleCustomGP`) must implement `construct_inputs`, as this is used to construct the inputs required for instantiating a `Model` instance from the experiment data.
@@ -112,32 +100,16 @@ ax_model = BoTorchModel(
 
 # ### Combine with a `ModelBridge`
 # 
-# `Model`s in Ax require a `ModelBridge` to interface with `Experiment`s. A `ModelBridge` takes the inputs supplied by the `Experiment` and converts them to the inputs expected by the `Model`. For a `BoTorchModel`, we use `TorchModelBridge`. The usage is as follows:
-# 
-# ```
-# from ax.modelbridge import TorchModelBridge
-# model_bridge = TorchModelBridge(
-#     experiment: Experiment,
-#     search_space: SearchSpace,
-#     data: Data,
-#     model: TorchModel,
-#     transforms: List[Type[Transform]],
-#     # And additional optional arguments.
-# )
-# # To generate a trial
-# trial = model_bridge.gen(1)
-# ```
-# 
-# For Modular BoTorch interface, we can combine the creation of the `BoTorchModel` and the `TorchModelBridge` into a single step as follows:
+# `Model`s in Ax require a `ModelBridge` to interface with `Experiment`s. A `ModelBridge` takes the inputs supplied by the `Experiment` and converts them to the inputs expected by the `Model`. For a `BoTorchModel`, we use `TorchModelBridge`. The Modular BoTorch interface creates the `BoTorchModel` and the `TorchModelBridge` in a single step, as follows:
 # 
 # ```
 # from ax.modelbridge.registry import Models
 # model_bridge = Models.BOTORCH_MODULAR(
 #     experiment=experiment,
 #     data=data,
-#     surrogate=Surrogate(SimpleCustomGP),  # Optional, will use default if unspecified
+#     surrogate=Surrogate(SimpleCustomGP),
 #     # Optional, will use default if unspecified
-#     # botorch_acqf_class=qNoisyExpectedImprovement,  
+#     # botorch_acqf_class=qLogNoisyExpectedImprovement,  
 # )
 # # To generate a trial
 # trial = model_bridge.gen(1)
@@ -148,11 +120,11 @@ ax_model = BoTorchModel(
 # 
 # We will demonstrate this with both the Service API (simpler, easier to use) and the Developer API (advanced, more customizable).
 
-# ## Optimization with the Service API
+# ## Optimization with Ax's Service API
 # 
 # A detailed tutorial on the Service API can be found [here](https://ax.dev/tutorials/gpei_hartmann_service.html).
 # 
-# In order to customize the way the candidates are created in Service API, we need to construct a new `GenerationStrategy` and pass it into `AxClient`.
+# In order to customize the way the candidates are created in the Service API, we need to construct a new `GenerationStrategy` and pass it into `AxClient`.
 
 # In[4]:
 
@@ -230,7 +202,21 @@ def evaluate(parameters):
 
 # ### Running the BO loop
 
+# The next cell sets up a decorator solely to speed up the testing of the notebook in `SMOKE_TEST` mode. You can safely ignore this cell and the use of the decorator throughout the tutorial.
+
 # In[6]:
+
+
+if SMOKE_TEST:
+    fast_smoke_test = fast_botorch_optimize_context_manager
+else:
+    fast_smoke_test = nullcontext
+
+# Set a seed for reproducible tutorial output
+torch.manual_seed(0)
+
+
+# In[7]:
 
 
 with fast_smoke_test():
@@ -242,13 +228,13 @@ with fast_smoke_test():
 
 # ### Viewing the evaluated trials
 
-# In[7]:
+# In[8]:
 
 
 ax_client.get_trials_data_frame()
 
 
-# In[8]:
+# In[9]:
 
 
 parameters, values = ax_client.get_best_parameters()
@@ -258,7 +244,7 @@ print(f"Corresponding mean: {values[0]}, covariance: {values[1]}")
 
 # ### Plotting the response surface and optimization progress
 
-# In[9]:
+# In[10]:
 
 
 from ax.utils.notebook.plotting import render
@@ -266,14 +252,14 @@ from ax.utils.notebook.plotting import render
 render(ax_client.get_contour_plot())
 
 
-# In[10]:
+# In[11]:
 
 
 best_parameters, values = ax_client.get_best_parameters()
 best_parameters, values[0]
 
 
-# In[11]:
+# In[12]:
 
 
 render(ax_client.get_optimization_trace(objective_optimum=0.397887))
@@ -290,7 +276,7 @@ render(ax_client.get_optimization_trace(objective_optimum=0.397887))
 # - An optimization config specifiying the objective / metrics to optimize, and optional outcome constraints;
 # - A runner that handles the deployment of trials. For a synthetic optimization problem, such as here, this only returns simple metadata about the trial.
 
-# In[12]:
+# In[13]:
 
 
 import pandas as pd
@@ -376,7 +362,7 @@ exp = Experiment(
 # 
 # A `Trial` supports evaluation of a single parameterization. For parallel evaluations, see [`BatchTrial`](https://ax.dev/docs/core.html#trial-vs-batch-trial).
 
-# In[13]:
+# In[14]:
 
 
 from ax.modelbridge.registry import Models
@@ -392,7 +378,7 @@ for i in range(5):
 
 # Once the initial (quasi-) random stage is completed, we can use our `SimpleCustomGP` with the default acquisition function chosen by `Ax` to run the BO loop.
 
-# In[14]:
+# In[15]:
 
 
 with fast_smoke_test():
@@ -409,7 +395,7 @@ with fast_smoke_test():
 
 # View the trials attached to the `Experiment`.
 
-# In[15]:
+# In[16]:
 
 
 exp.trials
@@ -417,7 +403,7 @@ exp.trials
 
 # View the evaluation data about these trials.
 
-# In[16]:
+# In[17]:
 
 
 exp.fetch_data().df
@@ -427,7 +413,7 @@ exp.fetch_data().df
 # 
 # We can use convenient Ax utilities for plotting the results.
 
-# In[17]:
+# In[18]:
 
 
 import numpy as np
