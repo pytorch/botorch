@@ -18,9 +18,9 @@ import torch
 from botorch.utils.safe_math import logmeanexp
 from torch import Tensor
 
-if TYPE_CHECKING:
-    from botorch.acquisition import AcquisitionFunction  # pragma: no cover
-    from botorch.model import Model  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover
+    from botorch.acquisition import AcquisitionFunction
+    from botorch.models.model import Model
 
 
 def standardize(Y: Tensor) -> Tensor:

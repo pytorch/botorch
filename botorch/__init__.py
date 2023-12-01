@@ -30,9 +30,11 @@ from botorch.logging import logger
 from botorch.utils import manual_seed
 
 try:
-    from botorch.version import version as __version__
+    # Marking this as a manual import to avoid autodeps complaints
+    # due to imports from non-existent file.
+    from botorch.version import version as __version__  # @manual
 except Exception:  # pragma: no cover
-    __version__ = "Unknown"  # pragma: no cover
+    __version__ = "Unknown"
 
 logger.info(
     "Turning off `fast_computations` in linear operator and increasing "

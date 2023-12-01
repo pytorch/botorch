@@ -14,12 +14,11 @@ from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.sampling.pathwise import draw_matheron_paths, MatheronPath, PathList
 from botorch.sampling.pathwise.utils import get_train_inputs
+from botorch.utils.test_helpers import get_sample_moments, standardize_moments
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels import MaternKernel, ScaleKernel
 from torch import Size
 from torch.nn.functional import pad
-
-from .helpers import get_sample_moments, standardize_moments
 
 
 class TestPosteriorSamplers(BotorchTestCase):

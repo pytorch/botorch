@@ -30,10 +30,9 @@ from botorch.optim.optimize import optimize_acqf
 from botorch.optim.utils import _filter_kwargs
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
+from botorch.utils.test_helpers import DummyNonScalarizingPosteriorTransform
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from gpytorch.distributions import MultitaskMultivariateNormal
-
-from .test_monte_carlo import DummyNonScalarizingPosteriorTransform
 
 NO = "botorch.utils.testing.MockModel.num_outputs"
 

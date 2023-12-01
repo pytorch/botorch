@@ -21,12 +21,11 @@ from botorch.sampling.pathwise import (
     PathList,
 )
 from botorch.sampling.pathwise.utils import get_train_inputs
+from botorch.utils.test_helpers import get_sample_moments, standardize_moments
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels import MaternKernel, RBFKernel, ScaleKernel
 from torch import Size
 from torch.nn.functional import pad
-
-from .helpers import get_sample_moments, standardize_moments
 
 
 class TestPriorSamplers(BotorchTestCase):
