@@ -26,7 +26,6 @@ from botorch.acquisition.objective import (
     ConstrainedMCObjective,
     GenericMCObjective,
     IdentityMCObjective,
-    PosteriorTransform,
     ScalarizedPosteriorTransform,
 )
 from botorch.acquisition.utils import prune_inferior_points
@@ -34,6 +33,7 @@ from botorch.exceptions import BotorchWarning, UnsupportedError
 from botorch.models import SingleTaskGP
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.low_rank import sample_cached_cholesky
+from botorch.utils.test_helpers import DummyNonScalarizingPosteriorTransform
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from botorch.utils.transforms import standardize
 from torch import Tensor
@@ -47,16 +47,6 @@ class DummyMCAcquisitionFunction(MCAcquisitionFunction):
 class DummyReducingMCAcquisitionFunction(SampleReducingMCAcquisitionFunction):
     def _sample_forward(self, X):
         pass
-
-
-class DummyNonScalarizingPosteriorTransform(PosteriorTransform):
-    scalarize = False
-
-    def evaluate(self, Y):
-        pass  # pragma: no cover
-
-    def forward(self, posterior):
-        pass  # pragma: no cover
 
 
 def infeasible_con(samples: Tensor) -> Tensor:

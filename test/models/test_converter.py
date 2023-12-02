@@ -20,12 +20,11 @@ from botorch.models.converter import (
 )
 from botorch.models.transforms.input import AppendFeatures, Normalize
 from botorch.models.transforms.outcome import Standardize
+from botorch.utils.test_helpers import SimpleGPyTorchModel
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels import RBFKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
-
-from .test_gpytorch import SimpleGPyTorchModel
 
 
 class TestConverters(BotorchTestCase):

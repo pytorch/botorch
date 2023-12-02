@@ -17,6 +17,7 @@ from botorch.models.transforms import Normalize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
 from botorch.utils.datasets import SupervisedDataset
+from botorch.utils.test_helpers import get_pvar_expected
 from botorch.utils.testing import _get_random_data, BotorchTestCase
 from gpytorch.kernels.kernel import AdditiveKernel, ProductKernel
 from gpytorch.kernels.matern_kernel import MaternKernel
@@ -25,8 +26,6 @@ from gpytorch.likelihoods import FixedNoiseGaussianLikelihood
 from gpytorch.likelihoods.gaussian_likelihood import GaussianLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
-
-from .test_gp_regression import _get_pvar_expected
 
 
 class TestMixedSingleTaskGP(BotorchTestCase):
@@ -119,7 +118,7 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             self.assertEqual(posterior_pred.mean.shape, expected_shape)
             self.assertEqual(posterior_pred.variance.shape, expected_shape)
             pvar = posterior_pred.variance
-            pvar_exp = _get_pvar_expected(posterior, model, X, m)
+            pvar_exp = get_pvar_expected(posterior, model, X, m)
             self.assertAllClose(pvar, pvar_exp, rtol=1e-4, atol=1e-5)
 
             # test batch evaluation
@@ -133,7 +132,7 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             self.assertIsInstance(posterior_pred, GPyTorchPosterior)
             self.assertEqual(posterior_pred.mean.shape, expected_shape)
             pvar = posterior_pred.variance
-            pvar_exp = _get_pvar_expected(posterior, model, X, m)
+            pvar_exp = get_pvar_expected(posterior, model, X, m)
             self.assertAllClose(pvar, pvar_exp, rtol=1e-4, atol=1e-5)
 
             # test that model converter throws an exception
