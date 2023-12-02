@@ -2102,6 +2102,78 @@ exists in <a class="reference internal" href="#botorch.utils.testing.MockModel.s
 </dd></dl>
 </dd></dl>
 </section>
+<section id="module-botorch.utils.test_helpers">
+<span id="test-helpers"></span><h2>Test Helpers<a class="headerlink" href="#module-botorch.utils.test_helpers" title="Permalink to this heading">¶</a></h2>
+<p>Dummy classes and other helpers that are used in multiple test files
+should be defined here to avoid relative imports.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.test_helpers.get_sample_moments">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.test_helpers.</span></span><span class="sig-name descname"><span class="pre">get_sample_moments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/test_helpers.html#get_sample_moments"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.test_helpers.get_sample_moments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the mean and covariance of a set of samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>samples</strong> (<em>Tensor</em>) – A tensor of shape <cite>sample_shape x batch_shape x q</cite>.</p></li>
+<li><p><strong>sample_shape</strong> (<em>Size</em>) – The sample_shape input used while generating the samples using
+the pathwise sampling API.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.test_helpers.standardize_moments">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.test_helpers.</span></span><span class="sig-name descname"><span class="pre">standardize_moments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transform</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covariance_matrix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/test_helpers.html#standardize_moments"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.test_helpers.standardize_moments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Standardizes the loc and covariance_matrix using the mean and standard
+deviations from a Standardize transform.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>transform</strong> (<a class="reference internal" href="models.html#botorch.models.transforms.outcome.Standardize" title="botorch.models.transforms.outcome.Standardize"><em>Standardize</em></a>) – </p></li>
+<li><p><strong>loc</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>covariance_matrix</strong> (<em>Tensor</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.test_helpers.gen_multi_task_dataset">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.test_helpers.</span></span><span class="sig-name descname"><span class="pre">gen_multi_task_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">tkwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/test_helpers.html#gen_multi_task_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.test_helpers.gen_multi_task_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructs a multi-task dataset with two tasks, each with 10 data points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>yvar</strong> (<em>float</em><em> | </em><em>None</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tuple</em>[<a class="reference internal" href="#botorch.utils.datasets.MultiTaskDataset" title="botorch.utils.datasets.MultiTaskDataset"><em>MultiTaskDataset</em></a>, <em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>, <em>Tensor</em>]]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.test_helpers.get_pvar_expected">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.test_helpers.</span></span><span class="sig-name descname"><span class="pre">get_pvar_expected</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/test_helpers.html#get_pvar_expected"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.test_helpers.get_pvar_expected" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the expected variance of a posterior after adding the
+predictive noise from the likelihood.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>posterior</strong> (<em>Posterior</em>) – </p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – </p></li>
+<li><p><strong>X</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>m</strong> (<em>int</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+</section>
 <section id="module-botorch.utils.torch">
 <span id="torch"></span><h2>Torch<a class="headerlink" href="#module-botorch.utils.torch" title="Permalink to this heading">¶</a></h2>
 <dl class="py class">
