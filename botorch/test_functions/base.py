@@ -11,7 +11,7 @@ Base class for test functions for optimization benchmarks.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple, Union
+from typing import List, Tuple, Union
 
 import torch
 
@@ -35,7 +35,9 @@ class BaseTestProblem(Module, ABC):
         r"""Base constructor for test functions.
 
         Args:
-            noise_std: Standard deviation of the observation noise.
+            noise_std: Standard deviation of the observation noise. If a list is provided,
+                specifies separate noise standard deviations for each objective in a
+                multiobjective problem.
             negate: If True, negate the function.
         """
         super().__init__()
@@ -161,11 +163,15 @@ class MultiObjectiveTestProblem(BaseTestProblem):
         r"""Base constructor for multi-objective test functions.
 
         Args:
-            noise_std: Standard deviation of the observation noise.
+            noise_std: Standard deviation of the observation noise. If a list is provided,
+                specifies separate noise standard deviations for each objective.
             negate: If True, negate the objectives.
         """
         if isinstance(noise_std, list) and len(noise_std) != len(self._ref_point):
-            raise InputDataError("If specified as a list, length of noise_std must match the number of objectives")
+            raise InputDataError(
+                f"If specified as a list, length of noise_std ({len(noise_std)}) "
+                f"must match the number of objectives ({len(self._ref_point)})"
+            )
         super().__init__(noise_std=noise_std, negate=negate)
         ref_point = torch.tensor(self._ref_point, dtype=torch.float)
         if negate:
