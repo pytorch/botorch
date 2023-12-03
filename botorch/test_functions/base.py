@@ -11,9 +11,10 @@ Base class for test functions for optimization benchmarks.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import torch
+
 from botorch.exceptions.errors import InputDataError
 from torch import Tensor
 from torch.nn import Module
@@ -26,7 +27,11 @@ class BaseTestProblem(Module, ABC):
     _bounds: List[Tuple[float, float]]
     _check_grad_at_opt: bool = True
 
-    def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
+    def __init__(
+        self,
+        noise_std: Optional[Union[float, List[float]]] = None,
+        negate: bool = False,
+    ) -> None:
         r"""Base constructor for test functions.
 
         Args:
@@ -60,7 +65,12 @@ class BaseTestProblem(Module, ABC):
         X = X if batch else X.unsqueeze(0)
         f = self.evaluate_true(X=X)
         if noise and self.noise_std is not None:
-            f += self.noise_std * torch.randn_like(f)
+            _noise = (
+                Tensor(self.noise_std)
+                if isinstance(self.noise_std, list)
+                else self.noise_std
+            )
+            f += _noise * torch.randn_like(f)
         if self.negate:
             f = -f
         return f if batch else f.squeeze(0)
@@ -147,7 +157,11 @@ class MultiObjectiveTestProblem(BaseTestProblem):
     _ref_point: List[float]
     _max_hv: float
 
-    def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
+    def __init__(
+        self,
+        noise_std: Optional[Union[float, List[float]]] = None,
+        negate: bool = False,
+    ) -> None:
         r"""Base constructor for multi-objective test functions.
 
         Args:
