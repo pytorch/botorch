@@ -35,9 +35,9 @@ class BaseTestProblem(Module, ABC):
         r"""Base constructor for test functions.
 
         Args:
-            noise_std: Standard deviation of the observation noise. If a list is provided,
-                specifies separate noise standard deviations for each objective in a
-                multiobjective problem.
+            noise_std: Standard deviation of the observation noise. If a list is
+                provided, specifies separate noise standard deviations for each
+                objective in a multiobjective problem.
             negate: If True, negate the function.
         """
         super().__init__()
@@ -163,8 +163,9 @@ class MultiObjectiveTestProblem(BaseTestProblem):
         r"""Base constructor for multi-objective test functions.
 
         Args:
-            noise_std: Standard deviation of the observation noise. If a list is provided,
-                specifies separate noise standard deviations for each objective.
+            noise_std: Standard deviation of the observation noise. If a list is
+                provided, specifies separate noise standard deviations for each
+                objective in a multiobjective problem.
             negate: If True, negate the objectives.
         """
         if isinstance(noise_std, list) and len(noise_std) != len(self._ref_point):

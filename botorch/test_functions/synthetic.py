@@ -70,9 +70,9 @@ class SyntheticTestFunction(BaseTestProblem):
     ) -> None:
         r"""
         Args:
-            noise_std: Standard deviation of the observation noise. If a list is provided,
-                specifies separate noise standard deviations for each objective in a
-                multiobjective problem.
+            noise_std: Standard deviation of the observation noise. If a list is
+                provided, specifies separate noise standard deviations for each
+                objective in a multiobjective problem.
             negate: If True, negate the function.
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
