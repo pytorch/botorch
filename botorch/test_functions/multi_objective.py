@@ -76,7 +76,7 @@ from __future__ import annotations
 import math
 from abc import ABC, abstractmethod
 from math import pi
-from typing import Optional
+from typing import List, Optional, Union
 
 import torch
 from botorch.exceptions.errors import UnsupportedError
@@ -116,7 +116,11 @@ class BraninCurrin(MultiObjectiveTestProblem):
     _ref_point = [18.0, 6.0]
     _max_hv = 59.36011874867746  # this is approximated using NSGA-II
 
-    def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
+    def __init__(
+        self,
+        noise_std: Optional[Union[float, List[float]]] = None,
+        negate: bool = False,
+    ) -> None:
         r"""
         Args:
             noise_std: Standard deviation of the observation noise.
@@ -174,7 +178,7 @@ class DH(MultiObjectiveTestProblem, ABC):
     def __init__(
         self,
         dim: int,
-        noise_std: Optional[float] = None,
+        noise_std: Optional[Union[float, List[float]]] = None,
         negate: bool = False,
     ) -> None:
         r"""
@@ -334,7 +338,7 @@ class DTLZ(MultiObjectiveTestProblem):
         self,
         dim: int,
         num_objectives: int = 2,
-        noise_std: Optional[float] = None,
+        noise_std: Optional[Union[float, List[float]]] = None,
         negate: bool = False,
     ) -> None:
         r"""
@@ -600,7 +604,7 @@ class GMM(MultiObjectiveTestProblem):
 
     def __init__(
         self,
-        noise_std: Optional[float] = None,
+        noise_std: Optional[Union[float, List[float]]] = None,
         negate: bool = False,
         num_objectives: int = 2,
     ) -> None:
@@ -926,7 +930,7 @@ class ZDT(MultiObjectiveTestProblem):
         self,
         dim: int,
         num_objectives: int = 2,
-        noise_std: Optional[float] = None,
+        noise_std: Optional[Union[float, List[float]]] = None,
         negate: bool = False,
     ) -> None:
         r"""
@@ -1234,7 +1238,11 @@ class ConstrainedBraninCurrin(BraninCurrin, ConstrainedBaseTestProblem):
     _ref_point = [80.0, 12.0]
     _max_hv = 608.4004237022673  # from NSGA-II with 90k evaluations
 
-    def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
+    def __init__(
+        self,
+        noise_std: Optional[Union[float, List[float]]] = None,
+        negate: bool = False,
+    ) -> None:
         r"""
         Args:
             noise_std: Standard deviation of the observation noise.
@@ -1337,7 +1345,7 @@ class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     def __init__(
         self,
         dim: int,
-        noise_std: Optional[float] = None,
+        noise_std: Optional[Union[float, List[float]]] = None,
         negate: bool = False,
     ) -> None:
         r"""
