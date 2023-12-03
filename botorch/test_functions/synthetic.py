@@ -47,7 +47,7 @@ References:
 from __future__ import annotations
 
 import math
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import torch
 from botorch.test_functions.base import BaseTestProblem, ConstrainedBaseTestProblem
@@ -64,13 +64,15 @@ class SyntheticTestFunction(BaseTestProblem):
 
     def __init__(
         self,
-        noise_std: Optional[float] = None,
+        noise_std: Union[None, float, List[float]] = None,
         negate: bool = False,
         bounds: Optional[List[Tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
-            noise_std: Standard deviation of the observation noise.
+            noise_std: Standard deviation of the observation noise. If a list is provided,
+                specifies separate noise standard deviations for each objective in a
+                multiobjective problem.
             negate: If True, negate the function.
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
