@@ -90,6 +90,7 @@ class ConstrainedBaseTestProblem(BaseTestProblem, ABC):
 
     num_constraints: int
     _check_grad_at_opt: bool = False
+    constraint_noise_std: Union[None, float, List[float]] = None
 
     def evaluate_slack(self, X: Tensor, noise: bool = True) -> Tensor:
         r"""Evaluate the constraint slack on a set of points.
@@ -109,10 +110,11 @@ class ConstrainedBaseTestProblem(BaseTestProblem, ABC):
                 corresponds to the constraint being feasible).
         """
         cons = self.evaluate_slack_true(X=X)
-        if noise and self.noise_std is not None:
-            # TODO: Allow different noise levels for objective and constraints (and
-            # different noise levels between different constraints)
-            cons += self.noise_std * torch.randn_like(cons)
+        if noise and self.constraint_noise_std is not None:
+            _constraint_noise = torch.tensor(
+                self.constraint_noise_std, device=X.device, dtype=X.dtype
+            )
+            cons += _constraint_noise * torch.randn_like(cons)
         return cons
 
     def is_feasible(self, X: Tensor, noise: bool = True) -> Tensor:
@@ -165,7 +167,7 @@ class MultiObjectiveTestProblem(BaseTestProblem):
         Args:
             noise_std: Standard deviation of the observation noise. If a list is
                 provided, specifies separate noise standard deviations for each
-                objective in a multiobjective problem.
+                objective.
             negate: If True, negate the objectives.
         """
         if isinstance(noise_std, list) and len(noise_std) != len(self._ref_point):
