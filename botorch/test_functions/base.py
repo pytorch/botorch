@@ -29,7 +29,7 @@ class BaseTestProblem(Module, ABC):
 
     def __init__(
         self,
-        noise_std: Optional[Union[float, List[float]]] = None,
+        noise_std: Union[None, float, List[float]] = None,
         negate: bool = False,
     ) -> None:
         r"""Base constructor for test functions.
@@ -65,11 +65,7 @@ class BaseTestProblem(Module, ABC):
         X = X if batch else X.unsqueeze(0)
         f = self.evaluate_true(X=X)
         if noise and self.noise_std is not None:
-            _noise = (
-                Tensor(self.noise_std)
-                if isinstance(self.noise_std, list)
-                else self.noise_std
-            )
+            _noise = torch.tensor(self.noise_std, device=X.device, dtype=X.dtype)
             f += _noise * torch.randn_like(f)
         if self.negate:
             f = -f
@@ -159,7 +155,7 @@ class MultiObjectiveTestProblem(BaseTestProblem):
 
     def __init__(
         self,
-        noise_std: Optional[Union[float, List[float]]] = None,
+        noise_std: Union[None, float, List[float]] = None,
         negate: bool = False,
     ) -> None:
         r"""Base constructor for multi-objective test functions.
@@ -168,6 +164,8 @@ class MultiObjectiveTestProblem(BaseTestProblem):
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the objectives.
         """
+        if isinstance(noise_std, list) and len(noise_std) != len(self._ref_point):
+            raise InputDataError("If specified as a list, length of noise_std must match the number of objectives")
         super().__init__(noise_std=noise_std, negate=negate)
         ref_point = torch.tensor(self._ref_point, dtype=torch.float)
         if negate:
