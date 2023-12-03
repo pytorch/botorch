@@ -50,6 +50,7 @@ import math
 from typing import List, Optional, Tuple, Union
 
 import torch
+from botorch.exceptions.errors import InputDataError
 from botorch.test_functions.base import BaseTestProblem, ConstrainedBaseTestProblem
 from botorch.test_functions.utils import round_nearest
 from torch import Tensor
@@ -804,7 +805,57 @@ class ThreeHumpCamel(SyntheticTestFunction):
 #  ------------ Constrained synthetic test functions ----------- #
 
 
-class ConstrainedGramacy(ConstrainedBaseTestProblem, SyntheticTestFunction):
+class ConstrainedSyntheticTestFunction(
+    ConstrainedBaseTestProblem, SyntheticTestFunction
+):
+    r"""Base class for constrained synthetic test functions."""
+
+    def __init__(
+        self,
+        noise_std: Union[None, float, List[float]] = None,
+        constraint_noise_std: Union[None, float, List[float]] = None,
+        negate: bool = False,
+        bounds: Optional[List[Tuple[float, float]]] = None,
+    ) -> None:
+        r"""
+        Args:
+            noise_std: Standard deviation of the observation noise. If a list is
+                provided, specifies separate noise standard deviations for each
+                objective in a multiobjective problem.
+            constraint_noise_std: Standard deviation of the constraint noise.
+                If a list is provided, specifies separate noise standard
+                deviations for each constraint.
+            negate: If True, negate the function.
+            bounds: Custom bounds for the function specified as (lower, upper) pairs.
+        """
+        self.setup_constraint_noise(constraint_noise_std)
+        SyntheticTestFunction.__init__(
+            self, noise_std=noise_std, negate=negate, bounds=bounds
+        )
+
+    def setup_constraint_noise(self, constraint_noise_std):
+        """
+        Validates that constraint_noise_std has length equal to
+        the number of constraints, if given as a list
+
+        Args:
+            constraint_noise_std: Standard deviation of the constraint noise.
+                If a list is provided, specifies separate noise standard
+                deviations for each constraint.
+        """
+        if (
+            isinstance(constraint_noise_std, list)
+            and len(constraint_noise_std) != self.num_constraints
+        ):
+            raise InputDataError(
+                f"If specified as a list, length of constraint_noise_std "
+                f"({len(constraint_noise_std)}) must match the "
+                f"number of constraints ({self.num_constraints})"
+            )
+        self.constraint_noise_std = constraint_noise_std
+
+
+class ConstrainedGramacy(ConstrainedSyntheticTestFunction):
     r"""Constrained Gramacy test function.
 
     This problem comes from [Gramacy2016]_. The problem is defined
@@ -837,7 +888,7 @@ class ConstrainedGramacy(ConstrainedBaseTestProblem, SyntheticTestFunction):
         return torch.cat([-c1, -c2], dim=-1)
 
 
-class ConstrainedHartmann(Hartmann, ConstrainedBaseTestProblem):
+class ConstrainedHartmann(Hartmann, ConstrainedSyntheticTestFunction):
     r"""Constrained Hartmann test function.
 
     This is a constrained version of the standard Hartmann test function that
@@ -845,11 +896,34 @@ class ConstrainedHartmann(Hartmann, ConstrainedBaseTestProblem):
     """
     num_constraints = 1
 
+    def __init__(
+        self,
+        dim: int = 6,
+        noise_std: Union[None, float] = None,
+        constraint_noise_std: Union[None, float, List[float]] = None,
+        negate: bool = False,
+        bounds: Optional[List[Tuple[float, float]]] = None,
+    ) -> None:
+        r"""
+        Args:
+            dim: The (input) dimension.
+            noise_std: Standard deviation of the observation noise.
+            constraint_noise_std: Standard deviation of the constraint noise.
+                If a list is provided, specifies separate noise standard
+                deviations for each constraint.
+            negate: If True, negate the function.
+            bounds: Custom bounds for the function specified as (lower, upper) pairs.
+        """
+        self.setup_constraint_noise(constraint_noise_std)
+        Hartmann.__init__(
+            self, dim=dim, noise_std=noise_std, negate=negate, bounds=bounds
+        )
+
     def evaluate_slack_true(self, X: Tensor) -> Tensor:
         return -X.norm(dim=-1, keepdim=True) + 1
 
 
-class ConstrainedHartmannSmooth(Hartmann, ConstrainedBaseTestProblem):
+class ConstrainedHartmannSmooth(Hartmann, ConstrainedSyntheticTestFunction):
     r"""Smooth constrained Hartmann test function.
 
     This is a constrained version of the standard Hartmann test function that
@@ -857,11 +931,34 @@ class ConstrainedHartmannSmooth(Hartmann, ConstrainedBaseTestProblem):
     """
     num_constraints = 1
 
+    def __init__(
+        self,
+        dim: int = 6,
+        noise_std: Union[None, float] = None,
+        constraint_noise_std: Union[None, float, List[float]] = None,
+        negate: bool = False,
+        bounds: Optional[List[Tuple[float, float]]] = None,
+    ) -> None:
+        r"""
+        Args:
+            dim: The (input) dimension.
+            noise_std: Standard deviation of the observation noise.
+            constraint_noise_std: Standard deviation of the constraint noise.
+                If a list is provided, specifies separate noise standard
+                deviations for each constraint.
+            negate: If True, negate the function.
+            bounds: Custom bounds for the function specified as (lower, upper) pairs.
+        """
+        self.setup_constraint_noise(constraint_noise_std)
+        Hartmann.__init__(
+            self, dim=dim, noise_std=noise_std, negate=negate, bounds=bounds
+        )
+
     def evaluate_slack_true(self, X: Tensor) -> Tensor:
         return -X.pow(2).sum(dim=-1, keepdim=True) + 1
 
 
-class PressureVessel(SyntheticTestFunction, ConstrainedBaseTestProblem):
+class PressureVessel(ConstrainedSyntheticTestFunction):
     r"""Pressure vessel design problem with constraints.
 
     The four-dimensional pressure vessel design problem with four black-box
@@ -896,7 +993,7 @@ class PressureVessel(SyntheticTestFunction, ConstrainedBaseTestProblem):
         )
 
 
-class WeldedBeamSO(SyntheticTestFunction, ConstrainedBaseTestProblem):
+class WeldedBeamSO(ConstrainedSyntheticTestFunction):
     r"""Welded beam design problem with constraints (single-outcome).
 
     The four-dimensional welded beam design proble problem with six
@@ -952,7 +1049,7 @@ class WeldedBeamSO(SyntheticTestFunction, ConstrainedBaseTestProblem):
         return -torch.stack([g1, g2, g3, g4, g5, g6], dim=-1)
 
 
-class TensionCompressionString(SyntheticTestFunction, ConstrainedBaseTestProblem):
+class TensionCompressionString(ConstrainedSyntheticTestFunction):
     r"""Tension compression string optimization problem with constraints.
 
     The three-dimensional tension compression string optimization problem with
@@ -983,7 +1080,7 @@ class TensionCompressionString(SyntheticTestFunction, ConstrainedBaseTestProblem
         return -constraints.clamp_max(100)
 
 
-class SpeedReducer(SyntheticTestFunction, ConstrainedBaseTestProblem):
+class SpeedReducer(ConstrainedSyntheticTestFunction):
     r"""Speed Reducer design problem with constraints.
 
     The seven-dimensional speed reducer design problem with eleven black-box
