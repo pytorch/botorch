@@ -8,7 +8,7 @@ import math
 from typing import List
 
 import torch
-from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.errors import InputDataError, UnsupportedError
 from botorch.test_functions.base import BaseTestProblem
 from botorch.test_functions.multi_objective import (
     BNH,
@@ -75,6 +75,8 @@ class TestBaseTestMultiObjectiveProblem(BotorchTestCase):
                     self.assertTrue(torch.equal(f_X, expected_f_X))
                 with self.assertRaises(NotImplementedError):
                     f.gen_pareto_front(1)
+            with self.assertRaises(InputDataError):
+                f = DummyMOProblem(noise_std=[1.0, 2.0, 3.0], negate=negate)
 
 
 class TestBraninCurrin(
