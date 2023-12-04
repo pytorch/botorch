@@ -828,12 +828,12 @@ class ConstrainedSyntheticTestFunction(
             negate: If True, negate the function.
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
-        self.setup_constraint_noise(constraint_noise_std)
+        self.constraint_noise_std = self._validate_constraint_noise(constraint_noise_std)
         SyntheticTestFunction.__init__(
             self, noise_std=noise_std, negate=negate, bounds=bounds
         )
 
-    def setup_constraint_noise(self, constraint_noise_std):
+    def _validate_constraint_noise(self, constraint_noise_std) -> Union[None, float, List[float]]:
         """
         Validates that constraint_noise_std has length equal to
         the number of constraints, if given as a list
@@ -848,11 +848,11 @@ class ConstrainedSyntheticTestFunction(
             and len(constraint_noise_std) != self.num_constraints
         ):
             raise InputDataError(
-                f"If specified as a list, length of constraint_noise_std "
+                "If specified as a list, length of constraint_noise_std "
                 f"({len(constraint_noise_std)}) must match the "
                 f"number of constraints ({self.num_constraints})"
             )
-        self.constraint_noise_std = constraint_noise_std
+        return constraint_noise_std
 
 
 class ConstrainedGramacy(ConstrainedSyntheticTestFunction):
