@@ -134,7 +134,9 @@ class TestConstraintNoise(BotorchTestCase):
     ]
 
     def test_constraint_noise_length_validation(self):
-        with self.assertRaises(InputDataError):
+        with self.assertRaisesRegex(
+            InputDataError, "must match the number of constraints"
+        ):
             DummyConstrainedSyntheticTestFunction(constraint_noise_std=[0.1, 0.2])
 
 

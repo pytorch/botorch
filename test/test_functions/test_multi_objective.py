@@ -75,7 +75,9 @@ class TestBaseTestMultiObjectiveProblem(BotorchTestCase):
                     self.assertTrue(torch.equal(f_X, expected_f_X))
                 with self.assertRaises(NotImplementedError):
                     f.gen_pareto_front(1)
-            with self.assertRaises(InputDataError):
+            with self.assertRaisesRegex(
+                InputDataError, "must match the number of objectives"
+            ):
                 f = DummyMOProblem(noise_std=[1.0, 2.0, 3.0], negate=negate)
 
 
