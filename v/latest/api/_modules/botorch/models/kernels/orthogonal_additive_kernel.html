@@ -40,7 +40,9 @@
 <span class="n">_positivity_constraint</span> <span class="o">=</span> <span class="n">Positive</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="OrthogonalAdditiveKernel"><a class="viewcode-back" href="../../../../models.html#botorch.models.kernels.orthogonal_additive_kernel.OrthogonalAdditiveKernel">[docs]</a><span class="k">class</span> <span class="nc">OrthogonalAdditiveKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">):</span>
+<div class="viewcode-block" id="OrthogonalAdditiveKernel">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.kernels.orthogonal_additive_kernel.OrthogonalAdditiveKernel">[docs]</a>
+<span class="k">class</span> <span class="nc">OrthogonalAdditiveKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Orthogonal Additive Kernels (OAKs) were introduced in [Lu2022additive]_, though</span>
 <span class="sd">    only for the case of Gaussian base kernels with a Gaussian input data distribution.</span>
 
@@ -250,6 +252,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="p">()</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_normalizer"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_normalizer</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">w</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="p">)</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="n">eps</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalizer</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">leggauss</span><span class="p">(</span>

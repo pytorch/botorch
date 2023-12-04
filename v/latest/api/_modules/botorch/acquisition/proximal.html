@@ -48,7 +48,9 @@
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 
 
-<div class="viewcode-block" id="ProximalAcquisitionFunction"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.proximal.ProximalAcquisitionFunction">[docs]</a><span class="k">class</span> <span class="nc">ProximalAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="ProximalAcquisitionFunction">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.proximal.ProximalAcquisitionFunction">[docs]</a>
+<span class="k">class</span> <span class="nc">ProximalAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A wrapper around AcquisitionFunctions to add proximal weighting of the</span>
 <span class="sd">    acquisition function. The acquisition function is</span>
 <span class="sd">    weighted via a squared exponential centered at the last training point,</span>
@@ -114,7 +116,9 @@
 
         <span class="n">_validate_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">proximal_weights</span><span class="p">)</span>
 
-<div class="viewcode-block" id="ProximalAcquisitionFunction.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.proximal.ProximalAcquisitionFunction.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">assert_output_shape</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="viewcode-block" id="ProximalAcquisitionFunction.forward">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.proximal.ProximalAcquisitionFunction.forward">[docs]</a>
+    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">assert_output_shape</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate base acquisition function with proximal weighting.</span>
 
@@ -173,7 +177,9 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">base_acqf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">softplus</span><span class="p">(</span><span class="n">base_acqf</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">base_acqf</span> <span class="o">*</span> <span class="n">proximal_acq_weight</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span></div></div>
+        <span class="k">return</span> <span class="n">base_acqf</span> <span class="o">*</span> <span class="n">proximal_acq_weight</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span></div>
+</div>
+
 
 
 <span class="k">def</span> <span class="nf">_validate_model</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">proximal_weights</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>

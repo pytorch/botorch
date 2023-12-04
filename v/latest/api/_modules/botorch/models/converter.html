@@ -136,7 +136,9 @@
             <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span><span class="s2">"All models must have the same input_transforms."</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="model_list_to_batched"><a class="viewcode-back" href="../../../models.html#botorch.models.converter.model_list_to_batched">[docs]</a><span class="k">def</span> <span class="nf">model_list_to_batched</span><span class="p">(</span><span class="n">model_list</span><span class="p">:</span> <span class="n">ModelListGP</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">:</span>
+<div class="viewcode-block" id="model_list_to_batched">
+<a class="viewcode-back" href="../../../models.html#botorch.models.converter.model_list_to_batched">[docs]</a>
+<span class="k">def</span> <span class="nf">model_list_to_batched</span><span class="p">(</span><span class="n">model_list</span><span class="p">:</span> <span class="n">ModelListGP</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Convert a ModelListGP to a BatchedMultiOutputGPyTorchModel.</span>
 
 <span class="sd">    Args:</span>
@@ -227,6 +229,7 @@
     <span class="k">return</span> <span class="n">batch_gp</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">was_training</span><span class="p">)</span></div>
 
 
+
 <span class="k">def</span> <span class="nf">_batched_kernel</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">batch_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Adds a batch dimension of size `batch_length` to all non-scalar</span>
 <span class="sd">    Tensor parameters that govern the kernel function `kernel`.</span>
@@ -246,7 +249,9 @@
 
 <span class="c1"># two helper functions for `batched_kernel`</span>
 <span class="c1"># like `setattr` and `getattr` for object hierarchies</span>
-<div class="viewcode-block" id="set_attribute"><a class="viewcode-back" href="../../../models.html#botorch.models.converter.set_attribute">[docs]</a><span class="k">def</span> <span class="nf">set_attribute</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+<div class="viewcode-block" id="set_attribute">
+<a class="viewcode-back" href="../../../models.html#botorch.models.converter.set_attribute">[docs]</a>
+<span class="k">def</span> <span class="nf">set_attribute</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Like `setattr` but works with hierarchical attribute specification.</span>
 <span class="sd">    E.g. if obj=Zoo(), and attr="tiger.age", set_attribute(obj, attr, 3),</span>
 <span class="sd">    would set the Zoo's tiger's age to three.</span>
@@ -256,7 +261,10 @@
     <span class="nb">setattr</span><span class="p">(</span><span class="n">leaf</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="get_attribute"><a class="viewcode-back" href="../../../models.html#botorch.models.converter.get_attribute">[docs]</a><span class="k">def</span> <span class="nf">get_attribute</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+
+<div class="viewcode-block" id="get_attribute">
+<a class="viewcode-back" href="../../../models.html#botorch.models.converter.get_attribute">[docs]</a>
+<span class="k">def</span> <span class="nf">get_attribute</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Like `getattr` but works with hierarchical attribute specification.</span>
 <span class="sd">    E.g. if obj=Zoo(), and attr="tiger.age", get_attribute(obj, attr),</span>
 <span class="sd">    would return the Zoo's tiger's age.</span>
@@ -267,7 +275,10 @@
     <span class="k">return</span> <span class="n">obj</span></div>
 
 
-<div class="viewcode-block" id="batched_to_model_list"><a class="viewcode-back" href="../../../models.html#botorch.models.converter.batched_to_model_list">[docs]</a><span class="k">def</span> <span class="nf">batched_to_model_list</span><span class="p">(</span><span class="n">batch_model</span><span class="p">:</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelListGP</span><span class="p">:</span>
+
+<div class="viewcode-block" id="batched_to_model_list">
+<a class="viewcode-back" href="../../../models.html#botorch.models.converter.batched_to_model_list">[docs]</a>
+<span class="k">def</span> <span class="nf">batched_to_model_list</span><span class="p">(</span><span class="n">batch_model</span><span class="p">:</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelListGP</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Convert a BatchedMultiOutputGPyTorchModel to a ModelListGP.</span>
 
 <span class="sd">    Args:</span>
@@ -352,7 +363,10 @@
     <span class="k">return</span> <span class="n">ModelListGP</span><span class="p">(</span><span class="o">*</span><span class="n">models</span><span class="p">)</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">was_training</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="batched_multi_output_to_single_output"><a class="viewcode-back" href="../../../models.html#botorch.models.converter.batched_multi_output_to_single_output">[docs]</a><span class="k">def</span> <span class="nf">batched_multi_output_to_single_output</span><span class="p">(</span>
+
+<div class="viewcode-block" id="batched_multi_output_to_single_output">
+<a class="viewcode-back" href="../../../models.html#botorch.models.converter.batched_multi_output_to_single_output">[docs]</a>
+<span class="k">def</span> <span class="nf">batched_multi_output_to_single_output</span><span class="p">(</span>
     <span class="n">batch_mo_model</span><span class="p">:</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Convert a model from batched multi-output to a batched single-output.</span>
@@ -424,6 +438,7 @@
     <span class="p">)</span>
     <span class="n">single_outcome_model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">batch_sd</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">single_outcome_model</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">was_training</span><span class="p">)</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">_get_adjusted_batch_keys</span><span class="p">(</span>

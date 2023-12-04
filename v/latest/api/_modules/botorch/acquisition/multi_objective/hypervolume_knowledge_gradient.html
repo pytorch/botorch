@@ -71,7 +71,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="qHypervolumeKnowledgeGradient"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qHypervolumeKnowledgeGradient">[docs]</a><span class="k">class</span> <span class="nc">qHypervolumeKnowledgeGradient</span><span class="p">(</span>
+<div class="viewcode-block" id="qHypervolumeKnowledgeGradient">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qHypervolumeKnowledgeGradient">[docs]</a>
+<span class="k">class</span> <span class="nc">qHypervolumeKnowledgeGradient</span><span class="p">(</span>
     <span class="n">DecoupledAcquisitionFunction</span><span class="p">,</span>
     <span class="n">MultiObjectiveMCAcquisitionFunction</span><span class="p">,</span>
     <span class="n">OneShotAcquisitionFunction</span><span class="p">,</span>
@@ -207,7 +209,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_cost_sampler</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cost_sampler</span>
 
-<div class="viewcode-block" id="qHypervolumeKnowledgeGradient.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qHypervolumeKnowledgeGradient.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
+<div class="viewcode-block" id="qHypervolumeKnowledgeGradient.forward">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qHypervolumeKnowledgeGradient.forward">[docs]</a>
+    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qKnowledgeGradient on the candidate set `X`.</span>
 
@@ -296,7 +300,10 @@
         <span class="c1"># return average over the fantasy samples</span>
         <span class="k">return</span> <span class="n">values</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="qHypervolumeKnowledgeGradient.get_augmented_q_batch_size"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qHypervolumeKnowledgeGradient.get_augmented_q_batch_size">[docs]</a>    <span class="k">def</span> <span class="nf">get_augmented_q_batch_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+
+<div class="viewcode-block" id="qHypervolumeKnowledgeGradient.get_augmented_q_batch_size">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qHypervolumeKnowledgeGradient.get_augmented_q_batch_size">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_augmented_q_batch_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Get augmented q batch size for one-shot optimization.</span>
 
 <span class="sd">        Args:</span>
@@ -308,7 +315,10 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="n">q</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_pseudo_points</span></div>
 
-<div class="viewcode-block" id="qHypervolumeKnowledgeGradient.extract_candidates"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qHypervolumeKnowledgeGradient.extract_candidates">[docs]</a>    <span class="k">def</span> <span class="nf">extract_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_full</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="qHypervolumeKnowledgeGradient.extract_candidates">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qHypervolumeKnowledgeGradient.extract_candidates">[docs]</a>
+    <span class="k">def</span> <span class="nf">extract_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_full</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""We only return X as the set of candidates post-optimization.</span>
 
 <span class="sd">        Args:</span>
@@ -318,10 +328,14 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            A `b x q x d`-dim Tensor with `b` t-batches of `q` design points each.</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="n">X_full</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">num_pseudo_points</span><span class="p">,</span> <span class="p">:]</span></div></div>
+        <span class="k">return</span> <span class="n">X_full</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">num_pseudo_points</span><span class="p">,</span> <span class="p">:]</span></div>
+</div>
 
 
-<div class="viewcode-block" id="qMultiFidelityHypervolumeKnowledgeGradient"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qMultiFidelityHypervolumeKnowledgeGradient">[docs]</a><span class="k">class</span> <span class="nc">qMultiFidelityHypervolumeKnowledgeGradient</span><span class="p">(</span><span class="n">qHypervolumeKnowledgeGradient</span><span class="p">):</span>
+
+<div class="viewcode-block" id="qMultiFidelityHypervolumeKnowledgeGradient">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qMultiFidelityHypervolumeKnowledgeGradient">[docs]</a>
+<span class="k">class</span> <span class="nc">qMultiFidelityHypervolumeKnowledgeGradient</span><span class="p">(</span><span class="n">qHypervolumeKnowledgeGradient</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Batch Hypervolume Knowledge Gradient for multi-fidelity optimization.</span>
 
 <span class="sd">    See [Daulton2023hvkg]_ for details.</span>
@@ -424,7 +438,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">valfunc_argfac</span> <span class="o">=</span> <span class="n">valfunc_argfac</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">target_fidelities</span> <span class="o">=</span> <span class="n">target_fidelities</span>
 
-<div class="viewcode-block" id="qMultiFidelityHypervolumeKnowledgeGradient.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qMultiFidelityHypervolumeKnowledgeGradient.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
+<div class="viewcode-block" id="qMultiFidelityHypervolumeKnowledgeGradient.forward">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qMultiFidelityHypervolumeKnowledgeGradient.forward">[docs]</a>
+    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qMultiFidelityKnowledgeGradient on the candidate set `X`.</span>
 
@@ -513,7 +529,9 @@
             <span class="p">)</span>
 
         <span class="c1"># return average over the fantasy samples</span>
-        <span class="k">return</span> <span class="n">values</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">values</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+</div>
+
 
 
 <span class="k">def</span> <span class="nf">_get_hv_value_function</span><span class="p">(</span>

@@ -77,7 +77,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="MCAcquisitionFunction"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.MCAcquisitionFunction">[docs]</a><span class="k">class</span> <span class="nc">MCAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<div class="viewcode-block" id="MCAcquisitionFunction">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.MCAcquisitionFunction">[docs]</a>
+<span class="k">class</span> <span class="nc">MCAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Abstract base class for Monte-Carlo based batch acquisition functions.</span>
 
@@ -146,7 +148,9 @@
         <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">samples</span><span class="p">,</span> <span class="n">obj</span>
 
-<div class="viewcode-block" id="MCAcquisitionFunction.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.MCAcquisitionFunction.forward">[docs]</a>    <span class="nd">@abstractmethod</span>
+<div class="viewcode-block" id="MCAcquisitionFunction.forward">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.MCAcquisitionFunction.forward">[docs]</a>
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Takes in a `batch_shape x q x d` X Tensor of t-batches with `q` `d`-dim</span>
 <span class="sd">        design points each, and returns a Tensor with shape `batch_shape'`, where</span>
@@ -154,10 +158,14 @@
 <span class="sd">        utilize the result of `set_X_pending` as needed to account for pending function</span>
 <span class="sd">        evaluations.</span>
 <span class="sd">        """</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div></div>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+</div>
 
 
-<div class="viewcode-block" id="SampleReductionProtocol"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.SampleReductionProtocol">[docs]</a><span class="k">class</span> <span class="nc">SampleReductionProtocol</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SampleReductionProtocol">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.SampleReductionProtocol">[docs]</a>
+<span class="k">class</span> <span class="nc">SampleReductionProtocol</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""For static type check of SampleReducingMCAcquisitionFunction's mc_reduction."""</span>
 
     <span class="nd">@staticmethod</span>
@@ -165,7 +173,10 @@
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
 
 
-<div class="viewcode-block" id="SampleReducingMCAcquisitionFunction"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction">[docs]</a><span class="k">class</span> <span class="nc">SampleReducingMCAcquisitionFunction</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SampleReducingMCAcquisitionFunction">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction">[docs]</a>
+<span class="k">class</span> <span class="nc">SampleReducingMCAcquisitionFunction</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batch acquisition function that reduces across samples and implements</span>
 <span class="sd">    a general treatment of outcome constraints.</span>
 
@@ -274,7 +285,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_eta</span> <span class="o">=</span> <span class="n">eta</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_fat</span> <span class="o">=</span> <span class="n">fat</span>
 
-<div class="viewcode-block" id="SampleReducingMCAcquisitionFunction.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
+<div class="viewcode-block" id="SampleReducingMCAcquisitionFunction.forward">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction.forward">[docs]</a>
+    <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Computes the acquisition value associated with the input `X`. Weighs the</span>
@@ -296,6 +309,7 @@
 <span class="sd">        """</span>
         <span class="n">non_reduced_acqval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_non_reduced_forward</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_reduction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_q_reduction</span><span class="p">(</span><span class="n">non_reduced_acqval</span><span class="p">))</span></div>
+
 
     <span class="k">def</span> <span class="nf">_non_reduced_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Compute the constrained acquisition values at the MC-sample, q level.</span>
@@ -354,7 +368,10 @@
         <span class="k">return</span> <span class="n">acqval</span></div>
 
 
-<div class="viewcode-block" id="qExpectedImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qExpectedImprovement">[docs]</a><span class="k">class</span> <span class="nc">qExpectedImprovement</span><span class="p">(</span><span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">):</span>
+
+<div class="viewcode-block" id="qExpectedImprovement">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qExpectedImprovement">[docs]</a>
+<span class="k">class</span> <span class="nc">qExpectedImprovement</span><span class="p">(</span><span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batch Expected Improvement.</span>
 
 <span class="sd">    This computes qEI by</span>
@@ -433,7 +450,10 @@
         <span class="k">return</span> <span class="p">(</span><span class="n">obj</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_f</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="qNoisyExpectedImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qNoisyExpectedImprovement">[docs]</a><span class="k">class</span> <span class="nc">qNoisyExpectedImprovement</span><span class="p">(</span>
+
+<div class="viewcode-block" id="qNoisyExpectedImprovement">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qNoisyExpectedImprovement">[docs]</a>
+<span class="k">class</span> <span class="nc">qNoisyExpectedImprovement</span><span class="p">(</span>
     <span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">,</span> <span class="n">CachedCholeskyMCSamplerMixin</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batch Noisy Expected Improvement.</span>
@@ -565,7 +585,9 @@
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_baseline_L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_root_decomposition</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">)</span>
 
-<div class="viewcode-block" id="qNoisyExpectedImprovement.compute_best_f"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qNoisyExpectedImprovement.compute_best_f">[docs]</a>    <span class="k">def</span> <span class="nf">compute_best_f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="qNoisyExpectedImprovement.compute_best_f">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qNoisyExpectedImprovement.compute_best_f">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute_best_f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Computes the best (feasible) noisy objective value.</span>
 
 <span class="sd">        Args:</span>
@@ -590,6 +612,7 @@
             <span class="p">]</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">val</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">view_shape</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="nf">_sample_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Evaluate qNoisyExpectedImprovement per objective value in `obj`.</span>
@@ -659,7 +682,10 @@
         <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="qProbabilityOfImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qProbabilityOfImprovement">[docs]</a><span class="k">class</span> <span class="nc">qProbabilityOfImprovement</span><span class="p">(</span><span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">):</span>
+
+<div class="viewcode-block" id="qProbabilityOfImprovement">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qProbabilityOfImprovement">[docs]</a>
+<span class="k">class</span> <span class="nc">qProbabilityOfImprovement</span><span class="p">(</span><span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batch Probability of Improvement.</span>
 
 <span class="sd">    Estimates the probability of improvement over the current best observed</span>
@@ -745,7 +771,10 @@
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">improvement</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">tau</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="qSimpleRegret"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qSimpleRegret">[docs]</a><span class="k">class</span> <span class="nc">qSimpleRegret</span><span class="p">(</span><span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">):</span>
+
+<div class="viewcode-block" id="qSimpleRegret">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qSimpleRegret">[docs]</a>
+<span class="k">class</span> <span class="nc">qSimpleRegret</span><span class="p">(</span><span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batch Simple Regret.</span>
 
 <span class="sd">    Samples from the joint posterior over the q-batch and computes the simple regret.</span>
@@ -771,7 +800,10 @@
         <span class="k">return</span> <span class="n">obj</span></div>
 
 
-<div class="viewcode-block" id="qUpperConfidenceBound"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qUpperConfidenceBound">[docs]</a><span class="k">class</span> <span class="nc">qUpperConfidenceBound</span><span class="p">(</span><span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">):</span>
+
+<div class="viewcode-block" id="qUpperConfidenceBound">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qUpperConfidenceBound">[docs]</a>
+<span class="k">class</span> <span class="nc">qUpperConfidenceBound</span><span class="p">(</span><span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batch Upper Confidence Bound.</span>
 
 <span class="sd">    Uses a reparameterization to extend UCB to qUCB for q &gt; 1 (See Appendix A</span>
@@ -831,6 +863,7 @@
 <span class="sd">        """</span>
         <span class="n">mean</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">mean</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta_prime</span> <span class="o">*</span> <span class="p">(</span><span class="n">obj</span> <span class="o">-</span> <span class="n">mean</span><span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span></div>
+
 </pre></div>
 </div>
 </div>

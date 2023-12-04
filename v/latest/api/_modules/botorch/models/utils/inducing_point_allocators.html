@@ -58,7 +58,9 @@
 <span class="n">NEG_INF</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">"-inf"</span><span class="p">))</span>
 
 
-<div class="viewcode-block" id="InducingPointAllocator"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.InducingPointAllocator">[docs]</a><span class="k">class</span> <span class="nc">InducingPointAllocator</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<div class="viewcode-block" id="InducingPointAllocator">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.InducingPointAllocator">[docs]</a>
+<span class="k">class</span> <span class="nc">InducingPointAllocator</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    This class provides functionality to initialize the inducing point locations</span>
 <span class="sd">    of an inducing point-based model, e.g. a `SingleTaskVariationalGP`.</span>
@@ -75,7 +77,9 @@
 <span class="sd">            A quality function.</span>
 <span class="sd">        """</span>
 
-<div class="viewcode-block" id="InducingPointAllocator.allocate_inducing_points"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.InducingPointAllocator.allocate_inducing_points">[docs]</a>    <span class="k">def</span> <span class="nf">allocate_inducing_points</span><span class="p">(</span>
+<div class="viewcode-block" id="InducingPointAllocator.allocate_inducing_points">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.InducingPointAllocator.allocate_inducing_points">[docs]</a>
+    <span class="k">def</span> <span class="nf">allocate_inducing_points</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">covar_module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
@@ -171,10 +175,14 @@
             <span class="o">*</span><span class="n">input_batch_shape</span><span class="p">,</span> <span class="n">num_inducing</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span>
         <span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">inducing_points</span></div></div>
+        <span class="k">return</span> <span class="n">inducing_points</span></div>
+</div>
 
 
-<div class="viewcode-block" id="QualityFunction"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.QualityFunction">[docs]</a><span class="k">class</span> <span class="nc">QualityFunction</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+
+<div class="viewcode-block" id="QualityFunction">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.QualityFunction">[docs]</a>
+<span class="k">class</span> <span class="nc">QualityFunction</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A function that scores inputs with respect</span>
 <span class="sd">    to a specific criterion."""</span>
 
@@ -189,7 +197,10 @@
 <span class="sd">        """</span></div>
 
 
-<div class="viewcode-block" id="UnitQualityFunction"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.UnitQualityFunction">[docs]</a><span class="k">class</span> <span class="nc">UnitQualityFunction</span><span class="p">(</span><span class="n">QualityFunction</span><span class="p">):</span>
+
+<div class="viewcode-block" id="UnitQualityFunction">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.UnitQualityFunction">[docs]</a>
+<span class="k">class</span> <span class="nc">UnitQualityFunction</span><span class="p">(</span><span class="n">QualityFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    A function returning ones for each element. Using this quality function</span>
 <span class="sd">    for inducing point allocation corresponds to allocating inducing points</span>
@@ -209,7 +220,10 @@
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">([</span><span class="n">inputs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">device</span><span class="o">=</span><span class="n">inputs</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">inputs</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="ExpectedImprovementQualityFunction"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.ExpectedImprovementQualityFunction">[docs]</a><span class="k">class</span> <span class="nc">ExpectedImprovementQualityFunction</span><span class="p">(</span><span class="n">QualityFunction</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ExpectedImprovementQualityFunction">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.ExpectedImprovementQualityFunction">[docs]</a>
+<span class="k">class</span> <span class="nc">ExpectedImprovementQualityFunction</span><span class="p">(</span><span class="n">QualityFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    A function measuring the quality of input points as their expected</span>
 <span class="sd">    improvement with respect to a conservative baseline. Expectations</span>
@@ -251,7 +265,10 @@
         <span class="k">return</span> <span class="n">sigma</span> <span class="o">*</span> <span class="p">(</span><span class="n">phi</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="o">+</span> <span class="n">u</span> <span class="o">*</span> <span class="n">Phi</span><span class="p">(</span><span class="n">u</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="GreedyVarianceReduction"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.GreedyVarianceReduction">[docs]</a><span class="k">class</span> <span class="nc">GreedyVarianceReduction</span><span class="p">(</span><span class="n">InducingPointAllocator</span><span class="p">):</span>
+
+<div class="viewcode-block" id="GreedyVarianceReduction">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.GreedyVarianceReduction">[docs]</a>
+<span class="k">class</span> <span class="nc">GreedyVarianceReduction</span><span class="p">(</span><span class="n">InducingPointAllocator</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    The inducing point allocator proposed by [burt2020svgp]_, that</span>
 <span class="sd">    greedily chooses inducing point locations with maximal (conditional)</span>
@@ -272,7 +289,10 @@
         <span class="k">return</span> <span class="n">UnitQualityFunction</span><span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="GreedyImprovementReduction"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.GreedyImprovementReduction">[docs]</a><span class="k">class</span> <span class="nc">GreedyImprovementReduction</span><span class="p">(</span><span class="n">InducingPointAllocator</span><span class="p">):</span>
+
+<div class="viewcode-block" id="GreedyImprovementReduction">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.GreedyImprovementReduction">[docs]</a>
+<span class="k">class</span> <span class="nc">GreedyImprovementReduction</span><span class="p">(</span><span class="n">InducingPointAllocator</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    An inducing point allocator that greedily chooses inducing points with large</span>
 <span class="sd">    predictive variance and that are in promising regions of the search</span>
@@ -304,7 +324,10 @@
         <span class="k">return</span> <span class="n">ExpectedImprovementQualityFunction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_maximize</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="_pivoted_cholesky_init"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators._pivoted_cholesky_init">[docs]</a><span class="k">def</span> <span class="nf">_pivoted_cholesky_init</span><span class="p">(</span>
+
+<div class="viewcode-block" id="_pivoted_cholesky_init">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators._pivoted_cholesky_init">[docs]</a>
+<span class="k">def</span> <span class="nf">_pivoted_cholesky_init</span><span class="p">(</span>
     <span class="n">train_inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">kernel_matrix</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">LinearOperator</span><span class="p">],</span>
     <span class="n">max_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -380,6 +403,7 @@
     <span class="n">ind_points</span> <span class="o">=</span> <span class="n">train_inputs</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">selected_items</span><span class="p">)]</span>
 
     <span class="k">return</span> <span class="n">ind_points</span><span class="p">[:</span><span class="n">max_length</span><span class="p">,</span> <span class="p">:]</span></div>
+
 </pre></div>
 </div>
 </div>

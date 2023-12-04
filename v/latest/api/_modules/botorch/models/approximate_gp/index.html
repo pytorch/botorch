@@ -95,7 +95,9 @@
 <span class="n">TApproxModel</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"TApproxModel"</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">"ApproximateGPyTorchModel"</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="ApproximateGPyTorchModel"><a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel">[docs]</a><span class="k">class</span> <span class="nc">ApproximateGPyTorchModel</span><span class="p">(</span><span class="n">GPyTorchModel</span><span class="p">):</span>
+<div class="viewcode-block" id="ApproximateGPyTorchModel">
+<a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel">[docs]</a>
+<span class="k">class</span> <span class="nc">ApproximateGPyTorchModel</span><span class="p">(</span><span class="n">GPyTorchModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Botorch wrapper class for various (variational) approximate GP models in</span>
 <span class="sd">    GPyTorch.</span>
@@ -146,11 +148,16 @@
     <span class="k">def</span> <span class="nf">num_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_desired_num_outputs</span>
 
-<div class="viewcode-block" id="ApproximateGPyTorchModel.eval"><a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel.eval">[docs]</a>    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">TApproxModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TApproxModel</span><span class="p">:</span>
+<div class="viewcode-block" id="ApproximateGPyTorchModel.eval">
+<a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel.eval">[docs]</a>
+    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">TApproxModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TApproxModel</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Puts the model in `eval` mode."""</span>
         <span class="k">return</span> <span class="n">Module</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="ApproximateGPyTorchModel.train"><a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel.train">[docs]</a>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">TApproxModel</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TApproxModel</span><span class="p">:</span>
+
+<div class="viewcode-block" id="ApproximateGPyTorchModel.train">
+<a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel.train">[docs]</a>
+    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">TApproxModel</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TApproxModel</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Put the model in `train` mode.</span>
 
 <span class="sd">        Args:</span>
@@ -159,7 +166,10 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="n">Module</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="ApproximateGPyTorchModel.posterior"><a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel.posterior">[docs]</a>    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
+
+<div class="viewcode-block" id="ApproximateGPyTorchModel.posterior">
+<a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel.posterior">[docs]</a>
+    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">output_indices</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchPosterior</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>  <span class="c1"># make sure model is in eval mode</span>
@@ -182,10 +192,15 @@
             <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span><span class="o">.</span><span class="n">untransform_posterior</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">posterior</span></div>
 
-<div class="viewcode-block" id="ApproximateGPyTorchModel.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
+
+<div class="viewcode-block" id="ApproximateGPyTorchModel.forward">
+<a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
             <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div>
+</div>
+
 
 
 <span class="k">class</span> <span class="nc">_SingleTaskVariationalGP</span><span class="p">(</span><span class="n">ApproximateGP</span><span class="p">):</span>
@@ -304,7 +319,9 @@
         <span class="k">return</span> <span class="n">latent_dist</span>
 
 
-<div class="viewcode-block" id="SingleTaskVariationalGP"><a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.SingleTaskVariationalGP">[docs]</a><span class="k">class</span> <span class="nc">SingleTaskVariationalGP</span><span class="p">(</span><span class="n">ApproximateGPyTorchModel</span><span class="p">):</span>
+<div class="viewcode-block" id="SingleTaskVariationalGP">
+<a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.SingleTaskVariationalGP">[docs]</a>
+<span class="k">class</span> <span class="nc">SingleTaskVariationalGP</span><span class="p">(</span><span class="n">ApproximateGPyTorchModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A single-task variational GP model following [hensman2013svgp]_.</span>
 
 <span class="sd">    By default, the inducing points are initialized though the</span>
@@ -461,7 +478,9 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span>
 
-<div class="viewcode-block" id="SingleTaskVariationalGP.init_inducing_points"><a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.SingleTaskVariationalGP.init_inducing_points">[docs]</a>    <span class="k">def</span> <span class="nf">init_inducing_points</span><span class="p">(</span>
+<div class="viewcode-block" id="SingleTaskVariationalGP.init_inducing_points">
+<a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.SingleTaskVariationalGP.init_inducing_points">[docs]</a>
+    <span class="k">def</span> <span class="nf">init_inducing_points</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -493,7 +512,9 @@
             <span class="n">var_strat</span><span class="o">.</span><span class="n">inducing_points</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">inducing_points</span><span class="p">)</span>
             <span class="n">var_strat</span><span class="o">.</span><span class="n">variational_params_initialized</span><span class="o">.</span><span class="n">fill_</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">inducing_points</span></div></div>
+        <span class="k">return</span> <span class="n">inducing_points</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

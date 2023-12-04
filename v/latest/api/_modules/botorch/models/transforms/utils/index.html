@@ -36,7 +36,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="lognorm_to_norm"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.utils.lognorm_to_norm">[docs]</a><span class="k">def</span> <span class="nf">lognorm_to_norm</span><span class="p">(</span><span class="n">mu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<div class="viewcode-block" id="lognorm_to_norm">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.utils.lognorm_to_norm">[docs]</a>
+<span class="k">def</span> <span class="nf">lognorm_to_norm</span><span class="p">(</span><span class="n">mu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Compute mean and covariance of a MVN from those of the associated log-MVN</span>
 
 <span class="sd">    If `Y` is log-normal with mean mu_ln and covariance Cov_ln, then</span>
@@ -61,7 +63,10 @@
     <span class="k">return</span> <span class="n">mu_n</span><span class="p">,</span> <span class="n">Cov_n</span></div>
 
 
-<div class="viewcode-block" id="norm_to_lognorm"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.utils.norm_to_lognorm">[docs]</a><span class="k">def</span> <span class="nf">norm_to_lognorm</span><span class="p">(</span><span class="n">mu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+
+<div class="viewcode-block" id="norm_to_lognorm">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.utils.norm_to_lognorm">[docs]</a>
+<span class="k">def</span> <span class="nf">norm_to_lognorm</span><span class="p">(</span><span class="n">mu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Compute mean and covariance of a log-MVN from its MVN sufficient statistics</span>
 
 <span class="sd">    If `X ~ N(mu, Cov)` and `Y = exp(X)`, then `Y` is log-normal with</span>
@@ -88,7 +93,10 @@
     <span class="k">return</span> <span class="n">mu_ln</span><span class="p">,</span> <span class="n">Cov_ln</span></div>
 
 
-<div class="viewcode-block" id="norm_to_lognorm_mean"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.utils.norm_to_lognorm_mean">[docs]</a><span class="k">def</span> <span class="nf">norm_to_lognorm_mean</span><span class="p">(</span><span class="n">mu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="norm_to_lognorm_mean">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.utils.norm_to_lognorm_mean">[docs]</a>
+<span class="k">def</span> <span class="nf">norm_to_lognorm_mean</span><span class="p">(</span><span class="n">mu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Compute mean of a log-MVN from its MVN marginals</span>
 
 <span class="sd">    Args:</span>
@@ -101,7 +109,10 @@
     <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">mu</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">var</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="norm_to_lognorm_variance"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.utils.norm_to_lognorm_variance">[docs]</a><span class="k">def</span> <span class="nf">norm_to_lognorm_variance</span><span class="p">(</span><span class="n">mu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="norm_to_lognorm_variance">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.utils.norm_to_lognorm_variance">[docs]</a>
+<span class="k">def</span> <span class="nf">norm_to_lognorm_variance</span><span class="p">(</span><span class="n">mu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Compute variance of a log-MVN from its MVN marginals</span>
 
 <span class="sd">    Args:</span>
@@ -115,7 +126,10 @@
     <span class="k">return</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">var</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="expand_and_copy_tensor"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.utils.expand_and_copy_tensor">[docs]</a><span class="k">def</span> <span class="nf">expand_and_copy_tensor</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="expand_and_copy_tensor">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.utils.expand_and_copy_tensor">[docs]</a>
+<span class="k">def</span> <span class="nf">expand_and_copy_tensor</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Expand and copy X according to batch_shape.</span>
 
 <span class="sd">    Args:</span>
@@ -137,7 +151,10 @@
     <span class="k">return</span> <span class="n">X</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">expand_shape</span><span class="p">)</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="subset_transform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.utils.subset_transform">[docs]</a><span class="k">def</span> <span class="nf">subset_transform</span><span class="p">(</span><span class="n">transform</span><span class="p">):</span>
+
+<div class="viewcode-block" id="subset_transform">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.utils.subset_transform">[docs]</a>
+<span class="k">def</span> <span class="nf">subset_transform</span><span class="p">(</span><span class="n">transform</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Decorator of an input transform function to separate out indexing logic."""</span>
 
     <span class="nd">@wraps</span><span class="p">(</span><span class="n">transform</span><span class="p">)</span>
@@ -150,6 +167,7 @@
         <span class="k">return</span> <span class="n">Y</span>
 
     <span class="k">return</span> <span class="n">f</span></div>
+
 </pre></div>
 </div>
 </div>

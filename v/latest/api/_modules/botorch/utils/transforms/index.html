@@ -46,7 +46,9 @@
     <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 
 
-<div class="viewcode-block" id="standardize"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.standardize">[docs]</a><span class="k">def</span> <span class="nf">standardize</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="standardize">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.standardize">[docs]</a>
+<span class="k">def</span> <span class="nf">standardize</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Standardizes (zero mean, unit variance) a tensor by dim=-2.</span>
 
 <span class="sd">    If the tensor is single-dimensional, simply standardizes the tensor.</span>
@@ -69,7 +71,10 @@
     <span class="k">return</span> <span class="p">(</span><span class="n">Y</span> <span class="o">-</span> <span class="n">Y</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">stddim</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span> <span class="o">/</span> <span class="n">Y_std</span></div>
 
 
-<div class="viewcode-block" id="normalize"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.normalize">[docs]</a><span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="normalize">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.normalize">[docs]</a>
+<span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Min-max normalize X w.r.t. the provided bounds.</span>
 
 <span class="sd">    Args:</span>
@@ -91,7 +96,10 @@
     <span class="k">return</span> <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div>
 
 
-<div class="viewcode-block" id="unnormalize"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.unnormalize">[docs]</a><span class="k">def</span> <span class="nf">unnormalize</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="unnormalize">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.unnormalize">[docs]</a>
+<span class="k">def</span> <span class="nf">unnormalize</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Un-normalizes X w.r.t. the provided bounds.</span>
 
 <span class="sd">    Args:</span>
@@ -113,7 +121,10 @@
     <span class="k">return</span> <span class="n">X</span> <span class="o">*</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="normalize_indices"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.normalize_indices">[docs]</a><span class="k">def</span> <span class="nf">normalize_indices</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+
+<div class="viewcode-block" id="normalize_indices">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.normalize_indices">[docs]</a>
+<span class="k">def</span> <span class="nf">normalize_indices</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Normalize a list of indices to ensure that they are positive.</span>
 
 <span class="sd">    Args:</span>
@@ -135,6 +146,7 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Index </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> out of bounds for tensor or length </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
         <span class="n">normalized_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">normalized_indices</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">_verify_output_shape</span><span class="p">(</span><span class="n">acqf</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -187,7 +199,9 @@
         <span class="k">return</span> <span class="kc">True</span>
 
 
-<div class="viewcode-block" id="is_fully_bayesian"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.is_fully_bayesian">[docs]</a><span class="k">def</span> <span class="nf">is_fully_bayesian</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<div class="viewcode-block" id="is_fully_bayesian">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.is_fully_bayesian">[docs]</a>
+<span class="k">def</span> <span class="nf">is_fully_bayesian</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Check if at least one model is a fully Bayesian model.</span>
 
 <span class="sd">    Args:</span>
@@ -203,7 +217,10 @@
     <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"_is_fully_bayesian"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="is_ensemble"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.is_ensemble">[docs]</a><span class="k">def</span> <span class="nf">is_ensemble</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+
+<div class="viewcode-block" id="is_ensemble">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.is_ensemble">[docs]</a>
+<span class="k">def</span> <span class="nf">is_ensemble</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Check if at least one model is an ensemble model.</span>
 
 <span class="sd">    Args:</span>
@@ -219,7 +236,10 @@
     <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"_is_ensemble"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="t_batch_mode_transform"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.t_batch_mode_transform">[docs]</a><span class="k">def</span> <span class="nf">t_batch_mode_transform</span><span class="p">(</span>
+
+<div class="viewcode-block" id="t_batch_mode_transform">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.t_batch_mode_transform">[docs]</a>
+<span class="k">def</span> <span class="nf">t_batch_mode_transform</span><span class="p">(</span>
     <span class="n">expected_q</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">assert_output_shape</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span>
@@ -303,7 +323,10 @@
     <span class="k">return</span> <span class="n">decorator</span></div>
 
 
-<div class="viewcode-block" id="concatenate_pending_points"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.concatenate_pending_points">[docs]</a><span class="k">def</span> <span class="nf">concatenate_pending_points</span><span class="p">(</span>
+
+<div class="viewcode-block" id="concatenate_pending_points">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.concatenate_pending_points">[docs]</a>
+<span class="k">def</span> <span class="nf">concatenate_pending_points</span><span class="p">(</span>
     <span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Decorator concatenating X_pending into an acquisition function's argument.</span>
@@ -330,7 +353,10 @@
     <span class="k">return</span> <span class="n">decorated</span></div>
 
 
-<div class="viewcode-block" id="match_batch_shape"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.match_batch_shape">[docs]</a><span class="k">def</span> <span class="nf">match_batch_shape</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="match_batch_shape">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.match_batch_shape">[docs]</a>
+<span class="k">def</span> <span class="nf">match_batch_shape</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Matches the batch dimension of a tensor to that of another tensor.</span>
 
 <span class="sd">    Args:</span>
@@ -356,9 +382,13 @@
     <span class="k">return</span> <span class="n">X</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span> <span class="o">-</span><span class="p">(</span><span class="n">Y</span><span class="o">.</span><span class="n">dim</span><span class="p">())]</span> <span class="o">+</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:])</span></div>
 
 
-<div class="viewcode-block" id="convert_to_target_pre_hook"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.convert_to_target_pre_hook">[docs]</a><span class="k">def</span> <span class="nf">convert_to_target_pre_hook</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+
+<div class="viewcode-block" id="convert_to_target_pre_hook">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.convert_to_target_pre_hook">[docs]</a>
+<span class="k">def</span> <span class="nf">convert_to_target_pre_hook</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Pre-hook for automatically calling `.to(X)` on module prior to `forward`"""</span>
     <span class="n">module</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span></div>
+
 </pre></div>
 </div>
 </div>

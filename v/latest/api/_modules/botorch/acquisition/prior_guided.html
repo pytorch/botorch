@@ -50,7 +50,9 @@
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 
 
-<div class="viewcode-block" id="PriorGuidedAcquisitionFunction"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.prior_guided.PriorGuidedAcquisitionFunction">[docs]</a><span class="k">class</span> <span class="nc">PriorGuidedAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="PriorGuidedAcquisitionFunction">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.prior_guided.PriorGuidedAcquisitionFunction">[docs]</a>
+<span class="k">class</span> <span class="nc">PriorGuidedAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Class for weighting acquisition functions by a prior distribution.</span>
 
 <span class="sd">    Supports MC and batch acquisition functions via</span>
@@ -94,7 +96,9 @@
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span><span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">)</span>
 
-<div class="viewcode-block" id="PriorGuidedAcquisitionFunction.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.prior_guided.PriorGuidedAcquisitionFunction.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
+<div class="viewcode-block" id="PriorGuidedAcquisitionFunction.forward">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.prior_guided.PriorGuidedAcquisitionFunction.forward">[docs]</a>
+    <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the acquisition function weighted by the prior."""</span>
@@ -119,7 +123,9 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">acq_func</span><span class="o">.</span><span class="n">_sample_reduction</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">acq_func</span><span class="o">.</span><span class="n">_q_reduction</span><span class="p">(</span><span class="n">weighted_af_val</span><span class="p">)</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">weighted_af_val</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># squeeze q-dim</span></div></div>
+        <span class="k">return</span> <span class="n">weighted_af_val</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># squeeze q-dim</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

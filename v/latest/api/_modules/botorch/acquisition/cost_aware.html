@@ -77,7 +77,9 @@
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
 
-<div class="viewcode-block" id="GenericCostAwareUtility"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cost_aware.GenericCostAwareUtility">[docs]</a><span class="k">class</span> <span class="nc">GenericCostAwareUtility</span><span class="p">(</span><span class="n">CostAwareUtility</span><span class="p">):</span>
+<div class="viewcode-block" id="GenericCostAwareUtility">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cost_aware.GenericCostAwareUtility">[docs]</a>
+<span class="k">class</span> <span class="nc">GenericCostAwareUtility</span><span class="p">(</span><span class="n">CostAwareUtility</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Generic cost-aware utility wrapping a callable."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cost</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -90,7 +92,9 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cost_callable</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="n">cost</span>
 
-<div class="viewcode-block" id="GenericCostAwareUtility.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cost_aware.GenericCostAwareUtility.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">deltas</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="GenericCostAwareUtility.forward">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cost_aware.GenericCostAwareUtility.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">deltas</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the cost function on the candidates and improvements.</span>
 
 <span class="sd">        Args:</span>
@@ -103,10 +107,14 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            A `num_fantasies x batch_shape`-dim Tensor of cost-weighted utilities.</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cost_callable</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">deltas</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cost_callable</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">deltas</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="InverseCostWeightedUtility"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cost_aware.InverseCostWeightedUtility">[docs]</a><span class="k">class</span> <span class="nc">InverseCostWeightedUtility</span><span class="p">(</span><span class="n">CostAwareUtility</span><span class="p">):</span>
+
+<div class="viewcode-block" id="InverseCostWeightedUtility">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cost_aware.InverseCostWeightedUtility">[docs]</a>
+<span class="k">class</span> <span class="nc">InverseCostWeightedUtility</span><span class="p">(</span><span class="n">CostAwareUtility</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A cost-aware utility using inverse cost weighting based on a model.</span>
 
 <span class="sd">    Computes the cost-aware utility by inverse-weighting samples</span>
@@ -160,7 +168,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_use_mean</span> <span class="o">=</span> <span class="n">use_mean</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_min_cost</span> <span class="o">=</span> <span class="n">min_cost</span>
 
-<div class="viewcode-block" id="InverseCostWeightedUtility.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cost_aware.InverseCostWeightedUtility.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+<div class="viewcode-block" id="InverseCostWeightedUtility.forward">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cost_aware.InverseCostWeightedUtility.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">deltas</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -230,7 +240,9 @@
 
         <span class="c1"># compute and return the ratio on the sample level - If `use_mean=True`</span>
         <span class="c1"># this operation involves broadcasting the cost across fantasies</span>
-        <span class="k">return</span> <span class="n">deltas</span> <span class="o">/</span> <span class="n">cost</span></div></div>
+        <span class="k">return</span> <span class="n">deltas</span> <span class="o">/</span> <span class="n">cost</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

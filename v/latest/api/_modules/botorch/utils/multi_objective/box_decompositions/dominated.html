@@ -41,7 +41,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="DominatedPartitioning"><a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.dominated.DominatedPartitioning">[docs]</a><span class="k">class</span> <span class="nc">DominatedPartitioning</span><span class="p">(</span><span class="n">FastPartitioning</span><span class="p">):</span>
+<div class="viewcode-block" id="DominatedPartitioning">
+<a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.dominated.DominatedPartitioning">[docs]</a>
+<span class="k">class</span> <span class="nc">DominatedPartitioning</span><span class="p">(</span><span class="n">FastPartitioning</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Partition dominated space into axis-aligned hyperrectangles.</span>
 
 <span class="sd">    This uses the Algorithm 1 from [Lacour17]_.</span>
@@ -91,6 +93,7 @@
             <span class="mi">2</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_neg_pareto_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_outcomes</span>
         <span class="p">)</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">hypercell_bounds</span> <span class="o">=</span> <span class="n">cell_bounds</span></div>
+
 </pre></div>
 </div>
 </div>

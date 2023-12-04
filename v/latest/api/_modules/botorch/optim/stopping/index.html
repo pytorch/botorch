@@ -63,7 +63,9 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">fvals</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="ExpMAStoppingCriterion"><a class="viewcode-back" href="../../../optim.html#botorch.optim.stopping.ExpMAStoppingCriterion">[docs]</a><span class="k">class</span> <span class="nc">ExpMAStoppingCriterion</span><span class="p">(</span><span class="n">StoppingCriterion</span><span class="p">):</span>
+<div class="viewcode-block" id="ExpMAStoppingCriterion">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.stopping.ExpMAStoppingCriterion">[docs]</a>
+<span class="k">class</span> <span class="nc">ExpMAStoppingCriterion</span><span class="p">(</span><span class="n">StoppingCriterion</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Exponential moving average stopping criterion.</span>
 
 <span class="sd">    Computes an exponentially weighted moving average over window length `n_window`</span>
@@ -105,7 +107,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="n">weights</span> <span class="o">/</span> <span class="n">weights</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_prev_fvals</span> <span class="o">=</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="ExpMAStoppingCriterion.evaluate"><a class="viewcode-back" href="../../../optim.html#botorch.optim.stopping.ExpMAStoppingCriterion.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fvals</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<div class="viewcode-block" id="ExpMAStoppingCriterion.evaluate">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.stopping.ExpMAStoppingCriterion.evaluate">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fvals</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the stopping criterion.</span>
 
 <span class="sd">        Args:</span>
@@ -149,7 +153,9 @@
         <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">rel_delta</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">rel_tol</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">True</span>
 
-        <span class="k">return</span> <span class="kc">False</span></div></div>
+        <span class="k">return</span> <span class="kc">False</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

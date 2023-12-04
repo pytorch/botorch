@@ -36,7 +36,9 @@
 <span class="n">MAX_BYTES</span> <span class="o">=</span> <span class="mf">5e6</span>
 
 
-<div class="viewcode-block" id="is_non_dominated"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.pareto.is_non_dominated">[docs]</a><span class="k">def</span> <span class="nf">is_non_dominated</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">deduplicate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="is_non_dominated">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.pareto.is_non_dominated">[docs]</a>
+<span class="k">def</span> <span class="nf">is_non_dominated</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">deduplicate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes the non-dominated front.</span>
 
 <span class="sd">    Note: this assumes maximization.</span>
@@ -75,6 +77,7 @@
         <span class="n">keep</span><span class="o">.</span><span class="n">scatter_</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">indices</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">nd_mask</span> <span class="o">&amp;</span> <span class="n">keep</span>
     <span class="k">return</span> <span class="n">nd_mask</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">_is_non_dominated_loop</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>

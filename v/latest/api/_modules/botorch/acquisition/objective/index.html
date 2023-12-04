@@ -92,7 +92,9 @@
 <span class="kn">from</span> <span class="nn">botorch.models.deterministic</span> <span class="kn">import</span> <span class="n">DeterministicModel</span>  <span class="c1"># noqa</span>
 
 
-<div class="viewcode-block" id="ScalarizedPosteriorTransform"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ScalarizedPosteriorTransform">[docs]</a><span class="k">class</span> <span class="nc">ScalarizedPosteriorTransform</span><span class="p">(</span><span class="n">PosteriorTransform</span><span class="p">):</span>
+<div class="viewcode-block" id="ScalarizedPosteriorTransform">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ScalarizedPosteriorTransform">[docs]</a>
+<span class="k">class</span> <span class="nc">ScalarizedPosteriorTransform</span><span class="p">(</span><span class="n">PosteriorTransform</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""An affine posterior transform for scalarizing multi-output posteriors.</span>
 
 <span class="sd">    For a Gaussian posterior at a single point (`q=1`) with mean `mu` and</span>
@@ -124,7 +126,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"weights"</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">=</span> <span class="n">offset</span>
 
-<div class="viewcode-block" id="ScalarizedPosteriorTransform.evaluate"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ScalarizedPosteriorTransform.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="ScalarizedPosteriorTransform.evaluate">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ScalarizedPosteriorTransform.evaluate">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the transform on a set of outcomes.</span>
 
 <span class="sd">        Args:</span>
@@ -135,7 +139,10 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">+</span> <span class="n">Y</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span></div>
 
-<div class="viewcode-block" id="ScalarizedPosteriorTransform.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ScalarizedPosteriorTransform.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+
+<div class="viewcode-block" id="ScalarizedPosteriorTransform.forward">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ScalarizedPosteriorTransform.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">GPyTorchPosterior</span><span class="p">,</span> <span class="n">PosteriorList</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchPosterior</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the posterior of the affine transformation.</span>
@@ -149,10 +156,14 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="n">scalarize_posterior</span><span class="p">(</span>
             <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">offset</span>
-        <span class="p">)</span></div></div>
+        <span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="ExpectationPosteriorTransform"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ExpectationPosteriorTransform">[docs]</a><span class="k">class</span> <span class="nc">ExpectationPosteriorTransform</span><span class="p">(</span><span class="n">PosteriorTransform</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ExpectationPosteriorTransform">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ExpectationPosteriorTransform">[docs]</a>
+<span class="k">class</span> <span class="nc">ExpectationPosteriorTransform</span><span class="p">(</span><span class="n">PosteriorTransform</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Transform the `batch x (q * n_w) x m` posterior into a `batch x q x m`</span>
 <span class="sd">    posterior of the expectation. The expectation is calculated over each</span>
 <span class="sd">    consecutive `n_w` block of points in the posterior.</span>
@@ -191,7 +202,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"weights"</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_w</span> <span class="o">=</span> <span class="n">n_w</span>
 
-<div class="viewcode-block" id="ExpectationPosteriorTransform.evaluate"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ExpectationPosteriorTransform.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="ExpectationPosteriorTransform.evaluate">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ExpectationPosteriorTransform.evaluate">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the expectation of a set of outcomes.</span>
 
 <span class="sd">        Args:</span>
@@ -204,7 +217,10 @@
         <span class="n">weighted_Y</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_w</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">weighted_Y</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="ExpectationPosteriorTransform.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ExpectationPosteriorTransform.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchPosterior</span><span class="p">:</span>
+
+<div class="viewcode-block" id="ExpectationPosteriorTransform.forward">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ExpectationPosteriorTransform.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchPosterior</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the posterior of the expectation.</span>
 
 <span class="sd">        Args:</span>
@@ -255,10 +271,14 @@
             <span class="n">new_mvn</span> <span class="o">=</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">(</span>
                 <span class="n">new_loc</span><span class="p">,</span> <span class="n">to_linear_operator</span><span class="p">(</span><span class="n">new_cov</span><span class="p">),</span> <span class="n">interleaved</span><span class="o">=</span><span class="kc">False</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="n">new_mvn</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="n">new_mvn</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="UnstandardizePosteriorTransform"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.UnstandardizePosteriorTransform">[docs]</a><span class="k">class</span> <span class="nc">UnstandardizePosteriorTransform</span><span class="p">(</span><span class="n">PosteriorTransform</span><span class="p">):</span>
+
+<div class="viewcode-block" id="UnstandardizePosteriorTransform">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.UnstandardizePosteriorTransform">[docs]</a>
+<span class="k">class</span> <span class="nc">UnstandardizePosteriorTransform</span><span class="p">(</span><span class="n">PosteriorTransform</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Posterior transform that unstandardizes the posterior.</span>
 
 <span class="sd">    TODO: remove this when MultiTask models support outcome transforms.</span>
@@ -290,11 +310,18 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span><span class="o">.</span><span class="n">_is_trained</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
 
-<div class="viewcode-block" id="UnstandardizePosteriorTransform.evaluate"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.UnstandardizePosteriorTransform.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="UnstandardizePosteriorTransform.evaluate">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.UnstandardizePosteriorTransform.evaluate">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span><span class="o">.</span><span class="n">untransform</span><span class="p">(</span><span class="n">Y</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span></div>
 
-<div class="viewcode-block" id="UnstandardizePosteriorTransform.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.UnstandardizePosteriorTransform.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span><span class="o">.</span><span class="n">untransform_posterior</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="UnstandardizePosteriorTransform.forward">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.UnstandardizePosteriorTransform.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span><span class="o">.</span><span class="n">untransform_posterior</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span></div>
+</div>
+
 
 
 <span class="k">class</span> <span class="nc">MCAcquisitionObjective</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
@@ -355,7 +382,9 @@
         <span class="k">return</span> <span class="n">output</span>
 
 
-<div class="viewcode-block" id="IdentityMCObjective"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.IdentityMCObjective">[docs]</a><span class="k">class</span> <span class="nc">IdentityMCObjective</span><span class="p">(</span><span class="n">MCAcquisitionObjective</span><span class="p">):</span>
+<div class="viewcode-block" id="IdentityMCObjective">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.IdentityMCObjective">[docs]</a>
+<span class="k">class</span> <span class="nc">IdentityMCObjective</span><span class="p">(</span><span class="n">MCAcquisitionObjective</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Trivial objective extracting the last dimension.</span>
 
 <span class="sd">    Example:</span>
@@ -364,11 +393,17 @@
 <span class="sd">        &gt;&gt;&gt; objective = identity_objective(samples)</span>
 <span class="sd">    """</span>
 
-<div class="viewcode-block" id="IdentityMCObjective.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.IdentityMCObjective.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">samples</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></div></div>
+<div class="viewcode-block" id="IdentityMCObjective.forward">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.IdentityMCObjective.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">samples</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="LinearMCObjective"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.LinearMCObjective">[docs]</a><span class="k">class</span> <span class="nc">LinearMCObjective</span><span class="p">(</span><span class="n">MCAcquisitionObjective</span><span class="p">):</span>
+
+<div class="viewcode-block" id="LinearMCObjective">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.LinearMCObjective">[docs]</a>
+<span class="k">class</span> <span class="nc">LinearMCObjective</span><span class="p">(</span><span class="n">MCAcquisitionObjective</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Linear objective constructed from a weight tensor.</span>
 
 <span class="sd">    For input `samples` and `mc_obj = LinearMCObjective(weights)`, this produces</span>
@@ -394,7 +429,9 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"weights must be a one-dimensional tensor."</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"weights"</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
 
-<div class="viewcode-block" id="LinearMCObjective.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.LinearMCObjective.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="LinearMCObjective.forward">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.LinearMCObjective.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the linear objective on the samples.</span>
 
 <span class="sd">        Args:</span>
@@ -408,10 +445,14 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Output shape of samples not equal to that of weights"</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">"...m, m"</span><span class="p">,</span> <span class="p">[</span><span class="n">samples</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">])</span></div></div>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">"...m, m"</span><span class="p">,</span> <span class="p">[</span><span class="n">samples</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">])</span></div>
+</div>
 
 
-<div class="viewcode-block" id="GenericMCObjective"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.GenericMCObjective">[docs]</a><span class="k">class</span> <span class="nc">GenericMCObjective</span><span class="p">(</span><span class="n">MCAcquisitionObjective</span><span class="p">):</span>
+
+<div class="viewcode-block" id="GenericMCObjective">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.GenericMCObjective">[docs]</a>
+<span class="k">class</span> <span class="nc">GenericMCObjective</span><span class="p">(</span><span class="n">MCAcquisitionObjective</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Objective generated from a generic callable.</span>
 
 <span class="sd">    Allows to construct arbitrary MC-objective functions from a generic</span>
@@ -450,7 +491,9 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">objective</span> <span class="o">=</span> <span class="n">objective</span>
 
-<div class="viewcode-block" id="GenericMCObjective.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.GenericMCObjective.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="GenericMCObjective.forward">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.GenericMCObjective.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the objective on the samples.</span>
 
 <span class="sd">        Args:</span>
@@ -462,10 +505,14 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            A `sample_shape x batch_shape x q`-dim Tensor of objective values.</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="ConstrainedMCObjective"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ConstrainedMCObjective">[docs]</a><span class="k">class</span> <span class="nc">ConstrainedMCObjective</span><span class="p">(</span><span class="n">GenericMCObjective</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ConstrainedMCObjective">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ConstrainedMCObjective">[docs]</a>
+<span class="k">class</span> <span class="nc">ConstrainedMCObjective</span><span class="p">(</span><span class="n">GenericMCObjective</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Feasibility-weighted objective.</span>
 
 <span class="sd">    An Objective allowing to maximize some scalable objective on the model</span>
@@ -525,7 +572,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"eta"</span><span class="p">,</span> <span class="n">eta</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"infeasible_cost"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">infeasible_cost</span><span class="p">))</span>
 
-<div class="viewcode-block" id="ConstrainedMCObjective.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ConstrainedMCObjective.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="ConstrainedMCObjective.forward">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ConstrainedMCObjective.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the feasibility-weighted objective on the samples.</span>
 
 <span class="sd">        Args:</span>
@@ -545,7 +594,9 @@
             <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span>
             <span class="n">infeasible_cost</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">infeasible_cost</span><span class="p">,</span>
             <span class="n">eta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">eta</span><span class="p">,</span>
-        <span class="p">)</span></div></div>
+        <span class="p">)</span></div>
+</div>
+
 
 
 <span class="n">LEARNED_OBJECTIVE_PREF_MODEL_MIXED_DTYPE_WARN</span> <span class="o">=</span> <span class="p">(</span>
@@ -554,7 +605,9 @@
 <span class="p">)</span>
 
 
-<div class="viewcode-block" id="LearnedObjective"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.LearnedObjective">[docs]</a><span class="k">class</span> <span class="nc">LearnedObjective</span><span class="p">(</span><span class="n">MCAcquisitionObjective</span><span class="p">):</span>
+<div class="viewcode-block" id="LearnedObjective">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.LearnedObjective">[docs]</a>
+<span class="k">class</span> <span class="nc">LearnedObjective</span><span class="p">(</span><span class="n">MCAcquisitionObjective</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Learned preference objective constructed from a preference model.</span>
 
 <span class="sd">    For input `samples`, it samples each individual sample again from the latent</span>
@@ -607,7 +660,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="o">=</span> <span class="n">IIDNormalSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">batch_range_override</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
-<div class="viewcode-block" id="LearnedObjective.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.LearnedObjective.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="LearnedObjective.forward">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.LearnedObjective.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample each element of samples.</span>
 
 <span class="sd">        Args:</span>
@@ -638,7 +693,9 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># return preference posterior augmented samples</span>
             <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">samples</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>  <span class="c1"># batch_shape x N</span></div></div>
+            <span class="k">return</span> <span class="n">samples</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>  <span class="c1"># batch_shape x N</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

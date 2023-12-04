@@ -42,7 +42,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">long</span><span class="p">,</span> <span class="n">ones</span><span class="p">,</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="SupervisedDataset"><a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.SupervisedDataset">[docs]</a><span class="k">class</span> <span class="nc">SupervisedDataset</span><span class="p">:</span>
+<div class="viewcode-block" id="SupervisedDataset">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.SupervisedDataset">[docs]</a>
+<span class="k">class</span> <span class="nc">SupervisedDataset</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Base class for datasets consisting of labelled pairs `(X, Y)`</span>
 <span class="sd">    and an optional `Yvar` that stipulates observations variances so</span>
 <span class="sd">    that `Y[i] ~ N(f(X[i]), Yvar[i])`.</span>
@@ -174,7 +176,10 @@
         <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="FixedNoiseDataset"><a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.FixedNoiseDataset">[docs]</a><span class="k">class</span> <span class="nc">FixedNoiseDataset</span><span class="p">(</span><span class="n">SupervisedDataset</span><span class="p">):</span>
+
+<div class="viewcode-block" id="FixedNoiseDataset">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.FixedNoiseDataset">[docs]</a>
+<span class="k">class</span> <span class="nc">FixedNoiseDataset</span><span class="p">(</span><span class="n">SupervisedDataset</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A SupervisedDataset with an additional field `Yvar` that stipulates</span>
 <span class="sd">    observations variances so that `Y[i] ~ N(f(X[i]), Yvar[i])`.</span>
 
@@ -206,7 +211,10 @@
         <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="RankingDataset"><a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.RankingDataset">[docs]</a><span class="k">class</span> <span class="nc">RankingDataset</span><span class="p">(</span><span class="n">SupervisedDataset</span><span class="p">):</span>
+
+<div class="viewcode-block" id="RankingDataset">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.RankingDataset">[docs]</a>
+<span class="k">class</span> <span class="nc">RankingDataset</span><span class="p">(</span><span class="n">SupervisedDataset</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A SupervisedDataset whose labelled pairs `(x, y)` consist of m-ary combinations</span>
 <span class="sd">    `x ∈ Z^{m}` of elements from a ground set `Z = (z_1, ...)` and ranking vectors</span>
 <span class="sd">    `y {0, ..., m - 1}^{m}` with properties:</span>
@@ -299,7 +307,10 @@
             <span class="n">y_incr</span> <span class="o">=</span> <span class="n">y_incr</span> <span class="o">-</span> <span class="n">y_diff</span> <span class="o">+</span> <span class="mi">1</span></div>
 
 
-<div class="viewcode-block" id="MultiTaskDataset"><a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.MultiTaskDataset">[docs]</a><span class="k">class</span> <span class="nc">MultiTaskDataset</span><span class="p">(</span><span class="n">SupervisedDataset</span><span class="p">):</span>
+
+<div class="viewcode-block" id="MultiTaskDataset">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.MultiTaskDataset">[docs]</a>
+<span class="k">class</span> <span class="nc">MultiTaskDataset</span><span class="p">(</span><span class="n">SupervisedDataset</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""This is a multi-task dataset that is constructed from the datasets of</span>
 <span class="sd">    individual tasks. It offers functionality to combine parts of individual</span>
 <span class="sd">    datasets to construct the inputs necessary for the `MultiTaskGP` models.</span>
@@ -341,7 +352,9 @@
             <span class="n">datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">feature_names</span> <span class="o">!=</span> <span class="n">ds</span><span class="o">.</span><span class="n">feature_names</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
         <span class="p">)</span>
 
-<div class="viewcode-block" id="MultiTaskDataset.from_joint_dataset"><a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.MultiTaskDataset.from_joint_dataset">[docs]</a>    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="MultiTaskDataset.from_joint_dataset">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.MultiTaskDataset.from_joint_dataset">[docs]</a>
+    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">from_joint_dataset</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">dataset</span><span class="p">:</span> <span class="n">SupervisedDataset</span><span class="p">,</span>
@@ -405,6 +418,7 @@
             <span class="p">),</span>
             <span class="n">task_feature_index</span><span class="o">=</span><span class="n">task_feature_index</span><span class="p">,</span>
         <span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="nf">_validate_datasets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datasets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Validates that:</span>
@@ -490,7 +504,9 @@
         <span class="n">all_Yvars</span> <span class="o">=</span> <span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">Yvar</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
         <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">all_Yvars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">all_Yvars</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-<div class="viewcode-block" id="MultiTaskDataset.get_dataset_without_task_feature"><a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.MultiTaskDataset.get_dataset_without_task_feature">[docs]</a>    <span class="k">def</span> <span class="nf">get_dataset_without_task_feature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outcome_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SupervisedDataset</span><span class="p">:</span>
+<div class="viewcode-block" id="MultiTaskDataset.get_dataset_without_task_feature">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.MultiTaskDataset.get_dataset_without_task_feature">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_dataset_without_task_feature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outcome_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SupervisedDataset</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""A helper for extracting the child datasets with their task features removed.</span>
 
 <span class="sd">        If the task feature index is `None`, the dataset will be returned as is.</span>
@@ -514,10 +530,14 @@
                 <span class="n">fn</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">fn</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">feature_names</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span>
             <span class="p">],</span>
             <span class="n">outcome_names</span><span class="o">=</span><span class="p">[</span><span class="n">outcome_name</span><span class="p">],</span>
-        <span class="p">)</span></div></div>
+        <span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="ContextualDataset"><a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.ContextualDataset">[docs]</a><span class="k">class</span> <span class="nc">ContextualDataset</span><span class="p">(</span><span class="n">SupervisedDataset</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ContextualDataset">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.ContextualDataset">[docs]</a>
+<span class="k">class</span> <span class="nc">ContextualDataset</span><span class="p">(</span><span class="n">SupervisedDataset</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""This is a contextual dataset that is constructed from either a single</span>
 <span class="sd">    dateset containing overall outcome or a list of datasets that each corresponds</span>
 <span class="sd">    to a context breakdown.</span>
@@ -664,6 +684,7 @@
                     <span class="k">raise</span> <span class="n">InputDataError</span><span class="p">(</span>
                         <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">outcome</span><span class="si">}</span><span class="s2"> is missing in metric_decomposition."</span>
                     <span class="p">)</span></div>
+
 </pre></div>
 </div>
 </div>

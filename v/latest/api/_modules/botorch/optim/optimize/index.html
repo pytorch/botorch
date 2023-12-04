@@ -80,7 +80,9 @@
 <span class="p">}</span>
 
 
-<div class="viewcode-block" id="OptimizeAcqfInputs"><a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.OptimizeAcqfInputs">[docs]</a><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="viewcode-block" id="OptimizeAcqfInputs">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.OptimizeAcqfInputs">[docs]</a>
+<span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">OptimizeAcqfInputs</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Container for inputs to `optimize_acqf`.</span>
@@ -151,14 +153,18 @@
                     <span class="s2">"`batch_initial_conditions` is None`."</span>
                 <span class="p">)</span>
 
-<div class="viewcode-block" id="OptimizeAcqfInputs.get_ic_generator"><a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.OptimizeAcqfInputs.get_ic_generator">[docs]</a>    <span class="k">def</span> <span class="nf">get_ic_generator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TGenInitialConditions</span><span class="p">:</span>
+<div class="viewcode-block" id="OptimizeAcqfInputs.get_ic_generator">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.OptimizeAcqfInputs.get_ic_generator">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_ic_generator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TGenInitialConditions</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ic_generator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ic_generator</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acq_function</span><span class="p">,</span> <span class="n">qKnowledgeGradient</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">gen_one_shot_kg_initial_conditions</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acq_function</span><span class="p">,</span> <span class="n">qHypervolumeKnowledgeGradient</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">gen_one_shot_hvkg_initial_conditions</span>
-        <span class="k">return</span> <span class="n">gen_batch_initial_conditions</span></div></div>
+        <span class="k">return</span> <span class="n">gen_batch_initial_conditions</span></div>
+</div>
+
 
 
 <span class="k">def</span> <span class="nf">_raise_deprecation_warning_if_kwargs</span><span class="p">(</span><span class="n">fn_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -437,7 +443,9 @@
     <span class="k">return</span> <span class="n">batch_candidates</span><span class="p">,</span> <span class="n">batch_acq_values</span>
 
 
-<div class="viewcode-block" id="optimize_acqf"><a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf">[docs]</a><span class="k">def</span> <span class="nf">optimize_acqf</span><span class="p">(</span>
+<div class="viewcode-block" id="optimize_acqf">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf">[docs]</a>
+<span class="k">def</span> <span class="nf">optimize_acqf</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -586,6 +594,7 @@
     <span class="k">return</span> <span class="n">_optimize_acqf</span><span class="p">(</span><span class="n">opt_acqf_inputs</span><span class="p">)</span></div>
 
 
+
 <span class="k">def</span> <span class="nf">_optimize_acqf</span><span class="p">(</span><span class="n">opt_inputs</span><span class="p">:</span> <span class="n">OptimizeAcqfInputs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
     <span class="c1"># Handle the trivial case when all features are fixed</span>
     <span class="k">if</span> <span class="p">(</span>
@@ -607,7 +616,9 @@
     <span class="k">return</span> <span class="n">_optimize_acqf_batch</span><span class="p">(</span><span class="n">opt_inputs</span><span class="o">=</span><span class="n">opt_inputs</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="optimize_acqf_cyclic"><a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf_cyclic">[docs]</a><span class="k">def</span> <span class="nf">optimize_acqf_cyclic</span><span class="p">(</span>
+<div class="viewcode-block" id="optimize_acqf_cyclic">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf_cyclic">[docs]</a>
+<span class="k">def</span> <span class="nf">optimize_acqf_cyclic</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -743,7 +754,10 @@
     <span class="k">return</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">acq_vals</span></div>
 
 
-<div class="viewcode-block" id="optimize_acqf_list"><a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf_list">[docs]</a><span class="k">def</span> <span class="nf">optimize_acqf_list</span><span class="p">(</span>
+
+<div class="viewcode-block" id="optimize_acqf_list">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf_list">[docs]</a>
+<span class="k">def</span> <span class="nf">optimize_acqf_list</span><span class="p">(</span>
     <span class="n">acq_function_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">AcquisitionFunction</span><span class="p">],</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">num_restarts</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -875,7 +889,10 @@
     <span class="k">return</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">acq_value_list</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="optimize_acqf_mixed"><a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf_mixed">[docs]</a><span class="k">def</span> <span class="nf">optimize_acqf_mixed</span><span class="p">(</span>
+
+<div class="viewcode-block" id="optimize_acqf_mixed">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf_mixed">[docs]</a>
+<span class="k">def</span> <span class="nf">optimize_acqf_mixed</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -1034,7 +1051,10 @@
     <span class="k">return</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">acq_value</span></div>
 
 
-<div class="viewcode-block" id="optimize_acqf_discrete"><a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf_discrete">[docs]</a><span class="k">def</span> <span class="nf">optimize_acqf_discrete</span><span class="p">(</span>
+
+<div class="viewcode-block" id="optimize_acqf_discrete">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf_discrete">[docs]</a>
+<span class="k">def</span> <span class="nf">optimize_acqf_discrete</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">choices</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -1114,6 +1134,7 @@
     <span class="k">return</span> <span class="n">choices_batched</span><span class="p">[</span><span class="n">best_idx</span><span class="p">],</span> <span class="n">acq_values</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]</span></div>
 
 
+
 <span class="k">def</span> <span class="nf">_split_batch_eval_acqf</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">max_batch_size</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -1181,7 +1202,9 @@
     <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to generate at least </span><span class="si">{</span><span class="n">min_points</span><span class="si">}</span><span class="s2"> initial conditions"</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="optimize_acqf_discrete_local_search"><a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf_discrete_local_search">[docs]</a><span class="k">def</span> <span class="nf">optimize_acqf_discrete_local_search</span><span class="p">(</span>
+<div class="viewcode-block" id="optimize_acqf_discrete_local_search">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf_discrete_local_search">[docs]</a>
+<span class="k">def</span> <span class="nf">optimize_acqf_discrete_local_search</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
     <span class="n">discrete_choices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -1321,6 +1344,7 @@
     <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
         <span class="n">acq_value</span> <span class="o">=</span> <span class="n">acq_function</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>  <span class="c1"># compute joint acquisition value</span>
     <span class="k">return</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">acq_value</span></div>
+
 </pre></div>
 </div>
 </div>

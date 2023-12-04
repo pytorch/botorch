@@ -106,7 +106,9 @@
     <span class="k">return</span> <span class="n">permutation</span>
 
 
-<div class="viewcode-block" id="LCEAKernel"><a class="viewcode-back" href="../../../../models.html#botorch.models.kernels.contextual_lcea.LCEAKernel">[docs]</a><span class="k">class</span> <span class="nc">LCEAKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">):</span>
+<div class="viewcode-block" id="LCEAKernel">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.kernels.contextual_lcea.LCEAKernel">[docs]</a>
+<span class="k">class</span> <span class="nc">LCEAKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The Latent Context Embedding Additive (LCE-A) Kernel.</span>
 
 <span class="sd">    This kernel is similar to the SACKernel, and is used when context breakdowns are</span>
@@ -460,6 +462,7 @@
             <span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="o">*</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">x1</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)),</span> <span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">base_covar_perm</span></div>
+
 </pre></div>
 </div>
 </div>

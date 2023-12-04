@@ -160,7 +160,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">tau_max</span> <span class="o">=</span> <span class="n">tau_max</span>
 
 
-<div class="viewcode-block" id="qLogExpectedImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.logei.qLogExpectedImprovement">[docs]</a><span class="k">class</span> <span class="nc">qLogExpectedImprovement</span><span class="p">(</span><span class="n">LogImprovementMCAcquisitionFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="qLogExpectedImprovement">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.logei.qLogExpectedImprovement">[docs]</a>
+<span class="k">class</span> <span class="nc">qLogExpectedImprovement</span><span class="p">(</span><span class="n">LogImprovementMCAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batch Log Expected Improvement.</span>
 
 <span class="sd">    This computes qLogEI by</span>
@@ -259,7 +261,10 @@
         <span class="k">return</span> <span class="n">li</span></div>
 
 
-<div class="viewcode-block" id="qLogNoisyExpectedImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.logei.qLogNoisyExpectedImprovement">[docs]</a><span class="k">class</span> <span class="nc">qLogNoisyExpectedImprovement</span><span class="p">(</span>
+
+<div class="viewcode-block" id="qLogNoisyExpectedImprovement">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.logei.qLogNoisyExpectedImprovement">[docs]</a>
+<span class="k">class</span> <span class="nc">qLogNoisyExpectedImprovement</span><span class="p">(</span>
     <span class="n">LogImprovementMCAcquisitionFunction</span><span class="p">,</span> <span class="n">CachedCholeskyMCSamplerMixin</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batch Log Noisy Expected Improvement.</span>
@@ -444,7 +449,9 @@
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_baseline_L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_root_decomposition</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">)</span>
 
-<div class="viewcode-block" id="qLogNoisyExpectedImprovement.compute_best_f"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.logei.qLogNoisyExpectedImprovement.compute_best_f">[docs]</a>    <span class="k">def</span> <span class="nf">compute_best_f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="qLogNoisyExpectedImprovement.compute_best_f">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.logei.qLogNoisyExpectedImprovement.compute_best_f">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute_best_f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Computes the best (feasible) noisy objective value.</span>
 
 <span class="sd">        Args:</span>
@@ -469,6 +476,7 @@
             <span class="p">]</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">val</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">view_shape</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="nf">_get_samples_and_objectives</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute samples at new points, using the cached root decomposition.</span>
@@ -517,6 +525,7 @@
         <span class="p">)</span></div>
 
 
+
 <span class="sd">"""</span>
 <span class="sd">###################################### utils ##########################################</span>
 <span class="sd">"""</span>
@@ -549,7 +558,9 @@
     <span class="k">return</span> <span class="n">log_soft_clamp</span><span class="p">(</span><span class="n">Z</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="n">tau</span><span class="p">)</span>  <span class="c1"># ~ ((Y - best_f) / Y_std).clamp(0)</span>
 
 
-<div class="viewcode-block" id="check_tau"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.logei.check_tau">[docs]</a><span class="k">def</span> <span class="nf">check_tau</span><span class="p">(</span><span class="n">tau</span><span class="p">:</span> <span class="n">FloatOrTensor</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FloatOrTensor</span><span class="p">:</span>
+<div class="viewcode-block" id="check_tau">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.logei.check_tau">[docs]</a>
+<span class="k">def</span> <span class="nf">check_tau</span><span class="p">(</span><span class="n">tau</span><span class="p">:</span> <span class="n">FloatOrTensor</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FloatOrTensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Checks the validity of the tau arguments of the functions below, and returns</span>
 <span class="sd">    `tau` if it is valid."""</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tau</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span> <span class="ow">and</span> <span class="n">tau</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
@@ -557,6 +568,7 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">tau</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">name</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">" is non-positive: </span><span class="si">{</span><span class="n">tau</span><span class="w"> </span><span class="si">= }</span><span class="s2">."</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">tau</span></div>
+
 </pre></div>
 </div>
 </div>

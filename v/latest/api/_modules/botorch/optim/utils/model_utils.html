@@ -43,13 +43,18 @@
 <span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span><span class="p">,</span> <span class="n">TensorDataset</span>
 
 
-<div class="viewcode-block" id="TorchAttr"><a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.model_utils.TorchAttr">[docs]</a><span class="k">class</span> <span class="nc">TorchAttr</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<div class="viewcode-block" id="TorchAttr">
+<a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.model_utils.TorchAttr">[docs]</a>
+<span class="k">class</span> <span class="nc">TorchAttr</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
     <span class="n">shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span>
     <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span>
     <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span></div>
 
 
-<div class="viewcode-block" id="get_data_loader"><a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.model_utils.get_data_loader">[docs]</a><span class="k">def</span> <span class="nf">get_data_loader</span><span class="p">(</span>
+
+<div class="viewcode-block" id="get_data_loader">
+<a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.model_utils.get_data_loader">[docs]</a>
+<span class="k">def</span> <span class="nf">get_data_loader</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1024</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataLoader</span><span class="p">:</span>
     <span class="n">dataset</span> <span class="o">=</span> <span class="n">TensorDataset</span><span class="p">(</span><span class="o">*</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">train_targets</span><span class="p">)</span>
@@ -58,7 +63,10 @@
     <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="get_parameters"><a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.model_utils.get_parameters">[docs]</a><span class="k">def</span> <span class="nf">get_parameters</span><span class="p">(</span>
+
+<div class="viewcode-block" id="get_parameters">
+<a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.model_utils.get_parameters">[docs]</a>
+<span class="k">def</span> <span class="nf">get_parameters</span><span class="p">(</span>
     <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
     <span class="n">requires_grad</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">name_filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -87,7 +95,10 @@
     <span class="k">return</span> <span class="n">parameters</span></div>
 
 
-<div class="viewcode-block" id="get_parameters_and_bounds"><a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.model_utils.get_parameters_and_bounds">[docs]</a><span class="k">def</span> <span class="nf">get_parameters_and_bounds</span><span class="p">(</span>
+
+<div class="viewcode-block" id="get_parameters_and_bounds">
+<a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.model_utils.get_parameters_and_bounds">[docs]</a>
+<span class="k">def</span> <span class="nf">get_parameters_and_bounds</span><span class="p">(</span>
     <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
     <span class="n">requires_grad</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">name_filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -130,7 +141,10 @@
     <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="p">{}</span></div>
 
 
-<div class="viewcode-block" id="get_name_filter"><a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.model_utils.get_name_filter">[docs]</a><span class="k">def</span> <span class="nf">get_name_filter</span><span class="p">(</span>
+
+<div class="viewcode-block" id="get_name_filter">
+<a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.model_utils.get_name_filter">[docs]</a>
+<span class="k">def</span> <span class="nf">get_name_filter</span><span class="p">(</span>
     <span class="n">patterns</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Pattern</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]]],</span> <span class="nb">bool</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Returns a binary function that filters strings (or iterables whose first</span>
@@ -171,7 +185,10 @@
     <span class="k">return</span> <span class="n">name_filter</span></div>
 
 
-<div class="viewcode-block" id="sample_all_priors"><a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.model_utils.sample_all_priors">[docs]</a><span class="k">def</span> <span class="nf">sample_all_priors</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">,</span> <span class="n">max_retries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+<div class="viewcode-block" id="sample_all_priors">
+<a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.model_utils.sample_all_priors">[docs]</a>
+<span class="k">def</span> <span class="nf">sample_all_priors</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">,</span> <span class="n">max_retries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Sample from hyperparameter priors (in-place).</span>
 
 <span class="sd">    Args:</span>
@@ -201,6 +218,7 @@
                         <span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="n">e</span></div>
+
 </pre></div>
 </div>
 </div>

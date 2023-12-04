@@ -35,7 +35,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="Ishigami"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.sensitivity_analysis.Ishigami">[docs]</a><span class="k">class</span> <span class="nc">Ishigami</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="Ishigami">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.sensitivity_analysis.Ishigami">[docs]</a>
+<span class="k">class</span> <span class="nc">Ishigami</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Ishigami test function.</span>
 
 <span class="sd">    three-dimensional function (usually evaluated on `[-pi, pi]^3`):</span>
@@ -82,7 +84,9 @@
     <span class="k">def</span> <span class="nf">_optimal_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
-<div class="viewcode-block" id="Ishigami.compute_dgsm"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.sensitivity_analysis.Ishigami.compute_dgsm">[docs]</a>    <span class="k">def</span> <span class="nf">compute_dgsm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+<div class="viewcode-block" id="Ishigami.compute_dgsm">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.sensitivity_analysis.Ishigami.compute_dgsm">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute_dgsm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute derivative global sensitivity measures.</span>
 
 <span class="sd">        This function can be called separately to estimate the dgsm measure</span>
@@ -114,17 +118,24 @@
         <span class="p">]</span>
         <span class="k">return</span> <span class="n">gradient_measure</span><span class="p">,</span> <span class="n">gradient_absolute_measure</span><span class="p">,</span> <span class="n">gradient_square_measure</span></div>
 
-<div class="viewcode-block" id="Ishigami.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.sensitivity_analysis.Ishigami.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="Ishigami.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.sensitivity_analysis.Ishigami.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
         <span class="n">t</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
             <span class="o">+</span> <span class="mi">7</span> <span class="o">*</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
             <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">*</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">**</span> <span class="mi">4</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">t</span></div></div>
+        <span class="k">return</span> <span class="n">t</span></div>
+</div>
 
 
-<div class="viewcode-block" id="Gsobol"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.sensitivity_analysis.Gsobol">[docs]</a><span class="k">class</span> <span class="nc">Gsobol</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Gsobol">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.sensitivity_analysis.Gsobol">[docs]</a>
+<span class="k">class</span> <span class="nc">Gsobol</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Gsobol test function.</span>
 
 <span class="sd">    d-dimensional function (usually evaluated on `[0, 1]^d`):</span>
@@ -193,7 +204,9 @@
     <span class="k">def</span> <span class="nf">_optimal_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
-<div class="viewcode-block" id="Gsobol.optimal_sobol_indicies"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.sensitivity_analysis.Gsobol.optimal_sobol_indicies">[docs]</a>    <span class="k">def</span> <span class="nf">optimal_sobol_indicies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Gsobol.optimal_sobol_indicies">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.sensitivity_analysis.Gsobol.optimal_sobol_indicies">[docs]</a>
+    <span class="k">def</span> <span class="nf">optimal_sobol_indicies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">vi</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">):</span>
             <span class="n">vi</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)))</span>
@@ -212,15 +225,22 @@
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">si_t</span> <span class="o">=</span> <span class="n">Tensor</span><span class="p">(</span><span class="n">si_t</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Gsobol.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.sensitivity_analysis.Gsobol.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="Gsobol.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.sensitivity_analysis.Gsobol.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
         <span class="n">t</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">):</span>
             <span class="n">t</span> <span class="o">=</span> <span class="n">t</span> <span class="o">*</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-        <span class="k">return</span> <span class="n">t</span></div></div>
+        <span class="k">return</span> <span class="n">t</span></div>
+</div>
 
 
-<div class="viewcode-block" id="Morris"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.sensitivity_analysis.Morris">[docs]</a><span class="k">class</span> <span class="nc">Morris</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Morris">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.sensitivity_analysis.Morris">[docs]</a>
+<span class="k">class</span> <span class="nc">Morris</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Morris test function.</span>
 
 <span class="sd">    20-dimensional function (usually evaluated on `[0, 1]^20`):</span>
@@ -268,7 +288,9 @@
     <span class="k">def</span> <span class="nf">_optimal_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
-<div class="viewcode-block" id="Morris.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.sensitivity_analysis.Morris.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="Morris.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.sensitivity_analysis.Morris.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
         <span class="n">W</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">t1</span> <span class="o">=</span> <span class="mi">0</span>
@@ -299,7 +321,9 @@
                         <span class="n">beta_ijk</span> <span class="o">=</span> <span class="mi">0</span>
                     <span class="n">t3</span> <span class="o">=</span> <span class="n">t3</span> <span class="o">+</span> <span class="n">beta_ijk</span> <span class="o">*</span> <span class="n">W</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">W</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">W</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
         <span class="n">t4</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">W</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">W</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">W</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">W</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">t1</span> <span class="o">+</span> <span class="n">t2</span> <span class="o">+</span> <span class="n">t3</span> <span class="o">+</span> <span class="n">t4</span></div></div>
+        <span class="k">return</span> <span class="n">t1</span> <span class="o">+</span> <span class="n">t2</span> <span class="o">+</span> <span class="n">t3</span> <span class="o">+</span> <span class="n">t4</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

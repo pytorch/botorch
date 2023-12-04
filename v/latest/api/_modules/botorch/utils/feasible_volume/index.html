@@ -41,7 +41,9 @@
 <span class="n">logger</span> <span class="o">=</span> <span class="n">_get_logger</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"Feasibility"</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="get_feasible_samples"><a class="viewcode-back" href="../../../utils.html#botorch.utils.feasible_volume.get_feasible_samples">[docs]</a><span class="k">def</span> <span class="nf">get_feasible_samples</span><span class="p">(</span>
+<div class="viewcode-block" id="get_feasible_samples">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.feasible_volume.get_feasible_samples">[docs]</a>
+<span class="k">def</span> <span class="nf">get_feasible_samples</span><span class="p">(</span>
     <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
@@ -79,7 +81,10 @@
     <span class="k">return</span> <span class="n">feasible_samples</span><span class="p">,</span> <span class="n">p_linear</span></div>
 
 
-<div class="viewcode-block" id="get_outcome_feasibility_probability"><a class="viewcode-back" href="../../../utils.html#botorch.utils.feasible_volume.get_outcome_feasibility_probability">[docs]</a><span class="k">def</span> <span class="nf">get_outcome_feasibility_probability</span><span class="p">(</span>
+
+<div class="viewcode-block" id="get_outcome_feasibility_probability">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.feasible_volume.get_outcome_feasibility_probability">[docs]</a>
+<span class="k">def</span> <span class="nf">get_outcome_feasibility_probability</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">outcome_constraints</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span>
@@ -139,7 +144,10 @@
     <span class="k">return</span> <span class="n">p_outcome</span></div>
 
 
-<div class="viewcode-block" id="estimate_feasible_volume"><a class="viewcode-back" href="../../../utils.html#botorch.utils.feasible_volume.estimate_feasible_volume">[docs]</a><span class="k">def</span> <span class="nf">estimate_feasible_volume</span><span class="p">(</span>
+
+<div class="viewcode-block" id="estimate_feasible_volume">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.feasible_volume.estimate_feasible_volume">[docs]</a>
+<span class="k">def</span> <span class="nf">estimate_feasible_volume</span><span class="p">(</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span>
     <span class="n">outcome_constraints</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span>
@@ -226,6 +234,7 @@
                 <span class="o">+</span> <span class="s2">"less restrictive."</span>
             <span class="p">)</span>
     <span class="k">return</span> <span class="n">p_feature</span><span class="p">,</span> <span class="n">p_outcome</span></div>
+
 </pre></div>
 </div>
 </div>

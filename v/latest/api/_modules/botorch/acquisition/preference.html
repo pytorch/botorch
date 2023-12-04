@@ -60,7 +60,9 @@
 <span class="n">SIGMA_JITTER</span> <span class="o">=</span> <span class="mf">1e-8</span>
 
 
-<div class="viewcode-block" id="AnalyticExpectedUtilityOfBestOption"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.preference.AnalyticExpectedUtilityOfBestOption">[docs]</a><span class="k">class</span> <span class="nc">AnalyticExpectedUtilityOfBestOption</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="AnalyticExpectedUtilityOfBestOption">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.preference.AnalyticExpectedUtilityOfBestOption">[docs]</a>
+<span class="k">class</span> <span class="nc">AnalyticExpectedUtilityOfBestOption</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Analytic Preferential Expected Utility of Best Options, i.e., Analytical EUBO"""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -98,7 +100,9 @@
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">std_norm</span> <span class="o">=</span> <span class="n">std_norm</span>
 
-<div class="viewcode-block" id="AnalyticExpectedUtilityOfBestOption.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.preference.AnalyticExpectedUtilityOfBestOption.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
+<div class="viewcode-block" id="AnalyticExpectedUtilityOfBestOption.forward">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.preference.AnalyticExpectedUtilityOfBestOption.forward">[docs]</a>
+    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate analytical EUBO on the candidate set X.</span>
 
@@ -139,10 +143,14 @@
         <span class="n">acqf_val</span> <span class="o">=</span> <span class="n">sigma</span> <span class="o">*</span> <span class="p">(</span><span class="n">updf</span> <span class="o">+</span> <span class="n">u</span> <span class="o">*</span> <span class="n">ucdf</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">previous_winner</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">acqf_val</span> <span class="o">=</span> <span class="n">acqf_val</span> <span class="o">+</span> <span class="n">pref_mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">acqf_val</span></div></div>
+        <span class="k">return</span> <span class="n">acqf_val</span></div>
+</div>
 
 
-<div class="viewcode-block" id="PairwiseBayesianActiveLearningByDisagreement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.preference.PairwiseBayesianActiveLearningByDisagreement">[docs]</a><span class="k">class</span> <span class="nc">PairwiseBayesianActiveLearningByDisagreement</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
+
+<div class="viewcode-block" id="PairwiseBayesianActiveLearningByDisagreement">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.preference.PairwiseBayesianActiveLearningByDisagreement">[docs]</a>
+<span class="k">class</span> <span class="nc">PairwiseBayesianActiveLearningByDisagreement</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""MC Bayesian Active Learning by Disagreement"""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -176,7 +184,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">std_noise</span> <span class="o">=</span> <span class="n">std_noise</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">std_normal</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
-<div class="viewcode-block" id="PairwiseBayesianActiveLearningByDisagreement.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.preference.PairwiseBayesianActiveLearningByDisagreement.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<div class="viewcode-block" id="PairwiseBayesianActiveLearningByDisagreement.forward">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.preference.PairwiseBayesianActiveLearningByDisagreement.forward">[docs]</a>
+    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate MC BALD on the candidate set `X`.</span>
 
@@ -212,7 +222,9 @@
         <span class="n">sample_entropies</span> <span class="o">=</span> <span class="n">Bernoulli</span><span class="p">(</span><span class="n">obj_samples</span><span class="p">)</span><span class="o">.</span><span class="n">entropy</span><span class="p">()</span>
         <span class="n">conditional_entropies</span> <span class="o">=</span> <span class="n">sample_entropies</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">posterior_entropies</span> <span class="o">-</span> <span class="n">conditional_entropies</span></div></div>
+        <span class="k">return</span> <span class="n">posterior_entropies</span> <span class="o">-</span> <span class="n">conditional_entropies</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

@@ -42,7 +42,9 @@
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 
 
-<div class="viewcode-block" id="BaseTestProblem"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.BaseTestProblem">[docs]</a><span class="k">class</span> <span class="nc">BaseTestProblem</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<div class="viewcode-block" id="BaseTestProblem">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.BaseTestProblem">[docs]</a>
+<span class="k">class</span> <span class="nc">BaseTestProblem</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Base class for test functions."""</span>
 
     <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span>
@@ -68,7 +70,9 @@
             <span class="s2">"bounds"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bounds</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
         <span class="p">)</span>
 
-<div class="viewcode-block" id="BaseTestProblem.forward"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.BaseTestProblem.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="BaseTestProblem.forward">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.BaseTestProblem.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the function on a set of points.</span>
 
 <span class="sd">        Args:</span>
@@ -88,13 +92,20 @@
             <span class="n">f</span> <span class="o">=</span> <span class="o">-</span><span class="n">f</span>
         <span class="k">return</span> <span class="n">f</span> <span class="k">if</span> <span class="n">batch</span> <span class="k">else</span> <span class="n">f</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="BaseTestProblem.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.BaseTestProblem.evaluate_true">[docs]</a>    <span class="nd">@abstractmethod</span>
+
+<div class="viewcode-block" id="BaseTestProblem.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.BaseTestProblem.evaluate_true">[docs]</a>
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the function (w/o observation noise) on a set of points."""</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div></div>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+</div>
 
 
-<div class="viewcode-block" id="ConstrainedBaseTestProblem"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.ConstrainedBaseTestProblem">[docs]</a><span class="k">class</span> <span class="nc">ConstrainedBaseTestProblem</span><span class="p">(</span><span class="n">BaseTestProblem</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ConstrainedBaseTestProblem">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.ConstrainedBaseTestProblem">[docs]</a>
+<span class="k">class</span> <span class="nc">ConstrainedBaseTestProblem</span><span class="p">(</span><span class="n">BaseTestProblem</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Base class for test functions with constraints.</span>
 
 <span class="sd">    In addition to one or more objectives, a problem may have a number of outcome</span>
@@ -106,7 +117,9 @@
     <span class="n">num_constraints</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">_check_grad_at_opt</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
-<div class="viewcode-block" id="ConstrainedBaseTestProblem.evaluate_slack"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.ConstrainedBaseTestProblem.evaluate_slack">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="ConstrainedBaseTestProblem.evaluate_slack">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.ConstrainedBaseTestProblem.evaluate_slack">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_slack</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the constraint slack on a set of points.</span>
 
 <span class="sd">        Constraints `i` is assumed to be feasible at `x` if the associated slack</span>
@@ -130,7 +143,10 @@
             <span class="n">cons</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_std</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn_like</span><span class="p">(</span><span class="n">cons</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cons</span></div>
 
-<div class="viewcode-block" id="ConstrainedBaseTestProblem.is_feasible"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.ConstrainedBaseTestProblem.is_feasible">[docs]</a>    <span class="k">def</span> <span class="nf">is_feasible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="ConstrainedBaseTestProblem.is_feasible">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.ConstrainedBaseTestProblem.is_feasible">[docs]</a>
+    <span class="k">def</span> <span class="nf">is_feasible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate whether the constraints are feasible on a set of points.</span>
 
 <span class="sd">        Args:</span>
@@ -144,7 +160,10 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluate_slack</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">noise</span><span class="o">=</span><span class="n">noise</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mf">0.0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="ConstrainedBaseTestProblem.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.ConstrainedBaseTestProblem.evaluate_slack_true">[docs]</a>    <span class="nd">@abstractmethod</span>
+
+<div class="viewcode-block" id="ConstrainedBaseTestProblem.evaluate_slack_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.ConstrainedBaseTestProblem.evaluate_slack_true">[docs]</a>
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the constraint slack (w/o observation noise) on a set of points.</span>
 
@@ -156,10 +175,14 @@
 <span class="sd">            A `batch_shape x n_c`-dim tensor of constraint slack (where positive slack</span>
 <span class="sd">                corresponds to the constraint being feasible).</span>
 <span class="sd">        """</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div></div>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+</div>
 
 
-<div class="viewcode-block" id="MultiObjectiveTestProblem"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.MultiObjectiveTestProblem">[docs]</a><span class="k">class</span> <span class="nc">MultiObjectiveTestProblem</span><span class="p">(</span><span class="n">BaseTestProblem</span><span class="p">):</span>
+
+<div class="viewcode-block" id="MultiObjectiveTestProblem">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.MultiObjectiveTestProblem">[docs]</a>
+<span class="k">class</span> <span class="nc">MultiObjectiveTestProblem</span><span class="p">(</span><span class="n">BaseTestProblem</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Base class for test multi-objective test functions.</span>
 
 <span class="sd">    TODO: add a pareto distance function that returns the distance</span>
@@ -193,9 +216,13 @@
                 <span class="s2">"hypervolume."</span>
             <span class="p">)</span>
 
-<div class="viewcode-block" id="MultiObjectiveTestProblem.gen_pareto_front"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.MultiObjectiveTestProblem.gen_pareto_front">[docs]</a>    <span class="k">def</span> <span class="nf">gen_pareto_front</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="MultiObjectiveTestProblem.gen_pareto_front">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.MultiObjectiveTestProblem.gen_pareto_front">[docs]</a>
+    <span class="k">def</span> <span class="nf">gen_pareto_front</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Generate `n` pareto optimal points."""</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div></div>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

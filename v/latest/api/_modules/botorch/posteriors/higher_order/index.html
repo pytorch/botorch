@@ -37,7 +37,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="HigherOrderGPPosterior"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.higher_order.HigherOrderGPPosterior">[docs]</a><span class="k">class</span> <span class="nc">HigherOrderGPPosterior</span><span class="p">(</span><span class="n">GPyTorchPosterior</span><span class="p">):</span>
+<div class="viewcode-block" id="HigherOrderGPPosterior">
+<a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.higher_order.HigherOrderGPPosterior">[docs]</a>
+<span class="k">class</span> <span class="nc">HigherOrderGPPosterior</span><span class="p">(</span><span class="n">GPyTorchPosterior</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Posterior class for a Higher order Gaussian process model [Zhe2019hogp]_. Extends</span>
 <span class="sd">    the standard GPyTorch posterior class by overwriting the rsample method.</span>
@@ -182,7 +184,9 @@
         <span class="n">perm_list</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">ndim</span><span class="p">),</span> <span class="mi">0</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="o">*</span><span class="n">perm_list</span><span class="p">),</span> <span class="n">noise_base_samples</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="o">*</span><span class="n">perm_list</span><span class="p">)</span>
 
-<div class="viewcode-block" id="HigherOrderGPPosterior.rsample_from_base_samples"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.higher_order.HigherOrderGPPosterior.rsample_from_base_samples">[docs]</a>    <span class="k">def</span> <span class="nf">rsample_from_base_samples</span><span class="p">(</span>
+<div class="viewcode-block" id="HigherOrderGPPosterior.rsample_from_base_samples">
+<a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.higher_order.HigherOrderGPPosterior.rsample_from_base_samples">[docs]</a>
+    <span class="k">def</span> <span class="nf">rsample_from_base_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
         <span class="n">base_samples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
@@ -265,7 +269,10 @@
         <span class="c1"># reshape samples to be the actual size of the train targets</span>
         <span class="k">return</span> <span class="n">test_cond_samples</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">sample_shape</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">output_shape</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="HigherOrderGPPosterior.rsample"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.higher_order.HigherOrderGPPosterior.rsample">[docs]</a>    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span>
+
+<div class="viewcode-block" id="HigherOrderGPPosterior.rsample">
+<a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.higher_order.HigherOrderGPPosterior.rsample">[docs]</a>
+    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -284,7 +291,9 @@
             <span class="n">sample_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">])</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rsample_from_base_samples</span><span class="p">(</span>
             <span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">base_samples</span><span class="o">=</span><span class="kc">None</span>
-        <span class="p">)</span></div></div>
+        <span class="p">)</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

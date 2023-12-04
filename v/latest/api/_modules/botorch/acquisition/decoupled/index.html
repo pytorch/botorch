@@ -45,7 +45,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="DecoupledAcquisitionFunction"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.decoupled.DecoupledAcquisitionFunction">[docs]</a><span class="k">class</span> <span class="nc">DecoupledAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<div class="viewcode-block" id="DecoupledAcquisitionFunction">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.decoupled.DecoupledAcquisitionFunction">[docs]</a>
+<span class="k">class</span> <span class="nc">DecoupledAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Abstract base class for decoupled acquisition functions.</span>
 <span class="sd">    A decoupled acquisition function where one may intend to</span>
@@ -113,7 +115,9 @@
                 <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_X_evaluation_mask</span> <span class="o">=</span> <span class="n">X_evaluation_mask</span>
 
-<div class="viewcode-block" id="DecoupledAcquisitionFunction.set_X_pending"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.decoupled.DecoupledAcquisitionFunction.set_X_pending">[docs]</a>    <span class="k">def</span> <span class="nf">set_X_pending</span><span class="p">(</span>
+<div class="viewcode-block" id="DecoupledAcquisitionFunction.set_X_pending">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.decoupled.DecoupledAcquisitionFunction.set_X_pending">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_X_pending</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">X_pending_evaluation_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -158,7 +162,10 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">X_pending</span> <span class="o">=</span> <span class="n">X_pending</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">X_pending_evaluation_mask</span> <span class="o">=</span> <span class="n">X_pending_evaluation_mask</span></div>
 
-<div class="viewcode-block" id="DecoupledAcquisitionFunction.construct_evaluation_mask"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.decoupled.DecoupledAcquisitionFunction.construct_evaluation_mask">[docs]</a>    <span class="k">def</span> <span class="nf">construct_evaluation_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
+
+<div class="viewcode-block" id="DecoupledAcquisitionFunction.construct_evaluation_mask">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.decoupled.DecoupledAcquisitionFunction.construct_evaluation_mask">[docs]</a>
+    <span class="k">def</span> <span class="nf">construct_evaluation_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct the boolean evaluation mask for X and X_pending</span>
 
 <span class="sd">        Args:</span>
@@ -183,7 +190,9 @@
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
                 <span class="p">[</span><span class="n">X_evaluation_mask</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">X_pending_evaluation_mask</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">X_evaluation_mask</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">X_evaluation_mask</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

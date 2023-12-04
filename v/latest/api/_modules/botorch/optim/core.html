@@ -58,14 +58,19 @@
 <span class="p">)</span>
 
 
-<div class="viewcode-block" id="OptimizationStatus"><a class="viewcode-back" href="../../../optim.html#botorch.optim.core.OptimizationStatus">[docs]</a><span class="k">class</span> <span class="nc">OptimizationStatus</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<div class="viewcode-block" id="OptimizationStatus">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.core.OptimizationStatus">[docs]</a>
+<span class="k">class</span> <span class="nc">OptimizationStatus</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
     <span class="n">RUNNING</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>  <span class="c1"># incomplete</span>
     <span class="n">SUCCESS</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>  <span class="c1"># optimizer converged</span>
     <span class="n">FAILURE</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>  <span class="c1"># terminated abnormally</span>
     <span class="n">STOPPED</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>  <span class="c1"># stopped due to user provided criterion</span></div>
 
 
-<div class="viewcode-block" id="OptimizationResult"><a class="viewcode-back" href="../../../optim.html#botorch.optim.core.OptimizationResult">[docs]</a><span class="nd">@dataclass</span>
+
+<div class="viewcode-block" id="OptimizationResult">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.core.OptimizationResult">[docs]</a>
+<span class="nd">@dataclass</span>
 <span class="k">class</span> <span class="nc">OptimizationResult</span><span class="p">:</span>
     <span class="n">step</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">fval</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
@@ -74,7 +79,10 @@
     <span class="n">message</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
-<div class="viewcode-block" id="scipy_minimize"><a class="viewcode-back" href="../../../optim.html#botorch.optim.core.scipy_minimize">[docs]</a><span class="k">def</span> <span class="nf">scipy_minimize</span><span class="p">(</span>
+
+<div class="viewcode-block" id="scipy_minimize">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.core.scipy_minimize">[docs]</a>
+<span class="k">def</span> <span class="nf">scipy_minimize</span><span class="p">(</span>
     <span class="n">closure</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
         <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]]],</span>
         <span class="n">NdarrayOptimizationClosure</span><span class="p">,</span>
@@ -162,7 +170,10 @@
     <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="torch_minimize"><a class="viewcode-back" href="../../../optim.html#botorch.optim.core.torch_minimize">[docs]</a><span class="k">def</span> <span class="nf">torch_minimize</span><span class="p">(</span>
+
+<div class="viewcode-block" id="torch_minimize">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.core.torch_minimize">[docs]</a>
+<span class="k">def</span> <span class="nf">torch_minimize</span><span class="p">(</span>
     <span class="n">closure</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]]],</span>
     <span class="n">parameters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -258,6 +269,7 @@
         <span class="n">runtime</span><span class="o">=</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">,</span>
         <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">"`torch_minimize` stopped after reaching step_limit=</span><span class="si">{</span><span class="n">step_limit</span><span class="si">}</span><span class="s2">."</span><span class="p">,</span>
     <span class="p">)</span></div>
+
 </pre></div>
 </div>
 </div>

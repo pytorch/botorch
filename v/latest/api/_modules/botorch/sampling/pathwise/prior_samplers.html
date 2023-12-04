@@ -55,7 +55,9 @@
 <span class="n">DrawKernelFeaturePaths</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">(</span><span class="s2">"draw_kernel_feature_paths"</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="draw_kernel_feature_paths"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.prior_samplers.draw_kernel_feature_paths">[docs]</a><span class="k">def</span> <span class="nf">draw_kernel_feature_paths</span><span class="p">(</span>
+<div class="viewcode-block" id="draw_kernel_feature_paths">
+<a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.prior_samplers.draw_kernel_feature_paths">[docs]</a>
+<span class="k">def</span> <span class="nf">draw_kernel_feature_paths</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">GP</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GeneralizedLinearPath</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Draws functions from a Bayesian-linear-model-based approximation to a GP prior.</span>
@@ -70,6 +72,7 @@
 <span class="sd">        sample_shape: The shape of the sample paths to be drawn.</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="n">DrawKernelFeaturePaths</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">_draw_kernel_feature_paths_fallback</span><span class="p">(</span>

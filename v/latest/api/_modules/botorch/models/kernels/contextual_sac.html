@@ -39,7 +39,9 @@
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">ModuleDict</span>  <span class="c1"># pyre-ignore</span>
 
 
-<div class="viewcode-block" id="SACKernel"><a class="viewcode-back" href="../../../../models.html#botorch.models.kernels.contextual_sac.SACKernel">[docs]</a><span class="k">class</span> <span class="nc">SACKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">):</span>
+<div class="viewcode-block" id="SACKernel">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.kernels.contextual_sac.SACKernel">[docs]</a>
+<span class="k">class</span> <span class="nc">SACKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The structural additive contextual(SAC) kernel.</span>
 
 <span class="sd">    The kernel is used for contextual BO without oberseving context breakdowns.</span>
@@ -140,6 +142,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">res</span> <span class="o">=</span> <span class="n">SumLinearOperator</span><span class="p">(</span><span class="o">*</span><span class="n">covars</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">res</span></div>
+
 </pre></div>
 </div>
 </div>

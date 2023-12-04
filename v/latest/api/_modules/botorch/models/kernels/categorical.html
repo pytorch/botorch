@@ -32,7 +32,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="CategoricalKernel"><a class="viewcode-back" href="../../../../models.html#botorch.models.kernels.categorical.CategoricalKernel">[docs]</a><span class="k">class</span> <span class="nc">CategoricalKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">):</span>
+<div class="viewcode-block" id="CategoricalKernel">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.kernels.categorical.CategoricalKernel">[docs]</a>
+<span class="k">class</span> <span class="nc">CategoricalKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A Kernel for categorical features.</span>
 
 <span class="sd">    Computes `exp(-dist(x1, x2) / lengthscale)`, where</span>
@@ -63,6 +65,7 @@
         <span class="k">if</span> <span class="n">diag</span><span class="p">:</span>
             <span class="n">res</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">dim1</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dim2</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">res</span></div>
+
 </pre></div>
 </div>
 </div>

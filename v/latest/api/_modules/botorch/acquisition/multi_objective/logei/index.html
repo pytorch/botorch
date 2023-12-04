@@ -68,7 +68,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="qLogExpectedHypervolumeImprovement"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.logei.qLogExpectedHypervolumeImprovement">[docs]</a><span class="k">class</span> <span class="nc">qLogExpectedHypervolumeImprovement</span><span class="p">(</span>
+<div class="viewcode-block" id="qLogExpectedHypervolumeImprovement">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.logei.qLogExpectedHypervolumeImprovement">[docs]</a>
+<span class="k">class</span> <span class="nc">qLogExpectedHypervolumeImprovement</span><span class="p">(</span>
     <span class="n">MultiObjectiveMCAcquisitionFunction</span><span class="p">,</span> <span class="n">SubsetIndexCachingMixin</span>
 <span class="p">):</span>
 
@@ -332,12 +334,16 @@
         <span class="n">XY</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">broadcast_tensors</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_smooth_min</span><span class="p">(</span><span class="n">XY</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-<div class="viewcode-block" id="qLogExpectedHypervolumeImprovement.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.logei.qLogExpectedHypervolumeImprovement.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
+<div class="viewcode-block" id="qLogExpectedHypervolumeImprovement.forward">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.logei.qLogExpectedHypervolumeImprovement.forward">[docs]</a>
+    <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_posterior_samples</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_log_qehvi</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_log_qehvi</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span></div>
+</div>
+
 
 
 <span class="k">class</span> <span class="nc">qLogNoisyExpectedHypervolumeImprovement</span><span class="p">(</span>

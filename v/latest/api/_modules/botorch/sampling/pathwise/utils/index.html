@@ -50,7 +50,9 @@
 <span class="n">GetTrainTargets</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">(</span><span class="s2">"get_train_targets"</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="TransformedModuleMixin"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.TransformedModuleMixin">[docs]</a><span class="k">class</span> <span class="nc">TransformedModuleMixin</span><span class="p">:</span>
+<div class="viewcode-block" id="TransformedModuleMixin">
+<a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.TransformedModuleMixin">[docs]</a>
+<span class="k">class</span> <span class="nc">TransformedModuleMixin</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Mixin that wraps a module's __call__ method with optional transforms."""</span>
     <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TInputTransform</span><span class="p">]</span>
     <span class="n">output_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TOutputTransform</span><span class="p">]</span>
@@ -76,15 +78,24 @@
         <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="TensorTransform"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.TensorTransform">[docs]</a><span class="k">class</span> <span class="nc">TensorTransform</span><span class="p">(</span><span class="n">ABC</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
+
+<div class="viewcode-block" id="TensorTransform">
+<a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.TensorTransform">[docs]</a>
+<span class="k">class</span> <span class="nc">TensorTransform</span><span class="p">(</span><span class="n">ABC</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Abstract base class for transforms that map tensor to tensor."""</span>
 
-<div class="viewcode-block" id="TensorTransform.forward"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.TensorTransform.forward">[docs]</a>    <span class="nd">@abstractmethod</span>
+<div class="viewcode-block" id="TensorTransform.forward">
+<a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.TensorTransform.forward">[docs]</a>
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div></div>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+</div>
 
 
-<div class="viewcode-block" id="ChainedTransform"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.ChainedTransform">[docs]</a><span class="k">class</span> <span class="nc">ChainedTransform</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ChainedTransform">
+<a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.ChainedTransform">[docs]</a>
+<span class="k">class</span> <span class="nc">ChainedTransform</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A composition of TensorTransforms."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">transforms</span><span class="p">:</span> <span class="n">TensorTransform</span><span class="p">):</span>
@@ -96,13 +107,19 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transforms</span> <span class="o">=</span> <span class="n">ModuleList</span><span class="p">(</span><span class="n">transforms</span><span class="p">)</span>
 
-<div class="viewcode-block" id="ChainedTransform.forward"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.ChainedTransform.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="ChainedTransform.forward">
+<a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.ChainedTransform.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">transform</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transforms</span><span class="p">):</span>
             <span class="n">values</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">values</span></div></div>
+        <span class="k">return</span> <span class="n">values</span></div>
+</div>
 
 
-<div class="viewcode-block" id="SineCosineTransform"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.SineCosineTransform">[docs]</a><span class="k">class</span> <span class="nc">SineCosineTransform</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SineCosineTransform">
+<a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.SineCosineTransform">[docs]</a>
+<span class="k">class</span> <span class="nc">SineCosineTransform</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A transform that returns concatenated sine and cosine features."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
@@ -114,12 +131,18 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">scale</span>
 
-<div class="viewcode-block" id="SineCosineTransform.forward"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.SineCosineTransform.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="SineCosineTransform.forward">
+<a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.SineCosineTransform.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">sincos</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">values</span><span class="o">.</span><span class="n">sin</span><span class="p">(),</span> <span class="n">values</span><span class="o">.</span><span class="n">cos</span><span class="p">()],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">sincos</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">*</span> <span class="n">sincos</span></div></div>
+        <span class="k">return</span> <span class="n">sincos</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">*</span> <span class="n">sincos</span></div>
+</div>
 
 
-<div class="viewcode-block" id="InverseLengthscaleTransform"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.InverseLengthscaleTransform">[docs]</a><span class="k">class</span> <span class="nc">InverseLengthscaleTransform</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
+
+<div class="viewcode-block" id="InverseLengthscaleTransform">
+<a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.InverseLengthscaleTransform">[docs]</a>
+<span class="k">class</span> <span class="nc">InverseLengthscaleTransform</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A transform that divides its inputs by a kernels lengthscales."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kernel</span><span class="p">:</span> <span class="n">Kernel</span><span class="p">):</span>
@@ -134,11 +157,17 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span> <span class="o">=</span> <span class="n">kernel</span>
 
-<div class="viewcode-block" id="InverseLengthscaleTransform.forward"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.InverseLengthscaleTransform.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">lengthscale</span><span class="o">.</span><span class="n">reciprocal</span><span class="p">()</span> <span class="o">*</span> <span class="n">values</span></div></div>
+<div class="viewcode-block" id="InverseLengthscaleTransform.forward">
+<a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.InverseLengthscaleTransform.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">lengthscale</span><span class="o">.</span><span class="n">reciprocal</span><span class="p">()</span> <span class="o">*</span> <span class="n">values</span></div>
+</div>
 
 
-<div class="viewcode-block" id="OutputscaleTransform"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.OutputscaleTransform">[docs]</a><span class="k">class</span> <span class="nc">OutputscaleTransform</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
+
+<div class="viewcode-block" id="OutputscaleTransform">
+<a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.OutputscaleTransform">[docs]</a>
+<span class="k">class</span> <span class="nc">OutputscaleTransform</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A transform that multiplies its inputs by the square root of a</span>
 <span class="sd">    kernel's outputscale."""</span>
 
@@ -151,16 +180,22 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span> <span class="o">=</span> <span class="n">kernel</span>
 
-<div class="viewcode-block" id="OutputscaleTransform.forward"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.OutputscaleTransform.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="OutputscaleTransform.forward">
+<a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.OutputscaleTransform.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">outputscale</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">outputscale</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">batch_shape</span>
             <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">outputscale</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">outputscale</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span> <span class="o">*</span> <span class="n">values</span></div></div>
+        <span class="k">return</span> <span class="n">outputscale</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span> <span class="o">*</span> <span class="n">values</span></div>
+</div>
 
 
-<div class="viewcode-block" id="FeatureSelector"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.FeatureSelector">[docs]</a><span class="k">class</span> <span class="nc">FeatureSelector</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
+
+<div class="viewcode-block" id="FeatureSelector">
+<a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.FeatureSelector">[docs]</a>
+<span class="k">class</span> <span class="nc">FeatureSelector</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A transform that returns a subset of its input's features.</span>
 <span class="sd">    along a given tensor dimension."""</span>
 
@@ -177,11 +212,17 @@
             <span class="s2">"indices"</span><span class="p">,</span> <span class="n">indices</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
         <span class="p">)</span>
 
-<div class="viewcode-block" id="FeatureSelector.forward"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.FeatureSelector.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">values</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">)</span></div></div>
+<div class="viewcode-block" id="FeatureSelector.forward">
+<a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.FeatureSelector.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">values</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="OutcomeUntransformer"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.OutcomeUntransformer">[docs]</a><span class="k">class</span> <span class="nc">OutcomeUntransformer</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
+
+<div class="viewcode-block" id="OutcomeUntransformer">
+<a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.OutcomeUntransformer">[docs]</a>
+<span class="k">class</span> <span class="nc">OutcomeUntransformer</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Module acting as a bridge for `OutcomeTransform.untransform`."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -203,7 +244,9 @@
             <span class="n">num_outputs</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">)</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">),</span>
         <span class="p">)</span>
 
-<div class="viewcode-block" id="OutcomeUntransformer.forward"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.OutcomeUntransformer.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="OutcomeUntransformer.forward">
+<a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.OutcomeUntransformer.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="c1"># OutcomeTransforms expect an explicit output dimension in the final position.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># BoTorch has suppressed the output dimension</span>
             <span class="n">output_values</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="o">.</span><span class="n">untransform</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
@@ -211,21 +254,29 @@
 
         <span class="c1"># BoTorch has moved the output dimension inside as the final batch dimension.</span>
         <span class="n">output_values</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="o">.</span><span class="n">untransform</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">output_values</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">output_values</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="get_input_transform"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.get_input_transform">[docs]</a><span class="k">def</span> <span class="nf">get_input_transform</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]:</span>
+
+<div class="viewcode-block" id="get_input_transform">
+<a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.get_input_transform">[docs]</a>
+<span class="k">def</span> <span class="nf">get_input_transform</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Returns a model's input_transform or None."""</span>
     <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"input_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="get_output_transform"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.get_output_transform">[docs]</a><span class="k">def</span> <span class="nf">get_output_transform</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeUntransformer</span><span class="p">]:</span>
+
+<div class="viewcode-block" id="get_output_transform">
+<a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.get_output_transform">[docs]</a>
+<span class="k">def</span> <span class="nf">get_output_transform</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeUntransformer</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Returns a wrapped version of a model's outcome_transform or None."""</span>
     <span class="n">transform</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">transform</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">return</span> <span class="n">OutcomeUntransformer</span><span class="p">(</span><span class="n">transform</span><span class="o">=</span><span class="n">transform</span><span class="p">,</span> <span class="n">num_outputs</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">num_outputs</span><span class="p">)</span></div>
+
 
 
 <span class="nd">@overload</span>
@@ -238,8 +289,11 @@
     <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
 
-<div class="viewcode-block" id="get_train_inputs"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.get_train_inputs">[docs]</a><span class="k">def</span> <span class="nf">get_train_inputs</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="get_train_inputs">
+<a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.get_train_inputs">[docs]</a>
+<span class="k">def</span> <span class="nf">get_train_inputs</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">GetTrainInputs</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">transformed</span><span class="o">=</span><span class="n">transformed</span><span class="p">)</span></div>
+
 
 
 <span class="nd">@GetTrainInputs</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Model</span><span class="p">)</span>
@@ -291,8 +345,11 @@
     <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
 
-<div class="viewcode-block" id="get_train_targets"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.get_train_targets">[docs]</a><span class="k">def</span> <span class="nf">get_train_targets</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="get_train_targets">
+<a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.get_train_targets">[docs]</a>
+<span class="k">def</span> <span class="nf">get_train_targets</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">GetTrainTargets</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">transformed</span><span class="o">=</span><span class="n">transformed</span><span class="p">)</span></div>
+
 
 
 <span class="nd">@GetTrainTargets</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Model</span><span class="p">)</span>

@@ -71,7 +71,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="SingleTaskMultiFidelityGP"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP">[docs]</a><span class="k">class</span> <span class="nc">SingleTaskMultiFidelityGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">):</span>
+<div class="viewcode-block" id="SingleTaskMultiFidelityGP">
+<a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP">[docs]</a>
+<span class="k">class</span> <span class="nc">SingleTaskMultiFidelityGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A single task multi-fidelity GP model.</span>
 
 <span class="sd">    A SingleTaskGP model using a DownsamplingKernel for the data fidelity</span>
@@ -183,7 +185,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_subset_batch_dict</span><span class="p">[</span><span class="s2">"likelihood.noise_covar.raw_noise"</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
 
-<div class="viewcode-block" id="SingleTaskMultiFidelityGP.construct_inputs"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP.construct_inputs">[docs]</a>    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="SingleTaskMultiFidelityGP.construct_inputs">
+<a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP.construct_inputs">[docs]</a>
+    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">training_data</span><span class="p">:</span> <span class="n">SupervisedDataset</span><span class="p">,</span>
@@ -198,10 +202,14 @@
 <span class="sd">        """</span>
         <span class="n">inputs</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">construct_inputs</span><span class="p">(</span><span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">inputs</span><span class="p">[</span><span class="s2">"data_fidelities"</span><span class="p">]</span> <span class="o">=</span> <span class="n">fidelity_features</span>
-        <span class="k">return</span> <span class="n">inputs</span></div></div>
+        <span class="k">return</span> <span class="n">inputs</span></div>
+</div>
 
 
-<div class="viewcode-block" id="FixedNoiseMultiFidelityGP"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP">[docs]</a><span class="k">class</span> <span class="nc">FixedNoiseMultiFidelityGP</span><span class="p">(</span><span class="n">SingleTaskMultiFidelityGP</span><span class="p">):</span>
+
+<div class="viewcode-block" id="FixedNoiseMultiFidelityGP">
+<a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP">[docs]</a>
+<span class="k">class</span> <span class="nc">FixedNoiseMultiFidelityGP</span><span class="p">(</span><span class="n">SingleTaskMultiFidelityGP</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -235,6 +243,7 @@
             <span class="n">outcome_transform</span><span class="o">=</span><span class="n">outcome_transform</span><span class="p">,</span>
             <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span>
         <span class="p">)</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">_setup_multifidelity_covar_module</span><span class="p">(</span>

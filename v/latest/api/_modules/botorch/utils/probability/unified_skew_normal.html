@@ -46,7 +46,9 @@
 <span class="kn">from</span> <span class="nn">torch.nn.functional</span> <span class="kn">import</span> <span class="n">pad</span>
 
 
-<div class="viewcode-block" id="UnifiedSkewNormal"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.unified_skew_normal.UnifiedSkewNormal">[docs]</a><span class="k">class</span> <span class="nc">UnifiedSkewNormal</span><span class="p">(</span><span class="n">Distribution</span><span class="p">):</span>
+<div class="viewcode-block" id="UnifiedSkewNormal">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.unified_skew_normal.UnifiedSkewNormal">[docs]</a>
+<span class="k">class</span> <span class="nc">UnifiedSkewNormal</span><span class="p">(</span><span class="n">Distribution</span><span class="p">):</span>
     <span class="n">arg_constraints</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -114,7 +116,9 @@
                     <span class="p">)</span>
                 <span class="k">raise</span> <span class="n">e</span>
 
-<div class="viewcode-block" id="UnifiedSkewNormal.log_prob"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.unified_skew_normal.UnifiedSkewNormal.log_prob">[docs]</a>    <span class="k">def</span> <span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="UnifiedSkewNormal.log_prob">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.unified_skew_normal.UnifiedSkewNormal.log_prob">[docs]</a>
+    <span class="k">def</span> <span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Computes the log probability `ln p(Y = value | a &lt; X &lt; b)`."""</span>
         <span class="n">event_ndim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">event_shape</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="n">event_ndim</span> <span class="ow">or</span> <span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="n">event_ndim</span><span class="p">:]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_shape</span><span class="p">:</span>
@@ -136,6 +140,7 @@
 
         <span class="k">return</span> <span class="n">log_probs</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">pre_shape</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">)</span></div>
 
+
     <span class="k">def</span> <span class="nf">_log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Computes the log probability `ln p(Y = value | a &lt; X &lt; b)`."""</span>
         <span class="c1"># Center by subtracting E[X | Y = value] from `bounds`.</span>
@@ -151,7 +156,9 @@
         <span class="c1"># p(Y = value | a &lt; X &lt; b) = P(a &lt; X &lt; b | Y = value)p(Y = value)/P(a &lt; X &lt; b)</span>
         <span class="k">return</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">gauss</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">trunc</span><span class="o">.</span><span class="n">log_partition</span>
 
-<div class="viewcode-block" id="UnifiedSkewNormal.rsample"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.unified_skew_normal.UnifiedSkewNormal.rsample">[docs]</a>    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>  <span class="c1"># noqa: B008</span>
+<div class="viewcode-block" id="UnifiedSkewNormal.rsample">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.unified_skew_normal.UnifiedSkewNormal.rsample">[docs]</a>
+    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>  <span class="c1"># noqa: B008</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Draw samples from the Unified Skew Normal.</span>
 
 <span class="sd">        Args:</span>
@@ -165,7 +172,10 @@
         <span class="n">cond_expectations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gauss</span><span class="o">.</span><span class="n">loc</span> <span class="o">+</span> <span class="n">trunc_rvs</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iKxx_Kxy</span>
         <span class="k">return</span> <span class="n">cond_expectations</span> <span class="o">+</span> <span class="n">residuals</span></div>
 
-<div class="viewcode-block" id="UnifiedSkewNormal.expand"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.unified_skew_normal.UnifiedSkewNormal.expand">[docs]</a>    <span class="k">def</span> <span class="nf">expand</span><span class="p">(</span>
+
+<div class="viewcode-block" id="UnifiedSkewNormal.expand">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.unified_skew_normal.UnifiedSkewNormal.expand">[docs]</a>
+    <span class="k">def</span> <span class="nf">expand</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">batch_shape</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">_instance</span><span class="p">:</span> <span class="n">UnifiedSkewNormal</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">UnifiedSkewNormal</span><span class="p">:</span>
         <span class="n">new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_checked_instance</span><span class="p">(</span><span class="n">UnifiedSkewNormal</span><span class="p">,</span> <span class="n">_instance</span><span class="p">)</span>
@@ -201,6 +211,7 @@
 
             <span class="nb">setattr</span><span class="p">(</span><span class="n">new</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">new_obj</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">new</span></div>
+
 
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">args_string</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
@@ -283,6 +294,7 @@
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Cov(X, X) - Cov(X, Y)Cov(Y, Y)^{-1} Cov(Y, X)`."""</span>
         <span class="n">beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iLyy_Kyx</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">trunc</span><span class="o">.</span><span class="n">covariance_matrix</span> <span class="o">-</span> <span class="n">beta</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">@</span> <span class="n">beta</span></div>
+
 </pre></div>
 </div>
 </div>

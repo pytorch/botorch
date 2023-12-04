@@ -50,7 +50,9 @@
 <span class="n">dispatcher</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">(</span><span class="s2">"parse_training_data"</span><span class="p">,</span> <span class="n">encoder</span><span class="o">=</span><span class="n">_encoder</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="parse_training_data"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.parse_training_data.parse_training_data">[docs]</a><span class="k">def</span> <span class="nf">parse_training_data</span><span class="p">(</span>
+<div class="viewcode-block" id="parse_training_data">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.utils.parse_training_data.parse_training_data">[docs]</a>
+<span class="k">def</span> <span class="nf">parse_training_data</span><span class="p">(</span>
     <span class="n">consumer</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">SupervisedDataset</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
@@ -65,6 +67,7 @@
 <span class="sd">        A dictionary containing the extracted information.</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="n">dispatcher</span><span class="p">(</span><span class="n">consumer</span><span class="p">,</span> <span class="n">training_data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
 
 
 <span class="nd">@dispatcher</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="n">SupervisedDataset</span><span class="p">)</span>

@@ -38,7 +38,9 @@
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Parameter</span>
 
 
-<div class="viewcode-block" id="HomotopySchedule"><a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.HomotopySchedule">[docs]</a><span class="k">class</span> <span class="nc">HomotopySchedule</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<div class="viewcode-block" id="HomotopySchedule">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.HomotopySchedule">[docs]</a>
+<span class="k">class</span> <span class="nc">HomotopySchedule</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
     <span class="nd">@property</span>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">num_steps</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
@@ -54,16 +56,25 @@
     <span class="k">def</span> <span class="nf">should_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Return true if we have incremented past the end of the schedule."""</span>
 
-<div class="viewcode-block" id="HomotopySchedule.restart"><a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.HomotopySchedule.restart">[docs]</a>    <span class="nd">@abstractmethod</span>
+<div class="viewcode-block" id="HomotopySchedule.restart">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.HomotopySchedule.restart">[docs]</a>
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">restart</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Restart the schedule to start from the beginning."""</span></div>
 
-<div class="viewcode-block" id="HomotopySchedule.step"><a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.HomotopySchedule.step">[docs]</a>    <span class="nd">@abstractmethod</span>
+
+<div class="viewcode-block" id="HomotopySchedule.step">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.HomotopySchedule.step">[docs]</a>
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Move to solving the next problem."""</span></div></div>
+<span class="w">        </span><span class="sd">"""Move to solving the next problem."""</span></div>
+</div>
 
 
-<div class="viewcode-block" id="FixedHomotopySchedule"><a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.FixedHomotopySchedule">[docs]</a><span class="k">class</span> <span class="nc">FixedHomotopySchedule</span><span class="p">(</span><span class="n">HomotopySchedule</span><span class="p">):</span>
+
+<div class="viewcode-block" id="FixedHomotopySchedule">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.FixedHomotopySchedule">[docs]</a>
+<span class="k">class</span> <span class="nc">FixedHomotopySchedule</span><span class="p">(</span><span class="n">HomotopySchedule</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Homotopy schedule with a fixed list of values."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -87,14 +98,23 @@
     <span class="k">def</span> <span class="nf">should_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">idx</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="p">)</span>
 
-<div class="viewcode-block" id="FixedHomotopySchedule.restart"><a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.FixedHomotopySchedule.restart">[docs]</a>    <span class="k">def</span> <span class="nf">restart</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="FixedHomotopySchedule.restart">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.FixedHomotopySchedule.restart">[docs]</a>
+    <span class="k">def</span> <span class="nf">restart</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span></div>
 
-<div class="viewcode-block" id="FixedHomotopySchedule.step"><a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.FixedHomotopySchedule.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span></div></div>
+
+<div class="viewcode-block" id="FixedHomotopySchedule.step">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.FixedHomotopySchedule.step">[docs]</a>
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span></div>
+</div>
 
 
-<div class="viewcode-block" id="LinearHomotopySchedule"><a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.LinearHomotopySchedule">[docs]</a><span class="k">class</span> <span class="nc">LinearHomotopySchedule</span><span class="p">(</span><span class="n">FixedHomotopySchedule</span><span class="p">):</span>
+
+<div class="viewcode-block" id="LinearHomotopySchedule">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.LinearHomotopySchedule">[docs]</a>
+<span class="k">class</span> <span class="nc">LinearHomotopySchedule</span><span class="p">(</span><span class="n">FixedHomotopySchedule</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Linear homotopy schedule."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -110,7 +130,10 @@
         <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="LogLinearHomotopySchedule"><a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.LogLinearHomotopySchedule">[docs]</a><span class="k">class</span> <span class="nc">LogLinearHomotopySchedule</span><span class="p">(</span><span class="n">FixedHomotopySchedule</span><span class="p">):</span>
+
+<div class="viewcode-block" id="LogLinearHomotopySchedule">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.LogLinearHomotopySchedule">[docs]</a>
+<span class="k">class</span> <span class="nc">LogLinearHomotopySchedule</span><span class="p">(</span><span class="n">FixedHomotopySchedule</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Log-linear homotopy schedule."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
@@ -128,7 +151,10 @@
         <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="HomotopyParameter"><a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.HomotopyParameter">[docs]</a><span class="nd">@dataclass</span>
+
+<div class="viewcode-block" id="HomotopyParameter">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.HomotopyParameter">[docs]</a>
+<span class="nd">@dataclass</span>
 <span class="k">class</span> <span class="nc">HomotopyParameter</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Homotopy parameter.</span>
 
@@ -139,7 +165,10 @@
     <span class="n">schedule</span><span class="p">:</span> <span class="n">HomotopySchedule</span></div>
 
 
-<div class="viewcode-block" id="Homotopy"><a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.Homotopy">[docs]</a><span class="k">class</span> <span class="nc">Homotopy</span><span class="p">:</span>
+
+<div class="viewcode-block" id="Homotopy">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.Homotopy">[docs]</a>
+<span class="k">class</span> <span class="nc">Homotopy</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Generic homotopy class.</span>
 
 <span class="sd">    This class is designed to be used in `optimize_acqf_homotopy`. Given a set of</span>
@@ -186,26 +215,36 @@
 <span class="w">        </span><span class="sd">"""Returns true if all schedules have reached the end."""</span>
         <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">should_stop</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_homotopy_parameters</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Homotopy.restart"><a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.Homotopy.restart">[docs]</a>    <span class="k">def</span> <span class="nf">restart</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="Homotopy.restart">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.Homotopy.restart">[docs]</a>
+    <span class="k">def</span> <span class="nf">restart</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Restart the homotopy to use the initial value in the schedule."""</span>
         <span class="k">for</span> <span class="n">hp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_homotopy_parameters</span><span class="p">:</span>
             <span class="n">hp</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">restart</span><span class="p">()</span>
             <span class="n">hp</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">fill_</span><span class="p">(</span><span class="n">hp</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_execute_callbacks</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="Homotopy.reset"><a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.Homotopy.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+<div class="viewcode-block" id="Homotopy.reset">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.Homotopy.reset">[docs]</a>
+    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Reset the homotopy parameter to their original values."""</span>
         <span class="k">for</span> <span class="n">hp</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_homotopy_parameters</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_original_values</span><span class="p">):</span>
             <span class="n">hp</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">fill_</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_execute_callbacks</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="Homotopy.step"><a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.Homotopy.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+<div class="viewcode-block" id="Homotopy.step">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.homotopy.Homotopy.step">[docs]</a>
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Take a step according to the schedules."""</span>
         <span class="k">for</span> <span class="n">hp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_homotopy_parameters</span><span class="p">:</span>
             <span class="n">hp</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">hp</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">should_stop</span><span class="p">:</span>
                 <span class="n">hp</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">fill_</span><span class="p">(</span><span class="n">hp</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_execute_callbacks</span><span class="p">()</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_execute_callbacks</span><span class="p">()</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

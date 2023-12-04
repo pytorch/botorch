@@ -42,7 +42,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="DeterministicPosterior"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior">[docs]</a><span class="k">class</span> <span class="nc">DeterministicPosterior</span><span class="p">(</span><span class="n">Posterior</span><span class="p">):</span>
+<div class="viewcode-block" id="DeterministicPosterior">
+<a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior">[docs]</a>
+<span class="k">class</span> <span class="nc">DeterministicPosterior</span><span class="p">(</span><span class="n">Posterior</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Deterministic posterior.</span>
 
 <span class="sd">    [DEPRECATED] Use `EnsemblePosterior` instead.</span>
@@ -91,7 +93,9 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
 
-<div class="viewcode-block" id="DeterministicPosterior.rsample"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior.rsample">[docs]</a>    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span>
+<div class="viewcode-block" id="DeterministicPosterior.rsample">
+<a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior.rsample">[docs]</a>
+    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -111,7 +115,9 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">sample_shape</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">sample_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">])</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_extended_shape</span><span class="p">(</span><span class="n">sample_shape</span><span class="p">))</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_extended_shape</span><span class="p">(</span><span class="n">sample_shape</span><span class="p">))</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

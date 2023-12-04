@@ -48,13 +48,17 @@
 <span class="kn">from</span> <span class="nn">torch.quasirandom</span> <span class="kn">import</span> <span class="n">SobolEngine</span>
 
 
-<div class="viewcode-block" id="NormalMCSampler"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.normal.NormalMCSampler">[docs]</a><span class="k">class</span> <span class="nc">NormalMCSampler</span><span class="p">(</span><span class="n">MCSampler</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<div class="viewcode-block" id="NormalMCSampler">
+<a class="viewcode-back" href="../../../sampling.html#botorch.sampling.normal.NormalMCSampler">[docs]</a>
+<span class="k">class</span> <span class="nc">NormalMCSampler</span><span class="p">(</span><span class="n">MCSampler</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Base class for samplers producing (possibly QMC) N(0,1) samples.</span>
 
 <span class="sd">    Subclasses must implement the `_construct_base_samples` method.</span>
 <span class="sd">    """</span>
 
-<div class="viewcode-block" id="NormalMCSampler.forward"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.normal.NormalMCSampler.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="NormalMCSampler.forward">
+<a class="viewcode-back" href="../../../sampling.html#botorch.sampling.normal.NormalMCSampler.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Draws MC samples from the posterior.</span>
 
 <span class="sd">        Args:</span>
@@ -71,6 +75,7 @@
             <span class="p">),</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">samples</span></div>
+
 
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">_construct_base_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -154,7 +159,10 @@
                     <span class="p">]</span> <span class="o">=</span> <span class="n">expanded_samples</span></div>
 
 
-<div class="viewcode-block" id="IIDNormalSampler"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.normal.IIDNormalSampler">[docs]</a><span class="k">class</span> <span class="nc">IIDNormalSampler</span><span class="p">(</span><span class="n">NormalMCSampler</span><span class="p">):</span>
+
+<div class="viewcode-block" id="IIDNormalSampler">
+<a class="viewcode-back" href="../../../sampling.html#botorch.sampling.normal.IIDNormalSampler">[docs]</a>
+<span class="k">class</span> <span class="nc">IIDNormalSampler</span><span class="p">(</span><span class="n">NormalMCSampler</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Sampler for MC base samples using iid N(0,1) samples.</span>
 
 <span class="sd">    Example:</span>
@@ -189,7 +197,10 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="SobolQMCNormalSampler"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.normal.SobolQMCNormalSampler">[docs]</a><span class="k">class</span> <span class="nc">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">NormalMCSampler</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SobolQMCNormalSampler">
+<a class="viewcode-back" href="../../../sampling.html#botorch.sampling.normal.SobolQMCNormalSampler">[docs]</a>
+<span class="k">class</span> <span class="nc">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">NormalMCSampler</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Sampler for quasi-MC N(0,1) base samples using Sobol sequences.</span>
 
 <span class="sd">    Example:</span>
@@ -230,6 +241,7 @@
             <span class="n">base_samples</span> <span class="o">=</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">target_shape</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"base_samples"</span><span class="p">,</span> <span class="n">base_samples</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span></div>
+
 </pre></div>
 </div>
 </div>

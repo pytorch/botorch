@@ -35,7 +35,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="prune_candidates"><a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize_homotopy.prune_candidates">[docs]</a><span class="k">def</span> <span class="nf">prune_candidates</span><span class="p">(</span>
+<div class="viewcode-block" id="prune_candidates">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize_homotopy.prune_candidates">[docs]</a>
+<span class="k">def</span> <span class="nf">prune_candidates</span><span class="p">(</span>
     <span class="n">candidates</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">acq_values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">prune_tolerance</span><span class="p">:</span> <span class="nb">float</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Prune candidates based on their distance to other candidates.</span>
@@ -69,7 +71,10 @@
     <span class="k">return</span> <span class="n">candidates_new</span></div>
 
 
-<div class="viewcode-block" id="optimize_acqf_homotopy"><a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize_homotopy.optimize_acqf_homotopy">[docs]</a><span class="k">def</span> <span class="nf">optimize_acqf_homotopy</span><span class="p">(</span>
+
+<div class="viewcode-block" id="optimize_acqf_homotopy">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize_homotopy.optimize_acqf_homotopy">[docs]</a>
+<span class="k">def</span> <span class="nf">optimize_acqf_homotopy</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -167,6 +172,7 @@
     <span class="n">homotopy</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>  <span class="c1"># Reset the homotopy parameters</span>
 
     <span class="k">return</span> <span class="n">selected_candidates</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">acq_value_list</span><span class="p">)</span></div>
+
 </pre></div>
 </div>
 </div>

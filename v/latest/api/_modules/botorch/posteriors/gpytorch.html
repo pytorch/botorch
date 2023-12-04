@@ -57,7 +57,9 @@
     <span class="kn">from</span> <span class="nn">botorch.posteriors.posterior_list</span> <span class="kn">import</span> <span class="n">PosteriorList</span>  <span class="c1"># pragma: no cover</span>
 
 
-<div class="viewcode-block" id="GPyTorchPosterior"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior">[docs]</a><span class="k">class</span> <span class="nc">GPyTorchPosterior</span><span class="p">(</span><span class="n">TorchPosterior</span><span class="p">):</span>
+<div class="viewcode-block" id="GPyTorchPosterior">
+<a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior">[docs]</a>
+<span class="k">class</span> <span class="nc">GPyTorchPosterior</span><span class="p">(</span><span class="n">TorchPosterior</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A posterior based on GPyTorch's multi-variate Normal distributions."""</span>
     <span class="n">distribution</span><span class="p">:</span> <span class="n">MultivariateNormal</span>
 
@@ -125,7 +127,9 @@
             <span class="n">base_shape</span> <span class="o">+=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">sample_shape</span> <span class="o">+</span> <span class="n">base_shape</span>
 
-<div class="viewcode-block" id="GPyTorchPosterior.rsample_from_base_samples"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.rsample_from_base_samples">[docs]</a>    <span class="k">def</span> <span class="nf">rsample_from_base_samples</span><span class="p">(</span>
+<div class="viewcode-block" id="GPyTorchPosterior.rsample_from_base_samples">
+<a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.rsample_from_base_samples">[docs]</a>
+    <span class="k">def</span> <span class="nf">rsample_from_base_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
         <span class="n">base_samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -168,7 +172,10 @@
             <span class="n">samples</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">samples</span></div>
 
-<div class="viewcode-block" id="GPyTorchPosterior.rsample"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.rsample">[docs]</a>    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span>
+
+<div class="viewcode-block" id="GPyTorchPosterior.rsample">
+<a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.rsample">[docs]</a>
+    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">base_samples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -219,6 +226,7 @@
             <span class="n">samples</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">samples</span></div>
 
+
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""The posterior mean."""</span>
@@ -235,19 +243,26 @@
             <span class="n">variance</span> <span class="o">=</span> <span class="n">variance</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">variance</span>
 
-<div class="viewcode-block" id="GPyTorchPosterior.quantile"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.quantile">[docs]</a>    <span class="k">def</span> <span class="nf">quantile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="GPyTorchPosterior.quantile">
+<a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.quantile">[docs]</a>
+    <span class="k">def</span> <span class="nf">quantile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the quantiles of the marginal distributions."""</span>
         <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="n">marginal</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">sqrt</span><span class="p">())</span>
         <span class="k">return</span> <span class="n">marginal</span><span class="o">.</span><span class="n">icdf</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="GPyTorchPosterior.density"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.density">[docs]</a>    <span class="k">def</span> <span class="nf">density</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="GPyTorchPosterior.density">
+<a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.density">[docs]</a>
+    <span class="k">def</span> <span class="nf">density</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""The probability density of the marginal distributions."""</span>
         <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">density</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="n">marginal</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">sqrt</span><span class="p">())</span>
-        <span class="k">return</span> <span class="n">marginal</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span></div></div>
+        <span class="k">return</span> <span class="n">marginal</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span></div>
+</div>
+
 
 
 <span class="k">def</span> <span class="nf">_validate_scalarize_inputs</span><span class="p">(</span><span class="n">weights</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -260,7 +275,9 @@
         <span class="p">)</span>
 
 
-<div class="viewcode-block" id="scalarize_posterior_gpytorch"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.scalarize_posterior_gpytorch">[docs]</a><span class="k">def</span> <span class="nf">scalarize_posterior_gpytorch</span><span class="p">(</span>
+<div class="viewcode-block" id="scalarize_posterior_gpytorch">
+<a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.scalarize_posterior_gpytorch">[docs]</a>
+<span class="k">def</span> <span class="nf">scalarize_posterior_gpytorch</span><span class="p">(</span>
     <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span><span class="p">,</span>
     <span class="n">weights</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">offset</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
@@ -341,7 +358,10 @@
     <span class="k">return</span> <span class="n">new_mean</span><span class="p">,</span> <span class="n">new_cov</span></div>
 
 
-<div class="viewcode-block" id="scalarize_posterior"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.scalarize_posterior">[docs]</a><span class="k">def</span> <span class="nf">scalarize_posterior</span><span class="p">(</span>
+
+<div class="viewcode-block" id="scalarize_posterior">
+<a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.scalarize_posterior">[docs]</a>
+<span class="k">def</span> <span class="nf">scalarize_posterior</span><span class="p">(</span>
     <span class="n">posterior</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">GPyTorchPosterior</span><span class="p">,</span> <span class="n">PosteriorList</span><span class="p">],</span>
     <span class="n">weights</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">offset</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
@@ -405,6 +425,7 @@
     <span class="n">new_cov</span> <span class="o">=</span> <span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">variance</span> <span class="o">@</span> <span class="p">(</span><span class="n">weights</span><span class="o">**</span><span class="mi">2</span><span class="p">))[:,</span> <span class="kc">None</span><span class="p">]</span>
     <span class="n">mvn</span> <span class="o">=</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">new_mean</span><span class="p">,</span> <span class="n">new_cov</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">mvn</span><span class="p">)</span></div>
+
 </pre></div>
 </div>
 </div>
