@@ -8,7 +8,7 @@ import math
 from typing import List
 
 import torch
-from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.errors import InputDataError, UnsupportedError
 from botorch.test_functions.base import BaseTestProblem
 from botorch.test_functions.multi_objective import (
     BNH,
@@ -63,7 +63,7 @@ class DummyMOProblem(MultiObjectiveTestProblem):
 class TestBaseTestMultiObjectiveProblem(BotorchTestCase):
     def test_base_mo_problem(self):
         for negate in (True, False):
-            for noise_std in (None, 1.0):
+            for noise_std in (None, 1.0, [1.0, 2.0]):
                 f = DummyMOProblem(noise_std=noise_std, negate=negate)
                 self.assertEqual(f.noise_std, noise_std)
                 self.assertEqual(f.negate, negate)
@@ -75,6 +75,10 @@ class TestBaseTestMultiObjectiveProblem(BotorchTestCase):
                     self.assertTrue(torch.equal(f_X, expected_f_X))
                 with self.assertRaises(NotImplementedError):
                     f.gen_pareto_front(1)
+            with self.assertRaisesRegex(
+                InputDataError, "must match the number of objectives"
+            ):
+                f = DummyMOProblem(noise_std=[1.0, 2.0, 3.0], negate=negate)
 
 
 class TestBraninCurrin(
@@ -155,6 +159,7 @@ class TestDTLZ(
             DTLZ4(dim=5, num_objectives=2),
             DTLZ5(dim=5, num_objectives=2),
             DTLZ7(dim=5, num_objectives=2),
+            DTLZ7(dim=5, num_objectives=2, noise_std=[0.1, 0.2]),
         ]
 
     def test_init(self):
@@ -216,7 +221,10 @@ class TestGMM(
 ):
     @property
     def functions(self) -> List[BaseTestProblem]:
-        return [GMM(num_objectives=4)]
+        return [
+            GMM(num_objectives=4),
+            GMM(num_objectives=4, noise_std=[0.0, 0.1, 0.2, 0.3]),
+        ]
 
     def test_init(self):
         f = self.functions[0]
@@ -269,7 +277,7 @@ class TestMW7(
 ):
     @property
     def functions(self) -> List[BaseTestProblem]:
-        return [MW7(dim=3)]
+        return [MW7(dim=3), MW7(dim=3, noise_std=[0.1, 0.2])]
 
     def test_init(self):
         for f in self.functions:
@@ -290,6 +298,8 @@ class TestZDT(
             ZDT1(dim=3, num_objectives=2),
             ZDT2(dim=3, num_objectives=2),
             ZDT3(dim=3, num_objectives=2),
+            ZDT3(dim=3, num_objectives=2, noise_std=0.1),
+            ZDT3(dim=3, num_objectives=2, noise_std=[0.1, 0.2]),
         ]
 
     def test_init(self):
@@ -362,7 +372,7 @@ class TestCarSideImpact(
 ):
     @property
     def functions(self) -> List[BaseTestProblem]:
-        return [CarSideImpact()]
+        return [CarSideImpact(), CarSideImpact(noise_std=[0.1, 0.2, 0.3, 0.4])]
 
 
 class TestPenicillin(
@@ -372,7 +382,7 @@ class TestPenicillin(
 ):
     @property
     def functions(self) -> List[BaseTestProblem]:
-        return [Penicillin()]
+        return [Penicillin(), Penicillin(noise_std=[0.1, 0.2, 0.3])]
 
 
 class TestToyRobust(
@@ -382,7 +392,7 @@ class TestToyRobust(
 ):
     @property
     def functions(self) -> List[BaseTestProblem]:
-        return [ToyRobust()]
+        return [ToyRobust(), ToyRobust(noise_std=[0.1, 0.2])]
 
 
 class TestVehicleSafety(
@@ -392,7 +402,7 @@ class TestVehicleSafety(
 ):
     @property
     def functions(self) -> List[BaseTestProblem]:
-        return [VehicleSafety()]
+        return [VehicleSafety(), VehicleSafety(noise_std=[0.1, 0.2, 0.3])]
 
 
 # ------------------ Constrained Multi-objective test problems ------------------ #
@@ -406,7 +416,7 @@ class TestBNH(
 ):
     @property
     def functions(self) -> List[BaseTestProblem]:
-        return [BNH()]
+        return [BNH(), BNH(noise_std=[0.1, 0.2])]
 
 
 class TestSRN(
@@ -417,7 +427,7 @@ class TestSRN(
 ):
     @property
     def functions(self) -> List[BaseTestProblem]:
-        return [SRN()]
+        return [SRN(), SRN(noise_std=[0.1, 0.2])]
 
 
 class TestCONSTR(
@@ -428,7 +438,7 @@ class TestCONSTR(
 ):
     @property
     def functions(self) -> List[BaseTestProblem]:
-        return [CONSTR()]
+        return [CONSTR(), CONSTR(noise_std=[0.1, 0.2])]
 
 
 class TestConstrainedBraninCurrin(
@@ -439,7 +449,10 @@ class TestConstrainedBraninCurrin(
 ):
     @property
     def functions(self) -> List[BaseTestProblem]:
-        return [ConstrainedBraninCurrin()]
+        return [
+            ConstrainedBraninCurrin(),
+            ConstrainedBraninCurrin(noise_std=[0.1, 0.2]),
+        ]
 
 
 class TestC2DTLZ2(
@@ -450,7 +463,11 @@ class TestC2DTLZ2(
 ):
     @property
     def functions(self) -> List[BaseTestProblem]:
-        return [C2DTLZ2(dim=3, num_objectives=2)]
+        return [
+            C2DTLZ2(dim=3, num_objectives=2),
+            C2DTLZ2(dim=3, num_objectives=2, noise_std=0.1),
+            C2DTLZ2(dim=3, num_objectives=2, noise_std=[0.1, 0.2]),
+        ]
 
     def test_batch_exception(self):
         f = C2DTLZ2(dim=3, num_objectives=2)
@@ -466,7 +483,7 @@ class TestDiscBrake(
 ):
     @property
     def functions(self) -> List[BaseTestProblem]:
-        return [DiscBrake()]
+        return [DiscBrake(), DiscBrake(noise_std=[0.1, 0.2])]
 
 
 class TestWeldedBeam(
@@ -477,7 +494,7 @@ class TestWeldedBeam(
 ):
     @property
     def functions(self) -> List[BaseTestProblem]:
-        return [WeldedBeam()]
+        return [WeldedBeam(), WeldedBeam(noise_std=[0.1, 0.2])]
 
 
 class TestOSY(
@@ -488,4 +505,4 @@ class TestOSY(
 ):
     @property
     def functions(self) -> List[BaseTestProblem]:
-        return [OSY()]
+        return [OSY(), OSY(noise_std=[0.1, 0.2])]
