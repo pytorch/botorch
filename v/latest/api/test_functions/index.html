@@ -34,7 +34,9 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -89,7 +91,9 @@ constraints of the form <cite>c_i(x) &gt;= 0</cite> for <cite>i=1, …, n_c</cit
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -97,6 +101,10 @@ constraints of the form <cite>c_i(x) &gt;= 0</cite> for <cite>i=1, …, n_c</cit
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.test_functions.base.ConstrainedBaseTestProblem.num_constraints">
 <span class="sig-name descname"><span class="pre">num_constraints</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#botorch.test_functions.base.ConstrainedBaseTestProblem.num_constraints" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.base.ConstrainedBaseTestProblem.constraint_noise_std">
+<span class="sig-name descname"><span class="pre">constraint_noise_std</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.test_functions.base.ConstrainedBaseTestProblem.constraint_noise_std" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.test_functions.base.ConstrainedBaseTestProblem.evaluate_slack">
@@ -183,7 +191,9 @@ between a provided point and the closest point on the true pareto front.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
 </dd>
@@ -264,7 +274,9 @@ Technometrics, 2016.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
@@ -325,7 +337,9 @@ Technometrics, 2016.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
@@ -369,7 +383,9 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
@@ -404,7 +420,9 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
@@ -442,7 +460,9 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
@@ -477,7 +497,9 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
@@ -554,7 +576,9 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
@@ -689,7 +713,9 @@ z_4 = ( 8.05502, -9.66459)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
@@ -975,7 +1001,9 @@ z_4 = ( 8.05502, -9.66459)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
@@ -1052,7 +1080,9 @@ z_4 = ( 8.05502, -9.66459)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
@@ -1081,9 +1111,41 @@ z_4 = ( 8.05502, -9.66459)</p>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="botorch.test_functions.synthetic.ConstrainedGramacy">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">ConstrainedGramacy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#ConstrainedGramacy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.ConstrainedGramacy" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">ConstrainedSyntheticTestFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraint_noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#ConstrainedSyntheticTestFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedBaseTestProblem</span></code></a>, <a class="reference internal" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="botorch.test_functions.synthetic.SyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">SyntheticTestFunction</span></code></a></p>
+<p>Base class for constrained synthetic test functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective in a multiobjective problem.</p></li>
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+If a list is provided, specifies separate noise standard
+deviations for each constraint.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction.num_constraints">
+<span class="sig-name descname"><span class="pre">num_constraints</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction.num_constraints" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction.dim" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction.training" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.test_functions.synthetic.ConstrainedGramacy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">ConstrainedGramacy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraint_noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#ConstrainedGramacy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.ConstrainedGramacy" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction" title="botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedSyntheticTestFunction</span></code></a></p>
 <p>Constrained Gramacy test function.</p>
 <p>This problem comes from <a class="reference internal" href="#gramacy2016" id="id2"><span>[Gramacy2016]</span></a>. The problem is defined
 over the unit cube and the goal is to minimize x1+x2 subject to
@@ -1092,7 +1154,12 @@ and x1^2 + x2^2 - 1.5 &lt;= 0.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective in a multiobjective problem.</p></li>
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+If a list is provided, specifies separate noise standard
+deviations for each constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
@@ -1152,16 +1219,19 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.test_functions.synthetic.ConstrainedHartmann">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">ConstrainedHartmann</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#ConstrainedHartmann"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.ConstrainedHartmann" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.Hartmann" title="botorch.test_functions.synthetic.Hartmann"><code class="xref py py-class docutils literal notranslate"><span class="pre">Hartmann</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedBaseTestProblem</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">ConstrainedHartmann</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraint_noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#ConstrainedHartmann"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.ConstrainedHartmann" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.Hartmann" title="botorch.test_functions.synthetic.Hartmann"><code class="xref py py-class docutils literal notranslate"><span class="pre">Hartmann</span></code></a>, <a class="reference internal" href="#botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction" title="botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedSyntheticTestFunction</span></code></a></p>
 <p>Constrained Hartmann test function.</p>
 <p>This is a constrained version of the standard Hartmann test function that
 uses <cite>||x||_2 &lt;= 1</cite> as the constraint. This problem comes from <a class="reference internal" href="#letham2019" id="id3"><span>[Letham2019]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>dim</strong> – The (input) dimension.</p></li>
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+If a list is provided, specifies separate noise standard
+deviations for each constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
@@ -1203,16 +1273,19 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.test_functions.synthetic.ConstrainedHartmannSmooth">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">ConstrainedHartmannSmooth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#ConstrainedHartmannSmooth"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.ConstrainedHartmannSmooth" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.Hartmann" title="botorch.test_functions.synthetic.Hartmann"><code class="xref py py-class docutils literal notranslate"><span class="pre">Hartmann</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedBaseTestProblem</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">ConstrainedHartmannSmooth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraint_noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#ConstrainedHartmannSmooth"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.ConstrainedHartmannSmooth" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.Hartmann" title="botorch.test_functions.synthetic.Hartmann"><code class="xref py py-class docutils literal notranslate"><span class="pre">Hartmann</span></code></a>, <a class="reference internal" href="#botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction" title="botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedSyntheticTestFunction</span></code></a></p>
 <p>Smooth constrained Hartmann test function.</p>
 <p>This is a constrained version of the standard Hartmann test function that
 uses <cite>||x||_2^2 &lt;= 1</cite> as the constraint to obtain smoother constraint slack.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>dim</strong> – The (input) dimension.</p></li>
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+If a list is provided, specifies separate noise standard
+deviations for each constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
@@ -1254,15 +1327,20 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.test_functions.synthetic.PressureVessel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">PressureVessel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#PressureVessel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.PressureVessel" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="botorch.test_functions.synthetic.SyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">SyntheticTestFunction</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedBaseTestProblem</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">PressureVessel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraint_noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#PressureVessel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.PressureVessel" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction" title="botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedSyntheticTestFunction</span></code></a></p>
 <p>Pressure vessel design problem with constraints.</p>
 <p>The four-dimensional pressure vessel design problem with four black-box
 constraints from <a class="reference internal" href="#coellocoello2002constraint" id="id4"><span>[CoelloCoello2002constraint]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective in a multiobjective problem.</p></li>
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+If a list is provided, specifies separate noise standard
+deviations for each constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
@@ -1317,8 +1395,8 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.test_functions.synthetic.WeldedBeamSO">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">WeldedBeamSO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#WeldedBeamSO"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.WeldedBeamSO" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="botorch.test_functions.synthetic.SyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">SyntheticTestFunction</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedBaseTestProblem</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">WeldedBeamSO</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraint_noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#WeldedBeamSO"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.WeldedBeamSO" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction" title="botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedSyntheticTestFunction</span></code></a></p>
 <p>Welded beam design problem with constraints (single-outcome).</p>
 <p>The four-dimensional welded beam design proble problem with six
 black-box constraints from <a class="reference internal" href="#coellocoello2002constraint" id="id5"><span>[CoelloCoello2002constraint]</span></a>.</p>
@@ -1327,7 +1405,12 @@ black-box constraints from <a class="reference internal" href="#coellocoello2002
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective in a multiobjective problem.</p></li>
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+If a list is provided, specifies separate noise standard
+deviations for each constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
@@ -1382,15 +1465,20 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.test_functions.synthetic.TensionCompressionString">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">TensionCompressionString</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#TensionCompressionString"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.TensionCompressionString" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="botorch.test_functions.synthetic.SyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">SyntheticTestFunction</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedBaseTestProblem</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">TensionCompressionString</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraint_noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#TensionCompressionString"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.TensionCompressionString" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction" title="botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedSyntheticTestFunction</span></code></a></p>
 <p>Tension compression string optimization problem with constraints.</p>
 <p>The three-dimensional tension compression string optimization problem with
 four black-box constraints from <a class="reference internal" href="#hedar2006derivfree" id="id6"><span>[Hedar2006derivfree]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective in a multiobjective problem.</p></li>
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+If a list is provided, specifies separate noise standard
+deviations for each constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
@@ -1445,15 +1533,20 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.test_functions.synthetic.SpeedReducer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">SpeedReducer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#SpeedReducer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.SpeedReducer" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="botorch.test_functions.synthetic.SyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">SyntheticTestFunction</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedBaseTestProblem</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">SpeedReducer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraint_noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#SpeedReducer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.SpeedReducer" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction" title="botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedSyntheticTestFunction</span></code></a></p>
 <p>Speed Reducer design problem with constraints.</p>
 <p>The seven-dimensional speed reducer design problem with eleven black-box
 constraints from <a class="reference internal" href="#lemonge2010constrained" id="id7"><span>[Lemonge2010constrained]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective in a multiobjective problem.</p></li>
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+If a list is provided, specifies separate noise standard
+deviations for each constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
@@ -1530,7 +1623,9 @@ and <cite>B_min = 0.397887</cite></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
@@ -1756,7 +1851,7 @@ evolutionary algorithms: Empirical results. Evolutionary Computation, vol.
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
 </dd>
@@ -1808,7 +1903,7 @@ on DH. The reference points were set using <cite>infer_reference_point</cite>.</
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -1838,7 +1933,7 @@ S(x_0) = alpha / (0.2 + x_0) + beta * x_0^2</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -1883,7 +1978,7 @@ S(x_0) = alpha / (0.2 + x_0) + beta * x_0^2</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -1923,7 +2018,7 @@ The specific values on the Pareto fronts can be found by varying <cite>x_0</cite
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -1967,7 +2062,7 @@ near <cite>x_0 + x_1 = 0.35</cite> and the global one near <cite>x_0 + x_1 = 0.8
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -1992,7 +2087,7 @@ near <cite>x_0 + x_1 = 0.35</cite> and the global one near <cite>x_0 + x_1 = 0.8
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2031,7 +2126,7 @@ The goal is to minimize both objectives. The reference point comes from <a class
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2095,7 +2190,7 @@ both objectives.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2160,7 +2255,7 @@ the one global Pareto-optimal front.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2204,7 +2299,7 @@ resulting in dense solutions near the f_M-f_1 plane.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2240,7 +2335,7 @@ g(x) = sum_{i=m}^{d-1} (x_i - 0.5)^2</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2292,7 +2387,7 @@ M - sum_{i=0}^{M-2} f_i(x)/(1+g(x)) * (1 + sin(3 * pi * f_i(x)))</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2328,7 +2423,7 @@ core/util/objectives.py.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – The number of objectives.</p></li>
 </ul>
@@ -2376,7 +2471,9 @@ on the Pareto frontier over a large discrete set of random designs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
 </dd>
@@ -2535,7 +2632,9 @@ random designs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
 </dd>
@@ -2608,7 +2707,9 @@ pareto front from <a class="reference internal" href="#tanabe2020" id="id18"><sp
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
 </dd>
@@ -2650,7 +2751,7 @@ pareto front from <a class="reference internal" href="#tanabe2020" id="id18"><sp
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Number of objectives. Must not be larger than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2686,7 +2787,7 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Number of objectives. Must not be larger than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2748,7 +2849,7 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Number of objectives. Must not be larger than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2810,7 +2911,7 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Number of objectives. Must not be larger than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2868,7 +2969,9 @@ based on the approximate Pareto frontier from <a class="reference internal" href
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
 </dd>
@@ -2906,7 +3009,9 @@ minimization problem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
 </dd>
@@ -2973,7 +3078,9 @@ minimization problem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
 </dd>
@@ -3038,7 +3145,7 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -3090,7 +3197,7 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -3148,7 +3255,9 @@ random designs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
 </dd>
@@ -3217,7 +3326,7 @@ frontier. It supports arbitrary input dimension &gt; 1. See <a class="reference 
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function. Must be at least 2.</p></li>
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -3289,7 +3398,9 @@ Note that this implementation assumes minimization, so please choose negate=True
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
 </dd>
@@ -3356,7 +3467,9 @@ minimization problem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
 </dd>
@@ -3426,7 +3539,9 @@ Note that this implementation assumes minimization, so please choose negate=True
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
 </dd>
@@ -3527,7 +3642,9 @@ Both functions assume minimization. See <a class="reference internal" href="#irs
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
 </dd>
@@ -3583,7 +3700,9 @@ is the fidelity parameter <cite>s</cite>. See <a class="reference internal" href
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+provided, specifies separate noise standard deviations for each
+objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
 </dd>

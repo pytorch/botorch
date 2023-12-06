@@ -70,9 +70,10 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">InputDataError</span>
 <span class="kn">from</span> <span class="nn">botorch.test_functions.base</span> <span class="kn">import</span> <span class="n">BaseTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span>
 <span class="kn">from</span> <span class="nn">botorch.test_functions.utils</span> <span class="kn">import</span> <span class="n">round_nearest</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
@@ -89,13 +90,15 @@
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">noise_std</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
-<span class="sd">            noise_std: Standard deviation of the observation noise.</span>
+<span class="sd">            noise_std: Standard deviation of the observation noise. If a list is</span>
+<span class="sd">                provided, specifies separate noise standard deviations for each</span>
+<span class="sd">                objective in a multiobjective problem.</span>
 <span class="sd">            negate: If True, negate the function.</span>
 <span class="sd">            bounds: Custom bounds for the function specified as (lower, upper) pairs.</span>
 <span class="sd">        """</span>
@@ -948,9 +951,66 @@
 <span class="c1">#  ------------ Constrained synthetic test functions ----------- #</span>
 
 
+<div class="viewcode-block" id="ConstrainedSyntheticTestFunction">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction">[docs]</a>
+<span class="k">class</span> <span class="nc">ConstrainedSyntheticTestFunction</span><span class="p">(</span>
+    <span class="n">ConstrainedBaseTestProblem</span><span class="p">,</span> <span class="n">SyntheticTestFunction</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Base class for constrained synthetic test functions."""</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">noise_std</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">constraint_noise_std</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Args:</span>
+<span class="sd">            noise_std: Standard deviation of the observation noise. If a list is</span>
+<span class="sd">                provided, specifies separate noise standard deviations for each</span>
+<span class="sd">                objective in a multiobjective problem.</span>
+<span class="sd">            constraint_noise_std: Standard deviation of the constraint noise.</span>
+<span class="sd">                If a list is provided, specifies separate noise standard</span>
+<span class="sd">                deviations for each constraint.</span>
+<span class="sd">            negate: If True, negate the function.</span>
+<span class="sd">            bounds: Custom bounds for the function specified as (lower, upper) pairs.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraint_noise_std</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_constraint_noise</span><span class="p">(</span>
+            <span class="n">constraint_noise_std</span>
+        <span class="p">)</span>
+        <span class="n">SyntheticTestFunction</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_validate_constraint_noise</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">constraint_noise_std</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Validates that constraint_noise_std has length equal to</span>
+<span class="sd">        the number of constraints, if given as a list</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            constraint_noise_std: Standard deviation of the constraint noise.</span>
+<span class="sd">                If a list is provided, specifies separate noise standard</span>
+<span class="sd">                deviations for each constraint.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraint_noise_std</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">constraint_noise_std</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_constraints</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="n">InputDataError</span><span class="p">(</span>
+                <span class="s2">"If specified as a list, length of constraint_noise_std "</span>
+                <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">constraint_noise_std</span><span class="p">)</span><span class="si">}</span><span class="s2">) must match the "</span>
+                <span class="sa">f</span><span class="s2">"number of constraints (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_constraints</span><span class="si">}</span><span class="s2">)"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">constraint_noise_std</span></div>
+
+
+
 <div class="viewcode-block" id="ConstrainedGramacy">
 <a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.ConstrainedGramacy">[docs]</a>
-<span class="k">class</span> <span class="nc">ConstrainedGramacy</span><span class="p">(</span><span class="n">ConstrainedBaseTestProblem</span><span class="p">,</span> <span class="n">SyntheticTestFunction</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">ConstrainedGramacy</span><span class="p">(</span><span class="n">ConstrainedSyntheticTestFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Constrained Gramacy test function.</span>
 
 <span class="sd">    This problem comes from [Gramacy2016]_. The problem is defined</span>
@@ -992,13 +1052,36 @@
 
 <div class="viewcode-block" id="ConstrainedHartmann">
 <a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.ConstrainedHartmann">[docs]</a>
-<span class="k">class</span> <span class="nc">ConstrainedHartmann</span><span class="p">(</span><span class="n">Hartmann</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">ConstrainedHartmann</span><span class="p">(</span><span class="n">Hartmann</span><span class="p">,</span> <span class="n">ConstrainedSyntheticTestFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Constrained Hartmann test function.</span>
 
 <span class="sd">    This is a constrained version of the standard Hartmann test function that</span>
 <span class="sd">    uses `||x||_2 &lt;= 1` as the constraint. This problem comes from [Letham2019]_.</span>
 <span class="sd">    """</span>
     <span class="n">num_constraints</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>
+        <span class="n">noise_std</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">constraint_noise_std</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Args:</span>
+<span class="sd">            dim: The (input) dimension.</span>
+<span class="sd">            noise_std: Standard deviation of the observation noise.</span>
+<span class="sd">            constraint_noise_std: Standard deviation of the constraint noise.</span>
+<span class="sd">                If a list is provided, specifies separate noise standard</span>
+<span class="sd">                deviations for each constraint.</span>
+<span class="sd">            negate: If True, negate the function.</span>
+<span class="sd">            bounds: Custom bounds for the function specified as (lower, upper) pairs.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_constraint_noise</span><span class="p">(</span><span class="n">constraint_noise_std</span><span class="p">)</span>
+        <span class="n">Hartmann</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span>
+        <span class="p">)</span>
 
 <div class="viewcode-block" id="ConstrainedHartmann.evaluate_slack_true">
 <a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.ConstrainedHartmann.evaluate_slack_true">[docs]</a>
@@ -1010,13 +1093,36 @@
 
 <div class="viewcode-block" id="ConstrainedHartmannSmooth">
 <a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.ConstrainedHartmannSmooth">[docs]</a>
-<span class="k">class</span> <span class="nc">ConstrainedHartmannSmooth</span><span class="p">(</span><span class="n">Hartmann</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">ConstrainedHartmannSmooth</span><span class="p">(</span><span class="n">Hartmann</span><span class="p">,</span> <span class="n">ConstrainedSyntheticTestFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Smooth constrained Hartmann test function.</span>
 
 <span class="sd">    This is a constrained version of the standard Hartmann test function that</span>
 <span class="sd">    uses `||x||_2^2 &lt;= 1` as the constraint to obtain smoother constraint slack.</span>
 <span class="sd">    """</span>
     <span class="n">num_constraints</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>
+        <span class="n">noise_std</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">constraint_noise_std</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Args:</span>
+<span class="sd">            dim: The (input) dimension.</span>
+<span class="sd">            noise_std: Standard deviation of the observation noise.</span>
+<span class="sd">            constraint_noise_std: Standard deviation of the constraint noise.</span>
+<span class="sd">                If a list is provided, specifies separate noise standard</span>
+<span class="sd">                deviations for each constraint.</span>
+<span class="sd">            negate: If True, negate the function.</span>
+<span class="sd">            bounds: Custom bounds for the function specified as (lower, upper) pairs.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_constraint_noise</span><span class="p">(</span><span class="n">constraint_noise_std</span><span class="p">)</span>
+        <span class="n">Hartmann</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span>
+        <span class="p">)</span>
 
 <div class="viewcode-block" id="ConstrainedHartmannSmooth.evaluate_slack_true">
 <a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.ConstrainedHartmannSmooth.evaluate_slack_true">[docs]</a>
@@ -1028,7 +1134,7 @@
 
 <div class="viewcode-block" id="PressureVessel">
 <a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.PressureVessel">[docs]</a>
-<span class="k">class</span> <span class="nc">PressureVessel</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">PressureVessel</span><span class="p">(</span><span class="n">ConstrainedSyntheticTestFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Pressure vessel design problem with constraints.</span>
 
 <span class="sd">    The four-dimensional pressure vessel design problem with four black-box</span>
@@ -1072,7 +1178,7 @@
 
 <div class="viewcode-block" id="WeldedBeamSO">
 <a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.WeldedBeamSO">[docs]</a>
-<span class="k">class</span> <span class="nc">WeldedBeamSO</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">WeldedBeamSO</span><span class="p">(</span><span class="n">ConstrainedSyntheticTestFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Welded beam design problem with constraints (single-outcome).</span>
 
 <span class="sd">    The four-dimensional welded beam design proble problem with six</span>
@@ -1137,7 +1243,7 @@
 
 <div class="viewcode-block" id="TensionCompressionString">
 <a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.TensionCompressionString">[docs]</a>
-<span class="k">class</span> <span class="nc">TensionCompressionString</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">TensionCompressionString</span><span class="p">(</span><span class="n">ConstrainedSyntheticTestFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Tension compression string optimization problem with constraints.</span>
 
 <span class="sd">    The three-dimensional tension compression string optimization problem with</span>
@@ -1177,7 +1283,7 @@
 
 <div class="viewcode-block" id="SpeedReducer">
 <a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.SpeedReducer">[docs]</a>
-<span class="k">class</span> <span class="nc">SpeedReducer</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">SpeedReducer</span><span class="p">(</span><span class="n">ConstrainedSyntheticTestFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Speed Reducer design problem with constraints.</span>
 
 <span class="sd">    The seven-dimensional speed reducer design problem with eleven black-box</span>
