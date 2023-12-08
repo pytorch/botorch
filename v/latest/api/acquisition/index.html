@@ -1333,11 +1333,21 @@ parameter, see the docs of <cite>compute_smoothed_feasibility_indicator</cite>.<
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qSimpleRegret">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">qSimpleRegret</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_reduction=&lt;built-in</span> <span class="pre">method</span> <span class="pre">mean</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_reduction=&lt;built-in</span> <span class="pre">method</span> <span class="pre">amax</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta=0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fat=False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#qSimpleRegret"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.qSimpleRegret" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">qSimpleRegret</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#qSimpleRegret"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.qSimpleRegret" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction" title="botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">SampleReducingMCAcquisitionFunction</span></code></a></p>
 <p>MC-based batch Simple Regret.</p>
 <p>Samples from the joint posterior over the q-batch and computes the simple regret.</p>
 <p><cite>qSR(X) = E(max Y), Y ~ f(X), X = (x_1,…,x_q)</cite></p>
+<p>Constraints should be provided as a <cite>ConstrainedMCObjective</cite>.
+Passing <cite>constraints</cite> as an argument is not supported. This is because
+<cite>SampleReducingMCAcquisitionFunction</cite> computes the acquisition values on the sample
+level and then weights the sample-level acquisition values by a soft feasibility
+indicator. Hence, it expects non-log acquisition function values to be
+non-negative. <cite>qSimpleRegret</cite> acquisition values can be negative, so we instead use
+a <cite>ConstrainedMCObjective</cite> which applies constraints to the objectives (e.g. before
+computing the acquisition function) and shifts negative objective values using
+by an infeasible cost to ensure non-negativity (before applying constraints and
+shifting them back).</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
@@ -1345,45 +1355,20 @@ parameter, see the docs of <cite>compute_smoothed_feasibility_indicator</cite>.<
 <span class="gp">&gt;&gt;&gt; </span><span class="n">qsr</span> <span class="o">=</span> <span class="n">qSR</span><span class="p">(</span><span class="n">test_X</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Constructor of SampleReducingMCAcquisitionFunction.</p>
+<p>q-Simple Regret.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted model.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. If not given, a
-sampler is generated on the fly within the
-<cite>get_posterior_samples</cite> method using
-<cite>botorch.sampling.get_sampler</cite>.
-NOTE: For posteriors that do not support base samples,
-a sampler compatible with intended use case must be provided.
-See <cite>ForkedRNGSampler</cite> and <cite>StochasticSampler</cite> as examples.</p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. See <cite>MCAcquisitionFunction</cite>
+more details.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><em>MCAcquisitionObjective</em><em>]</em>) – The MCAcquisitionObjective under which the samples are
-evaluated. Defaults to <cite>IdentityMCObjective()</cite>.
-NOTE: <cite>ConstrainedMCObjective</cite> for outcome constraints is deprecated in
-favor of passing the <cite>constraints</cite> directly to this constructor.</p></li>
-<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – A <cite>PosteriorTransform</cite> (optional).</p></li>
-<li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape, m x d</cite>-dim Tensor of <cite>m</cite> design points
-that have points that have been submitted for function evaluation
-but have not yet been evaluated.</p></li>
-<li><p><strong>sample_reduction</strong> (<a class="reference internal" href="#botorch.acquisition.monte_carlo.SampleReductionProtocol" title="botorch.acquisition.monte_carlo.SampleReductionProtocol"><em>SampleReductionProtocol</em></a>) – A callable that takes in a <cite>sample_shape x batch_shape</cite>
-Tensor of acquisition utility values, a keyword-argument <cite>dim</cite> that
-specifies the sample dimensions to reduce over, and returns a
-<cite>batch_shape</cite>-dim Tensor of acquisition values.</p></li>
-<li><p><strong>q_reduction</strong> (<a class="reference internal" href="#botorch.acquisition.monte_carlo.SampleReductionProtocol" title="botorch.acquisition.monte_carlo.SampleReductionProtocol"><em>SampleReductionProtocol</em></a>) – A callable that takes in a <cite>sample_shape x batch_shape x q</cite>
-Tensor of acquisition utility values, a keyword-argument <cite>dim</cite> that
-specifies the q dimension to reduce over (i.e. -1), and returns a
-<cite>sample_shape x batch_shape</cite>-dim Tensor of acquisition values.</p></li>
-<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of constraint callables which map a Tensor of posterior
-samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
-<cite>sample_shape x batch-shape x q</cite>-dim Tensor. The associated constraints
-are considered satisfied if the output is less than zero.
-NOTE: Constraint-weighting is only compatible with non-negative
-acquistion utilities, e.g. all improvement-based acquisition functions.</p></li>
-<li><p><strong>eta</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – Temperature parameter(s) governing the smoothness of the sigmoid
-approximation to the constraint indicators. For more details, on this
-parameter, see the docs of <cite>compute_smoothed_feasibility_indicator</cite>.</p></li>
-<li><p><strong>fat</strong> (<em>bool</em>) – Wether to apply a fat-tailed smooth approximation to the feasibility
-indicator or the canonical sigmoid approximation.</p></li>
+evaluated. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
+<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – A PosteriorTransform (optional).</p></li>
+<li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have
+points that have been submitted for function evaluation
+but have not yet been evaluated.  Concatenated into X upon
+forward call.  Copied and set to have no gradient.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1397,6 +1382,16 @@ indicator or the canonical sigmoid approximation.</p></li>
 of [Wilson2017reparam].)</p>
 <p><cite>qUCB = E(max(mu + |Y_tilde - mu|))</cite>, where <cite>Y_tilde ~ N(mu, beta pi/2 Sigma)</cite>
 and <cite>f(X)</cite> has distribution <cite>N(mu, Sigma)</cite>.</p>
+<p>Constraints should be provided as a <cite>ConstrainedMCObjective</cite>.
+Passing <cite>constraints</cite> as an argument is not supported. This is because
+<cite>SampleReducingMCAcquisitionFunction</cite> computes the acquisition values on the sample
+level and then weights the sample-level acquisition values by a soft feasibility
+indicator. Hence, it expects non-log acquisition function values to be
+non-negative. <cite>qSimpleRegret</cite> acquisition values can be negative, so we instead use
+a <cite>ConstrainedMCObjective</cite> which applies constraints to the objectives (e.g. before
+computing the acquisition function) and shifts negative objective values using
+by an infeasible cost to ensure non-negativity (before applying constraints and
+shifting them back).</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
@@ -5616,7 +5611,7 @@ complexity and performance).</p></li>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.acquisition.input_constructors.construct_inputs_qSimpleRegret">
-<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.input_constructors.</span></span><span class="sig-name descname"><span class="pre">construct_inputs_qSimpleRegret</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/input_constructors.html#construct_inputs_qSimpleRegret"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.input_constructors.construct_inputs_qSimpleRegret" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.input_constructors.</span></span><span class="sig-name descname"><span class="pre">construct_inputs_qSimpleRegret</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_baseline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/input_constructors.html#construct_inputs_qSimpleRegret"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.input_constructors.construct_inputs_qSimpleRegret" title="Link to this definition">¶</a></dt>
 <dd><p>Construct kwargs for qSimpleRegret.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -5630,6 +5625,14 @@ that have points that have been submitted for function evaluation
 but have not yet been evaluated.</p></li>
 <li><p><strong>sampler</strong> (<em>MCSampler</em><em> | </em><em>None</em>) – The sampler used to draw base samples. If omitted, uses
 the acquisition functions’s default sampler.</p></li>
+<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of constraint callables which map a Tensor of posterior
+samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
+<cite>sample_shape x batch-shape x q</cite>-dim Tensor. The associated constraints
+are considered satisfied if the output is less than zero.</p></li>
+<li><p><strong>X_baseline</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x r x d</cite>-dim Tensor of <cite>r</cite> design points
+that have already been observed. These points are considered as
+the potential best design point. If omitted, checks that all
+training_data have the same input features and take the first <cite>X</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

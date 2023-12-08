@@ -781,12 +781,53 @@
 
 <span class="sd">    `qSR(X) = E(max Y), Y ~ f(X), X = (x_1,...,x_q)`</span>
 
+<span class="sd">    Constraints should be provided as a `ConstrainedMCObjective`.</span>
+<span class="sd">    Passing `constraints` as an argument is not supported. This is because</span>
+<span class="sd">    `SampleReducingMCAcquisitionFunction` computes the acquisition values on the sample</span>
+<span class="sd">    level and then weights the sample-level acquisition values by a soft feasibility</span>
+<span class="sd">    indicator. Hence, it expects non-log acquisition function values to be</span>
+<span class="sd">    non-negative. `qSimpleRegret` acquisition values can be negative, so we instead use</span>
+<span class="sd">    a `ConstrainedMCObjective` which applies constraints to the objectives (e.g. before</span>
+<span class="sd">    computing the acquisition function) and shifts negative objective values using</span>
+<span class="sd">    by an infeasible cost to ensure non-negativity (before applying constraints and</span>
+<span class="sd">    shifting them back).</span>
+
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(train_X, train_Y)</span>
 <span class="sd">        &gt;&gt;&gt; sampler = SobolQMCNormalSampler(1024)</span>
 <span class="sd">        &gt;&gt;&gt; qSR = qSimpleRegret(model, sampler)</span>
 <span class="sd">        &gt;&gt;&gt; qsr = qSR(test_X)</span>
 <span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""q-Simple Regret.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model: A fitted model.</span>
+<span class="sd">            sampler: The sampler used to draw base samples. See `MCAcquisitionFunction`</span>
+<span class="sd">                more details.</span>
+<span class="sd">            objective: The MCAcquisitionObjective under which the samples are</span>
+<span class="sd">                evaluated. Defaults to `IdentityMCObjective()`.</span>
+<span class="sd">            posterior_transform: A PosteriorTransform (optional).</span>
+<span class="sd">            X_pending:  A `m x d`-dim Tensor of `m` design points that have</span>
+<span class="sd">                points that have been submitted for function evaluation</span>
+<span class="sd">                but have not yet been evaluated.  Concatenated into X upon</span>
+<span class="sd">                forward call.  Copied and set to have no gradient.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+            <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_sample_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qSimpleRegret per sample on the candidate set `X`.</span>
@@ -811,6 +852,17 @@
 
 <span class="sd">    `qUCB = E(max(mu + |Y_tilde - mu|))`, where `Y_tilde ~ N(mu, beta pi/2 Sigma)`</span>
 <span class="sd">    and `f(X)` has distribution `N(mu, Sigma)`.</span>
+
+<span class="sd">    Constraints should be provided as a `ConstrainedMCObjective`.</span>
+<span class="sd">    Passing `constraints` as an argument is not supported. This is because</span>
+<span class="sd">    `SampleReducingMCAcquisitionFunction` computes the acquisition values on the sample</span>
+<span class="sd">    level and then weights the sample-level acquisition values by a soft feasibility</span>
+<span class="sd">    indicator. Hence, it expects non-log acquisition function values to be</span>
+<span class="sd">    non-negative. `qSimpleRegret` acquisition values can be negative, so we instead use</span>
+<span class="sd">    a `ConstrainedMCObjective` which applies constraints to the objectives (e.g. before</span>
+<span class="sd">    computing the acquisition function) and shifts negative objective values using</span>
+<span class="sd">    by an infeasible cost to ensure non-negativity (before applying constraints and</span>
+<span class="sd">    shifting them back).</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(train_X, train_Y)</span>

@@ -104,6 +104,7 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.utils</span> <span class="kn">import</span> <span class="n">get_default_partitioning_alpha</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ConstrainedMCObjective</span><span class="p">,</span>
     <span class="n">IdentityMCObjective</span><span class="p">,</span>
     <span class="n">MCAcquisitionObjective</span><span class="p">,</span>
     <span class="n">PosteriorTransform</span><span class="p">,</span>
@@ -113,6 +114,7 @@
 <span class="kn">from</span> <span class="nn">botorch.acquisition.utils</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">compute_best_feasible_objective</span><span class="p">,</span>
     <span class="n">expand_trace_observations</span><span class="p">,</span>
+    <span class="n">get_infeasible_cost</span><span class="p">,</span>
     <span class="n">get_optimal_samples</span><span class="p">,</span>
     <span class="n">project_to_target_fidelity</span><span class="p">,</span>
 <span class="p">)</span>
@@ -482,6 +484,8 @@
     <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">X_baseline</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Construct kwargs for qSimpleRegret.</span>
 
@@ -495,10 +499,28 @@
 <span class="sd">            but have not yet been evaluated.</span>
 <span class="sd">        sampler: The sampler used to draw base samples. If omitted, uses</span>
 <span class="sd">            the acquisition functions's default sampler.</span>
+<span class="sd">        constraints: A list of constraint callables which map a Tensor of posterior</span>
+<span class="sd">            samples of dimension `sample_shape x batch-shape x q x m`-dim to a</span>
+<span class="sd">            `sample_shape x batch-shape x q`-dim Tensor. The associated constraints</span>
+<span class="sd">            are considered satisfied if the output is less than zero.</span>
+<span class="sd">        X_baseline: A `batch_shape x r x d`-dim Tensor of `r` design points</span>
+<span class="sd">            that have already been observed. These points are considered as</span>
+<span class="sd">            the potential best design point. If omitted, checks that all</span>
+<span class="sd">            training_data have the same input features and take the first `X`.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A dict mapping kwarg names of the constructor to values.</span>
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">X_baseline</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Constraints require an X_baseline."</span><span class="p">)</span>
+        <span class="n">objective</span> <span class="o">=</span> <span class="n">ConstrainedMCObjective</span><span class="p">(</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">infeasible_cost</span><span class="o">=</span><span class="n">get_infeasible_cost</span><span class="p">(</span>
+                <span class="n">X</span><span class="o">=</span><span class="n">X_baseline</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">objective</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">"model"</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span>
         <span class="s2">"objective"</span><span class="p">:</span> <span class="n">objective</span><span class="p">,</span>
