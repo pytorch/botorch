@@ -816,10 +816,7 @@ class TestQSimpleRegret(BotorchTestCase):
         samples = torch.zeros(2, 2, 1, device=self.device, dtype=torch.double)
         samples[0, 0, 0] = 1.0
         mm = MockModel(MockPosterior(samples=samples))
-        regex = (
-            r"qSimpleRegret\.__init__\(\) got an unexpected keyword argument "
-            r"'constraints'"
-        )
+        regex = r"__init__\(\) got an unexpected keyword argument 'constraints'"
         with self.assertRaisesRegex(TypeError, regex):
             qSimpleRegret(model=mm, constraints=[lambda Y: Y[..., 0]])
 
