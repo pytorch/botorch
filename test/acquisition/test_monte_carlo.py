@@ -49,6 +49,11 @@ class DummyReducingMCAcquisitionFunction(SampleReducingMCAcquisitionFunction):
         pass
 
 
+class NegativeReducingMCAcquisitionFunction(SampleReducingMCAcquisitionFunction):
+    def _sample_forward(self, X):
+        return torch.full_like(X, -1.0)
+
+
 def infeasible_con(samples: Tensor) -> Tensor:
     return torch.ones_like(samples[..., 0])
 
@@ -806,6 +811,18 @@ class TestQSimpleRegret(BotorchTestCase):
             acqf(X)
             self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
 
+    def test_q_simple_regret_constraints(self):
+        # basic test that passing constraints directly is not allowed
+        samples = torch.zeros(2, 2, 1, device=self.device, dtype=torch.double)
+        samples[0, 0, 0] = 1.0
+        mm = MockModel(MockPosterior(samples=samples))
+        regex = (
+            r"qSimpleRegret\.__init__\(\) got an unexpected keyword argument "
+            r"'constraints'"
+        )
+        with self.assertRaisesRegex(TypeError, regex):
+            qSimpleRegret(model=mm, constraints=[lambda Y: Y[..., 0]])
+
     # TODO: Test different objectives (incl. constraints)
 
 
@@ -988,7 +1005,9 @@ class TestMCAcquisitionFunctionWithConstraints(BotorchTestCase):
                 # regret because the acquisition utility is negative.
                 samples = -torch.rand(n, q, m, device=self.device, dtype=dtype)
                 mm = MockModel(MockPosterior(samples=samples))
-                cacqf = qSimpleRegret(model=mm, constraints=[feasible_con])
+                cacqf = NegativeReducingMCAcquisitionFunction(
+                    model=mm, constraints=[feasible_con]
+                )
                 with self.assertRaisesRegex(
                     ValueError,
                     "Constraint-weighting requires unconstrained "

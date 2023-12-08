@@ -81,6 +81,7 @@ from botorch.acquisition.multi_objective.objective import (
 )
 from botorch.acquisition.multi_objective.utils import get_default_partitioning_alpha
 from botorch.acquisition.objective import (
+    ConstrainedMCObjective,
     IdentityMCObjective,
     MCAcquisitionObjective,
     PosteriorTransform,
@@ -90,6 +91,7 @@ from botorch.acquisition.risk_measures import RiskMeasureMCObjective
 from botorch.acquisition.utils import (
     compute_best_feasible_objective,
     expand_trace_observations,
+    get_infeasible_cost,
     get_optimal_samples,
     project_to_target_fidelity,
 )
@@ -433,6 +435,8 @@ def construct_inputs_qSimpleRegret(
     posterior_transform: Optional[PosteriorTransform] = None,
     X_pending: Optional[Tensor] = None,
     sampler: Optional[MCSampler] = None,
+    constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+    X_baseline: Optional[Tensor] = None,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for qSimpleRegret.
 
@@ -446,10 +450,28 @@ def construct_inputs_qSimpleRegret(
             but have not yet been evaluated.
         sampler: The sampler used to draw base samples. If omitted, uses
             the acquisition functions's default sampler.
+        constraints: A list of constraint callables which map a Tensor of posterior
+            samples of dimension `sample_shape x batch-shape x q x m`-dim to a
+            `sample_shape x batch-shape x q`-dim Tensor. The associated constraints
+            are considered satisfied if the output is less than zero.
+        X_baseline: A `batch_shape x r x d`-dim Tensor of `r` design points
+            that have already been observed. These points are considered as
+            the potential best design point. If omitted, checks that all
+            training_data have the same input features and take the first `X`.
 
     Returns:
         A dict mapping kwarg names of the constructor to values.
     """
+    if constraints is not None:
+        if X_baseline is None:
+            raise ValueError("Constraints require an X_baseline.")
+        objective = ConstrainedMCObjective(
+            objective=objective,
+            constraints=constraints,
+            infeasible_cost=get_infeasible_cost(
+                X=X_baseline, model=model, objective=objective
+            ),
+        )
     return {
         "model": model,
         "objective": objective,

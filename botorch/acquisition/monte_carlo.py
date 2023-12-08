@@ -729,12 +729,53 @@ class qSimpleRegret(SampleReducingMCAcquisitionFunction):
 
     `qSR(X) = E(max Y), Y ~ f(X), X = (x_1,...,x_q)`
 
+    Constraints should be provided as a `ConstrainedMCObjective`.
+    Passing `constraints` as an argument is not supported. This is because
+    `SampleReducingMCAcquisitionFunction` computes the acquisition values on the sample
+    level and then weights the sample-level acquisition values by a soft feasibility
+    indicator. Hence, it expects non-log acquisition function values to be
+    non-negative. `qSimpleRegret` acquisition values can be negative, so we instead use
+    a `ConstrainedMCObjective` which applies constraints to the objectives (e.g. before
+    computing the acquisition function) and shifts negative objective values using
+    by an infeasible cost to ensure non-negativity (before applying constraints and
+    shifting them back).
+
     Example:
         >>> model = SingleTaskGP(train_X, train_Y)
         >>> sampler = SobolQMCNormalSampler(1024)
         >>> qSR = qSimpleRegret(model, sampler)
         >>> qsr = qSR(test_X)
     """
+
+    def __init__(
+        self,
+        model: Model,
+        sampler: Optional[MCSampler] = None,
+        objective: Optional[MCAcquisitionObjective] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
+        X_pending: Optional[Tensor] = None,
+    ) -> None:
+        r"""q-Simple Regret.
+
+        Args:
+            model: A fitted model.
+            sampler: The sampler used to draw base samples. See `MCAcquisitionFunction`
+                more details.
+            objective: The MCAcquisitionObjective under which the samples are
+                evaluated. Defaults to `IdentityMCObjective()`.
+            posterior_transform: A PosteriorTransform (optional).
+            X_pending:  A `m x d`-dim Tensor of `m` design points that have
+                points that have been submitted for function evaluation
+                but have not yet been evaluated.  Concatenated into X upon
+                forward call.  Copied and set to have no gradient.
+        """
+        super().__init__(
+            model=model,
+            sampler=sampler,
+            objective=objective,
+            posterior_transform=posterior_transform,
+            X_pending=X_pending,
+        )
 
     def _sample_forward(self, obj: Tensor) -> Tensor:
         r"""Evaluate qSimpleRegret per sample on the candidate set `X`.
@@ -756,6 +797,17 @@ class qUpperConfidenceBound(SampleReducingMCAcquisitionFunction):
 
     `qUCB = E(max(mu + |Y_tilde - mu|))`, where `Y_tilde ~ N(mu, beta pi/2 Sigma)`
     and `f(X)` has distribution `N(mu, Sigma)`.
+
+    Constraints should be provided as a `ConstrainedMCObjective`.
+    Passing `constraints` as an argument is not supported. This is because
+    `SampleReducingMCAcquisitionFunction` computes the acquisition values on the sample
+    level and then weights the sample-level acquisition values by a soft feasibility
+    indicator. Hence, it expects non-log acquisition function values to be
+    non-negative. `qSimpleRegret` acquisition values can be negative, so we instead use
+    a `ConstrainedMCObjective` which applies constraints to the objectives (e.g. before
+    computing the acquisition function) and shifts negative objective values using
+    by an infeasible cost to ensure non-negativity (before applying constraints and
+    shifting them back).
 
     Example:
         >>> model = SingleTaskGP(train_X, train_Y)
