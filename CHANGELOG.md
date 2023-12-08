@@ -2,6 +2,34 @@
 
 The release log for BoTorch.
 
+## [0.9.5] -- Dec 8, 2023
+
+#### New features
+
+Hypervolume Knowledge Gradient (HVKG):
+* Add `qHypervolumeKnowledgeGradient`, which seeks to maximize the difference in hypervolume of the hypervolume-maximizing set of a fixed size after conditioning the unknown observation(s) that would be received if X were evaluated (#1950).
+* Add initializer for one-shot HVKG (#1982).
+* Add tutorial on decoupled Multi-Objective Bayesian Optimization (MOBO) with HVKG (#2094).
+* Illustrate how to use Multi-Fidelity HVKG (MV-HVKG) (#2101).
+
+Other new features:
+* Add `MultiOutputFixedCostModel`, which is useful for decoupled scenarios where the objectives have different costs (#2093).
+* Enable `q > 1` in acquisition function optimization when nonlinear constraints are present (#1793).
+* Support different noise levels for different outputs in test functions (#2136).
+
+#### Bug fixes
+* Fix fantasization with a `FixedNoiseGaussianLikelihood` when `noise` is known and `X` is empty (#2090).
+* Make `LearnedObjective` compatible with constraints in acquisition functions regardless of `sample_shape` (#2111).
+* Make input constructors for `qExpectedImprovement`, `qLogExpectedImprovement`, and `qProbabilityOfImprovement` compatible with `LearnedObjective` regardless of `sample_shape` (#2115).
+* Fix handling of constraints in `qSimpleRegret` (#2141).
+
+#### Other changes
+* Increase default sample size for `LearnedObjective` (#2095).
+* Allow passing in `X` with or without fidelity dimensions in `project_to_target_fidelity` (#2102).
+* Use full-rank task covariance matrix by default in SAAS MTGP (#2104).
+* Rename `FullyBayesianPosterior` to `GaussianMixturePosterior`; add `_is_ensemble` and `_is_fully_bayesian` attributes to `Model` (#2108).
+* Various improvements to tutorials including speedups, improved explanations, and compatibility with newer versions of libraries.
+
 
 ## [0.9.4] - Nov 6, 2023
 
