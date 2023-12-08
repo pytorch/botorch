@@ -7,10 +7,8 @@ The release log for BoTorch.
 #### New features
 
 Hypervolume Knowledge Gradient (HVKG):
-* Add `qHypervolumeKnowledgeGradient`, which seeks to maximize the difference in hypervolume of the hypervolume-maximizing set of a fixed size after conditioning the unknown observation(s) that would be received if X were evaluated (#1950).
-* Add initializer for one-shot HVKG (#1982).
+* Add `qHypervolumeKnowledgeGradient`, which seeks to maximize the difference in hypervolume of the hypervolume-maximizing set of a fixed size after conditioning the unknown observation(s) that would be received if X were evaluated (#1950, #1982, #2101).
 * Add tutorial on decoupled Multi-Objective Bayesian Optimization (MOBO) with HVKG (#2094).
-* Illustrate how to use Multi-Fidelity HVKG (MV-HVKG) (#2101).
 
 Other new features:
 * Add `MultiOutputFixedCostModel`, which is useful for decoupled scenarios where the objectives have different costs (#2093).
