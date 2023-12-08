@@ -74,6 +74,7 @@ from botorch.acquisition.multi_objective.objective import (
 )
 from botorch.acquisition.multi_objective.utils import get_default_partitioning_alpha
 from botorch.acquisition.objective import (
+    ConstrainedMCObjective,
     LinearMCObjective,
     ScalarizedPosteriorTransform,
 )
@@ -473,6 +474,35 @@ class TestMCAcquisitionFunctionInputConstructors(InputConstructorBaseTestCase):
         self.assertIsNone(kwargs["sampler"])
         acqf = qSimpleRegret(**kwargs)
         self.assertIs(acqf.model, mock_model)
+        # test constraints
+        constraints = [lambda Y: Y[..., 0]]
+        with self.assertRaisesRegex(ValueError, "Constraints require an X_baseline."):
+            c(
+                model=mock_model,
+                training_data=self.blockX_blockY,
+                objective=objective,
+                X_pending=X_pending,
+                constraints=constraints,
+            )
+        with mock.patch(
+            "botorch.acquisition.input_constructors.get_infeasible_cost",
+            return_value=2.0,
+        ):
+            kwargs = c(
+                model=mock_model,
+                training_data=self.blockX_blockY,
+                objective=objective,
+                X_pending=X_pending,
+                constraints=constraints,
+                X_baseline=X_pending,
+            )
+        acqf = qSimpleRegret(**kwargs)
+        self.assertIsNone(acqf._constraints)
+        self.assertIsInstance(acqf.objective, ConstrainedMCObjective)
+        self.assertIs(acqf.objective.objective, objective)
+        self.assertIs(acqf.objective.constraints, constraints)
+        self.assertEqual(acqf.objective.infeasible_cost.item(), 2.0)
+
         # TODO: Test passing through of sampler
 
     def test_construct_inputs_qEI(self) -> None:

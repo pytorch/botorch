@@ -14,6 +14,7 @@ from botorch.test_functions.synthetic import (
     ConstrainedGramacy,
     ConstrainedHartmann,
     ConstrainedHartmannSmooth,
+    ConstrainedSyntheticTestFunction,
     Cosine8,
     DixonPrice,
     DropWave,
@@ -109,6 +110,34 @@ class TestCustomBounds(BotorchTestCase):
             func = func_class(bounds=bounds)
             self.assertEqual(func._bounds, bounds)
             self.assertAllClose(func.bounds, bounds_tensor)
+
+
+class DummyConstrainedSyntheticTestFunction(ConstrainedSyntheticTestFunction):
+    dim = 2
+    num_constraints = 1
+    _bounds = [(-1, 1), (-1, 1)]
+    _optimal_value = 0
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        return -X.pow(2).sum(dim=-1)
+
+    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+        return -X.norm(dim=-1, keepdim=True) + 1
+
+
+class TestConstraintNoise(BotorchTestCase):
+
+    functions = [
+        DummyConstrainedSyntheticTestFunction(),
+        DummyConstrainedSyntheticTestFunction(constraint_noise_std=0.1),
+        DummyConstrainedSyntheticTestFunction(constraint_noise_std=[0.1]),
+    ]
+
+    def test_constraint_noise_length_validation(self):
+        with self.assertRaisesRegex(
+            InputDataError, "must match the number of constraints"
+        ):
+            DummyConstrainedSyntheticTestFunction(constraint_noise_std=[0.1, 0.2])
 
 
 class TestAckley(
@@ -329,6 +358,9 @@ class TestConstrainedGramacy(
 
     functions = [
         ConstrainedGramacy(),
+        ConstrainedGramacy(negate=True),
+        ConstrainedGramacy(noise_std=0.1, negate=True),
+        ConstrainedGramacy(noise_std=0.1, constraint_noise_std=[0.1, 0.2], negate=True),
     ]
 
 
@@ -341,6 +373,10 @@ class TestConstrainedHartmann(
 
     functions = [
         ConstrainedHartmann(dim=6, negate=True),
+        ConstrainedHartmann(noise_std=0.1, dim=6, negate=True),
+        ConstrainedHartmann(
+            noise_std=0.1, constraint_noise_std=0.2, dim=6, negate=True
+        ),
     ]
 
 
@@ -353,6 +389,9 @@ class TestConstrainedHartmannSmooth(
 
     functions = [
         ConstrainedHartmannSmooth(dim=6, negate=True),
+        ConstrainedHartmannSmooth(
+            dim=6, noise_std=0.1, constraint_noise_std=0.2, negate=True
+        ),
     ]
 
 
@@ -362,7 +401,13 @@ class TestPressureVessel(
     ConstrainedTestProblemTestCaseMixin,
 ):
 
-    functions = [PressureVessel()]
+    functions = [
+        PressureVessel(),
+        PressureVessel(noise_std=0.1, constraint_noise_std=0.1, negate=True),
+        PressureVessel(
+            noise_std=0.1, constraint_noise_std=[0.1, 0.2, 0.1, 0.2], negate=True
+        ),
+    ]
 
 
 class TestSpeedReducer(
@@ -371,7 +416,11 @@ class TestSpeedReducer(
     ConstrainedTestProblemTestCaseMixin,
 ):
 
-    functions = [SpeedReducer()]
+    functions = [
+        SpeedReducer(),
+        SpeedReducer(noise_std=0.1, constraint_noise_std=0.1, negate=True),
+        SpeedReducer(noise_std=0.1, constraint_noise_std=[0.1] * 11, negate=True),
+    ]
 
 
 class TestTensionCompressionString(
@@ -380,7 +429,12 @@ class TestTensionCompressionString(
     ConstrainedTestProblemTestCaseMixin,
 ):
 
-    functions = [TensionCompressionString()]
+    functions = [
+        TensionCompressionString(),
+        TensionCompressionString(
+            noise_std=0.1, constraint_noise_std=[0.1, 0.2, 0.3, 0.4]
+        ),
+    ]
 
 
 class TestWeldedBeamSO(
@@ -389,4 +443,7 @@ class TestWeldedBeamSO(
     ConstrainedTestProblemTestCaseMixin,
 ):
 
-    functions = [WeldedBeamSO()]
+    functions = [
+        WeldedBeamSO(),
+        WeldedBeamSO(noise_std=0.1, constraint_noise_std=[0.2] * 6),
+    ]

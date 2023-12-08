@@ -26,7 +26,6 @@ from botorch.acquisition.objective import (
     ConstrainedMCObjective,
     GenericMCObjective,
     IdentityMCObjective,
-    PosteriorTransform,
     ScalarizedPosteriorTransform,
 )
 from botorch.acquisition.utils import prune_inferior_points
@@ -34,6 +33,7 @@ from botorch.exceptions import BotorchWarning, UnsupportedError
 from botorch.models import SingleTaskGP
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.low_rank import sample_cached_cholesky
+from botorch.utils.test_helpers import DummyNonScalarizingPosteriorTransform
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from botorch.utils.transforms import standardize
 from torch import Tensor
@@ -49,14 +49,9 @@ class DummyReducingMCAcquisitionFunction(SampleReducingMCAcquisitionFunction):
         pass
 
 
-class DummyNonScalarizingPosteriorTransform(PosteriorTransform):
-    scalarize = False
-
-    def evaluate(self, Y):
-        pass  # pragma: no cover
-
-    def forward(self, posterior):
-        pass  # pragma: no cover
+class NegativeReducingMCAcquisitionFunction(SampleReducingMCAcquisitionFunction):
+    def _sample_forward(self, X):
+        return torch.full_like(X, -1.0)
 
 
 def infeasible_con(samples: Tensor) -> Tensor:
@@ -816,6 +811,15 @@ class TestQSimpleRegret(BotorchTestCase):
             acqf(X)
             self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
 
+    def test_q_simple_regret_constraints(self):
+        # basic test that passing constraints directly is not allowed
+        samples = torch.zeros(2, 2, 1, device=self.device, dtype=torch.double)
+        samples[0, 0, 0] = 1.0
+        mm = MockModel(MockPosterior(samples=samples))
+        regex = r"__init__\(\) got an unexpected keyword argument 'constraints'"
+        with self.assertRaisesRegex(TypeError, regex):
+            qSimpleRegret(model=mm, constraints=[lambda Y: Y[..., 0]])
+
     # TODO: Test different objectives (incl. constraints)
 
 
@@ -998,7 +1002,9 @@ class TestMCAcquisitionFunctionWithConstraints(BotorchTestCase):
                 # regret because the acquisition utility is negative.
                 samples = -torch.rand(n, q, m, device=self.device, dtype=dtype)
                 mm = MockModel(MockPosterior(samples=samples))
-                cacqf = qSimpleRegret(model=mm, constraints=[feasible_con])
+                cacqf = NegativeReducingMCAcquisitionFunction(
+                    model=mm, constraints=[feasible_con]
+                )
                 with self.assertRaisesRegex(
                     ValueError,
                     "Constraint-weighting requires unconstrained "

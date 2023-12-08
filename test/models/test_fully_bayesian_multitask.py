@@ -42,13 +42,12 @@ from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
+from botorch.utils.test_helpers import gen_multi_task_dataset
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import FixedNoiseGaussianLikelihood
 from gpytorch.likelihoods.gaussian_likelihood import GaussianLikelihood
 from gpytorch.means import ConstantMean
-
-from .test_multitask import _gen_multi_task_dataset
 
 EXPECTED_KEYS = [
     "latent_features",
@@ -566,7 +565,7 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
         for dtype, infer_noise in [(torch.float, False), (torch.double, True)]:
             tkwargs = {"device": self.device, "dtype": dtype}
             task_feature = 0
-            datasets, (train_X, train_Y, train_Yvar) = _gen_multi_task_dataset(
+            datasets, (train_X, train_Y, train_Yvar) = gen_multi_task_dataset(
                 yvar=None if infer_noise else 0.05, **tkwargs
             )
 

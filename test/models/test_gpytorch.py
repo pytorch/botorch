@@ -28,6 +28,7 @@ from botorch.models.transforms.input import ChainedInputTransform, InputTransfor
 from botorch.models.utils import fantasize
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.sampling.normal import SobolQMCNormalSampler
+from botorch.utils.test_helpers import SimpleGPyTorchModel
 from botorch.utils.testing import BotorchTestCase
 from gpytorch import ExactMarginalLogLikelihood
 from gpytorch.distributions import MultivariateNormal
@@ -54,48 +55,6 @@ class SimpleInputTransform(InputTransform, torch.nn.Module):
 
     def transform(self, X: Tensor) -> Tensor:
         return X + self.add_value
-
-
-class SimpleGPyTorchModel(GPyTorchModel, ExactGP, FantasizeMixin):
-    last_fantasize_flag: bool = False
-
-    def __init__(self, train_X, train_Y, outcome_transform=None, input_transform=None):
-        r"""
-        Args:
-            train_X: A tensor of inputs, passed to self.transform_inputs.
-            train_Y: Passed to outcome_transform.
-            outcome_transform: Transform applied to train_Y.
-            input_transform: A Module that performs the input transformation, passed to
-                self.transform_inputs.
-        """
-        with torch.no_grad():
-            transformed_X = self.transform_inputs(
-                X=train_X, input_transform=input_transform
-            )
-        if outcome_transform is not None:
-            train_Y, _ = outcome_transform(train_Y)
-        self._validate_tensor_args(transformed_X, train_Y)
-        train_Y = train_Y.squeeze(-1)
-        likelihood = GaussianLikelihood()
-        super().__init__(train_X, train_Y, likelihood)
-        self.mean_module = ConstantMean()
-        self.covar_module = ScaleKernel(RBFKernel())
-        if outcome_transform is not None:
-            self.outcome_transform = outcome_transform
-        if input_transform is not None:
-            self.input_transform = input_transform
-        self._num_outputs = 1
-        self.to(train_X)
-        self.transformed_call_args = []
-
-    def forward(self, x):
-        self.last_fantasize_flag = fantasize.on()
-        if self.training:
-            x = self.transform_inputs(x)
-        self.transformed_call_args.append(x)
-        mean_x = self.mean_module(x)
-        covar_x = self.covar_module(x)
-        return MultivariateNormal(mean_x, covar_x)
 
 
 class SimpleBatchedMultiOutputGPyTorchModel(

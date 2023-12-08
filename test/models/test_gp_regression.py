@@ -17,11 +17,11 @@ from botorch.models.gp_regression import (
 )
 from botorch.models.transforms import Normalize, Standardize
 from botorch.models.transforms.input import InputStandardize
-from botorch.models.utils import add_output_dim
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
 from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.sampling import manual_seed
+from botorch.utils.test_helpers import get_pvar_expected
 from botorch.utils.testing import _get_random_data, BotorchTestCase
 from gpytorch.kernels import MaternKernel, RBFKernel, ScaleKernel
 from gpytorch.likelihoods import (
@@ -142,7 +142,7 @@ class TestSingleTaskGP(BotorchTestCase):
                 self.assertAllClose(posterior_pred.variance, expected_var)
             else:
                 pvar = posterior_pred.variance
-                pvar_exp = _get_pvar_expected(posterior, model, X, m)
+                pvar_exp = get_pvar_expected(posterior, model, X, m)
                 self.assertAllClose(pvar, pvar_exp, rtol=1e-4, atol=1e-5)
 
             # Tensor valued observation noise.
@@ -176,7 +176,7 @@ class TestSingleTaskGP(BotorchTestCase):
                 self.assertAllClose(posterior_pred.variance, expected_var)
             else:
                 pvar = posterior_pred.variance
-                pvar_exp = _get_pvar_expected(posterior, model, X, m)
+                pvar_exp = get_pvar_expected(posterior, model, X, m)
                 self.assertAllClose(pvar, pvar_exp, rtol=1e-4, atol=1e-5)
 
     def test_custom_init(self):
@@ -599,17 +599,3 @@ class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
     def test_subset_model(self):
         with self.assertRaises(NotImplementedError):
             super().test_subset_model()
-
-
-def _get_pvar_expected(posterior, model, X, m):
-    X = model.transform_inputs(X)
-    lh_kwargs = {}
-    if isinstance(model.likelihood, FixedNoiseGaussianLikelihood):
-        lh_kwargs["noise"] = model.likelihood.noise.mean().expand(X.shape[:-1])
-    if m == 1:
-        return model.likelihood(
-            posterior.distribution, X, **lh_kwargs
-        ).variance.unsqueeze(-1)
-    X_, odi = add_output_dim(X=X, original_batch_shape=model._input_batch_shape)
-    pvar_exp = model.likelihood(model(X_), X_, **lh_kwargs).variance
-    return torch.stack([pvar_exp.select(dim=odi, index=i) for i in range(m)], dim=-1)

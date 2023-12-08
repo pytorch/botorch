@@ -11,9 +11,10 @@ Base class for test functions for optimization benchmarks.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple
+from typing import List, Tuple, Union
 
 import torch
+
 from botorch.exceptions.errors import InputDataError
 from torch import Tensor
 from torch.nn import Module
@@ -26,11 +27,17 @@ class BaseTestProblem(Module, ABC):
     _bounds: List[Tuple[float, float]]
     _check_grad_at_opt: bool = True
 
-    def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
+    def __init__(
+        self,
+        noise_std: Union[None, float, List[float]] = None,
+        negate: bool = False,
+    ) -> None:
         r"""Base constructor for test functions.
 
         Args:
-            noise_std: Standard deviation of the observation noise.
+            noise_std: Standard deviation of the observation noise. If a list is
+                provided, specifies separate noise standard deviations for each
+                objective in a multiobjective problem.
             negate: If True, negate the function.
         """
         super().__init__()
@@ -60,7 +67,8 @@ class BaseTestProblem(Module, ABC):
         X = X if batch else X.unsqueeze(0)
         f = self.evaluate_true(X=X)
         if noise and self.noise_std is not None:
-            f += self.noise_std * torch.randn_like(f)
+            _noise = torch.tensor(self.noise_std, device=X.device, dtype=X.dtype)
+            f += _noise * torch.randn_like(f)
         if self.negate:
             f = -f
         return f if batch else f.squeeze(0)
@@ -82,6 +90,7 @@ class ConstrainedBaseTestProblem(BaseTestProblem, ABC):
 
     num_constraints: int
     _check_grad_at_opt: bool = False
+    constraint_noise_std: Union[None, float, List[float]] = None
 
     def evaluate_slack(self, X: Tensor, noise: bool = True) -> Tensor:
         r"""Evaluate the constraint slack on a set of points.
@@ -101,10 +110,11 @@ class ConstrainedBaseTestProblem(BaseTestProblem, ABC):
                 corresponds to the constraint being feasible).
         """
         cons = self.evaluate_slack_true(X=X)
-        if noise and self.noise_std is not None:
-            # TODO: Allow different noise levels for objective and constraints (and
-            # different noise levels between different constraints)
-            cons += self.noise_std * torch.randn_like(cons)
+        if noise and self.constraint_noise_std is not None:
+            _constraint_noise = torch.tensor(
+                self.constraint_noise_std, device=X.device, dtype=X.dtype
+            )
+            cons += _constraint_noise * torch.randn_like(cons)
         return cons
 
     def is_feasible(self, X: Tensor, noise: bool = True) -> Tensor:
@@ -147,13 +157,24 @@ class MultiObjectiveTestProblem(BaseTestProblem):
     _ref_point: List[float]
     _max_hv: float
 
-    def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
+    def __init__(
+        self,
+        noise_std: Union[None, float, List[float]] = None,
+        negate: bool = False,
+    ) -> None:
         r"""Base constructor for multi-objective test functions.
 
         Args:
-            noise_std: Standard deviation of the observation noise.
+            noise_std: Standard deviation of the observation noise. If a list is
+                provided, specifies separate noise standard deviations for each
+                objective.
             negate: If True, negate the objectives.
         """
+        if isinstance(noise_std, list) and len(noise_std) != len(self._ref_point):
+            raise InputDataError(
+                f"If specified as a list, length of noise_std ({len(noise_std)}) "
+                f"must match the number of objectives ({len(self._ref_point)})"
+            )
         super().__init__(noise_std=noise_std, negate=negate)
         ref_point = torch.tensor(self._ref_point, dtype=torch.float)
         if negate:
