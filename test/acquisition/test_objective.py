@@ -454,6 +454,8 @@ class TestLearnedObjective(BotorchTestCase):
         return pref_model
 
     def test_learned_preference_objective(self) -> None:
+        seed = torch.randint(low=0, high=10, size=torch.Size([1]))
+        torch.manual_seed(seed)
         pref_model = self._get_pref_model(dtype=torch.float64)
 
         og_sample_shape = 3
@@ -492,7 +494,7 @@ class TestLearnedObjective(BotorchTestCase):
             with self.assertRaisesRegex(
                 ValueError, "samples should have at least 3 dimensions."
             ):
-                pref_obj(torch.rand(q, self.x_dim))
+                pref_obj(torch.rand(q, self.x_dim, dtype=torch.float64))
 
         # test when sampler has multiple preference samples
         with self.subTest("Multiple samples"):
