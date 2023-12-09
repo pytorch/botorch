@@ -37,7 +37,9 @@
 <span class="kn">from</span> <span class="nn">botorch.sampling.stochastic_samplers</span> <span class="kn">import</span> <span class="n">StochasticSampler</span>
 
 
-<div class="viewcode-block" id="DeterministicSampler"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.deterministic.DeterministicSampler">[docs]</a><span class="k">class</span> <span class="nc">DeterministicSampler</span><span class="p">(</span><span class="n">StochasticSampler</span><span class="p">):</span>
+<div class="viewcode-block" id="DeterministicSampler">
+<a class="viewcode-back" href="../../../sampling.html#botorch.sampling.deterministic.DeterministicSampler">[docs]</a>
+<span class="k">class</span> <span class="nc">DeterministicSampler</span><span class="p">(</span><span class="n">StochasticSampler</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A sampler that simply calls `posterior.rsample`, intended to be used with</span>
 <span class="sd">    `DeterministicModel` &amp; `DeterministicPosterior`.</span>
 
@@ -58,6 +60,7 @@
 <span class="sd">            base_sampler: The base sampler to retrieve the base samples from.</span>
 <span class="sd">        """</span>
         <span class="k">return</span></div>
+
 </pre></div>
 </div>
 </div>

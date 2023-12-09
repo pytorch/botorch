@@ -44,7 +44,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="CVFolds"><a class="viewcode-back" href="../../cross_validation.html#botorch.cross_validation.CVFolds">[docs]</a><span class="k">class</span> <span class="nc">CVFolds</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<div class="viewcode-block" id="CVFolds">
+<a class="viewcode-back" href="../../cross_validation.html#botorch.cross_validation.CVFolds">[docs]</a>
+<span class="k">class</span> <span class="nc">CVFolds</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
     <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span>
     <span class="n">test_X</span><span class="p">:</span> <span class="n">Tensor</span>
     <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span>
@@ -53,14 +55,20 @@
     <span class="n">test_Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
-<div class="viewcode-block" id="CVResults"><a class="viewcode-back" href="../../cross_validation.html#botorch.cross_validation.CVResults">[docs]</a><span class="k">class</span> <span class="nc">CVResults</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+
+<div class="viewcode-block" id="CVResults">
+<a class="viewcode-back" href="../../cross_validation.html#botorch.cross_validation.CVResults">[docs]</a>
+<span class="k">class</span> <span class="nc">CVResults</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span>
     <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span>
     <span class="n">observed_Y</span><span class="p">:</span> <span class="n">Tensor</span>
     <span class="n">observed_Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
-<div class="viewcode-block" id="gen_loo_cv_folds"><a class="viewcode-back" href="../../cross_validation.html#botorch.cross_validation.gen_loo_cv_folds">[docs]</a><span class="k">def</span> <span class="nf">gen_loo_cv_folds</span><span class="p">(</span>
+
+<div class="viewcode-block" id="gen_loo_cv_folds">
+<a class="viewcode-back" href="../../cross_validation.html#botorch.cross_validation.gen_loo_cv_folds">[docs]</a>
+<span class="k">def</span> <span class="nf">gen_loo_cv_folds</span><span class="p">(</span>
     <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CVFolds</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Generate LOO CV folds w.r.t. to `n`.</span>
@@ -128,7 +136,10 @@
     <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="batch_cross_validation"><a class="viewcode-back" href="../../cross_validation.html#botorch.cross_validation.batch_cross_validation">[docs]</a><span class="k">def</span> <span class="nf">batch_cross_validation</span><span class="p">(</span>
+
+<div class="viewcode-block" id="batch_cross_validation">
+<a class="viewcode-back" href="../../cross_validation.html#botorch.cross_validation.batch_cross_validation">[docs]</a>
+<span class="k">def</span> <span class="nf">batch_cross_validation</span><span class="p">(</span>
     <span class="n">model_cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">GPyTorchModel</span><span class="p">],</span>
     <span class="n">mll_cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">MarginalLogLikelihood</span><span class="p">],</span>
     <span class="n">cv_folds</span><span class="p">:</span> <span class="n">CVFolds</span><span class="p">,</span>
@@ -190,6 +201,7 @@
         <span class="n">observed_Y</span><span class="o">=</span><span class="n">cv_folds</span><span class="o">.</span><span class="n">test_Y</span><span class="p">,</span>
         <span class="n">observed_Yvar</span><span class="o">=</span><span class="n">cv_folds</span><span class="o">.</span><span class="n">test_Yvar</span><span class="p">,</span>
     <span class="p">)</span></div>
+
 </pre></div>
 </div>
 </div>

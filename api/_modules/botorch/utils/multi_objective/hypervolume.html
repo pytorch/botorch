@@ -85,7 +85,9 @@
 <span class="n">MIN_Y_RANGE</span> <span class="o">=</span> <span class="mf">1e-7</span>
 
 
-<div class="viewcode-block" id="infer_reference_point"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.infer_reference_point">[docs]</a><span class="k">def</span> <span class="nf">infer_reference_point</span><span class="p">(</span>
+<div class="viewcode-block" id="infer_reference_point">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.infer_reference_point">[docs]</a>
+<span class="k">def</span> <span class="nf">infer_reference_point</span><span class="p">(</span>
     <span class="n">pareto_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">max_ref_point</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
@@ -172,7 +174,10 @@
     <span class="k">return</span> <span class="n">ref_point</span></div>
 
 
-<div class="viewcode-block" id="Hypervolume"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.Hypervolume">[docs]</a><span class="k">class</span> <span class="nc">Hypervolume</span><span class="p">:</span>
+
+<div class="viewcode-block" id="Hypervolume">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.Hypervolume">[docs]</a>
+<span class="k">class</span> <span class="nc">Hypervolume</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Hypervolume computation dimension sweep algorithm from [Fonseca2006]_.</span>
 
 <span class="sd">    Adapted from Simon Wessing's implementation of the algorithm</span>
@@ -211,7 +216,9 @@
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_ref_point</span> <span class="o">=</span> <span class="o">-</span><span class="n">ref_point</span>
 
-<div class="viewcode-block" id="Hypervolume.compute"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.Hypervolume.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pareto_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<div class="viewcode-block" id="Hypervolume.compute">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.Hypervolume.compute">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pareto_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute hypervolume.</span>
 
 <span class="sd">        Args:</span>
@@ -241,6 +248,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hv_recursive</span><span class="p">(</span>
             <span class="n">i</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ref_point</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_pareto</span><span class="o">=</span><span class="n">pareto_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span>
         <span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="nf">_hv_recursive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_pareto</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Recursive method for hypervolume calculation.</span>
@@ -345,7 +353,10 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="sort_by_dimension"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.sort_by_dimension">[docs]</a><span class="k">def</span> <span class="nf">sort_by_dimension</span><span class="p">(</span><span class="n">nodes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+<div class="viewcode-block" id="sort_by_dimension">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.sort_by_dimension">[docs]</a>
+<span class="k">def</span> <span class="nf">sort_by_dimension</span><span class="p">(</span><span class="n">nodes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Sorts the list of nodes in-place by the specified objective.</span>
 
 <span class="sd">    Args:</span>
@@ -361,7 +372,10 @@
     <span class="n">nodes</span><span class="p">[:]</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span> <span class="k">for</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span> <span class="ow">in</span> <span class="n">decorated</span><span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="Node"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.Node">[docs]</a><span class="k">class</span> <span class="nc">Node</span><span class="p">:</span>
+
+<div class="viewcode-block" id="Node">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.Node">[docs]</a>
+<span class="k">class</span> <span class="nc">Node</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Node in the MultiList data structure."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -387,7 +401,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">volume</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">area</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="MultiList"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.MultiList">[docs]</a><span class="k">class</span> <span class="nc">MultiList</span><span class="p">:</span>
+
+<div class="viewcode-block" id="MultiList">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.MultiList">[docs]</a>
+<span class="k">class</span> <span class="nc">MultiList</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A special data structure used in hypervolume computation.</span>
 
 <span class="sd">    It consists of several doubly linked lists that share common nodes.</span>
@@ -408,7 +425,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">sentinel</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sentinel</span><span class="p">]</span> <span class="o">*</span> <span class="n">m</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sentinel</span><span class="o">.</span><span class="n">prev</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sentinel</span><span class="p">]</span> <span class="o">*</span> <span class="n">m</span>
 
-<div class="viewcode-block" id="MultiList.append"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.MultiList.append">[docs]</a>    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="MultiList.append">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.MultiList.append">[docs]</a>
+    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Appends a node to the end of the list at the given index.</span>
 
 <span class="sd">        Args:</span>
@@ -422,7 +441,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">sentinel</span><span class="o">.</span><span class="n">prev</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span>
         <span class="n">last</span><span class="o">.</span><span class="n">next</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span></div>
 
-<div class="viewcode-block" id="MultiList.extend"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.MultiList.extend">[docs]</a>    <span class="k">def</span> <span class="nf">extend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+<div class="viewcode-block" id="MultiList.extend">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.MultiList.extend">[docs]</a>
+    <span class="k">def</span> <span class="nf">extend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Extends the list at the given index with the nodes.</span>
 
 <span class="sd">        Args:</span>
@@ -433,7 +455,10 @@
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">=</span><span class="n">node</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="MultiList.remove"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.MultiList.remove">[docs]</a>    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Node</span><span class="p">:</span>
+
+<div class="viewcode-block" id="MultiList.remove">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.MultiList.remove">[docs]</a>
+    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Node</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Removes and returns 'node' from all lists in [0, 'index'].</span>
 
 <span class="sd">        Args:</span>
@@ -449,7 +474,10 @@
         <span class="n">bounds</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">node</span></div>
 
-<div class="viewcode-block" id="MultiList.reinsert"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.MultiList.reinsert">[docs]</a>    <span class="k">def</span> <span class="nf">reinsert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+<div class="viewcode-block" id="MultiList.reinsert">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.MultiList.reinsert">[docs]</a>
+    <span class="k">def</span> <span class="nf">reinsert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Re-inserts the node at its original position.</span>
 
 <span class="sd">        Re-inserts the node at its original position in all lists in [0, 'index']</span>
@@ -465,10 +493,14 @@
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">index</span><span class="p">):</span>
             <span class="n">node</span><span class="o">.</span><span class="n">prev</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">next</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span>
             <span class="n">node</span><span class="o">.</span><span class="n">next</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">prev</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span>
-        <span class="n">bounds</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">)</span></div></div>
+        <span class="n">bounds</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="SubsetIndexCachingMixin"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.SubsetIndexCachingMixin">[docs]</a><span class="k">class</span> <span class="nc">SubsetIndexCachingMixin</span><span class="p">:</span>
+
+<div class="viewcode-block" id="SubsetIndexCachingMixin">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.SubsetIndexCachingMixin">[docs]</a>
+<span class="k">class</span> <span class="nc">SubsetIndexCachingMixin</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""A Mixin class that adds q-subset index computations and caching."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -476,7 +508,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">q_out</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">q_subset_indices</span><span class="p">:</span> <span class="n">BufferDict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="n">BufferDict</span><span class="p">()</span>
 
-<div class="viewcode-block" id="SubsetIndexCachingMixin.compute_q_subset_indices"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.SubsetIndexCachingMixin.compute_q_subset_indices">[docs]</a>    <span class="k">def</span> <span class="nf">compute_q_subset_indices</span><span class="p">(</span>
+<div class="viewcode-block" id="SubsetIndexCachingMixin.compute_q_subset_indices">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.SubsetIndexCachingMixin.compute_q_subset_indices">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute_q_subset_indices</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">q_out</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BufferDict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Returns and caches a dict of indices equal to subsets of `{1, ..., q_out}`.</span>
@@ -502,10 +536,14 @@
         <span class="k">if</span> <span class="n">q_out</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_out</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">q_subset_indices</span> <span class="o">=</span> <span class="n">compute_subset_indices</span><span class="p">(</span><span class="n">q_out</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">q_out</span> <span class="o">=</span> <span class="n">q_out</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_subset_indices</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_subset_indices</span></div>
+</div>
 
 
-<div class="viewcode-block" id="compute_subset_indices"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.compute_subset_indices">[docs]</a><span class="k">def</span> <span class="nf">compute_subset_indices</span><span class="p">(</span>
+
+<div class="viewcode-block" id="compute_subset_indices">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.compute_subset_indices">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_subset_indices</span><span class="p">(</span>
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BufferDict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Compute all (2^q - 1) distinct subsets of {1, ..., `q`}.</span>
@@ -525,6 +563,7 @@
             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">q</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
         <span class="p">}</span>
     <span class="p">)</span></div>
+
 
 
 <span class="k">class</span> <span class="nc">NoisyExpectedHypervolumeMixin</span><span class="p">(</span><span class="n">CachedCholeskyMCSamplerMixin</span><span class="p">):</span>

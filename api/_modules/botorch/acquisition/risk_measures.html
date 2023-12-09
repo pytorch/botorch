@@ -134,7 +134,9 @@
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
 
-<div class="viewcode-block" id="CVaR"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.CVaR">[docs]</a><span class="k">class</span> <span class="nc">CVaR</span><span class="p">(</span><span class="n">RiskMeasureMCObjective</span><span class="p">):</span>
+<div class="viewcode-block" id="CVaR">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.CVaR">[docs]</a>
+<span class="k">class</span> <span class="nc">CVaR</span><span class="p">(</span><span class="n">RiskMeasureMCObjective</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The Conditional Value-at-Risk risk measure.</span>
 
 <span class="sd">    The Conditional Value-at-Risk measures the expectation of the worst outcomes</span>
@@ -172,7 +174,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">alpha_idx</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span><span class="n">n_w</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="CVaR.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.CVaR.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="CVaR.forward">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.CVaR.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Calculate the CVaR corresponding to the given samples.</span>
 
 <span class="sd">        Args:</span>
@@ -190,10 +194,14 @@
             <span class="n">k</span><span class="o">=</span><span class="n">prepared_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_idx</span><span class="p">,</span>
             <span class="n">largest</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+        <span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="VaR"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.VaR">[docs]</a><span class="k">class</span> <span class="nc">VaR</span><span class="p">(</span><span class="n">CVaR</span><span class="p">):</span>
+
+<div class="viewcode-block" id="VaR">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.VaR">[docs]</a>
+<span class="k">class</span> <span class="nc">VaR</span><span class="p">(</span><span class="n">CVaR</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The Value-at-Risk risk measure.</span>
 
 <span class="sd">    Value-at-Risk measures the smallest possible reward (or largest possible loss)</span>
@@ -227,7 +235,9 @@
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_q</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_idx</span> <span class="o">/</span> <span class="n">n_w</span>
 
-<div class="viewcode-block" id="VaR.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.VaR.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="VaR.forward">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.VaR.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Calculate the VaR corresponding to the given samples.</span>
 
 <span class="sd">        Args:</span>
@@ -253,13 +263,19 @@
             <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
             <span class="n">keepdim</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="n">interpolation</span><span class="o">=</span><span class="s2">"lower"</span><span class="p">,</span>
-        <span class="p">)</span></div></div>
+        <span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="WorstCase"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.WorstCase">[docs]</a><span class="k">class</span> <span class="nc">WorstCase</span><span class="p">(</span><span class="n">RiskMeasureMCObjective</span><span class="p">):</span>
+
+<div class="viewcode-block" id="WorstCase">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.WorstCase">[docs]</a>
+<span class="k">class</span> <span class="nc">WorstCase</span><span class="p">(</span><span class="n">RiskMeasureMCObjective</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The worst-case risk measure."""</span>
 
-<div class="viewcode-block" id="WorstCase.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.WorstCase.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="WorstCase.forward">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.WorstCase.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Calculate the worst-case measure corresponding to the given samples.</span>
 
 <span class="sd">        Args:</span>
@@ -272,10 +288,14 @@
 <span class="sd">            A `sample_shape x batch_shape x q`-dim tensor of worst-case samples.</span>
 <span class="sd">        """</span>
         <span class="n">prepared_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_samples</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">prepared_samples</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span></div></div>
+        <span class="k">return</span> <span class="n">prepared_samples</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span></div>
+</div>
 
 
-<div class="viewcode-block" id="Expectation"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.Expectation">[docs]</a><span class="k">class</span> <span class="nc">Expectation</span><span class="p">(</span><span class="n">RiskMeasureMCObjective</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Expectation">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.Expectation">[docs]</a>
+<span class="k">class</span> <span class="nc">Expectation</span><span class="p">(</span><span class="n">RiskMeasureMCObjective</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The expectation risk measure.</span>
 
 <span class="sd">    For unconstrained problems, we recommend using the `ExpectationPosteriorTransform`</span>
@@ -284,7 +304,9 @@
 <span class="sd">    reducing the cost of posterior sampling as a result.</span>
 <span class="sd">    """</span>
 
-<div class="viewcode-block" id="Expectation.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.Expectation.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="Expectation.forward">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.Expectation.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Calculate the expectation corresponding to the given samples.</span>
 <span class="sd">        This calculates the expectation / mean / average of each `n_w` samples</span>
 <span class="sd">        across the q-batch dimension. If `self.weights` is given, the samples</span>
@@ -300,7 +322,9 @@
 <span class="sd">            A `sample_shape x batch_shape x q`-dim tensor of expectation samples.</span>
 <span class="sd">        """</span>
         <span class="n">prepared_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_samples</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">prepared_samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">prepared_samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

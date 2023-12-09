@@ -57,7 +57,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="NondominatedPartitioning"><a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning">[docs]</a><span class="k">class</span> <span class="nc">NondominatedPartitioning</span><span class="p">(</span><span class="n">BoxDecomposition</span><span class="p">):</span>
+<div class="viewcode-block" id="NondominatedPartitioning">
+<a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning">[docs]</a>
+<span class="k">class</span> <span class="nc">NondominatedPartitioning</span><span class="p">(</span><span class="n">BoxDecomposition</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A class for partitioning the non-dominated space into hyper-cells.</span>
 
 <span class="sd">    Note: this assumes maximization. Internally, it multiplies outcomes by -1 and</span>
@@ -268,7 +270,9 @@
             <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span>
         <span class="p">)</span>
 
-<div class="viewcode-block" id="NondominatedPartitioning.get_hypercell_bounds"><a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.get_hypercell_bounds">[docs]</a>    <span class="k">def</span> <span class="nf">get_hypercell_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="NondominatedPartitioning.get_hypercell_bounds">
+<a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.get_hypercell_bounds">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_hypercell_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Get the bounds of each hypercell in the decomposition.</span>
 
 <span class="sd">        Args:</span>
@@ -305,6 +309,7 @@
         <span class="n">minimization_cell_bounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_hypercell_bounds</span><span class="p">(</span><span class="n">aug_pareto_Y</span><span class="o">=</span><span class="n">aug_pareto_Y</span><span class="p">)</span>
         <span class="c1"># swap upper and lower bounds and multiply by -1</span>
         <span class="k">return</span> <span class="o">-</span><span class="n">minimization_cell_bounds</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span></div>
+
 
     <span class="k">def</span> <span class="nf">_get_hypercell_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aug_pareto_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Get the bounds of each hypercell in the decomposition.</span>
@@ -373,7 +378,10 @@
         <span class="k">return</span> <span class="n">total_volume</span> <span class="o">-</span> <span class="n">non_dom_volume</span></div>
 
 
-<div class="viewcode-block" id="FastNondominatedPartitioning"><a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.non_dominated.FastNondominatedPartitioning">[docs]</a><span class="k">class</span> <span class="nc">FastNondominatedPartitioning</span><span class="p">(</span><span class="n">FastPartitioning</span><span class="p">):</span>
+
+<div class="viewcode-block" id="FastNondominatedPartitioning">
+<a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.non_dominated.FastNondominatedPartitioning">[docs]</a>
+<span class="k">class</span> <span class="nc">FastNondominatedPartitioning</span><span class="p">(</span><span class="n">FastPartitioning</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A class for partitioning the non-dominated space into hyper-cells.</span>
 
 <span class="sd">    Note: this assumes maximization. Internally, it multiplies by -1 and performs</span>
@@ -478,6 +486,7 @@
             <span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">total_volume</span> <span class="o">-</span> <span class="n">non_dom_volume</span></div>
+
 </pre></div>
 </div>
 </div>

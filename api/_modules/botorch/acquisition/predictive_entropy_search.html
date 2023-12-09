@@ -48,7 +48,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="qPredictiveEntropySearch"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.predictive_entropy_search.qPredictiveEntropySearch">[docs]</a><span class="k">class</span> <span class="nc">qPredictiveEntropySearch</span><span class="p">(</span><span class="n">qMultiObjectivePredictiveEntropySearch</span><span class="p">):</span>
+<div class="viewcode-block" id="qPredictiveEntropySearch">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.predictive_entropy_search.qPredictiveEntropySearch">[docs]</a>
+<span class="k">class</span> <span class="nc">qPredictiveEntropySearch</span><span class="p">(</span><span class="n">qMultiObjectivePredictiveEntropySearch</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The acquisition function for Predictive Entropy Search.</span>
 
 <span class="sd">    This acquisition function approximates the mutual information between the</span>
@@ -111,7 +113,9 @@
             <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span>
         <span class="p">)</span>
 
-<div class="viewcode-block" id="qPredictiveEntropySearch.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.predictive_entropy_search.qPredictiveEntropySearch.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
+<div class="viewcode-block" id="qPredictiveEntropySearch.forward">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.predictive_entropy_search.qPredictiveEntropySearch.forward">[docs]</a>
+    <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qPredictiveEntropySearch on the candidate set `X`.</span>
@@ -124,7 +128,9 @@
 <span class="sd">            A `batch_shape'`-dim Tensor of Predictive Entropy Search values at the</span>
 <span class="sd">            given design points `X`.</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_information_gain</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_information_gain</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

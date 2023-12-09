@@ -51,7 +51,9 @@
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">ModuleList</span>
 
 
-<div class="viewcode-block" id="LCEMGP"><a class="viewcode-back" href="../../../models.html#botorch.models.contextual_multioutput.LCEMGP">[docs]</a><span class="k">class</span> <span class="nc">LCEMGP</span><span class="p">(</span><span class="n">MultiTaskGP</span><span class="p">):</span>
+<div class="viewcode-block" id="LCEMGP">
+<a class="viewcode-back" href="../../../models.html#botorch.models.contextual_multioutput.LCEMGP">[docs]</a>
+<span class="k">class</span> <span class="nc">LCEMGP</span><span class="p">(</span><span class="n">MultiTaskGP</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The Multi-Task GP with the latent context embedding multioutput (LCE-M)</span>
 <span class="sd">    kernel. See [Feng2020HDCPS]_ for a reference on the model and its use in Bayesian</span>
 <span class="sd">    optimization.</span>
@@ -161,7 +163,9 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">embeddings</span>
 
-<div class="viewcode-block" id="LCEMGP.task_covar_matrix"><a class="viewcode-back" href="../../../models.html#botorch.models.contextual_multioutput.LCEMGP.task_covar_matrix">[docs]</a>    <span class="k">def</span> <span class="nf">task_covar_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_idcs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="LCEMGP.task_covar_matrix">
+<a class="viewcode-back" href="../../../models.html#botorch.models.contextual_multioutput.LCEMGP.task_covar_matrix">[docs]</a>
+    <span class="k">def</span> <span class="nf">task_covar_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_idcs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""compute covariance matrix of a list of given context</span>
 
 <span class="sd">        Args:</span>
@@ -175,7 +179,10 @@
             <span class="n">right_interp_indices</span><span class="o">=</span><span class="n">task_idcs</span><span class="p">,</span>
         <span class="p">)</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="LCEMGP.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.contextual_multioutput.LCEMGP.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
+
+<div class="viewcode-block" id="LCEMGP.forward">
+<a class="viewcode-back" href="../../../models.html#botorch.models.contextual_multioutput.LCEMGP.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
             <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">x_basic</span><span class="p">,</span> <span class="n">task_idcs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_inputs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
@@ -185,10 +192,14 @@
         <span class="c1"># Compute task covariances</span>
         <span class="n">covar_i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_covar_matrix</span><span class="p">(</span><span class="n">task_idcs</span><span class="p">)</span>
         <span class="n">covar</span> <span class="o">=</span> <span class="n">covar_x</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">covar_i</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean_x</span><span class="p">,</span> <span class="n">covar</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean_x</span><span class="p">,</span> <span class="n">covar</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="FixedNoiseLCEMGP"><a class="viewcode-back" href="../../../models.html#botorch.models.contextual_multioutput.FixedNoiseLCEMGP">[docs]</a><span class="k">class</span> <span class="nc">FixedNoiseLCEMGP</span><span class="p">(</span><span class="n">LCEMGP</span><span class="p">):</span>
+
+<div class="viewcode-block" id="FixedNoiseLCEMGP">
+<a class="viewcode-back" href="../../../models.html#botorch.models.contextual_multioutput.FixedNoiseLCEMGP">[docs]</a>
+<span class="k">class</span> <span class="nc">FixedNoiseLCEMGP</span><span class="p">(</span><span class="n">LCEMGP</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The Multi-Task GP the latent context embedding multioutput</span>
 <span class="sd">    (LCE-M) kernel, with known observation noise.</span>
 
@@ -244,6 +255,7 @@
             <span class="n">embs_dim_list</span><span class="o">=</span><span class="n">embs_dim_list</span><span class="p">,</span>
             <span class="n">output_tasks</span><span class="o">=</span><span class="n">output_tasks</span><span class="p">,</span>
         <span class="p">)</span></div>
+
 </pre></div>
 </div>
 </div>

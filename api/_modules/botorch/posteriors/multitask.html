@@ -36,7 +36,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="MultitaskGPPosterior"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.multitask.MultitaskGPPosterior">[docs]</a><span class="k">class</span> <span class="nc">MultitaskGPPosterior</span><span class="p">(</span><span class="n">GPyTorchPosterior</span><span class="p">):</span>
+<div class="viewcode-block" id="MultitaskGPPosterior">
+<a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.multitask.MultitaskGPPosterior">[docs]</a>
+<span class="k">class</span> <span class="nc">MultitaskGPPosterior</span><span class="p">(</span><span class="n">GPyTorchPosterior</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">distribution</span><span class="p">:</span> <span class="n">MultivariateNormal</span><span class="p">,</span>
@@ -202,7 +204,9 @@
 
         <span class="k">return</span> <span class="n">base_samples</span><span class="p">,</span> <span class="n">noise_base_samples</span><span class="p">,</span> <span class="n">test_noise_base_samples</span>
 
-<div class="viewcode-block" id="MultitaskGPPosterior.rsample_from_base_samples"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.multitask.MultitaskGPPosterior.rsample_from_base_samples">[docs]</a>    <span class="k">def</span> <span class="nf">rsample_from_base_samples</span><span class="p">(</span>
+<div class="viewcode-block" id="MultitaskGPPosterior.rsample_from_base_samples">
+<a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.multitask.MultitaskGPPosterior.rsample_from_base_samples">[docs]</a>
+    <span class="k">def</span> <span class="nf">rsample_from_base_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
         <span class="n">base_samples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
@@ -272,7 +276,10 @@
 
         <span class="k">return</span> <span class="n">final_samples</span></div>
 
-<div class="viewcode-block" id="MultitaskGPPosterior.rsample"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.multitask.MultitaskGPPosterior.rsample">[docs]</a>    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span>
+
+<div class="viewcode-block" id="MultitaskGPPosterior.rsample">
+<a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.multitask.MultitaskGPPosterior.rsample">[docs]</a>
+    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -293,6 +300,7 @@
             <span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">base_samples</span><span class="o">=</span><span class="kc">None</span>
         <span class="p">)</span></div>
 
+
     <span class="k">def</span> <span class="nf">_draw_from_base_covar</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">covar</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">LinearOperator</span><span class="p">],</span> <span class="n">base_samples</span><span class="p">:</span> <span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -309,6 +317,7 @@
         <span class="n">res</span> <span class="o">=</span> <span class="n">covar_root</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">base_samples</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
+
 </pre></div>
 </div>
 </div>

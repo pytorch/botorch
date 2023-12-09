@@ -60,7 +60,9 @@
 <span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Normal</span>
 
 
-<div class="viewcode-block" id="qMultiObjectivePredictiveEntropySearch"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.predictive_entropy_search.qMultiObjectivePredictiveEntropySearch">[docs]</a><span class="k">class</span> <span class="nc">qMultiObjectivePredictiveEntropySearch</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="qMultiObjectivePredictiveEntropySearch">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.predictive_entropy_search.qMultiObjectivePredictiveEntropySearch">[docs]</a>
+<span class="k">class</span> <span class="nc">qMultiObjectivePredictiveEntropySearch</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The acquisition function for Predictive Entropy Search. The code supports</span>
 <span class="sd">    both single and multiple objectives as well as batching.</span>
 
@@ -100,7 +102,7 @@
 <span class="sd">        Problem (a) occurs because we have to compute the variable:</span>
 <span class="sd">        `alpha = (mean(x_n) - mean(x_p)) / std(x_n - x_p)`, which becomes very</span>
 <span class="sd">        large when `x_n` is better than `x_p` with high-probability. This leads to a</span>
-<span class="sd">        log(0) error when we compute `log(1 - cdf(alpha))`. We have pre-emptively</span>
+<span class="sd">        log(0) error when we compute `log(1 - cdf(alpha))`. We have preemptively</span>
 <span class="sd">        clamped some values depending on `1`alpha` in order to mitigate this.</span>
 
 <span class="sd">        Problem (b) occurs because we have to compute matrix inverses for the</span>
@@ -497,7 +499,9 @@
 
         <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">q_pes_f</span>
 
-<div class="viewcode-block" id="qMultiObjectivePredictiveEntropySearch.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.predictive_entropy_search.qMultiObjectivePredictiveEntropySearch.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
+<div class="viewcode-block" id="qMultiObjectivePredictiveEntropySearch.forward">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.predictive_entropy_search.qMultiObjectivePredictiveEntropySearch.forward">[docs]</a>
+    <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qMultiObjectivePredictiveEntropySearch on the candidate set `X`.</span>
@@ -510,10 +514,14 @@
 <span class="sd">            A `batch_shape'`-dim Tensor of acquisition values at the given design</span>
 <span class="sd">            points `X`.</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_information_gain</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_information_gain</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="log_cdf_robust"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.predictive_entropy_search.log_cdf_robust">[docs]</a><span class="k">def</span> <span class="nf">log_cdf_robust</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="log_cdf_robust">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.predictive_entropy_search.log_cdf_robust">[docs]</a>
+<span class="k">def</span> <span class="nf">log_cdf_robust</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes the logarithm of the normal cumulative density robustly. This uses</span>
 <span class="sd">    the approximation log(1-z) ~ -z when z is small:</span>
 
@@ -536,6 +544,7 @@
     <span class="n">log_cdf_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">cdf_x</span><span class="p">),</span> <span class="n">neg_cdf_neg_x</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">log_cdf_x</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="n">NEG_INF</span><span class="p">,</span> <span class="o">-</span><span class="n">CLAMP_LB</span><span class="p">)</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">_initialize_predictive_matrices</span><span class="p">(</span>

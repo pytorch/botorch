@@ -68,7 +68,9 @@
 <span class="n">GetSampler</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">(</span><span class="s2">"get_sampler"</span><span class="p">,</span> <span class="n">encoder</span><span class="o">=</span><span class="n">_posterior_to_distribution_encoder</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="get_sampler"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.get_sampler.get_sampler">[docs]</a><span class="k">def</span> <span class="nf">get_sampler</span><span class="p">(</span>
+<div class="viewcode-block" id="get_sampler">
+<a class="viewcode-back" href="../../../sampling.html#botorch.sampling.get_sampler.get_sampler">[docs]</a>
+<span class="k">def</span> <span class="nf">get_sampler</span><span class="p">(</span>
     <span class="n">posterior</span><span class="p">:</span> <span class="n">TorchPosterior</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCSampler</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Get the sampler for the given posterior.</span>
@@ -88,6 +90,7 @@
 <span class="sd">    """</span>
     <span class="n">kwargs</span><span class="p">[</span><span class="s2">"sample_shape"</span><span class="p">]</span> <span class="o">=</span> <span class="n">sample_shape</span>
     <span class="k">return</span> <span class="n">GetSampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
 
 
 <span class="nd">@GetSampler</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">MultivariateNormal</span><span class="p">)</span>

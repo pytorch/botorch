@@ -99,7 +99,7 @@
 <span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">pi</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
@@ -115,7 +115,9 @@
 <span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
 
 
-<div class="viewcode-block" id="BraninCurrin"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.BraninCurrin">[docs]</a><span class="k">class</span> <span class="nc">BraninCurrin</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
+<div class="viewcode-block" id="BraninCurrin">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.BraninCurrin">[docs]</a>
+<span class="k">class</span> <span class="nc">BraninCurrin</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Two objective problem composed of the Branin and Currin functions.</span>
 
 <span class="sd">    Branin (rescaled):</span>
@@ -139,7 +141,11 @@
     <span class="n">_ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">18.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">]</span>
     <span class="n">_max_hv</span> <span class="o">=</span> <span class="mf">59.36011874867746</span>  <span class="c1"># this is approximated using NSGA-II</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">noise_std</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>
@@ -163,14 +169,20 @@
         <span class="n">denom</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="n">x_0</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">+</span> <span class="mi">500</span> <span class="o">*</span> <span class="n">x_0</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">x_0</span> <span class="o">+</span> <span class="mi">20</span>
         <span class="k">return</span> <span class="n">factor1</span> <span class="o">*</span> <span class="n">numer</span> <span class="o">/</span> <span class="n">denom</span>
 
-<div class="viewcode-block" id="BraninCurrin.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.BraninCurrin.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="BraninCurrin.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.BraninCurrin.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="c1"># branin rescaled with inputsto [0,1]^2</span>
         <span class="n">branin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rescaled_branin</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
         <span class="n">currin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_currin</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">branin</span><span class="p">,</span> <span class="n">currin</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">branin</span><span class="p">,</span> <span class="n">currin</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="DH"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH">[docs]</a><span class="k">class</span> <span class="nc">DH</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DH">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH">[docs]</a>
+<span class="k">class</span> <span class="nc">DH</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Base class for DH problems for robust multi-objective optimization.</span>
 
 <span class="sd">    In their paper, [Deb2005robust]_ consider these problems under a mean-robustness</span>
@@ -197,7 +209,7 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">noise_std</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
@@ -229,7 +241,10 @@
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
 
 
-<div class="viewcode-block" id="DH1"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH1">[docs]</a><span class="k">class</span> <span class="nc">DH1</span><span class="p">(</span><span class="n">DH</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DH1">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH1">[docs]</a>
+<span class="k">class</span> <span class="nc">DH1</span><span class="p">(</span><span class="n">DH</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""DH1 test problem.</span>
 
 <span class="sd">    d-dimensional problem evaluated on `[0, 1] x [-1, 1]^{d-1}`:</span>
@@ -266,14 +281,20 @@
         <span class="n">x_0</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">/</span> <span class="p">(</span><span class="mf">0.2</span> <span class="o">+</span> <span class="n">x_0</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">*</span> <span class="n">x_0</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 
-<div class="viewcode-block" id="DH1.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH1.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="DH1.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH1.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">f_0</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
         <span class="c1"># This may encounter 0 / 0, which we set to 0.</span>
         <span class="n">f_1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_h</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_g</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_S</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">f_0</span><span class="p">,</span> <span class="n">f_1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">f_0</span><span class="p">,</span> <span class="n">f_1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="DH2"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH2">[docs]</a><span class="k">class</span> <span class="nc">DH2</span><span class="p">(</span><span class="n">DH1</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DH2">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH2">[docs]</a>
+<span class="k">class</span> <span class="nc">DH2</span><span class="p">(</span><span class="n">DH1</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""DH2 test problem.</span>
 
 <span class="sd">    This is identical to DH1 except for having `beta = 10.0`.</span>
@@ -282,7 +303,10 @@
     <span class="n">beta</span> <span class="o">=</span> <span class="mf">10.0</span></div>
 
 
-<div class="viewcode-block" id="DH3"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH3">[docs]</a><span class="k">class</span> <span class="nc">DH3</span><span class="p">(</span><span class="n">DH</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DH3">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH3">[docs]</a>
+<span class="k">class</span> <span class="nc">DH3</span><span class="p">(</span><span class="n">DH</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""DH3 test problem.</span>
 
 <span class="sd">    d-dimensional problem evaluated on `[0, 1]^2 x [-1, 1]^{d-2}`:</span>
@@ -320,13 +344,19 @@
     <span class="k">def</span> <span class="nf">_S</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span>
 
-<div class="viewcode-block" id="DH3.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH3.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="DH3.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH3.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">f_0</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
         <span class="n">f_1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_h</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_g</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_S</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">f_0</span><span class="p">,</span> <span class="n">f_1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">f_0</span><span class="p">,</span> <span class="n">f_1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="DH4"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH4">[docs]</a><span class="k">class</span> <span class="nc">DH4</span><span class="p">(</span><span class="n">DH3</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DH4">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH4">[docs]</a>
+<span class="k">class</span> <span class="nc">DH4</span><span class="p">(</span><span class="n">DH3</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""DH4 test problem.</span>
 
 <span class="sd">    This is similar to DH3 except that it is evaluated on</span>
@@ -347,7 +377,10 @@
         <span class="k">return</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.8</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">exp_arg_1</span><span class="p">)</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">exp_arg_2</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="DTLZ"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ">[docs]</a><span class="k">class</span> <span class="nc">DTLZ</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DTLZ">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ">[docs]</a>
+<span class="k">class</span> <span class="nc">DTLZ</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Base class for DTLZ problems.</span>
 
 <span class="sd">    See [Deb2005dtlz]_ for more details on DTLZ.</span>
@@ -357,7 +390,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">num_objectives</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-        <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">noise_std</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
@@ -379,7 +412,10 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="DTLZ1"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ1">[docs]</a><span class="k">class</span> <span class="nc">DTLZ1</span><span class="p">(</span><span class="n">DTLZ</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DTLZ1">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ1">[docs]</a>
+<span class="k">class</span> <span class="nc">DTLZ1</span><span class="p">(</span><span class="n">DTLZ</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""DLTZ1 test problem.</span>
 
 <span class="sd">    d-dimensional problem evaluated on `[0, 1]^d`:</span>
@@ -402,7 +438,9 @@
     <span class="k">def</span> <span class="nf">_max_hv</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ref_val</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">num_objectives</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">num_objectives</span>
 
-<div class="viewcode-block" id="DTLZ1.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ1.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="DTLZ1.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ1.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">X_m</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="p">:]</span>
         <span class="n">X_m_minus_half</span> <span class="o">=</span> <span class="n">X_m</span> <span class="o">-</span> <span class="mf">0.5</span>
         <span class="n">sum_term</span> <span class="o">=</span> <span class="p">(</span>
@@ -419,7 +457,10 @@
             <span class="n">fs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f_i</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="DTLZ1.gen_pareto_front"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ1.gen_pareto_front">[docs]</a>    <span class="k">def</span> <span class="nf">gen_pareto_front</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="DTLZ1.gen_pareto_front">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ1.gen_pareto_front">[docs]</a>
+    <span class="k">def</span> <span class="nf">gen_pareto_front</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Generate `n` pareto optimal points.</span>
 
 <span class="sd">        The pareto points randomly sampled from the hyperplane sum_i f(x_i) = 0.5.</span>
@@ -433,10 +474,14 @@
         <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
             <span class="n">f_X</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="k">return</span> <span class="n">f_X</span></div></div>
+        <span class="k">return</span> <span class="n">f_X</span></div>
+</div>
 
 
-<div class="viewcode-block" id="DTLZ2"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ2">[docs]</a><span class="k">class</span> <span class="nc">DTLZ2</span><span class="p">(</span><span class="n">DTLZ</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DTLZ2">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ2">[docs]</a>
+<span class="k">class</span> <span class="nc">DTLZ2</span><span class="p">(</span><span class="n">DTLZ</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""DLTZ2 test problem.</span>
 
 <span class="sd">    d-dimensional problem evaluated on `[0, 1]^d`:</span>
@@ -464,7 +509,9 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">hypercube_vol</span> <span class="o">-</span> <span class="n">pos_hypersphere_vol</span>
 
-<div class="viewcode-block" id="DTLZ2.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ2.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="DTLZ2.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ2.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">X_m</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="p">:]</span>
         <span class="n">g_X</span> <span class="o">=</span> <span class="p">(</span><span class="n">X_m</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">g_X_plus1</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">g_X</span>
@@ -479,7 +526,10 @@
             <span class="n">fs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f_i</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="DTLZ2.gen_pareto_front"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ2.gen_pareto_front">[docs]</a>    <span class="k">def</span> <span class="nf">gen_pareto_front</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="DTLZ2.gen_pareto_front">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ2.gen_pareto_front">[docs]</a>
+    <span class="k">def</span> <span class="nf">gen_pareto_front</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Generate `n` pareto optimal points.</span>
 
 <span class="sd">        The pareto points are randomly sampled from the hypersphere's</span>
@@ -494,10 +544,14 @@
         <span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
             <span class="n">f_X</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="k">return</span> <span class="n">f_X</span></div></div>
+        <span class="k">return</span> <span class="n">f_X</span></div>
+</div>
 
 
-<div class="viewcode-block" id="DTLZ3"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ3">[docs]</a><span class="k">class</span> <span class="nc">DTLZ3</span><span class="p">(</span><span class="n">DTLZ2</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DTLZ3">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ3">[docs]</a>
+<span class="k">class</span> <span class="nc">DTLZ3</span><span class="p">(</span><span class="n">DTLZ2</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""DTLZ3 test problem.</span>
 
 <span class="sd">    d-dimensional problem evaluated on `[0, 1]^d`:</span>
@@ -514,7 +568,9 @@
 
     <span class="n">_ref_val</span> <span class="o">=</span> <span class="mf">10000.0</span>
 
-<div class="viewcode-block" id="DTLZ3.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ3.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="DTLZ3.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ3.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">X_m</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="p">:]</span>
         <span class="n">g_X</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="p">(</span>
             <span class="n">X_m</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
@@ -530,10 +586,14 @@
             <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">f_i</span> <span class="o">*=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">*</span> <span class="n">pi_over_2</span><span class="p">)</span>
             <span class="n">fs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f_i</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="DTLZ4"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ4">[docs]</a><span class="k">class</span> <span class="nc">DTLZ4</span><span class="p">(</span><span class="n">DTLZ2</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DTLZ4">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ4">[docs]</a>
+<span class="k">class</span> <span class="nc">DTLZ4</span><span class="p">(</span><span class="n">DTLZ2</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""DTLZ4 test problem.</span>
 
 <span class="sd">    This is the same as DTLZ2, but with alpha=100 as the exponent,</span>
@@ -544,7 +604,10 @@
     <span class="n">_alpha</span> <span class="o">=</span> <span class="mf">100.0</span></div>
 
 
-<div class="viewcode-block" id="DTLZ5"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ5">[docs]</a><span class="k">class</span> <span class="nc">DTLZ5</span><span class="p">(</span><span class="n">DTLZ</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DTLZ5">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ5">[docs]</a>
+<span class="k">class</span> <span class="nc">DTLZ5</span><span class="p">(</span><span class="n">DTLZ</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""DTLZ5 test problem.</span>
 
 <span class="sd">    d-dimensional problem evaluated on `[0, 1]^d`:</span>
@@ -559,7 +622,9 @@
 
     <span class="n">_ref_val</span> <span class="o">=</span> <span class="mf">10.0</span>
 
-<div class="viewcode-block" id="DTLZ5.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ5.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="DTLZ5.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ5.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">X_m</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="p">:]</span>
         <span class="n">X_</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">]</span>
         <span class="n">g_X</span> <span class="o">=</span> <span class="p">(</span><span class="n">X_m</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
@@ -574,10 +639,14 @@
             <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">f_i</span> <span class="o">*=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">theta</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">pi_over_2</span><span class="p">)</span>
             <span class="n">fs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f_i</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="DTLZ7"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ7">[docs]</a><span class="k">class</span> <span class="nc">DTLZ7</span><span class="p">(</span><span class="n">DTLZ</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DTLZ7">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ7">[docs]</a>
+<span class="k">class</span> <span class="nc">DTLZ7</span><span class="p">(</span><span class="n">DTLZ</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""DTLZ7 test problem.</span>
 
 <span class="sd">    d-dimensional problem evaluated on `[0, 1]^d`:</span>
@@ -595,7 +664,9 @@
 
     <span class="n">_ref_val</span> <span class="o">=</span> <span class="mf">15.0</span>
 
-<div class="viewcode-block" id="DTLZ7.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ7.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+<div class="viewcode-block" id="DTLZ7.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ7.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
         <span class="n">f</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_objectives</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
             <span class="n">f</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">])</span>
@@ -605,10 +676,14 @@
         <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_objectives</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
             <span class="n">f</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">g_X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">f</span><span class="p">)),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">f</span><span class="p">,</span> <span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="n">g_X</span><span class="p">)</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">f</span><span class="p">,</span> <span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="n">g_X</span><span class="p">)</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="GMM"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.GMM">[docs]</a><span class="k">class</span> <span class="nc">GMM</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
+
+<div class="viewcode-block" id="GMM">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.GMM">[docs]</a>
+<span class="k">class</span> <span class="nc">GMM</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A test problem where each objective is a Gaussian mixture model.</span>
 
 <span class="sd">    This implementation is adapted from the single objective version (proposed by</span>
@@ -623,7 +698,7 @@
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">noise_std</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">num_objectives</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -687,7 +762,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"gmm_covar"</span><span class="p">,</span> <span class="n">gmm_covar</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"gmm_norm"</span><span class="p">,</span> <span class="n">gmm_norm</span><span class="p">)</span>
 
-<div class="viewcode-block" id="GMM.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.GMM.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="GMM.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.GMM.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the GMMs."""</span>
         <span class="c1"># This needs to be reinstantiated because MVN apparently does not</span>
         <span class="c1"># have a `to` method to make it device/dtype agnostic.</span>
@@ -700,10 +777,14 @@
         <span class="n">expand_shape</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">gmm_pos</span><span class="o">.</span><span class="n">shape</span>
         <span class="n">pdf_X</span> <span class="o">=</span> <span class="n">mvn</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">view_shape</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">expand_shape</span><span class="p">))</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span>
         <span class="c1"># Multiply by -1 to make this a minimization problem by default</span>
-        <span class="k">return</span> <span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gmm_norm</span> <span class="o">*</span> <span class="n">pdf_X</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gmm_norm</span> <span class="o">*</span> <span class="n">pdf_X</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="Penicillin"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.Penicillin">[docs]</a><span class="k">class</span> <span class="nc">Penicillin</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Penicillin">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.Penicillin">[docs]</a>
+<span class="k">class</span> <span class="nc">Penicillin</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A penicillin production simulator from [Liang2021]_.</span>
 
 <span class="sd">    This implementation is adapted from</span>
@@ -754,7 +835,9 @@
     <span class="n">R</span> <span class="o">=</span> <span class="mf">1.9872</span>  <span class="c1"># CAL/(MOL K)</span>
     <span class="n">V_max</span> <span class="o">=</span> <span class="mf">180.0</span>
 
-<div class="viewcode-block" id="Penicillin.penicillin_vectorized"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.Penicillin.penicillin_vectorized">[docs]</a>    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Penicillin.penicillin_vectorized">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.Penicillin.penicillin_vectorized">[docs]</a>
+    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">penicillin_vectorized</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">X_input</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Penicillin simulator, simplified and vectorized.</span>
 
@@ -828,15 +911,22 @@
 
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="o">-</span><span class="n">P</span><span class="p">,</span> <span class="n">CO2</span><span class="p">,</span> <span class="n">t_tensor</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Penicillin.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.Penicillin.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="Penicillin.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.Penicillin.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="c1"># This uses in-place operations. Hence, the clone is to avoid modifying</span>
         <span class="c1"># the original X in-place.</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">penicillin_vectorized</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span><span class="o">.</span><span class="n">clone</span><span class="p">())</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
             <span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_objectives</span>
-        <span class="p">)</span></div></div>
+        <span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="ToyRobust"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ToyRobust">[docs]</a><span class="k">class</span> <span class="nc">ToyRobust</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ToyRobust">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ToyRobust">[docs]</a>
+<span class="k">class</span> <span class="nc">ToyRobust</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A 1D problem where the Pareto frontier is sensitive to input noise.</span>
 
 <span class="sd">    Specifically, the pareto frontier over the nominal objectives is</span>
@@ -856,14 +946,19 @@
     <span class="n">num_objectives</span> <span class="o">=</span> <span class="mi">2</span>
     <span class="n">levy</span> <span class="o">=</span> <span class="n">Levy</span><span class="p">()</span>
 
-<div class="viewcode-block" id="ToyRobust.f_1"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ToyRobust.f_1">[docs]</a>    <span class="k">def</span> <span class="nf">f_1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="ToyRobust.f_1">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ToyRobust.f_1">[docs]</a>
+    <span class="k">def</span> <span class="nf">f_1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">p1</span> <span class="o">=</span> <span class="mf">2.4</span> <span class="o">-</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">X</span> <span class="o">-</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">X</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
         <span class="n">p2</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">X</span> <span class="o">-</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">X</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
         <span class="n">smoother</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">30</span> <span class="o">*</span> <span class="n">X</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.1</span>
         <span class="n">x_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">((</span><span class="mf">0.2</span> <span class="o">-</span> <span class="n">X</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.005</span><span class="p">)</span>
         <span class="k">return</span> <span class="o">-</span><span class="p">(</span><span class="n">p1</span> <span class="o">*</span> <span class="n">x_mask</span> <span class="o">+</span> <span class="n">p2</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">x_mask</span><span class="p">)</span> <span class="o">+</span> <span class="n">smoother</span><span class="p">)</span> <span class="o">*</span> <span class="mi">30</span> <span class="o">+</span> <span class="mi">30</span></div>
 
-<div class="viewcode-block" id="ToyRobust.f_2"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ToyRobust.f_2">[docs]</a>    <span class="k">def</span> <span class="nf">f_2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="ToyRobust.f_2">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ToyRobust.f_2">[docs]</a>
+    <span class="k">def</span> <span class="nf">f_2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
             <span class="p">[</span><span class="n">X</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">X</span><span class="p">)],</span>
             <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
@@ -875,11 +970,18 @@
         <span class="n">Y</span> <span class="o">-=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.75</span>
         <span class="k">return</span> <span class="n">Y</span></div>
 
-<div class="viewcode-block" id="ToyRobust.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ToyRobust.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="k">return</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">f_1</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">f_2</span><span class="p">(</span><span class="n">X</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="ToyRobust.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ToyRobust.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">f_1</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">f_2</span><span class="p">(</span><span class="n">X</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="VehicleSafety"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.VehicleSafety">[docs]</a><span class="k">class</span> <span class="nc">VehicleSafety</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
+
+<div class="viewcode-block" id="VehicleSafety">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.VehicleSafety">[docs]</a>
+<span class="k">class</span> <span class="nc">VehicleSafety</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Optimize Vehicle crash-worthiness.</span>
 
 <span class="sd">    See [Tanabe2020]_ for details.</span>
@@ -897,7 +999,9 @@
     <span class="n">dim</span> <span class="o">=</span> <span class="mi">5</span>
     <span class="n">num_objectives</span> <span class="o">=</span> <span class="mi">3</span>
 
-<div class="viewcode-block" id="VehicleSafety.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.VehicleSafety.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="VehicleSafety.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.VehicleSafety.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">X1</span><span class="p">,</span> <span class="n">X2</span><span class="p">,</span> <span class="n">X3</span><span class="p">,</span> <span class="n">X4</span><span class="p">,</span> <span class="n">X5</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">f1</span> <span class="o">=</span> <span class="p">(</span>
             <span class="mf">1640.2823</span>
@@ -934,10 +1038,14 @@
             <span class="o">+</span> <span class="mf">0.0109</span> <span class="o">*</span> <span class="n">X4</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="n">f_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">f1</span><span class="p">,</span> <span class="n">f2</span><span class="p">,</span> <span class="n">f3</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">f_X</span></div></div>
+        <span class="k">return</span> <span class="n">f_X</span></div>
+</div>
 
 
-<div class="viewcode-block" id="ZDT"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT">[docs]</a><span class="k">class</span> <span class="nc">ZDT</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ZDT">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT">[docs]</a>
+<span class="k">class</span> <span class="nc">ZDT</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Base class for ZDT problems.</span>
 
 <span class="sd">    See [Zitzler2000]_ for more details on ZDT.</span>
@@ -949,7 +1057,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">num_objectives</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-        <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">noise_std</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
@@ -977,7 +1085,10 @@
         <span class="k">return</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">9</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="ZDT1"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT1">[docs]</a><span class="k">class</span> <span class="nc">ZDT1</span><span class="p">(</span><span class="n">ZDT</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ZDT1">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT1">[docs]</a>
+<span class="k">class</span> <span class="nc">ZDT1</span><span class="p">(</span><span class="n">ZDT</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""ZDT1 test problem.</span>
 
 <span class="sd">    d-dimensional problem evaluated on `[0, 1]^d`:</span>
@@ -993,13 +1104,18 @@
 
     <span class="n">_max_hv</span> <span class="o">=</span> <span class="mi">120</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">/</span> <span class="mi">3</span>
 
-<div class="viewcode-block" id="ZDT1.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT1.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="ZDT1.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT1.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">f_0</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
         <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_g</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
         <span class="n">f_1</span> <span class="o">=</span> <span class="n">g</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">f_0</span> <span class="o">/</span> <span class="n">g</span><span class="p">)</span><span class="o">.</span><span class="n">sqrt</span><span class="p">())</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">f_0</span><span class="p">,</span> <span class="n">f_1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="ZDT1.gen_pareto_front"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT1.gen_pareto_front">[docs]</a>    <span class="k">def</span> <span class="nf">gen_pareto_front</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="ZDT1.gen_pareto_front">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT1.gen_pareto_front">[docs]</a>
+    <span class="k">def</span> <span class="nf">gen_pareto_front</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">f_0</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span>
             <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">device</span>
         <span class="p">)</span>
@@ -1007,10 +1123,14 @@
         <span class="n">f_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">f_0</span><span class="p">,</span> <span class="n">f_1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
             <span class="n">f_X</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="k">return</span> <span class="n">f_X</span></div></div>
+        <span class="k">return</span> <span class="n">f_X</span></div>
+</div>
 
 
-<div class="viewcode-block" id="ZDT2"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT2">[docs]</a><span class="k">class</span> <span class="nc">ZDT2</span><span class="p">(</span><span class="n">ZDT</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ZDT2">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT2">[docs]</a>
+<span class="k">class</span> <span class="nc">ZDT2</span><span class="p">(</span><span class="n">ZDT</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""ZDT2 test problem.</span>
 
 <span class="sd">    d-dimensional problem evaluated on `[0, 1]^d`:</span>
@@ -1026,13 +1146,18 @@
 
     <span class="n">_max_hv</span> <span class="o">=</span> <span class="mi">120</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">3</span>
 
-<div class="viewcode-block" id="ZDT2.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT2.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="ZDT2.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT2.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">f_0</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
         <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_g</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
         <span class="n">f_1</span> <span class="o">=</span> <span class="n">g</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">f_0</span> <span class="o">/</span> <span class="n">g</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">f_0</span><span class="p">,</span> <span class="n">f_1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="ZDT2.gen_pareto_front"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT2.gen_pareto_front">[docs]</a>    <span class="k">def</span> <span class="nf">gen_pareto_front</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="ZDT2.gen_pareto_front">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT2.gen_pareto_front">[docs]</a>
+    <span class="k">def</span> <span class="nf">gen_pareto_front</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">f_0</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span>
             <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">device</span>
         <span class="p">)</span>
@@ -1040,10 +1165,14 @@
         <span class="n">f_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">f_0</span><span class="p">,</span> <span class="n">f_1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
             <span class="n">f_X</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="k">return</span> <span class="n">f_X</span></div></div>
+        <span class="k">return</span> <span class="n">f_X</span></div>
+</div>
 
 
-<div class="viewcode-block" id="ZDT3"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT3">[docs]</a><span class="k">class</span> <span class="nc">ZDT3</span><span class="p">(</span><span class="n">ZDT</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ZDT3">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT3">[docs]</a>
+<span class="k">class</span> <span class="nc">ZDT3</span><span class="p">(</span><span class="n">ZDT</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""ZDT3 test problem.</span>
 
 <span class="sd">    d-dimensional problem evaluated on `[0, 1]^d`:</span>
@@ -1070,13 +1199,18 @@
     <span class="c1"># nugget to make sure linspace returns elements within the specified range</span>
     <span class="n">_eps</span> <span class="o">=</span> <span class="mf">1e-6</span>
 
-<div class="viewcode-block" id="ZDT3.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT3.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="ZDT3.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT3.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">f_0</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
         <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_g</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
         <span class="n">f_1</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">f_0</span> <span class="o">/</span> <span class="n">g</span><span class="p">)</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span> <span class="o">-</span> <span class="n">f_0</span> <span class="o">/</span> <span class="n">g</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">f_0</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">f_0</span><span class="p">,</span> <span class="n">f_1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="ZDT3.gen_pareto_front"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT3.gen_pareto_front">[docs]</a>    <span class="k">def</span> <span class="nf">gen_pareto_front</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="ZDT3.gen_pareto_front">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT3.gen_pareto_front">[docs]</a>
+    <span class="k">def</span> <span class="nf">gen_pareto_front</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">n_parts</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parts</span><span class="p">)</span>
         <span class="n">n_per_part</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">(</span>
             <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">n_parts</span><span class="p">]),</span>
@@ -1103,10 +1237,14 @@
         <span class="n">f_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">f_0</span><span class="p">,</span> <span class="n">f_1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
             <span class="n">f_X</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="k">return</span> <span class="n">f_X</span></div></div>
+        <span class="k">return</span> <span class="n">f_X</span></div>
+</div>
 
 
-<div class="viewcode-block" id="CarSideImpact"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.CarSideImpact">[docs]</a><span class="k">class</span> <span class="nc">CarSideImpact</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
+
+<div class="viewcode-block" id="CarSideImpact">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.CarSideImpact">[docs]</a>
+<span class="k">class</span> <span class="nc">CarSideImpact</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Car side impact problem.</span>
 
 <span class="sd">    See [Tanabe2020]_ for details.</span>
@@ -1131,7 +1269,9 @@
     <span class="n">_ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">45.4872</span><span class="p">,</span> <span class="mf">4.5114</span><span class="p">,</span> <span class="mf">13.3394</span><span class="p">,</span> <span class="mf">10.3942</span><span class="p">]</span>
     <span class="n">_max_hv</span> <span class="o">=</span> <span class="mf">484.72654347642793</span>
 
-<div class="viewcode-block" id="CarSideImpact.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.CarSideImpact.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="CarSideImpact.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.CarSideImpact.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">X1</span><span class="p">,</span> <span class="n">X2</span><span class="p">,</span> <span class="n">X3</span><span class="p">,</span> <span class="n">X4</span><span class="p">,</span> <span class="n">X5</span><span class="p">,</span> <span class="n">X6</span><span class="p">,</span> <span class="n">X7</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">f1</span> <span class="o">=</span> <span class="p">(</span>
             <span class="mf">1.98</span>
@@ -1189,13 +1329,17 @@
         <span class="n">zero</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
         <span class="n">g</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">g</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">g</span><span class="p">,</span> <span class="n">zero</span><span class="p">)</span>
         <span class="n">f4</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">f1</span><span class="p">,</span> <span class="n">f2</span><span class="p">,</span> <span class="n">f3</span><span class="p">,</span> <span class="n">f4</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">f1</span><span class="p">,</span> <span class="n">f2</span><span class="p">,</span> <span class="n">f3</span><span class="p">,</span> <span class="n">f4</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+</div>
+
 
 
 <span class="c1"># ------ Constrained Multi-Objective Test Problems ----- #</span>
 
 
-<div class="viewcode-block" id="BNH"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.BNH">[docs]</a><span class="k">class</span> <span class="nc">BNH</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+<div class="viewcode-block" id="BNH">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.BNH">[docs]</a>
+<span class="k">class</span> <span class="nc">BNH</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The constrained BNH problem.</span>
 
 <span class="sd">    See [GarridoMerchan2020]_ for more details on this problem. Note that this is a</span>
@@ -1208,18 +1352,27 @@
     <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">)]</span>
     <span class="n">_ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>  <span class="c1"># TODO: Determine proper reference point</span>
 
-<div class="viewcode-block" id="BNH.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.BNH.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="BNH.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.BNH.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
             <span class="p">[</span><span class="mf">4.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">X</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span> <span class="p">((</span><span class="n">X</span> <span class="o">-</span> <span class="mf">5.0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="BNH.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.BNH.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="BNH.evaluate_slack_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.BNH.evaluate_slack_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">c1</span> <span class="o">=</span> <span class="mf">25.0</span> <span class="o">-</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mf">5.0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span>
         <span class="n">c2</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mf">8.0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mf">3.0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="mf">7.7</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">c1</span><span class="p">,</span> <span class="n">c2</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">c1</span><span class="p">,</span> <span class="n">c2</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="CONSTR"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.CONSTR">[docs]</a><span class="k">class</span> <span class="nc">CONSTR</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+
+<div class="viewcode-block" id="CONSTR">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.CONSTR">[docs]</a>
+<span class="k">class</span> <span class="nc">CONSTR</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The constrained CONSTR problem.</span>
 
 <span class="sd">    See [GarridoMerchan2020]_ for more details on this problem. Note that this is a</span>
@@ -1232,18 +1385,27 @@
     <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">)]</span>
     <span class="n">_ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">]</span>
 
-<div class="viewcode-block" id="CONSTR.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.CONSTR.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="CONSTR.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.CONSTR.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">obj1</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
         <span class="n">obj2</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">obj1</span><span class="p">,</span> <span class="n">obj2</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="CONSTR.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.CONSTR.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="CONSTR.evaluate_slack_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.CONSTR.evaluate_slack_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">c1</span> <span class="o">=</span> <span class="mf">9.0</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">6.0</span>
         <span class="n">c2</span> <span class="o">=</span> <span class="mf">9.0</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1.0</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">c1</span><span class="p">,</span> <span class="n">c2</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">c1</span><span class="p">,</span> <span class="n">c2</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="ConstrainedBraninCurrin"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ConstrainedBraninCurrin">[docs]</a><span class="k">class</span> <span class="nc">ConstrainedBraninCurrin</span><span class="p">(</span><span class="n">BraninCurrin</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ConstrainedBraninCurrin">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ConstrainedBraninCurrin">[docs]</a>
+<span class="k">class</span> <span class="nc">ConstrainedBraninCurrin</span><span class="p">(</span><span class="n">BraninCurrin</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Constrained Branin Currin Function.</span>
 
 <span class="sd">    This uses the disk constraint from [Gelbart2014]_.</span>
@@ -1257,7 +1419,11 @@
     <span class="n">_ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">80.0</span><span class="p">,</span> <span class="mf">12.0</span><span class="p">]</span>
     <span class="n">_max_hv</span> <span class="o">=</span> <span class="mf">608.4004237022673</span>  <span class="c1"># from NSGA-II with 90k evaluations</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">noise_std</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>
@@ -1267,19 +1433,27 @@
         <span class="n">con_bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_con_bounds</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"con_bounds"</span><span class="p">,</span> <span class="n">con_bounds</span><span class="p">)</span>
 
-<div class="viewcode-block" id="ConstrainedBraninCurrin.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ConstrainedBraninCurrin.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="ConstrainedBraninCurrin.evaluate_slack_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ConstrainedBraninCurrin.evaluate_slack_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">X_tf</span> <span class="o">=</span> <span class="n">unnormalize</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">con_bounds</span><span class="p">)</span>
-        <span class="k">return</span> <span class="mi">50</span> <span class="o">-</span> <span class="p">(</span><span class="n">X_tf</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">2.5</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">X_tf</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mf">7.5</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="mi">50</span> <span class="o">-</span> <span class="p">(</span><span class="n">X_tf</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">2.5</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">X_tf</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mf">7.5</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="C2DTLZ2"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.C2DTLZ2">[docs]</a><span class="k">class</span> <span class="nc">C2DTLZ2</span><span class="p">(</span><span class="n">DTLZ2</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+
+<div class="viewcode-block" id="C2DTLZ2">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.C2DTLZ2">[docs]</a>
+<span class="k">class</span> <span class="nc">C2DTLZ2</span><span class="p">(</span><span class="n">DTLZ2</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
 
     <span class="n">num_constraints</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">_r</span> <span class="o">=</span> <span class="mf">0.2</span>
     <span class="c1"># approximate from nsga-ii, TODO: replace with analytic</span>
     <span class="n">_max_hv</span> <span class="o">=</span> <span class="mf">0.3996406303723544</span>
 
-<div class="viewcode-block" id="C2DTLZ2.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.C2DTLZ2.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="C2DTLZ2.evaluate_slack_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.C2DTLZ2.evaluate_slack_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"Batch X is not supported."</span><span class="p">)</span>
         <span class="n">f_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_true</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
@@ -1295,10 +1469,14 @@
         <span class="n">term2</span> <span class="o">=</span> <span class="p">(</span><span class="n">term2_inner</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_r</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">min1</span> <span class="o">=</span> <span class="p">(</span><span class="n">term1</span> <span class="o">+</span> <span class="n">term2</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
         <span class="n">min2</span> <span class="o">=</span> <span class="p">((</span><span class="n">f_X</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">f_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_r</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="k">return</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">min1</span><span class="p">,</span> <span class="n">min2</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">min1</span><span class="p">,</span> <span class="n">min2</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="DiscBrake"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DiscBrake">[docs]</a><span class="k">class</span> <span class="nc">DiscBrake</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DiscBrake">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DiscBrake">[docs]</a>
+<span class="k">class</span> <span class="nc">DiscBrake</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The Disc Brake problem.</span>
 
 <span class="sd">    There are 2 objectives and 4 constraints.</span>
@@ -1318,7 +1496,9 @@
     <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">55.0</span><span class="p">,</span> <span class="mf">80.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">75.0</span><span class="p">,</span> <span class="mf">110.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">1000.0</span><span class="p">,</span> <span class="mf">3000.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">11.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">)]</span>
     <span class="n">_ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">5.7771</span><span class="p">,</span> <span class="mf">3.9651</span><span class="p">]</span>
 
-<div class="viewcode-block" id="DiscBrake.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DiscBrake.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="DiscBrake.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DiscBrake.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">f</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
             <span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_objectives</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span>
         <span class="p">)</span>
@@ -1330,7 +1510,10 @@
 
         <span class="k">return</span> <span class="n">f</span></div>
 
-<div class="viewcode-block" id="DiscBrake.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DiscBrake.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="DiscBrake.evaluate_slack_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DiscBrake.evaluate_slack_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">g</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
             <span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_constraints</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span>
         <span class="p">)</span>
@@ -1341,10 +1524,14 @@
         <span class="n">g</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.4</span> <span class="o">-</span> <span class="n">X3</span> <span class="o">/</span> <span class="p">(</span><span class="mf">3.14</span> <span class="o">*</span> <span class="n">sq_diff</span><span class="p">)</span>
         <span class="n">g</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span><span class="mf">2.22</span> <span class="o">*</span> <span class="mf">1e-3</span> <span class="o">*</span> <span class="n">X3</span> <span class="o">*</span> <span class="n">cub_diff</span><span class="p">)</span> <span class="o">/</span> <span class="n">sq_diff</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
         <span class="n">g</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">3</span><span class="p">:]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">2.66</span> <span class="o">*</span> <span class="mf">1e-2</span> <span class="o">*</span> <span class="n">X3</span> <span class="o">*</span> <span class="n">X4</span> <span class="o">*</span> <span class="n">cub_diff</span><span class="p">)</span> <span class="o">/</span> <span class="n">sq_diff</span> <span class="o">-</span> <span class="mf">900.0</span>
-        <span class="k">return</span> <span class="n">g</span></div></div>
+        <span class="k">return</span> <span class="n">g</span></div>
+</div>
 
 
-<div class="viewcode-block" id="MW7"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.MW7">[docs]</a><span class="k">class</span> <span class="nc">MW7</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+
+<div class="viewcode-block" id="MW7">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.MW7">[docs]</a>
+<span class="k">class</span> <span class="nc">MW7</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The MW7 problem.</span>
 
 <span class="sd">    This problem has 2 objectives, 2 constraints, and a disconnected Pareto</span>
@@ -1360,7 +1547,7 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">noise_std</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
@@ -1375,10 +1562,15 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)]</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">)</span>
 
-<div class="viewcode-block" id="MW7.LA2"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.MW7.LA2">[docs]</a>    <span class="k">def</span> <span class="nf">LA2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">theta</span><span class="p">):</span>
+<div class="viewcode-block" id="MW7.LA2">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.MW7.LA2">[docs]</a>
+    <span class="k">def</span> <span class="nf">LA2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">theta</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">A</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">B</span> <span class="o">*</span> <span class="n">theta</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">C</span><span class="p">))</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">D</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="MW7.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.MW7.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="MW7.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.MW7.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">a</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.5</span>
         <span class="n">contrib</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="n">a</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
         <span class="n">g</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">contrib</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
@@ -1386,7 +1578,10 @@
         <span class="n">f1</span> <span class="o">=</span> <span class="n">g</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">f0</span> <span class="o">/</span> <span class="n">g</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">f0</span><span class="p">,</span> <span class="n">f1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="MW7.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.MW7.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="MW7.evaluate_slack_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.MW7.evaluate_slack_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">ff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_true</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="n">f0</span><span class="p">,</span> <span class="n">f1</span> <span class="o">=</span> <span class="n">ff</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">ff</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
         <span class="n">atan</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arctan</span><span class="p">(</span><span class="n">f1</span> <span class="o">/</span> <span class="n">f0</span><span class="p">)</span>
@@ -1396,10 +1591,14 @@
             <span class="o">-</span> <span class="p">(</span><span class="mf">1.2</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">LA2</span><span class="p">(</span><span class="mf">0.4</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">16.0</span><span class="p">,</span> <span class="n">atan</span><span class="p">))</span><span class="o">.</span><span class="n">abs</span><span class="p">())</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="n">g1</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.15</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">LA2</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">8.0</span><span class="p">,</span> <span class="n">atan</span><span class="p">))</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">f0</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">f1</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-        <span class="k">return</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">g0</span><span class="p">,</span> <span class="n">g1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">g0</span><span class="p">,</span> <span class="n">g1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="OSY"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.OSY">[docs]</a><span class="k">class</span> <span class="nc">OSY</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+
+<div class="viewcode-block" id="OSY">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.OSY">[docs]</a>
+<span class="k">class</span> <span class="nc">OSY</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    The OSY test problem from [Oszycka1995]_.</span>
 <span class="sd">    Implementation from</span>
@@ -1420,7 +1619,9 @@
     <span class="p">]</span>
     <span class="n">_ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">75.0</span><span class="p">,</span> <span class="mf">75.0</span><span class="p">]</span>
 
-<div class="viewcode-block" id="OSY.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.OSY.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="OSY.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.OSY.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">f1</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span>
             <span class="mi">25</span> <span class="o">*</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
             <span class="o">+</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
@@ -1431,17 +1632,24 @@
         <span class="n">f2</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">f1</span><span class="p">,</span> <span class="n">f2</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="OSY.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.OSY.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="OSY.evaluate_slack_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.OSY.evaluate_slack_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">g1</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">2.0</span>
         <span class="n">g2</span> <span class="o">=</span> <span class="mf">6.0</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
         <span class="n">g3</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
         <span class="n">g4</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
         <span class="n">g5</span> <span class="o">=</span> <span class="mf">4.0</span> <span class="o">-</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mf">3.0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
         <span class="n">g6</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span> <span class="o">-</span> <span class="mf">3.0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span> <span class="o">-</span> <span class="mf">4.0</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">,</span> <span class="n">g3</span><span class="p">,</span> <span class="n">g4</span><span class="p">,</span> <span class="n">g5</span><span class="p">,</span> <span class="n">g6</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">,</span> <span class="n">g3</span><span class="p">,</span> <span class="n">g4</span><span class="p">,</span> <span class="n">g5</span><span class="p">,</span> <span class="n">g6</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="SRN"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.SRN">[docs]</a><span class="k">class</span> <span class="nc">SRN</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SRN">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.SRN">[docs]</a>
+<span class="k">class</span> <span class="nc">SRN</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The constrained SRN problem.</span>
 
 <span class="sd">    See [GarridoMerchan2020]_ for more details on this problem. Note that this is a</span>
@@ -1454,18 +1662,27 @@
     <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="o">-</span><span class="mf">20.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">20.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">)]</span>
     <span class="n">_ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>  <span class="c1"># TODO: Determine proper reference point</span>
 
-<div class="viewcode-block" id="SRN.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.SRN.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="SRN.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.SRN.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">obj1</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">+</span> <span class="p">((</span><span class="n">X</span> <span class="o">-</span> <span class="mf">2.0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">obj2</span> <span class="o">=</span> <span class="mf">9.0</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">obj1</span><span class="p">,</span> <span class="n">obj2</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SRN.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.SRN.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="SRN.evaluate_slack_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.SRN.evaluate_slack_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">c1</span> <span class="o">=</span> <span class="mf">225.0</span> <span class="o">-</span> <span class="p">((</span><span class="n">X</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">c2</span> <span class="o">=</span> <span class="o">-</span><span class="mf">10.0</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">c1</span><span class="p">,</span> <span class="n">c2</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">c1</span><span class="p">,</span> <span class="n">c2</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="WeldedBeam"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.WeldedBeam">[docs]</a><span class="k">class</span> <span class="nc">WeldedBeam</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+
+<div class="viewcode-block" id="WeldedBeam">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.WeldedBeam">[docs]</a>
+<span class="k">class</span> <span class="nc">WeldedBeam</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    The Welded Beam multi-objective test problem. Similar to `WeldedBeamSO` in</span>
 <span class="sd">    `botorch.test_function.synthetic`, but with an additional output, somewhat</span>
@@ -1487,7 +1704,9 @@
     <span class="p">]</span>
     <span class="n">_ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mi">40</span><span class="p">,</span> <span class="mf">0.015</span><span class="p">]</span>
 
-<div class="viewcode-block" id="WeldedBeam.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.WeldedBeam.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="WeldedBeam.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.WeldedBeam.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="c1"># We could do the following, but the constraints are using somewhat</span>
         <span class="c1"># different numbers (see below).</span>
         <span class="c1"># f1 = WeldedBeam.evaluate_true(self, X)</span>
@@ -1496,7 +1715,10 @@
         <span class="n">f2</span> <span class="o">=</span> <span class="mf">2.1952</span> <span class="o">/</span> <span class="p">(</span><span class="n">x4</span> <span class="o">*</span> <span class="n">x3</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">f1</span><span class="p">,</span> <span class="n">f2</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="WeldedBeam.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.WeldedBeam.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="WeldedBeam.evaluate_slack_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.WeldedBeam.evaluate_slack_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">x3</span><span class="p">,</span> <span class="n">x4</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">P</span> <span class="o">=</span> <span class="mf">6000.0</span>
         <span class="n">L</span> <span class="o">=</span> <span class="mf">14.0</span>
@@ -1528,7 +1750,9 @@
         <span class="n">g3</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">5</span> <span class="o">-</span> <span class="mf">0.125</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">x1</span> <span class="o">-</span> <span class="n">x4</span><span class="p">)</span>
         <span class="n">g4</span> <span class="o">=</span> <span class="p">(</span><span class="n">P</span> <span class="o">-</span> <span class="n">P_c</span><span class="p">)</span> <span class="o">/</span> <span class="n">P</span>
 
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">,</span> <span class="n">g3</span><span class="p">,</span> <span class="n">g4</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">,</span> <span class="n">g3</span><span class="p">,</span> <span class="n">g4</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

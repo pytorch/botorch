@@ -69,7 +69,9 @@
 <span class="n">_inv_2pi</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">_2pi</span>
 
 
-<div class="viewcode-block" id="bvn"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.bvn.bvn">[docs]</a><span class="k">def</span> <span class="nf">bvn</span><span class="p">(</span><span class="n">r</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">xl</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">yl</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">xu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">yu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="bvn">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.bvn.bvn">[docs]</a>
+<span class="k">def</span> <span class="nf">bvn</span><span class="p">(</span><span class="n">r</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">xl</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">yl</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">xu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">yu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A function for computing bivariate normal probabilities.</span>
 
 <span class="sd">    Calculates `P(xl &lt; x &lt; xu, yl &lt; y &lt; yu)` where `x` and `y` are bivariate normal with</span>
@@ -112,7 +114,10 @@
     <span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">_0</span><span class="p">,</span> <span class="n">_1</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="bvnu"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.bvn.bvnu">[docs]</a><span class="k">def</span> <span class="nf">bvnu</span><span class="p">(</span><span class="n">r</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="bvnu">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.bvn.bvnu">[docs]</a>
+<span class="k">def</span> <span class="nf">bvnu</span><span class="p">(</span><span class="n">r</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Solves for `P(x &gt; h, y &gt; k)` where `x` and `y` are standard bivariate normal</span>
 <span class="sd">    random variables with correlation coefficient `r`. In [Genz2004bvnt]_, this is (1)</span>
 
@@ -154,6 +159,7 @@
         <span class="p">),</span>  <span class="c1"># For |r| &lt; 0.925, integrate in polar coordinates.</span>
         <span class="n">default</span><span class="o">=</span><span class="k">lambda</span> <span class="n">mask</span><span class="p">:</span> <span class="n">_bvnu_polar</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">h</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">k</span><span class="p">[</span><span class="n">mask</span><span class="p">]),</span>
     <span class="p">)</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">_bvnu_polar</span><span class="p">(</span>
@@ -259,7 +265,9 @@
     <span class="k">return</span> <span class="p">(</span><span class="n">int_from_0_to_s</span> <span class="o">-</span> <span class="n">int_from_0_to_a</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="n">_0</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">_1</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="bvnmom"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.bvn.bvnmom">[docs]</a><span class="k">def</span> <span class="nf">bvnmom</span><span class="p">(</span>
+<div class="viewcode-block" id="bvnmom">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.bvn.bvnmom">[docs]</a>
+<span class="k">def</span> <span class="nf">bvnmom</span><span class="p">(</span>
     <span class="n">r</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">xl</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">yl</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -314,6 +322,7 @@
     <span class="n">p_diffs</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">density_at_bounds</span> <span class="o">*</span> <span class="n">prob_given_bounds</span><span class="p">)</span><span class="o">.</span><span class="n">diff</span><span class="p">()</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">moments</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">p</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">p_diffs</span> <span class="o">+</span> <span class="n">r</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">p_diffs</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">moments</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
+
 </pre></div>
 </div>
 </div>

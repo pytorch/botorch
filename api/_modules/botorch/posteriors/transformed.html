@@ -36,7 +36,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="TransformedPosterior"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.transformed.TransformedPosterior">[docs]</a><span class="k">class</span> <span class="nc">TransformedPosterior</span><span class="p">(</span><span class="n">Posterior</span><span class="p">):</span>
+<div class="viewcode-block" id="TransformedPosterior">
+<a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.transformed.TransformedPosterior">[docs]</a>
+<span class="k">class</span> <span class="nc">TransformedPosterior</span><span class="p">(</span><span class="n">Posterior</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A generic transformation of a posterior (implicitly represented)."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -121,7 +123,9 @@
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"No variance transform provided."</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variance_transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_posterior</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_posterior</span><span class="o">.</span><span class="n">variance</span><span class="p">)</span>
 
-<div class="viewcode-block" id="TransformedPosterior.rsample_from_base_samples"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.transformed.TransformedPosterior.rsample_from_base_samples">[docs]</a>    <span class="k">def</span> <span class="nf">rsample_from_base_samples</span><span class="p">(</span>
+<div class="viewcode-block" id="TransformedPosterior.rsample_from_base_samples">
+<a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.transformed.TransformedPosterior.rsample_from_base_samples">[docs]</a>
+    <span class="k">def</span> <span class="nf">rsample_from_base_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
         <span class="n">base_samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -147,7 +151,10 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_transform</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="TransformedPosterior.rsample"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.transformed.TransformedPosterior.rsample">[docs]</a>    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span>
+
+<div class="viewcode-block" id="TransformedPosterior.rsample">
+<a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.transformed.TransformedPosterior.rsample">[docs]</a>
+    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -163,7 +170,9 @@
 <span class="sd">            `self._extended_shape(sample_shape=sample_shape)`.</span>
 <span class="sd">        """</span>
         <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_posterior</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_transform</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_transform</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

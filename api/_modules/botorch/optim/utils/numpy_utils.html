@@ -56,7 +56,9 @@
 <span class="p">}</span>
 
 
-<div class="viewcode-block" id="as_ndarray"><a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.numpy_utils.as_ndarray">[docs]</a><span class="k">def</span> <span class="nf">as_ndarray</span><span class="p">(</span>
+<div class="viewcode-block" id="as_ndarray">
+<a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.numpy_utils.as_ndarray">[docs]</a>
+<span class="k">def</span> <span class="nf">as_ndarray</span><span class="p">(</span>
     <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Helper for going from torch.Tensor to numpy.ndarray.</span>
@@ -88,7 +90,10 @@
         <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="get_tensors_as_ndarray_1d"><a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.numpy_utils.get_tensors_as_ndarray_1d">[docs]</a><span class="k">def</span> <span class="nf">get_tensors_as_ndarray_1d</span><span class="p">(</span>
+
+<div class="viewcode-block" id="get_tensors_as_ndarray_1d">
+<a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.numpy_utils.get_tensors_as_ndarray_1d">[docs]</a>
+<span class="k">def</span> <span class="nf">get_tensors_as_ndarray_1d</span><span class="p">(</span>
     <span class="n">tensors</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Iterator</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]],</span>
     <span class="n">out</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">dtype</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -133,7 +138,10 @@
     <span class="k">return</span> <span class="n">out</span></div>
 
 
-<div class="viewcode-block" id="set_tensors_from_ndarray_1d"><a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.numpy_utils.set_tensors_from_ndarray_1d">[docs]</a><span class="k">def</span> <span class="nf">set_tensors_from_ndarray_1d</span><span class="p">(</span>
+
+<div class="viewcode-block" id="set_tensors_from_ndarray_1d">
+<a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.numpy_utils.set_tensors_from_ndarray_1d">[docs]</a>
+<span class="k">def</span> <span class="nf">set_tensors_from_ndarray_1d</span><span class="p">(</span>
     <span class="n">tensors</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Iterator</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]],</span>
     <span class="n">array</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span>
     <span class="n">as_tensor</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">,</span>
@@ -157,7 +165,10 @@
                 <span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span></div>
 
 
-<div class="viewcode-block" id="get_bounds_as_ndarray"><a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.numpy_utils.get_bounds_as_ndarray">[docs]</a><span class="k">def</span> <span class="nf">get_bounds_as_ndarray</span><span class="p">(</span>
+
+<div class="viewcode-block" id="get_bounds_as_ndarray">
+<a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.numpy_utils.get_bounds_as_ndarray">[docs]</a>
+<span class="k">def</span> <span class="nf">get_bounds_as_ndarray</span><span class="p">(</span>
     <span class="n">parameters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span>
         <span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">],</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]]</span>
@@ -193,6 +204,7 @@
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">out</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
         <span class="n">out</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">return</span> <span class="n">out</span></div>
+
 </pre></div>
 </div>
 </div>

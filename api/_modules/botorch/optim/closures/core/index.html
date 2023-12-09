@@ -46,7 +46,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="ForwardBackwardClosure"><a class="viewcode-back" href="../../../../optim.html#botorch.optim.closures.core.ForwardBackwardClosure">[docs]</a><span class="k">class</span> <span class="nc">ForwardBackwardClosure</span><span class="p">:</span>
+<div class="viewcode-block" id="ForwardBackwardClosure">
+<a class="viewcode-back" href="../../../../optim.html#botorch.optim.closures.core.ForwardBackwardClosure">[docs]</a>
+<span class="k">class</span> <span class="nc">ForwardBackwardClosure</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Wrapper for fused forward and backward closures."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -95,7 +97,10 @@
             <span class="k">return</span> <span class="n">value</span><span class="p">,</span> <span class="n">grads</span></div>
 
 
-<div class="viewcode-block" id="NdarrayOptimizationClosure"><a class="viewcode-back" href="../../../../optim.html#botorch.optim.closures.core.NdarrayOptimizationClosure">[docs]</a><span class="k">class</span> <span class="nc">NdarrayOptimizationClosure</span><span class="p">:</span>
+
+<div class="viewcode-block" id="NdarrayOptimizationClosure">
+<a class="viewcode-back" href="../../../../optim.html#botorch.optim.closures.core.NdarrayOptimizationClosure">[docs]</a>
+<span class="k">class</span> <span class="nc">NdarrayOptimizationClosure</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Adds stateful behavior and a numpy.ndarray-typed API to a closure with an</span>
 <span class="sd">    expected return type Tuple[Tensor, Union[Tensor, Sequence[Optional[Tensor]]]]."""</span>
 
@@ -208,6 +213,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_gradient_ndarray</span> <span class="o">=</span> <span class="n">array</span>
 
         <span class="k">return</span> <span class="n">array</span></div>
+
 </pre></div>
 </div>
 </div>

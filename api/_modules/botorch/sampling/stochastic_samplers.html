@@ -40,7 +40,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="ForkedRNGSampler"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.stochastic_samplers.ForkedRNGSampler">[docs]</a><span class="k">class</span> <span class="nc">ForkedRNGSampler</span><span class="p">(</span><span class="n">MCSampler</span><span class="p">):</span>
+<div class="viewcode-block" id="ForkedRNGSampler">
+<a class="viewcode-back" href="../../../sampling.html#botorch.sampling.stochastic_samplers.ForkedRNGSampler">[docs]</a>
+<span class="k">class</span> <span class="nc">ForkedRNGSampler</span><span class="p">(</span><span class="n">MCSampler</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A sampler using `torch.fork_rng` to enable replicable sampling</span>
 <span class="sd">    from a posterior that does not support base samples.</span>
 
@@ -52,7 +54,9 @@
 <span class="sd">    compatible with Sample Average Approximation.</span>
 <span class="sd">    """</span>
 
-<div class="viewcode-block" id="ForkedRNGSampler.forward"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.stochastic_samplers.ForkedRNGSampler.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="ForkedRNGSampler.forward">
+<a class="viewcode-back" href="../../../sampling.html#botorch.sampling.stochastic_samplers.ForkedRNGSampler.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Draws MC samples from the posterior in a `fork_rng` context.</span>
 
 <span class="sd">        Args:</span>
@@ -63,10 +67,14 @@
 <span class="sd">        """</span>
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">fork_rng</span><span class="p">():</span>
             <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">posterior</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_shape</span><span class="p">)</span></div></div>
+            <span class="k">return</span> <span class="n">posterior</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_shape</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="StochasticSampler"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.stochastic_samplers.StochasticSampler">[docs]</a><span class="k">class</span> <span class="nc">StochasticSampler</span><span class="p">(</span><span class="n">MCSampler</span><span class="p">):</span>
+
+<div class="viewcode-block" id="StochasticSampler">
+<a class="viewcode-back" href="../../../sampling.html#botorch.sampling.stochastic_samplers.StochasticSampler">[docs]</a>
+<span class="k">class</span> <span class="nc">StochasticSampler</span><span class="p">(</span><span class="n">MCSampler</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A sampler that simply calls `posterior.rsample` to generate the</span>
 <span class="sd">    samples. This should only be used for stochastic optimization of the</span>
 <span class="sd">    acquisition functions, e.g., via `gen_candidates_torch`. This should</span>
@@ -76,7 +84,9 @@
 <span class="sd">    NOTE: This ignores the `seed` option.</span>
 <span class="sd">    """</span>
 
-<div class="viewcode-block" id="StochasticSampler.forward"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.stochastic_samplers.StochasticSampler.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="StochasticSampler.forward">
+<a class="viewcode-back" href="../../../sampling.html#botorch.sampling.stochastic_samplers.StochasticSampler.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Draws MC samples from the posterior.</span>
 
 <span class="sd">        Args:</span>
@@ -85,7 +95,9 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            The samples drawn from the posterior.</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="n">posterior</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_shape</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">posterior</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_shape</span><span class="p">)</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

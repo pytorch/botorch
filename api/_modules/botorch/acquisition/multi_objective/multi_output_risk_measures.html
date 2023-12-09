@@ -132,7 +132,9 @@
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
 
-<div class="viewcode-block" id="MultiOutputExpectation"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputExpectation">[docs]</a><span class="k">class</span> <span class="nc">MultiOutputExpectation</span><span class="p">(</span><span class="n">MultiOutputRiskMeasureMCObjective</span><span class="p">):</span>
+<div class="viewcode-block" id="MultiOutputExpectation">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputExpectation">[docs]</a>
+<span class="k">class</span> <span class="nc">MultiOutputExpectation</span><span class="p">(</span><span class="n">MultiOutputRiskMeasureMCObjective</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A multi-output MC expectation risk measure.</span>
 
 <span class="sd">    For unconstrained problems, we recommend using the `ExpectationPosteriorTransform`</span>
@@ -141,7 +143,9 @@
 <span class="sd">    reducing the cost of posterior sampling as a result.</span>
 <span class="sd">    """</span>
 
-<div class="viewcode-block" id="MultiOutputExpectation.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputExpectation.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="MultiOutputExpectation.forward">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputExpectation.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Calculate the expectation of the given samples. Expectation is</span>
 <span class="sd">        calculated over each `n_w` samples in the q-batch dimension.</span>
 
@@ -155,10 +159,14 @@
 <span class="sd">            A `sample_shape x batch_shape x q x m'`-dim tensor of expectation samples.</span>
 <span class="sd">        """</span>
         <span class="n">prepared_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_samples</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">prepared_samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">prepared_samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="IndependentCVaR"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentCVaR">[docs]</a><span class="k">class</span> <span class="nc">IndependentCVaR</span><span class="p">(</span><span class="n">CVaR</span><span class="p">,</span> <span class="n">MultiOutputRiskMeasureMCObjective</span><span class="p">):</span>
+
+<div class="viewcode-block" id="IndependentCVaR">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentCVaR">[docs]</a>
+<span class="k">class</span> <span class="nc">IndependentCVaR</span><span class="p">(</span><span class="n">CVaR</span><span class="p">,</span> <span class="n">MultiOutputRiskMeasureMCObjective</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The multi-output Conditional Value-at-Risk risk measure that operates on</span>
 <span class="sd">    each output dimension independently. Since this does not consider the joint</span>
 <span class="sd">    distribution of the outputs (i.e., that the outputs were evaluated on same</span>
@@ -191,7 +199,9 @@
         <span class="n">prepared_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_samples</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">prepared_samples</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">descending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
 
-<div class="viewcode-block" id="IndependentCVaR.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentCVaR.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="IndependentCVaR.forward">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentCVaR.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Calculate the CVaR corresponding to the given samples.</span>
 
 <span class="sd">        Args:</span>
@@ -204,10 +214,14 @@
 <span class="sd">            A `sample_shape x batch_shape x q x m'`-dim tensor of CVaR samples.</span>
 <span class="sd">        """</span>
         <span class="n">sorted_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_sorted_prepared_samples</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">sorted_samples</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_idx</span> <span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">sorted_samples</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_idx</span> <span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="IndependentVaR"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentVaR">[docs]</a><span class="k">class</span> <span class="nc">IndependentVaR</span><span class="p">(</span><span class="n">IndependentCVaR</span><span class="p">):</span>
+
+<div class="viewcode-block" id="IndependentVaR">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentVaR">[docs]</a>
+<span class="k">class</span> <span class="nc">IndependentVaR</span><span class="p">(</span><span class="n">IndependentCVaR</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The multi-output Value-at-Risk risk measure that operates on each output</span>
 <span class="sd">    dimension independently. For the same reasons as `IndependentCVaR`, the risk</span>
 <span class="sd">    estimates provided by this are in general more optimistic than the definition</span>
@@ -219,7 +233,9 @@
 <span class="sd">    `1 - alpha` quantile of a given random variable.</span>
 <span class="sd">    """</span>
 
-<div class="viewcode-block" id="IndependentVaR.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentVaR.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="IndependentVaR.forward">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentVaR.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Calculate the VaR corresponding to the given samples.</span>
 
 <span class="sd">        Args:</span>
@@ -232,13 +248,19 @@
 <span class="sd">            A `sample_shape x batch_shape x q x m'`-dim tensor of VaR samples.</span>
 <span class="sd">        """</span>
         <span class="n">sorted_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_sorted_prepared_samples</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">sorted_samples</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_idx</span><span class="p">,</span> <span class="p">:]</span></div></div>
+        <span class="k">return</span> <span class="n">sorted_samples</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_idx</span><span class="p">,</span> <span class="p">:]</span></div>
+</div>
 
 
-<div class="viewcode-block" id="MultiOutputWorstCase"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputWorstCase">[docs]</a><span class="k">class</span> <span class="nc">MultiOutputWorstCase</span><span class="p">(</span><span class="n">MultiOutputRiskMeasureMCObjective</span><span class="p">):</span>
+
+<div class="viewcode-block" id="MultiOutputWorstCase">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputWorstCase">[docs]</a>
+<span class="k">class</span> <span class="nc">MultiOutputWorstCase</span><span class="p">(</span><span class="n">MultiOutputRiskMeasureMCObjective</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The multi-output worst-case risk measure."""</span>
 
-<div class="viewcode-block" id="MultiOutputWorstCase.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputWorstCase.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="MultiOutputWorstCase.forward">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputWorstCase.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Calculate the worst-case measure corresponding to the given samples.</span>
 
 <span class="sd">        Args:</span>
@@ -251,10 +273,14 @@
 <span class="sd">            A `sample_shape x batch_shape x q x m'`-dim tensor of worst-case samples.</span>
 <span class="sd">        """</span>
         <span class="n">prepared_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_samples</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">prepared_samples</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">values</span></div></div>
+        <span class="k">return</span> <span class="n">prepared_samples</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">values</span></div>
+</div>
 
 
-<div class="viewcode-block" id="MVaR"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR">[docs]</a><span class="k">class</span> <span class="nc">MVaR</span><span class="p">(</span><span class="n">MultiOutputRiskMeasureMCObjective</span><span class="p">):</span>
+
+<div class="viewcode-block" id="MVaR">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR">[docs]</a>
+<span class="k">class</span> <span class="nc">MVaR</span><span class="p">(</span><span class="n">MultiOutputRiskMeasureMCObjective</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The multivariate Value-at-Risk as introduced in [Prekopa2012MVaR]_.</span>
 
 <span class="sd">    MVaR is defined as the non-dominated set of points in the extended domain</span>
@@ -313,7 +339,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">pad_to_n_w</span> <span class="o">=</span> <span class="n">pad_to_n_w</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">filter_dominated</span> <span class="o">=</span> <span class="n">filter_dominated</span>
 
-<div class="viewcode-block" id="MVaR.get_mvar_set_cpu"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_cpu">[docs]</a>    <span class="k">def</span> <span class="nf">get_mvar_set_cpu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="MVaR.get_mvar_set_cpu">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_cpu">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_mvar_set_cpu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Find MVaR set based on the definition in [Prekopa2012MVaR]_.</span>
 
 <span class="sd">        NOTE: This is much faster on CPU for large `n_w` than the alternative but it</span>
@@ -406,7 +434,10 @@
             <span class="n">mvar</span> <span class="o">=</span> <span class="n">alpha_level_points</span>
         <span class="k">return</span> <span class="n">mvar</span></div>
 
-<div class="viewcode-block" id="MVaR.get_mvar_set_gpu"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_gpu">[docs]</a>    <span class="k">def</span> <span class="nf">get_mvar_set_gpu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="MVaR.get_mvar_set_gpu">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_gpu">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_mvar_set_gpu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Find MVaR set based on the definition in [Prekopa2012MVaR]_.</span>
 
 <span class="sd">        NOTE: This is much faster on GPU than the alternative but it scales very poorly</span>
@@ -481,7 +512,10 @@
                 <span class="n">mvar</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">alpha_level_points</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">mvar</span></div>
 
-<div class="viewcode-block" id="MVaR.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="MVaR.forward">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Calculate the MVaR corresponding to the given samples.</span>
 
 <span class="sd">        Args:</span>
@@ -522,7 +556,7 @@
             <span class="c1"># TODO: Investigate differentiability of MVaR.</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
                 <span class="s2">"Got `samples` that requires grad, but computing MVaR involves "</span>
-                <span class="s2">"non-differentable operations and the results will not be "</span>
+                <span class="s2">"non-differentiable operations and the results will not be "</span>
                 <span class="s2">"differentiable. This may lead to errors down the line!"</span><span class="p">,</span>
                 <span class="ne">RuntimeWarning</span><span class="p">,</span>
             <span class="p">)</span>
@@ -539,10 +573,14 @@
                     <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">mvar_</span><span class="p">,</span> <span class="n">mvar_</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">repeats_needed</span><span class="p">,</span> <span class="n">m</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
                 <span class="p">)</span>
         <span class="n">mvars</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">padded_mvar_list</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">mvars</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">mvars</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="MARS"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MARS">[docs]</a><span class="k">class</span> <span class="nc">MARS</span><span class="p">(</span><span class="n">VaR</span><span class="p">,</span> <span class="n">MultiOutputRiskMeasureMCObjective</span><span class="p">):</span>
+
+<div class="viewcode-block" id="MARS">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MARS">[docs]</a>
+<span class="k">class</span> <span class="nc">MARS</span><span class="p">(</span><span class="n">VaR</span><span class="p">,</span> <span class="n">MultiOutputRiskMeasureMCObjective</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""MVaR Approximation based on Random Scalarizations as introduced</span>
 <span class="sd">    in [Daulton2022MARS]_.</span>
 
@@ -599,7 +637,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">mvar</span> <span class="o">=</span> <span class="n">MVaR</span><span class="p">(</span><span class="n">n_w</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_w</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_chebyshev_objective</span> <span class="o">=</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="MARS.set_baseline_Y"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MARS.set_baseline_Y">[docs]</a>    <span class="k">def</span> <span class="nf">set_baseline_Y</span><span class="p">(</span>
+<div class="viewcode-block" id="MARS.set_baseline_Y">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MARS.set_baseline_Y">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_baseline_Y</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Model</span><span class="p">],</span>
         <span class="n">X_baseline</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
@@ -632,6 +672,7 @@
         <span class="n">Y</span> <span class="o">=</span> <span class="n">Y</span><span class="p">[</span><span class="n">is_non_dominated</span><span class="p">(</span><span class="n">Y</span><span class="p">)]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">baseline_Y</span> <span class="o">=</span> <span class="n">Y</span></div>
 
+
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">chebyshev_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""The weights used in Chebyshev scalarization."""</span>
@@ -659,7 +700,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">baseline_Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Baseline outcomes used indetermining the normalization bounds."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Baseline outcomes used in determining the normalization bounds."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_baseline_Y</span>
 
     <span class="nd">@baseline_Y</span><span class="o">.</span><span class="n">setter</span>
@@ -784,6 +825,7 @@
         <span class="n">mask</span> <span class="o">=</span> <span class="n">Y_range</span> <span class="o">&lt;=</span> <span class="mi">0</span>
         <span class="n">Y_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">Y_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">mask</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span>
         <span class="k">return</span> <span class="n">Y_bounds</span></div>
+
 </pre></div>
 </div>
 </div>

@@ -49,7 +49,9 @@
 <span class="n">NLC_TOL</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1e-6</span>
 
 
-<div class="viewcode-block" id="make_scipy_bounds"><a class="viewcode-back" href="../../../optim.html#botorch.optim.parameter_constraints.make_scipy_bounds">[docs]</a><span class="k">def</span> <span class="nf">make_scipy_bounds</span><span class="p">(</span>
+<div class="viewcode-block" id="make_scipy_bounds">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.parameter_constraints.make_scipy_bounds">[docs]</a>
+<span class="k">def</span> <span class="nf">make_scipy_bounds</span><span class="p">(</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">lower_bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">upper_bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -88,7 +90,10 @@
     <span class="k">return</span> <span class="n">Bounds</span><span class="p">(</span><span class="n">lb</span><span class="o">=</span><span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">ub</span><span class="p">,</span> <span class="n">keep_feasible</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="make_scipy_linear_constraints"><a class="viewcode-back" href="../../../optim.html#botorch.optim.parameter_constraints.make_scipy_linear_constraints">[docs]</a><span class="k">def</span> <span class="nf">make_scipy_linear_constraints</span><span class="p">(</span>
+
+<div class="viewcode-block" id="make_scipy_linear_constraints">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.parameter_constraints.make_scipy_linear_constraints">[docs]</a>
+<span class="k">def</span> <span class="nf">make_scipy_linear_constraints</span><span class="p">(</span>
     <span class="n">shapeX</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
     <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -151,7 +156,10 @@
     <span class="k">return</span> <span class="n">constraints</span></div>
 
 
-<div class="viewcode-block" id="eval_lin_constraint"><a class="viewcode-back" href="../../../optim.html#botorch.optim.parameter_constraints.eval_lin_constraint">[docs]</a><span class="k">def</span> <span class="nf">eval_lin_constraint</span><span class="p">(</span>
+
+<div class="viewcode-block" id="eval_lin_constraint">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.parameter_constraints.eval_lin_constraint">[docs]</a>
+<span class="k">def</span> <span class="nf">eval_lin_constraint</span><span class="p">(</span>
     <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">flat_idxr</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">coeffs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">rhs</span><span class="p">:</span> <span class="nb">float</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Evaluate a single linear constraint.</span>
@@ -168,7 +176,10 @@
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">flat_idxr</span><span class="p">]</span> <span class="o">*</span> <span class="n">coeffs</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">rhs</span></div>
 
 
-<div class="viewcode-block" id="lin_constraint_jac"><a class="viewcode-back" href="../../../optim.html#botorch.optim.parameter_constraints.lin_constraint_jac">[docs]</a><span class="k">def</span> <span class="nf">lin_constraint_jac</span><span class="p">(</span>
+
+<div class="viewcode-block" id="lin_constraint_jac">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.parameter_constraints.lin_constraint_jac">[docs]</a>
+<span class="k">def</span> <span class="nf">lin_constraint_jac</span><span class="p">(</span>
     <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">flat_idxr</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">coeffs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Return the Jacobian associated with a linear constraint.</span>
@@ -186,6 +197,7 @@
     <span class="n">jac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
     <span class="n">jac</span><span class="p">[</span><span class="n">flat_idxr</span><span class="p">]</span> <span class="o">=</span> <span class="n">coeffs</span>
     <span class="k">return</span> <span class="n">jac</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">_arrayify</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -335,8 +347,65 @@
     <span class="k">return</span> <span class="n">constraints</span>
 
 
+<span class="k">def</span> <span class="nf">_make_nonlinear_constraints</span><span class="p">(</span>
+    <span class="n">f_np_wrapper</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">nlc</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">is_intrapoint</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">shapeX</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">ScipyConstraintDict</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Create nonlinear constraints to be used by `scipy.minimize`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        f_np_wrapper: A wrapper function that given a constraint evaluates</span>
+<span class="sd">            the value and gradient (using autograd) of a numpy input and returns both</span>
+<span class="sd">            the objective and the gradient.</span>
+<span class="sd">        nlc: Callable representing a constraint of the form `callable(x) &gt;= 0`. In case</span>
+<span class="sd">            of an intra-point constraint, `callable()`takes in an one-dimensional tensor</span>
+<span class="sd">            of shape `d` and returns a scalar. In case of an inter-point constraint,</span>
+<span class="sd">            `callable()` takes a two dimensional tensor of shape `q x d` and again</span>
+<span class="sd">            returns a scalar.</span>
+<span class="sd">        is_intrapoint: A Boolean indicating if a constraint is an intra-point or</span>
+<span class="sd">            inter-point constraint (see the docstring of the `inequality_constraints`</span>
+<span class="sd">            argument to `optimize_acqf()`).</span>
+<span class="sd">        shapeX: Shape of the three-dimensional batch X, that should be optimized.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A list of constraint dictionaries with the following keys</span>
+
+<span class="sd">        - "type": Indicates the type of the constraint, here always "ineq".</span>
+<span class="sd">        - "fun": A callable evaluating the constraint value on `x`, a flattened</span>
+<span class="sd">            version of the input tensor `X`, returning a scalar.</span>
+<span class="sd">        - "jac": A callable evaluating the constraint's Jacobian on `x`, a flattened</span>
+<span class="sd">            version of the input tensor `X`, returning a numpy array.</span>
+<span class="sd">    """</span>
+    <span class="n">shapeX</span> <span class="o">=</span> <span class="n">_validate_linear_constraints_shape_input</span><span class="p">(</span><span class="n">shapeX</span><span class="p">)</span>
+    <span class="n">b</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">shapeX</span>
+    <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">get_intrapoint_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nlc</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">nlc</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">q</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">get_interpoint_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nlc</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">nlc</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">b</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">is_intrapoint</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">q</span><span class="p">):</span>
+                <span class="n">f_obj</span><span class="p">,</span> <span class="n">f_grad</span> <span class="o">=</span> <span class="n">_make_f_and_grad_nonlinear_inequality_constraints</span><span class="p">(</span>
+                    <span class="n">f_np_wrapper</span><span class="o">=</span><span class="n">f_np_wrapper</span><span class="p">,</span>
+                    <span class="n">nlc</span><span class="o">=</span><span class="n">get_intrapoint_constraint</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="n">j</span><span class="p">,</span> <span class="n">nlc</span><span class="o">=</span><span class="n">nlc</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"ineq"</span><span class="p">,</span> <span class="s2">"fun"</span><span class="p">:</span> <span class="n">f_obj</span><span class="p">,</span> <span class="s2">"jac"</span><span class="p">:</span> <span class="n">f_grad</span><span class="p">})</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+            <span class="n">f_obj</span><span class="p">,</span> <span class="n">f_grad</span> <span class="o">=</span> <span class="n">_make_f_and_grad_nonlinear_inequality_constraints</span><span class="p">(</span>
+                <span class="n">f_np_wrapper</span><span class="o">=</span><span class="n">f_np_wrapper</span><span class="p">,</span>
+                <span class="n">nlc</span><span class="o">=</span><span class="n">get_interpoint_constraint</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="n">nlc</span><span class="o">=</span><span class="n">nlc</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"ineq"</span><span class="p">,</span> <span class="s2">"fun"</span><span class="p">:</span> <span class="n">f_obj</span><span class="p">,</span> <span class="s2">"jac"</span><span class="p">:</span> <span class="n">f_grad</span><span class="p">})</span>
+
+    <span class="k">return</span> <span class="n">constraints</span>
+
+
 <span class="k">def</span> <span class="nf">_generate_unfixed_nonlin_constraints</span><span class="p">(</span>
-    <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]],</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]]],</span>
     <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
     <span class="n">dimension</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]]:</span>
@@ -370,7 +439,8 @@
         <span class="k">return</span> <span class="n">new_nonlin_constraint</span>
 
     <span class="k">return</span> <span class="p">[</span>
-        <span class="n">_wrap_nonlin_constraint</span><span class="p">(</span><span class="n">constraint</span><span class="o">=</span><span class="n">constraint</span><span class="p">)</span> <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="n">constraints</span>
+        <span class="p">(</span><span class="n">_wrap_nonlin_constraint</span><span class="p">(</span><span class="n">constraint</span><span class="o">=</span><span class="n">nlc</span><span class="p">),</span> <span class="n">is_intrapoint</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">nlc</span><span class="p">,</span> <span class="n">is_intrapoint</span> <span class="ow">in</span> <span class="n">constraints</span>
     <span class="p">]</span>
 
 
@@ -442,7 +512,7 @@
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Create callables for objective + grad for the nonlinear inequality constraints.</span>
 <span class="sd">    The Scipy interface requires specifying separate callables and we use caching to</span>
-<span class="sd">    avoid evaluating the same input twice. This caching onlh works if</span>
+<span class="sd">    avoid evaluating the same input twice. This caching only works if</span>
 <span class="sd">    the returned functions are evaluated on the same input in immediate</span>
 <span class="sd">    sequence (i.e., calling `f_obj(X_1)`, `f_grad(X_1)` will result in a</span>
 <span class="sd">    single forward pass, while `f_obj(X_1)`, `f_grad(X_2)`, `f_obj(X_1)`</span>
@@ -472,53 +542,104 @@
     <span class="k">return</span> <span class="n">f_obj</span><span class="p">,</span> <span class="n">f_grad</span>
 
 
-<div class="viewcode-block" id="make_scipy_nonlinear_inequality_constraints"><a class="viewcode-back" href="../../../optim.html#botorch.optim.parameter_constraints.make_scipy_nonlinear_inequality_constraints">[docs]</a><span class="k">def</span> <span class="nf">make_scipy_nonlinear_inequality_constraints</span><span class="p">(</span>
-    <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">],</span>
+<div class="viewcode-block" id="nonlinear_constraint_is_feasible">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.parameter_constraints.nonlinear_constraint_is_feasible">[docs]</a>
+<span class="k">def</span> <span class="nf">nonlinear_constraint_is_feasible</span><span class="p">(</span>
+    <span class="n">nonlinear_inequality_constraint</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">is_intrapoint</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Checks if a nonlinear inequality constraint is fulfilled.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        nonlinear_inequality_constraint: Callable to evaluate the</span>
+<span class="sd">            constraint.</span>
+<span class="sd">        intra: If True, the constraint is an intra-point constraint that</span>
+<span class="sd">            is applied pointwise and is broadcasted over the q-batch. Else, the</span>
+<span class="sd">            constraint has to evaluated over the whole q-batch and is a an</span>
+<span class="sd">            inter-point constraint.</span>
+<span class="sd">        x: Tensor of shape (b x q x d).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bool: True if the constraint is fulfilled, else False.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="nf">check_x</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_arrayify</span><span class="p">(</span><span class="n">nonlinear_inequality_constraint</span><span class="p">(</span><span class="n">x</span><span class="p">))</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">NLC_TOL</span>
+
+    <span class="k">for</span> <span class="n">x_</span> <span class="ow">in</span> <span class="n">x</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">is_intrapoint</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">check_x</span><span class="p">(</span><span class="n">x__</span><span class="p">)</span> <span class="k">for</span> <span class="n">x__</span> <span class="ow">in</span> <span class="n">x_</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">check_x</span><span class="p">(</span><span class="n">x_</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
+<div class="viewcode-block" id="make_scipy_nonlinear_inequality_constraints">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.parameter_constraints.make_scipy_nonlinear_inequality_constraints">[docs]</a>
+<span class="k">def</span> <span class="nf">make_scipy_nonlinear_inequality_constraints</span><span class="p">(</span>
+    <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]],</span>
     <span class="n">f_np_wrapper</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">x0</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">shapeX</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Generate Scipy nonlinear inequality constraints from callables.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        nonlinear_inequality_constraints: List of callables for the nonlinear</span>
-<span class="sd">            inequality constraints. Each callable represents a constraint of the</span>
-<span class="sd">            form &gt;= 0 and takes a torch tensor of size (p x q x dim) and returns a</span>
-<span class="sd">            torch tensor of size (p x q).</span>
+<span class="sd">        nonlinear_inequality_constraints: A list of tuples representing the nonlinear</span>
+<span class="sd">            inequality constraints. The first element in the tuple is a callable</span>
+<span class="sd">            representing a constraint of the form `callable(x) &gt;= 0`. In case of an</span>
+<span class="sd">            intra-point constraint, `callable()`takes in an one-dimensional tensor of</span>
+<span class="sd">            shape `d` and returns a scalar. In case of an inter-point constraint,</span>
+<span class="sd">            `callable()` takes a two dimensional tensor of shape `q x d` and again</span>
+<span class="sd">            returns a scalar. The second element is a boolean, indicating if it is an</span>
+<span class="sd">            intra-point or inter-point constraint (`True` for intra-point. `False` for</span>
+<span class="sd">            inter-point). For more information on intra-point vs inter-point</span>
+<span class="sd">            constraints, see the docstring of the `inequality_constraints` argument to</span>
+<span class="sd">            `optimize_acqf()`. The constraints will later be passed to the scipy</span>
+<span class="sd">            solver.</span>
 <span class="sd">        f_np_wrapper: A wrapper function that given a constraint evaluates the value</span>
 <span class="sd">             and gradient (using autograd) of a numpy input and returns both the</span>
 <span class="sd">             objective and the gradient.</span>
 <span class="sd">        x0: The starting point for SLSQP. We return this starting point in (rare)</span>
 <span class="sd">            cases where SLSQP fails and thus require it to be feasible.</span>
+<span class="sd">        shapeX: Shape of the three-dimensional batch X, that should be optimized.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A list of dictionaries containing callables for constraint function</span>
 <span class="sd">        values and Jacobians and a string indicating the associated constraint</span>
 <span class="sd">        type ("eq", "ineq"), as expected by `scipy.minimize`.</span>
 <span class="sd">    """</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">nonlinear_inequality_constraints</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">"`nonlinear_inequality_constraints` must be a list of callables, "</span>
-            <span class="sa">f</span><span class="s2">"got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">nonlinear_inequality_constraints</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
-        <span class="p">)</span>
 
     <span class="n">scipy_nonlinear_inequality_constraints</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">nlc</span> <span class="ow">in</span> <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">_arrayify</span><span class="p">(</span><span class="n">nlc</span><span class="p">(</span><span class="n">x0</span><span class="p">))</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">NLC_TOL</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraint</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"A nonlinear constraint has to be a tuple, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"A nonlinear constraint has to be a tuple of length 2, "</span>
+                <span class="sa">f</span><span class="s2">"got length </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span>
+        <span class="n">nlc</span><span class="p">,</span> <span class="n">is_intrapoint</span> <span class="o">=</span> <span class="n">constraint</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">nonlinear_constraint_is_feasible</span><span class="p">(</span>
+            <span class="n">nlc</span><span class="p">,</span> <span class="n">is_intrapoint</span><span class="o">=</span><span class="n">is_intrapoint</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">x0</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shapeX</span><span class="p">)</span>
+        <span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">"`batch_initial_conditions` must satisfy the non-linear inequality "</span>
                 <span class="s2">"constraints."</span>
             <span class="p">)</span>
-        <span class="n">f_obj</span><span class="p">,</span> <span class="n">f_grad</span> <span class="o">=</span> <span class="n">_make_f_and_grad_nonlinear_inequality_constraints</span><span class="p">(</span>
-            <span class="n">f_np_wrapper</span><span class="o">=</span><span class="n">f_np_wrapper</span><span class="p">,</span> <span class="n">nlc</span><span class="o">=</span><span class="n">nlc</span>
-        <span class="p">)</span>
-        <span class="n">scipy_nonlinear_inequality_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="p">{</span>
-                <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"ineq"</span><span class="p">,</span>
-                <span class="s2">"fun"</span><span class="p">:</span> <span class="n">f_obj</span><span class="p">,</span>
-                <span class="s2">"jac"</span><span class="p">:</span> <span class="n">f_grad</span><span class="p">,</span>
-            <span class="p">}</span>
+
+        <span class="n">scipy_nonlinear_inequality_constraints</span> <span class="o">+=</span> <span class="n">_make_nonlinear_constraints</span><span class="p">(</span>
+            <span class="n">f_np_wrapper</span><span class="o">=</span><span class="n">f_np_wrapper</span><span class="p">,</span>
+            <span class="n">nlc</span><span class="o">=</span><span class="n">nlc</span><span class="p">,</span>
+            <span class="n">is_intrapoint</span><span class="o">=</span><span class="n">is_intrapoint</span><span class="p">,</span>
+            <span class="n">shapeX</span><span class="o">=</span><span class="n">shapeX</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">scipy_nonlinear_inequality_constraints</span></div>
+
 </pre></div>
 </div>
 </div>

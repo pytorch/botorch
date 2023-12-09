@@ -36,48 +36,71 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 
-<div class="viewcode-block" id="BotorchError"><a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.BotorchError">[docs]</a><span class="k">class</span> <span class="nc">BotorchError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<div class="viewcode-block" id="BotorchError">
+<a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.BotorchError">[docs]</a>
+<span class="k">class</span> <span class="nc">BotorchError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Base botorch exception."""</span>
 
     <span class="k">pass</span></div>
 
 
-<div class="viewcode-block" id="CandidateGenerationError"><a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.CandidateGenerationError">[docs]</a><span class="k">class</span> <span class="nc">CandidateGenerationError</span><span class="p">(</span><span class="n">BotorchError</span><span class="p">):</span>
+
+<div class="viewcode-block" id="CandidateGenerationError">
+<a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.CandidateGenerationError">[docs]</a>
+<span class="k">class</span> <span class="nc">CandidateGenerationError</span><span class="p">(</span><span class="n">BotorchError</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Exception raised during generating candidates."""</span>
 
     <span class="k">pass</span></div>
 
 
-<div class="viewcode-block" id="DeprecationError"><a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.DeprecationError">[docs]</a><span class="k">class</span> <span class="nc">DeprecationError</span><span class="p">(</span><span class="n">BotorchError</span><span class="p">):</span>
+
+<div class="viewcode-block" id="DeprecationError">
+<a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.DeprecationError">[docs]</a>
+<span class="k">class</span> <span class="nc">DeprecationError</span><span class="p">(</span><span class="n">BotorchError</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Exception raised due to deprecations"""</span>
     <span class="k">pass</span></div>
 
 
-<div class="viewcode-block" id="InputDataError"><a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.InputDataError">[docs]</a><span class="k">class</span> <span class="nc">InputDataError</span><span class="p">(</span><span class="n">BotorchError</span><span class="p">):</span>
+
+<div class="viewcode-block" id="InputDataError">
+<a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.InputDataError">[docs]</a>
+<span class="k">class</span> <span class="nc">InputDataError</span><span class="p">(</span><span class="n">BotorchError</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Exception raised when input data does not comply with conventions."""</span>
 
     <span class="k">pass</span></div>
 
 
-<div class="viewcode-block" id="UnsupportedError"><a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.UnsupportedError">[docs]</a><span class="k">class</span> <span class="nc">UnsupportedError</span><span class="p">(</span><span class="n">BotorchError</span><span class="p">):</span>
+
+<div class="viewcode-block" id="UnsupportedError">
+<a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.UnsupportedError">[docs]</a>
+<span class="k">class</span> <span class="nc">UnsupportedError</span><span class="p">(</span><span class="n">BotorchError</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Currently unsupported feature."""</span>
 
     <span class="k">pass</span></div>
 
 
-<div class="viewcode-block" id="BotorchTensorDimensionError"><a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.BotorchTensorDimensionError">[docs]</a><span class="k">class</span> <span class="nc">BotorchTensorDimensionError</span><span class="p">(</span><span class="n">BotorchError</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BotorchTensorDimensionError">
+<a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.BotorchTensorDimensionError">[docs]</a>
+<span class="k">class</span> <span class="nc">BotorchTensorDimensionError</span><span class="p">(</span><span class="n">BotorchError</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Exception raised when a tensor violates a botorch convention."""</span>
 
     <span class="k">pass</span></div>
 
 
-<div class="viewcode-block" id="ModelFittingError"><a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.ModelFittingError">[docs]</a><span class="k">class</span> <span class="nc">ModelFittingError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ModelFittingError">
+<a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.ModelFittingError">[docs]</a>
+<span class="k">class</span> <span class="nc">ModelFittingError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Exception raised when attempts to fit a model terminate unsuccessfully."""</span>
 
     <span class="k">pass</span></div>
 
 
-<div class="viewcode-block" id="OptimizationTimeoutError"><a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.OptimizationTimeoutError">[docs]</a><span class="k">class</span> <span class="nc">OptimizationTimeoutError</span><span class="p">(</span><span class="n">BotorchError</span><span class="p">):</span>
+
+<div class="viewcode-block" id="OptimizationTimeoutError">
+<a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.OptimizationTimeoutError">[docs]</a>
+<span class="k">class</span> <span class="nc">OptimizationTimeoutError</span><span class="p">(</span><span class="n">BotorchError</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Exception raised when optimization times out."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -94,6 +117,7 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">current_x</span> <span class="o">=</span> <span class="n">current_x</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span> <span class="o">=</span> <span class="n">runtime</span></div>
+
 </pre></div>
 </div>
 </div>

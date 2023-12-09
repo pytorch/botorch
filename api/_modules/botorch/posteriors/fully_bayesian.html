@@ -29,6 +29,7 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
@@ -40,7 +41,9 @@
 <span class="n">TOL</span> <span class="o">=</span> <span class="mf">1e-6</span>  <span class="c1"># Bisection tolerance</span>
 
 
-<div class="viewcode-block" id="batched_bisect"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.fully_bayesian.batched_bisect">[docs]</a><span class="k">def</span> <span class="nf">batched_bisect</span><span class="p">(</span>
+<div class="viewcode-block" id="batched_bisect">
+<a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.fully_bayesian.batched_bisect">[docs]</a>
+<span class="k">def</span> <span class="nf">batched_bisect</span><span class="p">(</span>
     <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">TOL</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Batched bisection with a fixed number of steps.</span>
@@ -77,7 +80,8 @@
     <span class="k">return</span> <span class="n">center</span></div>
 
 
-<span class="k">def</span> <span class="nf">_quantile</span><span class="p">(</span><span class="n">posterior</span><span class="p">:</span> <span class="n">FullyBayesianPosterior</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<span class="k">def</span> <span class="nf">_quantile</span><span class="p">(</span><span class="n">posterior</span><span class="p">:</span> <span class="n">GaussianMixturePosterior</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Compute the posterior quantiles for the mixture of models."""</span>
     <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
@@ -101,13 +105,15 @@
     <span class="p">)</span>
 
 
-<div class="viewcode-block" id="FullyBayesianPosterior"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.fully_bayesian.FullyBayesianPosterior">[docs]</a><span class="k">class</span> <span class="nc">FullyBayesianPosterior</span><span class="p">(</span><span class="n">GPyTorchPosterior</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""A posterior for a fully Bayesian model.</span>
+<div class="viewcode-block" id="GaussianMixturePosterior">
+<a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.fully_bayesian.GaussianMixturePosterior">[docs]</a>
+<span class="k">class</span> <span class="nc">GaussianMixturePosterior</span><span class="p">(</span><span class="n">GPyTorchPosterior</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A Gaussian mixture posterior.</span>
 
 <span class="sd">    The MCMC batch dimension that corresponds to the models in the mixture is located</span>
 <span class="sd">    at `MCMC_DIM` (defined at the top of this file). Note that while each MCMC sample</span>
-<span class="sd">    corresponds to a Gaussian posterior, the fully Bayesian posterior is rather a</span>
-<span class="sd">    mixture of Gaussian distributions.</span>
+<span class="sd">    corresponds to a Gaussian posterior, the posterior is rather a mixture of Gaussian</span>
+<span class="sd">    distributions.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">distribution</span><span class="p">:</span> <span class="n">MultivariateNormal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -147,9 +153,12 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_mixture_variance</span> <span class="o">=</span> <span class="n">t1</span> <span class="o">+</span> <span class="n">t2</span> <span class="o">+</span> <span class="n">t3</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mixture_variance</span>
 
-<div class="viewcode-block" id="FullyBayesianPosterior.quantile"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.fully_bayesian.FullyBayesianPosterior.quantile">[docs]</a>    <span class="k">def</span> <span class="nf">quantile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="GaussianMixturePosterior.quantile">
+<a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.fully_bayesian.GaussianMixturePosterior.quantile">[docs]</a>
+    <span class="k">def</span> <span class="nf">quantile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the posterior quantiles for the mixture of models."""</span>
         <span class="k">return</span> <span class="n">_quantile</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">)</span></div>
+
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">batch_range</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
@@ -160,10 +169,24 @@
 <span class="sd">        provide consistency in the acquisition values, i.e., to ensure that a</span>
 <span class="sd">        candidate produces same value regardless of its position on the t-batch.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_mt</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_mt</span> <span class="k">else</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="FullyBayesianPosterior">
+<a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.fully_bayesian.FullyBayesianPosterior">[docs]</a>
+<span class="k">class</span> <span class="nc">FullyBayesianPosterior</span><span class="p">(</span><span class="n">GaussianMixturePosterior</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""For backwards compatibility."""</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">distribution</span><span class="p">:</span> <span class="n">MultivariateNormal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""DEPRECATED."""</span>
+        <span class="n">warn</span><span class="p">(</span>
+            <span class="s2">"`FullyBayesianPosterior` is marked for deprecation, consider using "</span>
+            <span class="s2">"`GaussianMixturePosterior` instead."</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="n">distribution</span><span class="p">)</span></div>
+
 </pre></div>
 </div>
 </div>

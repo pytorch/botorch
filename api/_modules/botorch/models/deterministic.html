@@ -83,7 +83,9 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="GenericDeterministicModel"><a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.GenericDeterministicModel">[docs]</a><span class="k">class</span> <span class="nc">GenericDeterministicModel</span><span class="p">(</span><span class="n">DeterministicModel</span><span class="p">):</span>
+<div class="viewcode-block" id="GenericDeterministicModel">
+<a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.GenericDeterministicModel">[docs]</a>
+<span class="k">class</span> <span class="nc">GenericDeterministicModel</span><span class="p">(</span><span class="n">DeterministicModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A generic deterministic model constructed from a callable.</span>
 
 <span class="sd">    Example:</span>
@@ -103,7 +105,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_f</span> <span class="o">=</span> <span class="n">f</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">=</span> <span class="n">num_outputs</span>
 
-<div class="viewcode-block" id="GenericDeterministicModel.subset_output"><a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.GenericDeterministicModel.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">GenericDeterministicModel</span><span class="p">:</span>
+<div class="viewcode-block" id="GenericDeterministicModel.subset_output">
+<a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.GenericDeterministicModel.subset_output">[docs]</a>
+    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">GenericDeterministicModel</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Subset the model along the output dimension.</span>
 
 <span class="sd">        Args:</span>
@@ -118,7 +122,10 @@
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">f</span><span class="o">=</span><span class="n">f_subset</span><span class="p">,</span> <span class="n">num_outputs</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">idcs</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="GenericDeterministicModel.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.GenericDeterministicModel.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="GenericDeterministicModel.forward">
+<a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.GenericDeterministicModel.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the (deterministic) model output at X.</span>
 
 <span class="sd">        Args:</span>
@@ -127,10 +134,14 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            A `batch_shape x n x m`-dimensional output tensor.</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="AffineDeterministicModel"><a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.AffineDeterministicModel">[docs]</a><span class="k">class</span> <span class="nc">AffineDeterministicModel</span><span class="p">(</span><span class="n">DeterministicModel</span><span class="p">):</span>
+
+<div class="viewcode-block" id="AffineDeterministicModel">
+<a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.AffineDeterministicModel">[docs]</a>
+<span class="k">class</span> <span class="nc">AffineDeterministicModel</span><span class="p">(</span><span class="n">DeterministicModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""An affine deterministic model."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -158,7 +169,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"b"</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
-<div class="viewcode-block" id="AffineDeterministicModel.subset_output"><a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.AffineDeterministicModel.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">AffineDeterministicModel</span><span class="p">:</span>
+<div class="viewcode-block" id="AffineDeterministicModel.subset_output">
+<a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.AffineDeterministicModel.subset_output">[docs]</a>
+    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">AffineDeterministicModel</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Subset the model along the output dimension.</span>
 
 <span class="sd">        Args:</span>
@@ -171,11 +184,18 @@
         <span class="n">b_sub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="o">.</span><span class="n">detach</span><span class="p">()[</span><span class="o">...</span><span class="p">,</span> <span class="n">idcs</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="n">a_sub</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b_sub</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="AffineDeterministicModel.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.AffineDeterministicModel.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">"...d,dm"</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="AffineDeterministicModel.forward">
+<a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.AffineDeterministicModel.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">"...d,dm"</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="PosteriorMeanModel"><a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.PosteriorMeanModel">[docs]</a><span class="k">class</span> <span class="nc">PosteriorMeanModel</span><span class="p">(</span><span class="n">DeterministicModel</span><span class="p">):</span>
+
+<div class="viewcode-block" id="PosteriorMeanModel">
+<a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.PosteriorMeanModel">[docs]</a>
+<span class="k">class</span> <span class="nc">PosteriorMeanModel</span><span class="p">(</span><span class="n">DeterministicModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A deterministic model that always returns the posterior mean."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -186,11 +206,17 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
 
-<div class="viewcode-block" id="PosteriorMeanModel.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.PosteriorMeanModel.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span></div></div>
+<div class="viewcode-block" id="PosteriorMeanModel.forward">
+<a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.PosteriorMeanModel.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span></div>
+</div>
 
 
-<div class="viewcode-block" id="FixedSingleSampleModel"><a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.FixedSingleSampleModel">[docs]</a><span class="k">class</span> <span class="nc">FixedSingleSampleModel</span><span class="p">(</span><span class="n">DeterministicModel</span><span class="p">):</span>
+
+<div class="viewcode-block" id="FixedSingleSampleModel">
+<a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.FixedSingleSampleModel">[docs]</a>
+<span class="k">class</span> <span class="nc">FixedSingleSampleModel</span><span class="p">(</span><span class="n">DeterministicModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    A deterministic model defined by a single sample `w`.</span>
 
@@ -234,9 +260,13 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">w</span> <span class="o">=</span> <span class="n">w</span>
 
-<div class="viewcode-block" id="FixedSingleSampleModel.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.FixedSingleSampleModel.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="FixedSingleSampleModel.forward">
+<a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.FixedSingleSampleModel.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">post</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">post</span><span class="o">.</span><span class="n">mean</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">post</span><span class="o">.</span><span class="n">variance</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">jitter</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">w</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">post</span><span class="o">.</span><span class="n">mean</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">post</span><span class="o">.</span><span class="n">variance</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">jitter</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">w</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

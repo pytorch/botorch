@@ -59,7 +59,9 @@
 <span class="n">GaussianUpdate</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">(</span><span class="s2">"gaussian_update"</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="gaussian_update"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.update_strategies.gaussian_update">[docs]</a><span class="k">def</span> <span class="nf">gaussian_update</span><span class="p">(</span>
+<div class="viewcode-block" id="gaussian_update">
+<a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.update_strategies.gaussian_update">[docs]</a>
+<span class="k">def</span> <span class="nf">gaussian_update</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">GP</span><span class="p">,</span>
     <span class="n">sample_values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">likelihood</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Likelihood</span><span class="p">]</span> <span class="o">=</span> <span class="n">DEFAULT</span><span class="p">,</span>
@@ -88,6 +90,7 @@
         <span class="n">likelihood</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"likelihood"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">GaussianUpdate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">likelihood</span><span class="p">,</span> <span class="n">sample_values</span><span class="o">=</span><span class="n">sample_values</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">_gaussian_update_exact</span><span class="p">(</span>

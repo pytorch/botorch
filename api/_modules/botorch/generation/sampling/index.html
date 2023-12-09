@@ -85,7 +85,9 @@
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
 
-<div class="viewcode-block" id="MaxPosteriorSampling"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.MaxPosteriorSampling">[docs]</a><span class="k">class</span> <span class="nc">MaxPosteriorSampling</span><span class="p">(</span><span class="n">SamplingStrategy</span><span class="p">):</span>
+<div class="viewcode-block" id="MaxPosteriorSampling">
+<a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.MaxPosteriorSampling">[docs]</a>
+<span class="k">class</span> <span class="nc">MaxPosteriorSampling</span><span class="p">(</span><span class="n">SamplingStrategy</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Sample from a set of points according to their max posterior value.</span>
 
 <span class="sd">    Example:</span>
@@ -116,7 +118,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span> <span class="o">=</span> <span class="n">posterior_transform</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">replacement</span> <span class="o">=</span> <span class="n">replacement</span>
 
-<div class="viewcode-block" id="MaxPosteriorSampling.forward"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.MaxPosteriorSampling.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+<div class="viewcode-block" id="MaxPosteriorSampling.forward">
+<a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.MaxPosteriorSampling.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">observation_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample from the model posterior.</span>
@@ -140,7 +144,10 @@
         <span class="n">samples</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_samples</span><span class="p">]))</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize_samples</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">samples</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="MaxPosteriorSampling.maximize_samples"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.MaxPosteriorSampling.maximize_samples">[docs]</a>    <span class="k">def</span> <span class="nf">maximize_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+
+<div class="viewcode-block" id="MaxPosteriorSampling.maximize_samples">
+<a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.MaxPosteriorSampling.maximize_samples">[docs]</a>
+    <span class="k">def</span> <span class="nf">maximize_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
         <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>  <span class="c1"># num_samples x batch_shape x N</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">replacement</span><span class="p">:</span>
             <span class="c1"># if we allow replacement then things are simple(r)</span>
@@ -180,10 +187,14 @@
         <span class="c1"># batch_shape of X, so we expand X to the proper shape</span>
         <span class="n">Xe</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
         <span class="c1"># finally we can gather along the N dimension</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">Xe</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">idcs</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">Xe</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">idcs</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="BoltzmannSampling"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.BoltzmannSampling">[docs]</a><span class="k">class</span> <span class="nc">BoltzmannSampling</span><span class="p">(</span><span class="n">SamplingStrategy</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BoltzmannSampling">
+<a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.BoltzmannSampling">[docs]</a>
+<span class="k">class</span> <span class="nc">BoltzmannSampling</span><span class="p">(</span><span class="n">SamplingStrategy</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Sample from a set of points according to a tempered acquisition value.</span>
 
 <span class="sd">    Given an acquisition function `acq_func`, this sampling strategies draws</span>
@@ -221,7 +232,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">=</span> <span class="n">eta</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">replacement</span> <span class="o">=</span> <span class="n">replacement</span>
 
-<div class="viewcode-block" id="BoltzmannSampling.forward"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.BoltzmannSampling.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="BoltzmannSampling.forward">
+<a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.BoltzmannSampling.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample from a tempered value of the acquisition function value.</span>
 
 <span class="sd">        Args:</span>
@@ -247,10 +260,14 @@
             <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="n">num_samples</span><span class="p">,</span> <span class="n">replacement</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">replacement</span>
         <span class="p">)</span>
         <span class="c1"># now do some gathering acrobatics to select the right elements from X</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">idcs</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">idcs</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)))</span></div></div>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">idcs</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">idcs</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)))</span></div>
+</div>
 
 
-<div class="viewcode-block" id="ConstrainedMaxPosteriorSampling"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.ConstrainedMaxPosteriorSampling">[docs]</a><span class="k">class</span> <span class="nc">ConstrainedMaxPosteriorSampling</span><span class="p">(</span><span class="n">MaxPosteriorSampling</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ConstrainedMaxPosteriorSampling">
+<a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.ConstrainedMaxPosteriorSampling">[docs]</a>
+<span class="k">class</span> <span class="nc">ConstrainedMaxPosteriorSampling</span><span class="p">(</span><span class="n">MaxPosteriorSampling</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Constrained max posterior sampling.</span>
 
 <span class="sd">    Posterior sampling where we try to maximize an objective function while</span>
@@ -340,7 +357,9 @@
             <span class="n">scores</span><span class="p">[</span><span class="o">~</span><span class="n">has_feasible_candidate</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">total_violation</span>
         <span class="k">return</span> <span class="n">scores</span>
 
-<div class="viewcode-block" id="ConstrainedMaxPosteriorSampling.forward"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.ConstrainedMaxPosteriorSampling.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+<div class="viewcode-block" id="ConstrainedMaxPosteriorSampling.forward">
+<a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.ConstrainedMaxPosteriorSampling.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">observation_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample from the model posterior.</span>
@@ -372,7 +391,9 @@
         <span class="n">scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_samples_to_scores</span><span class="p">(</span>
             <span class="n">Y_samples</span><span class="o">=</span><span class="n">Y_samples</span><span class="p">,</span> <span class="n">C_samples</span><span class="o">=</span><span class="n">C_samples</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize_samples</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="n">scores</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="n">num_samples</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize_samples</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="n">scores</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="n">num_samples</span><span class="p">)</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

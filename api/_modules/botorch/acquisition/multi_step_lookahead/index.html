@@ -28,7 +28,7 @@
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
 <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">A general implementation of multi-step look-ahead acquistion function with configurable</span>
+<span class="sd">A general implementation of multi-step look-ahead acquisition function with configurable</span>
 <span class="sd">value functions. See [Jiang2020multistep]_.</span>
 
 <span class="sd">.. [Jiang2020multistep]</span>
@@ -69,7 +69,9 @@
 <span class="n">TAcqfArgConstructor</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Model</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
 
 
-<div class="viewcode-block" id="qMultiStepLookahead"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead">[docs]</a><span class="k">class</span> <span class="nc">qMultiStepLookahead</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">,</span> <span class="n">OneShotAcquisitionFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="qMultiStepLookahead">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead">[docs]</a>
+<span class="k">class</span> <span class="nc">qMultiStepLookahead</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">,</span> <span class="n">OneShotAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batch Multi-Step Look-Ahead (one-shot optimization)."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -186,7 +188,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_valfunc_argfacs</span> <span class="o">=</span> <span class="n">valfunc_argfacs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_collapse_fantasy_base_samples</span> <span class="o">=</span> <span class="n">collapse_fantasy_base_samples</span>
 
-<div class="viewcode-block" id="qMultiStepLookahead.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
+<div class="viewcode-block" id="qMultiStepLookahead.forward">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.forward">[docs]</a>
+    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qMultiStepLookahead on the candidate set X.</span>
 
@@ -217,6 +221,7 @@
             <span class="n">running_val</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="p">)</span></div>
 
+
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">_num_auxiliary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Number of auxiliary variables in the q-batch dimension.</span>
@@ -236,19 +241,24 @@
         <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">samplers</span><span class="p">:</span>
             <span class="n">s</span><span class="o">.</span><span class="n">batch_range_override</span> <span class="o">=</span> <span class="p">(</span><span class="n">tbatch_dim_start</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
 
-<div class="viewcode-block" id="qMultiStepLookahead.get_augmented_q_batch_size"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_augmented_q_batch_size">[docs]</a>    <span class="k">def</span> <span class="nf">get_augmented_q_batch_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Get augmented q batch size for one-shot optimzation.</span>
+<div class="viewcode-block" id="qMultiStepLookahead.get_augmented_q_batch_size">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_augmented_q_batch_size">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_augmented_q_batch_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Get augmented q batch size for one-shot optimization.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            q: The number of candidates to consider jointly.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            The augmented size for one-shot optimzation (including variables</span>
+<span class="sd">            The augmented size for one-shot optimization (including variables</span>
 <span class="sd">            parameterizing the fantasy solutions): `q_0 + f_1 q_1 + f_2 f_1 q_2 + ...`</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="n">q</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_auxiliary</span></div>
 
-<div class="viewcode-block" id="qMultiStepLookahead.get_split_shapes"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_split_shapes">[docs]</a>    <span class="k">def</span> <span class="nf">get_split_shapes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Size</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Size</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+
+<div class="viewcode-block" id="qMultiStepLookahead.get_split_shapes">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_split_shapes">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_split_shapes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Size</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Size</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Get the split shapes from X.</span>
 
 <span class="sd">        Args:</span>
@@ -272,7 +282,10 @@
         <span class="n">sizes</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[:</span> <span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">))]</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">*</span> <span class="n">s</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">shapes</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">batch_shape</span><span class="p">,</span> <span class="n">shapes</span><span class="p">,</span> <span class="n">sizes</span></div>
 
-<div class="viewcode-block" id="qMultiStepLookahead.get_multi_step_tree_input_representation"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_multi_step_tree_input_representation">[docs]</a>    <span class="k">def</span> <span class="nf">get_multi_step_tree_input_representation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
+
+<div class="viewcode-block" id="qMultiStepLookahead.get_multi_step_tree_input_representation">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_multi_step_tree_input_representation">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_multi_step_tree_input_representation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Get the multi-step tree representation of X.</span>
 
 <span class="sd">        Args:</span>
@@ -302,7 +315,10 @@
 
         <span class="k">return</span> <span class="p">[</span><span class="n">X0</span><span class="p">]</span> <span class="o">+</span> <span class="n">Xother</span></div>
 
-<div class="viewcode-block" id="qMultiStepLookahead.extract_candidates"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.extract_candidates">[docs]</a>    <span class="k">def</span> <span class="nf">extract_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_full</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="qMultiStepLookahead.extract_candidates">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.extract_candidates">[docs]</a>
+    <span class="k">def</span> <span class="nf">extract_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_full</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""We only return X as the set of candidates post-optimization.</span>
 
 <span class="sd">        Args:</span>
@@ -314,7 +330,10 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="n">X_full</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_auxiliary</span><span class="p">,</span> <span class="p">:]</span></div>
 
-<div class="viewcode-block" id="qMultiStepLookahead.get_induced_fantasy_model"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_induced_fantasy_model">[docs]</a>    <span class="k">def</span> <span class="nf">get_induced_fantasy_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
+
+<div class="viewcode-block" id="qMultiStepLookahead.get_induced_fantasy_model">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_induced_fantasy_model">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_induced_fantasy_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Fantasy model induced by X.</span>
 
 <span class="sd">        Args:</span>
@@ -334,7 +353,9 @@
 
         <span class="k">return</span> <span class="n">_get_induced_fantasy_model</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">Xs</span><span class="o">=</span><span class="n">Xs</span><span class="p">,</span> <span class="n">samplers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">samplers</span>
-        <span class="p">)</span></div></div>
+        <span class="p">)</span></div>
+</div>
+
 
 
 <span class="k">def</span> <span class="nf">_step</span><span class="p">(</span>
@@ -572,7 +593,7 @@
                 <span class="p">)</span>
             <span class="k">if</span> <span class="n">q</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">mcs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                    <span class="s2">"inner_mc_samples is ignored for analytic acquistion functions"</span><span class="p">,</span>
+                    <span class="s2">"inner_mc_samples is ignored for analytic acquisition functions"</span><span class="p">,</span>
                     <span class="n">BotorchWarning</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="n">inner_samplers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
@@ -615,7 +636,9 @@
         <span class="p">)</span>
 
 
-<div class="viewcode-block" id="warmstart_multistep"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.warmstart_multistep">[docs]</a><span class="k">def</span> <span class="nf">warmstart_multistep</span><span class="p">(</span>
+<div class="viewcode-block" id="warmstart_multistep">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.warmstart_multistep">[docs]</a>
+<span class="k">def</span> <span class="nf">warmstart_multistep</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="p">:</span> <span class="n">qMultiStepLookahead</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">num_restarts</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -685,9 +708,13 @@
     <span class="k">return</span> <span class="n">X_init</span><span class="p">[:</span><span class="n">raw_samples</span><span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="make_best_f"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.make_best_f">[docs]</a><span class="k">def</span> <span class="nf">make_best_f</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+
+<div class="viewcode-block" id="make_best_f">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.make_best_f">[docs]</a>
+<span class="k">def</span> <span class="nf">make_best_f</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Extract the best observed training input from the model."""</span>
     <span class="k">return</span> <span class="p">{</span><span class="s2">"best_f"</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">train_targets</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">}</span></div>
+
 </pre></div>
 </div>
 </div>

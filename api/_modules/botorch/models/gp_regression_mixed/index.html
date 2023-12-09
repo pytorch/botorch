@@ -48,7 +48,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="MixedSingleTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_mixed.MixedSingleTaskGP">[docs]</a><span class="k">class</span> <span class="nc">MixedSingleTaskGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">):</span>
+<div class="viewcode-block" id="MixedSingleTaskGP">
+<a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_mixed.MixedSingleTaskGP">[docs]</a>
+<span class="k">class</span> <span class="nc">MixedSingleTaskGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A single-task exact GP model for mixed search spaces.</span>
 
 <span class="sd">    This model is similar to `SingleTaskGP`, but supports mixed search spaces,</span>
@@ -204,7 +206,9 @@
             <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span>
         <span class="p">)</span>
 
-<div class="viewcode-block" id="MixedSingleTaskGP.construct_inputs"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_mixed.MixedSingleTaskGP.construct_inputs">[docs]</a>    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="MixedSingleTaskGP.construct_inputs">
+<a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_mixed.MixedSingleTaskGP.construct_inputs">[docs]</a>
+    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">training_data</span><span class="p">:</span> <span class="n">SupervisedDataset</span><span class="p">,</span>
@@ -224,7 +228,9 @@
             <span class="o">**</span><span class="n">base_inputs</span><span class="p">,</span>
             <span class="s2">"cat_dims"</span><span class="p">:</span> <span class="n">categorical_features</span><span class="p">,</span>
             <span class="s2">"likelihood"</span><span class="p">:</span> <span class="n">likelihood</span><span class="p">,</span>
-        <span class="p">}</span></div></div>
+        <span class="p">}</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

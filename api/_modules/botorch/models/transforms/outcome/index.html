@@ -155,7 +155,9 @@
         <span class="p">)</span>
 
 
-<div class="viewcode-block" id="ChainedOutcomeTransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform">[docs]</a><span class="k">class</span> <span class="nc">ChainedOutcomeTransform</span><span class="p">(</span><span class="n">OutcomeTransform</span><span class="p">,</span> <span class="n">ModuleDict</span><span class="p">):</span>
+<div class="viewcode-block" id="ChainedOutcomeTransform">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform">[docs]</a>
+<span class="k">class</span> <span class="nc">ChainedOutcomeTransform</span><span class="p">(</span><span class="n">OutcomeTransform</span><span class="p">,</span> <span class="n">ModuleDict</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""An outcome transform representing the chaining of individual transforms"""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">transforms</span><span class="p">:</span> <span class="n">OutcomeTransform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -168,7 +170,9 @@
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">(</span><span class="n">transforms</span><span class="p">))</span>
 
-<div class="viewcode-block" id="ChainedOutcomeTransform.forward"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+<div class="viewcode-block" id="ChainedOutcomeTransform.forward">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Transform the outcomes in a model's training targets</span>
@@ -188,7 +192,10 @@
             <span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span></div>
 
-<div class="viewcode-block" id="ChainedOutcomeTransform.subset_output"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">OutcomeTransform</span><span class="p">:</span>
+
+<div class="viewcode-block" id="ChainedOutcomeTransform.subset_output">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform.subset_output">[docs]</a>
+    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">OutcomeTransform</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Subset the transform along the output dimension.</span>
 
 <span class="sd">        Args:</span>
@@ -201,7 +208,10 @@
             <span class="o">**</span><span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">subset_output</span><span class="p">(</span><span class="n">idcs</span><span class="o">=</span><span class="n">idcs</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">tf</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="ChainedOutcomeTransform.untransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform.untransform">[docs]</a>    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span>
+
+<div class="viewcode-block" id="ChainedOutcomeTransform.untransform">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform.untransform">[docs]</a>
+    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-transform previously transformed outcomes</span>
@@ -221,6 +231,7 @@
             <span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">untransform</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span></div>
 
+
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">_is_linear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""</span>
@@ -229,7 +240,9 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="nb">all</span><span class="p">((</span><span class="n">octf</span><span class="o">.</span><span class="n">_is_linear</span> <span class="k">for</span> <span class="n">octf</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
 
-<div class="viewcode-block" id="ChainedOutcomeTransform.untransform_posterior"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform.untransform_posterior">[docs]</a>    <span class="k">def</span> <span class="nf">untransform_posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
+<div class="viewcode-block" id="ChainedOutcomeTransform.untransform_posterior">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform.untransform_posterior">[docs]</a>
+    <span class="k">def</span> <span class="nf">untransform_posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-transform a posterior</span>
 
 <span class="sd">        Args:</span>
@@ -240,10 +253,14 @@
 <span class="sd">        """</span>
         <span class="k">for</span> <span class="n">tf</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
             <span class="n">posterior</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">untransform_posterior</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">posterior</span></div></div>
+        <span class="k">return</span> <span class="n">posterior</span></div>
+</div>
 
 
-<div class="viewcode-block" id="Standardize"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Standardize">[docs]</a><span class="k">class</span> <span class="nc">Standardize</span><span class="p">(</span><span class="n">OutcomeTransform</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Standardize">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Standardize">[docs]</a>
+<span class="k">class</span> <span class="nc">Standardize</span><span class="p">(</span><span class="n">OutcomeTransform</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Standardize outcomes (zero mean, unit variance).</span>
 
 <span class="sd">    This module is stateful: If in train mode, calling forward updates the</span>
@@ -279,7 +296,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_batch_shape</span> <span class="o">=</span> <span class="n">batch_shape</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_min_stdv</span> <span class="o">=</span> <span class="n">min_stdv</span>
 
-<div class="viewcode-block" id="Standardize.load_state_dict"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Standardize.load_state_dict">[docs]</a>    <span class="k">def</span> <span class="nf">load_state_dict</span><span class="p">(</span>
+<div class="viewcode-block" id="Standardize.load_state_dict">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Standardize.load_state_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">load_state_dict</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Custom logic for loading the state dict."""</span>
@@ -292,7 +311,10 @@
             <span class="n">state_dict</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">state_dict</span><span class="p">,</span> <span class="s2">"_is_trained"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="kc">True</span><span class="p">)}</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">state_dict</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Standardize.forward"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Standardize.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+
+<div class="viewcode-block" id="Standardize.forward">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Standardize.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Standardize outcomes.</span>
@@ -340,7 +362,10 @@
         <span class="n">Yvar_tf</span> <span class="o">=</span> <span class="n">Yvar</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stdvs_sq</span> <span class="k">if</span> <span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="n">Y_tf</span><span class="p">,</span> <span class="n">Yvar_tf</span></div>
 
-<div class="viewcode-block" id="Standardize.subset_output"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Standardize.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">OutcomeTransform</span><span class="p">:</span>
+
+<div class="viewcode-block" id="Standardize.subset_output">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Standardize.subset_output">[docs]</a>
+    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">OutcomeTransform</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Subset the transform along the output dimension.</span>
 
 <span class="sd">        Args:</span>
@@ -373,7 +398,10 @@
             <span class="n">new_tf</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">new_tf</span></div>
 
-<div class="viewcode-block" id="Standardize.untransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Standardize.untransform">[docs]</a>    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span>
+
+<div class="viewcode-block" id="Standardize.untransform">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Standardize.untransform">[docs]</a>
+    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-standardize outcomes.</span>
@@ -400,11 +428,14 @@
         <span class="n">Yvar_utf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stdvs_sq</span> <span class="o">*</span> <span class="n">Yvar</span> <span class="k">if</span> <span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="n">Y_utf</span><span class="p">,</span> <span class="n">Yvar_utf</span></div>
 
+
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">_is_linear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>
 
-<div class="viewcode-block" id="Standardize.untransform_posterior"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Standardize.untransform_posterior">[docs]</a>    <span class="k">def</span> <span class="nf">untransform_posterior</span><span class="p">(</span>
+<div class="viewcode-block" id="Standardize.untransform_posterior">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Standardize.untransform_posterior">[docs]</a>
+    <span class="k">def</span> <span class="nf">untransform_posterior</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">GPyTorchPosterior</span><span class="p">,</span> <span class="n">TransformedPosterior</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-standardize the posterior.</span>
@@ -478,10 +509,14 @@
 
         <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"interleaved"</span><span class="p">:</span> <span class="n">mvn</span><span class="o">.</span><span class="n">_interleaved</span><span class="p">}</span> <span class="k">if</span> <span class="n">posterior</span><span class="o">.</span><span class="n">_is_mt</span> <span class="k">else</span> <span class="p">{}</span>
         <span class="n">mvn_tf</span> <span class="o">=</span> <span class="n">mvn</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">mean_tf</span><span class="p">,</span> <span class="n">covariance_matrix</span><span class="o">=</span><span class="n">covar_tf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">mvn_tf</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">mvn_tf</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="Log"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Log">[docs]</a><span class="k">class</span> <span class="nc">Log</span><span class="p">(</span><span class="n">OutcomeTransform</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Log">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Log">[docs]</a>
+<span class="k">class</span> <span class="nc">Log</span><span class="p">(</span><span class="n">OutcomeTransform</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Log-transform outcomes.</span>
 
 <span class="sd">    Useful if the targets are modeled using a (multivariate) log-Normal</span>
@@ -499,7 +534,9 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="o">=</span> <span class="n">outputs</span>
 
-<div class="viewcode-block" id="Log.subset_output"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Log.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">OutcomeTransform</span><span class="p">:</span>
+<div class="viewcode-block" id="Log.subset_output">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Log.subset_output">[docs]</a>
+    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">OutcomeTransform</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Subset the transform along the output dimension.</span>
 
 <span class="sd">        Args:</span>
@@ -521,7 +558,10 @@
             <span class="n">new_tf</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">new_tf</span></div>
 
-<div class="viewcode-block" id="Log.forward"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Log.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+
+<div class="viewcode-block" id="Log.forward">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Log.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Log-transform outcomes.</span>
@@ -554,7 +594,10 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">Y_tf</span><span class="p">,</span> <span class="n">Yvar</span></div>
 
-<div class="viewcode-block" id="Log.untransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Log.untransform">[docs]</a>    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span>
+
+<div class="viewcode-block" id="Log.untransform">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Log.untransform">[docs]</a>
+    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-transform log-transformed outcomes</span>
@@ -588,7 +631,10 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">Y_utf</span><span class="p">,</span> <span class="n">Yvar</span></div>
 
-<div class="viewcode-block" id="Log.untransform_posterior"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Log.untransform_posterior">[docs]</a>    <span class="k">def</span> <span class="nf">untransform_posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformedPosterior</span><span class="p">:</span>
+
+<div class="viewcode-block" id="Log.untransform_posterior">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Log.untransform_posterior">[docs]</a>
+    <span class="k">def</span> <span class="nf">untransform_posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformedPosterior</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-transform the log-transformed posterior.</span>
 
 <span class="sd">        Args:</span>
@@ -606,10 +652,14 @@
             <span class="n">sample_transform</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">,</span>
             <span class="n">mean_transform</span><span class="o">=</span><span class="n">norm_to_lognorm_mean</span><span class="p">,</span>
             <span class="n">variance_transform</span><span class="o">=</span><span class="n">norm_to_lognorm_variance</span><span class="p">,</span>
-        <span class="p">)</span></div></div>
+        <span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="Power"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Power">[docs]</a><span class="k">class</span> <span class="nc">Power</span><span class="p">(</span><span class="n">OutcomeTransform</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Power">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Power">[docs]</a>
+<span class="k">class</span> <span class="nc">Power</span><span class="p">(</span><span class="n">OutcomeTransform</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Power-transform outcomes.</span>
 
 <span class="sd">    Useful if the targets are modeled using a (multivariate) power transform of</span>
@@ -628,7 +678,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="o">=</span> <span class="n">outputs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">power</span> <span class="o">=</span> <span class="n">power</span>
 
-<div class="viewcode-block" id="Power.subset_output"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Power.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">OutcomeTransform</span><span class="p">:</span>
+<div class="viewcode-block" id="Power.subset_output">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Power.subset_output">[docs]</a>
+    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">OutcomeTransform</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Subset the transform along the output dimension.</span>
 
 <span class="sd">        Args:</span>
@@ -650,7 +702,10 @@
             <span class="n">new_tf</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">new_tf</span></div>
 
-<div class="viewcode-block" id="Power.forward"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Power.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+
+<div class="viewcode-block" id="Power.forward">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Power.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Power-transform outcomes.</span>
@@ -683,7 +738,10 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">Y_tf</span><span class="p">,</span> <span class="n">Yvar</span></div>
 
-<div class="viewcode-block" id="Power.untransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Power.untransform">[docs]</a>    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span>
+
+<div class="viewcode-block" id="Power.untransform">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Power.untransform">[docs]</a>
+    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-transform power-transformed outcomes</span>
@@ -717,7 +775,10 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">Y_utf</span><span class="p">,</span> <span class="n">Yvar</span></div>
 
-<div class="viewcode-block" id="Power.untransform_posterior"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Power.untransform_posterior">[docs]</a>    <span class="k">def</span> <span class="nf">untransform_posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformedPosterior</span><span class="p">:</span>
+
+<div class="viewcode-block" id="Power.untransform_posterior">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Power.untransform_posterior">[docs]</a>
+    <span class="k">def</span> <span class="nf">untransform_posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformedPosterior</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-transform the power-transformed posterior.</span>
 
 <span class="sd">        Args:</span>
@@ -733,10 +794,14 @@
         <span class="k">return</span> <span class="n">TransformedPosterior</span><span class="p">(</span>
             <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span>
             <span class="n">sample_transform</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">power</span><span class="p">),</span>
-        <span class="p">)</span></div></div>
+        <span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="Bilog"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Bilog">[docs]</a><span class="k">class</span> <span class="nc">Bilog</span><span class="p">(</span><span class="n">OutcomeTransform</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Bilog">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Bilog">[docs]</a>
+<span class="k">class</span> <span class="nc">Bilog</span><span class="p">(</span><span class="n">OutcomeTransform</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Bilog-transform outcomes.</span>
 
 <span class="sd">    The Bilog transform [eriksson2021scalable]_ is useful for modeling outcome</span>
@@ -753,7 +818,9 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="o">=</span> <span class="n">outputs</span>
 
-<div class="viewcode-block" id="Bilog.subset_output"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Bilog.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">OutcomeTransform</span><span class="p">:</span>
+<div class="viewcode-block" id="Bilog.subset_output">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Bilog.subset_output">[docs]</a>
+    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">OutcomeTransform</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Subset the transform along the output dimension.</span>
 
 <span class="sd">        Args:</span>
@@ -775,7 +842,10 @@
             <span class="n">new_tf</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">new_tf</span></div>
 
-<div class="viewcode-block" id="Bilog.forward"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Bilog.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+
+<div class="viewcode-block" id="Bilog.forward">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Bilog.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Bilog-transform outcomes.</span>
@@ -807,7 +877,10 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">Y_tf</span><span class="p">,</span> <span class="n">Yvar</span></div>
 
-<div class="viewcode-block" id="Bilog.untransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Bilog.untransform">[docs]</a>    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span>
+
+<div class="viewcode-block" id="Bilog.untransform">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Bilog.untransform">[docs]</a>
+    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-transform bilog-transformed outcomes</span>
@@ -841,7 +914,10 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">Y_utf</span><span class="p">,</span> <span class="n">Yvar</span></div>
 
-<div class="viewcode-block" id="Bilog.untransform_posterior"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Bilog.untransform_posterior">[docs]</a>    <span class="k">def</span> <span class="nf">untransform_posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformedPosterior</span><span class="p">:</span>
+
+<div class="viewcode-block" id="Bilog.untransform_posterior">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Bilog.untransform_posterior">[docs]</a>
+    <span class="k">def</span> <span class="nf">untransform_posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformedPosterior</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-transform the bilog-transformed posterior.</span>
 
 <span class="sd">        Args:</span>
@@ -857,7 +933,9 @@
         <span class="k">return</span> <span class="n">TransformedPosterior</span><span class="p">(</span>
             <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span>
             <span class="n">sample_transform</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">sign</span><span class="p">()</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">),</span>
-        <span class="p">)</span></div></div>
+        <span class="p">)</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

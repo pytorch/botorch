@@ -43,7 +43,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="extract_batch_covar"><a class="viewcode-back" href="../../../utils.html#botorch.utils.low_rank.extract_batch_covar">[docs]</a><span class="k">def</span> <span class="nf">extract_batch_covar</span><span class="p">(</span><span class="n">mt_mvn</span><span class="p">:</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearOperator</span><span class="p">:</span>
+<div class="viewcode-block" id="extract_batch_covar">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.low_rank.extract_batch_covar">[docs]</a>
+<span class="k">def</span> <span class="nf">extract_batch_covar</span><span class="p">(</span><span class="n">mt_mvn</span><span class="p">:</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearOperator</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Extract a batched independent covariance matrix from an MTMVN.</span>
 
 <span class="sd">    Args:</span>
@@ -61,6 +63,7 @@
             <span class="sa">f</span><span class="s2">"Expected BlockDiagLinearOperator, but got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">lazy_covar</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">lazy_covar</span><span class="o">.</span><span class="n">base_linear_op</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">_reshape_base_samples</span><span class="p">(</span>
@@ -105,7 +108,9 @@
     <span class="p">)</span>
 
 
-<div class="viewcode-block" id="sample_cached_cholesky"><a class="viewcode-back" href="../../../utils.html#botorch.utils.low_rank.sample_cached_cholesky">[docs]</a><span class="k">def</span> <span class="nf">sample_cached_cholesky</span><span class="p">(</span>
+<div class="viewcode-block" id="sample_cached_cholesky">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.low_rank.sample_cached_cholesky">[docs]</a>
+<span class="k">def</span> <span class="nf">sample_cached_cholesky</span><span class="p">(</span>
     <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span><span class="p">,</span>
     <span class="n">baseline_L</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -194,6 +199,7 @@
         <span class="n">suffix</span> <span class="o">=</span> <span class="s2">" and "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">suffix_args</span><span class="p">)</span>
         <span class="k">raise</span> <span class="n">NanError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Samples contain </span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">res</span></div>
+
 </pre></div>
 </div>
 </div>

@@ -59,7 +59,9 @@
 <span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Normal</span>
 
 
-<div class="viewcode-block" id="LowerBoundMultiObjectiveEntropySearch"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.joint_entropy_search.LowerBoundMultiObjectiveEntropySearch">[docs]</a><span class="k">class</span> <span class="nc">LowerBoundMultiObjectiveEntropySearch</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span><span class="p">):</span>
+<div class="viewcode-block" id="LowerBoundMultiObjectiveEntropySearch">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.joint_entropy_search.LowerBoundMultiObjectiveEntropySearch">[docs]</a>
+<span class="k">class</span> <span class="nc">LowerBoundMultiObjectiveEntropySearch</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Abstract base class for the lower bound multi-objective entropy search</span>
 <span class="sd">    acquisition functions.</span>
 <span class="sd">    """</span>
@@ -260,7 +262,9 @@
         <span class="c1"># Sum over the batch.</span>
         <span class="k">return</span> <span class="n">initial_entropy</span> <span class="o">-</span> <span class="n">conditional_entropy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 
-<div class="viewcode-block" id="LowerBoundMultiObjectiveEntropySearch.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.joint_entropy_search.LowerBoundMultiObjectiveEntropySearch.forward">[docs]</a>    <span class="nd">@abstractmethod</span>
+<div class="viewcode-block" id="LowerBoundMultiObjectiveEntropySearch.forward">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.joint_entropy_search.LowerBoundMultiObjectiveEntropySearch.forward">[docs]</a>
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute lower bound multi-objective entropy search at the design points</span>
 <span class="sd">        `X`.</span>
@@ -274,10 +278,14 @@
 <span class="sd">            points `X`.</span>
 <span class="sd">        """</span>
 
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div></div>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+</div>
 
 
-<div class="viewcode-block" id="qLowerBoundMultiObjectiveJointEntropySearch"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch">[docs]</a><span class="k">class</span> <span class="nc">qLowerBoundMultiObjectiveJointEntropySearch</span><span class="p">(</span>
+
+<div class="viewcode-block" id="qLowerBoundMultiObjectiveJointEntropySearch">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch">[docs]</a>
+<span class="k">class</span> <span class="nc">qLowerBoundMultiObjectiveJointEntropySearch</span><span class="p">(</span>
     <span class="n">LowerBoundMultiObjectiveEntropySearch</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The acquisition function for the multi-objective joint entropy search, where</span>
@@ -464,7 +472,9 @@
 
         <span class="k">return</span> <span class="n">samples</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="o">-</span><span class="mi">3</span><span class="p">),</span> <span class="n">samples_log_prob</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
-<div class="viewcode-block" id="qLowerBoundMultiObjectiveJointEntropySearch.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
+<div class="viewcode-block" id="qLowerBoundMultiObjectiveJointEntropySearch.forward">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch.forward">[docs]</a>
+    <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluates qLowerBoundMultiObjectiveJointEntropySearch at the design</span>
@@ -478,7 +488,9 @@
 <span class="sd">            A `batch_shape`-dim Tensor of acquisition values at the given design</span>
 <span class="sd">            points `X`.</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_lower_bound_information_gain</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_lower_bound_information_gain</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div>
+</div>
+
 
 
 <span class="k">def</span> <span class="nf">_compute_entropy_noiseless</span><span class="p">(</span>

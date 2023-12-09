@@ -60,8 +60,11 @@
     <span class="k">return</span> <span class="n">logger</span>
 
 
-<div class="viewcode-block" id="shape_to_str"><a class="viewcode-back" href="../../logging.html#botorch.logging.shape_to_str">[docs]</a><span class="k">def</span> <span class="nf">shape_to_str</span><span class="p">(</span><span class="n">shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<div class="viewcode-block" id="shape_to_str">
+<a class="viewcode-back" href="../../logging.html#botorch.logging.shape_to_str">[docs]</a>
+<span class="k">def</span> <span class="nf">shape_to_str</span><span class="p">(</span><span class="n">shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="k">return</span> <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="s1">' x '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s2">`"</span></div>
+
 
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">_get_logger</span><span class="p">()</span>

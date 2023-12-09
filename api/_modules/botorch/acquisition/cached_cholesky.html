@@ -29,7 +29,7 @@
 
 <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">Abstract class for acquisition functions leveraging a cached Cholesky</span>
-<span class="sd">decomposition of the posterior covaiance over f(X_baseline).</span>
+<span class="sd">decomposition of the posterior covariance over f(X_baseline).</span>
 <span class="sd">"""</span>
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
@@ -55,7 +55,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="supports_cache_root"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cached_cholesky.supports_cache_root">[docs]</a><span class="k">def</span> <span class="nf">supports_cache_root</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<div class="viewcode-block" id="supports_cache_root">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cached_cholesky.supports_cache_root">[docs]</a>
+<span class="k">def</span> <span class="nf">supports_cache_root</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Checks if a model supports the cache_root functionality.</span>
 <span class="sd">    The two criteria are that the model is not multi-task and the model</span>
 <span class="sd">    produces a GPyTorchPosterior.</span>
@@ -71,6 +73,7 @@
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">model</span><span class="o">.</span><span class="n">outcome_transform</span><span class="o">.</span><span class="n">_is_linear</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">False</span>
     <span class="k">return</span> <span class="kc">True</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">_get_cache_root_not_supported_message</span><span class="p">(</span><span class="n">model_cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -130,9 +133,9 @@
 <span class="sd">          `MultitaskMultivariateNormal`, since we construct `lazy_covar` in that</span>
 <span class="sd">          case.</span>
 <span class="sd">        2) If the root decomposition has not been found in the cache, compute it.</span>
-<span class="sd">        3) Write it to the cache of `lazy_covar`. Note that this will become inacessible</span>
-<span class="sd">          if `posterior.mvn` is a `MultitaskMultivariateNormal`, since in that case</span>
-<span class="sd">          `lazy_covar`'s scope is only this function.</span>
+<span class="sd">        3) Write it to the cache of `lazy_covar`. Note that this will become</span>
+<span class="sd">          inaccessible if `posterior.mvn` is a `MultitaskMultivariateNormal`,</span>
+<span class="sd">          since in that case `lazy_covar`'s scope is only this function.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            posterior: The posterior over f(X_baseline).</span>
@@ -212,7 +215,9 @@
 
 
 <span class="c1"># TODO: remove</span>
-<div class="viewcode-block" id="CachedCholeskyMCAcquisitionFunction"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cached_cholesky.CachedCholeskyMCAcquisitionFunction">[docs]</a><span class="k">class</span> <span class="nc">CachedCholeskyMCAcquisitionFunction</span><span class="p">(</span><span class="n">CachedCholeskyMCSamplerMixin</span><span class="p">):</span>
+<div class="viewcode-block" id="CachedCholeskyMCAcquisitionFunction">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cached_cholesky.CachedCholeskyMCAcquisitionFunction">[docs]</a>
+<span class="k">class</span> <span class="nc">CachedCholeskyMCAcquisitionFunction</span><span class="p">(</span><span class="n">CachedCholeskyMCSamplerMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""DEPRECATED - USE CachedCholeskyMCSamplerMixin instead."""</span>
 
     <span class="k">def</span> <span class="nf">_setup</span><span class="p">(</span>
@@ -234,6 +239,7 @@
             <span class="ne">DeprecationWarning</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">cache_root</span><span class="o">=</span><span class="n">cache_root</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">)</span></div>
+
 </pre></div>
 </div>
 </div>

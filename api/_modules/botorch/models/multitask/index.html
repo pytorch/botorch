@@ -67,7 +67,7 @@
     <span class="n">MIN_INFERRED_NOISE_LEVEL</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.multitask</span> <span class="kn">import</span> <span class="n">MultitaskGPPosterior</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">SupervisedDataset</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">MultiTaskDataset</span><span class="p">,</span> <span class="n">SupervisedDataset</span>
 <span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions.multitask_multivariate_normal</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">MultitaskMultivariateNormal</span><span class="p">,</span>
@@ -107,7 +107,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="MultiTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.MultiTaskGP">[docs]</a><span class="k">class</span> <span class="nc">MultiTaskGP</span><span class="p">(</span><span class="n">ExactGP</span><span class="p">,</span> <span class="n">MultiTaskGPyTorchModel</span><span class="p">,</span> <span class="n">FantasizeMixin</span><span class="p">):</span>
+<div class="viewcode-block" id="MultiTaskGP">
+<a class="viewcode-back" href="../../../models.html#botorch.models.multitask.MultiTaskGP">[docs]</a>
+<span class="k">class</span> <span class="nc">MultiTaskGP</span><span class="p">(</span><span class="n">ExactGP</span><span class="p">,</span> <span class="n">MultiTaskGPyTorchModel</span><span class="p">,</span> <span class="n">FantasizeMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Multi-Task exact GP model using an ICM (intrinsic co-regionalization model)</span>
 <span class="sd">    kernel. See [Bonilla2007MTGP]_ and [Swersky2013MTBO]_ for a reference on the</span>
 <span class="sd">    model and its use in Bayesian optimization.</span>
@@ -260,7 +262,9 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">x_basic</span><span class="p">,</span> <span class="n">task_idcs</span>
 
-<div class="viewcode-block" id="MultiTaskGP.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.MultiTaskGP.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
+<div class="viewcode-block" id="MultiTaskGP.forward">
+<a class="viewcode-back" href="../../../models.html#botorch.models.multitask.MultiTaskGP.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
             <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">x_basic</span><span class="p">,</span> <span class="n">task_idcs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_inputs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
@@ -273,7 +277,10 @@
         <span class="n">covar</span> <span class="o">=</span> <span class="n">covar_x</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">covar_i</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean_x</span><span class="p">,</span> <span class="n">covar</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="MultiTaskGP.get_all_tasks"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.MultiTaskGP.get_all_tasks">[docs]</a>    <span class="nd">@classmethod</span>
+
+<div class="viewcode-block" id="MultiTaskGP.get_all_tasks">
+<a class="viewcode-back" href="../../../models.html#botorch.models.multitask.MultiTaskGP.get_all_tasks">[docs]</a>
+    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">get_all_tasks</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -291,10 +298,13 @@
         <span class="n">all_tasks</span> <span class="o">=</span> <span class="n">train_X</span><span class="p">[:,</span> <span class="n">task_feature</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">all_tasks</span><span class="p">,</span> <span class="n">task_feature</span><span class="p">,</span> <span class="n">d</span></div>
 
-<div class="viewcode-block" id="MultiTaskGP.construct_inputs"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.MultiTaskGP.construct_inputs">[docs]</a>    <span class="nd">@classmethod</span>
+
+<div class="viewcode-block" id="MultiTaskGP.construct_inputs">
+<a class="viewcode-back" href="../../../models.html#botorch.models.multitask.MultiTaskGP.construct_inputs">[docs]</a>
+    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
-        <span class="n">training_data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SupervisedDataset</span><span class="p">],</span>
+        <span class="n">training_data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">,</span> <span class="n">MultiTaskDataset</span><span class="p">],</span>
         <span class="n">task_feature</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">output_tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">task_covar_prior</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Prior</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -302,10 +312,10 @@
         <span class="n">rank</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct `Model` keyword arguments from dictionary of `SupervisedDataset`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct `Model` keyword arguments from a dataset and other args.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            training_data: Dictionary of `SupervisedDataset`.</span>
+<span class="sd">            training_data: A `SupervisedDataset` or a `MultiTaskDataset`.</span>
 <span class="sd">            task_feature: Column index of embedded task indicator features. For details,</span>
 <span class="sd">                see `parse_training_data`.</span>
 <span class="sd">            output_tasks: A list of task indices for which to compute model</span>
@@ -326,7 +336,7 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="n">prior_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"use_LKJ_prior"</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Currently only config for LKJ prior is supported."</span><span class="p">)</span>
 
-            <span class="n">num_tasks</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">training_data</span><span class="p">)</span>
+            <span class="n">num_tasks</span> <span class="o">=</span> <span class="n">training_data</span><span class="o">.</span><span class="n">X</span><span class="p">[</span><span class="n">task_feature</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
             <span class="n">sd_prior</span> <span class="o">=</span> <span class="n">GammaPrior</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">)</span>
             <span class="n">sd_prior</span><span class="o">.</span><span class="n">_event_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_tasks</span><span class="p">])</span>
             <span class="n">eta</span> <span class="o">=</span> <span class="n">prior_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"eta"</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
@@ -343,10 +353,14 @@
             <span class="s2">"output_tasks"</span><span class="p">:</span> <span class="n">output_tasks</span><span class="p">,</span>
             <span class="s2">"task_covar_prior"</span><span class="p">:</span> <span class="n">task_covar_prior</span><span class="p">,</span>
             <span class="s2">"rank"</span><span class="p">:</span> <span class="n">rank</span><span class="p">,</span>
-        <span class="p">}</span></div></div>
+        <span class="p">}</span></div>
+</div>
 
 
-<div class="viewcode-block" id="FixedNoiseMultiTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.FixedNoiseMultiTaskGP">[docs]</a><span class="k">class</span> <span class="nc">FixedNoiseMultiTaskGP</span><span class="p">(</span><span class="n">MultiTaskGP</span><span class="p">):</span>
+
+<div class="viewcode-block" id="FixedNoiseMultiTaskGP">
+<a class="viewcode-back" href="../../../models.html#botorch.models.multitask.FixedNoiseMultiTaskGP">[docs]</a>
+<span class="k">class</span> <span class="nc">FixedNoiseMultiTaskGP</span><span class="p">(</span><span class="n">MultiTaskGP</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Multi-Task GP model using an ICM kernel, with known observation noise.</span>
 
 <span class="sd">    DEPRECATED: Please use `MultiTaskGP` with `train_Yvar` instead.</span>
@@ -420,7 +434,10 @@
         <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="KroneckerMultiTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.KroneckerMultiTaskGP">[docs]</a><span class="k">class</span> <span class="nc">KroneckerMultiTaskGP</span><span class="p">(</span><span class="n">ExactGP</span><span class="p">,</span> <span class="n">GPyTorchModel</span><span class="p">,</span> <span class="n">FantasizeMixin</span><span class="p">):</span>
+
+<div class="viewcode-block" id="KroneckerMultiTaskGP">
+<a class="viewcode-back" href="../../../models.html#botorch.models.multitask.KroneckerMultiTaskGP">[docs]</a>
+<span class="k">class</span> <span class="nc">KroneckerMultiTaskGP</span><span class="p">(</span><span class="n">ExactGP</span><span class="p">,</span> <span class="n">GPyTorchModel</span><span class="p">,</span> <span class="n">FantasizeMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Multi-task GP with Kronecker structure, using an ICM kernel.</span>
 
 <span class="sd">    This model assumes the "block design" case, i.e., it requires that all tasks</span>
@@ -552,13 +569,16 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">input_transform</span> <span class="o">=</span> <span class="n">input_transform</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
 
-<div class="viewcode-block" id="KroneckerMultiTaskGP.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.KroneckerMultiTaskGP.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">:</span>
+<div class="viewcode-block" id="KroneckerMultiTaskGP.forward">
+<a class="viewcode-back" href="../../../models.html#botorch.models.multitask.KroneckerMultiTaskGP.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
             <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 
         <span class="n">mean_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="n">covar_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">(</span><span class="n">mean_x</span><span class="p">,</span> <span class="n">covar_x</span><span class="p">)</span></div>
+
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">_task_covar_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -595,7 +615,9 @@
 
         <span class="k">return</span> <span class="n">train_solve</span>
 
-<div class="viewcode-block" id="KroneckerMultiTaskGP.posterior"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.KroneckerMultiTaskGP.posterior">[docs]</a>    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
+<div class="viewcode-block" id="KroneckerMultiTaskGP.posterior">
+<a class="viewcode-back" href="../../../models.html#botorch.models.multitask.KroneckerMultiTaskGP.posterior">[docs]</a>
+    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">output_indices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -807,7 +829,10 @@
             <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span><span class="o">.</span><span class="n">untransform_posterior</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">posterior</span></div>
 
-<div class="viewcode-block" id="KroneckerMultiTaskGP.train"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.KroneckerMultiTaskGP.train">[docs]</a>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+<div class="viewcode-block" id="KroneckerMultiTaskGP.train">
+<a class="viewcode-back" href="../../../models.html#botorch.models.multitask.KroneckerMultiTaskGP.train">[docs]</a>
+    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">val</span><span class="p">:</span>
             <span class="n">fixed_cache_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"data_data_roots"</span><span class="p">,</span> <span class="s2">"train_full_covar"</span><span class="p">,</span> <span class="s2">"task_root"</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">fixed_cache_names</span><span class="p">:</span>
@@ -816,7 +841,9 @@
                 <span class="k">except</span> <span class="n">CachingError</span><span class="p">:</span>
                     <span class="k">pass</span>
 
-        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

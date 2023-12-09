@@ -56,7 +56,9 @@
 <span class="n">EMPTY_SIZE</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="BotorchTestCase"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.BotorchTestCase">[docs]</a><span class="k">class</span> <span class="nc">BotorchTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+<div class="viewcode-block" id="BotorchTestCase">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.BotorchTestCase">[docs]</a>
+<span class="k">class</span> <span class="nc">BotorchTestCase</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Basic test case for Botorch.</span>
 
 <span class="sd">    This</span>
@@ -66,7 +68,9 @@
 
     <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"cpu"</span><span class="p">)</span>
 
-<div class="viewcode-block" id="BotorchTestCase.setUp"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.BotorchTestCase.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">suppress_input_warnings</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="BotorchTestCase.setUp">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.BotorchTestCase.setUp">[docs]</a>
+    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">suppress_input_warnings</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">resetwarnings</span><span class="p">()</span>
         <span class="n">settings</span><span class="o">.</span><span class="n">debug</span><span class="o">.</span><span class="n">_set_state</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"always"</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -92,7 +96,10 @@
                 <span class="n">category</span><span class="o">=</span><span class="n">InputDataWarning</span><span class="p">,</span>
             <span class="p">)</span></div>
 
-<div class="viewcode-block" id="BotorchTestCase.assertAllClose"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.BotorchTestCase.assertAllClose">[docs]</a>    <span class="k">def</span> <span class="nf">assertAllClose</span><span class="p">(</span>
+
+<div class="viewcode-block" id="BotorchTestCase.assertAllClose">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.BotorchTestCase.assertAllClose">[docs]</a>
+    <span class="k">def</span> <span class="nf">assertAllClose</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
         <span class="n">other</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
@@ -120,11 +127,17 @@
             <span class="n">rtol</span><span class="o">=</span><span class="n">rtol</span><span class="p">,</span>
             <span class="n">atol</span><span class="o">=</span><span class="n">atol</span><span class="p">,</span>
             <span class="n">equal_nan</span><span class="o">=</span><span class="n">equal_nan</span><span class="p">,</span>
-        <span class="p">)</span></div></div>
+        <span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="BaseTestProblemTestCaseMixIn"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.BaseTestProblemTestCaseMixIn">[docs]</a><span class="k">class</span> <span class="nc">BaseTestProblemTestCaseMixIn</span><span class="p">:</span>
-<div class="viewcode-block" id="BaseTestProblemTestCaseMixIn.test_forward"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.BaseTestProblemTestCaseMixIn.test_forward">[docs]</a>    <span class="k">def</span> <span class="nf">test_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BaseTestProblemTestCaseMixIn">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.BaseTestProblemTestCaseMixIn">[docs]</a>
+<span class="k">class</span> <span class="nc">BaseTestProblemTestCaseMixIn</span><span class="p">:</span>
+<div class="viewcode-block" id="BaseTestProblemTestCaseMixIn.test_forward">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.BaseTestProblemTestCaseMixIn.test_forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">batch_shape</span> <span class="ow">in</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">(),</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">2</span><span class="p">]),</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])):</span>
                 <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">functions</span><span class="p">:</span>
@@ -140,6 +153,7 @@
                     <span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">batch_shape</span> <span class="o">+</span> <span class="n">tail_shape</span><span class="p">)</span></div>
 
+
     <span class="nd">@abstractproperty</span>
     <span class="k">def</span> <span class="nf">functions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseTestProblem</span><span class="p">]:</span>
         <span class="c1"># The functions that should be tested. Typically defined as a class</span>
@@ -147,8 +161,13 @@
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
 
 
-<div class="viewcode-block" id="SyntheticTestFunctionTestCaseMixin"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.SyntheticTestFunctionTestCaseMixin">[docs]</a><span class="k">class</span> <span class="nc">SyntheticTestFunctionTestCaseMixin</span><span class="p">:</span>
-<div class="viewcode-block" id="SyntheticTestFunctionTestCaseMixin.test_optimal_value"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.SyntheticTestFunctionTestCaseMixin.test_optimal_value">[docs]</a>    <span class="k">def</span> <span class="nf">test_optimal_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SyntheticTestFunctionTestCaseMixin">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.SyntheticTestFunctionTestCaseMixin">[docs]</a>
+<span class="k">class</span> <span class="nc">SyntheticTestFunctionTestCaseMixin</span><span class="p">:</span>
+<div class="viewcode-block" id="SyntheticTestFunctionTestCaseMixin.test_optimal_value">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.SyntheticTestFunctionTestCaseMixin.test_optimal_value">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_optimal_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">functions</span><span class="p">:</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
@@ -159,7 +178,10 @@
                 <span class="k">except</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
                     <span class="k">pass</span></div>
 
-<div class="viewcode-block" id="SyntheticTestFunctionTestCaseMixin.test_optimizer"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.SyntheticTestFunctionTestCaseMixin.test_optimizer">[docs]</a>    <span class="k">def</span> <span class="nf">test_optimizer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SyntheticTestFunctionTestCaseMixin.test_optimizer">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.SyntheticTestFunctionTestCaseMixin.test_optimizer">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_optimizer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">functions</span><span class="p">:</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
@@ -173,17 +195,26 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">assertAllClose</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">res_exp</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">_check_grad_at_opt</span><span class="p">:</span>
                     <span class="n">grad</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">([</span><span class="o">*</span><span class="n">res</span><span class="p">],</span> <span class="n">Xopt</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">assertLess</span><span class="p">(</span><span class="n">grad</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="mf">1e-3</span><span class="p">)</span></div></div>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">assertLess</span><span class="p">(</span><span class="n">grad</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="mf">1e-3</span><span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="MultiObjectiveTestProblemTestCaseMixin"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin">[docs]</a><span class="k">class</span> <span class="nc">MultiObjectiveTestProblemTestCaseMixin</span><span class="p">:</span>
-<div class="viewcode-block" id="MultiObjectiveTestProblemTestCaseMixin.test_attributes"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin.test_attributes">[docs]</a>    <span class="k">def</span> <span class="nf">test_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="MultiObjectiveTestProblemTestCaseMixin">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin">[docs]</a>
+<span class="k">class</span> <span class="nc">MultiObjectiveTestProblemTestCaseMixin</span><span class="p">:</span>
+<div class="viewcode-block" id="MultiObjectiveTestProblemTestCaseMixin.test_attributes">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin.test_attributes">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">functions</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">"dim"</span><span class="p">))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">"num_objectives"</span><span class="p">))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">dim</span><span class="p">]))</span></div>
 
-<div class="viewcode-block" id="MultiObjectiveTestProblemTestCaseMixin.test_max_hv"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin.test_max_hv">[docs]</a>    <span class="k">def</span> <span class="nf">test_max_hv</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="MultiObjectiveTestProblemTestCaseMixin.test_max_hv">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin.test_max_hv">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_max_hv</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">functions</span><span class="p">:</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
@@ -193,7 +224,10 @@
                 <span class="k">else</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">max_hv</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">_max_hv</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="MultiObjectiveTestProblemTestCaseMixin.test_ref_point"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin.test_ref_point">[docs]</a>    <span class="k">def</span> <span class="nf">test_ref_point</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="MultiObjectiveTestProblemTestCaseMixin.test_ref_point">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin.test_ref_point">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_ref_point</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">functions</span><span class="p">:</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
@@ -202,15 +236,24 @@
                         <span class="n">f</span><span class="o">.</span><span class="n">ref_point</span><span class="p">,</span>
                         <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">_ref_point</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
                     <span class="p">)</span>
-                <span class="p">)</span></div></div>
+                <span class="p">)</span></div>
+</div>
 
 
-<div class="viewcode-block" id="ConstrainedTestProblemTestCaseMixin"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.ConstrainedTestProblemTestCaseMixin">[docs]</a><span class="k">class</span> <span class="nc">ConstrainedTestProblemTestCaseMixin</span><span class="p">:</span>
-<div class="viewcode-block" id="ConstrainedTestProblemTestCaseMixin.test_num_constraints"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.ConstrainedTestProblemTestCaseMixin.test_num_constraints">[docs]</a>    <span class="k">def</span> <span class="nf">test_num_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ConstrainedTestProblemTestCaseMixin">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.ConstrainedTestProblemTestCaseMixin">[docs]</a>
+<span class="k">class</span> <span class="nc">ConstrainedTestProblemTestCaseMixin</span><span class="p">:</span>
+<div class="viewcode-block" id="ConstrainedTestProblemTestCaseMixin.test_num_constraints">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.ConstrainedTestProblemTestCaseMixin.test_num_constraints">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_num_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">functions</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">"num_constraints"</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="ConstrainedTestProblemTestCaseMixin.test_evaluate_slack_true"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.ConstrainedTestProblemTestCaseMixin.test_evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">test_evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ConstrainedTestProblemTestCaseMixin.test_evaluate_slack_true">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.ConstrainedTestProblemTestCaseMixin.test_evaluate_slack_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">test_evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">functions</span><span class="p">:</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
@@ -219,10 +262,14 @@
                     <span class="n">bounds</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">slack</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">evaluate_slack_true</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">slack</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">num_constraints</span><span class="p">]))</span></div></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">slack</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">num_constraints</span><span class="p">]))</span></div>
+</div>
 
 
-<div class="viewcode-block" id="MockPosterior"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MockPosterior">[docs]</a><span class="k">class</span> <span class="nc">MockPosterior</span><span class="p">(</span><span class="n">Posterior</span><span class="p">):</span>
+
+<div class="viewcode-block" id="MockPosterior">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MockPosterior">[docs]</a>
+<span class="k">class</span> <span class="nc">MockPosterior</span><span class="p">(</span><span class="n">Posterior</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Mock object that implements dummy methods and feeds through specified outputs"""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -295,7 +342,9 @@
     <span class="k">def</span> <span class="nf">variance</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variance</span>
 
-<div class="viewcode-block" id="MockPosterior.rsample"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MockPosterior.rsample">[docs]</a>    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span>
+<div class="viewcode-block" id="MockPosterior.rsample">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MockPosterior.rsample">[docs]</a>
+    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">base_samples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -310,12 +359,17 @@
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"sample_shape disagrees with base_samples."</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_samples</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">sample_shape</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="MockPosterior.rsample_from_base_samples"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MockPosterior.rsample_from_base_samples">[docs]</a>    <span class="k">def</span> <span class="nf">rsample_from_base_samples</span><span class="p">(</span>
+
+<div class="viewcode-block" id="MockPosterior.rsample_from_base_samples">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MockPosterior.rsample_from_base_samples">[docs]</a>
+    <span class="k">def</span> <span class="nf">rsample_from_base_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
         <span class="n">base_samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">base_samples</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">base_samples</span><span class="p">)</span></div>
+</div>
+
 
 
 <span class="nd">@GetSampler</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">MockPosterior</span><span class="p">)</span>
@@ -326,14 +380,18 @@
     <span class="k">return</span> <span class="n">StochasticSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="MockModel"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MockModel">[docs]</a><span class="k">class</span> <span class="nc">MockModel</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="n">FantasizeMixin</span><span class="p">):</span>
+<div class="viewcode-block" id="MockModel">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MockModel">[docs]</a>
+<span class="k">class</span> <span class="nc">MockModel</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="n">FantasizeMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Mock object that implements dummy methods and feeds through specified outputs"""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">MockPosterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: D107</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_posterior</span> <span class="o">=</span> <span class="n">posterior</span>
 
-<div class="viewcode-block" id="MockModel.posterior"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MockModel.posterior">[docs]</a>    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
+<div class="viewcode-block" id="MockModel.posterior">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MockModel.posterior">[docs]</a>
+    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">output_indices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -345,6 +403,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_posterior</span></div>
 
+
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">num_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="n">extended_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_posterior</span><span class="o">.</span><span class="n">_extended_shape</span><span class="p">()</span>
@@ -355,16 +414,25 @@
         <span class="n">extended_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_posterior</span><span class="o">.</span><span class="n">_extended_shape</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">extended_shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
 
-<div class="viewcode-block" id="MockModel.state_dict"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MockModel.state_dict">[docs]</a>    <span class="k">def</span> <span class="nf">state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="MockModel.state_dict">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MockModel.state_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">pass</span></div>
 
-<div class="viewcode-block" id="MockModel.load_state_dict"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MockModel.load_state_dict">[docs]</a>    <span class="k">def</span> <span class="nf">load_state_dict</span><span class="p">(</span>
+
+<div class="viewcode-block" id="MockModel.load_state_dict">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MockModel.load_state_dict">[docs]</a>
+    <span class="k">def</span> <span class="nf">load_state_dict</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OrderedDict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">pass</span></div></div>
+        <span class="k">pass</span></div>
+</div>
 
 
-<div class="viewcode-block" id="MockAcquisitionFunction"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MockAcquisitionFunction">[docs]</a><span class="k">class</span> <span class="nc">MockAcquisitionFunction</span><span class="p">:</span>
+
+<div class="viewcode-block" id="MockAcquisitionFunction">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MockAcquisitionFunction">[docs]</a>
+<span class="k">class</span> <span class="nc">MockAcquisitionFunction</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Mock acquisition function object that implements dummy methods."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c1"># noqa: D107</span>
@@ -374,8 +442,12 @@
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
 
-<div class="viewcode-block" id="MockAcquisitionFunction.set_X_pending"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MockAcquisitionFunction.set_X_pending">[docs]</a>    <span class="k">def</span> <span class="nf">set_X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">X_pending</span> <span class="o">=</span> <span class="n">X_pending</span></div></div>
+<div class="viewcode-block" id="MockAcquisitionFunction.set_X_pending">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MockAcquisitionFunction.set_X_pending">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X_pending</span> <span class="o">=</span> <span class="n">X_pending</span></div>
+</div>
+
 
 
 <span class="k">def</span> <span class="nf">_get_random_data</span><span class="p">(</span>

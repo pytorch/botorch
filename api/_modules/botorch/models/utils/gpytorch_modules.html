@@ -38,7 +38,9 @@
 <span class="n">MIN_INFERRED_NOISE_LEVEL</span> <span class="o">=</span> <span class="mf">1e-4</span>
 
 
-<div class="viewcode-block" id="get_matern_kernel_with_gamma_prior"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.gpytorch_modules.get_matern_kernel_with_gamma_prior">[docs]</a><span class="k">def</span> <span class="nf">get_matern_kernel_with_gamma_prior</span><span class="p">(</span>
+<div class="viewcode-block" id="get_matern_kernel_with_gamma_prior">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.utils.gpytorch_modules.get_matern_kernel_with_gamma_prior">[docs]</a>
+<span class="k">def</span> <span class="nf">get_matern_kernel_with_gamma_prior</span><span class="p">(</span>
     <span class="n">ard_num_dims</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">batch_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ScaleKernel</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Constructs the Scale-Matern kernel that is used by default by</span>
@@ -57,7 +59,10 @@
     <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="get_gaussian_likelihood_with_gamma_prior"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.gpytorch_modules.get_gaussian_likelihood_with_gamma_prior">[docs]</a><span class="k">def</span> <span class="nf">get_gaussian_likelihood_with_gamma_prior</span><span class="p">(</span>
+
+<div class="viewcode-block" id="get_gaussian_likelihood_with_gamma_prior">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.utils.gpytorch_modules.get_gaussian_likelihood_with_gamma_prior">[docs]</a>
+<span class="k">def</span> <span class="nf">get_gaussian_likelihood_with_gamma_prior</span><span class="p">(</span>
     <span class="n">batch_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GaussianLikelihood</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Constructs the GaussianLikelihood that is used by default by</span>
@@ -76,6 +81,7 @@
             <span class="n">initial_value</span><span class="o">=</span><span class="n">noise_prior_mode</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">)</span></div>
+
 </pre></div>
 </div>
 </div>

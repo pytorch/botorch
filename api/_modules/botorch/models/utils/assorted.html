@@ -67,7 +67,9 @@
     <span class="p">)</span>
 
 
-<div class="viewcode-block" id="multioutput_to_batch_mode_transform"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.multioutput_to_batch_mode_transform">[docs]</a><span class="k">def</span> <span class="nf">multioutput_to_batch_mode_transform</span><span class="p">(</span>
+<div class="viewcode-block" id="multioutput_to_batch_mode_transform">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.multioutput_to_batch_mode_transform">[docs]</a>
+<span class="k">def</span> <span class="nf">multioutput_to_batch_mode_transform</span><span class="p">(</span>
     <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">num_outputs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -107,7 +109,10 @@
     <span class="k">return</span> <span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span></div>
 
 
-<div class="viewcode-block" id="add_output_dim"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.add_output_dim">[docs]</a><span class="k">def</span> <span class="nf">add_output_dim</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">original_batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+
+<div class="viewcode-block" id="add_output_dim">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.add_output_dim">[docs]</a>
+<span class="k">def</span> <span class="nf">add_output_dim</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">original_batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Insert the output dimension at the correct location.</span>
 
 <span class="sd">    The trailing batch dimensions of X must match the original batch dimensions</span>
@@ -134,7 +139,8 @@
         <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                 <span class="s2">"The trailing batch dimensions of X must match the trailing "</span>
-                <span class="s2">"batch dimensions of the training inputs."</span>
+                <span class="sa">f</span><span class="s2">"batch dimensions of the training inputs. Got </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="si">=}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"and </span><span class="si">{</span><span class="n">original_batch_shape</span><span class="si">=}</span><span class="s2">."</span>
             <span class="p">)</span>
     <span class="c1"># insert `m` dimension</span>
     <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span>
@@ -142,7 +148,10 @@
     <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">output_dim_idx</span></div>
 
 
-<div class="viewcode-block" id="check_no_nans"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.check_no_nans">[docs]</a><span class="k">def</span> <span class="nf">check_no_nans</span><span class="p">(</span><span class="n">Z</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+<div class="viewcode-block" id="check_no_nans">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.check_no_nans">[docs]</a>
+<span class="k">def</span> <span class="nf">check_no_nans</span><span class="p">(</span><span class="n">Z</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Check that tensor does not contain NaN values.</span>
 
 <span class="sd">    Raises an InputDataError if `Z` contains NaN values.</span>
@@ -154,7 +163,10 @@
         <span class="k">raise</span> <span class="n">InputDataError</span><span class="p">(</span><span class="s2">"Input data contains NaN values."</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="check_min_max_scaling"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.check_min_max_scaling">[docs]</a><span class="k">def</span> <span class="nf">check_min_max_scaling</span><span class="p">(</span>
+
+<div class="viewcode-block" id="check_min_max_scaling">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.check_min_max_scaling">[docs]</a>
+<span class="k">def</span> <span class="nf">check_min_max_scaling</span><span class="p">(</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">,</span>
@@ -196,7 +208,10 @@
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">InputDataWarning</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="check_standardization"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.check_standardization">[docs]</a><span class="k">def</span> <span class="nf">check_standardization</span><span class="p">(</span>
+
+<div class="viewcode-block" id="check_standardization">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.check_standardization">[docs]</a>
+<span class="k">def</span> <span class="nf">check_standardization</span><span class="p">(</span>
     <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">atol_mean</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">,</span>
     <span class="n">atol_std</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">,</span>
@@ -224,7 +239,10 @@
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">InputDataWarning</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="validate_input_scaling"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.validate_input_scaling">[docs]</a><span class="k">def</span> <span class="nf">validate_input_scaling</span><span class="p">(</span>
+
+<div class="viewcode-block" id="validate_input_scaling">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.validate_input_scaling">[docs]</a>
+<span class="k">def</span> <span class="nf">validate_input_scaling</span><span class="p">(</span>
     <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -269,7 +287,10 @@
     <span class="n">check_standardization</span><span class="p">(</span><span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">raise_on_fail</span><span class="o">=</span><span class="n">raise_on_fail</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="mod_batch_shape"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.mod_batch_shape">[docs]</a><span class="k">def</span> <span class="nf">mod_batch_shape</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">b</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+<div class="viewcode-block" id="mod_batch_shape">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.mod_batch_shape">[docs]</a>
+<span class="k">def</span> <span class="nf">mod_batch_shape</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">b</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Recursive helper to modify gpytorch modules' batch shape attribute.</span>
 
 <span class="sd">    Modifies the module in-place.</span>
@@ -291,7 +312,10 @@
         <span class="n">mod_batch_shape</span><span class="p">(</span><span class="n">module</span><span class="o">=</span><span class="n">m</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">names</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="gpt_posterior_settings"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.gpt_posterior_settings">[docs]</a><span class="nd">@contextmanager</span>
+
+<div class="viewcode-block" id="gpt_posterior_settings">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.gpt_posterior_settings">[docs]</a>
+<span class="nd">@contextmanager</span>
 <span class="k">def</span> <span class="nf">gpt_posterior_settings</span><span class="p">():</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Context manager for settings used for computing model posteriors."""</span>
     <span class="k">with</span> <span class="n">ExitStack</span><span class="p">()</span> <span class="k">as</span> <span class="n">es</span><span class="p">:</span>
@@ -305,7 +329,10 @@
         <span class="k">yield</span></div>
 
 
-<div class="viewcode-block" id="detect_duplicates"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.detect_duplicates">[docs]</a><span class="k">def</span> <span class="nf">detect_duplicates</span><span class="p">(</span>
+
+<div class="viewcode-block" id="detect_duplicates">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.detect_duplicates">[docs]</a>
+<span class="k">def</span> <span class="nf">detect_duplicates</span><span class="p">(</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">rtol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">,</span>
@@ -339,7 +366,10 @@
     <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="consolidate_duplicates"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.consolidate_duplicates">[docs]</a><span class="k">def</span> <span class="nf">consolidate_duplicates</span><span class="p">(</span>
+
+<div class="viewcode-block" id="consolidate_duplicates">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.consolidate_duplicates">[docs]</a>
+<span class="k">def</span> <span class="nf">consolidate_duplicates</span><span class="p">(</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">rtol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Drop duplicated Xs and update the indices tensor Y accordingly.</span>
@@ -395,9 +425,13 @@
         <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="fantasize"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.fantasize">[docs]</a><span class="k">class</span> <span class="nc">fantasize</span><span class="p">(</span><span class="n">_Flag</span><span class="p">):</span>
+
+<div class="viewcode-block" id="fantasize">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.fantasize">[docs]</a>
+<span class="k">class</span> <span class="nc">fantasize</span><span class="p">(</span><span class="n">_Flag</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A flag denoting whether we are currently in a `fantasize` context."""</span>
     <span class="n">_state</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
+
 </pre></div>
 </div>
 </div>

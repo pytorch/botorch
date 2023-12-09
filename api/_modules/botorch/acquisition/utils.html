@@ -42,7 +42,11 @@
     <span class="n">MCAcquisitionObjective</span><span class="p">,</span>
     <span class="n">PosteriorTransform</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">DeprecationError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BotorchTensorDimensionError</span><span class="p">,</span>
+    <span class="n">DeprecationError</span><span class="p">,</span>
+    <span class="n">UnsupportedError</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.models.fully_bayesian</span> <span class="kn">import</span> <span class="n">MCMC_DIM</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
@@ -50,17 +54,71 @@
 <span class="kn">from</span> <span class="nn">botorch.sampling.pathwise</span> <span class="kn">import</span> <span class="n">draw_matheron_paths</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.objective</span> <span class="kn">import</span> <span class="n">compute_feasibility_indicator</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">optimize_posterior_samples</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">is_fully_bayesian</span><span class="p">,</span> <span class="n">normalize_indices</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">is_ensemble</span><span class="p">,</span> <span class="n">normalize_indices</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="get_acquisition_function"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.get_acquisition_function">[docs]</a><span class="k">def</span> <span class="nf">get_acquisition_function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="get_acquisition_function">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.get_acquisition_function">[docs]</a>
+<span class="k">def</span> <span class="nf">get_acquisition_function</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="k">raise</span> <span class="n">DeprecationError</span><span class="p">(</span>
         <span class="s2">"`get_acquisition_function` has been moved to `botorch.acquisition.factory`."</span>
     <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="compute_best_feasible_objective"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.compute_best_feasible_objective">[docs]</a><span class="k">def</span> <span class="nf">compute_best_feasible_objective</span><span class="p">(</span>
+
+<div class="viewcode-block" id="repeat_to_match_aug_dim">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.repeat_to_match_aug_dim">[docs]</a>
+<span class="k">def</span> <span class="nf">repeat_to_match_aug_dim</span><span class="p">(</span><span class="n">target_tensor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">reference_tensor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Repeat target_tensor until it has the same first dimension as reference_tensor</span>
+<span class="sd">    This works regardless of the batch shapes and q.</span>
+<span class="sd">    This is useful as we sometimes modify sample shapes such as in LearnedObjective.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        target_tensor: A `sample_size x batch_shape x q x m`-dim Tensor</span>
+<span class="sd">        reference_tensor: A `(augmented_sample * sample_size) x batch_shape x q`-dim</span>
+<span class="sd">            Tensor. `augmented_sample` could be 1.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The content of `target_tensor` potentially repeated so that its first dimension</span>
+<span class="sd">        matches that of `reference_tensor`.</span>
+<span class="sd">        The shape will be `(augmented_sample * sample_size) x batch_shape x q x m`.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; import torch</span>
+<span class="sd">        &gt;&gt;&gt; target_tensor = torch.arange(3).repeat(2, 1).T</span>
+<span class="sd">        &gt;&gt;&gt; target_tensor</span>
+<span class="sd">        tensor([[0, 0],</span>
+<span class="sd">                [1, 1],</span>
+<span class="sd">                [2, 2]])</span>
+<span class="sd">        &gt;&gt;&gt; repeat_to_match_aug_dim(target_tensor, torch.zeros(6))</span>
+<span class="sd">        tensor([[0, 0],</span>
+<span class="sd">                [1, 1],</span>
+<span class="sd">                [2, 2],</span>
+<span class="sd">                [0, 0],</span>
+<span class="sd">                [1, 1],</span>
+<span class="sd">                [2, 2]])</span>
+<span class="sd">    """</span>
+    <span class="n">augmented_sample_num</span><span class="p">,</span> <span class="n">remainder</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span>
+        <span class="n">reference_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">target_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">remainder</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"The first dimension of reference_tensor must "</span>
+            <span class="s2">"be a multiple of target_tensor's."</span>
+        <span class="p">)</span>
+
+    <span class="c1"># using repeat here as obj might be constructed as</span>
+    <span class="c1"># obj.reshape(-1, *samples.shape[2:]) where the first 2 dimensions are</span>
+    <span class="c1"># of shape `augmented_samples x sample_shape`.</span>
+    <span class="n">repeat_size</span> <span class="o">=</span> <span class="p">(</span><span class="n">augmented_sample_num</span><span class="p">,)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)</span> <span class="o">*</span> <span class="p">(</span><span class="n">target_tensor</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">target_tensor</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="o">*</span><span class="n">repeat_size</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="compute_best_feasible_objective">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.compute_best_feasible_objective">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_best_feasible_objective</span><span class="p">(</span>
     <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]],</span>
@@ -128,9 +186,13 @@
             <span class="n">X</span><span class="o">=</span><span class="n">X_baseline</span><span class="p">,</span>
         <span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
 
+    <span class="n">is_feasible</span> <span class="o">=</span> <span class="n">repeat_to_match_aug_dim</span><span class="p">(</span>
+        <span class="n">target_tensor</span><span class="o">=</span><span class="n">is_feasible</span><span class="p">,</span> <span class="n">reference_tensor</span><span class="o">=</span><span class="n">obj</span>
+    <span class="p">)</span>
     <span class="n">obj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">is_feasible</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">infeasible_value</span><span class="p">)</span>
     <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
         <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
 
 
 <span class="k">def</span> <span class="nf">_estimate_objective_lower_bound</span><span class="p">(</span>
@@ -170,7 +232,9 @@
     <span class="p">)</span>
 
 
-<div class="viewcode-block" id="get_infeasible_cost"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.get_infeasible_cost">[docs]</a><span class="k">def</span> <span class="nf">get_infeasible_cost</span><span class="p">(</span>
+<div class="viewcode-block" id="get_infeasible_cost">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.get_infeasible_cost">[docs]</a>
+<span class="k">def</span> <span class="nf">get_infeasible_cost</span><span class="p">(</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -212,7 +276,10 @@
     <span class="k">return</span> <span class="o">-</span><span class="p">(</span><span class="n">lb</span><span class="o">.</span><span class="n">clamp_max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="prune_inferior_points"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.prune_inferior_points">[docs]</a><span class="k">def</span> <span class="nf">prune_inferior_points</span><span class="p">(</span>
+
+<div class="viewcode-block" id="prune_inferior_points">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.prune_inferior_points">[docs]</a>
+<span class="k">def</span> <span class="nf">prune_inferior_points</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -260,7 +327,7 @@
 <span class="sd">        with `N_nz` the number of points in `X` that have non-zero (empirical,</span>
 <span class="sd">        under `num_samples` samples) probability of being the best point.</span>
 <span class="sd">    """</span>
-    <span class="k">if</span> <span class="n">marginalize_dim</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">is_fully_bayesian</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">marginalize_dim</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">is_ensemble</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
         <span class="c1"># TODO: Properly deal with marginalizing fully Bayesian models</span>
         <span class="n">marginalize_dim</span> <span class="o">=</span> <span class="n">MCMC_DIM</span>
 
@@ -317,22 +384,32 @@
     <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">idcs</span><span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="project_to_target_fidelity"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.project_to_target_fidelity">[docs]</a><span class="k">def</span> <span class="nf">project_to_target_fidelity</span><span class="p">(</span>
-    <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">target_fidelities</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="project_to_target_fidelity">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.project_to_target_fidelity">[docs]</a>
+<span class="k">def</span> <span class="nf">project_to_target_fidelity</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">target_fidelities</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">d</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Project `X` onto the target set of fidelities.</span>
 
 <span class="sd">    This function assumes that the set of feasible fidelities is a box, so</span>
 <span class="sd">    projecting here just means setting each fidelity parameter to its target</span>
-<span class="sd">    value.</span>
+<span class="sd">    value. If X does not contain the fidelity dimensions, this will insert</span>
+<span class="sd">    them and set them to their target values.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        X: A `batch_shape x q x d`-dim Tensor of with `q` `d`-dim design points</span>
-<span class="sd">            for each t-batch.</span>
+<span class="sd">        X: A `batch_shape x q x (d or d-d_f)`-dim Tensor of with `q` `d` or</span>
+<span class="sd">            `d-d_f`-dim design points for each t-batch, where d_f is the</span>
+<span class="sd">            number of fidelity dimensions. If the argument `d` is not provided,</span>
+<span class="sd">            `X` must include the fidelity dimensions and have a trailing`X` must</span>
+<span class="sd">            include the fidelity dimensions and have a trailing</span>
 <span class="sd">        target_fidelities: A dictionary mapping a subset of columns of `X` (the</span>
 <span class="sd">            fidelity parameters) to their respective target fidelity value. If</span>
 <span class="sd">            omitted, assumes that the last column of X is the fidelity parameter</span>
 <span class="sd">            with a target value of 1.0.</span>
+<span class="sd">        d: The total dimension `d`.</span>
 
 <span class="sd">    Return:</span>
 <span class="sd">        A `batch_shape x q x d`-dim Tensor `X_proj` with fidelity parameters</span>
@@ -340,19 +417,43 @@
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">target_fidelities</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">target_fidelities</span> <span class="o">=</span> <span class="p">{</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span>
-    <span class="n">d</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># assume X contains the fidelity dimensions</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="c1"># normalize to positive indices</span>
     <span class="n">tfs</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span> <span class="k">if</span> <span class="n">k</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">d</span> <span class="o">+</span> <span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">target_fidelities</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
     <span class="n">ones</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-    <span class="c1"># here we're looping through the feature dimension of X - this could be</span>
-    <span class="c1"># slow for large `d`, we should optimize this for that case</span>
-    <span class="n">X_proj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
-        <span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tfs</span> <span class="k">else</span> <span class="n">tfs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">ones</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
-    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">d</span><span class="p">:</span>
+        <span class="c1"># X contains fidelity dimensions</span>
+        <span class="c1"># here we're looping through the feature dimension of X - this could be</span>
+        <span class="c1"># slow for large `d`, we should optimize this for that case</span>
+        <span class="n">X_proj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tfs</span> <span class="k">else</span> <span class="n">tfs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">ones</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">d</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">target_fidelities</span><span class="p">):</span>
+        <span class="c1"># need to insert fidelity dimensions</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">X_idx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tfs</span><span class="p">:</span>
+                <span class="n">cols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">X_idx</span><span class="p">])</span>
+                <span class="n">X_idx</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tfs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">ones</span><span class="p">)</span>
+        <span class="n">X_proj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">BotorchTensorDimensionError</span><span class="p">(</span>
+            <span class="s2">"X must have a last dimension with size `d` or `d-d_f`,"</span>
+            <span class="sa">f</span><span class="s2">" but got </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">."</span>
+        <span class="p">)</span>
+
     <span class="k">return</span> <span class="n">X_proj</span></div>
 
 
-<div class="viewcode-block" id="expand_trace_observations"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.expand_trace_observations">[docs]</a><span class="k">def</span> <span class="nf">expand_trace_observations</span><span class="p">(</span>
+
+<div class="viewcode-block" id="expand_trace_observations">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.expand_trace_observations">[docs]</a>
+<span class="k">def</span> <span class="nf">expand_trace_observations</span><span class="p">(</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">fidelity_dims</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">num_trace_obs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Expand `X` with trace observations.</span>
@@ -405,7 +506,10 @@
     <span class="k">return</span> <span class="n">scale_fac</span> <span class="o">*</span> <span class="n">X_expanded</span></div>
 
 
-<div class="viewcode-block" id="project_to_sample_points"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.project_to_sample_points">[docs]</a><span class="k">def</span> <span class="nf">project_to_sample_points</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sample_points</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+<div class="viewcode-block" id="project_to_sample_points">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.project_to_sample_points">[docs]</a>
+<span class="k">def</span> <span class="nf">project_to_sample_points</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sample_points</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Augment `X` with sample points at which to take weighted average.</span>
 
 <span class="sd">    Args:</span>
@@ -424,7 +528,10 @@
     <span class="k">return</span> <span class="n">X_new</span></div>
 
 
-<div class="viewcode-block" id="get_optimal_samples"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.get_optimal_samples">[docs]</a><span class="k">def</span> <span class="nf">get_optimal_samples</span><span class="p">(</span>
+
+<div class="viewcode-block" id="get_optimal_samples">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.get_optimal_samples">[docs]</a>
+<span class="k">def</span> <span class="nf">get_optimal_samples</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">num_optima</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -458,6 +565,7 @@
         <span class="n">maximize</span><span class="o">=</span><span class="n">maximize</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">optimal_inputs</span><span class="p">,</span> <span class="n">optimal_outputs</span></div>
+
 </pre></div>
 </div>
 </div>

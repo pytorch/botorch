@@ -60,7 +60,9 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="MOMF"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_fidelity.MOMF">[docs]</a><span class="k">class</span> <span class="nc">MOMF</span><span class="p">(</span><span class="n">qExpectedHypervolumeImprovement</span><span class="p">):</span>
+<div class="viewcode-block" id="MOMF">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_fidelity.MOMF">[docs]</a>
+<span class="k">class</span> <span class="nc">MOMF</span><span class="p">(</span><span class="n">qExpectedHypervolumeImprovement</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
@@ -159,14 +161,18 @@
         <span class="n">cost_aware_utility</span> <span class="o">=</span> <span class="n">InverseCostWeightedUtility</span><span class="p">(</span><span class="n">cost_model</span><span class="o">=</span><span class="n">cost_model</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cost_aware_utility</span> <span class="o">=</span> <span class="n">cost_aware_utility</span>
 
-<div class="viewcode-block" id="MOMF.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_fidelity.MOMF.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
+<div class="viewcode-block" id="MOMF.forward">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_fidelity.MOMF.forward">[docs]</a>
+    <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_posterior_samples</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
         <span class="n">hv_gain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_qehvi</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
         <span class="n">cost_weighted_qehvi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cost_aware_utility</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">deltas</span><span class="o">=</span><span class="n">hv_gain</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">cost_weighted_qehvi</span></div></div>
+        <span class="k">return</span> <span class="n">cost_weighted_qehvi</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

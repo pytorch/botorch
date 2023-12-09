@@ -72,14 +72,16 @@
 <span class="kn">from</span> <span class="nn">botorch.utils.objective</span> <span class="kn">import</span> <span class="n">compute_smoothed_feasibility_indicator</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">concatenate_pending_points</span><span class="p">,</span>
-    <span class="n">is_fully_bayesian</span><span class="p">,</span>
+    <span class="n">is_ensemble</span><span class="p">,</span>
     <span class="n">match_batch_shape</span><span class="p">,</span>
     <span class="n">t_batch_mode_transform</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="MultiObjectiveMCAcquisitionFunction"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction">[docs]</a><span class="k">class</span> <span class="nc">MultiObjectiveMCAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<div class="viewcode-block" id="MultiObjectiveMCAcquisitionFunction">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction">[docs]</a>
+<span class="k">class</span> <span class="nc">MultiObjectiveMCAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Abstract base class for Multi-Objective batch acquisition functions.</span>
 
 <span class="sd">    NOTE: This does not inherit from `MCAcquisitionFunction` to avoid circular imports.</span>
@@ -154,7 +156,9 @@
         <span class="k">if</span> <span class="n">X_pending</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span><span class="n">X_pending</span><span class="p">)</span>
 
-<div class="viewcode-block" id="MultiObjectiveMCAcquisitionFunction.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction.forward">[docs]</a>    <span class="nd">@abstractmethod</span>
+<div class="viewcode-block" id="MultiObjectiveMCAcquisitionFunction.forward">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction.forward">[docs]</a>
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Takes in a `batch_shape x q x d` X Tensor of t-batches with `q` `d`-dim</span>
 <span class="sd">        design points each, and returns a Tensor with shape `batch_shape'`, where</span>
@@ -162,10 +166,14 @@
 <span class="sd">        utilize the result of `set_X_pending` as needed to account for pending function</span>
 <span class="sd">        evaluations.</span>
 <span class="sd">        """</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div></div>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+</div>
 
 
-<div class="viewcode-block" id="qExpectedHypervolumeImprovement"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement">[docs]</a><span class="k">class</span> <span class="nc">qExpectedHypervolumeImprovement</span><span class="p">(</span>
+
+<div class="viewcode-block" id="qExpectedHypervolumeImprovement">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement">[docs]</a>
+<span class="k">class</span> <span class="nc">qExpectedHypervolumeImprovement</span><span class="p">(</span>
     <span class="n">MultiObjectiveMCAcquisitionFunction</span><span class="p">,</span> <span class="n">SubsetIndexCachingMixin</span>
 <span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -207,7 +215,7 @@
 <span class="sd">            constraints: A list of callables, each mapping a Tensor of dimension</span>
 <span class="sd">                `sample_shape x batch-shape x q x m` to a Tensor of dimension</span>
 <span class="sd">                `sample_shape x batch-shape x q`, where negative values imply</span>
-<span class="sd">                feasibility. The acqusition function will compute expected feasible</span>
+<span class="sd">                feasibility. The acquisition function will compute expected feasible</span>
 <span class="sd">                hypervolume.</span>
 <span class="sd">            X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points that have</span>
 <span class="sd">                points that have been submitted for function evaluation but have not yet</span>
@@ -314,7 +322,7 @@
             <span class="n">overlap_vertices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span>
                 <span class="n">overlap_vertices</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_upper_bounds</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">view_shape</span><span class="p">)</span>
             <span class="p">)</span>
-            <span class="c1"># substract cell lower bounds, clamp min at zero</span>
+            <span class="c1"># subtract cell lower bounds, clamp min at zero</span>
             <span class="n">lengths_i</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">overlap_vertices</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_lower_bounds</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">view_shape</span><span class="p">)</span>
             <span class="p">)</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
@@ -335,12 +343,16 @@
         <span class="c1"># sum over segments and average over MC samples</span>
         <span class="k">return</span> <span class="n">areas_per_segment</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-<div class="viewcode-block" id="qExpectedHypervolumeImprovement.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
+<div class="viewcode-block" id="qExpectedHypervolumeImprovement.forward">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement.forward">[docs]</a>
+    <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_posterior_samples</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_qehvi</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_qehvi</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span></div>
+</div>
+
 
 
 <span class="k">class</span> <span class="nc">qNoisyExpectedHypervolumeImprovement</span><span class="p">(</span>
@@ -393,7 +405,7 @@
 <span class="sd">            constraints: A list of callables, each mapping a Tensor of dimension</span>
 <span class="sd">                `sample_shape x batch-shape x q x m` to a Tensor of dimension</span>
 <span class="sd">                `sample_shape x batch-shape x q`, where negative values imply</span>
-<span class="sd">                feasibility. The acqusition function will compute expected feasible</span>
+<span class="sd">                feasibility. The acquisition function will compute expected feasible</span>
 <span class="sd">                hypervolume.</span>
 <span class="sd">            X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points that</span>
 <span class="sd">                have points that have been submitted for function evaluation, but</span>
@@ -476,7 +488,7 @@
         <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X_full</span><span class="p">)</span>
         <span class="c1"># Account for possible one-to-many transform and the MCMC batch dimension in</span>
         <span class="c1"># `SaasFullyBayesianSingleTaskGP`</span>
-        <span class="n">event_shape_lag</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">is_fully_bayesian</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span> <span class="k">else</span> <span class="mi">2</span>
+        <span class="n">event_shape_lag</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">is_ensemble</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span> <span class="k">else</span> <span class="mi">2</span>
         <span class="n">n_w</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">posterior</span><span class="o">.</span><span class="n">_extended_shape</span><span class="p">()[</span><span class="n">X_full</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">-</span> <span class="n">event_shape_lag</span><span class="p">]</span>
             <span class="o">//</span> <span class="n">X_full</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
