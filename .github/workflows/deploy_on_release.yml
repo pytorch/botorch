@@ -82,6 +82,8 @@ jobs:
     - name: Install dependencies
       shell: bash -l {0}
       run: |
+        # avoid conda bug in >=23.10.0: https://github.com/conda/conda/issues/13412
+        conda config --set solver classic
         conda install -y setuptools_scm conda-build conda-verify anaconda-client
         conda install -y scipy sphinx pytest flake8 multipledispatch
         conda install -y -c pytorch pytorch cpuonly
