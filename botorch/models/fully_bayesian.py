@@ -498,9 +498,8 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
         rest of this method will not run.
         """
         self._check_if_fitted()
-        x = X.unsqueeze(MCMC_DIM)
-        mean_x = self.mean_module(x)
-        covar_x = self.covar_module(x)
+        mean_x = self.mean_module(X)
+        covar_x = self.covar_module(X)
         return MultivariateNormal(mean_x, covar_x)
 
     # pyre-ignore[14]: Inconsistent override
@@ -534,7 +533,7 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
         """
         self._check_if_fitted()
         posterior = super().posterior(
-            X=X,
+            X=X.unsqueeze(MCMC_DIM),
             output_indices=output_indices,
             observation_noise=observation_noise,
             posterior_transform=posterior_transform,
@@ -542,3 +541,32 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
         )
         posterior = GaussianMixturePosterior(distribution=posterior.distribution)
         return posterior
+
+    def condition_on_observations(
+        self, X: Tensor, Y: Tensor, **kwargs: Any
+    ) -> BatchedMultiOutputGPyTorchModel:
+        """Conditions on additional observations for a Fully Bayesian model (either
+        identical across models or unique per-model).
+
+        Args:
+            X: (Tensor): A `(batch_shape) x num_samples x d`-dim Tensor, where `d` is
+                the dimension of the feature space and `batch_shape` is the number of
+                 sampled models.
+            Y (Tensor): A `(batch_shape) x num_samples x 1`-dim Tensor, where `d` is
+                the dimension of the feature space and `batch_shape` is the number of
+                 sampled models.
+
+        Returns:
+            BatchedMultiOutputGPyTorchModel: _description_
+        """
+        if X.ndim < 3 or Y.ndim < 3:
+            # The can either be thrown here or in GPyTorch, when the inference of the
+            # batch dimension fails since the training data by default does not have
+            # a batch shape.
+            raise ValueError(
+                "Conditioning in fully Bayesian models must contain a batch dimension."
+                "Add a batch dimension (the leading dim) with length matching the "
+                "number of hyperparameter sets to the conditioned data."
+            )
+
+        return super().condition_on_observations(X, Y, **kwargs)

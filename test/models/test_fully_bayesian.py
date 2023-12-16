@@ -124,6 +124,16 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             )
         return train_X, train_Y, train_Yvar, test_X
 
+    def _get_unnormalized_condition_data(
+        self, num_models: int, infer_noise: bool, **tkwargs
+    ):
+        with torch.random.fork_rng():
+            torch.manual_seed(0)
+            cond_X = 5 + 5 * torch.rand(num_models, 2, 4, **tkwargs)
+            cond_Y = 10 + torch.sin(cond_X[..., :1])
+            cond_Yvar = None if infer_noise else 0.1 * torch.ones(cond_Y.shape)
+        return cond_X, cond_Y, cond_Yvar
+
     def _get_mcmc_samples(
         self, num_samples: int, dim: int, infer_noise: bool, **tkwargs
     ):
@@ -654,6 +664,77 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                     model.pyro_model.train_Yvar,
                     train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL) / (sigma**2),
                     atol=5e-4,
+                )
+
+    def test_condition_on_observation(self):
+
+        num_models = 3
+        num_cond = 2
+        for infer_noise, dtype in itertools.product(
+            (True,), (torch.float, torch.double)
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            train_X, train_Y, train_Yvar, test_X = self._get_unnormalized_data(
+                infer_noise=infer_noise, **tkwargs
+            )
+            num_train, num_dims = train_X.shape
+            # condition on different observations per model to obtain num_models sets
+            # of training data
+            cond_X, cond_Y, cond_Yvar = self._get_unnormalized_condition_data(
+                num_models=num_models, infer_noise=infer_noise, **tkwargs
+            )
+            model = SaasFullyBayesianSingleTaskGP(
+                train_X=train_X,
+                train_Y=train_Y,
+                train_Yvar=train_Yvar,
+            )
+            mcmc_samples = self._get_mcmc_samples(
+                num_samples=num_models,
+                dim=train_X.shape[-1],
+                infer_noise=infer_noise,
+                **tkwargs
+            )
+            model.load_mcmc_samples(mcmc_samples)
+
+            # need to forward pass before conditioning
+            model.posterior(train_X)
+            cond_model = model.condition_on_observations(
+                cond_X, cond_Y, noise=cond_Yvar
+            )
+            posterior = cond_model.posterior(test_X)
+            self.assertEqual(
+                posterior.mean.shape, torch.Size([num_models, len(test_X), 1])
+            )
+
+            # since the data is not equal for the conditioned points, a batch size
+            # is added to the training data
+            self.assertEqual(
+                cond_model.train_inputs[0].shape,
+                torch.Size([num_models, num_train + num_cond, num_dims]),
+            )
+            # condition on identical sets of data (i.e. one set) for all models
+            # i.e, with no batch shape. This should not work.
+            cond_X_nobatch, cond_Y_nobatch = cond_X[0], cond_Y[0]
+            model = SaasFullyBayesianSingleTaskGP(
+                train_X=train_X,
+                train_Y=train_Y,
+                train_Yvar=train_Yvar,
+            )
+            mcmc_samples = self._get_mcmc_samples(
+                num_samples=num_models,
+                dim=train_X.shape[-1],
+                infer_noise=infer_noise,
+                **tkwargs
+            )
+            model.load_mcmc_samples(mcmc_samples)
+
+            # This should __NOT__ work - conditioning must have a batch size for the
+            # conditioned point and is not supported (the training data by default
+            # does not have a batch size)
+            model.posterior(train_X)
+            with self.assertRaises(ValueError):
+                model.condition_on_observations(
+                    cond_X_nobatch, cond_Y_nobatch, noise=cond_Yvar
                 )
 
     def test_bisect(self):
