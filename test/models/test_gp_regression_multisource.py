@@ -101,7 +101,9 @@ class TestAugmentedSingleTaskGP(BotorchTestCase):
                 self.assertIsInstance(model, SingleTaskAugmentedGP)
 
             # Test initialization with m = 0
-            self.assertRaises(InputDataError, SingleTaskAugmentedGP, train_X, train_Y, m=0)
+            self.assertRaises(
+                InputDataError, SingleTaskAugmentedGP, train_X, train_Y, m=0
+            )
             # Test initialization without true source points
             bounds = torch.stack([torch.zeros(d), torch.ones(d)])
             bounds[0, -1] = 1
@@ -109,8 +111,6 @@ class TestAugmentedSingleTaskGP(BotorchTestCase):
             train_X = draw_sobol_samples(bounds=bounds, n=n, q=1).squeeze(1)
             train_X[:, -1] = torch.round(train_X[:, -1], decimals=0)
             self.assertRaises(InputDataError, SingleTaskAugmentedGP, train_X, train_Y)
-
-
 
     def test_get_reliable_observation(self):
         x = torch.linspace(0, 5, 15).reshape(-1, 1)
@@ -378,8 +378,14 @@ class TestAugmentedFixedNoiseGP(TestAugmentedSingleTaskGP):
                 self.assertIsInstance(model, FixedNoiseAugmentedGP)
 
             # Test initialization with m = 0
-            self.assertRaises(InputDataError, FixedNoiseAugmentedGP, train_X, train_Y,
-                              torch.full_like(train_Y, 0.01), m=0)
+            self.assertRaises(
+                InputDataError,
+                FixedNoiseAugmentedGP,
+                train_X,
+                train_Y,
+                torch.full_like(train_Y, 0.01),
+                m=0,
+            )
             # Test initialization without true source points
             bounds = torch.stack([torch.zeros(d), torch.ones(d)])
             bounds[0, -1] = 1
