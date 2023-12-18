@@ -22,19 +22,16 @@ from torch import Tensor
 class AugmentedUpperConfidenceBound(UpperConfidenceBound):
     r"""Single-outcome Multi-Source Upper Confidence Bound (UCB).
 
-    Description...
+    A modified version of the UCB for Multi Information Source, that consider
+    the most optimistic improvement with respect to the best value observed so far.
+    The improvement is then penalized depending on source’s cost, and
+    the discrepancy between the GP associated to the source and the AGP.
 
-    `AUCB(x, s, y^+) =
-        ((mu(x) + sqrt(beta) * sigma(x)) - y^+) /
-        (c(s) (1 + abs(mu(x) - mu_s(x))))`,
-     where `mu` and `sigma` are the posterior mean and standard deviation of the AGP,
-     `mu_s` is the posterior mean of the GP modelling the s-th source and
-     c(s) is the cost of the source s.
-
-    Example:
-        >>> model = AugmentedSingleTaskGP(train_X, train_Y)
-        >>> UCB = AugmentedUpperConfidenceBound(model, beta=0.2)
-        >>> ucb = UCB(test_X)
+    `AUCB(x, s, y^+) = ((mu(x) + sqrt(beta) * sigma(x)) - y^+)
+    / (c(s) (1 + abs(mu(x) - mu_s(x))))`,
+    where `mu` and `sigma` are the posterior mean and standard deviation of the AGP,
+    `mu_s` is the posterior mean of the GP modelling the s-th source and
+    c(s) is the cost of the source s.
     """
 
     def __init__(
@@ -52,6 +49,9 @@ class AugmentedUpperConfidenceBound(UpperConfidenceBound):
             model: A fitted single-outcome Augmented GP model.
             beta: Either a scalar or a one-dim tensor with `b` elements (batch mode)
                 representing the trade-off parameter between mean and covariance
+            cost: A dictionary containing the cost of querying each source.
+            best_f: Either a scalar or a `b`-dim Tensor (batch mode) representing
+                the best function value observed so far (assumed noiseless).
             posterior_transform: A PosteriorTransform. If using a multi-output model,
                 a PosteriorTransform that transforms the multi-output posterior into a
                 single-output posterior is required.

@@ -10,8 +10,6 @@ Multi-Source Gaussian Process Regression models based on GPyTorch models.
 For more on Multi-Source BO, see the
 `tutorial <https://botorch.org/tutorials/multi_source_bo>`__
 
-BRIEF DESCRIPTION
-
 .. [Ca2021ms]
     Candelieri, A., & Archetti, F. (2021).
     Sparsifying to optimize over multiple information sources:
@@ -78,6 +76,13 @@ class SingleTaskAugmentedGP(SingleTaskGP):
     r"""A single-task multi-source GP model.
 
     The Augmented Gaussian Process is described in [Ca2021ms]_.
+    The basic idea is to use GP sparsification for selecting a subset of
+    the function evaluations, among those performed so far over all the
+    different sources, as inducing locations to generate the AGP approximating f(x).
+    The GP sparsification proposed is an insertion method: the set of inducing
+    locations is initialized with the function evaluations on the most expensive
+    information source and is incremented by including evaluations on other sources
+    depending on both a model discrepancy measure and GP’s predictive uncertainty.
     """
 
     def __init__(

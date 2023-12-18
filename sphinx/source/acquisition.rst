@@ -143,6 +143,11 @@ Preference Acquisition Functions
 .. automodule:: botorch.acquisition.preference
     :members:
 
+Multi Information Source Acquisition Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.augmented_multisource
+    :members:
+
 
 Objectives and Cost-Aware Utilities
 -------------------------------------------
