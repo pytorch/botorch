@@ -13,6 +13,8 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any, List
 
+import torch
+
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.gpytorch import GPyTorchModel, ModelListGPyTorchModel
 from botorch.models.model import FantasizeMixin
@@ -87,14 +89,12 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel, FantasizeMixin):
                 f"{Y.shape[-1]} observation outputs, but model has "
                 f"{self.num_outputs} outputs."
             )
-        targets = [Y[..., i] for i in range(Y.shape[-1])]
-        for i, model in enumerate(self.models):
-            if hasattr(model, "outcome_transform"):
-                noise = kwargs.get("noise")
-                targets[i], noise = model.outcome_transform(targets[i], noise)
-
-        # This should never trigger, posterior call would fail.
-        assert len(targets) == len(X)
+        if len(X) != self.num_outputs:
+            raise BotorchTensorDimensionError(
+                "Incorrect number of inputs for observations. Received "
+                f"{len(X)} observation inputs, but model has "
+                f"{self.num_outputs} outputs."
+            )
         if "noise" in kwargs:
             noise = kwargs.pop("noise")
             if noise.shape != Y.shape[-noise.dim() :]:
@@ -102,19 +102,43 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel, FantasizeMixin):
                     "The shape of observation noise does not agree with the outcomes. "
                     f"Received {noise.shape} noise with {Y.shape} outcomes."
                 )
-            kwargs_ = {**kwargs, "noise": [noise[..., i] for i in range(Y.shape[-1])]}
+
         else:
-            kwargs_ = kwargs
-        return super().get_fantasy_model(X, targets, **kwargs_)
+            noise = None
+        targets = []
+        inputs = []
+        noises = []
+        i = 0
+        for model in self.models:
+            j = i + model.num_outputs
+            y_i = torch.cat([Y[..., k] for k in range(i, j)], dim=-1)
+            X_i = torch.cat([X[k] for k in range(i, j)], dim=-2)
+            if noise is None:
+                noise_i = None
+            else:
+                noise_i = torch.cat([noise[..., k] for k in range(i, j)], dim=-1)
+            if hasattr(model, "outcome_transform"):
+                y_i, noise_i = model.outcome_transform(y_i, noise_i)
+                if noise_i is not None:
+                    noise_i = noise_i.squeeze(0)
+            targets.append(y_i)
+            inputs.append(X_i)
+            noises.append(noise_i)
+            i += model.num_outputs
+
+        kwargs_ = {**kwargs, "noise": noises} if noise is not None else kwargs
+        return super().get_fantasy_model(inputs, targets, **kwargs_)
 
     def subset_output(self, idcs: List[int]) -> ModelListGP:
-        r"""Subset the model along the output dimension.
+        r"""Subset the model along the submodel dimension.
 
         Args:
-            idcs: The output indices to subset the model to.
+            idcs: The indices of submodels to subset the model to.
 
         Returns:
-            The current model, subset to the specified output indices.
+            The current model, subset to the specified submodels. If each model
+            is single-output, this will correspond to that subset of the
+            outputs.
         """
         return self.__class__(*[deepcopy(self.models[i]) for i in idcs])
 
