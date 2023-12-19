@@ -94,7 +94,7 @@ train_X = torch.rand(<span class="hljs-number">10</span>, <span class="hljs-numb
 train_Y = <span class="hljs-number">1</span> - (train_X - <span class="hljs-number">0.5</span>).norm(dim=<span class="hljs-number">-1</span>, keepdim=<span class="hljs-literal">True</span>)
 train_Y += <span class="hljs-number">0.1</span> * torch.rand_like(train_Y)
 
-gp = SingleTaskGP(train_X, trainb_Y, outcome_transform=Standardize(m=<span class="hljs-number">1</span>))
+gp = SingleTaskGP(train_X, train_Y, outcome_transform=Standardize(m=<span class="hljs-number">1</span>))
 mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
 fit_gpytorch_mll(mll)
 </code></pre></li>
