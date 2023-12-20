@@ -23,13 +23,14 @@ from botorch.models.gpytorch import (
     ModelListGPyTorchModel,
 )
 from botorch.models.model import FantasizeMixin
+from botorch.models.multitask import MultiTaskGP
 from botorch.models.transforms import Standardize
 from botorch.models.transforms.input import ChainedInputTransform, InputTransform
 from botorch.models.utils import fantasize
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils.test_helpers import SimpleGPyTorchModel
-from botorch.utils.testing import BotorchTestCase
+from botorch.utils.testing import _get_random_data, BotorchTestCase
 from gpytorch import ExactMarginalLogLikelihood
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import RBFKernel, ScaleKernel
@@ -441,7 +442,44 @@ class TestModelListGPyTorchModel(BotorchTestCase):
             posterior = model.posterior(test_X)
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertEqual(posterior.mean.shape, torch.Size([2, 2]))
+            # test multioutput
+            train_x_raw, train_y = _get_random_data(
+                batch_shape=torch.Size(), m=1, n=10, **tkwargs
+            )
+            task_idx = torch.cat(
+                [torch.ones(5, 1, **tkwargs), torch.zeros(5, 1, **tkwargs)], dim=0
+            )
+            train_x = torch.cat([train_x_raw, task_idx], dim=-1)
+            model_mt = MultiTaskGP(
+                train_X=train_x,
+                train_Y=train_y,
+                task_feature=-1,
+            )
+            mt_posterior = model_mt.posterior(test_X)
+            model = SimpleModelListGPyTorchModel(m1, model_mt, m2)
+            posterior2 = model.posterior(test_X)
+            expected_mean = torch.cat(
+                (
+                    posterior.mean[:, 0].unsqueeze(-1),
+                    mt_posterior.mean,
+                    posterior.mean[:, 1].unsqueeze(-1),
+                ),
+                dim=1,
+            )
+            self.assertTrue(torch.allclose(expected_mean, posterior2.mean))
+            expected_covariance = torch.block_diag(
+                posterior.covariance_matrix[:2, :2],
+                mt_posterior.covariance_matrix[:2, :2],
+                mt_posterior.covariance_matrix[-2:, -2:],
+                posterior.covariance_matrix[-2:, -2:],
+            )
+            self.assertTrue(
+                torch.allclose(
+                    expected_covariance, posterior2.covariance_matrix, atol=1e-5
+                )
+            )
             # test output indices
+            posterior = model.posterior(test_X)
             for output_indices in ([0], [1], [0, 1]):
                 posterior_subset = model.posterior(
                     test_X, output_indices=output_indices
@@ -451,17 +489,18 @@ class TestModelListGPyTorchModel(BotorchTestCase):
                     posterior_subset.mean.shape, torch.Size([2, len(output_indices)])
                 )
                 self.assertTrue(
-                    torch.equal(
+                    torch.allclose(
                         posterior_subset.mean, posterior.mean[..., output_indices]
                     )
                 )
                 self.assertTrue(
-                    torch.equal(
+                    torch.allclose(
                         posterior_subset.variance,
                         posterior.variance[..., output_indices],
                     )
                 )
             # test observation noise
+            model = SimpleModelListGPyTorchModel(m1, m2)
             posterior = model.posterior(test_X, observation_noise=True)
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertEqual(posterior.mean.shape, torch.Size([2, 2]))
