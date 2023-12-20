@@ -200,6 +200,7 @@
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
             <span class="s2">"`FixedNoiseDataset` is deprecated. Use `SupervisedDataset` instead."</span><span class="p">,</span>
             <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span>
@@ -605,6 +606,8 @@
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="c1"># use LCEA model</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">outcome_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">Yvar</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">outcome_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">Yvar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
                 <span class="p">[</span>
@@ -626,7 +629,7 @@
                     <span class="k">if</span> <span class="n">outcome_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric_decomposition</span><span class="p">[</span><span class="n">context</span><span class="p">]:</span>
                         <span class="k">if</span> <span class="n">context_outcome_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">context</span><span class="si">}</span><span class="s2"> bucket contains mutltiple outcomes"</span>
+                                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">context</span><span class="si">}</span><span class="s2"> bucket contains multiple outcomes"</span>
                             <span class="p">)</span>
                         <span class="n">context_outcome_map</span><span class="p">[</span><span class="n">context</span><span class="p">]</span> <span class="o">=</span> <span class="n">outcome_name</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">context_outcome_map</span><span class="p">[</span><span class="n">context</span><span class="p">]</span> <span class="k">for</span> <span class="n">context</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">context_buckets</span><span class="p">]</span>
@@ -642,11 +645,17 @@
 <span class="sd">        3. metric_decomposition contains all the outcomes in datasets.</span>
 <span class="sd">        4. value keys of parameter decomposition and the keys of</span>
 <span class="sd">        metric_decomposition match context buckets.</span>
+<span class="sd">        5. Yvar is None for all, or not for all.</span>
 <span class="sd">        """</span>
         <span class="n">X</span> <span class="o">=</span> <span class="n">datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">X</span>
+        <span class="n">Yvar_is_none</span> <span class="o">=</span> <span class="n">datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">Yvar</span> <span class="ow">is</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">X</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">True</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">InputDataError</span><span class="p">(</span><span class="s2">"Require same X for context buckets"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">Yvar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="n">Yvar_is_none</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">InputDataError</span><span class="p">(</span>
+                    <span class="s2">"Require Yvar to be specified for all buckets, or for none"</span>
+                <span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">datasets</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">metric_decomposition</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>

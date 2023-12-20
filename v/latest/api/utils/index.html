@@ -719,6 +719,24 @@ decomposition with increasing jitter.</p></li>
 </dl>
 </dd></dl>
 </section>
+<section id="module-botorch.utils.multitask">
+<span id="multi-task-distribution-utils"></span><h2>Multi-Task Distribution Utils<a class="headerlink" href="#module-botorch.utils.multitask" title="Link to this heading">¶</a></h2>
+<p>Helpers for multitask modeling.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.multitask.separate_mtmvn">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.multitask.</span></span><span class="sig-name descname"><span class="pre">separate_mtmvn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mvn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multitask.html#separate_mtmvn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multitask.separate_mtmvn" title="Link to this definition">¶</a></dt>
+<dd><p>Separate a MTMVN into a list of MVNs, where covariance across data within each task
+are preserved, while covariance across task are dropped.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mvn</strong> (<em>MultitaskMultivariateNormal</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>List</em>[<em>MultivariateNormal</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+</section>
 <section id="module-botorch.utils.objective">
 <span id="objective"></span><h2>Objective<a class="headerlink" href="#module-botorch.utils.objective" title="Link to this heading">¶</a></h2>
 <p>Helpers for handling objectives.</p>
