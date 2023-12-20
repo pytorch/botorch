@@ -20,10 +20,10 @@ from linear_operator import to_linear_operator
 
 def separate_mtmvn(mvn: MultitaskMultivariateNormal) -> List[MultivariateNormal]:
     """
-    Separate a MTMVN into a list of MVNs, where covariance across data within each task are
-    preserved, while covariance across task are dropped.
+    Separate a MTMVN into a list of MVNs, where covariance across data within each task
+    are preserved, while covariance across task are dropped.
     """
-    # TODO T150340766 Upstream this into a class method on gpytorch MultitaskMultivariateNormal.
+    # T150340766 Upstream as a class method on gpytorch MultitaskMultivariateNormal.
     full_covar = mvn.lazy_covariance_matrix
     num_data, num_tasks = mvn.mean.shape[-2:]
     if mvn._interleaved:
