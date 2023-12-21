@@ -79,7 +79,7 @@ class AugmentedUpperConfidenceBound(UpperConfidenceBound):
             A `(b1 x ... bk)`-dim tensor of Augmented Upper Confidence Bound values at
             the given design points `X`.
         """
-        alpha = torch.zeros(X.shape[0], dtype=X.dtype)
+        alpha = torch.zeros(X.shape[0], dtype=X.dtype, device=X.device)
         agp_mean, agp_sigma = self._mean_and_sigma(X[..., :-1])
         cb = (self.best_f if self.maximize else -self.best_f) + (
             (agp_mean if self.maximize else -agp_mean) + self.beta.sqrt() * agp_sigma

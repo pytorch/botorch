@@ -33,14 +33,13 @@ from gpytorch.priors import GammaPrior
 
 
 def _get_random_data_with_source(batch_shape, n, d, n_source, q=1, **tkwargs):
-    dtype = tkwargs.get("dtype", torch.float32)
     rep_shape = batch_shape + torch.Size([1, 1])
     bounds = torch.stack([torch.zeros(d), torch.ones(d)])
     bounds[-1, -1] = n_source - 1
     train_x = (
-        get_random_x_for_agp(n=n, bounds=bounds, q=q).repeat(rep_shape).type(dtype)
+        get_random_x_for_agp(n=n, bounds=bounds, q=q).repeat(rep_shape).to(**tkwargs)
     )
-    train_y = torch.sin(train_x[..., :1] * (2 * math.pi)).type(dtype)
+    train_y = torch.sin(train_x[..., :1] * (2 * math.pi)).to(**tkwargs)
     train_y = train_y + 0.2 * torch.randn(n, 1, **tkwargs).repeat(rep_shape)
     return train_x, train_y
 
