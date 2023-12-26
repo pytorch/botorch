@@ -131,12 +131,8 @@ class qHypervolumeKnowledgeGradient(
         if sampler is None:
             # base samples should be fixed for joint optimization over X, X_fantasies
             samplers = [
-                SobolQMCNormalSampler(
-                    sample_shape=torch.Size([num_fantasies]),
-                    resample=False,
-                    collapse_batch_dims=True,
-                )
-                for _ in range(ref_point.shape[0])
+                SobolQMCNormalSampler(sample_shape=torch.Size([num_fantasies]))
+                for _ in range(model.num_outputs)
             ]
             sampler = ListSampler(*samplers)
         else:
@@ -148,9 +144,7 @@ class qHypervolumeKnowledgeGradient(
         super().__init__(model=model, X_evaluation_mask=X_evaluation_mask)
 
         if inner_sampler is None:
-            inner_sampler = SobolQMCNormalSampler(
-                sample_shape=torch.Size([32]), resample=False, collapse_batch_dims=True
-            )
+            inner_sampler = SobolQMCNormalSampler(sample_shape=torch.Size([32]))
         if current_value is None and cost_aware_utility is not None:
             raise UnsupportedError(
                 "Cost-aware HVKG requires current_value to be specified."
