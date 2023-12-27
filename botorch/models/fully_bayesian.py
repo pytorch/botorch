@@ -549,24 +549,29 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
         identical across models or unique per-model).
 
         Args:
-            X: (Tensor): A `(batch_shape) x num_samples x d`-dim Tensor, where `d` is
+            X: A `batch_shape x num_samples x d`-dim Tensor, where `d` is
                 the dimension of the feature space and `batch_shape` is the number of
-                 sampled models.
-            Y (Tensor): A `(batch_shape) x num_samples x 1`-dim Tensor, where `d` is
+                sampled models.
+            Y: A `batch_shape x num_samples x 1`-dim Tensor, where `d` is
                 the dimension of the feature space and `batch_shape` is the number of
-                 sampled models.
+                sampled models.
 
         Returns:
-            BatchedMultiOutputGPyTorchModel: _description_
+            BatchedMultiOutputGPyTorchModel: A fully bayesian model conditioned on
+              given observations. The returned model has `batch_shape` copies of the
+              training data in case of identical observations (and `batch_shape`
+              training datasets otherwise).
         """
-        if X.ndim < 3 or Y.ndim < 3:
-            # The can either be thrown here or in GPyTorch, when the inference of the
-            # batch dimension fails since the training data by default does not have
-            # a batch shape.
-            raise ValueError(
-                "Conditioning in fully Bayesian models must contain a batch dimension."
-                "Add a batch dimension (the leading dim) with length matching the "
-                "number of hyperparameter sets to the conditioned data."
-            )
+        if X.ndim == 2 and Y.ndim == 2:
+            # To avoid an error in GPyTorch when inferring the batch dimension, we add
+            # the explicit batch shape here. The result is that the conditioned model
+            # will have 'batch_shape' copies of the training data.
+            X = X.repeat(self.batch_shape + (1, 1))
+            Y = Y.repeat(self.batch_shape + (1, 1))
+
+        elif X.ndim < Y.ndim:
+            # We need to duplicate the training data to enable correct batch
+            # size inference in gpytorch.
+            X = X.repeat(*(Y.shape[:-2] + (1, 1)))
 
         return super().condition_on_observations(X, Y, **kwargs)

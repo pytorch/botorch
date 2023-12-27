@@ -223,12 +223,7 @@ class GPyTorchModel(Model, ABC):
             >>> new_Y = torch.sin(new_X[:, 0]) + torch.cos(new_X[:, 1])
             >>> model = model.condition_on_observations(X=new_X, Y=new_Y)
         """
-        Yvar = kwargs.get("noise", None)
-
-        # for fully bayesian models, the keyword argument "noise": None
-        # throws an error in LinearOperator releted to inferring batch dims
-        if "noise" in kwargs and kwargs["noise"] is None:
-            del kwargs["noise"]
+        Yvar = kwargs.pop("noise", None)
 
         if hasattr(self, "outcome_transform"):
             # pass the transformed data to get_fantasy_model below
@@ -496,7 +491,8 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
         fantasy_model._input_batch_shape = fantasy_model.train_targets.shape[
             : (-1 if self._num_outputs == 1 else -2)
         ]
-
+        if not self._is_fully_bayesian:
+            fantasy_model._aug_batch_shape = fantasy_model.train_targets.shape[:-1]
         return fantasy_model
 
     def subset_output(self, idcs: List[int]) -> BatchedMultiOutputGPyTorchModel:

@@ -125,13 +125,15 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
         return train_X, train_Y, train_Yvar, test_X
 
     def _get_unnormalized_condition_data(
-        self, num_models: int, infer_noise: bool, **tkwargs
+        self, num_models: int, num_cond: int, infer_noise: bool, **tkwargs
     ):
         with torch.random.fork_rng():
             torch.manual_seed(0)
-            cond_X = 5 + 5 * torch.rand(num_models, 2, 4, **tkwargs)
+            cond_X = 5 + 5 * torch.rand(num_models, num_cond, 4, **tkwargs)
             cond_Y = 10 + torch.sin(cond_X[..., :1])
-            cond_Yvar = None if infer_noise else 0.1 * torch.ones(cond_Y.shape)
+            cond_Yvar = (
+                None if infer_noise else 0.1 * torch.ones(cond_Y.shape, **tkwargs)
+            )
         return cond_X, cond_Y, cond_Yvar
 
     def _get_mcmc_samples(
@@ -667,11 +669,15 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 )
 
     def test_condition_on_observation(self):
-
+        # The following conditioned data shapes should work (output describes):
+        # training data shape after cond(batch shape in output is req. in gpytorch)
+        # X: num_models x n x d, Y: num_models x n x d --> num_models x n x d
+        # X: n x d, Y: n x d --> num_models x n x d
+        # X: n x d, Y: num_models x n x d --> num_models x n x d
         num_models = 3
         num_cond = 2
         for infer_noise, dtype in itertools.product(
-            (True,), (torch.float, torch.double)
+            (True, False), (torch.float, torch.double)
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
             train_X, train_Y, train_Yvar, test_X = self._get_unnormalized_data(
@@ -681,7 +687,10 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             # condition on different observations per model to obtain num_models sets
             # of training data
             cond_X, cond_Y, cond_Yvar = self._get_unnormalized_condition_data(
-                num_models=num_models, infer_noise=infer_noise, **tkwargs
+                num_models=num_models,
+                num_cond=num_cond,
+                infer_noise=infer_noise,
+                **tkwargs
             )
             model = SaasFullyBayesianSingleTaskGP(
                 train_X=train_X,
@@ -712,8 +721,12 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 cond_model.train_inputs[0].shape,
                 torch.Size([num_models, num_train + num_cond, num_dims]),
             )
+
+            # the batch shape of the condition model is added during conditioning
+            self.assertEqual(cond_model.batch_shape, torch.Size([num_models]))
+
             # condition on identical sets of data (i.e. one set) for all models
-            # i.e, with no batch shape. This should not work.
+            # i.e, with no batch shape. This infers the batch shape.
             cond_X_nobatch, cond_Y_nobatch = cond_X[0], cond_Y[0]
             model = SaasFullyBayesianSingleTaskGP(
                 train_X=train_X,
@@ -728,14 +741,36 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             )
             model.load_mcmc_samples(mcmc_samples)
 
-            # This should __NOT__ work - conditioning must have a batch size for the
-            # conditioned point and is not supported (the training data by default
-            # does not have a batch size)
+            # conditioning without a batch size - the resulting conditioned model
+            # will still have a batch size
             model.posterior(train_X)
-            with self.assertRaises(ValueError):
-                model.condition_on_observations(
-                    cond_X_nobatch, cond_Y_nobatch, noise=cond_Yvar
-                )
+            cond_model = model.condition_on_observations(
+                cond_X_nobatch, cond_Y_nobatch, noise=cond_Yvar
+            )
+            self.assertEqual(
+                cond_model.train_inputs[0].shape,
+                torch.Size([num_models, num_train + num_cond, num_dims]),
+            )
+
+            # test repeated conditining
+            repeat_cond_X = cond_X + 5
+            repeat_cond_model = cond_model.condition_on_observations(
+                repeat_cond_X, cond_Y, noise=cond_Yvar
+            )
+            self.assertEqual(
+                repeat_cond_model.train_inputs[0].shape,
+                torch.Size([num_models, num_train + 2 * num_cond, num_dims]),
+            )
+
+            # test repeated conditioning without a batch size
+            repeat_cond_X_nobatch = cond_X_nobatch + 10
+            repeat_cond_model2 = repeat_cond_model.condition_on_observations(
+                repeat_cond_X_nobatch, cond_Y_nobatch, noise=cond_Yvar
+            )
+            self.assertEqual(
+                repeat_cond_model2.train_inputs[0].shape,
+                torch.Size([num_models, num_train + 3 * num_cond, num_dims]),
+            )
 
     def test_bisect(self):
         def f(x):
