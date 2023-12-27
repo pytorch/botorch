@@ -172,6 +172,7 @@ class FixedNoiseDataset(SupervisedDataset):
         warnings.warn(
             "`FixedNoiseDataset` is deprecated. Use `SupervisedDataset` instead.",
             DeprecationWarning,
+            stacklevel=2,
         )
         super().__init__(
             X=X,
@@ -562,6 +563,8 @@ class ContextualDataset(SupervisedDataset):
         if len(self.datasets) == 1:
             # use LCEA model
             return self.datasets[self.outcome_names[0]].Yvar
+        elif self.datasets[self.outcome_names[0]].Yvar is None:
+            return None
         else:
             return torch.cat(
                 [
@@ -583,7 +586,7 @@ class ContextualDataset(SupervisedDataset):
                     if outcome_name in self.metric_decomposition[context]:
                         if context_outcome_map.get(context, None) is not None:
                             raise ValueError(
-                                f"{context} bucket contains mutltiple outcomes"
+                                f"{context} bucket contains multiple outcomes"
                             )
                         context_outcome_map[context] = outcome_name
         return [context_outcome_map[context] for context in self.context_buckets]
@@ -599,11 +602,17 @@ class ContextualDataset(SupervisedDataset):
         3. metric_decomposition contains all the outcomes in datasets.
         4. value keys of parameter decomposition and the keys of
         metric_decomposition match context buckets.
+        5. Yvar is None for all, or not for all.
         """
         X = datasets[0].X
+        Yvar_is_none = datasets[0].Yvar is None
         for dataset in datasets:
             if torch.equal(X, dataset.X) is not True:
                 raise InputDataError("Require same X for context buckets")
+            if (dataset.Yvar is None) != Yvar_is_none:
+                raise InputDataError(
+                    "Require Yvar to be specified for all buckets, or for none"
+                )
 
         if len(datasets) > 1:
             if metric_decomposition is None:

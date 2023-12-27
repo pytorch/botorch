@@ -49,7 +49,7 @@ Here's a quick run down of the main components of a Bayesian Optimization loop.
     train_Y = 1 - (train_X - 0.5).norm(dim=-1, keepdim=True)
     train_Y += 0.1 * torch.rand_like(train_Y)
 
-    gp = SingleTaskGP(train_X, trainb_Y, outcome_transform=Standardize(m=1))
+    gp = SingleTaskGP(train_X, train_Y, outcome_transform=Standardize(m=1))
     mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
     fit_gpytorch_mll(mll)
     ```

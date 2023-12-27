@@ -440,13 +440,40 @@ class TestDatasets(BotorchTestCase):
             torch.equal(context_dt.Yvar, torch.flip(context_dt_reverse.Yvar, (1,)))
         )
 
+        # Test handling None Yvar
+        dataset_list3 = [
+            make_dataset(
+                d=1 * num_contexts,
+                has_yvar=False,
+                feature_names=feature_names,
+                outcome_names=[context_outcome_list[0]],
+            )
+        ]
+        for m in context_outcome_list[1:]:
+            dataset_list3.append(
+                SupervisedDataset(
+                    X=dataset_list3[0].X,
+                    Y=rand(dataset_list3[0].Y.size()),
+                    Yvar=None,
+                    feature_names=feature_names,
+                    outcome_names=[m],
+                )
+            )
+        context_dt3 = ContextualDataset(
+            datasets=dataset_list3,
+            parameter_decomposition=parameter_decomposition,
+            context_buckets=context_buckets,
+            metric_decomposition=metric_decomposition,
+        )
+        self.assertIsNone(context_dt3.Yvar)
+
         # test dataset validation
         wrong_metric_decomposition = {
             f"{c}": [f"y:{c}"] for c in context_buckets if c != "context_0"
         }
         wrong_metric_decomposition["context_0"] = ["y:context_0", "y:context_1"]
         with self.assertRaisesRegex(
-            ValueError, "context_0 bucket contains mutltiple outcomes"
+            ValueError, "context_0 bucket contains multiple outcomes"
         ):
             ContextualDataset(
                 datasets=dataset_list2,
@@ -522,6 +549,18 @@ class TestDatasets(BotorchTestCase):
         ):
             ContextualDataset(
                 datasets=dataset_list2,
+                parameter_decomposition=parameter_decomposition,
+                context_buckets=context_buckets,
+                metric_decomposition=wrong_metric_decomposition,
+            )
+
+        # Test error for mixed Yvar
+        dataset_list3[0]._Yvar = dataset_list2[0]._Yvar
+        with self.assertRaisesRegex(
+            InputDataError, "Require Yvar to be specified for all buckets, or for none"
+        ):
+            ContextualDataset(
+                datasets=dataset_list3,
                 parameter_decomposition=parameter_decomposition,
                 context_buckets=context_buckets,
                 metric_decomposition=wrong_metric_decomposition,

@@ -36,9 +36,11 @@ from botorch.models.utils import (
 )
 from botorch.posteriors.fully_bayesian import GaussianMixturePosterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
+from botorch.utils.multitask import separate_mtmvn
 from botorch.utils.transforms import is_ensemble
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
+from linear_operator.operators import BlockDiagLinearOperator, CatLinearOperator
 from torch import Tensor
 
 if TYPE_CHECKING:
@@ -101,6 +103,7 @@ class GPyTorchModel(Model, ABC):
                     "following error would have been raised with strict enforcement: "
                     f"{message}",
                     BotorchTensorDimensionWarning,
+                    stacklevel=2,
                 )
         # Yvar may not have the same batch dimensions, but the trailing dimensions
         # of Yvar should be the same as the trailing dimensions of Y.
@@ -562,7 +565,8 @@ class ModelListGPyTorchModel(ModelList, GPyTorchModel, ABC):
     r"""Abstract base class for models based on multi-output GPyTorch models.
 
     This is meant to be used with a gpytorch ModelList wrapper for independent
-    evaluation of submodels.
+    evaluation of submodels. Those submodels can themselves be multi-output
+    models, in which case the task covariances will be ignored.
 
     :meta private:
     """
@@ -585,7 +589,7 @@ class ModelListGPyTorchModel(ModelList, GPyTorchModel, ABC):
             )
             try:
                 broadcast_shape = torch.broadcast_shapes(*batch_shapes)
-                warnings.warn(msg + ". Broadcasting batch shapes.")
+                warnings.warn(msg + ". Broadcasting batch shapes.", stacklevel=2)
                 return broadcast_shape
             except RuntimeError:
                 raise NotImplementedError(msg + " that are not broadcastble.")
@@ -601,6 +605,9 @@ class ModelListGPyTorchModel(ModelList, GPyTorchModel, ABC):
         **kwargs: Any,
     ) -> Union[GPyTorchPosterior, PosteriorList]:
         r"""Computes the posterior over model outputs at the provided points.
+        If any model returns a MultitaskMultivariateNormal posterior, then that
+        will be split into individual MVNs per task, with inter-task covariance
+        ignored.
 
         Args:
             X: A `b x q x d`-dim Tensor, where `d` is the dimension of the
@@ -651,20 +658,41 @@ class ModelListGPyTorchModel(ModelList, GPyTorchModel, ABC):
         )
         if not returns_untransformed:
             mvns = [p.distribution for p in posterior.posteriors]
-            # Combining MTMVNs into a single MTMVN is currently not supported.
-            if not any(isinstance(m, MultitaskMultivariateNormal) for m in mvns):
-                # Return the result as a GPyTorchPosterior/GaussianMixturePosterior.
+            if any(isinstance(m, MultitaskMultivariateNormal) for m in mvns):
+                mvn_list = []
+                for mvn in mvns:
+                    if len(mvn.event_shape) == 2:
+                        # We separate MTMVNs into independent-across-task MVNs for
+                        # the convenience of using BlockDiagLinearOperator below.
+                        # (b x q x m x m) -> list of m (b x q x 1 x 1)
+                        mvn_list.extend(separate_mtmvn(mvn))
+                    else:
+                        mvn_list.append(mvn)
+                mean = torch.stack([mvn.mean for mvn in mvn_list], dim=-1)
+                covars = CatLinearOperator(
+                    *[mvn.lazy_covariance_matrix.unsqueeze(-3) for mvn in mvn_list],
+                    dim=-3,
+                )  # List of m (b x q x 1 x 1) -> (b x q x m x 1 x 1)
+                mvn = MultitaskMultivariateNormal(
+                    mean=mean,
+                    covariance_matrix=BlockDiagLinearOperator(covars, block_dim=-3).to(
+                        X
+                    ),  # (b x q x m x 1 x 1) -> (b x q x m x m)
+                    interleaved=False,
+                )
+            else:
                 mvn = (
                     mvns[0]
                     if len(mvns) == 1
                     else MultitaskMultivariateNormal.from_independent_mvns(mvns=mvns)
                 )
-                if any(is_ensemble(m) for m in self.models):
-                    # Mixing fully Bayesian and other GP models is currently
-                    # not supported.
-                    posterior = GaussianMixturePosterior(distribution=mvn)
-                else:
-                    posterior = GPyTorchPosterior(distribution=mvn)
+            # Return the result as a GPyTorchPosterior/GaussianMixturePosterior.
+            if any(is_ensemble(m) for m in self.models):
+                # Mixing fully Bayesian and other GP models is currently
+                # not supported.
+                posterior = GaussianMixturePosterior(distribution=mvn)
+            else:
+                posterior = GPyTorchPosterior(distribution=mvn)
         if posterior_transform is not None:
             return posterior_transform(posterior)
         return posterior
