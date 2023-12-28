@@ -283,10 +283,14 @@ class TestMVaR(BotorchTestCase):
                 dim=-1,
             ).to(Y)
             # check that both versions produce the correct set
-            cpu_mvar = mvar.get_mvar_set_cpu(Y)  # For 2d input, returns k x m
-            gpu_mvar = mvar.get_mvar_set_gpu(Y)[0]  # returns a batch list of k x m
-            self.assertTrue(set_equals(cpu_mvar, gpu_mvar))
-            self.assertTrue(set_equals(cpu_mvar, expected_set))
+            mvar_counting = mvar.get_mvar_set_via_counting(Y)[
+                0
+            ]  # returns a batch list of k x m
+            mvar_vectorized = mvar.get_mvar_set_vectorized(Y)[
+                0
+            ]  # returns a batch list of k x m
+            self.assertTrue(set_equals(mvar_counting, mvar_vectorized))
+            self.assertTrue(set_equals(mvar_counting, expected_set))
             # check that the `filter_dominated` works correctly
             mvar = MVaR(
                 n_w=5,
@@ -304,9 +308,9 @@ class TestMVaR(BotorchTestCase):
                 ],
                 **tkwargs,
             )
-            cpu_mvar = mvar.get_mvar_set_cpu(Y)
-            gpu_mvar = mvar.get_mvar_set_gpu(Y)[0]
-            self.assertTrue(set_equals(cpu_mvar, gpu_mvar))
+            mvar_counting = mvar.get_mvar_set_via_counting(Y)[0]
+            mvar_vectorized = mvar.get_mvar_set_vectorized(Y)[0]
+            self.assertTrue(set_equals(mvar_counting, mvar_vectorized))
             # negating here as well
             expected_w_dominated = -torch.tensor(
                 [
@@ -318,15 +322,15 @@ class TestMVaR(BotorchTestCase):
                 ],
                 **tkwargs,
             )
-            self.assertTrue(set_equals(cpu_mvar, expected_w_dominated))
+            self.assertTrue(set_equals(mvar_counting, expected_w_dominated))
             expected_non_dominated = expected_w_dominated[
                 is_non_dominated(expected_w_dominated)
             ]
             mvar.filter_dominated = True
-            cpu_mvar = mvar.get_mvar_set_cpu(Y)
-            gpu_mvar = mvar.get_mvar_set_gpu(Y)[0]
-            self.assertTrue(set_equals(cpu_mvar, gpu_mvar))
-            self.assertTrue(set_equals(cpu_mvar, expected_non_dominated))
+            mvar_counting = mvar.get_mvar_set_via_counting(Y)[0]
+            mvar_vectorized = mvar.get_mvar_set_vectorized(Y)[0]
+            self.assertTrue(set_equals(mvar_counting, mvar_vectorized))
+            self.assertTrue(set_equals(mvar_counting, expected_non_dominated))
 
             # test batched w/ random input
             mvar = MVaR(
@@ -335,16 +339,20 @@ class TestMVaR(BotorchTestCase):
                 filter_dominated=False,
             )
             Y = torch.rand(4, 10, 2, **tkwargs)
-            cpu_mvar = mvar.get_mvar_set_cpu(Y)
-            gpu_mvar = mvar.get_mvar_set_gpu(Y)
+            mvar_counting = mvar.get_mvar_set_via_counting(Y)
+            mvar_vectorized = mvar.get_mvar_set_vectorized(Y)
             # check that the two agree
             self.assertTrue(
-                all([set_equals(cpu_mvar[i], gpu_mvar[i]) for i in range(4)])
+                all(set_equals(mvar_counting[i], mvar_vectorized[i]) for i in range(4))
             )
             # check that the MVaR is dominated by `alpha` fraction (maximization).
-            dominated_count = (Y[0].unsqueeze(-2) >= cpu_mvar[0]).all(dim=-1).sum(dim=0)
+            dominated_count = (
+                (Y[0].unsqueeze(-2) >= mvar_counting[0]).all(dim=-1).sum(dim=0)
+            )
             expected_count = (
-                torch.ones(cpu_mvar[0].shape[0], device=self.device, dtype=torch.long)
+                torch.ones(
+                    mvar_counting[0].shape[0], device=self.device, dtype=torch.long
+                )
                 * 5
             )
             self.assertTrue(torch.equal(dominated_count, expected_count))
@@ -359,7 +367,8 @@ class TestMVaR(BotorchTestCase):
             samples = torch.rand(2, 20, 2, **tkwargs)
             mvar_exp = mvar(samples)
             expected = [
-                mvar.get_mvar_set_cpu(Y).mean(dim=0) for Y in samples.view(4, 10, 2)
+                mvar.get_mvar_set_via_counting(Y)[0].mean(dim=0)
+                for Y in samples.view(4, 10, 2)
             ]
             self.assertTrue(
                 torch.allclose(mvar_exp, torch.stack(expected).view(2, 2, 2))
@@ -369,9 +378,19 @@ class TestMVaR(BotorchTestCase):
             samples = torch.rand(2, 20, 3, **tkwargs)
             mvar_exp = mvar(samples)
             expected = [
-                mvar.get_mvar_set_gpu(Y)[0].mean(dim=0) for Y in samples.view(4, 10, 3)
+                mvar.get_mvar_set_vectorized(Y)[0].mean(dim=0)
+                for Y in samples.view(4, 10, 3)
             ]
             self.assertTrue(torch.equal(mvar_exp, torch.stack(expected).view(2, 2, 3)))
+
+            # check that cpu code also works with m=3
+            samples = samples.view(4, 10, 3)
+            self.assertTrue(
+                set_equals(
+                    torch.cat(mvar.get_mvar_set_vectorized(samples)),
+                    torch.cat(mvar.get_mvar_set_via_counting(samples)),
+                )
+            )
 
             # with `expectation=False`
             mvar = MVaR(
@@ -383,7 +402,9 @@ class TestMVaR(BotorchTestCase):
             samples = torch.rand(2, 20, 2, **tkwargs)
             mvar_vals = mvar(samples)
             self.assertTrue(mvar_vals.shape == samples.shape)
-            expected = [mvar.get_mvar_set_cpu(Y) for Y in samples.view(4, 10, 2)]
+            expected = [
+                mvar.get_mvar_set_via_counting(Y)[0] for Y in samples.view(4, 10, 2)
+            ]
             for i in range(4):
                 batch_idx = i // 2
                 q_idx_start = 10 * (i % 2)
@@ -413,16 +434,13 @@ class TestMVaR(BotorchTestCase):
             # Test the no-exact alpha level points case.
             # This happens when there are duplicates in the input.
             Y = torch.ones(10, 2, **tkwargs)
-            cpu_mvar = mvar.get_mvar_set_cpu(Y)
-            gpu_mvar = mvar.get_mvar_set_gpu(Y)[0]
-            self.assertTrue(torch.equal(cpu_mvar, Y[:1]))
-            self.assertTrue(torch.equal(gpu_mvar, Y[:1]))
+            mvar_counting = mvar.get_mvar_set_via_counting(Y)[0]
+            mvar_vectorized = mvar.get_mvar_set_vectorized(Y)[0]
+            self.assertTrue(torch.equal(mvar_counting, Y[:1]))
+            self.assertTrue(torch.equal(mvar_vectorized, Y[:1]))
 
-            # Test grad warning
-            with self.assertWarnsRegex(RuntimeWarning, "requires grad"):
-                mvar(Y.requires_grad_())
-
-            # TODO: Test grad support once properly implemented.
+            # Check that the output has gradients.
+            self.assertTrue(mvar(Y.requires_grad_()).requires_grad)
 
 
 class TestMARS(BotorchTestCase):
