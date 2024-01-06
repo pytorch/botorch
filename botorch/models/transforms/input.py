@@ -1429,10 +1429,7 @@ class InputPerturbation(InputTransform, Module):
 
 
 class OneHotToNumeric(InputTransform, Module):
-    r"""Transform categorical parameters from a one-hot to a numeric representation.
-
-    This assumes that the categoricals are the trailing dimensions.
-    """
+    r"""Transform categorical parameters from a one-hot to a numeric representation."""
 
     def __init__(
         self,
