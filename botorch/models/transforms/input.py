@@ -1470,8 +1470,6 @@ class OneHotToNumeric(InputTransform, Module):
             sorted(categorical_features.items(), key=lambda x: x[0])
         )
         if len(self.categorical_features) > 0:
-            self.categorical_start_idx = min(self.categorical_features.keys())
-            #
             self.onehot_idx = [
                 list(range(start, start + card))
                 for start, card in self.categorical_features.items()
@@ -1512,15 +1510,10 @@ class OneHotToNumeric(InputTransform, Module):
             X_numeric = X[..., : self.numeric_dim].clone()
             # copy the numerical dims over
             X_numeric[..., self.new_numerical_idx] = X[..., self.numerical_idx]
-            # idx = self.categorical_start_idx
-            for i in range(
-                len(self.categorical_features)
-            ):  # start, card in self.categorical_features.items():
-                # start, card = self.categorical_features[i]
+            for i in range(len(self.categorical_features)):
                 X_numeric[..., self.ordinal_idx[i]] = X[..., self.onehot_idx[i]].argmax(
                     dim=-1
                 )
-                # idx += 1
             return X_numeric
         return X
 
@@ -1548,26 +1541,6 @@ class OneHotToNumeric(InputTransform, Module):
                     num_classes=len(self.onehot_idx[i]),
                 ).to(X_onehot)
             return X_onehot
-
-            # one_hot_categoricals = [
-            #     # note that self.categorical_features is sorted by the starting index
-            #     # in one-hot representation
-            #     one_hot(
-            #         X[..., self.ordinal_idx[i]].long(),
-            #         num_classes=len(self.onehot_idx[i]),
-            #     )
-            #     for i in range(
-            #         len(self.categorical_features)
-            #     )  # idx, cardinality in enumerate(self.categorical_features.values())
-            # ]
-
-            # X = torch.cat(
-            #     [
-            #         X[..., : self.categorical_start_idx],
-            #         *one_hot_categoricals,
-            #     ],
-            #     dim=-1,
-            # )
         return X
 
     def equals(self, other: InputTransform) -> bool:
