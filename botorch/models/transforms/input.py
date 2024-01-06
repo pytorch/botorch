@@ -15,11 +15,12 @@ method.
 """
 from __future__ import annotations
 
+import itertools
+
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from typing import Any, Callable, Dict, List, Optional, Union
 from warnings import warn
-import itertools
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
@@ -1229,7 +1230,6 @@ class AppendFeatures(InputTransform, Module):
 
 
 class FilterFeatures(InputTransform, Module):
-
     r"""A transform that filters the input with a given set of features indices.
 
     As an example, this can be used in a multiobjective optimization with `ModelListGP`
