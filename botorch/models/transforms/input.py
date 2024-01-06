@@ -19,6 +19,7 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 from typing import Any, Callable, Dict, List, Optional, Union
 from warnings import warn
+import itertools
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
@@ -258,6 +259,7 @@ class ReversibleInputTransform(InputTransform, ABC):
 
     :meta private:
     """
+
     reverse: bool
 
     def transform(self, X: Tensor) -> Tensor:
@@ -1469,26 +1471,32 @@ class OneHotToNumeric(InputTransform, Module):
         )
         if len(self.categorical_features) > 0:
             self.categorical_start_idx = min(self.categorical_features.keys())
-            # check that the trailing dimensions are categoricals
-            end = self.categorical_start_idx
-            err_msg = (
-                f"{self.__class__.__name__} requires that the categorical "
-                "parameters are the rightmost elements."
-            )
+            #
+            self.onehot_idx = [
+                list(range(start, start + card))
+                for start, card in self.categorical_features.items()
+            ]
+            idx = list(itertools.chain.from_iterable(self.onehot_idx))
+            if len(idx) != len(set(idx)):
+                raise ValueError("Categorical features overlap.")
+            if max(idx) >= dim:
+                raise ValueError("Categorical features exceed the provided dimension.")
+            self.numerical_idx = list(set(range(dim)) - set(idx))
+
+            offset = 0
+            self.ordinal_idx = []
             for start, card in self.categorical_features.items():
-                # the end of one one-hot representation should be followed
-                # by the start of the next
-                if end != start:
-                    raise ValueError(err_msg)
-                # This assumes that the categoricals are the trailing
-                # dimensions
-                end = start + card
-            if end != dim:
-                # check end
-                raise ValueError(err_msg)
-            # the numeric representation dimension is the total number of parameters
-            # (continuous, integer, and categorical)
-            self.numeric_dim = self.categorical_start_idx + len(categorical_features)
+                self.ordinal_idx.append(start - offset)
+                offset += card - 1
+
+            reduced_dim = len(self.ordinal_idx) + len(self.numerical_idx)
+            self.new_numerical_idx = list(
+                set(range(reduced_dim)) - set(self.ordinal_idx)
+            )
+
+            self.numeric_dim = len(self.new_numerical_idx) + len(
+                self.categorical_features
+            )
 
     def transform(self, X: Tensor) -> Tensor:
         r"""Transform the categorical inputs into integer representation.
@@ -1502,10 +1510,17 @@ class OneHotToNumeric(InputTransform, Module):
         """
         if len(self.categorical_features) > 0:
             X_numeric = X[..., : self.numeric_dim].clone()
-            idx = self.categorical_start_idx
-            for start, card in self.categorical_features.items():
-                X_numeric[..., idx] = X[..., start : start + card].argmax(dim=-1)
-                idx += 1
+            # copy the numerical dims over
+            X_numeric[..., self.new_numerical_idx] = X[..., self.numerical_idx]
+            # idx = self.categorical_start_idx
+            for i in range(
+                len(self.categorical_features)
+            ):  # start, card in self.categorical_features.items():
+                # start, card = self.categorical_features[i]
+                X_numeric[..., self.ordinal_idx[i]] = X[..., self.onehot_idx[i]].argmax(
+                    dim=-1
+                )
+                # idx += 1
             return X_numeric
         return X
 
@@ -1521,23 +1536,38 @@ class OneHotToNumeric(InputTransform, Module):
             have been transformed to one-hot representation.
         """
         if len(self.categorical_features) > 0:
-            self.numeric_dim
-            one_hot_categoricals = [
-                # note that self.categorical_features is sorted by the starting index
-                # in one-hot representation
-                one_hot(
-                    X[..., idx - len(self.categorical_features)].long(),
-                    num_classes=cardinality,
-                )
-                for idx, cardinality in enumerate(self.categorical_features.values())
-            ]
-            X = torch.cat(
-                [
-                    X[..., : self.categorical_start_idx],
-                    *one_hot_categoricals,
-                ],
-                dim=-1,
+            s = list(X.shape)
+            s[-1] = len(self.numerical_idx) + len(
+                list(itertools.chain.from_iterable(self.onehot_idx))
             )
+            X_onehot = torch.zeros(size=s).to(X)
+            X_onehot[..., self.numerical_idx] = X[..., self.new_numerical_idx]
+            for i in range(len(self.categorical_features)):
+                X_onehot[..., self.onehot_idx[i]] = one_hot(
+                    X[..., self.ordinal_idx[i]].long(),
+                    num_classes=len(self.onehot_idx[i]),
+                ).to(X_onehot)
+            return X_onehot
+
+            # one_hot_categoricals = [
+            #     # note that self.categorical_features is sorted by the starting index
+            #     # in one-hot representation
+            #     one_hot(
+            #         X[..., self.ordinal_idx[i]].long(),
+            #         num_classes=len(self.onehot_idx[i]),
+            #     )
+            #     for i in range(
+            #         len(self.categorical_features)
+            #     )  # idx, cardinality in enumerate(self.categorical_features.values())
+            # ]
+
+            # X = torch.cat(
+            #     [
+            #         X[..., : self.categorical_start_idx],
+            #         *one_hot_categoricals,
+            #     ],
+            #     dim=-1,
+            # )
         return X
 
     def equals(self, other: InputTransform) -> bool:
