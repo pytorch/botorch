@@ -906,11 +906,11 @@ class TestOptimizeAcqf(BotorchTestCase):
                 return_best_only=True,
             )
 
-            for i in range(2):
+            for candidate in candidates:
                 self.assertTrue(
                     torch.allclose(
-                        torch.sort(candidates[i]).values,
-                        torch.tensor([[1, 1, 2]], **tkwargs),
+                        torch.sort(candidate).values,
+                        torch.tensor([[1.0, 1.0, 2.0]], **tkwargs),
                     )
                 )
             self.assertTrue(
