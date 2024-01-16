@@ -15,12 +15,12 @@ method.
 """
 from __future__ import annotations
 
-import itertools
-
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from typing import Any, Callable, Dict, List, Optional, Union
 from warnings import warn
+
+import numpy as np
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
@@ -1468,10 +1468,11 @@ class OneHotToNumeric(InputTransform, Module):
         )
         if len(self.categorical_features) > 0:
             self.onehot_idx = [
-                list(range(start, start + card))
+                np.arange(start, start + card)
                 for start, card in self.categorical_features.items()
             ]
-            idx = list(itertools.chain.from_iterable(self.onehot_idx))
+            idx = np.concatenate(self.onehot_idx)
+
             if len(idx) != len(set(idx)):
                 raise ValueError("Categorical features overlap.")
             if max(idx) >= dim:
@@ -1527,9 +1528,7 @@ class OneHotToNumeric(InputTransform, Module):
         """
         if len(self.categorical_features) > 0:
             s = list(X.shape)
-            s[-1] = len(self.numerical_idx) + len(
-                list(itertools.chain.from_iterable(self.onehot_idx))
-            )
+            s[-1] = len(self.numerical_idx) + len(np.concatenate(self.onehot_idx))
             X_onehot = torch.zeros(size=s).to(X)
             X_onehot[..., self.numerical_idx] = X[..., self.new_numerical_idx]
             for i in range(len(self.categorical_features)):
