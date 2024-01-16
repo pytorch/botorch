@@ -107,6 +107,11 @@ def get_acquisition_function(
         # Since these are the non-noisy variants, use the posterior mean at the observed
         # inputs directly to compute the best feasible value without sampling.
         Y = model.posterior(X_observed, posterior_transform=posterior_transform).mean
+        # in case of a fully bayesian GP, one has to take also the mean over the
+        # individual sets of hyperparams
+        if len(Y.shape) == 3:
+            Y = Y.mean(dim=0)
+
         obj = objective(samples=Y, X=X_observed)
         best_f = compute_best_feasible_objective(
             samples=Y,
