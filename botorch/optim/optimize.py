@@ -1039,7 +1039,7 @@ def optimize_acqf_discrete(
             be passed to different acquisition functions without raising an error.
 
     Returns:
-        A three-element tuple containing
+        A two-element tuple containing
 
         - a `q x d`-dim tensor of generated candidates.
         - an associated acquisition value.
