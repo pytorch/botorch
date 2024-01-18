@@ -1399,10 +1399,7 @@ def get_best_f_mc(
     # For most objectives, `obj` will have shape `1 x (batch_shape) x q`, but
     # with a `LearnedObjective` it can be `num_samples x (batch_shape) x q`.
     obj = objective(Y.unsqueeze(0), X=X_baseline)
-    if obj.shape[0] > 1:
-        obj = obj.mean(dim=0)
-    else:
-        obj = obj.squeeze(0)
+    obj = obj.mean(dim=0)  # taking mean over monte carlo samples
     return compute_best_feasible_objective(
         samples=Y,
         obj=obj,
@@ -1411,7 +1408,7 @@ def get_best_f_mc(
         objective=objective,
         posterior_transform=posterior_transform,
         X_baseline=X_baseline,
-    ).squeeze()
+    )
 
 
 def optimize_objective(

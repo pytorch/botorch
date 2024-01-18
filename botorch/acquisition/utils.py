@@ -121,13 +121,13 @@ def compute_best_feasible_objective(
         infeasible_obj: A Tensor to be returned when no feasible points exist.
 
     Returns:
-        A `(sample_shape) x batch_shape x 1`-dim Tensor of best feasible objectives.
+        A `(sample_shape) x batch_shape`-dim Tensor of best feasible objectives.
     """
     if constraints is None:  # unconstrained case
         # we don't need to differentiate through X_baseline for now, so taking
         # the regular max over the n points to get best_f is fine
         with torch.no_grad():
-            return obj.amax(dim=-1, keepdim=True)
+            return obj.amax(dim=-1, keepdim=False)
 
     is_feasible = compute_feasibility_indicator(
         constraints=constraints, samples=samples
@@ -160,7 +160,7 @@ def compute_best_feasible_objective(
     )
     obj = torch.where(is_feasible, obj, infeasible_value)
     with torch.no_grad():
-        return obj.amax(dim=-1, keepdim=True)
+        return obj.amax(dim=-1, keepdim=False)
 
 
 def _estimate_objective_lower_bound(

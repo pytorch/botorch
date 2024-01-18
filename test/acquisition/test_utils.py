@@ -73,7 +73,7 @@ class TestConstraintUtils(BotorchTestCase):
                     best_f = compute_best_feasible_objective(
                         samples=samples, obj=obj, constraints=constraints
                     )
-                    self.assertAllClose(best_f, obj.amax(dim=-1, keepdim=True))
+                    self.assertAllClose(best_f, obj.amax(dim=-1, keepdim=False))
 
                     # testing with some infeasible points
                     con_cutoff = 3.0
@@ -101,18 +101,18 @@ class TestConstraintUtils(BotorchTestCase):
                                 ).item(),
                             ],
                             **tkwargs,
-                        ).view(-1, 1)
+                        )
                         if len(batch_shape) > 0:
                             # When `batch_shape = (b,)`, this expands `expected_best_f`
                             # from shape (3, 1) to (3, 1, 1), then to
                             # (1, 1, ..., 1, 3, b, 1), where there are
                             # `len(sample_shape) - 1` leading ones.
                             expected_best_f = expected_best_f.unsqueeze(1).repeat(
-                                *[1] * len(sample_shape), *batch_shape, 1
+                                *[1] * len(sample_shape), *batch_shape
                             )
                     else:
                         expected_best_f = torch.full(
-                            sample_shape + batch_shape + torch.Size([1]),
+                            sample_shape + batch_shape,
                             con_cutoff,
                             **tkwargs,
                         )
@@ -133,7 +133,7 @@ class TestConstraintUtils(BotorchTestCase):
                     # testing with no feasible points and infeasible obj
                     infeasible_obj = torch.tensor(torch.pi, **tkwargs)
                     expected_best_f = torch.full(
-                        sample_shape + batch_shape + torch.Size([1]),
+                        sample_shape + batch_shape,
                         torch.pi,
                         **tkwargs,
                     )
@@ -159,7 +159,7 @@ class TestConstraintUtils(BotorchTestCase):
                         objective=objective,
                     )
                     expected_best_f = torch.full(
-                        sample_shape + batch_shape + torch.Size([1]),
+                        sample_shape + batch_shape,
                         -get_infeasible_cost(X=X, model=mm, objective=objective).item(),
                         **tkwargs,
                     )
