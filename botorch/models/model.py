@@ -42,6 +42,7 @@ from botorch.models.utils.assorted import fantasize as fantasize_flag
 from botorch.posteriors import Posterior, PosteriorList
 from botorch.sampling.base import MCSampler
 from botorch.sampling.list_sampler import ListSampler
+from botorch.utils.containers import BotorchContainer
 from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.transforms import is_fully_bayesian
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
@@ -187,11 +188,28 @@ class Model(Module, ABC):
         cls,
         training_data: SupervisedDataset,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
-        r"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`."""
-        from botorch.models.utils.parse_training_data import parse_training_data
+    ) -> Dict[str, Union[BotorchContainer, Tensor]]:
+        """
+        Construct `Model` keyword arguments from a `SupervisedDataset`.
 
-        return parse_training_data(cls, training_data, **kwargs)
+        Args:
+            training_data: A `SupervisedDataset`, with attributes `train_X`,
+                `train_Y`, and, optionally, `train_Yvar`.
+            kwargs: Ignored.
+
+        Returns:
+            A dict of keyword arguments that can be used to initialize a `Model`,
+            with keys `train_X`, `train_Y`, and, optionally, `train_Yvar`.
+        """
+        if not isinstance(training_data, SupervisedDataset):
+            raise TypeError(
+                "Expected `training_data` to be a `SupervisedDataset`, but got "
+                f"{type(training_data)}."
+            )
+        parsed_data = {"train_X": training_data.X, "train_Y": training_data.Y}
+        if training_data.Yvar is not None:
+            parsed_data["train_Yvar"] = training_data.Yvar
+        return parsed_data
 
     def transform_inputs(
         self,

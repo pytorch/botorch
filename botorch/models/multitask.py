@@ -283,8 +283,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
 
         Args:
             training_data: A `SupervisedDataset` or a `MultiTaskDataset`.
-            task_feature: Column index of embedded task indicator features. For details,
-                see `parse_training_data`.
+            task_feature: Column index of embedded task indicator features.
             output_tasks: A list of task indices for which to compute model
                 outputs for. If omitted, return outputs for all task indices.
             task_covar_prior: A GPyTorch `Prior` object to use as prior on

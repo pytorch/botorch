@@ -28,6 +28,8 @@ from botorch.models.pairwise_gp import (
 from botorch.models.transforms.input import Normalize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling.pairwise_samplers import PairwiseSobolQMCNormalSampler
+from botorch.utils.containers import SliceContainer
+from botorch.utils.datasets import RankingDataset, SupervisedDataset
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels import RBFKernel, ScaleKernel
 from gpytorch.kernels.linear_kernel import LinearKernel
@@ -74,6 +76,33 @@ class TestPairwiseGP(BotorchTestCase):
         }
         model = PairwiseGP(**model_kwargs)
         return model, model_kwargs
+
+    def test_construct_inputs(self) -> None:
+        datapoints = torch.rand(3, 2)
+        indices = torch.tensor([[0, 1], [1, 2]], dtype=torch.long)
+        event_shape = torch.Size([2 * datapoints.shape[-1]])
+        dataset_X = SliceContainer(datapoints, indices, event_shape=event_shape)
+        dataset_Y = torch.tensor([[0, 1], [1, 0]]).expand(indices.shape)
+        dataset = RankingDataset(
+            X=dataset_X, Y=dataset_Y, feature_names=["a", "b"], outcome_names=["y"]
+        )
+        model_inputs = PairwiseGP.construct_inputs(dataset)
+        comparisons = torch.tensor([[0, 1], [2, 1]], dtype=torch.long)
+        self.assertSetEqual(set(model_inputs.keys()), {"datapoints", "comparisons"})
+        self.assertTrue(torch.equal(model_inputs["datapoints"], datapoints))
+        self.assertTrue(torch.equal(model_inputs["comparisons"], comparisons))
+
+        with self.subTest("Input other than RankingDataset"):
+            dataset = SupervisedDataset(
+                X=datapoints,
+                Y=torch.rand(3, 1),
+                feature_names=["a", "b"],
+                outcome_names=["y"],
+            )
+            with self.assertRaisesRegex(
+                UnsupportedError, "Only `RankingDataset` is supported"
+            ):
+                PairwiseGP.construct_inputs(dataset)
 
     def test_pairwise_gp(self) -> None:
         torch.manual_seed(random.randint(0, 10))

@@ -19,9 +19,6 @@ from botorch.models.utils.assorted import (
     validate_input_scaling,
 )
 
-# # TODO: Omitted to avoid circular dependency created by `Model.construct_inputs`
-# from botorch.models.utils.parse_training_data import parse_training_data
-
 
 __all__ = [
     "_make_X_full",
