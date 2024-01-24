@@ -158,11 +158,6 @@ Transform Utilities
 Utilities
 -------------------------------------------
 
-Dataset Parsing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.models.utils.parse_training_data
-    :members:
-
 GPyTorch Module Constructors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.utils.gpytorch_modules

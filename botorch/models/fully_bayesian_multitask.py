@@ -395,8 +395,7 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
 
         Args:
             training_data: A `SupervisedDataset` or a `MultiTaskDataset`.
-            task_feature: Column index of embedded task indicator features. For details,
-                see `parse_training_data`.
+            task_feature: Column index of embedded task indicator features.
             rank: The rank of the cross-task covariance matrix.
         """
         inputs = super().construct_inputs(

@@ -28,7 +28,6 @@ import numpy as np
 import torch
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions import UnsupportedError
-
 from botorch.exceptions.warnings import _get_single_precision_warning, InputDataWarning
 from botorch.models.likelihoods.pairwise import (
     PairwiseLikelihood,
@@ -39,6 +38,7 @@ from botorch.models.transforms.input import InputTransform
 from botorch.models.utils.assorted import consolidate_duplicates
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
+from botorch.utils.datasets import RankingDataset, SupervisedDataset
 from gpytorch import settings
 from gpytorch.constraints import GreaterThan, Interval
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
@@ -783,6 +783,39 @@ class PairwiseGP(Model, GP, FantasizeMixin):
             return torch.Size()
         else:
             return self.datapoints.shape[:-2]
+
+    @classmethod
+    def construct_inputs(
+        cls,
+        training_data: SupervisedDataset,
+        **kwargs: Any,
+    ) -> Dict[str, Tensor]:
+        r"""
+        Construct `Model` keyword arguments from a `RankingDataset`.
+
+        Args:
+            training_data: A `RankingDataset`, with attributes `train_X`,
+                `train_Y`, and, optionally, `train_Yvar`.
+            kwargs: Ignored.
+
+        Returns:
+            A dict of keyword arguments that can be used to initialize a
+            `PairwiseGP`, including `datapoints` and `comparisons`.
+        """
+        if not isinstance(training_data, RankingDataset):
+            raise UnsupportedError(
+                "Only `RankingDataset` is supported for `PairwiseGP`. Received "
+                f"{type(training_data)}."
+            )
+        datapoints = training_data._X.values
+        comparisons = training_data._X.indices
+        comp_order = training_data.Y
+        comparisons = torch.gather(input=comparisons, dim=-1, index=comp_order)
+
+        return {
+            "datapoints": datapoints,
+            "comparisons": comparisons,
+        }
 
     def set_train_data(
         self,
