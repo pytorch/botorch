@@ -366,8 +366,8 @@ class qExpectedImprovement(SampleReducingMCAcquisitionFunction):
         Args:
             model: A fitted model.
             best_f: The best objective value observed so far (assumed noiseless). Can be
-                a `batch_shape`-shaped tensor, which in case of a batched model
-                specifies potentially different values for each element of the batch.
+                a scalar, or a `batch_shape`-dim tensor. In case of a batched model, the
+                tensor can specify different values for each element of the batch.
             sampler: The sampler used to draw base samples. See `MCAcquisitionFunction`
                 more details.
             objective: The MCAcquisitionObjective under which the samples are evaluated.
@@ -538,7 +538,7 @@ class qNoisyExpectedImprovement(
                 "_baseline_best_f",
                 self._compute_best_feasible_objective(
                     samples=baseline_samples, obj=baseline_obj
-                ),
+                ),  # `sample_shape x batch_shape`-dim
             )
             self._baseline_L = self._compute_root_decomposition(posterior=posterior)
 
@@ -549,7 +549,7 @@ class qNoisyExpectedImprovement(
             obj: `sample_shape x batch_shape x q`-dim Tensor of objectives in forward.
 
         Returns:
-            A `sample_shape x batch_shape x 1`-dim Tensor of best feasible objectives.
+            A `sample_shape x batch_shape`-dim Tensor of best feasible objectives.
         """
         if self._cache_root:
             val = self._baseline_best_f
@@ -562,11 +562,11 @@ class qNoisyExpectedImprovement(
         view_shape = torch.Size(
             [
                 *val.shape[:n_sample_dims],  # sample dimensions
-                *(1,) * (obj.ndim - val.ndim),  # pad to match obj
+                *(1,) * (obj.ndim - val.ndim - 1),  # pad to match obj, without `q`-dim
                 *val.shape[n_sample_dims:],  # the rest
             ]
         )
-        return val.view(view_shape).to(obj)
+        return val.view(view_shape).to(obj)  # obj.shape[:-1], i.e. without `q`-dim`
 
     def _sample_forward(self, obj: Tensor) -> Tensor:
         """Evaluate qNoisyExpectedImprovement per objective value in `obj`.
@@ -577,7 +577,7 @@ class qNoisyExpectedImprovement(
         Returns:
             A `sample_shape x batch_shape x q`-dim Tensor of noisy improvement values.
         """
-        return (obj - self.compute_best_f(obj)).clamp_min(0)
+        return (obj - self.compute_best_f(obj).unsqueeze(-1)).clamp_min(0)
 
     def _get_samples_and_objectives(self, X: Tensor) -> Tuple[Tensor, Tensor]:
         r"""Compute samples at new points, using the cached root decomposition.
@@ -623,7 +623,7 @@ class qNoisyExpectedImprovement(
             obj: A `sample_shape x batch_shape x q`-dim Tensor of MC objective values.
 
         Returns:
-            A `sample_shape x batch_shape x 1`-dim Tensor of best feasible objectives.
+            A `sample_shape x batch_shape`-dim Tensor of best feasible objectives.
         """
         return compute_best_feasible_objective(
             samples=samples,

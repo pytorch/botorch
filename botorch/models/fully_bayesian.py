@@ -498,9 +498,8 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
         rest of this method will not run.
         """
         self._check_if_fitted()
-        x = X.unsqueeze(MCMC_DIM)
-        mean_x = self.mean_module(x)
-        covar_x = self.covar_module(x)
+        mean_x = self.mean_module(X)
+        covar_x = self.covar_module(X)
         return MultivariateNormal(mean_x, covar_x)
 
     # pyre-ignore[14]: Inconsistent override
@@ -534,7 +533,7 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
         """
         self._check_if_fitted()
         posterior = super().posterior(
-            X=X,
+            X=X.unsqueeze(MCMC_DIM),
             output_indices=output_indices,
             observation_noise=observation_noise,
             posterior_transform=posterior_transform,
@@ -542,3 +541,37 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
         )
         posterior = GaussianMixturePosterior(distribution=posterior.distribution)
         return posterior
+
+    def condition_on_observations(
+        self, X: Tensor, Y: Tensor, **kwargs: Any
+    ) -> BatchedMultiOutputGPyTorchModel:
+        """Conditions on additional observations for a Fully Bayesian model (either
+        identical across models or unique per-model).
+
+        Args:
+            X: A `batch_shape x num_samples x d`-dim Tensor, where `d` is
+                the dimension of the feature space and `batch_shape` is the number of
+                sampled models.
+            Y: A `batch_shape x num_samples x 1`-dim Tensor, where `d` is
+                the dimension of the feature space and `batch_shape` is the number of
+                sampled models.
+
+        Returns:
+            BatchedMultiOutputGPyTorchModel: A fully bayesian model conditioned on
+              given observations. The returned model has `batch_shape` copies of the
+              training data in case of identical observations (and `batch_shape`
+              training datasets otherwise).
+        """
+        if X.ndim == 2 and Y.ndim == 2:
+            # To avoid an error in GPyTorch when inferring the batch dimension, we add
+            # the explicit batch shape here. The result is that the conditioned model
+            # will have 'batch_shape' copies of the training data.
+            X = X.repeat(self.batch_shape + (1, 1))
+            Y = Y.repeat(self.batch_shape + (1, 1))
+
+        elif X.ndim < Y.ndim:
+            # We need to duplicate the training data to enable correct batch
+            # size inference in gpytorch.
+            X = X.repeat(*(Y.shape[:-2] + (1, 1)))
+
+        return super().condition_on_observations(X, Y, **kwargs)

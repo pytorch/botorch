@@ -221,3 +221,71 @@ class TestObjectiveAndConstraintIntegration(BotorchTestCase):
                     prune_baseline=prune_baseline,
                     test_batch_shape=torch.Size(test_batch_shape),
                 )
+
+
+class TestInputConstructorIntegration(BotorchTestCase):
+    def _base_test_input_consructor(
+        self, test_batch_shape: torch.Size, train_batch_shape: torch.Size
+    ) -> None:
+        m = 1
+        d = 2
+        q = 3
+
+        train_x = torch.rand(
+            (*train_batch_shape, 5, d), device=self.device, dtype=torch.double
+        )
+        y = torch.rand(
+            (*train_batch_shape, 5, m), device=self.device, dtype=torch.double
+        )
+
+        training_data = SupervisedDataset(
+            X=train_x,
+            Y=y,
+            feature_names=[f"x{i}" for i in range(d)],
+            outcome_names=[f"y{i}" for i in range(m)],
+        )
+
+        with catch_warnings():
+            simplefilter("ignore", category=InputDataWarning)
+            model = SingleTaskGP(train_x, y)
+
+        test_x = torch.rand(
+            (*test_batch_shape, q, d), device=self.device, dtype=torch.double
+        )
+
+        for acqf_cls, kws in [
+            (qNoisyExpectedImprovement, {"prune_baseline": False}),
+            (qLogNoisyExpectedImprovement, {"prune_baseline": False}),
+            (qExpectedImprovement, {}),
+            (qProbabilityOfImprovement, {}),
+            (qLogExpectedImprovement, {}),
+        ]:
+            with self.subTest(acqf_cls=acqf_cls):
+                input_constructor = get_acqf_input_constructor(acqf_cls=acqf_cls)
+                acqf = acqf_cls(
+                    **input_constructor(
+                        model=model,
+                        training_data=training_data,
+                        X_baseline=train_x,
+                        sampler=SobolQMCNormalSampler(torch.Size([4])),
+                        **kws,
+                    )
+                )
+                acq_val = acqf(test_x)
+                self.assertEqual(acq_val.numel(), torch.Size(test_batch_shape).numel())
+
+    def test_input_constructor_not_batched(self) -> None:
+        self._base_test_input_consructor(
+            test_batch_shape=torch.Size([]),
+            train_batch_shape=torch.Size([]),
+        )
+
+    def test_input_constructor_batched(self) -> None:
+        self._base_test_input_consructor(
+            test_batch_shape=torch.Size([6]),
+            train_batch_shape=torch.Size([]),
+        )
+        self._base_test_input_consructor(
+            test_batch_shape=torch.Size([6]),
+            train_batch_shape=torch.Size([6]),
+        )

@@ -240,6 +240,8 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
     particular realizations of the random variable. [Cousin2013MVaR]_ instead
     propose to use the expectation of the set-valued MVaR as the multivariate
     VaR. We support this alternative with an `expectation` flag.
+
+    This supports approximate gradients as discussed in [Daulton2022MARS]_.
     """
 
     _verify_output_shape = False
@@ -253,6 +255,7 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
         *,
         pad_to_n_w: bool = False,
         filter_dominated: bool = True,
+        use_counting: bool = False,
     ) -> None:
         r"""The multivariate Value-at-Risk.
 
@@ -281,6 +284,9 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
                 the dominated points will be filtered out later, e.g., while
                 calculating the hypervolume. Disabling this is not recommended
                 if `expectation=True`.
+            use_counting: If True, uses `get_mvar_set_via_counting` for finding the
+                MVaR set. This is method is less memory intensive than the vectorized
+                implementation, which is beneficial when `n_w` is quite large.
         """
         super().__init__(n_w=n_w, preprocessing_function=preprocessing_function)
         if not 0 < alpha <= 1:
@@ -289,23 +295,22 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
         self.expectation = expectation
         self.pad_to_n_w = pad_to_n_w
         self.filter_dominated = filter_dominated
+        self.use_counting = use_counting
 
-    def get_mvar_set_cpu(self, Y: Tensor) -> Tensor:
+    def get_mvar_set_via_counting(self, Y: Tensor) -> List[Tensor]:
         r"""Find MVaR set based on the definition in [Prekopa2012MVaR]_.
-
-        NOTE: This is much faster on CPU for large `n_w` than the alternative but it
-        is significantly slower on GPU. Based on empirical evidence, this is recommended
-        when running on CPU with `n_w > 64`.
 
         This first calculates the CDF for each point on the extended domain of the
         random variable (the grid defined by the given samples), then takes the
         values with CDF equal to (rounded if necessary) `alpha`. The non-dominated
         subset of these form the MVaR set.
 
+        This implementation processes each batch of `Y` in a for loop using a counting
+        based implementation. It requires less memory than the vectorized implementation
+        and should be used with large (>128) `n_w` values.
+
         Args:
-            Y: A `batch x n_w x m`-dim tensor of outcomes. This is currently
-                restricted to `m = 2` objectives.
-                TODO: Support `m > 2` objectives.
+            Y: A `batch x n_w x m`-dim tensor of outcomes.
 
         Returns:
             A `batch` length list of `k x m`-dim tensor of MVaR values, where `k`
@@ -313,10 +318,8 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
             are not in-sample points.
         """
         if Y.dim() == 3:
-            return [self.get_mvar_set_cpu(y_) for y_ in Y]
+            return sum((self.get_mvar_set_via_counting(y_) for y_ in Y), [])
         m = Y.shape[-1]
-        if m != 2:  # pragma: no cover
-            raise ValueError("`get_mvar_set_cpu` only supports `m=2` outcomes!")
         # Generate sets of all unique values in each output dimension.
         # Note that points in MVaR are bounded from above by the
         # independent VaR of each objective. Hence, we only need to
@@ -324,9 +327,10 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
         # the VaR of the independent objectives
         var_alpha_idx = ceil(self.alpha * self.n_w) - 1
         Y_sorted = Y.topk(Y.shape[0] - var_alpha_idx, dim=0, largest=False).values
-        unique_outcomes_list = [
-            Y_sorted[:, i].unique().tolist()[::-1] for i in range(m)
-        ]
+        unique_outcomes_list = []
+        for i in range(m):
+            sorted_i = Y_sorted[:, i].cpu().clone(memory_format=torch.contiguous_format)
+            unique_outcomes_list.append(sorted_i.unique().tolist()[::-1])
         # Convert this into a list of m dictionaries mapping values to indices.
         unique_outcomes = [
             dict(zip(outcomes, range(len(outcomes))))
@@ -351,7 +355,8 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
         Y_pruned = Y[mask]
         for y_ in Y_pruned:
             starting_idcs = [unique_outcomes[i].get(y_[i].item(), 0) for i in range(m)]
-            counter_tensor[starting_idcs[0] :, starting_idcs[1] :] += 1
+            slices = [slice(s_idx, None) for s_idx in starting_idcs]
+            counter_tensor[slices] += 1
 
         # Get the count alpha-level points should have.
         alpha_count = ceil(self.alpha * self.n_w)
@@ -381,20 +386,21 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
             mvar = alpha_level_points[mask]
         else:
             mvar = alpha_level_points
-        return mvar
+        return [mvar]
 
-    def get_mvar_set_gpu(self, Y: Tensor) -> Tensor:
+    def get_mvar_set_vectorized(self, Y: Tensor) -> List[Tensor]:
         r"""Find MVaR set based on the definition in [Prekopa2012MVaR]_.
-
-        NOTE: This is much faster on GPU than the alternative but it scales very poorly
-        on CPU as `n_w` increases. This should be preferred if a GPU is available or
-        when `n_w <= 64`. In addition, this supports `m >= 2` outcomes (vs `m = 2` for
-        the CPU version) and it should be used if `m > 2`.
 
         This first calculates the CDF for each point on the extended domain of the
         random variable (the grid defined by the given samples), then takes the
         values with CDF equal to (rounded if necessary) `alpha`. The non-dominated
         subset of these form the MVaR set.
+
+        This implementation uses computes the CDF of each point using highly vectorized
+        operations. As such, it may use large amounts of memory, particularly when the
+        batch size and/or `n_w` are large. It is typically faster than the alternative
+        implementation when computing MVaR of a large batch of points with small to
+        moderate (<128 for m=2, <64 for m=3) `n_w`.
 
         Args:
             Y: A `batch x n_w x m`-dim tensor of observations.
@@ -458,7 +464,29 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
                 mvar.append(alpha_level_points)
         return mvar
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def make_differentiable(self, prepared_samples: Tensor, mvars: Tensor) -> Tensor:
+        r"""An experimental approach for obtaining the gradient of the MVaR via
+        component-wise mapping to original samples. See [Daulton2022MARS]_.
+
+        Args:
+            prepared_samples: A `(sample_shape * batch_shape * q) x n_w x m`-dim tensor
+                of posterior samples. The q-batches should be ordered so that each
+                `n_w` block of samples correspond to the same input.
+            mvars: A `(sample_shape * batch_shape * q) x k x m`-dim tensor
+                of padded MVaR values.
+        Returns:
+            The same `mvars` with entries mapped to inputs to produce gradients.
+        """
+        samples = prepared_samples.unsqueeze(-2).repeat(1, 1, mvars.shape[-2], 1)
+        mask = samples == mvars.unsqueeze(-3)
+        samples[~mask] = 0
+        return samples.sum(dim=-3) / mask.sum(dim=-3)
+
+    def forward(
+        self,
+        samples: Tensor,
+        X: Optional[Tensor] = None,
+    ) -> Tensor:
         r"""Calculate the MVaR corresponding to the given samples.
 
         Args:
@@ -481,28 +509,11 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
         prepared_samples = self._prepare_samples(samples)
         # This is -1 x n_w x m.
         prepared_samples = prepared_samples.reshape(-1, *prepared_samples.shape[-2:])
-        # Get the mvar set using the appropriate method based on device, m & n_w.
-        # NOTE: The `n_w <= 64` part is based on testing on a 24 core CPU.
-        # `get_mvar_set_gpu` heavily relies on parallelized batch computations and
-        # may scale worse on CPUs with fewer cores.
-        # Using `no_grad` here since `MVaR` is not differentiable.
         with torch.no_grad():
-            if (
-                samples.device == torch.device("cpu")
-                and m == 2
-                and prepared_samples.shape[-2] <= 64
-            ):
-                mvar_set = self.get_mvar_set_cpu(prepared_samples)
+            if self.use_counting:
+                mvar_set = self.get_mvar_set_via_counting(prepared_samples)
             else:
-                mvar_set = self.get_mvar_set_gpu(prepared_samples)
-        if samples.requires_grad:
-            # TODO: Investigate differentiability of MVaR.
-            warnings.warn(
-                "Got `samples` that requires grad, but computing MVaR involves "
-                "non-differentiable operations and the results will not be "
-                "differentiable. This may lead to errors down the line!",
-                RuntimeWarning,
-            )
+                mvar_set = self.get_mvar_set_vectorized(prepared_samples)
         # Set the `pad_size` to either `self.n_w` or the size of the largest MVaR set.
         pad_size = self.n_w if self.pad_to_n_w else max([_.shape[0] for _ in mvar_set])
         padded_mvar_list = []
@@ -516,6 +527,10 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
                     torch.cat([mvar_, mvar_[-1].expand(repeats_needed, m)], dim=0)
                 )
         mvars = torch.stack(padded_mvar_list, dim=0)
+        if samples.requires_grad:
+            mvars = self.make_differentiable(
+                prepared_samples=prepared_samples, mvars=mvars
+            )
         return mvars.view(*batch_shape, -1, m)
 
 
@@ -602,6 +617,7 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
                     "`model` and `X_baseline` are ignored when `Y_samples` is "
                     "provided to `MARS.set_baseline_Y`.",
                     BotorchWarning,
+                    stacklevel=2,
                 )
             Y = Y_samples
         Y = self.preprocessing_function(Y)

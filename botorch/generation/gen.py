@@ -233,7 +233,7 @@ def gen_candidates_scipy(
 
     if nonlinear_inequality_constraints:
         # Make sure `batch_limit` is 1 for now.
-        if not (len(shapeX) == 3 and shapeX[:2] == torch.Size([1, 1])):
+        if not (len(shapeX) == 3 and shapeX[0] == 1):
             raise ValueError(
                 "`batch_limit` must be 1 when non-linear inequality constraints "
                 "are given."

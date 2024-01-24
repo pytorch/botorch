@@ -37,6 +37,11 @@ Low-Rank Cholesky Update Utils
 .. automodule:: botorch.utils.low_rank
 		:members:
 
+Multi-Task Distribution Utils
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.multitask
+		:members:
+
 Objective
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.objective

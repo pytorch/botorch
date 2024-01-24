@@ -6,6 +6,7 @@
 
 import itertools
 import warnings
+from copy import deepcopy
 from typing import Optional
 
 import torch
@@ -206,7 +207,7 @@ class TestModelListGP(BotorchTestCase):
             )
 
         # test X having wrong size
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(BotorchTensorDimensionError):
             model.condition_on_observations(f_x[:1], f_y)
 
         # test posterior transform
@@ -336,12 +337,46 @@ class TestModelListGP(BotorchTestCase):
             model_list_gp_mean = model_list_gp.posterior(train_x_raw).mean
         self.assertAllClose(model2_mean, model_list_gp_mean)
         # Mix of multi-output and single-output MTGPs.
-        model_list_gp = ModelListGP(model, model2)
-        self.assertEqual(model_list_gp.num_outputs, 3)
+        model_list_gp = ModelListGP(model, model2, deepcopy(model))
+        self.assertEqual(model_list_gp.num_outputs, 4)
         with torch.no_grad():
-            model_list_gp_mean = model_list_gp.posterior(train_x_raw).mean
-        expected_mean = torch.cat([model_mean, model2_mean], dim=-1)
-        self.assertAllClose(expected_mean, model_list_gp_mean)
+            posterior = model_list_gp.posterior(train_x_raw)
+        expected_mean = torch.cat([model_mean, model2_mean, model_mean], dim=-1)
+        self.assertAllClose(expected_mean, posterior.mean)
+        C1 = model.posterior(train_x_raw).covariance_matrix
+        C2 = model2.posterior(train_x_raw).covariance_matrix[:10, :10]
+        C3 = model2.posterior(train_x_raw).covariance_matrix[-10:, -10:]
+        expected_covariance = torch.block_diag(C1, C2, C3, C1)
+        self.assertTrue(
+            torch.allclose(expected_covariance, posterior.covariance_matrix, atol=1e-5)
+        )
+        # test subset outputs
+        subset_model = model_list_gp.subset_output([1])
+        self.assertEqual(subset_model.num_outputs, 2)
+        subset_model = model_list_gp.subset_output([0, 1])
+        self.assertEqual(subset_model.num_outputs, 3)
+        self.assertEqual(len(subset_model.models), 2)
+        # Test condition on observations
+        model_s1 = SingleTaskGP(
+            train_X=train_x_raw,
+            train_Y=train_y,
+        )
+        model_list_gp = ModelListGP(model_s1, model2, deepcopy(model_s1))
+        model_list_gp.posterior(train_x_raw)
+        f_x = [torch.rand(5, 1, **tkwargs) for _ in range(2)]
+        C1 = torch.cat((f_x[0], torch.zeros(5, 1, **tkwargs)), dim=-1)
+        C2 = torch.cat((f_x[1], torch.ones(5, 1, **tkwargs)), dim=-1)
+        f_x2 = [f_x[0], C1, C2, f_x[1]]
+        f_y = torch.rand(5, 4, **tkwargs)
+        cm = model_list_gp.condition_on_observations(f_x2, f_y)
+        self.assertIsInstance(cm, ModelListGP)
+        self.assertEqual(cm.num_outputs, 4)
+        self.assertEqual(len(cm.models), 3)
+        for i in [0, 2]:
+            self.assertIsInstance(cm.models[i], SingleTaskGP)
+            self.assertEqual(cm.models[i].train_inputs[0].shape, torch.Size([15, 1]))
+        self.assertIsInstance(cm.models[1], MultiTaskGP)
+        self.assertEqual(cm.models[1].train_inputs[0].shape, torch.Size([20, 2]))
 
     def test_transform_revert_train_inputs(self):
         tkwargs = {"device": self.device, "dtype": torch.float}
@@ -513,11 +548,11 @@ class TestModelListGP(BotorchTestCase):
                     eval_mask: Optional[Tensor] = None,
                 ) -> float:
                     fant = model.fantasize(
-                        target_x,
+                        target_x,  # noqa
                         sampler=sampler,
                         evaluation_mask=eval_mask,
                     )
-                    return fant.posterior(target_x).mean.mean(dim=(-2, -3))
+                    return fant.posterior(target_x).mean.mean(dim=(-2, -3))  # noqa
 
                 # ~0
                 sampler = IIDNormalSampler(sample_shape=torch.Size([10]), seed=0)

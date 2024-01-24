@@ -115,8 +115,6 @@ class TestQExpectedImprovement(BotorchTestCase):
             res = acqf(X)
             self.assertEqual(res.item(), 1.0)
 
-            # TODO: Test batched best_f, batched model, batched evaluation
-
             # basic test, no resample
             sampler = IIDNormalSampler(sample_shape=torch.Size([2]), seed=12345)
             acqf = qExpectedImprovement(model=mm, best_f=0, sampler=sampler)
@@ -593,7 +591,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                     self.assertAllClose(best_feas_f, acqf.compute_best_f(obj))
                 else:
                     self.assertAllClose(
-                        best_feas_f, torch.full_like(obj[..., [0]], -infcost.item())
+                        best_feas_f, torch.full_like(obj[..., 0], -infcost.item())
                     )
         # TODO: Test different objectives (incl. constraints)
 

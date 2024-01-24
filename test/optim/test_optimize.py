@@ -79,7 +79,11 @@ class SquaredAcquisitionFunction(AcquisitionFunction):
         super().__init__(model=model)
 
     def forward(self, X):
-        return torch.linalg.norm(X, dim=-1).squeeze(-1)
+        # we take the norm and sum over the q-batch dim
+        if len(X.shape) > 2:
+            return torch.linalg.norm(X, dim=-1).sum(-1)
+        else:
+            return torch.linalg.norm(X, dim=-1).squeeze(-1)
 
 
 class MockOneShotEvaluateAcquisitionFunction(MockOneShotAcquisitionFunction):
@@ -852,6 +856,7 @@ class TestOptimizeAcqf(BotorchTestCase):
             def nlc4(x):
                 return x[..., 2] - 1
 
+            # test it with q=1
             with torch.random.fork_rng():
                 torch.manual_seed(0)
                 batch_initial_conditions = 1 + 0.33 * torch.rand(
@@ -878,6 +883,38 @@ class TestOptimizeAcqf(BotorchTestCase):
             )
             self.assertTrue(
                 torch.allclose(acq_value, torch.tensor(2.45, **tkwargs), atol=1e-3)
+            )
+
+            # test it with q=2
+            with torch.random.fork_rng():
+                torch.manual_seed(0)
+                batch_initial_conditions = 1 + 0.33 * torch.rand(
+                    num_restarts, 2, 3, **tkwargs
+                )
+            candidates, acq_value = optimize_acqf(
+                acq_function=mock_acq_function,
+                bounds=bounds,
+                q=2,
+                nonlinear_inequality_constraints=[
+                    (nlc1, True),
+                    (nlc2, True),
+                    (nlc3, True),
+                    (nlc4, True),
+                ],
+                batch_initial_conditions=batch_initial_conditions,
+                num_restarts=num_restarts,
+                return_best_only=True,
+            )
+
+            for candidate in candidates:
+                self.assertTrue(
+                    torch.allclose(
+                        torch.sort(candidate).values,
+                        torch.tensor([[1.0, 1.0, 2.0]], **tkwargs),
+                    )
+                )
+            self.assertTrue(
+                torch.allclose(acq_value, torch.tensor(2.45 * 2, **tkwargs), atol=1e-3)
             )
 
             with torch.random.fork_rng():

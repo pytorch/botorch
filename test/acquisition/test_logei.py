@@ -725,7 +725,7 @@ class TestQLogNoisyExpectedImprovement(BotorchTestCase):
                     self.assertAllClose(best_feas_f, acqf.compute_best_f(obj))
                 else:
                     self.assertAllClose(
-                        best_feas_f, torch.full_like(obj[..., [0]], -infcost.item())
+                        best_feas_f, torch.full_like(obj[..., 0], -infcost.item())
                     )
         # TODO: Test different objectives (incl. constraints)
 
