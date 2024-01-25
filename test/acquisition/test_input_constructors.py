@@ -1116,11 +1116,12 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
 
     def test_construct_inputs_mes(self) -> None:
         func = get_acqf_input_constructor(qMaxValueEntropy)
-        model = SingleTaskGP(train_X=torch.ones((3, 2)), train_Y=torch.zeros((3, 1)))
+        n, d, m = 5, 2, 1
+        model = SingleTaskGP(train_X=torch.ones((n, d)), train_Y=torch.zeros((n, m)))
         kwargs = func(
             model=model,
             training_data=self.blockX_blockY,
-            objective=LinearMCObjective(torch.rand(2)),
+            posterior_transform=ScalarizedPosteriorTransform(torch.rand(m)),
             bounds=self.bounds,
             candidate_size=17,
             maximize=False,

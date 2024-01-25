@@ -1103,6 +1103,7 @@ def construct_inputs_qMES(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
     bounds: List[Tuple[float, float]],
+    posterior_transform: Optional[PosteriorTransform] = None,
     candidate_size: int = 1000,
     maximize: bool = True,
     # TODO: qMES also supports other inputs, such as num_fantasies
@@ -1115,6 +1116,7 @@ def construct_inputs_qMES(
     _bounds = torch.as_tensor(bounds, **_kw).transpose(0, 1)
     return {
         "model": model,
+        "posterior_transform": posterior_transform,
         "candidate_set": _bounds[0] + (_bounds[1] - _bounds[0]) * _rvs,
         "maximize": maximize,
     }
