@@ -6,7 +6,7 @@
 # In this tutorial, we show how to implement **B**ayesian optimization with **a**daptively e**x**panding s**u**bspace**s** (BAxUS) [1] in a closed loop in BoTorch.
 # The tutorial is purposefully similar to the [TuRBO tutorial](https://botorch.org/tutorials/turbo_1) to highlight the differences in the implementations.
 # 
-# This implementation supports either Expected Improvement (EI) or Thompson sampling (TS). We optimize the Branin2 function [2] with 498 dummy dimensions$ and show that BAxUS outperforms EI as well as Sobol.
+# This implementation supports either Expected Improvement (EI) or Thompson sampling (TS). We optimize the Branin2 function [2] with 498 dummy dimensions and show that BAxUS outperforms EI as well as Sobol.
 # 
 # Since BoTorch assumes a maximization problem, we will attempt to maximize $-f(x)$ to achieve $\max_{x\in \mathcal{X}} -f(x)=0$.
 # 
@@ -32,7 +32,7 @@ from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from torch.quasirandom import SobolEngine
 
-from botorch.acquisition.analytic import ExpectedImprovement
+from botorch.acquisition.analytic import LogExpectedImprovement
 from botorch.exceptions import ModelFittingError
 from botorch.fit import fit_gpytorch_mll
 from botorch.generation import MaxPosteriorSampling
@@ -219,9 +219,12 @@ def increase_embedding_and_observations(
     for row_idx in range(len(S)):
         row = S[row_idx]
         idxs_non_zero = torch.nonzero(row)
-        idxs_non_zero = idxs_non_zero[torch.randperm(len(idxs_non_zero))].squeeze()
+        idxs_non_zero = idxs_non_zero[torch.randperm(len(idxs_non_zero))].reshape(-1)
 
-        non_zero_elements = row[idxs_non_zero].squeeze()
+        if len(idxs_non_zero) <= 1:
+            continue
+
+        non_zero_elements = row[idxs_non_zero].reshape(-1)
 
         n_row_bins = min(
             n_new_bins, len(idxs_non_zero)
@@ -352,7 +355,7 @@ def create_candidate(
             X_next = thompson_sampling(X_cand, num_samples=1)
 
     elif acqf == "ei":
-        ei = ExpectedImprovement(model, train_Y.max())
+        ei = LogExpectedImprovement(model, train_Y.max())
         X_next, acq_value = optimize_acqf(
             ei,
             bounds=torch.stack([tr_lb, tr_ub]),
@@ -385,30 +388,18 @@ Y_baxus = torch.tensor(
     [branin_emb(x) for x in X_baxus_input], dtype=dtype, device=device
 ).unsqueeze(-1)
 
-
 NUM_RESTARTS = 10 if not SMOKE_TEST else 2
 RAW_SAMPLES = 512 if not SMOKE_TEST else 4
 N_CANDIDATES = min(5000, max(2000, 200 * dim)) if not SMOKE_TEST else 4
 
 # Disable input scaling checks as we normalize to [-1, 1]
 with botorch.settings.validate_input_scaling(False):
-
     for _ in range(evaluation_budget - n_init):  # Run until evaluation budget depleted
         # Fit a GP model
         train_Y = (Y_baxus - Y_baxus.mean()) / Y_baxus.std()
         likelihood = GaussianLikelihood(noise_constraint=Interval(1e-8, 1e-3))
-        covar_module = (
-            ScaleKernel(  # Use the same lengthscale prior as in the TuRBO paper
-                MaternKernel(
-                    nu=2.5,
-                    ard_num_dims=state.target_dim,
-                    lengthscale_constraint=Interval(0.005, 10),
-                ),
-                outputscale_constraint=Interval(0.05, 10),
-            )
-        )
         model = SingleTaskGP(
-            X_baxus_target, train_Y, covar_module=covar_module, likelihood=likelihood
+            X_baxus_target, train_Y, likelihood=likelihood
         )
         mll = ExactMarginalLogLikelihood(model.likelihood, model)
 
@@ -503,7 +494,7 @@ with botorch.settings.validate_input_scaling(False):
             optimizer.step()
 
         # Create a batch
-        ei = ExpectedImprovement(model, train_Y.max())
+        ei = LogExpectedImprovement(model, train_Y.max())
         candidate, acq_value = optimize_acqf(
             ei,
             bounds=torch.stack(
@@ -579,10 +570,4 @@ plt.legend(
     fontsize=16,
 )
 plt.show()
-
-
-# In[ ]:
-
-
-
 
