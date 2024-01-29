@@ -1283,34 +1283,53 @@ def construct_inputs_qMFMES(
 @acqf_input_constructor(AnalyticExpectedUtilityOfBestOption)
 def construct_inputs_analytic_eubo(
     model: Model,
-    pref_model: Model,
+    pref_model: Optional[Model] = None,
     previous_winner: Optional[Tensor] = None,
     sample_multiplier: Optional[float] = 1.0,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for the `AnalyticExpectedUtilityOfBestOption` constructor.
 
+    `model` is the primary model defined over the parameter space. It can be the
+    outcomde model in BOPE or the preference model in PBO. `pref_model` is the model
+    defined over the outcome/metric space, which is typically the preference model
+    in BOPE.
+
+    If both model and pref_model exist, we are performing Bayesian Optimization with
+    Preference Exploration (BOPE). When only pref_model is None, we are performing
+    preferential BO (PBO).
+
     Args:
-        model: The outcome model to be used in the acquisition function.
-        pref_model: The preference model to be used in preference exploration.
+        model: The outcome model to be used in the acquisition function in BOPE
+            when pref_model exists; otherwise, model is the preference model and
+            we are doing Preferential BO
+        pref_model: The preference model to be used in preference exploration as in
+            BOPE; if None, we are doing PBO and model is the preference model.
         previous_winner: The previous winner of the best option.
         sample_multiplier: The scale factor for the single-sample model.
 
     Returns:
         A dict mapping kwarg names of the constructor to values.
     """
-    # construct a deterministic fixed single sample model from `model`
-    # i.e., performing EUBO-zeta by default as described
-    # in https://arxiv.org/abs/2203.11382
-    # using pref_model.dim instead of model.num_outputs here as MTGP's
-    # num_outputs could be tied to the number of tasks
-    w = torch.randn(pref_model.dim) * sample_multiplier
-    one_sample_outcome_model = FixedSingleSampleModel(model=model, w=w)
+    if pref_model is None:
+        return {
+            "pref_model": model,
+            "outcome_model": None,
+            "previous_winner": previous_winner,
+        }
+    else:
+        # construct a deterministic fixed single sample model from `model`
+        # i.e., performing EUBO-zeta by default as described
+        # in https://arxiv.org/abs/2203.11382
+        # using pref_model.dim instead of model.num_outputs here as MTGP's
+        # num_outputs could be tied to the number of tasks
+        w = torch.randn(pref_model.dim) * sample_multiplier
+        one_sample_outcome_model = FixedSingleSampleModel(model=model, w=w)
 
-    return {
-        "pref_model": pref_model,
-        "outcome_model": one_sample_outcome_model,
-        "previous_winner": previous_winner,
-    }
+        return {
+            "pref_model": pref_model,
+            "outcome_model": one_sample_outcome_model,
+            "previous_winner": previous_winner,
+        }
 
 
 def get_best_f_analytic(
