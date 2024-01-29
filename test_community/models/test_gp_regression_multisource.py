@@ -13,7 +13,7 @@ import torch
 from botorch import fit_gpytorch_mll
 from botorch.exceptions import InputDataError, OptimizationWarning
 from botorch.models import FixedNoiseGP, SingleTaskGP
-from botorch.models.gp_regression_multisource import (
+from botorch_community.models.gp_regression_multisource import (
     _get_reliable_observations,
     FixedNoiseAugmentedGP,
     get_random_x_for_agp,

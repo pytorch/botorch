@@ -7,14 +7,15 @@
 r"""
 Multi-Source Gaussian Process Regression models based on GPyTorch models.
 
-For more on Multi-Source BO, see the
-`tutorial <https://botorch.org/tutorials/multi_source_bo>`__
+References:
 
 .. [Ca2021ms]
     Candelieri, A., & Archetti, F. (2021).
     Sparsifying to optimize over multiple information sources:
     an augmented Gaussian process based algorithm.
     Structural and Multidisciplinary Optimization, 64, 239-255.
+
+Contributor: andreaponti5
 """
 
 from __future__ import annotations

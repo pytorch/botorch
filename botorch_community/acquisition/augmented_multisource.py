@@ -4,6 +4,20 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+r"""
+Multi-Source Upper Confidence Bound.
+
+References:
+
+.. [Ca2021ms]
+    Candelieri, A., & Archetti, F. (2021).
+    Sparsifying to optimize over multiple information sources:
+    an augmented Gaussian process based algorithm.
+    Structural and Multidisciplinary Optimization, 64, 239-255.
+
+Contributor: andreaponti5
+"""
+
 from __future__ import annotations
 
 from typing import Dict, Optional, Tuple, Union

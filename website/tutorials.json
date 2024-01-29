@@ -141,10 +141,6 @@
       "title": "Multi-fidelity Bayesian optimization with discrete fidelities using KG"
     },
     {
-      "id": "multi_source_bo",
-      "title": "Multi-Information Source BO with Augmented Gaussian Processes"
-    },
-    {
       "id": "composite_bo_with_hogp",
       "title": "Composite Bayesian optimization with the High Order Gaussian Process"
     },

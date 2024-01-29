@@ -6,9 +6,9 @@
 
 import torch
 
-from botorch.acquisition.augmented_multisource import AugmentedUpperConfidenceBound
+from botorch_community.acquisition.augmented_multisource import AugmentedUpperConfidenceBound
 from botorch.exceptions import UnsupportedError
-from botorch.models.gp_regression_multisource import SingleTaskAugmentedGP
+from botorch_community.models.gp_regression_multisource import SingleTaskAugmentedGP
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 
 

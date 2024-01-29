@@ -44,11 +44,6 @@ GP Regression Models
 .. automodule:: botorch.models.gp_regression
     :members:
 
-Multi Information Source GP Regression Models
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.models.gp_regression_multisource
-    :members:
-
 Multi-Fidelity GP Regression Models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.gp_regression_fidelity
