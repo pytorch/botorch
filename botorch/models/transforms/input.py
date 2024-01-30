@@ -21,7 +21,6 @@ from typing import Any, Callable, Dict, List, Optional, Union
 from warnings import warn
 
 import numpy as np
-
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.exceptions.warnings import UserInputWarning
@@ -513,6 +512,7 @@ class Normalize(AffineInputTransform):
         reverse: bool = False,
         min_range: float = 1e-8,
         learn_bounds: Optional[bool] = None,
+        almost_zero: float = 1e-12,
     ) -> None:
         r"""Normalize the inputs to the unit cube.
 
@@ -537,6 +537,23 @@ class Normalize(AffineInputTransform):
                 zero errors.
             learn_bounds: Whether to learn the bounds in train mode. Defaults
                 to False if bounds are provided, otherwise defaults to True.
+            almost_zero: If the range of an input dimension is smaller than
+                `almost_zero`, that input dimension will be normalized to zero.
+                This is equivalent to using bounds `[min, min + 1]` for that dimension.
+            Example:
+                >>> t = Normalize(d=2)
+                >>> t(torch.tensor([[3., 2.], [3., 6.]]))
+                ... tensor([[3., 2.],
+                ...         [3., 6.]])
+                >>> t.eval()
+                ... Normalize()
+                >>> t(torch.tensor([[3.5, 2.8]]))
+                ... tensor([[0.5, 0.2]])
+                >>> t.bounds
+                ... tensor([[3., 2.],
+                ...         [4., 6.]])
+                >>> t.coefficient
+                ... tensor([[1., 4.]])
         """
         if learn_bounds is not None:
             self.learn_coefficients = learn_bounds
@@ -576,6 +593,7 @@ class Normalize(AffineInputTransform):
             reverse=reverse,
         )
         self.min_range = min_range
+        self.almost_zero = almost_zero
 
     @property
     def ranges(self):
@@ -602,8 +620,9 @@ class Normalize(AffineInputTransform):
         batch_ndim = min(len(self.batch_shape), X.ndim - 2)  # batch rank of `X`
         reduce_dims = (*range(X.ndim - batch_ndim - 2), X.ndim - 2)
         self._offset = torch.amin(X, dim=reduce_dims).unsqueeze(-2)
-        self._coefficient = torch.amax(X, dim=reduce_dims).unsqueeze(-2) - self.offset
-        self._coefficient.clamp_(min=self.min_range)
+        coefficient = torch.amax(X, dim=reduce_dims).unsqueeze(-2) - self.offset
+        coefficient = torch.where(coefficient > self.almost_zero, coefficient, 1.0)
+        self._coefficient = coefficient.clamp_(min=self.min_range)
 
     def get_init_args(self) -> Dict[str, Any]:
         r"""Get the arguments necessary to construct an exact copy of the transform."""
@@ -618,6 +637,7 @@ class Normalize(AffineInputTransform):
             "reverse": self.reverse,
             "min_range": self.min_range,
             "learn_bounds": self.learn_bounds,
+            "almost_zero": self.almost_zero,
         }
 
 

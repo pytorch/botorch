@@ -229,8 +229,8 @@ class TestInputTransforms(BotorchTestCase):
             nlz.to(other_dtype)
             self.assertTrue(nlz.mins.dtype == other_dtype)
             # test incompatible dimensions of specified bounds
+            bounds = torch.zeros(2, 3, device=self.device, dtype=dtype)
             with self.assertRaises(BotorchTensorDimensionError):
-                bounds = torch.zeros(2, 3, device=self.device, dtype=dtype)
                 Normalize(d=2, bounds=bounds)
 
             # test jitter
@@ -379,6 +379,24 @@ class TestInputTransforms(BotorchTestCase):
                 nlz.eval()
                 self.assertIsNone(nlz.coefficient.grad_fn)
                 self.assertIsNone(nlz.offset.grad_fn)
+
+            # test that zero range is not scaled.
+            nlz = Normalize(d=2)
+            X = torch.tensor([[1.0, 0.0], [1.0, 2.0]], device=self.device, dtype=dtype)
+            nlzd_X = nlz(X)
+            self.assertAllClose(
+                nlz.coefficient,
+                torch.tensor([[1.0, 2.0]], device=self.device, dtype=dtype),
+            )
+            expected_X = torch.tensor(
+                [[0.0, 0.0], [0.0, 1.0]], device=self.device, dtype=dtype
+            )
+            self.assertAllClose(nlzd_X, expected_X)
+            nlz.eval()
+            X = torch.tensor([[1.5, 1.5]], device=self.device, dtype=dtype)
+            nlzd_X = nlz(X)
+            expected_X = torch.tensor([[0.5, 0.75]], device=self.device, dtype=dtype)
+            self.assertAllClose(nlzd_X, expected_X)
 
     def test_standardize(self):
         for dtype in (torch.float, torch.double):
