@@ -21,7 +21,6 @@ from typing import Any, Callable, Dict, List, Optional, Union
 from warnings import warn
 
 import numpy as np
-
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.exceptions.warnings import UserInputWarning
@@ -513,6 +512,7 @@ class Normalize(AffineInputTransform):
         reverse: bool = False,
         min_range: float = 1e-8,
         learn_bounds: Optional[bool] = None,
+        almost_zero: float = 1e-12,
     ) -> None:
         r"""Normalize the inputs to the unit cube.
 
@@ -533,10 +533,28 @@ class Normalize(AffineInputTransform):
                 transform when called from within a `fantasize` call. Default: True.
             reverse: A boolean indicating whether the forward pass should untransform
                 the inputs.
-            min_range: Amount of noise to add to the range to ensure no division by
-                zero errors.
+            min_range: If the range of an input dimension is smaller than `min_range`,
+                that input dimension will not be normalized. This is equivalent to
+                using bounds of `[0, 1]` for this dimension, and helps avoid division
+                by zero errors and related numerical issues. See the example below.
+                NOTE: This only applies if `learn_bounds=True`.
             learn_bounds: Whether to learn the bounds in train mode. Defaults
                 to False if bounds are provided, otherwise defaults to True.
+
+        Example:
+            >>> t = Normalize(d=2)
+            >>> t(torch.tensor([[3., 2.], [3., 6.]]))
+            ... tensor([[3., 2.],
+            ...         [3., 6.]])
+            >>> t.eval()
+            ... Normalize()
+            >>> t(torch.tensor([[3.5, 2.8]]))
+            ... tensor([[3.5, 0.2]])
+            >>> t.bounds
+            ... tensor([[0., 2.],
+            ...         [1., 6.]])
+            >>> t.coefficient
+            ... tensor([[1., 4.]])
         """
         if learn_bounds is not None:
             self.learn_coefficients = learn_bounds
@@ -601,9 +619,11 @@ class Normalize(AffineInputTransform):
         # Aggregate mins and ranges over extra batch and marginal dims
         batch_ndim = min(len(self.batch_shape), X.ndim - 2)  # batch rank of `X`
         reduce_dims = (*range(X.ndim - batch_ndim - 2), X.ndim - 2)
-        self._offset = torch.amin(X, dim=reduce_dims).unsqueeze(-2)
-        self._coefficient = torch.amax(X, dim=reduce_dims).unsqueeze(-2) - self.offset
-        self._coefficient.clamp_(min=self.min_range)
+        offset = torch.amin(X, dim=reduce_dims).unsqueeze(-2)
+        coefficient = torch.amax(X, dim=reduce_dims).unsqueeze(-2) - offset
+        almost_zero = coefficient < self.min_range
+        self._coefficient = torch.where(almost_zero, 1.0, coefficient)
+        self._offset = torch.where(almost_zero, 0.0, offset)
 
     def get_init_args(self) -> Dict[str, Any]:
         r"""Get the arguments necessary to construct an exact copy of the transform."""
@@ -655,8 +675,11 @@ class InputStandardize(AffineInputTransform):
                 transform in eval() mode. Default: True
             reverse: A boolean indicating whether the forward pass should untransform
                 the inputs.
-            min_std: Amount of noise to add to the standard deviation to ensure no
-                division by zero errors.
+            min_std: If the standard deviation of an input dimension is smaller than
+                `min_std`, that input dimension will not be standardized. This is
+                equivalent to using a standard deviation of 1.0 and a mean of 0.0 for
+                this dimension, and helps avoid division by zero errors and related
+                numerical issues.
         """
         transform_dimension = d if indices is None else len(indices)
         super().__init__(
@@ -688,11 +711,13 @@ class InputStandardize(AffineInputTransform):
         # Aggregate means and standard deviations over extra batch and marginal dims
         batch_ndim = min(len(self.batch_shape), X.ndim - 2)  # batch rank of `X`
         reduce_dims = (*range(X.ndim - batch_ndim - 2), X.ndim - 2)
-        coefficient, self._offset = (
+        coefficient, offset = (
             values.unsqueeze(-2)
             for values in torch.std_mean(X, dim=reduce_dims, unbiased=True)
         )
-        self._coefficient = coefficient.clamp_(min=self.min_std)
+        almost_zero = coefficient < self.min_std
+        self._coefficient = torch.where(almost_zero, 1.0, coefficient)
+        self._offset = torch.where(almost_zero, 0.0, offset)
 
 
 class Round(InputTransform, Module):
