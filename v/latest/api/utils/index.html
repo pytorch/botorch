@@ -1944,7 +1944,7 @@ This is a tensor of shape <cite>sample_shape x base_sample_shape</cite>.</p></li
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.testing.</span></span><span class="sig-name descname"><span class="pre">MockModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MockModel" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>, <a class="reference internal" href="models.html#botorch.models.model.FantasizeMixin" title="botorch.models.model.FantasizeMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">FantasizeMixin</span></code></a></p>
 <p>Mock object that implements dummy methods and feeds through specified outputs</p>
-<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<p>Initialize internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="#botorch.utils.testing.MockPosterior" title="botorch.utils.testing.MockPosterior"><em>MockPosterior</em></a>) – </p>
@@ -2006,7 +2006,7 @@ shape <cite>broadcast(test_batch_shape, model.batch_shape) x q x m</cite>.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.utils.testing.MockModel.state_dict">
 <span class="sig-name descname"><span class="pre">state_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockModel.state_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MockModel.state_dict" title="Link to this definition">¶</a></dt>
-<dd><p>Returns a dictionary containing references to the whole state of the module.</p>
+<dd><p>Return a dictionary containing references to the whole state of the module.</p>
 <p>Both parameters and persistent buffers (e.g. running averages) are
 included. Keys are corresponding parameter and buffer names.
 Parameters and buffers set to <code class="docutils literal notranslate"><span class="pre">None</span></code> are not included.</p>
@@ -2059,8 +2059,8 @@ Default: <code class="docutils literal notranslate"><span class="pre">False</spa
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.utils.testing.MockModel.load_state_dict">
 <span class="sig-name descname"><span class="pre">load_state_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockModel.load_state_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MockModel.load_state_dict" title="Link to this definition">¶</a></dt>
-<dd><p>Copies parameters and buffers from <a class="reference internal" href="#botorch.utils.testing.MockModel.state_dict" title="botorch.utils.testing.MockModel.state_dict"><code class="xref py py-attr docutils literal notranslate"><span class="pre">state_dict</span></code></a> into
-this module and its descendants. If <code class="xref py py-attr docutils literal notranslate"><span class="pre">strict</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, then
+<dd><p>Copy parameters and buffers from <a class="reference internal" href="#botorch.utils.testing.MockModel.state_dict" title="botorch.utils.testing.MockModel.state_dict"><code class="xref py py-attr docutils literal notranslate"><span class="pre">state_dict</span></code></a> into this module and its descendants.</p>
+<p>If <code class="xref py py-attr docutils literal notranslate"><span class="pre">strict</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, then
 the keys of <a class="reference internal" href="#botorch.utils.testing.MockModel.state_dict" title="botorch.utils.testing.MockModel.state_dict"><code class="xref py py-attr docutils literal notranslate"><span class="pre">state_dict</span></code></a> must exactly match the keys returned
 by this module’s <code class="xref py py-meth docutils literal notranslate"><span class="pre">state_dict()</span></code> function.</p>
 <div class="admonition warning">
@@ -2290,7 +2290,7 @@ key-value pairs of type (string, <code class="xref py py-class docutils literal 
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.utils.torch.BufferDict.extra_repr">
 <span class="sig-name descname"><span class="pre">extra_repr</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/torch.html#BufferDict.extra_repr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.torch.BufferDict.extra_repr" title="Link to this definition">¶</a></dt>
-<dd><p>Set the extra representation of the module</p>
+<dd><p>Set the extra representation of the module.</p>
 <p>To print customized extra information, you should re-implement
 this method in your own modules. Both single-line and multi-line
 strings are acceptable.</p>
