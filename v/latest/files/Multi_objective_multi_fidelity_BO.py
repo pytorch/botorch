@@ -26,7 +26,7 @@
 
 
 import os
-from typing import Callable, Dict, Tuple
+from typing import Callable, Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -85,6 +85,8 @@ target_fidelities = {2: 1.0}
 
 
 from math import exp
+
+
 def cost_func(x):
     """A simple exponential cost function."""
     exp_arg = torch.tensor(4.8, **tkwargs)
@@ -95,6 +97,7 @@ def cost_func(x):
 # Displaying the min and max costs for this optimization
 print(f"Min Cost: {cost_func(0)}")
 print(f"Max Cost: {cost_func(1)}")
+
 
 def cost_callable(X: torch.Tensor) -> torch.Tensor:
     r"""Wrapper for the cost function that takes care of shaping
@@ -121,19 +124,17 @@ def cost_callable(X: torch.Tensor) -> torch.Tensor:
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.transforms.outcome import Standardize
+from botorch.utils.transforms import normalize
 from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 from gpytorch.priors import GammaPrior
-from botorch.utils.transforms import normalize
 
 
 def inv_transform(u):
     # define inverse transform to sample from the probability distribution with
     # PDF proportional to 1/(c(x))
     # u is a uniform(0,1) rv
-    return (
-        5 / 24 * torch.log(-exp(24 / 5) / (exp(24 / 5) * u - u - exp(24 / 5)))
-    )
+    return 5 / 24 * torch.log(-exp(24 / 5) / (exp(24 / 5) * u - u - exp(24 / 5)))
 
 
 def gen_init_data(n: int):
@@ -168,7 +169,7 @@ def gen_init_data(n: int):
 
 def initialize_model(train_x, train_obj, state_dict=None):
     """Initializes a ModelList with Matern 5/2 Kernel and returns the model and its MLL.
-    
+
     Note: a batched model could also be used here.
     """
     models = []
@@ -215,6 +216,7 @@ from botorch.utils.transforms import unnormalize
 dim_y_momf = dim_y + 1  # Output Dimesnion for MOMF optimization
 ref_point_momf = torch.zeros(dim_y_momf, **tkwargs)
 
+
 def fid_obj(X: torch.Tensor) -> torch.Tensor:
     """
     A Fidelity Objective that can be thought of as a trust objective.
@@ -248,9 +250,7 @@ def optimize_MOMF_and_get_obs(
     Wrapper to call MOMF and optimizes it in a sequential greedy
     fashion returning a new candidate and evaluation
     """
-    partitioning = FastNondominatedPartitioning(
-        ref_point=ref_point, Y=train_obj
-    )
+    partitioning = FastNondominatedPartitioning(ref_point=ref_point, Y=train_obj)
     acq_func = MOMF(
         model=model,
         ref_point=ref_point,  # use known reference point
@@ -265,7 +265,11 @@ def optimize_MOMF_and_get_obs(
         q=BATCH_SIZE,
         num_restarts=NUM_RESTARTS,
         raw_samples=RAW_SAMPLES,  # used for intialization heuristic
-        options={"batch_limit": 5, "maxiter": 200, "nonnegative": True},
+        options={
+            "batch_limit": 5,
+            "maxiter": 20 if SMOKE_TEST else 200,
+            "nonnegative": True,
+        },
         sequential=True,
     )
     # if the AF val is 0, set the fidelity parameter to zero
@@ -427,41 +431,7 @@ from botorch import fit_gpytorch_mll
 # In[9]:
 
 
-# Intializing train_x to zero
-verbose = False
-torch.manual_seed(0)
-train_x_momf, _ = gen_init_data(n_INIT)
-train_obj_momf = get_objective_momf(train_x_momf)
-# Generate Sampler
-momf_sampler = SobolQMCNormalSampler(sample_shape=torch.Size([MC_SAMPLES]))
-
-# run N_BATCH rounds of BayesOpt after the initial random batch
-iteration = 0
-total_cost = cost_callable(train_x_momf).sum().item()
-while total_cost < EVAL_BUDGET * cost_func(1):
-    if verbose:
-        print(f"cost: {total_cost}")
-
-    # reinitialize the models so they are ready for fitting on next iteration
-    mll, model = initialize_model(normalize(train_x_momf, BC.bounds), train_obj_momf)
-
-    fit_gpytorch_mll(mll=mll)  # Fit the model
-
-    # optimize acquisition functions and get new observations
-    new_x, new_obj = optimize_MOMF_and_get_obs(
-        model=model,
-        train_obj=train_obj_momf,
-        sampler=momf_sampler,
-        ref_point=ref_point_momf,
-        standard_bounds=standard_bounds,
-        BATCH_SIZE=BATCH_SIZE,
-        cost_call=cost_callable,
-    )
-    # Updating train_x and train_obj
-    train_x_momf = torch.cat([train_x_momf, new_x], dim=0)
-    train_obj_momf = torch.cat([train_obj_momf, new_obj], dim=0)
-    iteration += 1
-    total_cost += cost_callable(new_x).sum().item()
+get_ipython().run_cell_magic('time', '', '\n# Intializing train_x to zero\nverbose = False\ntorch.manual_seed(0)\ntrain_x_momf, _ = gen_init_data(n_INIT)\ntrain_obj_momf = get_objective_momf(train_x_momf)\n# Generate Sampler\nmomf_sampler = SobolQMCNormalSampler(sample_shape=torch.Size([MC_SAMPLES]))\n\n# run N_BATCH rounds of BayesOpt after the initial random batch\niteration = 0\ntotal_cost = cost_callable(train_x_momf).sum().item()\nwhile total_cost < EVAL_BUDGET * cost_func(1):\n    if verbose:\n        print(f"cost: {total_cost}")\n\n    # reinitialize the models so they are ready for fitting on next iteration\n    mll, model = initialize_model(normalize(train_x_momf, BC.bounds), train_obj_momf)\n\n    fit_gpytorch_mll(mll=mll)  # Fit the model\n\n    # optimize acquisition functions and get new observations\n    new_x, new_obj = optimize_MOMF_and_get_obs(\n        model=model,\n        train_obj=train_obj_momf,\n        sampler=momf_sampler,\n        ref_point=ref_point_momf,\n        standard_bounds=standard_bounds,\n        BATCH_SIZE=BATCH_SIZE,\n        cost_call=cost_callable,\n    )\n    # Updating train_x and train_obj\n    train_x_momf = torch.cat([train_x_momf, new_x], dim=0)\n    train_obj_momf = torch.cat([train_obj_momf, new_obj], dim=0)\n    iteration += 1\n    total_cost += cost_callable(new_x).sum().item()\n')
 
 
 # ### Run MF-HVKG
@@ -469,32 +439,7 @@ while total_cost < EVAL_BUDGET * cost_func(1):
 # In[10]:
 
 
-torch.manual_seed(0)
-train_x_kg, train_obj_kg = gen_init_data(n_INIT)
-MF_n_INIT = train_x_kg.shape[0]
-iteration = 0
-total_cost = cost_callable(train_x_kg).sum().item()
-while total_cost < EVAL_BUDGET * cost_func(1):
-    if verbose:
-        print(f"cost: {total_cost}")
-
-    # reinitialize the models so they are ready for fitting on next iteration
-    mll, model = initialize_model(normalize(train_x_kg, BC.bounds), train_obj_kg)
-
-    fit_gpytorch_mll(mll=mll)  # Fit the model
-    # optimize acquisition functions and get new observations
-    new_x, new_obj = optimize_HVKG_and_get_obs(
-        model=model,
-        ref_point=ref_point,
-        standard_bounds=standard_bounds,
-        BATCH_SIZE=BATCH_SIZE,
-        cost_call=cost_callable,
-    )
-    # Updating train_x and train_obj
-    train_x_kg = torch.cat([train_x_kg, new_x], dim=0)
-    train_obj_kg = torch.cat([train_obj_kg, new_obj], dim=0)
-    iteration += 1
-    total_cost += cost_callable(new_x).sum().item()
+get_ipython().run_cell_magic('time', '', '\ntorch.manual_seed(0)\ntrain_x_kg, train_obj_kg = gen_init_data(n_INIT)\nMF_n_INIT = train_x_kg.shape[0]\niteration = 0\ntotal_cost = cost_callable(train_x_kg).sum().item()\nwhile total_cost < EVAL_BUDGET * cost_func(1):\n    if verbose:\n        print(f"cost: {total_cost}")\n\n    # reinitialize the models so they are ready for fitting on next iteration\n    mll, model = initialize_model(normalize(train_x_kg, BC.bounds), train_obj_kg)\n\n    fit_gpytorch_mll(mll=mll)  # Fit the model\n    # optimize acquisition functions and get new observations\n    new_x, new_obj = optimize_HVKG_and_get_obs(\n        model=model,\n        ref_point=ref_point,\n        standard_bounds=standard_bounds,\n        BATCH_SIZE=BATCH_SIZE,\n        cost_call=cost_callable,\n    )\n    # Updating train_x and train_obj\n    train_x_kg = torch.cat([train_x_kg, new_x], dim=0)\n    train_obj_kg = torch.cat([train_obj_kg, new_obj], dim=0)\n    iteration += 1\n    total_cost += cost_callable(new_x).sum().item()\n')
 
 
 # ### Result:  Evaluating the Pareto front at the highest fidelity using NSGA-II on the posterior mean
@@ -510,19 +455,17 @@ from botorch.utils.multi_objective.pareto import (
 from gpytorch import settings
 
 try:
-    from pymoo.optimize import minimize
-    
-    # Note: These are the pymoo 0.6+ imports, if you happen to be stuck on 
+    # Note: These are the pymoo 0.6+ imports, if you happen to be stuck on
     # an older pymoo version you need to replace them with the ones below.
     from pymoo.algorithms.moo.nsga2 import NSGA2
     from pymoo.core.problem import Problem
+    from pymoo.optimize import minimize
     from pymoo.termination.max_gen import MaximumGenerationTermination
-    
+
     # from pymoo.algorithms.nsga2 import NSGA2
     # from pymoo.model.problem import Problem
     # from pymoo.util.termination.max_gen import MaximumGenerationTermination
-    
-    
+
     def get_pareto(
         model,
         non_fidelity_indices,
@@ -641,19 +584,7 @@ except ImportError:
 # In[12]:
 
 
-hvs_kg = []
-costs = []
-for i in range(MF_n_INIT, train_x_kg.shape[0] + 1, 5):
-
-    mll, model = initialize_model(
-        normalize(train_x_kg[:i], BC.bounds), train_obj_kg[:i]
-    )
-    fit_gpytorch_mll(mll)
-    hypervolume = get_pareto(
-        model, project=project, non_fidelity_indices=[0, 1]
-    )
-    hvs_kg.append(hypervolume)
-    costs.append(cost_callable(train_x_kg[:i]).sum().item())
+get_ipython().run_cell_magic('time', '', '\nhvs_kg = []\ncosts = []\nfor i in range(MF_n_INIT, train_x_kg.shape[0] + 1, 5):\n\n    mll, model = initialize_model(\n        normalize(train_x_kg[:i], BC.bounds), train_obj_kg[:i]\n    )\n    fit_gpytorch_mll(mll)\n    hypervolume = get_pareto(model, project=project, non_fidelity_indices=[0, 1])\n    hvs_kg.append(hypervolume)\n    costs.append(cost_callable(train_x_kg[:i]).sum().item())\n')
 
 
 # ## Evaluate MOMF
@@ -663,17 +594,7 @@ for i in range(MF_n_INIT, train_x_kg.shape[0] + 1, 5):
 # In[13]:
 
 
-hvs_momf = []
-costs_momf = []
-for i in range(MF_n_INIT, train_x_momf.shape[0] + 1):
-
-    mll, model = initialize_model(
-        normalize(train_x_momf[:i], BC.bounds), train_obj_momf[:i, :2]
-    )
-    fit_gpytorch_mll(mll)
-    hypervolume = get_pareto(model, project=project, non_fidelity_indices=[0, 1])
-    hvs_momf.append(hypervolume)
-    costs_momf.append(cost_callable(train_x_momf[:i]).sum().item())
+get_ipython().run_cell_magic('time', '', '\nhvs_momf = []\ncosts_momf = []\nfor i in range(MF_n_INIT, train_x_momf.shape[0] + 1):\n\n    mll, model = initialize_model(\n        normalize(train_x_momf[:i], BC.bounds), train_obj_momf[:i, :2]\n    )\n    fit_gpytorch_mll(mll)\n    hypervolume = get_pareto(model, project=project, non_fidelity_indices=[0, 1])\n    hvs_momf.append(hypervolume)\n    costs_momf.append(cost_callable(train_x_momf[:i]).sum().item())\n')
 
 
 # ### Plot log inference hypervolume regret (under the model) vs cost
