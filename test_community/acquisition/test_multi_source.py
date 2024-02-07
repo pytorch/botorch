@@ -5,11 +5,13 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
-
-from botorch_community.acquisition.augmented_multisource import AugmentedUpperConfidenceBound
 from botorch.exceptions import UnsupportedError
-from botorch_community.models.gp_regression_multisource import SingleTaskAugmentedGP
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
+
+from botorch_community.acquisition.augmented_multisource import (
+    AugmentedUpperConfidenceBound,
+)
+from botorch_community.models.gp_regression_multisource import SingleTaskAugmentedGP
 
 
 class TestAugmentedUpperConfidenceBound(BotorchTestCase):

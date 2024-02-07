@@ -13,18 +13,18 @@ import torch
 from botorch import fit_gpytorch_mll
 from botorch.exceptions import InputDataError, OptimizationWarning
 from botorch.models import FixedNoiseGP, SingleTaskGP
-from botorch_community.models.gp_regression_multisource import (
-    _get_reliable_observations,
-    FixedNoiseAugmentedGP,
-    get_random_x_for_agp,
-    SingleTaskAugmentedGP,
-)
 from botorch.models.transforms import Normalize, Standardize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
 from botorch.utils import draw_sobol_samples
 from botorch.utils.test_helpers import get_pvar_expected
 from botorch.utils.testing import _get_random_data, BotorchTestCase
+from botorch_community.models.gp_regression_multisource import (
+    _get_reliable_observations,
+    FixedNoiseAugmentedGP,
+    get_random_x_for_agp,
+    SingleTaskAugmentedGP,
+)
 from gpytorch import ExactMarginalLogLikelihood
 from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import FixedNoiseGaussianLikelihood
