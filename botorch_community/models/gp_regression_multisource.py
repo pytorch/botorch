@@ -26,7 +26,7 @@ import torch
 
 from botorch import fit_gpytorch_mll
 from botorch.exceptions import InputDataError
-from botorch.models import FixedNoiseGP, SingleTaskGP
+from botorch.models import SingleTaskGP
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.utils import draw_sobol_samples
@@ -45,7 +45,7 @@ def get_random_x_for_agp(
 ):
     r"""Draw qMC samples from the box defined by bounds.
     The function assures that at least one point belong to
-    the source 0 (the ground truth).
+    the highest fidelity source (the source associated to bounds[1, -1]).
 
     Args:
         n: The number of samples.
@@ -67,9 +67,9 @@ def get_random_x_for_agp(
         )
     train_x = draw_sobol_samples(bounds=bounds, n=n, q=q, seed=seed).squeeze(1)
     train_x[..., -1] = torch.round(train_x[..., -1], decimals=0)
-    if 0 not in train_x[..., -1]:
+    if bounds[1, -1] not in train_x[..., -1]:
         true_idxs = torch.randint(0, n, [max(1, int(n * 0.2))])
-        train_x[true_idxs, -1] = 0
+        train_x[true_idxs, -1] = bounds[1, -1]
     return train_x
 
 
@@ -122,10 +122,6 @@ class SingleTaskAugmentedGP(SingleTaskGP):
         """
         if m <= 0:
             raise InputDataError(f"The value of m must be greater than 0, given m={m}.")
-        if 0 not in train_X[..., -1]:
-            raise InputDataError(
-                "At least one observation of the true source have to be provided."
-            )
         # Divide train_X and train_Y based on the source
         train_S = train_X[..., -1]
         sources = torch.unique(train_S).int()
@@ -158,26 +154,28 @@ class SingleTaskAugmentedGP(SingleTaskGP):
         # and the reliable observations from the other sources
         reliable_idxs = [
             _get_reliable_observations(
-                self.models[0], self.models[s], train_X[s][:, :-1], m
+                self.models[-1], self.models[s], train_X[s][..., :-1], m
             )
-            for s in sources[1:]
+            for s in sources[:-1]
         ]
         train_X = torch.cat(
             [
-                train_X[s] if s == 0 else train_X[s][reliable_idxs[s - 1]]
+                train_X[s] if s == len(sources) - 1 else train_X[s][reliable_idxs[s]]
                 for s in sources
             ]
         )[:, :-1]
         train_Y = torch.cat(
             [
-                train_Y[s] if s == 0 else train_Y[s][reliable_idxs[s - 1]]
+                train_Y[s] if s == len(sources) - 1 else train_Y[s][reliable_idxs[s]]
                 for s in sources
             ]
         )
         if train_Yvar is not None:
             train_Yvar = torch.cat(
                 [
-                    train_Yvar[s] if s == 0 else train_Yvar[s][reliable_idxs[s - 1]]
+                    train_Yvar[s]
+                    if s == len(sources) - 1
+                    else train_Yvar[s][reliable_idxs[s]]
                     for s in sources
                 ]
             )

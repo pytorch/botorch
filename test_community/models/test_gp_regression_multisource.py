@@ -9,7 +9,6 @@ import math
 import warnings
 
 import torch
-from gpytorch.likelihoods import FixedNoiseGaussianLikelihood
 
 from botorch import fit_gpytorch_mll
 from botorch.exceptions import InputDataError, OptimizationWarning
@@ -17,7 +16,6 @@ from botorch.models import FixedNoiseGP, SingleTaskGP
 from botorch.models.transforms import Normalize, Standardize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
-from botorch.utils import draw_sobol_samples
 from botorch.utils.test_helpers import get_pvar_expected
 from botorch.utils.testing import _get_random_data, BotorchTestCase
 from botorch_community.models.gp_regression_multisource import (
@@ -27,6 +25,7 @@ from botorch_community.models.gp_regression_multisource import (
 )
 from gpytorch import ExactMarginalLogLikelihood
 from gpytorch.kernels import MaternKernel, ScaleKernel
+from gpytorch.likelihoods import FixedNoiseGaussianLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.priors import GammaPrior
 
@@ -79,7 +78,7 @@ class TestAugmentedSingleTaskGP(BotorchTestCase):
                 self.assertRaises(InputDataError, get_random_x_for_agp, n, bounds, 1)
             else:
                 x = get_random_x_for_agp(n, bounds, q=1)
-                self.assertIn(0, x[..., -1])
+                self.assertIn(n_source - 1, x[..., -1])
                 self.assertEqual(x.shape, (n, d))
 
     def test_init_error(self):
@@ -104,13 +103,6 @@ class TestAugmentedSingleTaskGP(BotorchTestCase):
             self.assertRaises(
                 InputDataError, SingleTaskAugmentedGP, train_X, train_Y, m=0
             )
-            # Test initialization without true source points
-            bounds = torch.stack([torch.zeros(d), torch.ones(d)])
-            bounds[0, -1] = 1
-            bounds[-1, -1] = n_source - 1
-            train_X = draw_sobol_samples(bounds=bounds, n=n, q=1).squeeze(1)
-            train_X[:, -1] = torch.round(train_X[:, -1], decimals=0)
-            self.assertRaises(InputDataError, SingleTaskAugmentedGP, train_X, train_Y)
 
     def test_get_reliable_observation(self):
         x = torch.linspace(0, 5, 15).reshape(-1, 1)
