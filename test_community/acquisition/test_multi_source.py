@@ -17,7 +17,7 @@ from botorch_community.models.gp_regression_multisource import SingleTaskAugment
 class TestAugmentedUpperConfidenceBound(BotorchTestCase):
     def _get_mock_agp(self, batch_shape, dtype):
         train_X = torch.tensor([[0, 0], [0, 1]], dtype=dtype, device=self.device)
-        train_Y = torch.tensor([[0.5], [5.0]], dtype=dtype, device=self.device)
+        train_Y = torch.tensor([[5.0], [0.5]], dtype=dtype, device=self.device)
         rep_shape = batch_shape + torch.Size([1, 1])
         train_X = train_X.repeat(rep_shape)
         train_Y = train_Y.repeat(rep_shape)
@@ -34,12 +34,12 @@ class TestAugmentedUpperConfidenceBound(BotorchTestCase):
             module = AugmentedUpperConfidenceBound(
                 model=mm,
                 beta=1.0,
-                best_f=torch.tensor(0.5, device=self.device, dtype=dtype),
-                cost={0: 1, 1: 0.5},
+                best_f=torch.tensor(5.0, device=self.device, dtype=dtype),
+                cost={0: 0.5, 1: 1},
             )
-            X = torch.zeros(1, 2, device=self.device, dtype=dtype)
+            X = torch.tensor([[0, 1]], device=self.device, dtype=dtype)
             ucb = module(X)
-            ucb_expected = torch.tensor([1.8460], device=self.device, dtype=dtype)
+            ucb_expected = torch.tensor([8.0169], device=self.device, dtype=dtype)
             self.assertAllClose(ucb, ucb_expected, atol=1e-4)
 
             module = AugmentedUpperConfidenceBound(
@@ -47,9 +47,9 @@ class TestAugmentedUpperConfidenceBound(BotorchTestCase):
                 beta=1.0,
                 maximize=False,
                 best_f=torch.tensor(0.5, device=self.device, dtype=dtype),
-                cost={0: 1, 1: 0.5},
+                cost={0: 0.5, 1: 1},
             )
-            X = torch.zeros(1, 2, device=self.device, dtype=dtype)
+            X = torch.tensor([[0, 1]], device=self.device, dtype=dtype)
             ucb = module(X)
             ucb_expected = torch.tensor([0.1217], device=self.device, dtype=dtype)
             self.assertAllClose(ucb, ucb_expected, atol=1e-4)
@@ -63,7 +63,7 @@ class TestAugmentedUpperConfidenceBound(BotorchTestCase):
                     model=mm1,
                     beta=1.0,
                     best_f=torch.tensor(1.0, device=self.device, dtype=dtype),
-                    cost={0: 1, 1: 0.5},
+                    cost={0: 0.5, 1: 1.0},
                 )
             # check for proper error if multi-output model
             mean2 = torch.rand(1, 2, device=self.device, dtype=dtype)
@@ -75,7 +75,7 @@ class TestAugmentedUpperConfidenceBound(BotorchTestCase):
                     model=mm2,
                     beta=1.0,
                     best_f=torch.tensor(1.0, device=self.device, dtype=dtype),
-                    cost={0: 1, 1: 0.5},
+                    cost={0: 0.5, 1: 1.0},
                 )
 
     def test_upper_confidence_bound_batch(self):
@@ -85,9 +85,9 @@ class TestAugmentedUpperConfidenceBound(BotorchTestCase):
                 model=mm,
                 beta=1.0,
                 best_f=torch.tensor(1.0, device=self.device, dtype=dtype),
-                cost={0: 1, 1: 0.5},
+                cost={0: 0.5, 1: 1.0},
             )
-            X = torch.zeros(1, 2, device=self.device, dtype=dtype)
+            X = torch.tensor([[0, 1]], device=self.device, dtype=dtype)
             ucb = module(X)
             ucb_expected = torch.tensor([2.3892], device=self.device, dtype=dtype)
             self.assertAllClose(ucb, ucb_expected, atol=1e-4)

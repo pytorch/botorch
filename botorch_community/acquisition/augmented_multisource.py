@@ -99,8 +99,8 @@ class AugmentedUpperConfidenceBound(UpperConfidenceBound):
             (agp_mean if self.maximize else -agp_mean) + self.beta.sqrt() * agp_sigma
         )
         source_idxs = {
-            int(s.tolist()): torch.where(torch.round(X[..., -1], decimals=0) == s)[0]
-            for s in torch.round(X[..., -1], decimals=0).unique()
+            s.item(): torch.where(torch.round(X[..., -1], decimals=0) == s)[0]
+            for s in torch.round(X[..., -1], decimals=0).unique().int()
         }
         for s in source_idxs:
             mean, sigma = self._mean_and_sigma(
