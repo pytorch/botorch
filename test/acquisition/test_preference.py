@@ -9,6 +9,7 @@ from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.preference import (
     AnalyticExpectedUtilityOfBestOption,
     PairwiseBayesianActiveLearningByDisagreement,
+    qExpectedUtilityOfBestOption,
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models import SingleTaskGP
@@ -32,8 +33,11 @@ class TestPreferenceAcquisitionFunctions(BotorchTestCase):
         self.pref_model_on_Y = PairwiseGP(Y, comps)
         self.deterministic_model = FixedSingleSampleModel(model=self.model)
 
-    def pairwise_preference_acqf_test(
-        self, acqf_class: AcquisitionFunction, test_previous_winner: bool
+    def preference_acqf_test(
+        self,
+        acqf_class: AcquisitionFunction,
+        pairwise_only: bool,
+        test_previous_winner: bool,
     ):
         for outcome_model in [self.deterministic_model, None]:
             pref_model = (
@@ -47,13 +51,18 @@ class TestPreferenceAcquisitionFunctions(BotorchTestCase):
             X2 = torch.rand(2, self.X_dim, **self.twargs)
             X3 = torch.rand(3, self.X_dim, **self.twargs)
 
-            # q = 1
-            with self.assertRaises((UnsupportedError, AssertionError)):
+            if pairwise_only:
+                # q = 1
+                with self.assertRaises((UnsupportedError, AssertionError)):
+                    acqf(X1)
+                # q = 2
+                acqf(X2)
+                # q > 2
+                with self.assertRaises((UnsupportedError, AssertionError)):
+                    acqf(X3)
+            else:
                 acqf(X1)
-            # q = 2
-            acqf(X2)
-            # q > 2
-            with self.assertRaises((UnsupportedError, AssertionError)):
+                acqf(X2)
                 acqf(X3)
 
             if test_previous_winner:
@@ -77,13 +86,22 @@ class TestPreferenceAcquisitionFunctions(BotorchTestCase):
                     acqf(X3)
 
     def test_analytic_eubo(self):
-        self.pairwise_preference_acqf_test(
+        self.preference_acqf_test(
             acqf_class=AnalyticExpectedUtilityOfBestOption,
+            pairwise_only=True,
             test_previous_winner=True,
         )
 
+    def test_qeubo(self):
+        self.preference_acqf_test(
+            acqf_class=qExpectedUtilityOfBestOption,
+            pairwise_only=False,
+            test_previous_winner=False,
+        )
+
     def test_analytic_bald(self):
-        self.pairwise_preference_acqf_test(
+        self.preference_acqf_test(
             acqf_class=PairwiseBayesianActiveLearningByDisagreement,
+            pairwise_only=True,
             test_previous_winner=False,
         )
