@@ -731,6 +731,15 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
                 `q_e` additional points in each q-batch correspond to
                 additional ("trace") observations.
         """
+        if X_pending is not None and isinstance(
+            self, qMultiFidelityLowerBoundMaxValueEntropy
+        ):
+            # TODO: Fix bug where passing in pending points causes qMFLBMVE AF to break:
+            # https://github.com/pytorch/botorch/issues/2183
+            raise NotImplementedError(
+                "Pending points (`X_pending`) are not yet supported for the"
+                "`qMultiFidelityLowerBoundMaxValueEntropy` acquisition function."
+            )
         super().__init__(
             model=model,
             candidate_set=candidate_set,
