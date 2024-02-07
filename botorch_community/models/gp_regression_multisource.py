@@ -133,21 +133,24 @@ class SingleTaskAugmentedGP(SingleTaskGP):
             raise InputDataError("AGP is meant to be used with more than one source.")
         train_X = [train_X[torch.where(train_S == s)] for s in sources]
         train_Y = [train_Y[torch.where(train_S == s)] for s in sources]
+        if train_Yvar is not None:
+            train_Yvar = [train_Yvar[torch.where(train_S == s)] for s in sources]
         self.n_true_points = len(train_X[-1])
         self.max_n_cheap_points = max([len(points) for points in train_X[:-1]])
 
         # Init and fit a SingleTaskGP for each source
         self.models = [
             self._init_fit_gp(
-                x[:, :-1],
-                y,
+                train_X[s][..., :-1],
+                train_Y[s],
+                None if train_Yvar is None else train_Yvar[s],
                 likelihood,
                 covar_module,
                 mean_module,
                 outcome_transform,
                 input_transform,
             )
-            for x, y in zip(train_X, train_Y)
+            for s in sources
         ]
 
         # Create the training set for the AGP selecting all
@@ -171,6 +174,13 @@ class SingleTaskAugmentedGP(SingleTaskGP):
                 for s in sources
             ]
         )
+        if train_Yvar is not None:
+            train_Yvar = torch.cat(
+                [
+                    train_Yvar[s] if s == 0 else train_Yvar[s][reliable_idxs[s - 1]]
+                    for s in sources
+                ]
+            )
 
         super().__init__(
             train_X,
@@ -187,6 +197,7 @@ class SingleTaskAugmentedGP(SingleTaskGP):
         self,
         train_X: Tensor,
         train_Y: Tensor,
+        train_Yvar: Optional[Tensor] = None,
         likelihood: Optional[Likelihood] = None,
         covar_module: Optional[Module] = None,
         mean_module: Optional[Mean] = None,
@@ -197,6 +208,7 @@ class SingleTaskAugmentedGP(SingleTaskGP):
 
         Args:
             train_X: A `batch_shape x n x d` tensor of training features.
+            train_Y: A `batch_shape x n x m` tensor of training observations.
             train_Y: A `batch_shape x n x m` tensor of training observations.
             likelihood: A likelihood. If omitted, use a standard
                 GaussianLikelihood with inferred noise level.
@@ -217,153 +229,8 @@ class SingleTaskAugmentedGP(SingleTaskGP):
         gp = SingleTaskGP(
             train_X,
             train_Y,
-            likelihood=likelihood,
-            covar_module=covar_module,
-            mean_module=mean_module,
-            outcome_transform=outcome_transform,
-            input_transform=input_transform,
-        )
-        mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-        fit_gpytorch_mll(mll)
-        return gp
-
-
-class FixedNoiseAugmentedGP(FixedNoiseGP):
-    def __init__(
-        self,
-        train_X: Tensor,
-        train_Y: Tensor,
-        train_Yvar: Tensor,
-        m: int = 1,
-        covar_module: Optional[Module] = None,
-        mean_module: Optional[Mean] = None,
-        outcome_transform: Optional[OutcomeTransform] = None,
-        input_transform: Optional[InputTransform] = None,
-    ) -> None:
-        """
-        Args:
-            train_X: A `batch_shape x n x (d + 1)` tensor of training features,
-                where the additional dimension is for the source parameter.
-            train_Y: A `batch_shape x n x m` tensor of training observations.
-            train_Yvar: A `batch_shape x n x m` tensor of observed measurement
-                noise.
-            m: The moltiplicator factor of the model standard deviation used to select
-                points from other sources to add to the Augmented GP.
-            covar_module: The module computing the covariance (Kernel) matrix.
-                If omitted, use a `MaternKernel`.
-            mean_module: The mean function to be used. If omitted, use a
-                `ConstantMean`.
-            outcome_transform: An outcome transform that is applied to the
-                training data during instantiation and to the posterior during
-                inference (that is, the `Posterior` obtained by calling
-                `.posterior` on the model will be on the original scale).
-            input_transform: An input transform that is applied in the model's
-                forward pass.
-        """
-        if m <= 0:
-            raise InputDataError(f"The value of m must be greater than 0, given m={m}.")
-        if 0 not in train_X[..., -1]:
-            raise InputDataError(
-                "At least one observation of the true source have to be provided."
-            )
-        # Divide train_X and train_Y based on the source
-        train_S = train_X[..., -1]
-        sources = torch.unique(train_S).int()
-        if sources.shape[0] == 1:
-            raise InputDataError("AGP is meant to be used with more than one source.")
-
-        train_X = [train_X[torch.where(train_S == s)] for s in sources]
-        train_Y = [train_Y[torch.where(train_S == s)] for s in sources]
-        train_Yvar = [train_Yvar[torch.where(train_S == s)] for s in sources]
-        self.n_true_points = len(train_X[-1])
-        self.max_n_cheap_points = max([len(points) for points in train_X[:-1]])
-
-        # Init and fit a SingleTaskGP for each source
-        self.models = [
-            self._init_fit_gp(
-                x[:, :-1],
-                y,
-                yvar,
-                covar_module,
-                mean_module,
-                outcome_transform,
-                input_transform,
-            )
-            for x, y, yvar in zip(train_X, train_Y, train_Yvar)
-        ]
-
-        # Create the training set for the AGP selecting all the
-        # observations from the high fidelity source
-        # and the reliable observations from the other sources
-        reliable_idxs = [
-            _get_reliable_observations(
-                self.models[0], self.models[s], train_X[s][:, :-1], m
-            )
-            for s in sources[1:]
-        ]
-        train_X = torch.cat(
-            [
-                train_X[s] if s == 0 else train_X[s][reliable_idxs[s - 1]]
-                for s in sources
-            ]
-        )[:, :-1]
-        train_Y = torch.cat(
-            [
-                train_Y[s] if s == 0 else train_Y[s][reliable_idxs[s - 1]]
-                for s in sources
-            ]
-        )
-        train_Yvar = torch.cat(
-            [
-                train_Yvar[s] if s == 0 else train_Yvar[s][reliable_idxs[s - 1]]
-                for s in sources
-            ]
-        )
-
-        super().__init__(
-            train_X,
-            train_Y,
             train_Yvar,
-            covar_module,
-            mean_module,
-            outcome_transform,
-            input_transform,
-        )
-
-    def _init_fit_gp(
-        self,
-        train_X: Tensor,
-        train_Y: Tensor,
-        train_Yvar: Tensor,
-        covar_module: Optional[Module] = None,
-        mean_module: Optional[Mean] = None,
-        outcome_transform: Optional[OutcomeTransform] = None,
-        input_transform: Optional[InputTransform] = None,
-    ) -> FixedNoiseGP:
-        r"""Initialize and fit a Fixed Noise GP model.
-
-        Args:
-            train_X: A `batch_shape x n x d` tensor of training features.
-            train_Y: A `batch_shape x n x m` tensor of training observations.
-            train_Yvar: A `batch_shape x n x m` tensor of observed measurement
-                noise.
-            covar_module: The module computing the covariance (Kernel) matrix.
-                If omitted, use a `MaternKernel`.
-            mean_module: The mean function to be used. If omitted, use a
-                `ConstantMean`.
-            outcome_transform: An outcome transform that is applied to the
-                training data during instantiation and to the posterior during
-                inference (that is, the `Posterior` obtained by calling
-                `.posterior` on the model will be on the original scale).
-            input_transform: An input transform that is applied in the model's
-                forward pass.
-        Returns:
-            The fitted Fixed Noise GP and its Marginal Log Likelihood.
-        """
-        gp = FixedNoiseGP(
-            train_X,
-            train_Y,
-            train_Yvar=train_Yvar,
+            likelihood=likelihood,
             covar_module=covar_module,
             mean_module=mean_module,
             outcome_transform=outcome_transform,

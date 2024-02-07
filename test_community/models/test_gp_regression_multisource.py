@@ -9,6 +9,7 @@ import math
 import warnings
 
 import torch
+from gpytorch.likelihoods import FixedNoiseGaussianLikelihood
 
 from botorch import fit_gpytorch_mll
 from botorch.exceptions import InputDataError, OptimizationWarning
@@ -21,13 +22,11 @@ from botorch.utils.test_helpers import get_pvar_expected
 from botorch.utils.testing import _get_random_data, BotorchTestCase
 from botorch_community.models.gp_regression_multisource import (
     _get_reliable_observations,
-    FixedNoiseAugmentedGP,
     get_random_x_for_agp,
     SingleTaskAugmentedGP,
 )
 from gpytorch import ExactMarginalLogLikelihood
 from gpytorch.kernels import MaternKernel, ScaleKernel
-from gpytorch.likelihoods import FixedNoiseGaussianLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.priors import GammaPrior
 
@@ -51,6 +50,7 @@ class TestAugmentedSingleTaskGP(BotorchTestCase):
         n,
         d,
         n_source,
+        train_Yvar=False,
         outcome_transform=None,
         input_transform=None,
         extra_model_kwargs=None,
@@ -63,6 +63,7 @@ class TestAugmentedSingleTaskGP(BotorchTestCase):
         model_kwargs = {
             "train_X": train_X,
             "train_Y": train_Y,
+            "train_Yvar": torch.full_like(train_Y, 0.01) if train_Yvar else None,
             "outcome_transform": outcome_transform,
             "input_transform": input_transform,
         }
@@ -126,9 +127,10 @@ class TestAugmentedSingleTaskGP(BotorchTestCase):
     def test_gp(self):
         bounds = torch.tensor([[-1.0], [1.0]])
         d = 5
-        for batch_shape, dtype, use_octf, use_intf in itertools.product(
+        for batch_shape, dtype, use_octf, use_intf, train_Yvar in itertools.product(
             (torch.Size(), torch.Size([2])),
             (torch.float, torch.double),
+            (False, True),
             (False, True),
             (False, True),
         ):
@@ -144,6 +146,7 @@ class TestAugmentedSingleTaskGP(BotorchTestCase):
                 n=10,
                 d=d,
                 n_source=5,
+                train_Yvar=train_Yvar,
                 outcome_transform=octf,
                 input_transform=intf,
                 **tkwargs,
@@ -325,92 +328,6 @@ class TestAugmentedSingleTaskGP(BotorchTestCase):
                         )
                     )
 
-
-class TestAugmentedFixedNoiseGP(TestAugmentedSingleTaskGP):
-    def _get_model_and_data(
-        self,
-        batch_shape,
-        n,
-        d,
-        n_source,
-        outcome_transform=None,
-        input_transform=None,
-        extra_model_kwargs=None,
-        **tkwargs,
-    ):
-        extra_model_kwargs = extra_model_kwargs or {}
-        train_X, train_Y = _get_random_data_with_source(
-            batch_shape, n, d, n_source, **tkwargs
-        )
-        model_kwargs = {
-            "train_X": train_X,
-            "train_Y": train_Y,
-            "train_Yvar": torch.full_like(train_Y, 0.01),
-            "outcome_transform": outcome_transform,
-            "input_transform": input_transform,
-        }
-        model = FixedNoiseAugmentedGP(**model_kwargs, **extra_model_kwargs)
-        return model, model_kwargs
-
-    def test_init_error(self):
-        n, d = 10, 5
-        for n_source, batch_shape in itertools.product(
-            (1, 2, 3), (torch.Size([]), torch.Size([2]))
-        ):
-            # Test initialization
-            train_X, train_Y = _get_random_data_with_source(
-                batch_shape=batch_shape, n=n, d=d, n_source=n_source
-            )
-            if n_source == 1:
-                self.assertRaises(
-                    InputDataError,
-                    FixedNoiseAugmentedGP,
-                    train_X,
-                    train_Y,
-                    torch.full_like(train_Y, 0.01),
-                )
-                continue
-            else:
-                model = FixedNoiseAugmentedGP(
-                    train_X, train_Y, torch.full_like(train_Y, 0.01)
-                )
-                self.assertIsInstance(model, FixedNoiseAugmentedGP)
-
-            # Test initialization with m = 0
-            self.assertRaises(
-                InputDataError,
-                FixedNoiseAugmentedGP,
-                train_X,
-                train_Y,
-                torch.full_like(train_Y, 0.01),
-                m=0,
-            )
-            # Test initialization without true source points
-            bounds = torch.stack([torch.zeros(d), torch.ones(d)])
-            bounds[0, -1] = 1
-            bounds[-1, -1] = n_source - 1
-            train_X = draw_sobol_samples(bounds=bounds, n=n, q=1).squeeze(1)
-            train_X[:, -1] = torch.round(train_X[:, -1], decimals=0)
-            self.assertRaises(
-                InputDataError,
-                FixedNoiseAugmentedGP,
-                train_X,
-                train_Y,
-                torch.full_like(train_Y, 0.01),
-            )
-
-    def test_get_reliable_observation(self):
-        x = torch.linspace(0, 5, 15).reshape(-1, 1)
-        true_y = torch.sin(x).reshape(-1, 1)
-        y = torch.cos(x).reshape(-1, 1)
-
-        model0 = FixedNoiseGP(x, true_y, torch.full_like(true_y, 1))
-        model1 = FixedNoiseGP(x, y, torch.full_like(true_y, 1))
-
-        res = _get_reliable_observations(model0, model1, x)
-        true_res = torch.cat([torch.arange(0, 4, 1), torch.arange(10, 13, 1)]).int()
-        self.assertListEqual(res.tolist(), true_res.tolist())
-
     def test_fixed_noise_likelihood(self):
         for batch_shape, dtype in itertools.product(
             (torch.Size(), torch.Size([2])), (torch.float, torch.double)
@@ -421,6 +338,7 @@ class TestAugmentedFixedNoiseGP(TestAugmentedSingleTaskGP):
                 n=10,
                 d=5,
                 n_source=5,
+                train_Yvar=True,
                 **tkwargs,
             )
             self.assertIsInstance(model.likelihood, FixedNoiseGaussianLikelihood)
@@ -447,6 +365,7 @@ class TestAugmentedFixedNoiseGP(TestAugmentedSingleTaskGP):
                 n=10,
                 d=d,
                 n_source=5,
+                train_Yvar=True,
                 outcome_transform=octf,
                 **tkwargs,
             )
