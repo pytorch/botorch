@@ -196,7 +196,7 @@ class qExpectedUtilityOfBestOption(MCAcquisitionFunction):
         """
         Y = X if self.outcome_model is None else self.outcome_model(X)
 
-        obj = self._get_samples_and_objectives(Y)[1]
+        _, obj = self._get_samples_and_objectives(Y)
         obj_best = obj.max(dim=-1).values
         return obj_best.mean(dim=0)
 
