@@ -105,7 +105,7 @@ class SingleTaskAugmentedGP(SingleTaskGP):
             train_Y: A `batch_shape x n x m` tensor of training observations.
             train_Yvar: A `batch_shape x n x m` tensor of observed measurement
                 noise.
-            m: The moltiplicator factor of the model standard deviation used to select
+            m: The multiplication factor of the model standard deviation used to select
                 points from other sources to add to the Augmented GP.
             likelihood: A likelihood. If omitted, use a standard
                 GaussianLikelihood with inferred noise level.
