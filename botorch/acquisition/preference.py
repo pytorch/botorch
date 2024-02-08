@@ -167,8 +167,8 @@ class qExpectedUtilityOfBestOption(MCAcquisitionFunction):
                 Defaults to `IdentityMCObjective()`.
             posterior_transform: A PosteriorTransform (optional).
             X_pending:  A `m x d`-dim Tensor of `m` design points that have been
-            submitted for function evaluation but have not yet been evaluated.
-            Concatenated into X upon forward call. Copied and set to have no gradient.
+                submitted for function evaluation but have not yet been evaluated.
+                Concatenated into X upon forward call. Copied and set to have no gradient.
         """
         super().__init__(
             model=pref_model,
