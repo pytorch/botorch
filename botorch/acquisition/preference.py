@@ -6,7 +6,13 @@
 
 r"""
 Preference acquisition functions. This includes:
-Analytical EUBO acquisition function as introduced in [Lin2022preference]_.
+Analytical EUBO acquisition function as introduced in [Lin2022preference]_
+and its MC-based generalization qEUBO as proposed in [Astudillo2023qeubo]_.
+
+.. [Astudillo2023qeubo]
+    Astudillo, R., Lin, Z.J., Bakshy, E. and Frazier, P.I. qEUBO: A Decision-Theoretic
+    Acquisition Function for Preferential Bayesian Optimization. International
+    Conference on Artificial Intelligence and Statistics (AISTATS), 2023.
 
 .. [Lin2022preference]
     Lin, Z.J., Astudillo, R., Frazier, P.I. and Bakshy, E. Preference Exploration
@@ -27,10 +33,16 @@ from typing import Any, Optional
 import torch
 from botorch.acquisition import AnalyticAcquisitionFunction
 from botorch.acquisition.monte_carlo import MCAcquisitionFunction
+from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.deterministic import DeterministicModel
 from botorch.models.model import Model
-from botorch.utils.transforms import match_batch_shape, t_batch_mode_transform
+from botorch.sampling.base import MCSampler
+from botorch.utils.transforms import (
+    concatenate_pending_points,
+    match_batch_shape,
+    t_batch_mode_transform,
+)
 from torch import Tensor
 from torch.distributions import Bernoulli, Normal
 
@@ -117,6 +129,77 @@ class AnalyticExpectedUtilityOfBestOption(AnalyticAcquisitionFunction):
         if self.previous_winner is None:
             acqf_val = acqf_val + pref_mean[..., 1]
         return acqf_val
+
+
+class qExpectedUtilityOfBestOption(MCAcquisitionFunction):
+    r"""MC-based Expected Utility of Best Option (qEUBO)
+
+    This computes qEUBO by
+    (1) sampling the joint posterior over q points
+    (2) evaluating the maximum objective value accross the q points
+    (3) averaging over the samples
+
+    `qEUBO(X) = E[max Y], Y ~ f(X), where X = (x_1,...,x_q)`
+    """
+
+    def __init__(
+        self,
+        pref_model: Model,
+        outcome_model: Optional[DeterministicModel] = None,
+        sampler: Optional[MCSampler] = None,
+        objective: Optional[MCAcquisitionObjective] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
+        X_pending: Optional[Tensor] = None,
+    ) -> None:
+        r"""MC-based Expected Utility of Best Option (qEUBO) as proposed
+        in [Astudillo2023qeubo]_.
+
+        Args:
+            pref_model: The preference model that maps the outcomes (i.e., Y) to
+                scalar-valued utility.
+            outcome_model: A deterministic model that maps parameters (i.e., X) to
+                outcomes (i.e., Y). The outcome model f defines the search space of
+                Y = f(X). If model is None, we are directly calculating qEUBO on
+                the parameter space.
+             sampler: The sampler used to draw base samples. See `MCAcquisitionFunction`
+                more details.
+            objective: The MCAcquisitionObjective under which the samples are evaluated.
+                Defaults to `IdentityMCObjective()`.
+            posterior_transform: A PosteriorTransform (optional).
+            X_pending:  A `m x d`-dim Tensor of `m` design points that have been
+                submitted for function evaluation but have not yet been evaluated.
+                Concatenated into X upon forward call. Copied and set
+                to have no gradient.
+        """
+        super().__init__(
+            model=pref_model,
+            sampler=sampler,
+            objective=objective,
+            posterior_transform=posterior_transform,
+            X_pending=X_pending,
+        )
+        # ensure the model is in eval mode
+        self.add_module("outcome_model", outcome_model)
+
+    @concatenate_pending_points
+    @t_batch_mode_transform()
+    def forward(self, X: Tensor) -> Tensor:
+        r"""Evaluate qEUBO on the candidate set `X`.
+
+        Args:
+            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q`
+                `d`-dim design points each.
+
+        Returns:
+            A `batch_shape'`-dim Tensor of qEUBO values at the given design
+            points `X`, where `batch_shape'` is the broadcasted batch shape
+            of model and input `X`.
+        """
+        Y = X if self.outcome_model is None else self.outcome_model(X)
+
+        _, obj = self._get_samples_and_objectives(Y)
+        obj_best = obj.max(dim=-1).values
+        return obj_best.mean(dim=0)
 
 
 class PairwiseBayesianActiveLearningByDisagreement(MCAcquisitionFunction):

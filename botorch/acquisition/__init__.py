@@ -71,6 +71,7 @@ from botorch.acquisition.objective import (
 from botorch.acquisition.preference import (
     AnalyticExpectedUtilityOfBestOption,
     PairwiseBayesianActiveLearningByDisagreement,
+    qExpectedUtilityOfBestOption,
 )
 from botorch.acquisition.prior_guided import PriorGuidedAcquisitionFunction
 from botorch.acquisition.proximal import ProximalAcquisitionFunction
@@ -99,6 +100,7 @@ __all__ = [
     "UpperConfidenceBound",
     "qAnalyticProbabilityOfImprovement",
     "qExpectedImprovement",
+    "qExpectedUtilityOfBestOption",
     "LogImprovementMCAcquisitionFunction",
     "qLogExpectedImprovement",
     "qLogNoisyExpectedImprovement",

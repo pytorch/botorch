@@ -4,11 +4,13 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from itertools import product
+
 import torch
-from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.preference import (
     AnalyticExpectedUtilityOfBestOption,
     PairwiseBayesianActiveLearningByDisagreement,
+    qExpectedUtilityOfBestOption,
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models import SingleTaskGP
@@ -32,58 +34,82 @@ class TestPreferenceAcquisitionFunctions(BotorchTestCase):
         self.pref_model_on_Y = PairwiseGP(Y, comps)
         self.deterministic_model = FixedSingleSampleModel(model=self.model)
 
-    def pairwise_preference_acqf_test(
-        self, acqf_class: AcquisitionFunction, test_previous_winner: bool
-    ):
+        self.X1 = torch.rand(1, self.X_dim, **self.twargs)
+        self.X2 = torch.rand(2, self.X_dim, **self.twargs)
+        self.X3 = torch.rand(3, self.X_dim, **self.twargs)
+
+
+class TestAnalyticEUBOAndBald(TestPreferenceAcquisitionFunctions):
+    def test_only_pairwise_allowed(self) -> None:
+        outcome_models = [self.deterministic_model, None]
+        acqf_classes = [
+            AnalyticExpectedUtilityOfBestOption,
+            PairwiseBayesianActiveLearningByDisagreement,
+        ]
+        for outcome_model, acqf_class in product(outcome_models, acqf_classes):
+            with self.subTest(outcome_model=outcome_model, acqf_cls=acqf_class):
+                pref_model = (
+                    self.pref_model_on_X
+                    if outcome_model is None
+                    else self.pref_model_on_Y
+                )
+                # Test with an outcome model and a preference model
+                acqf = acqf_class(pref_model=pref_model, outcome_model=outcome_model)
+
+                # test forward with different number of points
+                # q = 1
+                with self.assertRaises((UnsupportedError, AssertionError)):
+                    acqf(self.X1)
+                # q = 2
+                acqf(self.X2)
+                # q > 2
+                with self.assertRaises((UnsupportedError, AssertionError)):
+                    acqf(self.X3)
+
+    def test_analytic_eubo_previous_winner(self) -> None:
         for outcome_model in [self.deterministic_model, None]:
             pref_model = (
                 self.pref_model_on_X if outcome_model is None else self.pref_model_on_Y
             )
             # Test with an outcome model and a preference model
-            acqf = acqf_class(pref_model=pref_model, outcome_model=outcome_model)
-
-            # test forward with different number of points
-            X1 = torch.rand(1, self.X_dim, **self.twargs)
-            X2 = torch.rand(2, self.X_dim, **self.twargs)
-            X3 = torch.rand(3, self.X_dim, **self.twargs)
-
+            acqf = AnalyticExpectedUtilityOfBestOption(
+                pref_model=pref_model, outcome_model=outcome_model
+            )
+            previous_winner = (
+                torch.rand(1, self.X_dim, **self.twargs)
+                if outcome_model is None
+                else torch.rand(1, self.Y_dim, **self.twargs)
+            )
+            acqf = AnalyticExpectedUtilityOfBestOption(
+                pref_model=pref_model,
+                outcome_model=outcome_model,
+                previous_winner=previous_winner,
+            )
             # q = 1
-            with self.assertRaises((UnsupportedError, AssertionError)):
-                acqf(X1)
+            acqf(self.X1)
             # q = 2
-            acqf(X2)
+            with self.assertRaises((UnsupportedError, AssertionError)):
+                acqf(self.X2)
             # q > 2
             with self.assertRaises((UnsupportedError, AssertionError)):
-                acqf(X3)
+                acqf(self.X3)
 
-            if test_previous_winner:
-                previous_winner = (
-                    torch.rand(1, self.X_dim, **self.twargs)
-                    if outcome_model is None
-                    else torch.rand(1, self.Y_dim, **self.twargs)
-                )
-                acqf = acqf_class(
-                    pref_model=pref_model,
-                    outcome_model=outcome_model,
-                    previous_winner=previous_winner,
-                )
-                # q = 1
-                acqf(X1)
-                # q = 2
-                with self.assertRaises((UnsupportedError, AssertionError)):
-                    acqf(X2)
-                # q > 2
-                with self.assertRaises((UnsupportedError, AssertionError)):
-                    acqf(X3)
 
-    def test_analytic_eubo(self):
-        self.pairwise_preference_acqf_test(
-            acqf_class=AnalyticExpectedUtilityOfBestOption,
-            test_previous_winner=True,
-        )
+class TestQExpectedUtilityOfBestOption(TestPreferenceAcquisitionFunctions):
+    def test_qeubo(self) -> None:
+        for outcome_model in [self.deterministic_model, None]:
+            pref_model = (
+                self.pref_model_on_X if outcome_model is None else self.pref_model_on_Y
+            )
+            # Test with an outcome model and a preference model
+            acqf = qExpectedUtilityOfBestOption(
+                pref_model=pref_model, outcome_model=outcome_model
+            )
 
-    def test_analytic_bald(self):
-        self.pairwise_preference_acqf_test(
-            acqf_class=PairwiseBayesianActiveLearningByDisagreement,
-            test_previous_winner=False,
-        )
+            # test forward with different number of points
+            acq_val = acqf(self.X1)
+            self.assertEqual(acq_val.shape, torch.Size([1]))
+            acq_val = acqf(self.X2)
+            self.assertEqual(acq_val.shape, torch.Size([1]))
+            acq_val = acqf(self.X3)
+            self.assertEqual(acq_val.shape, torch.Size([1]))
