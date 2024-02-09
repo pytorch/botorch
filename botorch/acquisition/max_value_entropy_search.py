@@ -834,6 +834,65 @@ class qMultiFidelityLowerBoundMaxValueEntropy(qMultiFidelityMaxValueEntropy):
         >>> mf_gibbon = MF_qGIBBON(test_X)
     """
 
+    def __init__(
+        self,
+        model: Model,
+        candidate_set: Tensor,
+        num_fantasies: int = 16,
+        num_mv_samples: int = 10,
+        num_y_samples: int = 128,
+        posterior_transform: Optional[PosteriorTransform] = None,
+        use_gumbel: bool = True,
+        maximize: bool = True,
+        cost_aware_utility: Optional[CostAwareUtility] = None,
+        project: Callable[[Tensor], Tensor] = lambda X: X,
+        expand: Callable[[Tensor], Tensor] = lambda X: X,
+    ) -> None:
+        r"""Single-outcome max-value entropy search acquisition function.
+
+        Args:
+            model: A fitted single-outcome model.
+            candidate_set: A `n x d` Tensor including `n` candidate points to
+                discretize the design space, which will be used to sample the
+                max values from their posteriors.
+            cost_aware_utility: A CostAwareUtility computing the cost-transformed
+                utility from a candidate set and samples of increases in utility.
+            num_fantasies: Number of fantasies to generate. The higher this
+                number the more accurate the model (at the expense of model
+                complexity and performance) and it's only used when `X_pending`
+                is not `None`.
+            num_mv_samples: Number of max value samples.
+            num_y_samples: Number of posterior samples at specific design point `X`.
+            posterior_transform: A PosteriorTransform. If using a multi-output model,
+                a PosteriorTransform that transforms the multi-output posterior into a
+                single-output posterior is required.
+            use_gumbel: If True, use Gumbel approximation to sample the max values.
+            maximize: If True, consider the problem a maximization problem.
+            cost_aware_utility: A CostAwareUtility computing the cost-transformed
+                utility from a candidate set and samples of increases in utility.
+            project: A callable mapping a `batch_shape x q x d` tensor of design
+                points to a tensor of the same shape projected to the desired
+                target set (e.g. the target fidelities in case of multi-fidelity
+                optimization).
+            expand: A callable mapping a `batch_shape x q x d` input tensor to
+                a `batch_shape x (q + q_e)' x d`-dim output tensor, where the
+                `q_e` additional points in each q-batch correspond to
+                additional ("trace") observations.
+        """
+        super().__init__(
+            model=model,
+            candidate_set=candidate_set,
+            num_fantasies=num_fantasies,
+            num_mv_samples=num_mv_samples,
+            num_y_samples=num_y_samples,
+            posterior_transform=posterior_transform,
+            use_gumbel=use_gumbel,
+            maximize=maximize,
+            cost_aware_utility=cost_aware_utility,
+            project=project,
+            expand=expand,
+        )
+
     def _compute_information_gain(
         self, X: Tensor, mean_M: Tensor, variance_M: Tensor, covar_mM: Tensor
     ) -> Tensor:
