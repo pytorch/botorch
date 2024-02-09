@@ -124,9 +124,11 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
             "nu": nu,
             "outcome_transform": outcome_transform,
         }
-        if iteration_fidelity is None and data_fidelities is None:
+        if iteration_fidelity is None and (
+            data_fidelities is None or len(data_fidelities) == 0
+        ):
             raise UnsupportedError(
-                "SingleTaskMultiFidelityGP requires at least one fidelity parameter."
+                f"{self.__class__.__name__} requires at least one fidelity parameter."
             )
         with torch.no_grad():
             transformed_X = self.transform_inputs(
