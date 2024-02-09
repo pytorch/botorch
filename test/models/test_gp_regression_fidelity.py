@@ -91,13 +91,20 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
         model = SingleTaskMultiFidelityGP(**model_kwargs)
         return model, model_kwargs
 
-    def test_init_error(self):
+    def test_init_error(self) -> None:
         train_X = torch.rand(2, 2, device=self.device)
         train_Y = torch.rand(2, 1)
         for lin_truncated in (True, False):
-            with self.assertRaises(UnsupportedError):
+            no_fidelity_msg = (
+                "SingleTaskMultiFidelityGP requires at least one fidelity parameter."
+            )
+            with self.assertRaisesRegex(UnsupportedError, no_fidelity_msg):
                 SingleTaskMultiFidelityGP(
                     train_X, train_Y, linear_truncated=lin_truncated
+                )
+            with self.assertRaisesRegex(UnsupportedError, no_fidelity_msg):
+                SingleTaskMultiFidelityGP(
+                    train_X, train_Y, linear_truncated=lin_truncated, data_fidelities=[]
                 )
         with self.assertRaises(ValueError):
             SingleTaskMultiFidelityGP(
@@ -108,7 +115,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 train_X, train_Y, data_fidelity=1, linear_truncated=False
             )
 
-    def test_gp(self):
+    def test_gp(self) -> None:
         for (iteration_fidelity, data_fidelities) in self.FIDELITY_TEST_PAIRS:
             num_dim = 1 + (iteration_fidelity is not None)
             if data_fidelities is not None:
