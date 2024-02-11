@@ -76,14 +76,15 @@ def get_random_x_for_agp(
 class SingleTaskAugmentedGP(SingleTaskGP):
     r"""A single-task multi-source GP model.
 
-    The Augmented Gaussian Process is described in [Ca2021ms]_.
-    The basic idea is to use GP sparsification for selecting a subset of
-    the function evaluations, among those performed so far over all the
-    different sources, as inducing locations to generate the AGP approximating f(x).
-    The GP sparsification proposed is an insertion method: the set of inducing
-    locations is initialized with the function evaluations on the most expensive
-    information source and is incremented by including evaluations on other sources
-    depending on both a model discrepancy measure and GP’s predictive uncertainty.
+    The Augmented Gaussian Process (AGP) is described in [Ca2021ms]_.
+    The basic idea is to select a subset of function evaluations (namely,
+    augmenting observations), among those performed so far over all the
+    cheap sources, to augment the set of observations from the ground
+    truth source. The resulting augmented set of observations is used to
+    fit the AGP.
+    The set of "augmenting observations" is selected depending on a
+    discrepancy measure between GP's predictive mean and GP’s predictive
+    uncertainty.
     """
 
     def __init__(
