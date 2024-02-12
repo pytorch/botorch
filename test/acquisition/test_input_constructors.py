@@ -773,169 +773,183 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             )
 
         # test with Y_pmean supplied explicitly
-        Y_pmean = torch.rand(3, 6)
-        kwargs = c(
-            model=mock_model,
-            training_data=self.blockX_blockY,
-            objective_thresholds=objective_thresholds,
-            Y_pmean=Y_pmean,
-        )
-        self.assertEqual(kwargs["model"], mock_model)
-        self.assertIsInstance(kwargs["objective"], IdentityAnalyticMultiOutputObjective)
-        self.assertTrue(torch.equal(kwargs["ref_point"], objective_thresholds))
-        partitioning = kwargs["partitioning"]
-        alpha_expected = get_default_partitioning_alpha(6)
-        self.assertIsInstance(partitioning, NondominatedPartitioning)
-        self.assertEqual(partitioning.alpha, alpha_expected)
-        self.assertTrue(torch.equal(partitioning._neg_ref_point, -objective_thresholds))
-
-        Y_pmean = torch.rand(3, 2)
-        objective_thresholds = torch.rand(2)
-        kwargs = c(
-            model=mock_model,
-            training_data=self.blockX_blockY,
-            objective_thresholds=objective_thresholds,
-            Y_pmean=Y_pmean,
-        )
-        partitioning = kwargs["partitioning"]
-        self.assertIsInstance(partitioning, FastNondominatedPartitioning)
-        self.assertTrue(torch.equal(partitioning.ref_point, objective_thresholds))
-
-        # test with custom objective
-        weights = torch.rand(2)
-        obj = WeightedMCMultiOutputObjective(weights=weights)
-        kwargs = c(
-            model=mock_model,
-            training_data=self.blockX_blockY,
-            objective_thresholds=objective_thresholds,
-            objective=obj,
-            Y_pmean=Y_pmean,
-            alpha=0.05,
-        )
-        self.assertEqual(kwargs["model"], mock_model)
-        self.assertIsInstance(kwargs["objective"], WeightedMCMultiOutputObjective)
-        ref_point_expected = objective_thresholds * weights
-        self.assertTrue(torch.equal(kwargs["ref_point"], ref_point_expected))
-        partitioning = kwargs["partitioning"]
-        self.assertIsInstance(partitioning, NondominatedPartitioning)
-        self.assertEqual(partitioning.alpha, 0.05)
-        self.assertTrue(torch.equal(partitioning._neg_ref_point, -ref_point_expected))
-
-        # Test without providing Y_pmean (computed from model)
-        mean = torch.rand(1, 2)
-        variance = torch.ones(1, 1)
-        mm = MockModel(MockPosterior(mean=mean, variance=variance))
-        kwargs = c(
-            model=mm,
-            training_data=self.blockX_blockY,
-            objective_thresholds=objective_thresholds,
-        )
-        self.assertIsInstance(kwargs["objective"], IdentityAnalyticMultiOutputObjective)
-        self.assertTrue(torch.equal(kwargs["ref_point"], objective_thresholds))
-        partitioning = kwargs["partitioning"]
-        self.assertIsInstance(partitioning, FastNondominatedPartitioning)
-        self.assertTrue(torch.equal(partitioning.ref_point, objective_thresholds))
-        self.assertTrue(torch.equal(partitioning._neg_Y, -mean))
-
-        # Test with risk measures.
-        for use_preprocessing in (True, False):
-            obj = MultiOutputExpectation(
-                n_w=3,
-                preprocessing_function=WeightedMCMultiOutputObjective(
-                    torch.tensor([-1.0, -1.0])
-                )
-                if use_preprocessing
-                else None,
+        with self.subTest("explicit Y_pmean"):
+            Y_pmean = torch.rand(3, 6)
+            kwargs = c(
+                model=mock_model,
+                training_data=self.blockX_blockY,
+                objective_thresholds=objective_thresholds,
+                Y_pmean=Y_pmean,
             )
+            self.assertEqual(kwargs["model"], mock_model)
+            self.assertIsInstance(
+                kwargs["objective"], IdentityAnalyticMultiOutputObjective
+            )
+            self.assertTrue(torch.equal(kwargs["ref_point"], objective_thresholds))
+            partitioning = kwargs["partitioning"]
+            alpha_expected = get_default_partitioning_alpha(6)
+            self.assertIsInstance(partitioning, NondominatedPartitioning)
+            self.assertEqual(partitioning.alpha, alpha_expected)
+            self.assertTrue(
+                torch.equal(partitioning._neg_ref_point, -objective_thresholds)
+            )
+
+            Y_pmean = torch.rand(3, 2)
+            objective_thresholds = torch.rand(2)
+            kwargs = c(
+                model=mock_model,
+                training_data=self.blockX_blockY,
+                objective_thresholds=objective_thresholds,
+                Y_pmean=Y_pmean,
+            )
+            partitioning = kwargs["partitioning"]
+            self.assertIsInstance(partitioning, FastNondominatedPartitioning)
+            self.assertTrue(torch.equal(partitioning.ref_point, objective_thresholds))
+
+        with self.subTest("custom objective"):
+            weights = torch.rand(2)
+            obj = WeightedMCMultiOutputObjective(weights=weights)
+            kwargs = c(
+                model=mock_model,
+                training_data=self.blockX_blockY,
+                objective_thresholds=objective_thresholds,
+                objective=obj,
+                Y_pmean=Y_pmean,
+                alpha=0.05,
+            )
+            self.assertEqual(kwargs["model"], mock_model)
+            self.assertIsInstance(kwargs["objective"], WeightedMCMultiOutputObjective)
+            ref_point_expected = objective_thresholds * weights
+            self.assertTrue(torch.equal(kwargs["ref_point"], ref_point_expected))
+            partitioning = kwargs["partitioning"]
+            self.assertIsInstance(partitioning, NondominatedPartitioning)
+            self.assertEqual(partitioning.alpha, 0.05)
+            self.assertTrue(
+                torch.equal(partitioning._neg_ref_point, -ref_point_expected)
+            )
+
+        with self.subTest("without Y_pmean"):
+            mean = torch.rand(1, 2)
+            variance = torch.ones(1, 1)
+            mm = MockModel(MockPosterior(mean=mean, variance=variance))
             kwargs = c(
                 model=mm,
                 training_data=self.blockX_blockY,
                 objective_thresholds=objective_thresholds,
-                objective=obj,
             )
-            expected_obj_t = (
-                -objective_thresholds if use_preprocessing else objective_thresholds
+            self.assertIsInstance(
+                kwargs["objective"], IdentityAnalyticMultiOutputObjective
             )
-            self.assertIs(kwargs["objective"], obj)
-            self.assertTrue(torch.equal(kwargs["ref_point"], expected_obj_t))
+            self.assertTrue(torch.equal(kwargs["ref_point"], objective_thresholds))
             partitioning = kwargs["partitioning"]
             self.assertIsInstance(partitioning, FastNondominatedPartitioning)
-            self.assertTrue(torch.equal(partitioning.ref_point, expected_obj_t))
+            self.assertTrue(torch.equal(partitioning.ref_point, objective_thresholds))
+            self.assertTrue(torch.equal(partitioning._neg_Y, -mean))
+
+        with self.subTest("risk measures"):
+            for use_preprocessing in (True, False):
+                obj = MultiOutputExpectation(
+                    n_w=3,
+                    preprocessing_function=WeightedMCMultiOutputObjective(
+                        torch.tensor([-1.0, -1.0])
+                    )
+                    if use_preprocessing
+                    else None,
+                )
+                kwargs = c(
+                    model=mm,
+                    training_data=self.blockX_blockY,
+                    objective_thresholds=objective_thresholds,
+                    objective=obj,
+                )
+                expected_obj_t = (
+                    -objective_thresholds if use_preprocessing else objective_thresholds
+                )
+                self.assertIs(kwargs["objective"], obj)
+                self.assertTrue(torch.equal(kwargs["ref_point"], expected_obj_t))
+                partitioning = kwargs["partitioning"]
+                self.assertIsInstance(partitioning, FastNondominatedPartitioning)
+                self.assertTrue(torch.equal(partitioning.ref_point, expected_obj_t))
 
     def test_construct_inputs_qEHVI(self) -> None:
         c = get_acqf_input_constructor(qExpectedHypervolumeImprovement)
         objective_thresholds = torch.rand(2)
 
         # Test defaults
-        mm = SingleTaskGP(torch.rand(1, 2), torch.rand(1, 2))
-        mean = mm.posterior(self.blockX_blockY[0].X).mean
-        kwargs = c(
-            model=mm,
-            training_data=self.blockX_blockY,
-            objective_thresholds=objective_thresholds,
-        )
-        self.assertIsInstance(kwargs["objective"], IdentityMCMultiOutputObjective)
-        ref_point_expected = objective_thresholds
-        self.assertTrue(torch.equal(kwargs["ref_point"], ref_point_expected))
-        partitioning = kwargs["partitioning"]
-        self.assertIsInstance(partitioning, FastNondominatedPartitioning)
-        self.assertTrue(torch.equal(partitioning.ref_point, ref_point_expected))
-        self.assertTrue(torch.equal(partitioning._neg_Y, -mean))
-        sampler = kwargs["sampler"]
-        self.assertIsInstance(sampler, SobolQMCNormalSampler)
-        self.assertEqual(sampler.sample_shape, torch.Size([128]))
-        self.assertIsNone(kwargs["X_pending"])
-        self.assertIsNone(kwargs["constraints"])
-        self.assertEqual(kwargs["eta"], 1e-3)
+        with self.subTest("defaults"):
+            mm = SingleTaskGP(torch.rand(1, 2), torch.rand(1, 2))
+            mean = mm.posterior(self.blockX_blockY[0].X).mean
+            kwargs = c(
+                model=mm,
+                training_data=self.blockX_blockY,
+                objective_thresholds=objective_thresholds,
+            )
+            self.assertIsInstance(kwargs["objective"], IdentityMCMultiOutputObjective)
+            ref_point_expected = objective_thresholds
+            self.assertTrue(torch.equal(kwargs["ref_point"], ref_point_expected))
+            partitioning = kwargs["partitioning"]
+            self.assertIsInstance(partitioning, FastNondominatedPartitioning)
+            self.assertTrue(torch.equal(partitioning.ref_point, ref_point_expected))
+            self.assertTrue(torch.equal(partitioning._neg_Y, -mean))
+            sampler = kwargs["sampler"]
+            self.assertIsInstance(sampler, SobolQMCNormalSampler)
+            self.assertEqual(sampler.sample_shape, torch.Size([128]))
+            self.assertIsNone(kwargs["X_pending"])
+            self.assertIsNone(kwargs["constraints"])
+            self.assertEqual(kwargs["eta"], 1e-3)
 
-        # Test IID sampler
-        kwargs = c(
-            model=mm,
-            training_data=self.blockX_blockY,
-            objective_thresholds=objective_thresholds,
-            qmc=False,
-            mc_samples=64,
-        )
-        sampler = kwargs["sampler"]
-        self.assertIsInstance(sampler, IIDNormalSampler)
-        self.assertEqual(sampler.sample_shape, torch.Size([64]))
+        with self.subTest("IID sampler"):
+            kwargs = c(
+                model=mm,
+                training_data=self.blockX_blockY,
+                objective_thresholds=objective_thresholds,
+                qmc=False,
+                mc_samples=64,
+            )
+            sampler = kwargs["sampler"]
+            self.assertIsInstance(sampler, IIDNormalSampler)
+            self.assertEqual(sampler.sample_shape, torch.Size([64]))
 
         # Test outcome constraints and custom inputs
-        mean = torch.tensor([[1.0, 0.25], [0.5, 1.0]])
-        variance = torch.ones(1, 1)
-        mm = MockModel(MockPosterior(mean=mean, variance=variance))
-        weights = torch.rand(2)
-        obj = WeightedMCMultiOutputObjective(weights=weights)
-        outcome_constraints = (torch.tensor([[0.0, 1.0]]), torch.tensor([[0.5]]))
-        constraints = get_outcome_constraint_transforms(
-            outcome_constraints=outcome_constraints
-        )
-        X_pending = torch.rand(1, 2)
-        kwargs = c(
-            model=mm,
-            training_data=self.blockX_blockY,
-            objective_thresholds=objective_thresholds,
-            objective=obj,
-            constraints=constraints,
-            X_pending=X_pending,
-            alpha=0.05,
-            eta=1e-2,
-        )
-        self.assertIsInstance(kwargs["objective"], WeightedMCMultiOutputObjective)
-        ref_point_expected = objective_thresholds * weights
-        self.assertTrue(torch.equal(kwargs["ref_point"], ref_point_expected))
-        partitioning = kwargs["partitioning"]
-        self.assertIsInstance(partitioning, NondominatedPartitioning)
-        self.assertEqual(partitioning.alpha, 0.05)
-        self.assertTrue(torch.equal(partitioning._neg_ref_point, -ref_point_expected))
-        Y_expected = mean[:1] * weights
-        self.assertTrue(torch.equal(partitioning._neg_Y, -Y_expected))
-        self.assertTrue(torch.equal(kwargs["X_pending"], X_pending))
-        self.assertIs(kwargs["constraints"], constraints)
-        self.assertEqual(kwargs["eta"], 1e-2)
+        with self.subTest("outcome constraints and custom inputs"):
+            mean = torch.tensor([[1.0, 0.25], [0.5, 1.0]])
+            variance = torch.ones(1, 1)
+            mm = MockModel(MockPosterior(mean=mean, variance=variance))
+            weights = torch.rand(2)
+            obj = WeightedMCMultiOutputObjective(weights=weights)
+            outcome_constraints = (torch.tensor([[0.0, 1.0]]), torch.tensor([[0.5]]))
+            constraints = get_outcome_constraint_transforms(
+                outcome_constraints=outcome_constraints
+            )
+            X_pending = torch.rand(1, 2)
+            kwargs = c(
+                model=mm,
+                training_data=self.blockX_blockY,
+                objective_thresholds=objective_thresholds,
+                objective=obj,
+                constraints=constraints,
+                X_pending=X_pending,
+                alpha=0.05,
+                eta=1e-2,
+            )
+            self.assertIsInstance(kwargs["objective"], WeightedMCMultiOutputObjective)
+            ref_point_expected = objective_thresholds * weights
+            self.assertTrue(torch.equal(kwargs["ref_point"], ref_point_expected))
+            partitioning = kwargs["partitioning"]
+            self.assertIsInstance(partitioning, NondominatedPartitioning)
+            self.assertEqual(partitioning.alpha, 0.05)
+            self.assertTrue(
+                torch.equal(partitioning._neg_ref_point, -ref_point_expected)
+            )
+            Y_expected = mean[:1] * weights
+            self.assertTrue(torch.equal(partitioning._neg_Y, -Y_expected))
+            self.assertTrue(torch.equal(kwargs["X_pending"], X_pending))
+            self.assertIs(kwargs["constraints"], constraints)
+            self.assertEqual(kwargs["eta"], 1e-2)
 
-        # Test check for block designs
-        with self.assertRaisesRegex(ValueError, "Field `X` must be shared"):
+        with self.subTest("block designs"), self.assertRaisesRegex(
+            ValueError, "Field `X` must be shared"
+        ):
             c(
                 model=mm,
                 training_data=self.multiX_multiY,
@@ -948,17 +962,20 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             )
 
         # Test custom sampler
-        custom_sampler = SobolQMCNormalSampler(sample_shape=torch.Size([16]), seed=1234)
-        kwargs = c(
-            model=mm,
-            training_data=self.blockX_blockY,
-            objective_thresholds=objective_thresholds,
-            sampler=custom_sampler,
-        )
-        sampler = kwargs["sampler"]
-        self.assertIsInstance(sampler, SobolQMCNormalSampler)
-        self.assertEqual(sampler.sample_shape, torch.Size([16]))
-        self.assertEqual(sampler.seed, 1234)
+        with self.subTest("custom sampler"):
+            custom_sampler = SobolQMCNormalSampler(
+                sample_shape=torch.Size([16]), seed=1234
+            )
+            kwargs = c(
+                model=mm,
+                training_data=self.blockX_blockY,
+                objective_thresholds=objective_thresholds,
+                sampler=custom_sampler,
+            )
+            sampler = kwargs["sampler"]
+            self.assertIsInstance(sampler, SobolQMCNormalSampler)
+            self.assertEqual(sampler.sample_shape, torch.Size([16]))
+            self.assertEqual(sampler.seed, 1234)
 
     def test_construct_inputs_qNEHVI(self) -> None:
         self._test_construct_inputs_qNEHVI(qNoisyExpectedHypervolumeImprovement)
