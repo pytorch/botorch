@@ -43,9 +43,6 @@ def get_objective_weights_transform(
         >>> weights = torch.tensor([0.75, 0.25])
         >>> transform = get_objective_weights_transform(weights)
     """
-    # if no weights provided, just extract the single output
-    if weights is None:
-        return lambda Y: Y.squeeze(-1)
 
     def _objective(Y: Tensor, X: Optional[Tensor] = None):
         r"""Evaluate objective.
@@ -55,10 +52,14 @@ def get_objective_weights_transform(
 
         Args:
             Y: A `... x b x q x m` tensor of function values.
+            X: Ignored.
 
         Returns:
             A `... x b x q`-dim tensor of objective values.
         """
+        # if no weights provided, just extract the single output
+        if weights is None:
+            return Y.squeeze(-1)
         return torch.einsum("...m, m", [Y, weights])
 
     return _objective
