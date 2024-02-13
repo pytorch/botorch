@@ -103,9 +103,15 @@ class GaussianMixturePosterior(GPyTorchPosterior):
             if self._is_mt
             else distribution.variance.unsqueeze(-1)
         )
+        self._covariance_matrix = (
+            distribution.lazy_covariance_matrix
+            if self._is_mt
+            else distribution.lazy_covariance_matrix
+        )
 
         self._mixture_mean: Optional[Tensor] = None
         self._mixture_variance: Optional[Tensor] = None
+        self._mixture_covariance_matrix: Optional[Tensor] = None
 
     @property
     def mixture_mean(self) -> Tensor:
@@ -124,6 +130,21 @@ class GaussianMixturePosterior(GPyTorchPosterior):
             t3 = -(self._mean.sum(dim=MCMC_DIM) / num_mcmc_samples).pow(2)
             self._mixture_variance = t1 + t2 + t3
         return self._mixture_variance
+
+    @property
+    def mixture_covariance_matrix(self) -> Tensor:
+        r"""The posterior covariance matrix for the mixture of models."""
+        if self._mixture_covariance_matrix is None:
+            num_mcmc_samples = self.mean.shape[MCMC_DIM]
+            t1 = self._covariance_matrix.sum(dim=MCMC_DIM) / num_mcmc_samples
+            mean_diff = self._mean - self.mixture_mean.unsqueeze(MCMC_DIM)
+            t2 = (
+                torch.matmul(mean_diff, mean_diff.transpose(-1, -2)).sum(dim=MCMC_DIM)
+                / num_mcmc_samples
+            )
+            self._mixture_covariance_matrix = t1 + t2
+
+        return self._mixture_covariance_matrix
 
     def quantile(self, value: Tensor) -> Tensor:
         r"""Compute the posterior quantiles for the mixture of models."""

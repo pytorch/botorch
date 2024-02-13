@@ -22,6 +22,8 @@ Here is an incomplete selection of peer-reviewed Bayesian optimization papers th
 
 - [Unexpected Improvements to Expected Improvement for Bayesian Optimization](https://arxiv.org/abs/2310.20708). Sebastian Ament, Samuel Daulton, David Eriksson, Maximilian Balandat, Eytan Bakshy. NeurIPS 2023.
 
+- [Self-Correcting Bayesian Optimization through Bayesian Active Learning](https://arxiv.org/abs/2304.11005). Carl Hvarfner, Erik Orm Hellsten, Frank Hutter, Luigi Nardi. NeurIPS 2023.
+
 - [Hypervolume Knowledge Gradient: A Lookahead Approach for Multi-Objective Bayesian Optimization with Partial Information](https://proceedings.mlr.press/v202/daulton23a.html). Sam Daulton, Max Balandat, Eytan Bakshy. ICML 2023.
 
 - [Global Optimization with Parametric Function Approximation](https://proceedings.mlr.press/v202/liu23al.html). Chong Liu, Yu-Xiang Wang. ICML 2023.

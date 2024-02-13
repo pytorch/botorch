@@ -138,6 +138,19 @@ Active Learning Acquisition Functions
 .. automodule:: botorch.acquisition.active_learning
     :members:
 
+
+Bayesian Active Learning Acquisition Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.bayesian_active_learning
+    :members:
+
+
+Self-Correcting Bayesian Optimization Acquisition Function
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.scorebo
+    :members:
+
+
 Preference Acquisition Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.preference

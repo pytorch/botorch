@@ -62,6 +62,11 @@ Sampling from GP priors
 .. automodule:: botorch.utils.gp_sampling
 		:members:
 
+Statistical Distances
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.stat_dist
+		:members:
+
 Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.testing
