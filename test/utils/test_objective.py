@@ -251,19 +251,23 @@ class TestApplyConstraints(BotorchTestCase):
 
 
 class TestGetObjectiveWeightsTransform(BotorchTestCase):
-    def test_NoWeights(self):
+    def test_NoWeights(self) -> None:
         Y = torch.ones(5, 2, 4, 1)
         objective_transform = get_objective_weights_transform(None)
         Y_transformed = objective_transform(Y)
         self.assertTrue(torch.equal(Y.squeeze(-1), Y_transformed))
+        Y_transformed_X_None = objective_transform(Y, X=None)
+        self.assertTrue(torch.equal(Y.squeeze(-1), Y_transformed_X_None))
 
-    def test_OneWeightBroadcasting(self):
+    def test_OneWeightBroadcasting(self) -> None:
         Y = torch.ones(5, 2, 4, 1)
         objective_transform = get_objective_weights_transform(torch.tensor([0.5]))
         Y_transformed = objective_transform(Y)
         self.assertTrue(torch.equal(0.5 * Y.sum(dim=-1), Y_transformed))
+        Y_transformed_X_None = objective_transform(Y, X=None)
+        self.assertTrue(torch.equal(0.5 * Y.sum(dim=-1), Y_transformed_X_None))
 
-    def test_IncompatibleNumberOfWeights(self):
+    def test_IncompatibleNumberOfWeights(self) -> None:
         Y = torch.ones(5, 2, 4, 3)
         objective_transform = get_objective_weights_transform(torch.tensor([1.0, 2.0]))
         with self.assertRaises(RuntimeError):
