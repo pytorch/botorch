@@ -1237,13 +1237,11 @@ def construct_inputs_qMFMES(
     X_baseline: Optional[Tensor] = None,
     X_pending: Optional[Tensor] = None,
     objective_thresholds: Optional[Tensor] = None,
-    outcome_constraints: Optional[List[Tuple[Tensor, Tensor]]] = None,
     fidelity_weights: Optional[Dict[int, float]] = None,
     cost_intercept: float = 1.0,
     num_trace_observations: int = 0,
     candidate_size: int = 1000,
     maximize: bool = True,
-    **optimize_objective_kwargs: TOptimizeObjectiveKwargs,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for `qMultiFidelityMaxValueEntropy` constructor."""
     inputs_mf = construct_inputs_mf_base(
@@ -1261,23 +1259,7 @@ def construct_inputs_qMFMES(
         maximize=maximize,
     )
 
-    X = _get_dataset_field(training_data, "X", first_only=True)
-    _bounds = torch.as_tensor(bounds, dtype=X.dtype, device=X.device)
-    _, current_value = optimize_objective(
-        model=model,
-        bounds=_bounds.t(),
-        q=1,
-        objective=objective,
-        posterior_transform=posterior_transform,
-        **optimize_objective_kwargs,
-    )
-
-    return {
-        **inputs_mf,
-        **inputs_qmes,
-        "current_value": current_value.detach().cpu().max(),
-        "target_fidelities": target_fidelities,
-    }
+    return {**inputs_mf, **inputs_qmes, "num_fantasies": num_fantasies}
 
 
 @acqf_input_constructor(AnalyticExpectedUtilityOfBestOption)

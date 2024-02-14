@@ -1223,6 +1223,8 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             "fidelity_weights": {0: 0.654},
             "cost_intercept": 0.321,
         }
+
+        input_constructor = get_acqf_input_constructor(qMultiFidelityKnowledgeGradient)
         with mock.patch(
             target="botorch.acquisition.input_constructors.construct_inputs_mf_base",
             return_value={"foo": 0},
@@ -1230,14 +1232,9 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             target="botorch.acquisition.input_constructors.construct_inputs_qKG",
             return_value={"bar": 1},
         ):
-            from botorch.acquisition import input_constructors
-
-            input_constructor = input_constructors.get_acqf_input_constructor(
-                qMultiFidelityKnowledgeGradient
-            )
             inputs_mfkg = input_constructor(**constructor_args)
-            inputs_test = {"foo": 0, "bar": 1}
-            self.assertEqual(inputs_mfkg, inputs_test)
+        inputs_test = {"foo": 0, "bar": 1}
+        self.assertEqual(inputs_mfkg, inputs_test)
 
     def test_construct_inputs_mfmes(self) -> None:
         target_fidelities = {0: 0.987}
@@ -1246,36 +1243,22 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             "training_data": self.blockX_blockY,
             "objective": None,
             "bounds": self.bounds,
-            "num_fantasies": 123,
             "candidate_size": 17,
             "target_fidelities": target_fidelities,
             "fidelity_weights": {0: 0.654},
             "cost_intercept": 0.321,
         }
-        current_value = torch.tensor(1.23)
+        input_constructor = get_acqf_input_constructor(qMultiFidelityMaxValueEntropy)
         with mock.patch(
             target="botorch.acquisition.input_constructors.construct_inputs_mf_base",
             return_value={"foo": 0},
         ), mock.patch(
             target="botorch.acquisition.input_constructors.construct_inputs_qMES",
             return_value={"bar": 1},
-        ), mock.patch(
-            target="botorch.acquisition.input_constructors.optimize_objective",
-            return_value=(None, current_value),
         ):
-            from botorch.acquisition import input_constructors
-
-            input_constructor = input_constructors.get_acqf_input_constructor(
-                qMultiFidelityMaxValueEntropy
-            )
             inputs_mfmes = input_constructor(**constructor_args)
-            inputs_test = {
-                "foo": 0,
-                "bar": 1,
-                "current_value": current_value,
-                "target_fidelities": target_fidelities,
-            }
-            self.assertEqual(inputs_mfmes, inputs_test)
+        inputs_test = {"foo": 0, "bar": 1, "num_fantasies": 64}
+        self.assertEqual(inputs_mfmes, inputs_test)
 
     def test_construct_inputs_jes(self) -> None:
         func = get_acqf_input_constructor(qJointEntropySearch)
@@ -1371,17 +1354,14 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
         )
 
     def test_constructors_like_qMultiFidelityKnowledgeGradient(self) -> None:
-        classes = [
-            qMultiFidelityKnowledgeGradient,
-            # currently the input constructor for qMFMVG is not working
-            # qMultiFidelityMaxValueEntropy
-        ]
+        classes = [qMultiFidelityKnowledgeGradient, qMultiFidelityMaxValueEntropy]
         self._test_constructor_base(
             classes=classes,
             model=SingleTaskGP(train_X=torch.rand((3, 1)), train_Y=torch.rand((3, 1))),
             training_data=self.blockX_blockY,
             bounds=torch.ones((1, 2)),
             target_fidelities={0: 0.987},
+            num_fantasies=30,
         )
 
     def test_eubo(self) -> None:
