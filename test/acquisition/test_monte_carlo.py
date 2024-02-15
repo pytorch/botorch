@@ -385,6 +385,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                 )
             )
             X_baseline = torch.zeros(3, 1, device=self.device, dtype=dtype)
+            objective = GenericMCObjective(objective=lambda Y, X: Y[..., 0])
             with mock.patch(no, new_callable=mock.PropertyMock) as mock_num_outputs:
                 mock_num_outputs.return_value = 2
                 with mock.patch(prune, wraps=prune_inferior_points) as mock_prune:
@@ -393,7 +394,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                         X_baseline=X_baseline,
                         prune_baseline=True,
                         cache_root=False,
-                        objective=GenericMCObjective(objective=lambda Y: Y[..., 0]),
+                        objective=objective,
                         constraints=constraints,
                     )
                 mock_prune.assert_called_once()
@@ -413,14 +414,14 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                         prune_baseline=True,
                         cache_root=False,
                         marginalize_dim=-3,
-                        objective=GenericMCObjective(objective=lambda Y: Y[..., 0]),
+                        objective=objective,
                         constraints=constraints,
                     )
-                    mock_prune.assert_called_once()
-                    _, kwargs = mock_prune.call_args
-                    self.assertIs(kwargs["constraints"], constraints)
-                    self.assertTrue(torch.equal(acqf.X_baseline, X_baseline[[-1]]))
-                    self.assertEqual(kwargs["marginalize_dim"], -3)
+                mock_prune.assert_called_once()
+                _, kwargs = mock_prune.call_args
+                self.assertIs(kwargs["constraints"], constraints)
+                self.assertTrue(torch.equal(acqf.X_baseline, X_baseline[[-1]]))
+                self.assertEqual(kwargs["marginalize_dim"], -3)
 
     def test_cache_root(self):
         sample_cached_path = (

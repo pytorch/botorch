@@ -506,6 +506,7 @@ class TestQLogNoisyExpectedImprovement(BotorchTestCase):
         prune = "botorch.acquisition.logei.prune_inferior_points"
         constraints = [lambda Y: Y[..., 1] + 0.1]
         # only the last sample if feasible and it has the worst objective value
+        mc_obj = GenericMCObjective(objective=lambda Y, X: Y[..., 0])
 
         for dtype in (torch.float, torch.double):
             samples = torch.tensor(
@@ -527,7 +528,7 @@ class TestQLogNoisyExpectedImprovement(BotorchTestCase):
                         X_baseline=X_baseline,
                         prune_baseline=True,
                         cache_root=False,
-                        objective=GenericMCObjective(objective=lambda Y: Y[..., 0]),
+                        objective=mc_obj,
                         constraints=constraints,
                     )
                 mock_prune.assert_called_once()
@@ -547,14 +548,14 @@ class TestQLogNoisyExpectedImprovement(BotorchTestCase):
                         prune_baseline=True,
                         cache_root=False,
                         marginalize_dim=-3,
-                        objective=GenericMCObjective(objective=lambda Y: Y[..., 0]),
+                        objective=mc_obj,
                         constraints=constraints,
                     )
-                    mock_prune.assert_called_once()
-                    _, kwargs = mock_prune.call_args
-                    self.assertIs(kwargs["constraints"], constraints)
-                    self.assertTrue(torch.equal(acqf.X_baseline, X_baseline[[-1]]))
-                    self.assertEqual(kwargs["marginalize_dim"], -3)
+                mock_prune.assert_called_once()
+                _, kwargs = mock_prune.call_args
+                self.assertIs(kwargs["constraints"], constraints)
+                self.assertTrue(torch.equal(acqf.X_baseline, X_baseline[[-1]]))
+                self.assertEqual(kwargs["marginalize_dim"], -3)
 
     def test_cache_root(self):
         sample_cached_path = (

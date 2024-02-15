@@ -294,7 +294,7 @@ class TestPruneInferiorPoints(BotorchTestCase):
             X_pruned = prune_inferior_points(
                 model=mm,
                 X=X,
-                objective=GenericMCObjective(objective=lambda Y: Y[..., 0]),
+                objective=GenericMCObjective(objective=lambda Y, X: Y[..., 0]),
                 constraints=constraints,
             )
             self.assertTrue(torch.equal(X_pruned, X[[-1]]))
