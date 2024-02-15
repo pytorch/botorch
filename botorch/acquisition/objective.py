@@ -8,7 +8,6 @@ r"""Objective Modules to be used with acquisition functions."""
 
 from __future__ import annotations
 
-import inspect
 import warnings
 from abc import ABC, abstractmethod
 from typing import Callable, List, Optional, TYPE_CHECKING, Union
@@ -412,20 +411,7 @@ class GenericMCObjective(MCAcquisitionObjective):
                 `sample_shape x batch-shape x q`-dim Tensor of objective values.
         """
         super().__init__()
-        if len(inspect.signature(objective).parameters) == 1:
-            warnings.warn(
-                "The `objective` callable of `GenericMCObjective` is expected to "
-                "take two arguments. Passing a callable that expects a single "
-                "argument will result in an error in future versions.",
-                DeprecationWarning,
-            )
-
-            def obj(samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
-                return objective(samples)
-
-            self.objective = obj
-        else:
-            self.objective = objective
+        self.objective = objective
 
     def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         r"""Evaluate the objective on the samples.
