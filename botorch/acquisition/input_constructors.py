@@ -72,13 +72,10 @@ from botorch.acquisition.multi_objective import (
     qNoisyExpectedHypervolumeImprovement,
 )
 from botorch.acquisition.multi_objective.logei import (
+    qLogExpectedHypervolumeImprovement,
     qLogNoisyExpectedHypervolumeImprovement,
 )
-from botorch.acquisition.multi_objective.objective import (
-    AnalyticMultiOutputObjective,
-    IdentityAnalyticMultiOutputObjective,
-    IdentityMCMultiOutputObjective,
-)
+from botorch.acquisition.multi_objective.objective import IdentityMCMultiOutputObjective
 from botorch.acquisition.multi_objective.utils import get_default_partitioning_alpha
 from botorch.acquisition.objective import (
     ConstrainedMCObjective,
@@ -859,7 +856,8 @@ def construct_inputs_EHVI(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
     objective_thresholds: Tensor,
-    objective: Optional[AnalyticMultiOutputObjective] = None,
+    objective: Optional[MCMultiOutputObjective] = None,
+    posterior_transform: Optional[PosteriorTransform] = None,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     alpha: Optional[float] = None,
     Y_pmean: Optional[Tensor] = None,
@@ -881,15 +879,6 @@ def construct_inputs_EHVI(
         if alpha is None
         else alpha
     )
-    # This selects the objectives (a subset of the outcomes) and set each
-    # objective threshold to have the proper optimization direction.
-    if objective is None:
-        objective = IdentityAnalyticMultiOutputObjective()
-    if isinstance(objective, RiskMeasureMCObjective):
-        pre_obj = objective.preprocessing_function
-    else:
-        pre_obj = objective
-    ref_point = pre_obj(objective_thresholds)
 
     # Compute posterior mean (for ref point computation ref pareto frontier)
     # if one is not provided among arguments.
@@ -898,25 +887,29 @@ def construct_inputs_EHVI(
             Y_pmean = model.posterior(X).mean
     if alpha > 0:
         partitioning = NondominatedPartitioning(
-            ref_point=ref_point,
-            Y=pre_obj(Y_pmean),
+            ref_point=objective_thresholds,
+            Y=Y_pmean,
             alpha=alpha,
         )
     else:
         partitioning = FastNondominatedPartitioning(
-            ref_point=ref_point,
-            Y=pre_obj(Y_pmean),
+            ref_point=objective_thresholds,
+            Y=Y_pmean,
         )
 
-    return {
+    kwargs = {
         "model": model,
-        "ref_point": ref_point,
+        "ref_point": objective_thresholds,
         "partitioning": partitioning,
-        "objective": objective,
     }
+    if posterior_transform is not None:
+        kwargs["posterior_transform"] = posterior_transform
+    return kwargs
 
 
-@acqf_input_constructor(qExpectedHypervolumeImprovement)
+@acqf_input_constructor(
+    qExpectedHypervolumeImprovement, qLogExpectedHypervolumeImprovement
+)
 def construct_inputs_qEHVI(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
@@ -930,7 +923,10 @@ def construct_inputs_qEHVI(
     mc_samples: int = 128,
     qmc: bool = True,
 ) -> Dict[str, Any]:
-    r"""Construct kwargs for `qExpectedHypervolumeImprovement` constructor."""
+    r"""
+    Construct kwargs for `qExpectedHypervolumeImprovement` and
+    `qLogExpectedHypervolumeImprovement`.
+    """
     X = _get_dataset_field(
         training_data,
         fieldname="X",
@@ -947,31 +943,49 @@ def construct_inputs_qEHVI(
         feas = torch.stack([c(Y_pmean) <= 0 for c in constraints], dim=-1).all(dim=-1)
         Y_pmean = Y_pmean[feas]
 
-    if objective is None:
-        objective = IdentityMCMultiOutputObjective()
+    num_objectives = objective_thresholds.shape[0]
 
-    ehvi_kwargs = construct_inputs_EHVI(
-        model=model,
-        training_data=training_data,
-        objective_thresholds=objective_thresholds,
-        objective=objective,
-        constraints=None,
-        alpha=alpha,
-        # Pass `Y_pmean` that accounts for constraints to `construct_inputs_EHVI`
-        # to ensure that correct non-dominated partitioning is produced.
-        Y_pmean=Y_pmean,
+    alpha = (
+        get_default_partitioning_alpha(num_objectives=num_objectives)
+        if alpha is None
+        else alpha
     )
+
+    if objective is None:
+        ref_point = objective_thresholds
+        Y = Y_pmean
+    elif isinstance(objective, RiskMeasureMCObjective):
+        ref_point = objective.preprocessing_function(objective_thresholds)
+        Y = objective.preprocessing_function(Y_pmean)
+    else:
+        ref_point = objective(objective_thresholds)
+        Y = objective(Y_pmean)
+
+    if alpha > 0:
+        partitioning = NondominatedPartitioning(
+            ref_point=ref_point,
+            Y=Y,
+            alpha=alpha,
+        )
+    else:
+        partitioning = FastNondominatedPartitioning(
+            ref_point=ref_point,
+            Y=Y,
+        )
 
     if sampler is None and isinstance(model, GPyTorchModel):
         sampler = _get_sampler(mc_samples=mc_samples, qmc=qmc)
 
-    add_qehvi_kwargs = {
+    return {
+        "model": model,
+        "ref_point": ref_point,
+        "partitioning": partitioning,
         "sampler": sampler,
         "X_pending": X_pending,
         "constraints": constraints,
         "eta": eta,
+        "objective": objective,
     }
-    return {**ehvi_kwargs, **add_qehvi_kwargs}
 
 
 @acqf_input_constructor(qNoisyExpectedHypervolumeImprovement)

@@ -62,13 +62,13 @@ from botorch.acquisition.multi_objective import (
     qNoisyExpectedHypervolumeImprovement,
 )
 from botorch.acquisition.multi_objective.logei import (
+    qLogExpectedHypervolumeImprovement,
     qLogNoisyExpectedHypervolumeImprovement,
 )
 from botorch.acquisition.multi_objective.multi_output_risk_measures import (
     MultiOutputExpectation,
 )
 from botorch.acquisition.multi_objective.objective import (
-    IdentityAnalyticMultiOutputObjective,
     IdentityMCMultiOutputObjective,
     WeightedMCMultiOutputObjective,
 )
@@ -781,10 +781,10 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
                 objective_thresholds=objective_thresholds,
                 Y_pmean=Y_pmean,
             )
-            self.assertEqual(kwargs["model"], mock_model)
-            self.assertIsInstance(
-                kwargs["objective"], IdentityAnalyticMultiOutputObjective
+            self.assertSetEqual(
+                set(kwargs.keys()), {"model", "ref_point", "partitioning"}
             )
+            self.assertEqual(kwargs["model"], mock_model)
             self.assertTrue(torch.equal(kwargs["ref_point"], objective_thresholds))
             partitioning = kwargs["partitioning"]
             alpha_expected = get_default_partitioning_alpha(6)
@@ -806,18 +806,97 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             self.assertIsInstance(partitioning, FastNondominatedPartitioning)
             self.assertTrue(torch.equal(partitioning.ref_point, objective_thresholds))
 
+        n = 3
+        m = 4
+        k = 2
+        with self.subTest("posterior_transform"):
+            model = SingleTaskGP(train_X=torch.rand((n, k)), train_Y=torch.rand((n, m)))
+            #  This is a strange posterior transform to test with a hypervolume acqf
+            posterior_transform = ScalarizedPosteriorTransform(weights=torch.rand(m))
+            objective_thresholds = torch.rand(m)
+            Y_pmean = torch.rand(n, m)
+            kwargs = c(
+                model=model,
+                training_data=self.blockX_blockY,
+                objective_thresholds=objective_thresholds,
+                Y_pmean=Y_pmean,
+                posterior_transform=posterior_transform,
+            )
+            self.assertSetEqual(
+                set(kwargs.keys()),
+                {"model", "ref_point", "partitioning", "posterior_transform"},
+            )
+            acqf = ExpectedHypervolumeImprovement(**kwargs)
+            acqf(torch.rand((1, k)))
+
+        with self.subTest("Without Y_pmean"):
+            mean = torch.rand(1, m)
+            variance = torch.ones(1, 1)
+            mm = MockModel(MockPosterior(mean=mean, variance=variance))
+            kwargs = c(
+                model=mm,
+                training_data=self.blockX_blockY,
+                objective_thresholds=objective_thresholds,
+            )
+            self.assertSetEqual(
+                set(kwargs.keys()), {"model", "ref_point", "partitioning"}
+            )
+            self.assertTrue(torch.equal(kwargs["ref_point"], objective_thresholds))
+            partitioning = kwargs["partitioning"]
+            self.assertIsInstance(partitioning, FastNondominatedPartitioning)
+            self.assertTrue(torch.equal(partitioning.ref_point, objective_thresholds))
+            self.assertTrue(torch.equal(partitioning._neg_Y, -mean))
+
+    def test_construct_inputs_qEHVI(self) -> None:
+        c = get_acqf_input_constructor(qExpectedHypervolumeImprovement)
+        objective_thresholds = torch.rand(2)
+
+        with self.subTest("defaults"):
+            mm = SingleTaskGP(torch.rand(1, 2), torch.rand(1, 2))
+            mean = mm.posterior(self.blockX_blockY[0].X).mean
+            kwargs = c(
+                model=mm,
+                training_data=self.blockX_blockY,
+                objective_thresholds=objective_thresholds,
+            )
+            self.assertSetEqual(
+                set(kwargs.keys()),
+                {
+                    "model",
+                    "ref_point",
+                    "partitioning",
+                    "sampler",
+                    "X_pending",
+                    "constraints",
+                    "eta",
+                    "objective",
+                },
+            )
+            self.assertIsNone(kwargs["objective"])
+            ref_point_expected = objective_thresholds
+            self.assertTrue(torch.equal(kwargs["ref_point"], ref_point_expected))
+            partitioning = kwargs["partitioning"]
+            self.assertIsInstance(partitioning, FastNondominatedPartitioning)
+            self.assertTrue(torch.equal(partitioning.ref_point, ref_point_expected))
+            self.assertTrue(torch.equal(partitioning._neg_Y, -mean))
+            sampler = kwargs["sampler"]
+            self.assertIsInstance(sampler, SobolQMCNormalSampler)
+            self.assertEqual(sampler.sample_shape, torch.Size([128]))
+            self.assertIsNone(kwargs["X_pending"])
+            self.assertIsNone(kwargs["constraints"])
+            self.assertEqual(kwargs["eta"], 1e-3)
+
         with self.subTest("custom objective"):
             weights = torch.rand(2)
             obj = WeightedMCMultiOutputObjective(weights=weights)
             kwargs = c(
-                model=mock_model,
+                model=mm,
                 training_data=self.blockX_blockY,
                 objective_thresholds=objective_thresholds,
                 objective=obj,
-                Y_pmean=Y_pmean,
                 alpha=0.05,
             )
-            self.assertEqual(kwargs["model"], mock_model)
+            self.assertEqual(kwargs["model"], mm)
             self.assertIsInstance(kwargs["objective"], WeightedMCMultiOutputObjective)
             ref_point_expected = objective_thresholds * weights
             self.assertTrue(torch.equal(kwargs["ref_point"], ref_point_expected))
@@ -827,24 +906,6 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             self.assertTrue(
                 torch.equal(partitioning._neg_ref_point, -ref_point_expected)
             )
-
-        with self.subTest("without Y_pmean"):
-            mean = torch.rand(1, 2)
-            variance = torch.ones(1, 1)
-            mm = MockModel(MockPosterior(mean=mean, variance=variance))
-            kwargs = c(
-                model=mm,
-                training_data=self.blockX_blockY,
-                objective_thresholds=objective_thresholds,
-            )
-            self.assertIsInstance(
-                kwargs["objective"], IdentityAnalyticMultiOutputObjective
-            )
-            self.assertTrue(torch.equal(kwargs["ref_point"], objective_thresholds))
-            partitioning = kwargs["partitioning"]
-            self.assertIsInstance(partitioning, FastNondominatedPartitioning)
-            self.assertTrue(torch.equal(partitioning.ref_point, objective_thresholds))
-            self.assertTrue(torch.equal(partitioning._neg_Y, -mean))
 
         with self.subTest("risk measures"):
             for use_preprocessing in (True, False):
@@ -871,33 +932,6 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
                 self.assertIsInstance(partitioning, FastNondominatedPartitioning)
                 self.assertTrue(torch.equal(partitioning.ref_point, expected_obj_t))
 
-    def test_construct_inputs_qEHVI(self) -> None:
-        c = get_acqf_input_constructor(qExpectedHypervolumeImprovement)
-        objective_thresholds = torch.rand(2)
-
-        # Test defaults
-        with self.subTest("defaults"):
-            mm = SingleTaskGP(torch.rand(1, 2), torch.rand(1, 2))
-            mean = mm.posterior(self.blockX_blockY[0].X).mean
-            kwargs = c(
-                model=mm,
-                training_data=self.blockX_blockY,
-                objective_thresholds=objective_thresholds,
-            )
-            self.assertIsInstance(kwargs["objective"], IdentityMCMultiOutputObjective)
-            ref_point_expected = objective_thresholds
-            self.assertTrue(torch.equal(kwargs["ref_point"], ref_point_expected))
-            partitioning = kwargs["partitioning"]
-            self.assertIsInstance(partitioning, FastNondominatedPartitioning)
-            self.assertTrue(torch.equal(partitioning.ref_point, ref_point_expected))
-            self.assertTrue(torch.equal(partitioning._neg_Y, -mean))
-            sampler = kwargs["sampler"]
-            self.assertIsInstance(sampler, SobolQMCNormalSampler)
-            self.assertEqual(sampler.sample_shape, torch.Size([128]))
-            self.assertIsNone(kwargs["X_pending"])
-            self.assertIsNone(kwargs["constraints"])
-            self.assertEqual(kwargs["eta"], 1e-3)
-
         with self.subTest("IID sampler"):
             kwargs = c(
                 model=mm,
@@ -911,7 +945,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             self.assertEqual(sampler.sample_shape, torch.Size([64]))
 
         # Test outcome constraints and custom inputs
-        with self.subTest("outcome constraints and custom inputs"):
+        with self.subTest("outcome constraints and custom imports"):
             mean = torch.tensor([[1.0, 0.25], [0.5, 1.0]])
             variance = torch.ones(1, 1)
             mm = MockModel(MockPosterior(mean=mean, variance=variance))
@@ -1330,11 +1364,27 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
     def test_constructors_like_qNEHVI(self) -> None:
         objective_thresholds = torch.tensor([0.1, 0.2])
         model = SingleTaskGP(train_X=torch.rand((3, 2)), train_Y=torch.rand((3, 2)))
-        # The EHVI and qEHVI input constructors are not working
         classes = [
             qNoisyExpectedHypervolumeImprovement,
-            # ExpectedHypervolumeImprovement,
-            # qExpectedHypervolumeImprovement,
+            qLogNoisyExpectedHypervolumeImprovement,
+            ExpectedHypervolumeImprovement,
+            qExpectedHypervolumeImprovement,
+            qLogExpectedHypervolumeImprovement,
+        ]
+        self._test_constructor_base(
+            classes=classes,
+            model=model,
+            training_data=self.blockX_blockY,
+            objective_thresholds=objective_thresholds,
+        )
+
+    def test_constructors_like_EHVI(self) -> None:
+        objective_thresholds = torch.tensor([0.1, 0.2])
+        model = SingleTaskGP(train_X=torch.rand((3, 2)), train_Y=torch.rand((3, 2)))
+        classes = [
+            ExpectedHypervolumeImprovement,
+            qExpectedHypervolumeImprovement,
+            qLogExpectedHypervolumeImprovement,
         ]
         self._test_constructor_base(
             classes=classes,
