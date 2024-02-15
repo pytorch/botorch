@@ -82,7 +82,6 @@ class ExpectedHypervolumeImprovement(MultiObjectiveAnalyticAcquisitionFunction):
         ref_point: List[float],
         partitioning: NondominatedPartitioning,
         posterior_transform: Optional[PosteriorTransform] = None,
-        **kwargs,
     ) -> None:
         r"""Expected Hypervolume Improvement supporting m>=2 outcomes.
 
@@ -112,10 +111,10 @@ class ExpectedHypervolumeImprovement(MultiObjectiveAnalyticAcquisitionFunction):
 
         Args:
             model: A fitted model.
-            ref_point: A list with `m` elements representing the reference point (in the
-                outcome space) w.r.t. to which compute the hypervolume. This is a
-                reference point for the objective values (i.e. after applying
-                `objective` to the samples).
+            ref_point: A list with `m` elements representing the reference point
+                (in the outcome space) w.r.t. to which compute the hypervolume.
+                This is a reference point for the outcome values (i.e., after
+                applying `posterior_transform` if provided).
             partitioning: A `NondominatedPartitioning` module that provides the non-
                 dominated front and a partitioning of the non-dominated space in hyper-
                 rectangles.
@@ -139,7 +138,7 @@ class ExpectedHypervolumeImprovement(MultiObjectiveAnalyticAcquisitionFunction):
             raise ValueError(
                 "At least one pareto point must be better than the reference point."
             )
-        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
+        super().__init__(model=model, posterior_transform=posterior_transform)
         self.register_buffer("ref_point", ref_point)
         self.partitioning = partitioning
         cell_bounds = self.partitioning.get_hypercell_bounds()
