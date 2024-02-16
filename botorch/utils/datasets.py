@@ -8,8 +8,6 @@ r"""Representations for different kinds of datasets."""
 
 from __future__ import annotations
 
-import collections
-
 import warnings
 from typing import Any, Dict, List, Optional, Union
 
@@ -505,7 +503,6 @@ class ContextualDataset(SupervisedDataset):
         self,
         datasets: List[SupervisedDataset],
         parameter_decomposition: Dict[str, List[str]],
-        context_buckets: List[str],
         metric_decomposition: Optional[Dict[str, List[str]]] = None,
     ):
         """Construct a `ContextualDataset`.
@@ -513,10 +510,8 @@ class ContextualDataset(SupervisedDataset):
         Args:
             datasets: A list of the datasets of individual tasks. Each dataset
                 is expected to contain data for only one outcome.
-            parameter_decomposition: Dict from context name to list of indices
-                of X corresponding to that context.
-            context_buckets: List of the context names in the order of dataset
-                in datasets corresponding to each context outcome.
+            parameter_decomposition: Dict from context name to list of feature
+                names corresponding to that context.
             metric_decomposition: Context breakdown metrics. Keys are context names.
                 Values are the lists of metric names belonging to the context:
                 {'context1': ['m1_c1'], 'context2': ['m1_c2'],}.
@@ -527,13 +522,14 @@ class ContextualDataset(SupervisedDataset):
         self.feature_names = datasets[0].feature_names
         self.outcome_names = list(self.datasets.keys())
         self.parameter_decomposition = parameter_decomposition
-        self.context_buckets = context_buckets
         self.metric_decomposition = metric_decomposition
-        self._validate_datasets(
-            datasets=datasets, metric_decomposition=metric_decomposition
-        )
-        # order the dataset based on context bucket
-        self.outcome_names = self._sort_outcome_names()
+        self._validate_datasets()
+        self._validate_decompositions()
+        self.context_buckets = self._extract_context_buckets()
+        self.parameter_index_decomp = {
+            c: [self.feature_names.index(i) for i in parameter_decomposition[c]]
+            for c in self.context_buckets
+        }
 
     @property
     def X(self) -> Tensor:
@@ -545,14 +541,11 @@ class ContextualDataset(SupervisedDataset):
         by LCEM model if there are multiple datasets; Or return the Y expected
         by LCEA model if there is only one dataset.
         """
-        if len(self.datasets) == 1:
-            # use LCEA model
-            return self.datasets[self.outcome_names[0]].Y
+        Ys = [ds.Y for ds in self.datasets.values()]
+        if len(Ys) == 1:
+            return Ys[0]
         else:
-            return torch.cat(
-                [self.datasets[outcome_name].Y for outcome_name in self.outcome_names],
-                dim=-1,
-            )
+            return torch.cat(Ys, dim=-1)
 
     @property
     def Yvar(self) -> Tensor:
@@ -560,42 +553,39 @@ class ContextualDataset(SupervisedDataset):
         by LCEM model if there are multiple datasets; Or return the Yvar expected
         by LCEA model if there is only one dataset.
         """
-        if len(self.datasets) == 1:
-            # use LCEA model
-            return self.datasets[self.outcome_names[0]].Yvar
-        elif self.datasets[self.outcome_names[0]].Yvar is None:
+        Yvars = [ds.Yvar for ds in self.datasets.values()]
+        if Yvars[0] is None:
             return None
+        elif len(Yvars) == 1:
+            return Yvars[0]
         else:
-            return torch.cat(
-                [
-                    self.datasets[outcome_name].Yvar
-                    for outcome_name in self.outcome_names
-                ],
-                dim=-1,
-            )
+            return torch.cat(Yvars, dim=-1)
 
-    def _sort_outcome_names(self) -> List[str]:
-        """Sort the outcome names according to the order of context buckets."""
-        outcome_names = list(self.datasets.keys())
-        if len(outcome_names) == 1:
-            return outcome_names
+    def _extract_context_buckets(self) -> List[str]:
+        """Determines the context buckets from the data, and sets the
+        context_buckets attribute.
+
+        If we have an outcome for each context, we will lists the contexts
+        in the same order as the outcomes (i.e., the order of datasets).
+
+        If there is a single outcome (aggregated across contexts), the context
+        buckets are taken from the parameter decomposition.
+        """
+        if len(self.outcome_names) > 1:
+            assert len(self.outcome_names) == len(
+                self.metric_decomposition
+            ), "Expected a single dataset, or one for each context bucket."
+            context_buckets = []
+            for outcome_name in self.outcome_names:
+                for k, v in self.metric_decomposition.items():
+                    if outcome_name in v:
+                        context_buckets.append(k)
+                        break
         else:
-            context_outcome_map = {}
-            for context in self.context_buckets:
-                for outcome_name in outcome_names:
-                    if outcome_name in self.metric_decomposition[context]:
-                        if context_outcome_map.get(context, None) is not None:
-                            raise ValueError(
-                                f"{context} bucket contains multiple outcomes"
-                            )
-                        context_outcome_map[context] = outcome_name
-        return [context_outcome_map[context] for context in self.context_buckets]
+            context_buckets = list(self.parameter_decomposition.keys())
+        return context_buckets
 
-    def _validate_datasets(
-        self,
-        datasets: List[SupervisedDataset],
-        metric_decomposition: Optional[Dict[str, List[str]]] = None,
-    ) -> None:
+    def _validate_datasets(self) -> None:
         """Validation of given datasets.
         1. each dataset has same X.
         2. metric_decomposition is not None if there are multiple datasets.
@@ -604,6 +594,7 @@ class ContextualDataset(SupervisedDataset):
         metric_decomposition match context buckets.
         5. Yvar is None for all, or not for all.
         """
+        datasets = list(self.datasets.values())
         X = datasets[0].X
         Yvar_is_none = datasets[0].Yvar is None
         for dataset in datasets:
@@ -615,35 +606,47 @@ class ContextualDataset(SupervisedDataset):
                 )
 
         if len(datasets) > 1:
-            if metric_decomposition is None:
+            if self.metric_decomposition is None:
                 raise InputDataError(
                     "metric_decomposition must be provided when there are"
                     + " multiple datasets."
                 )
         else:
-            if metric_decomposition is not None:
+            if self.metric_decomposition is not None:
                 raise InputDataError(
                     "metric_decomposition is redundant when there is one "
                     + "dataset for overall outcome."
                 )
 
-        if collections.Counter(
-            list(self.parameter_decomposition.keys())
-        ) != collections.Counter(self.context_buckets):
-            raise InputDataError(
-                "Keys of parameter decomposition and context buckets do not match."
-            )
+    def _validate_decompositions(self) -> None:
+        """Checks that the decompositions are valid.
 
-        if metric_decomposition is not None:
-            if collections.Counter(
-                list(self.metric_decomposition.keys())
-            ) != collections.Counter(self.context_buckets):
+        Raises:
+            InputDataError: If any of the decompositions are invalid.
+        """
+        if self.metric_decomposition is not None:
+            m = len(list(self.metric_decomposition.values())[0])
+            existing_metrics = set()
+            for v in self.metric_decomposition.values():
+                if existing_metrics.intersection(list(v)):
+                    raise InputDataError(
+                        "metric_decomposition has same metric for multiple contexts."
+                    )
+                if len(v) != m or len(set(v)) != m:
+                    raise InputDataError(
+                        "All values in metric_decomposition must have the same length."
+                    )
+                existing_metrics.update(list(v))
+
+            if set(self.metric_decomposition.keys()) != set(
+                self.parameter_decomposition.keys()
+            ):
                 raise InputDataError(
-                    "Keys of metric decomposition and context buckets do not match."
+                    "Keys of metric and parameter decompositions do not match."
                 )
 
             all_metrics = []
-            for m in metric_decomposition.values():
+            for m in self.metric_decomposition.values():
                 all_metrics.extend(m)
             for outcome in self.outcome_names:
                 if outcome not in all_metrics:
