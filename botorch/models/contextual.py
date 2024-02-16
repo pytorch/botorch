@@ -121,7 +121,7 @@ class LCEAGP(SingleTaskGP):
     def construct_inputs(
         cls,
         training_data: SupervisedDataset,
-        decomposition: Dict[str, List[int]],
+        decomposition: Dict[str, List[str]],
         train_embedding: bool = True,
         cat_feature_dict: Optional[Dict] = None,
         embs_feature_dict: Optional[Dict] = None,
@@ -133,7 +133,7 @@ class LCEAGP(SingleTaskGP):
 
         Args:
             training_data: A `SupervisedDataset` containing the training data.
-            decomposition: Dictionary of context names and their indexes of the
+            decomposition: Dictionary of context names and the names of the
                 corresponding active context parameters.
             train_embedding: Whether to train the embedding layer or not.
             cat_feature_dict: Keys are context names and values are list of categorical
@@ -148,9 +148,13 @@ class LCEAGP(SingleTaskGP):
             context_weight_dict: Known population weights of each context.
         """
         base_inputs = super().construct_inputs(training_data=training_data, **kwargs)
+        index_decomp = {
+            c: [training_data.feature_names.index(i) for i in v]
+            for c, v in decomposition.items()
+        }
         return {
             **base_inputs,
-            "decomposition": decomposition,
+            "decomposition": index_decomp,
             "train_embedding": train_embedding,
             "cat_feature_dict": cat_feature_dict,
             "embs_feature_dict": embs_feature_dict,
