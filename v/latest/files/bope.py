@@ -30,14 +30,18 @@
 
 
 import os
-from typing import Tuple
+from typing import Optional, Tuple
 
 import matplotlib as mpl
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
 import torch
-from botorch.acquisition import MCAcquisitionObjective, GenericMCObjective, LearnedObjective
+from botorch.acquisition import (
+    GenericMCObjective,
+    LearnedObjective,
+    MCAcquisitionObjective,
+)
 from botorch.acquisition.logei import qLogNoisyExpectedImprovement
 from botorch.acquisition.monte_carlo import qSimpleRegret
 from botorch.acquisition.preference import AnalyticExpectedUtilityOfBestOption
@@ -73,7 +77,7 @@ SMOKE_TEST = os.environ.get("SMOKE_TEST")
 # In[2]:
 
 
-def neg_l1_dist(Y):
+def neg_l1_dist(Y: torch.Tensor, X: Optional[torch.Tensor] = None) -> torch.Tensor:
     """Negative L1 distance from a Pareto optimal points"""
     if len(Y.shape) == 1:
         Y = Y.unsqueeze(0)
@@ -92,7 +96,7 @@ else:
     NUM_RESTARTS = 8
     # Since BOPE samples from both the outcome and preference models, we take
     # fewer samples than usual from the outcome model for speed.
-    NUM_OUTCOME_SAMPLES = 32  
+    NUM_OUTCOME_SAMPLES = 32
     RAW_SAMPLES = 64
     BATCH_LIMIT = 4
 
@@ -390,7 +394,9 @@ exp_candidate_results.append(exp_result)
 
 # Plotting
 plt.figure(figsize=(8, 6))
-for name, group in pd.DataFrame(within_session_results).groupby("pe_strategy", sort=True):
+for name, group in pd.DataFrame(within_session_results).groupby(
+    "pe_strategy", sort=True
+):
     plt.plot(
         group["n_comps"],
         group["util"],

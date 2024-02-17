@@ -24,6 +24,8 @@
 
 
 import os
+from typing import Optional
+
 import torch
 
 device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
@@ -107,7 +109,7 @@ def initialize_model(train_x, train_obj, train_con, state_dict=None):
 from botorch.acquisition.objective import ConstrainedMCObjective
 
 
-def obj_callable(Z):
+def obj_callable(Z: torch.Tensor, X: Optional[torch.Tensor] = None):
     return Z[..., 0]
 
 
@@ -182,16 +184,16 @@ def update_random_observations(best_random):
 # In[6]:
 
 
+import time
+import warnings
+
 from botorch import fit_gpytorch_mll
 from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
     qNoisyExpectedImprovement,
 )
-from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.exceptions import BadInitialCandidatesWarning
-
-import time
-import warnings
+from botorch.sampling.normal import SobolQMCNormalSampler
 
 
 warnings.filterwarnings("ignore", category=BadInitialCandidatesWarning)

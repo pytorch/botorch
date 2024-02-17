@@ -154,7 +154,7 @@
     <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">training_data</span><span class="p">:</span> <span class="n">SupervisedDataset</span><span class="p">,</span>
-        <span class="n">decomposition</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
+        <span class="n">decomposition</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
         <span class="n">train_embedding</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">cat_feature_dict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">embs_feature_dict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -166,7 +166,7 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            training_data: A `SupervisedDataset` containing the training data.</span>
-<span class="sd">            decomposition: Dictionary of context names and their indexes of the</span>
+<span class="sd">            decomposition: Dictionary of context names and the names of the</span>
 <span class="sd">                corresponding active context parameters.</span>
 <span class="sd">            train_embedding: Whether to train the embedding layer or not.</span>
 <span class="sd">            cat_feature_dict: Keys are context names and values are list of categorical</span>
@@ -181,9 +181,13 @@
 <span class="sd">            context_weight_dict: Known population weights of each context.</span>
 <span class="sd">        """</span>
         <span class="n">base_inputs</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">construct_inputs</span><span class="p">(</span><span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">index_decomp</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">c</span><span class="p">:</span> <span class="p">[</span><span class="n">training_data</span><span class="o">.</span><span class="n">feature_names</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">v</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">decomposition</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="o">**</span><span class="n">base_inputs</span><span class="p">,</span>
-            <span class="s2">"decomposition"</span><span class="p">:</span> <span class="n">decomposition</span><span class="p">,</span>
+            <span class="s2">"decomposition"</span><span class="p">:</span> <span class="n">index_decomp</span><span class="p">,</span>
             <span class="s2">"train_embedding"</span><span class="p">:</span> <span class="n">train_embedding</span><span class="p">,</span>
             <span class="s2">"cat_feature_dict"</span><span class="p">:</span> <span class="n">cat_feature_dict</span><span class="p">,</span>
             <span class="s2">"embs_feature_dict"</span><span class="p">:</span> <span class="n">embs_feature_dict</span><span class="p">,</span>

@@ -116,7 +116,6 @@
         <span class="n">ref_point</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
         <span class="n">partitioning</span><span class="p">:</span> <span class="n">NondominatedPartitioning</span><span class="p">,</span>
         <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Expected Hypervolume Improvement supporting m&gt;=2 outcomes.</span>
 
@@ -146,10 +145,10 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model.</span>
-<span class="sd">            ref_point: A list with `m` elements representing the reference point (in the</span>
-<span class="sd">                outcome space) w.r.t. to which compute the hypervolume. This is a</span>
-<span class="sd">                reference point for the objective values (i.e. after applying</span>
-<span class="sd">                `objective` to the samples).</span>
+<span class="sd">            ref_point: A list with `m` elements representing the reference point</span>
+<span class="sd">                (in the outcome space) w.r.t. to which compute the hypervolume.</span>
+<span class="sd">                This is a reference point for the outcome values (i.e., after</span>
+<span class="sd">                applying `posterior_transform` if provided).</span>
 <span class="sd">            partitioning: A `NondominatedPartitioning` module that provides the non-</span>
 <span class="sd">                dominated front and a partitioning of the non-dominated space in hyper-</span>
 <span class="sd">                rectangles.</span>
@@ -173,7 +172,7 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">"At least one pareto point must be better than the reference point."</span>
             <span class="p">)</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"ref_point"</span><span class="p">,</span> <span class="n">ref_point</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">partitioning</span> <span class="o">=</span> <span class="n">partitioning</span>
         <span class="n">cell_bounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">partitioning</span><span class="o">.</span><span class="n">get_hypercell_bounds</span><span class="p">()</span>

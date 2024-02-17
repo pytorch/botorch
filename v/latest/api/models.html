@@ -2405,7 +2405,7 @@ dimension is set to 1 for each categorical variable.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a>) – A <cite>SupervisedDataset</cite> containing the training data.</p></li>
-<li><p><strong>decomposition</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Dictionary of context names and their indexes of the
+<li><p><strong>decomposition</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – Dictionary of context names and the names of the
 corresponding active context parameters.</p></li>
 <li><p><strong>train_embedding</strong> (<em>bool</em>) – Whether to train the embedding layer or not.</p></li>
 <li><p><strong>cat_feature_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Keys are context names and values are list of categorical
