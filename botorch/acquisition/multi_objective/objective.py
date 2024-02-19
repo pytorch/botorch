@@ -255,27 +255,3 @@ class UnstandardizeMCMultiOutputObjective(IdentityMCMultiOutputObjective):
     def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         samples = super().forward(samples=samples)
         return samples * self.Y_std + self.Y_mean
-
-
-class AnalyticMultiOutputObjective(torch.nn.Module):
-    r"""Abstract base class for multi-output analytic objectives.
-
-    DEPRECATED - This will be removed in the next version.
-
-    """
-
-    def __init__(self, *args, **kwargs) -> None:
-        """Initialize objective."""
-        warnings.warn("AnalyticMultiOutputObjective is deprecated.", DeprecationWarning)
-        super().__init__(*args, **kwargs)
-
-
-class IdentityAnalyticMultiOutputObjective(AnalyticMultiOutputObjective):
-    """DEPRECATED - This will be removed in the next version."""
-
-    def __init__(self):
-        """Initialize objective."""
-        super().__init__()
-
-    def forward(self, posterior: GPyTorchPosterior) -> GPyTorchPosterior:
-        return posterior
