@@ -5,7 +5,6 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
-import warnings
 
 import torch
 from botorch.acquisition.multi_objective.multi_output_risk_measures import (

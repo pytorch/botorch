@@ -6,8 +6,6 @@
 
 from __future__ import annotations
 
-import warnings
-
 from abc import abstractmethod
 from typing import List, Optional
 
@@ -15,7 +13,6 @@ import torch
 from botorch.acquisition.objective import GenericMCObjective, MCAcquisitionObjective
 from botorch.exceptions.errors import BotorchError, BotorchTensorDimensionError
 from botorch.models.model import Model
-from botorch.posteriors import GPyTorchPosterior
 from botorch.utils import apply_constraints
 from botorch.utils.transforms import normalize_indices
 from torch import Tensor
