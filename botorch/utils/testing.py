@@ -187,7 +187,7 @@ class ConstrainedTestProblemTestCaseMixin:
         for f in self.functions:
             self.assertTrue(hasattr(f, "num_constraints"))
 
-    def test_evaluate_slack_true(self):
+    def test_evaluate_slack(self):
         for dtype in (torch.float, torch.double):
             for f in self.functions:
                 f.to(device=self.device, dtype=dtype)
@@ -195,8 +195,13 @@ class ConstrainedTestProblemTestCaseMixin:
                     torch.rand(1, f.dim, device=self.device, dtype=dtype),
                     bounds=f.bounds,
                 )
-                slack = f.evaluate_slack_true(X)
-                self.assertEqual(slack.shape, torch.Size([1, f.num_constraints]))
+                slack_true = f.evaluate_slack_true(X)
+                slack_observed = f.evaluate_slack(X)
+                self.assertEqual(slack_true.shape, torch.Size([1, f.num_constraints]))
+                self.assertEqual(slack_observed.shape, torch.Size([1, f.num_constraints]))
+                if isinstance(f.constraint_noise_std, float):
+                    is_equal = torch.equal(slack_true, slack_observed)
+                    self.assertEqual(is_equal, f.constraint_noise_std == 0.0)
 
 
 class MockPosterior(Posterior):
