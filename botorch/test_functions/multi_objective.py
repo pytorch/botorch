@@ -1246,7 +1246,9 @@ class ConstrainedBraninCurrin(BraninCurrin, ConstrainedBaseTestProblem):
     ) -> None:
         r"""
         Args:
-            noise_std: Standard deviation of the observation noise.
+            noise_std: Standard deviation of the observation noise of the objectives.
+            constraint_noise_std: Standard deviation of the observation noise of the
+                constraint.
             negate: If True, negate the function.
         """
         super().__init__(noise_std=noise_std, negate=negate)
@@ -1354,7 +1356,9 @@ class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         r"""
         Args:
             dim: The (input) dimension of the function. Must be at least 2.
-            noise_std: Standard deviation of the observation noise.
+            noise_std: Standard deviation of the observation noise of the objectives.
+            constraint_noise_std: Standard deviation of the observation noise of the
+                constraints.
             negate: If True, negate the function.
         """
         if dim < 2:

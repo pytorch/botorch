@@ -201,9 +201,23 @@ class ConstrainedTestProblemTestCaseMixin:
                 self.assertEqual(
                     slack_observed.shape, torch.Size([1, f.num_constraints])
                 )
+                is_equal = (slack_observed == slack_true).bool()
                 if isinstance(f.constraint_noise_std, float):
-                    is_equal = torch.equal(slack_true, slack_observed)
-                    self.assertEqual(is_equal, f.constraint_noise_std == 0.0)
+                    self.assertEqual(
+                        is_equal.all().item(), f.constraint_noise_std == 0.0
+                    )
+                elif isinstance(f.constraint_noise_std, list):
+                    for i, noise_std in enumerate(f.constraint_noise_std):
+                        # NOTE: We can run into floating point precision issues here if
+                        # the slack value is extremely large so that adding noise to the
+                        # outcome may not result in a different (floating point) number.
+                        # TODO: Find a more principled way for testing this.
+                        if slack_true[:, i].abs() < 1e8:
+                            self.assertEqual(
+                                is_equal[:, i].item(), noise_std in (0.0, None)
+                            )
+                else:
+                    self.assertTrue(is_equal.all().item())
 
 
 class MockPosterior(Posterior):
