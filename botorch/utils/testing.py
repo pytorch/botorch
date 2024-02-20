@@ -198,7 +198,9 @@ class ConstrainedTestProblemTestCaseMixin:
                 slack_true = f.evaluate_slack_true(X)
                 slack_observed = f.evaluate_slack(X)
                 self.assertEqual(slack_true.shape, torch.Size([1, f.num_constraints]))
-                self.assertEqual(slack_observed.shape, torch.Size([1, f.num_constraints]))
+                self.assertEqual(
+                    slack_observed.shape, torch.Size([1, f.num_constraints])
+                )
                 if isinstance(f.constraint_noise_std, float):
                     is_equal = torch.equal(slack_true, slack_observed)
                     self.assertEqual(is_equal, f.constraint_noise_std == 0.0)
