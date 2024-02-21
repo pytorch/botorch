@@ -196,8 +196,8 @@ class ConstrainedTestProblemTestCaseMixin:
                     bounds=f.bounds,
                 )
                 slack_true = f.evaluate_slack_true(X)
-                # Mock out the random generator to ensure that the noise realizations are
-                # sizable and we don't run into any floating point comparison issues.
+                # Mock out the random generator to ensure that noise realizations are
+                # sizable so we don't run into any floating point comparison issues.
                 with mock.patch(
                     "botorch.test_functions.base.torch.randn_like",
                     side_effect=lambda y: y,
