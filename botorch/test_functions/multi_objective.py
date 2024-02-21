@@ -1241,16 +1241,20 @@ class ConstrainedBraninCurrin(BraninCurrin, ConstrainedBaseTestProblem):
     def __init__(
         self,
         noise_std: Union[None, float, List[float]] = None,
+        constraint_noise_std: Union[None, float, List[float]] = None,
         negate: bool = False,
     ) -> None:
         r"""
         Args:
-            noise_std: Standard deviation of the observation noise.
+            noise_std: Standard deviation of the observation noise of the objectives.
+            constraint_noise_std: Standard deviation of the observation noise of the
+                constraint.
             negate: If True, negate the function.
         """
         super().__init__(noise_std=noise_std, negate=negate)
         con_bounds = torch.tensor(self._con_bounds, dtype=torch.float).transpose(-1, -2)
         self.register_buffer("con_bounds", con_bounds)
+        self.constraint_noise_std = constraint_noise_std
 
     def evaluate_slack_true(self, X: Tensor) -> Tensor:
         X_tf = unnormalize(X, self.con_bounds)
@@ -1346,12 +1350,15 @@ class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         self,
         dim: int,
         noise_std: Union[None, float, List[float]] = None,
+        constraint_noise_std: Union[None, float, List[float]] = None,
         negate: bool = False,
     ) -> None:
         r"""
         Args:
             dim: The (input) dimension of the function. Must be at least 2.
-            noise_std: Standard deviation of the observation noise.
+            noise_std: Standard deviation of the observation noise of the objectives.
+            constraint_noise_std: Standard deviation of the observation noise of the
+                constraints.
             negate: If True, negate the function.
         """
         if dim < 2:
@@ -1359,6 +1366,7 @@ class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         self.dim = dim
         self._bounds = [(0.0, 1.0) for _ in range(self.dim)]
         super().__init__(noise_std=noise_std, negate=negate)
+        self.constraint_noise_std = constraint_noise_std
 
     def LA2(self, A, B, C, D, theta):
         return A * torch.sin(B * theta.pow(C)).pow(D)

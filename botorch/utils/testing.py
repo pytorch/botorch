@@ -11,7 +11,7 @@ import warnings
 from abc import abstractproperty
 from collections import OrderedDict
 from typing import Any, List, Optional, Tuple, Union
-from unittest import TestCase
+from unittest import mock, TestCase
 
 import torch
 from botorch import settings
@@ -187,7 +187,7 @@ class ConstrainedTestProblemTestCaseMixin:
         for f in self.functions:
             self.assertTrue(hasattr(f, "num_constraints"))
 
-    def test_evaluate_slack_true(self):
+    def test_evaluate_slack(self):
         for dtype in (torch.float, torch.double):
             for f in self.functions:
                 f.to(device=self.device, dtype=dtype)
@@ -195,8 +195,31 @@ class ConstrainedTestProblemTestCaseMixin:
                     torch.rand(1, f.dim, device=self.device, dtype=dtype),
                     bounds=f.bounds,
                 )
-                slack = f.evaluate_slack_true(X)
-                self.assertEqual(slack.shape, torch.Size([1, f.num_constraints]))
+                slack_true = f.evaluate_slack_true(X)
+                # Mock out the random generator to ensure that noise realizations are
+                # sizable so we don't run into any floating point comparison issues.
+                with mock.patch(
+                    "botorch.test_functions.base.torch.randn_like",
+                    side_effect=lambda y: y,
+                ):
+                    slack_observed = f.evaluate_slack(X)
+
+                self.assertEqual(slack_true.shape, torch.Size([1, f.num_constraints]))
+                self.assertEqual(
+                    slack_observed.shape, torch.Size([1, f.num_constraints])
+                )
+                is_equal = (slack_observed == slack_true).bool()
+                if isinstance(f.constraint_noise_std, float):
+                    self.assertEqual(
+                        is_equal.all().item(), f.constraint_noise_std == 0.0
+                    )
+                elif isinstance(f.constraint_noise_std, list):
+                    for i, noise_std in enumerate(f.constraint_noise_std):
+                        self.assertEqual(
+                            is_equal[:, i].item(), noise_std in (0.0, None)
+                        )
+                else:
+                    self.assertTrue(is_equal.all().item())
 
 
 class MockPosterior(Posterior):
