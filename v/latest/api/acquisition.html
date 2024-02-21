@@ -4631,52 +4631,6 @@ dimension).</p>
 </div>
 </dd></dl>
 </dd></dl>
-<dl class="py class">
-<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.objective.</span></span><span class="sig-name descname"><span class="pre">AnalyticMultiOutputObjective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#AnalyticMultiOutputObjective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
-<p>Abstract base class for multi-output analytic objectives.</p>
-<p>DEPRECATED - This will be removed in the next version.</p>
-<p>Initialize objective.</p>
-<dl class="field-list simple">
-</dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-</dd></dl>
-<dl class="py class">
-<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.objective.IdentityAnalyticMultiOutputObjective">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.objective.</span></span><span class="sig-name descname"><span class="pre">IdentityAnalyticMultiOutputObjective</span></span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#IdentityAnalyticMultiOutputObjective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.IdentityAnalyticMultiOutputObjective" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnalyticMultiOutputObjective</span></code></a></p>
-<p>DEPRECATED - This will be removed in the next version.</p>
-<p>Initialize objective.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.objective.IdentityAnalyticMultiOutputObjective.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.IdentityAnalyticMultiOutputObjective.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.objective.IdentityAnalyticMultiOutputObjective.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#IdentityAnalyticMultiOutputObjective.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.IdentityAnalyticMultiOutputObjective.forward" title="Link to this definition">¶</a></dt>
-<dd><p>Define the computation performed at every call.</p>
-<p>Should be overridden by all subclasses.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Although the recipe for forward pass needs to be defined within
-this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
-instead of this since the former takes care of running the
-registered hooks while the latter silently ignores them.</p>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><em>GPyTorchPosterior</em></a>) – </p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><em>GPyTorchPosterior</em></a></p>
-</dd>
-</dl>
-</dd></dl>
-</dd></dl>
 </section>
 <section id="module-botorch.acquisition.cost_aware">
 <span id="cost-aware-utility"></span><h3>Cost-Aware Utility<a class="headerlink" href="#module-botorch.acquisition.cost_aware" title="Link to this heading">¶</a></h3>
