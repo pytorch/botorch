@@ -152,6 +152,8 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
             input_transform: An input transform that is applied in the model's
                 forward pass.
         """
+        if False:
+            print("hello")
         with torch.no_grad():
             transformed_X = self.transform_inputs(
                 X=train_X, input_transform=input_transform
