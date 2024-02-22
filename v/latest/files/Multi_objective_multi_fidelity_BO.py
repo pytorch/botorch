@@ -65,7 +65,7 @@ BATCH_SIZE = 1  # For batch optimization, BATCH_SIZE should be greater than 1
 EVAL_BUDGET = 2.05  # in terms of the number of full-fidelity evaluations
 n_INIT = 2  # Initialization budget in terms of the number of full-fidelity evaluations
 # Number of Monte Carlo samples, used to approximate MOMF
-MC_SAMPLES = 8 if SMOKE_TEST else 128
+MC_SAMPLES = 2 if SMOKE_TEST else 128
 # Number of restart points for multi-start optimization
 NUM_RESTARTS = 2 if SMOKE_TEST else 10
 # Number of raw samples for initial point selection heuristic
@@ -301,9 +301,9 @@ from botorch.acquisition.utils import project_to_target_fidelity
 from botorch.models.deterministic import GenericDeterministicModel
 from torch import Tensor
 
-NUM_INNER_MC_SAMPLES = 32
-NUM_PARETO = 10
-NUM_FANTASIES = 8
+NUM_INNER_MC_SAMPLES = 2 if SMOKE_TEST else 32
+NUM_PARETO = 3 if SMOKE_TEST else 10
+NUM_FANTASIES = 2 if SMOKE_TEST else 8
 
 
 def get_current_value(
@@ -470,8 +470,8 @@ try:
         model,
         non_fidelity_indices,
         project,
-        population_size=250,
-        max_gen=100,
+        population_size=20 if SMOKE_TEST else 250,
+        max_gen=10 if SMOKE_TEST else 100,
         is_mf_model=True,
     ):
         """Optimize the posterior mean using NSGA-II."""
@@ -536,15 +536,15 @@ try:
         return partitioning.compute_hypervolume().item()
 
 except ImportError:
-    NUM_DISCRETE_POINTS = 100 if SMOKE_TEST else 100000
+    NUM_DISCRETE_POINTS = 10 if SMOKE_TEST else 100000
     CHUNK_SIZE = 512
 
     def get_pareto(
         model,
         non_fidelity_indices,
         project,
-        population_size=250,
-        max_gen=100,
+        population_size=20 if SMOKE_TEST else 250,
+        max_gen=10 if SMOKE_TEST else 100,
         is_mf_model=True,
     ):
         """Optimize the posterior mean over a discrete set."""

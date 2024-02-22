@@ -97,12 +97,12 @@ dimensions) problems, but in general NSGA-II will yield far better results.</p>
 <div class="prompt input_prompt">In [1]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-plaintext"><pre><span></span>import os
-from typing import Callable, Dict
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span>
 
-import matplotlib.pyplot as plt
-import numpy as np
-import torch
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">torch</span>
 </pre></div>
 </div>
 </div>
@@ -133,11 +133,11 @@ I0205 114101.867 _utils_internal.py:252] NCCL_DEBUG is forced to WARN from None
 <div class="prompt input_prompt">In [2]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-plaintext"><pre><span></span>tkwargs = {  # Tkwargs is a dictionary contaning data about data type and data device
-    "dtype": torch.double,
-    "device": torch.device("cuda" if torch.cuda.is_available() else "cpu"),
-}
-SMOKE_TEST = os.environ.get("SMOKE_TEST")
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span>  <span class="c1"># Tkwargs is a dictionary contaning data about data type and data device</span>
+    <span class="s2">"dtype"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">,</span>
+    <span class="s2">"device"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"cuda"</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">"cpu"</span><span class="p">),</span>
+<span class="p">}</span>
+<span class="n">SMOKE_TEST</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"SMOKE_TEST"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -155,30 +155,30 @@ SMOKE_TEST = os.environ.get("SMOKE_TEST")
 <div class="prompt input_prompt">In [3]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-plaintext"><pre><span></span>from botorch.test_functions.multi_objective_multi_fidelity import MOMFBraninCurrin
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.test_functions.multi_objective_multi_fidelity</span> <span class="kn">import</span> <span class="n">MOMFBraninCurrin</span>
 
-BC = MOMFBraninCurrin(negate=True).to(**tkwargs)
-dim_x = BC.dim
-dim_y = BC.num_objectives
+<span class="n">BC</span> <span class="o">=</span> <span class="n">MOMFBraninCurrin</span><span class="p">(</span><span class="n">negate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+<span class="n">dim_x</span> <span class="o">=</span> <span class="n">BC</span><span class="o">.</span><span class="n">dim</span>
+<span class="n">dim_y</span> <span class="o">=</span> <span class="n">BC</span><span class="o">.</span><span class="n">num_objectives</span>
 
-ref_point = torch.zeros(dim_y, **tkwargs)
+<span class="n">ref_point</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dim_y</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
 
 
-BATCH_SIZE = 1  # For batch optimization, BATCH_SIZE should be greater than 1
-# This evaluation budget is set to be very low to make the notebook run fast. This should be much higher.
-EVAL_BUDGET = 2.05  # in terms of the number of full-fidelity evaluations
-n_INIT = 2  # Initialization budget in terms of the number of full-fidelity evaluations
-# Number of Monte Carlo samples, used to approximate MOMF
-MC_SAMPLES = 8 if SMOKE_TEST else 128
-# Number of restart points for multi-start optimization
-NUM_RESTARTS = 2 if SMOKE_TEST else 10
-# Number of raw samples for initial point selection heuristic
-RAW_SAMPLES = 4 if SMOKE_TEST else 512
+<span class="n">BATCH_SIZE</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># For batch optimization, BATCH_SIZE should be greater than 1</span>
+<span class="c1"># This evaluation budget is set to be very low to make the notebook run fast. This should be much higher.</span>
+<span class="n">EVAL_BUDGET</span> <span class="o">=</span> <span class="mf">2.05</span>  <span class="c1"># in terms of the number of full-fidelity evaluations</span>
+<span class="n">n_INIT</span> <span class="o">=</span> <span class="mi">2</span>  <span class="c1"># Initialization budget in terms of the number of full-fidelity evaluations</span>
+<span class="c1"># Number of Monte Carlo samples, used to approximate MOMF</span>
+<span class="n">MC_SAMPLES</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">128</span>
+<span class="c1"># Number of restart points for multi-start optimization</span>
+<span class="n">NUM_RESTARTS</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">10</span>
+<span class="c1"># Number of raw samples for initial point selection heuristic</span>
+<span class="n">RAW_SAMPLES</span> <span class="o">=</span> <span class="mi">4</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">512</span>
 
-standard_bounds = torch.zeros(2, dim_x, **tkwargs)
-standard_bounds[1] = 1
-# mapping from index to target fidelity (highest fidelity)
-target_fidelities = {2: 1.0}
+<span class="n">standard_bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">dim_x</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+<span class="n">standard_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="c1"># mapping from index to target fidelity (highest fidelity)</span>
+<span class="n">target_fidelities</span> <span class="o">=</span> <span class="p">{</span><span class="mi">2</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span>
 </pre></div>
 </div>
 </div>
@@ -196,34 +196,34 @@ target_fidelities = {2: 1.0}
 <div class="prompt input_prompt">In [4]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-plaintext"><pre><span></span>from math import exp
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">exp</span>
 
 
-def cost_func(x):
-    """A simple exponential cost function."""
-    exp_arg = torch.tensor(4.8, **tkwargs)
-    val = torch.exp(exp_arg * x)
-    return val
+<span class="k">def</span> <span class="nf">cost_func</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A simple exponential cost function."""</span>
+    <span class="n">exp_arg</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">4.8</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">exp_arg</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">val</span>
 
 
-# Displaying the min and max costs for this optimization
-print(f"Min Cost: {cost_func(0)}")
-print(f"Max Cost: {cost_func(1)}")
+<span class="c1"># Displaying the min and max costs for this optimization</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Min Cost: </span><span class="si">{</span><span class="n">cost_func</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Max Cost: </span><span class="si">{</span><span class="n">cost_func</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
-def cost_callable(X: torch.Tensor) -&gt; torch.Tensor:
-    r"""Wrapper for the cost function that takes care of shaping
-    input and output arrays for interfacing with cost_func.
-    This is passed as a callable function to MOMF.
+<span class="k">def</span> <span class="nf">cost_callable</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Wrapper for the cost function that takes care of shaping</span>
+<span class="sd">    input and output arrays for interfacing with cost_func.</span>
+<span class="sd">    This is passed as a callable function to MOMF.</span>
 
-    Args:
-        X: A `batch_shape x q x d`-dim Tensor
-    Returns:
-        Cost `batch_shape x q x m`-dim Tensor of cost generated
-        from fidelity dimension using cost_func.
-    """
+<span class="sd">    Args:</span>
+<span class="sd">        X: A `batch_shape x q x d`-dim Tensor</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Cost `batch_shape x q x m`-dim Tensor of cost generated</span>
+<span class="sd">        from fidelity dimension using cost_func.</span>
+<span class="sd">    """</span>
 
-    return cost_func(X[..., -1:])
+    <span class="k">return</span> <span class="n">cost_func</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">:])</span>
 </pre></div>
 </div>
 </div>
@@ -254,79 +254,79 @@ The model is initialized with random points, where the fidelity is sampled from 
 <div class="prompt input_prompt">In [5]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-plaintext"><pre><span></span>from botorch.models.gp_regression import SingleTaskGP
-from botorch.models.model_list_gp_regression import ModelListGP
-from botorch.models.transforms.outcome import Standardize
-from botorch.utils.transforms import normalize
-from gpytorch.kernels import MaternKernel, ScaleKernel
-from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
-from gpytorch.priors import GammaPrior
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span> <span class="nn">botorch.models.model_list_gp_regression</span> <span class="kn">import</span> <span class="n">ModelListGP</span>
+<span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">Standardize</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">normalize</span>
+<span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">MaternKernel</span><span class="p">,</span> <span class="n">ScaleKernel</span>
+<span class="kn">from</span> <span class="nn">gpytorch.mlls.sum_marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">SumMarginalLogLikelihood</span>
+<span class="kn">from</span> <span class="nn">gpytorch.priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span>
 
 
-def inv_transform(u):
-    # define inverse transform to sample from the probability distribution with
-    # PDF proportional to 1/(c(x))
-    # u is a uniform(0,1) rv
-    return 5 / 24 * torch.log(-exp(24 / 5) / (exp(24 / 5) * u - u - exp(24 / 5)))
+<span class="k">def</span> <span class="nf">inv_transform</span><span class="p">(</span><span class="n">u</span><span class="p">):</span>
+    <span class="c1"># define inverse transform to sample from the probability distribution with</span>
+    <span class="c1"># PDF proportional to 1/(c(x))</span>
+    <span class="c1"># u is a uniform(0,1) rv</span>
+    <span class="k">return</span> <span class="mi">5</span> <span class="o">/</span> <span class="mi">24</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="o">-</span><span class="n">exp</span><span class="p">(</span><span class="mi">24</span> <span class="o">/</span> <span class="mi">5</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">exp</span><span class="p">(</span><span class="mi">24</span> <span class="o">/</span> <span class="mi">5</span><span class="p">)</span> <span class="o">*</span> <span class="n">u</span> <span class="o">-</span> <span class="n">u</span> <span class="o">-</span> <span class="n">exp</span><span class="p">(</span><span class="mi">24</span> <span class="o">/</span> <span class="mi">5</span><span class="p">)))</span>
 
 
-def gen_init_data(n: int):
-    r"""
-    Generates the initial data. Sample fidelities inversely proportional to cost.
-    """
-    # total cost budget is n
-    train_x = torch.empty(
-        0, BC.bounds.shape[1], dtype=BC.bounds.dtype, device=BC.bounds.device
-    )
-    total_cost = 0
-    # assume target fidelity is 1
-    total_cost_limit = (
-        n
-        * cost_callable(
-            torch.ones(
-                1, BC.bounds.shape[1], dtype=BC.bounds.dtype, device=BC.bounds.device
-            )
-        ).item()
-    )
-    while total_cost &lt; total_cost_limit:
-        new_x = torch.rand(
-            1, BC.bounds.shape[1], dtype=BC.bounds.dtype, device=BC.bounds.device
-        )
-        new_x[:, -1] = inv_transform(new_x[:, -1])
-        total_cost += cost_callable(new_x)
-        train_x = torch.cat([train_x, new_x], dim=0)
-    train_x = train_x[:-1]
-    train_obj = BC(train_x)
-    return train_x, train_obj
+<span class="k">def</span> <span class="nf">gen_init_data</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Generates the initial data. Sample fidelities inversely proportional to cost.</span>
+<span class="sd">    """</span>
+    <span class="c1"># total cost budget is n</span>
+    <span class="n">train_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span>
+        <span class="mi">0</span><span class="p">,</span> <span class="n">BC</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">BC</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">BC</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">device</span>
+    <span class="p">)</span>
+    <span class="n">total_cost</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="c1"># assume target fidelity is 1</span>
+    <span class="n">total_cost_limit</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">n</span>
+        <span class="o">*</span> <span class="n">cost_callable</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
+                <span class="mi">1</span><span class="p">,</span> <span class="n">BC</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">BC</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">BC</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">device</span>
+            <span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="k">while</span> <span class="n">total_cost</span> <span class="o">&lt;</span> <span class="n">total_cost_limit</span><span class="p">:</span>
+        <span class="n">new_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span>
+            <span class="mi">1</span><span class="p">,</span> <span class="n">BC</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">BC</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">BC</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">device</span>
+        <span class="p">)</span>
+        <span class="n">new_x</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">inv_transform</span><span class="p">(</span><span class="n">new_x</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">total_cost</span> <span class="o">+=</span> <span class="n">cost_callable</span><span class="p">(</span><span class="n">new_x</span><span class="p">)</span>
+        <span class="n">train_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">train_x</span><span class="p">,</span> <span class="n">new_x</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">train_x</span> <span class="o">=</span> <span class="n">train_x</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">train_obj</span> <span class="o">=</span> <span class="n">BC</span><span class="p">(</span><span class="n">train_x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span>
 
 
-def initialize_model(train_x, train_obj, state_dict=None):
-    """Initializes a ModelList with Matern 5/2 Kernel and returns the model and its MLL.
+<span class="k">def</span> <span class="nf">initialize_model</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">,</span> <span class="n">state_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Initializes a ModelList with Matern 5/2 Kernel and returns the model and its MLL.</span>
 
-    Note: a batched model could also be used here.
-    """
-    models = []
-    for i in range(train_obj.shape[-1]):
-        m = SingleTaskGP(
-            train_x,
-            train_obj[:, i : i + 1],
-            train_Yvar=torch.full_like(train_obj[:, i : i + 1], 1e-6),
-            outcome_transform=Standardize(m=1),
-            covar_module=ScaleKernel(
-                MaternKernel(
-                    nu=2.5,
-                    ard_num_dims=train_x.shape[-1],
-                    lengthscale_prior=GammaPrior(2.0, 2.0),
-                ),
-                outputscale_prior=GammaPrior(2.0, 0.15),
-            ),
-        )
-        models.append(m)
-    model = ModelListGP(*models)
-    mll = SumMarginalLogLikelihood(model.likelihood, model)
-    if state_dict is not None:
-        model.load_state_dict(state_dict=state_dict)
-    return mll, model
+<span class="sd">    Note: a batched model could also be used here.</span>
+<span class="sd">    """</span>
+    <span class="n">models</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">train_obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span>
+            <span class="n">train_x</span><span class="p">,</span>
+            <span class="n">train_obj</span><span class="p">[:,</span> <span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="n">train_Yvar</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">train_obj</span><span class="p">[:,</span> <span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="mf">1e-6</span><span class="p">),</span>
+            <span class="n">outcome_transform</span><span class="o">=</span><span class="n">Standardize</span><span class="p">(</span><span class="n">m</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">covar_module</span><span class="o">=</span><span class="n">ScaleKernel</span><span class="p">(</span>
+                <span class="n">MaternKernel</span><span class="p">(</span>
+                    <span class="n">nu</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span>
+                    <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">train_x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                    <span class="n">lengthscale_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">),</span>
+                <span class="p">),</span>
+                <span class="n">outputscale_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">),</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">ModelListGP</span><span class="p">(</span><span class="o">*</span><span class="n">models</span><span class="p">)</span>
+    <span class="n">mll</span> <span class="o">=</span> <span class="n">SumMarginalLogLikelihood</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">state_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">state_dict</span><span class="o">=</span><span class="n">state_dict</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mll</span><span class="p">,</span> <span class="n">model</span>
 </pre></div>
 </div>
 </div>
@@ -345,81 +345,81 @@ def initialize_model(train_x, train_obj, state_dict=None):
 <div class="prompt input_prompt">In [6]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-plaintext"><pre><span></span>from botorch.acquisition.multi_objective.multi_fidelity import MOMF
-from botorch.optim.optimize import optimize_acqf
-from botorch.sampling.normal import SobolQMCNormalSampler
-from botorch.utils.multi_objective.box_decompositions.non_dominated import (
-    FastNondominatedPartitioning,
-)
-from botorch.utils.transforms import unnormalize
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.multi_fidelity</span> <span class="kn">import</span> <span class="n">MOMF</span>
+<span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.normal</span> <span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FastNondominatedPartitioning</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">unnormalize</span>
 
 
-dim_y_momf = dim_y + 1  # Output Dimesnion for MOMF optimization
-ref_point_momf = torch.zeros(dim_y_momf, **tkwargs)
+<span class="n">dim_y_momf</span> <span class="o">=</span> <span class="n">dim_y</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># Output Dimesnion for MOMF optimization</span>
+<span class="n">ref_point_momf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dim_y_momf</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
 
 
-def fid_obj(X: torch.Tensor) -&gt; torch.Tensor:
-    """
-    A Fidelity Objective that can be thought of as a trust objective.
-    Higher Fidelity simulations are rewarded as being more
-    trustworthy. Here we consider just a linear fidelity objective.
-    """
-    fid_obj = 1 * X[..., -1]
-    return fid_obj
+<span class="k">def</span> <span class="nf">fid_obj</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    A Fidelity Objective that can be thought of as a trust objective.</span>
+<span class="sd">    Higher Fidelity simulations are rewarded as being more</span>
+<span class="sd">    trustworthy. Here we consider just a linear fidelity objective.</span>
+<span class="sd">    """</span>
+    <span class="n">fid_obj</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">fid_obj</span>
 
 
-def get_objective_momf(x: torch.Tensor) -&gt; torch.Tensor:
-    """Wrapper around the Objective function to take care of fid_obj stacking"""
-    y = BC(x)  # The Branin-Currin is called
-    fid = fid_obj(x)  # Getting the fidelity objective values
-    fid_out = fid.unsqueeze(-1)
-    # Concatenating objective values with fid_objective
-    y_out = torch.cat([y, fid_out], -1)
-    return y_out
+<span class="k">def</span> <span class="nf">get_objective_momf</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Wrapper around the Objective function to take care of fid_obj stacking"""</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">BC</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># The Branin-Currin is called</span>
+    <span class="n">fid</span> <span class="o">=</span> <span class="n">fid_obj</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># Getting the fidelity objective values</span>
+    <span class="n">fid_out</span> <span class="o">=</span> <span class="n">fid</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># Concatenating objective values with fid_objective</span>
+    <span class="n">y_out</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">y</span><span class="p">,</span> <span class="n">fid_out</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">y_out</span>
 
 
-def optimize_MOMF_and_get_obs(
-    model: SingleTaskGP,
-    train_obj: torch.Tensor,
-    sampler: SobolQMCNormalSampler,
-    ref_point: torch.Tensor,
-    standard_bounds: torch.Tensor,
-    BATCH_SIZE: int,
-    cost_call: Callable[[torch.Tensor], torch.Tensor],
-):
-    """
-    Wrapper to call MOMF and optimizes it in a sequential greedy
-    fashion returning a new candidate and evaluation
-    """
-    partitioning = FastNondominatedPartitioning(ref_point=ref_point, Y=train_obj)
-    acq_func = MOMF(
-        model=model,
-        ref_point=ref_point,  # use known reference point
-        partitioning=partitioning,
-        sampler=sampler,
-        cost_call=cost_call,
-    )
-    # Optimization
-    candidates, vals = optimize_acqf(
-        acq_function=acq_func,
-        bounds=standard_bounds,
-        q=BATCH_SIZE,
-        num_restarts=NUM_RESTARTS,
-        raw_samples=RAW_SAMPLES,  # used for intialization heuristic
-        options={
-            "batch_limit": 5,
-            "maxiter": 20 if SMOKE_TEST else 200,
-            "nonnegative": True,
-        },
-        sequential=True,
-    )
-    # if the AF val is 0, set the fidelity parameter to zero
-    if vals.item() == 0.0:
-        candidates[:, -1] = 0.0
-    # observe new values
-    new_x = unnormalize(candidates.detach(), bounds=standard_bounds)
-    new_obj = get_objective_momf(new_x)
-    return new_x, new_obj
+<span class="k">def</span> <span class="nf">optimize_MOMF_and_get_obs</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">SingleTaskGP</span><span class="p">,</span>
+    <span class="n">train_obj</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">sampler</span><span class="p">:</span> <span class="n">SobolQMCNormalSampler</span><span class="p">,</span>
+    <span class="n">ref_point</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">standard_bounds</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">BATCH_SIZE</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">cost_call</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Wrapper to call MOMF and optimizes it in a sequential greedy</span>
+<span class="sd">    fashion returning a new candidate and evaluation</span>
+<span class="sd">    """</span>
+    <span class="n">partitioning</span> <span class="o">=</span> <span class="n">FastNondominatedPartitioning</span><span class="p">(</span><span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_obj</span><span class="p">)</span>
+    <span class="n">acq_func</span> <span class="o">=</span> <span class="n">MOMF</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>  <span class="c1"># use known reference point</span>
+        <span class="n">partitioning</span><span class="o">=</span><span class="n">partitioning</span><span class="p">,</span>
+        <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
+        <span class="n">cost_call</span><span class="o">=</span><span class="n">cost_call</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># Optimization</span>
+    <span class="n">candidates</span><span class="p">,</span> <span class="n">vals</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
+        <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_func</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">standard_bounds</span><span class="p">,</span>
+        <span class="n">q</span><span class="o">=</span><span class="n">BATCH_SIZE</span><span class="p">,</span>
+        <span class="n">num_restarts</span><span class="o">=</span><span class="n">NUM_RESTARTS</span><span class="p">,</span>
+        <span class="n">raw_samples</span><span class="o">=</span><span class="n">RAW_SAMPLES</span><span class="p">,</span>  <span class="c1"># used for intialization heuristic</span>
+        <span class="n">options</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"batch_limit"</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+            <span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">20</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">200</span><span class="p">,</span>
+            <span class="s2">"nonnegative"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="n">sequential</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># if the AF val is 0, set the fidelity parameter to zero</span>
+    <span class="k">if</span> <span class="n">vals</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="n">candidates</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="c1"># observe new values</span>
+    <span class="n">new_x</span> <span class="o">=</span> <span class="n">unnormalize</span><span class="p">(</span><span class="n">candidates</span><span class="o">.</span><span class="n">detach</span><span class="p">(),</span> <span class="n">bounds</span><span class="o">=</span><span class="n">standard_bounds</span><span class="p">)</span>
+    <span class="n">new_obj</span> <span class="o">=</span> <span class="n">get_objective_momf</span><span class="p">(</span><span class="n">new_x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">new_x</span><span class="p">,</span> <span class="n">new_obj</span>
 </pre></div>
 </div>
 </div>
@@ -438,121 +438,121 @@ def optimize_MOMF_and_get_obs(
 <div class="prompt input_prompt">In [7]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-plaintext"><pre><span></span>from botorch.acquisition.cost_aware import InverseCostWeightedUtility
-from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
-from botorch.acquisition.multi_objective.hypervolume_knowledge_gradient import (
-    _get_hv_value_function,
-    qMultiFidelityHypervolumeKnowledgeGradient,
-)
-from botorch.acquisition.utils import project_to_target_fidelity
-from botorch.models.deterministic import GenericDeterministicModel
-from torch import Tensor
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition.cost_aware</span> <span class="kn">import</span> <span class="n">InverseCostWeightedUtility</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.fixed_feature</span> <span class="kn">import</span> <span class="n">FixedFeatureAcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.hypervolume_knowledge_gradient</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_get_hv_value_function</span><span class="p">,</span>
+    <span class="n">qMultiFidelityHypervolumeKnowledgeGradient</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.utils</span> <span class="kn">import</span> <span class="n">project_to_target_fidelity</span>
+<span class="kn">from</span> <span class="nn">botorch.models.deterministic</span> <span class="kn">import</span> <span class="n">GenericDeterministicModel</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
-NUM_INNER_MC_SAMPLES = 32
-NUM_PARETO = 10
-NUM_FANTASIES = 8
-
-
-def get_current_value(
-    model: SingleTaskGP,
-    ref_point: torch.Tensor,
-    bounds: torch.Tensor,
-    normalized_target_fidelities: Dict[int, float],
-):
-    """Helper to get the hypervolume of the current hypervolume
-    maximizing set.
-    """
-    fidelity_dims, fidelity_targets = zip(*normalized_target_fidelities.items())
-    # optimize
-    non_fidelity_dims = list(set(range(dim_x)) - set(fidelity_dims))
-    curr_val_acqf = FixedFeatureAcquisitionFunction(
-        acq_function=_get_hv_value_function(
-            model=model,
-            ref_point=ref_point,
-            sampler=SobolQMCNormalSampler(
-                sample_shape=torch.Size([NUM_INNER_MC_SAMPLES]),
-                resample=False,
-                collapse_batch_dims=True,
-            ),
-            use_posterior_mean=True,
-        ),
-        d=dim_x,
-        columns=fidelity_dims,
-        values=fidelity_targets,
-    )
-    # optimize
-    _, current_value = optimize_acqf(
-        acq_function=curr_val_acqf,
-        bounds=bounds[:, non_fidelity_dims],
-        q=NUM_PARETO,
-        num_restarts=1,
-        raw_samples=1024,
-        return_best_only=True,
-        options={"nonnegative": True},
-    )
-    return current_value
+<span class="n">NUM_INNER_MC_SAMPLES</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">32</span>
+<span class="n">NUM_PARETO</span> <span class="o">=</span> <span class="mi">3</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">10</span>
+<span class="n">NUM_FANTASIES</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">8</span>
 
 
-normalized_target_fidelities = {}
-for idx, fidelity in target_fidelities.items():
-    lb = standard_bounds[0, idx].item()
-    ub = standard_bounds[1, idx].item()
-    normalized_target_fidelities[idx] = (fidelity - lb) / (ub - lb)
-project_d = dim_x
+<span class="k">def</span> <span class="nf">get_current_value</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">SingleTaskGP</span><span class="p">,</span>
+    <span class="n">ref_point</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">normalized_target_fidelities</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Helper to get the hypervolume of the current hypervolume</span>
+<span class="sd">    maximizing set.</span>
+<span class="sd">    """</span>
+    <span class="n">fidelity_dims</span><span class="p">,</span> <span class="n">fidelity_targets</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">normalized_target_fidelities</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+    <span class="c1"># optimize</span>
+    <span class="n">non_fidelity_dims</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">dim_x</span><span class="p">))</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">fidelity_dims</span><span class="p">))</span>
+    <span class="n">curr_val_acqf</span> <span class="o">=</span> <span class="n">FixedFeatureAcquisitionFunction</span><span class="p">(</span>
+        <span class="n">acq_function</span><span class="o">=</span><span class="n">_get_hv_value_function</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>
+            <span class="n">sampler</span><span class="o">=</span><span class="n">SobolQMCNormalSampler</span><span class="p">(</span>
+                <span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">NUM_INNER_MC_SAMPLES</span><span class="p">]),</span>
+                <span class="n">resample</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">collapse_batch_dims</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">use_posterior_mean</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">d</span><span class="o">=</span><span class="n">dim_x</span><span class="p">,</span>
+        <span class="n">columns</span><span class="o">=</span><span class="n">fidelity_dims</span><span class="p">,</span>
+        <span class="n">values</span><span class="o">=</span><span class="n">fidelity_targets</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># optimize</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">current_value</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
+        <span class="n">acq_function</span><span class="o">=</span><span class="n">curr_val_acqf</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">[:,</span> <span class="n">non_fidelity_dims</span><span class="p">],</span>
+        <span class="n">q</span><span class="o">=</span><span class="n">NUM_PARETO</span><span class="p">,</span>
+        <span class="n">num_restarts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">raw_samples</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
+        <span class="n">return_best_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">"nonnegative"</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">current_value</span>
 
 
-def project(X: Tensor) -&gt; Tensor:
+<span class="n">normalized_target_fidelities</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">fidelity</span> <span class="ow">in</span> <span class="n">target_fidelities</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">lb</span> <span class="o">=</span> <span class="n">standard_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <span class="n">ub</span> <span class="o">=</span> <span class="n">standard_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <span class="n">normalized_target_fidelities</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">fidelity</span> <span class="o">-</span> <span class="n">lb</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">ub</span> <span class="o">-</span> <span class="n">lb</span><span class="p">)</span>
+<span class="n">project_d</span> <span class="o">=</span> <span class="n">dim_x</span>
 
-    return project_to_target_fidelity(
-        X=X,
-        d=project_d,
-        target_fidelities=normalized_target_fidelities,
-    )
+
+<span class="k">def</span> <span class="nf">project</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+    <span class="k">return</span> <span class="n">project_to_target_fidelity</span><span class="p">(</span>
+        <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span>
+        <span class="n">d</span><span class="o">=</span><span class="n">project_d</span><span class="p">,</span>
+        <span class="n">target_fidelities</span><span class="o">=</span><span class="n">normalized_target_fidelities</span><span class="p">,</span>
+    <span class="p">)</span>
 
 
-def optimize_HVKG_and_get_obs(
-    model: SingleTaskGP,
-    ref_point: torch.Tensor,
-    standard_bounds: torch.Tensor,
-    BATCH_SIZE: int,
-    cost_call: Callable[[torch.Tensor], torch.Tensor],
-):
-    """Utility to initialize and optimize HVKG."""
-    cost_model = GenericDeterministicModel(cost_call)
-    cost_aware_utility = InverseCostWeightedUtility(cost_model=cost_model)
-    current_value = get_current_value(
-        model=model,
-        ref_point=ref_point,
-        bounds=standard_bounds,
-        normalized_target_fidelities=normalized_target_fidelities,
-    )
+<span class="k">def</span> <span class="nf">optimize_HVKG_and_get_obs</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">SingleTaskGP</span><span class="p">,</span>
+    <span class="n">ref_point</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">standard_bounds</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">BATCH_SIZE</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">cost_call</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Utility to initialize and optimize HVKG."""</span>
+    <span class="n">cost_model</span> <span class="o">=</span> <span class="n">GenericDeterministicModel</span><span class="p">(</span><span class="n">cost_call</span><span class="p">)</span>
+    <span class="n">cost_aware_utility</span> <span class="o">=</span> <span class="n">InverseCostWeightedUtility</span><span class="p">(</span><span class="n">cost_model</span><span class="o">=</span><span class="n">cost_model</span><span class="p">)</span>
+    <span class="n">current_value</span> <span class="o">=</span> <span class="n">get_current_value</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">standard_bounds</span><span class="p">,</span>
+        <span class="n">normalized_target_fidelities</span><span class="o">=</span><span class="n">normalized_target_fidelities</span><span class="p">,</span>
+    <span class="p">)</span>
 
-    acq_func = qMultiFidelityHypervolumeKnowledgeGradient(
-        model=model,
-        ref_point=ref_point,  # use known reference point
-        num_fantasies=NUM_FANTASIES,
-        num_pareto=NUM_PARETO,
-        current_value=current_value,
-        cost_aware_utility=cost_aware_utility,
-        target_fidelities=normalized_target_fidelities,
-        project=project,
-    )
-    # Optimization
-    candidates, vals = optimize_acqf(
-        acq_function=acq_func,
-        bounds=standard_bounds,
-        q=BATCH_SIZE,
-        num_restarts=1,
-        raw_samples=RAW_SAMPLES,  # used for intialization heuristic
-        options={"batch_limit": 5},
-    )
-    # if the AF val is 0, set the fidelity parameter to zero
-    if vals.item() == 0.0:
-        candidates[:, -1] = 0.0
-    # observe new values
-    new_x = unnormalize(candidates.detach(), bounds=BC.bounds)
-    new_obj = BC(new_x)
-    return new_x, new_obj
+    <span class="n">acq_func</span> <span class="o">=</span> <span class="n">qMultiFidelityHypervolumeKnowledgeGradient</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>  <span class="c1"># use known reference point</span>
+        <span class="n">num_fantasies</span><span class="o">=</span><span class="n">NUM_FANTASIES</span><span class="p">,</span>
+        <span class="n">num_pareto</span><span class="o">=</span><span class="n">NUM_PARETO</span><span class="p">,</span>
+        <span class="n">current_value</span><span class="o">=</span><span class="n">current_value</span><span class="p">,</span>
+        <span class="n">cost_aware_utility</span><span class="o">=</span><span class="n">cost_aware_utility</span><span class="p">,</span>
+        <span class="n">target_fidelities</span><span class="o">=</span><span class="n">normalized_target_fidelities</span><span class="p">,</span>
+        <span class="n">project</span><span class="o">=</span><span class="n">project</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># Optimization</span>
+    <span class="n">candidates</span><span class="p">,</span> <span class="n">vals</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
+        <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_func</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">standard_bounds</span><span class="p">,</span>
+        <span class="n">q</span><span class="o">=</span><span class="n">BATCH_SIZE</span><span class="p">,</span>
+        <span class="n">num_restarts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">raw_samples</span><span class="o">=</span><span class="n">RAW_SAMPLES</span><span class="p">,</span>  <span class="c1"># used for intialization heuristic</span>
+        <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">"batch_limit"</span><span class="p">:</span> <span class="mi">5</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="c1"># if the AF val is 0, set the fidelity parameter to zero</span>
+    <span class="k">if</span> <span class="n">vals</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="n">candidates</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="c1"># observe new values</span>
+    <span class="n">new_x</span> <span class="o">=</span> <span class="n">unnormalize</span><span class="p">(</span><span class="n">candidates</span><span class="o">.</span><span class="n">detach</span><span class="p">(),</span> <span class="n">bounds</span><span class="o">=</span><span class="n">BC</span><span class="o">.</span><span class="n">bounds</span><span class="p">)</span>
+    <span class="n">new_obj</span> <span class="o">=</span> <span class="n">BC</span><span class="p">(</span><span class="n">new_x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">new_x</span><span class="p">,</span> <span class="n">new_obj</span>
 </pre></div>
 </div>
 </div>
@@ -578,7 +578,7 @@ def optimize_HVKG_and_get_obs(
 <div class="prompt input_prompt">In [8]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-plaintext"><pre><span></span>from botorch import fit_gpytorch_mll
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
 </pre></div>
 </div>
 </div>
@@ -589,43 +589,43 @@ def optimize_HVKG_and_get_obs(
 <div class="prompt input_prompt">In [9]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-plaintext"><pre><span></span>%%time
+<div class="highlight hl-ipython3"><pre><span></span><span class="o">%%time</span>
 
-# Intializing train_x to zero
-verbose = False
-torch.manual_seed(0)
-train_x_momf, _ = gen_init_data(n_INIT)
-train_obj_momf = get_objective_momf(train_x_momf)
-# Generate Sampler
-momf_sampler = SobolQMCNormalSampler(sample_shape=torch.Size([MC_SAMPLES]))
+<span class="c1"># Intializing train_x to zero</span>
+<span class="n">verbose</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">train_x_momf</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">gen_init_data</span><span class="p">(</span><span class="n">n_INIT</span><span class="p">)</span>
+<span class="n">train_obj_momf</span> <span class="o">=</span> <span class="n">get_objective_momf</span><span class="p">(</span><span class="n">train_x_momf</span><span class="p">)</span>
+<span class="c1"># Generate Sampler</span>
+<span class="n">momf_sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">MC_SAMPLES</span><span class="p">]))</span>
 
-# run N_BATCH rounds of BayesOpt after the initial random batch
-iteration = 0
-total_cost = cost_callable(train_x_momf).sum().item()
-while total_cost &lt; EVAL_BUDGET * cost_func(1):
-    if verbose:
-        print(f"cost: {total_cost}")
+<span class="c1"># run N_BATCH rounds of BayesOpt after the initial random batch</span>
+<span class="n">iteration</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">total_cost</span> <span class="o">=</span> <span class="n">cost_callable</span><span class="p">(</span><span class="n">train_x_momf</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+<span class="k">while</span> <span class="n">total_cost</span> <span class="o">&lt;</span> <span class="n">EVAL_BUDGET</span> <span class="o">*</span> <span class="n">cost_func</span><span class="p">(</span><span class="mi">1</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"cost: </span><span class="si">{</span><span class="n">total_cost</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-    # reinitialize the models so they are ready for fitting on next iteration
-    mll, model = initialize_model(normalize(train_x_momf, BC.bounds), train_obj_momf)
+    <span class="c1"># reinitialize the models so they are ready for fitting on next iteration</span>
+    <span class="n">mll</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">initialize_model</span><span class="p">(</span><span class="n">normalize</span><span class="p">(</span><span class="n">train_x_momf</span><span class="p">,</span> <span class="n">BC</span><span class="o">.</span><span class="n">bounds</span><span class="p">),</span> <span class="n">train_obj_momf</span><span class="p">)</span>
 
-    fit_gpytorch_mll(mll=mll)  # Fit the model
+    <span class="n">fit_gpytorch_mll</span><span class="p">(</span><span class="n">mll</span><span class="o">=</span><span class="n">mll</span><span class="p">)</span>  <span class="c1"># Fit the model</span>
 
-    # optimize acquisition functions and get new observations
-    new_x, new_obj = optimize_MOMF_and_get_obs(
-        model=model,
-        train_obj=train_obj_momf,
-        sampler=momf_sampler,
-        ref_point=ref_point_momf,
-        standard_bounds=standard_bounds,
-        BATCH_SIZE=BATCH_SIZE,
-        cost_call=cost_callable,
-    )
-    # Updating train_x and train_obj
-    train_x_momf = torch.cat([train_x_momf, new_x], dim=0)
-    train_obj_momf = torch.cat([train_obj_momf, new_obj], dim=0)
-    iteration += 1
-    total_cost += cost_callable(new_x).sum().item()
+    <span class="c1"># optimize acquisition functions and get new observations</span>
+    <span class="n">new_x</span><span class="p">,</span> <span class="n">new_obj</span> <span class="o">=</span> <span class="n">optimize_MOMF_and_get_obs</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">train_obj</span><span class="o">=</span><span class="n">train_obj_momf</span><span class="p">,</span>
+        <span class="n">sampler</span><span class="o">=</span><span class="n">momf_sampler</span><span class="p">,</span>
+        <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point_momf</span><span class="p">,</span>
+        <span class="n">standard_bounds</span><span class="o">=</span><span class="n">standard_bounds</span><span class="p">,</span>
+        <span class="n">BATCH_SIZE</span><span class="o">=</span><span class="n">BATCH_SIZE</span><span class="p">,</span>
+        <span class="n">cost_call</span><span class="o">=</span><span class="n">cost_callable</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># Updating train_x and train_obj</span>
+    <span class="n">train_x_momf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">train_x_momf</span><span class="p">,</span> <span class="n">new_x</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">train_obj_momf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">train_obj_momf</span><span class="p">,</span> <span class="n">new_obj</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">iteration</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">total_cost</span> <span class="o">+=</span> <span class="n">cost_callable</span><span class="p">(</span><span class="n">new_x</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -665,34 +665,34 @@ Wall time: 11.8 s
 <div class="prompt input_prompt">In [10]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-plaintext"><pre><span></span>%%time
+<div class="highlight hl-ipython3"><pre><span></span><span class="o">%%time</span>
 
-torch.manual_seed(0)
-train_x_kg, train_obj_kg = gen_init_data(n_INIT)
-MF_n_INIT = train_x_kg.shape[0]
-iteration = 0
-total_cost = cost_callable(train_x_kg).sum().item()
-while total_cost &lt; EVAL_BUDGET * cost_func(1):
-    if verbose:
-        print(f"cost: {total_cost}")
+<span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">train_x_kg</span><span class="p">,</span> <span class="n">train_obj_kg</span> <span class="o">=</span> <span class="n">gen_init_data</span><span class="p">(</span><span class="n">n_INIT</span><span class="p">)</span>
+<span class="n">MF_n_INIT</span> <span class="o">=</span> <span class="n">train_x_kg</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">iteration</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">total_cost</span> <span class="o">=</span> <span class="n">cost_callable</span><span class="p">(</span><span class="n">train_x_kg</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+<span class="k">while</span> <span class="n">total_cost</span> <span class="o">&lt;</span> <span class="n">EVAL_BUDGET</span> <span class="o">*</span> <span class="n">cost_func</span><span class="p">(</span><span class="mi">1</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"cost: </span><span class="si">{</span><span class="n">total_cost</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-    # reinitialize the models so they are ready for fitting on next iteration
-    mll, model = initialize_model(normalize(train_x_kg, BC.bounds), train_obj_kg)
+    <span class="c1"># reinitialize the models so they are ready for fitting on next iteration</span>
+    <span class="n">mll</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">initialize_model</span><span class="p">(</span><span class="n">normalize</span><span class="p">(</span><span class="n">train_x_kg</span><span class="p">,</span> <span class="n">BC</span><span class="o">.</span><span class="n">bounds</span><span class="p">),</span> <span class="n">train_obj_kg</span><span class="p">)</span>
 
-    fit_gpytorch_mll(mll=mll)  # Fit the model
-    # optimize acquisition functions and get new observations
-    new_x, new_obj = optimize_HVKG_and_get_obs(
-        model=model,
-        ref_point=ref_point,
-        standard_bounds=standard_bounds,
-        BATCH_SIZE=BATCH_SIZE,
-        cost_call=cost_callable,
-    )
-    # Updating train_x and train_obj
-    train_x_kg = torch.cat([train_x_kg, new_x], dim=0)
-    train_obj_kg = torch.cat([train_obj_kg, new_obj], dim=0)
-    iteration += 1
-    total_cost += cost_callable(new_x).sum().item()
+    <span class="n">fit_gpytorch_mll</span><span class="p">(</span><span class="n">mll</span><span class="o">=</span><span class="n">mll</span><span class="p">)</span>  <span class="c1"># Fit the model</span>
+    <span class="c1"># optimize acquisition functions and get new observations</span>
+    <span class="n">new_x</span><span class="p">,</span> <span class="n">new_obj</span> <span class="o">=</span> <span class="n">optimize_HVKG_and_get_obs</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>
+        <span class="n">standard_bounds</span><span class="o">=</span><span class="n">standard_bounds</span><span class="p">,</span>
+        <span class="n">BATCH_SIZE</span><span class="o">=</span><span class="n">BATCH_SIZE</span><span class="p">,</span>
+        <span class="n">cost_call</span><span class="o">=</span><span class="n">cost_callable</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># Updating train_x and train_obj</span>
+    <span class="n">train_x_kg</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">train_x_kg</span><span class="p">,</span> <span class="n">new_x</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">train_obj_kg</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">train_obj_kg</span><span class="p">,</span> <span class="n">new_obj</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">iteration</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">total_cost</span> <span class="o">+=</span> <span class="n">cost_callable</span><span class="p">(</span><span class="n">new_x</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -742,133 +742,133 @@ Wall time: 2min 22s
 <div class="prompt input_prompt">In [11]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-plaintext"><pre><span></span>from botorch.utils.multi_objective.pareto import (
-    _is_non_dominated_loop,
-    is_non_dominated,
-)
-from gpytorch import settings
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.pareto</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_is_non_dominated_loop</span><span class="p">,</span>
+    <span class="n">is_non_dominated</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">gpytorch</span> <span class="kn">import</span> <span class="n">settings</span>
 
-try:
-    # Note: These are the pymoo 0.6+ imports, if you happen to be stuck on
-    # an older pymoo version you need to replace them with the ones below.
-    from pymoo.algorithms.moo.nsga2 import NSGA2
-    from pymoo.core.problem import Problem
-    from pymoo.optimize import minimize
-    from pymoo.termination.max_gen import MaximumGenerationTermination
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># Note: These are the pymoo 0.6+ imports, if you happen to be stuck on</span>
+    <span class="c1"># an older pymoo version you need to replace them with the ones below.</span>
+    <span class="kn">from</span> <span class="nn">pymoo.algorithms.moo.nsga2</span> <span class="kn">import</span> <span class="n">NSGA2</span>
+    <span class="kn">from</span> <span class="nn">pymoo.core.problem</span> <span class="kn">import</span> <span class="n">Problem</span>
+    <span class="kn">from</span> <span class="nn">pymoo.optimize</span> <span class="kn">import</span> <span class="n">minimize</span>
+    <span class="kn">from</span> <span class="nn">pymoo.termination.max_gen</span> <span class="kn">import</span> <span class="n">MaximumGenerationTermination</span>
 
-    # from pymoo.algorithms.nsga2 import NSGA2
-    # from pymoo.model.problem import Problem
-    # from pymoo.util.termination.max_gen import MaximumGenerationTermination
+    <span class="c1"># from pymoo.algorithms.nsga2 import NSGA2</span>
+    <span class="c1"># from pymoo.model.problem import Problem</span>
+    <span class="c1"># from pymoo.util.termination.max_gen import MaximumGenerationTermination</span>
 
-    def get_pareto(
-        model,
-        non_fidelity_indices,
-        project,
-        population_size=250,
-        max_gen=100,
-        is_mf_model=True,
-    ):
-        """Optimize the posterior mean using NSGA-II."""
-        tkwargs = {
-            "dtype": BC.ref_point.dtype,
-            "device": BC.ref_point.device,
-        }
-        dim = len(non_fidelity_indices)
+    <span class="k">def</span> <span class="nf">get_pareto</span><span class="p">(</span>
+        <span class="n">model</span><span class="p">,</span>
+        <span class="n">non_fidelity_indices</span><span class="p">,</span>
+        <span class="n">project</span><span class="p">,</span>
+        <span class="n">population_size</span><span class="o">=</span><span class="mi">20</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">250</span><span class="p">,</span>
+        <span class="n">max_gen</span><span class="o">=</span><span class="mi">10</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">is_mf_model</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Optimize the posterior mean using NSGA-II."""</span>
+        <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"dtype"</span><span class="p">:</span> <span class="n">BC</span><span class="o">.</span><span class="n">ref_point</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+            <span class="s2">"device"</span><span class="p">:</span> <span class="n">BC</span><span class="o">.</span><span class="n">ref_point</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">non_fidelity_indices</span><span class="p">)</span>
 
-        class PosteriorMeanPymooProblem(Problem):
-            def __init__(self):
-                super().__init__(
-                    n_var=dim,
-                    n_obj=BC.num_objectives,
-                    type_var=np.double,
-                )
-                self.xl = np.zeros(dim)
-                self.xu = np.ones(dim)
+        <span class="k">class</span> <span class="nc">PosteriorMeanPymooProblem</span><span class="p">(</span><span class="n">Problem</span><span class="p">):</span>
+            <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+                <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+                    <span class="n">n_var</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span>
+                    <span class="n">n_obj</span><span class="o">=</span><span class="n">BC</span><span class="o">.</span><span class="n">num_objectives</span><span class="p">,</span>
+                    <span class="n">type_var</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">double</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">xl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">xu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
 
-            def _evaluate(self, x, out, *args, **kwargs):
-                X = torch.from_numpy(x).to(**tkwargs)
-                if is_mf_model:
-                    X = project(X)
-                with torch.no_grad():
-                    with settings.cholesky_max_tries(9):
-                        # eval in batch mode
-                        y = model.posterior(X.unsqueeze(-2)).mean.squeeze(-2)
-                out["F"] = -y.cpu().numpy()
+            <span class="k">def</span> <span class="nf">_evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+                <span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">is_mf_model</span><span class="p">:</span>
+                    <span class="n">X</span> <span class="o">=</span> <span class="n">project</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+                <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+                    <span class="k">with</span> <span class="n">settings</span><span class="o">.</span><span class="n">cholesky_max_tries</span><span class="p">(</span><span class="mi">9</span><span class="p">):</span>
+                        <span class="c1"># eval in batch mode</span>
+                        <span class="n">y</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+                <span class="n">out</span><span class="p">[</span><span class="s2">"F"</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">y</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
 
-        pymoo_problem = PosteriorMeanPymooProblem()
-        algorithm = NSGA2(
-            pop_size=population_size,
-            eliminate_duplicates=True,
-        )
-        res = minimize(
-            pymoo_problem,
-            algorithm,
-            termination=MaximumGenerationTermination(max_gen),
-            seed=0,  # fix seed
-            verbose=False,
-        )
-        X = torch.tensor(
-            res.X,
-            **tkwargs,
-        )
-        # project to full fidelity
-        if is_mf_model:
-            if project is not None:
-                X = project(X)
-        # determine Pareto set of designs under model
-        with torch.no_grad():
-            preds = model.posterior(X.unsqueeze(-2)).mean.squeeze(-2)
-        pareto_mask = is_non_dominated(preds)
-        X = X[pareto_mask]
-        # evaluate Pareto set of designs on true function and compute hypervolume
-        if not is_mf_model:
-            X = project(X)
-        X = unnormalize(X, BC.bounds)
-        Y = BC(X)
-        # compute HV
-        partitioning = FastNondominatedPartitioning(ref_point=BC.ref_point, Y=Y)
-        return partitioning.compute_hypervolume().item()
+        <span class="n">pymoo_problem</span> <span class="o">=</span> <span class="n">PosteriorMeanPymooProblem</span><span class="p">()</span>
+        <span class="n">algorithm</span> <span class="o">=</span> <span class="n">NSGA2</span><span class="p">(</span>
+            <span class="n">pop_size</span><span class="o">=</span><span class="n">population_size</span><span class="p">,</span>
+            <span class="n">eliminate_duplicates</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span>
+            <span class="n">pymoo_problem</span><span class="p">,</span>
+            <span class="n">algorithm</span><span class="p">,</span>
+            <span class="n">termination</span><span class="o">=</span><span class="n">MaximumGenerationTermination</span><span class="p">(</span><span class="n">max_gen</span><span class="p">),</span>
+            <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># fix seed</span>
+            <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">X</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">tkwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># project to full fidelity</span>
+        <span class="k">if</span> <span class="n">is_mf_model</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">project</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">X</span> <span class="o">=</span> <span class="n">project</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="c1"># determine Pareto set of designs under model</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">preds</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">pareto_mask</span> <span class="o">=</span> <span class="n">is_non_dominated</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">pareto_mask</span><span class="p">]</span>
+        <span class="c1"># evaluate Pareto set of designs on true function and compute hypervolume</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_mf_model</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">project</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">unnormalize</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">BC</span><span class="o">.</span><span class="n">bounds</span><span class="p">)</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">BC</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="c1"># compute HV</span>
+        <span class="n">partitioning</span> <span class="o">=</span> <span class="n">FastNondominatedPartitioning</span><span class="p">(</span><span class="n">ref_point</span><span class="o">=</span><span class="n">BC</span><span class="o">.</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">partitioning</span><span class="o">.</span><span class="n">compute_hypervolume</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
 
-except ImportError:
-    NUM_DISCRETE_POINTS = 100 if SMOKE_TEST else 100000
-    CHUNK_SIZE = 512
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">NUM_DISCRETE_POINTS</span> <span class="o">=</span> <span class="mi">10</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">100000</span>
+    <span class="n">CHUNK_SIZE</span> <span class="o">=</span> <span class="mi">512</span>
 
-    def get_pareto(
-        model,
-        non_fidelity_indices,
-        project,
-        population_size=250,
-        max_gen=100,
-        is_mf_model=True,
-    ):
-        """Optimize the posterior mean over a discrete set."""
-        tkwargs = {
-            "dtype": BC.ref_point.dtype,
-            "device": BC.ref_point.device,
-        }
-        dim_x = BC.dim
+    <span class="k">def</span> <span class="nf">get_pareto</span><span class="p">(</span>
+        <span class="n">model</span><span class="p">,</span>
+        <span class="n">non_fidelity_indices</span><span class="p">,</span>
+        <span class="n">project</span><span class="p">,</span>
+        <span class="n">population_size</span><span class="o">=</span><span class="mi">20</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">250</span><span class="p">,</span>
+        <span class="n">max_gen</span><span class="o">=</span><span class="mi">10</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">is_mf_model</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Optimize the posterior mean over a discrete set."""</span>
+        <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"dtype"</span><span class="p">:</span> <span class="n">BC</span><span class="o">.</span><span class="n">ref_point</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+            <span class="s2">"device"</span><span class="p">:</span> <span class="n">BC</span><span class="o">.</span><span class="n">ref_point</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">dim_x</span> <span class="o">=</span> <span class="n">BC</span><span class="o">.</span><span class="n">dim</span>
 
-        discrete_set = torch.rand(NUM_DISCRETE_POINTS, dim_x - 1, **tkwargs)
-        if is_mf_model:
-            discrete_set = project(discrete_set)
-        discrete_set[:, -1] = 1.0  # set to target fidelity
-        with torch.no_grad():
-            preds_list = []
-            for start in range(0, NUM_DISCRETE_POINTS, CHUNK_SIZE):
-                preds = model.posterior(
-                    discrete_set[start : start + CHUNK_SIZE].unsqueeze(-2)
-                ).mean.squeeze(-2)
-                preds_list.append(preds)
-            preds = torch.cat(preds_list, dim=0)
-            pareto_mask = _is_non_dominated_loop(preds)
-            pareto_X = discrete_set[pareto_mask]
-        if not is_mf_model:
-            pareto_X = project(pareto_X)
-        pareto_X = unnormalize(pareto_X, BC.bounds)
-        Y = BC(pareto_X)
-        # compute HV
-        partitioning = FastNondominatedPartitioning(ref_point=BC.ref_point, Y=Y)
-        return partitioning.compute_hypervolume().item()
+        <span class="n">discrete_set</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">NUM_DISCRETE_POINTS</span><span class="p">,</span> <span class="n">dim_x</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">is_mf_model</span><span class="p">:</span>
+            <span class="n">discrete_set</span> <span class="o">=</span> <span class="n">project</span><span class="p">(</span><span class="n">discrete_set</span><span class="p">)</span>
+        <span class="n">discrete_set</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># set to target fidelity</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">preds_list</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">NUM_DISCRETE_POINTS</span><span class="p">,</span> <span class="n">CHUNK_SIZE</span><span class="p">):</span>
+                <span class="n">preds</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
+                    <span class="n">discrete_set</span><span class="p">[</span><span class="n">start</span> <span class="p">:</span> <span class="n">start</span> <span class="o">+</span> <span class="n">CHUNK_SIZE</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+                <span class="n">preds_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span>
+            <span class="n">preds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">preds_list</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">pareto_mask</span> <span class="o">=</span> <span class="n">_is_non_dominated_loop</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span>
+            <span class="n">pareto_X</span> <span class="o">=</span> <span class="n">discrete_set</span><span class="p">[</span><span class="n">pareto_mask</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_mf_model</span><span class="p">:</span>
+            <span class="n">pareto_X</span> <span class="o">=</span> <span class="n">project</span><span class="p">(</span><span class="n">pareto_X</span><span class="p">)</span>
+        <span class="n">pareto_X</span> <span class="o">=</span> <span class="n">unnormalize</span><span class="p">(</span><span class="n">pareto_X</span><span class="p">,</span> <span class="n">BC</span><span class="o">.</span><span class="n">bounds</span><span class="p">)</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">BC</span><span class="p">(</span><span class="n">pareto_X</span><span class="p">)</span>
+        <span class="c1"># compute HV</span>
+        <span class="n">partitioning</span> <span class="o">=</span> <span class="n">FastNondominatedPartitioning</span><span class="p">(</span><span class="n">ref_point</span><span class="o">=</span><span class="n">BC</span><span class="o">.</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">partitioning</span><span class="o">.</span><span class="n">compute_hypervolume</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -886,19 +886,19 @@ except ImportError:
 <div class="prompt input_prompt">In [12]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-plaintext"><pre><span></span>%%time
+<div class="highlight hl-ipython3"><pre><span></span><span class="o">%%time</span>
 
-hvs_kg = []
-costs = []
-for i in range(MF_n_INIT, train_x_kg.shape[0] + 1, 5):
+<span class="n">hvs_kg</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">costs</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">MF_n_INIT</span><span class="p">,</span> <span class="n">train_x_kg</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">):</span>
 
-    mll, model = initialize_model(
-        normalize(train_x_kg[:i], BC.bounds), train_obj_kg[:i]
-    )
-    fit_gpytorch_mll(mll)
-    hypervolume = get_pareto(model, project=project, non_fidelity_indices=[0, 1])
-    hvs_kg.append(hypervolume)
-    costs.append(cost_callable(train_x_kg[:i]).sum().item())
+    <span class="n">mll</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">initialize_model</span><span class="p">(</span>
+        <span class="n">normalize</span><span class="p">(</span><span class="n">train_x_kg</span><span class="p">[:</span><span class="n">i</span><span class="p">],</span> <span class="n">BC</span><span class="o">.</span><span class="n">bounds</span><span class="p">),</span> <span class="n">train_obj_kg</span><span class="p">[:</span><span class="n">i</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">fit_gpytorch_mll</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
+    <span class="n">hypervolume</span> <span class="o">=</span> <span class="n">get_pareto</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="n">project</span><span class="p">,</span> <span class="n">non_fidelity_indices</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">hvs_kg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hypervolume</span><span class="p">)</span>
+    <span class="n">costs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cost_callable</span><span class="p">(</span><span class="n">train_x_kg</span><span class="p">[:</span><span class="n">i</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -937,19 +937,19 @@ Wall time: 6.79 s
 <div class="prompt input_prompt">In [13]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-plaintext"><pre><span></span>%%time
+<div class="highlight hl-ipython3"><pre><span></span><span class="o">%%time</span>
 
-hvs_momf = []
-costs_momf = []
-for i in range(MF_n_INIT, train_x_momf.shape[0] + 1):
+<span class="n">hvs_momf</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">costs_momf</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">MF_n_INIT</span><span class="p">,</span> <span class="n">train_x_momf</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
 
-    mll, model = initialize_model(
-        normalize(train_x_momf[:i], BC.bounds), train_obj_momf[:i, :2]
-    )
-    fit_gpytorch_mll(mll)
-    hypervolume = get_pareto(model, project=project, non_fidelity_indices=[0, 1])
-    hvs_momf.append(hypervolume)
-    costs_momf.append(cost_callable(train_x_momf[:i]).sum().item())
+    <span class="n">mll</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">initialize_model</span><span class="p">(</span>
+        <span class="n">normalize</span><span class="p">(</span><span class="n">train_x_momf</span><span class="p">[:</span><span class="n">i</span><span class="p">],</span> <span class="n">BC</span><span class="o">.</span><span class="n">bounds</span><span class="p">),</span> <span class="n">train_obj_momf</span><span class="p">[:</span><span class="n">i</span><span class="p">,</span> <span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">fit_gpytorch_mll</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
+    <span class="n">hypervolume</span> <span class="o">=</span> <span class="n">get_pareto</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="n">project</span><span class="p">,</span> <span class="n">non_fidelity_indices</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">hvs_momf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hypervolume</span><span class="p">)</span>
+    <span class="n">costs_momf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cost_callable</span><span class="p">(</span><span class="n">train_x_momf</span><span class="p">[:</span><span class="n">i</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -990,20 +990,20 @@ Wall time: 10.8 s
 <div class="prompt input_prompt">In [14]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-plaintext"><pre><span></span>plt.plot(
-    costs_momf,
-    np.log10(BC.max_hv - np.array(hvs_momf)),
-    "--",
-    marker="s",
-    ms=10,
-    label="MOMF",
-)
-plt.plot(
-    costs, np.log10(BC.max_hv - np.array(hvs_kg)), "--", marker="d", ms=10, label="HVKG"
-)
-plt.ylabel("Log Inference Hypervolume Regret")
-plt.xlabel("Cost")
-plt.legend()
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+    <span class="n">costs_momf</span><span class="p">,</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">BC</span><span class="o">.</span><span class="n">max_hv</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">hvs_momf</span><span class="p">)),</span>
+    <span class="s2">"--"</span><span class="p">,</span>
+    <span class="n">marker</span><span class="o">=</span><span class="s2">"s"</span><span class="p">,</span>
+    <span class="n">ms</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">label</span><span class="o">=</span><span class="s2">"MOMF"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+    <span class="n">costs</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">BC</span><span class="o">.</span><span class="n">max_hv</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">hvs_kg</span><span class="p">)),</span> <span class="s2">"--"</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">"d"</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"HVKG"</span>
+<span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Log Inference Hypervolume Regret"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Cost"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
