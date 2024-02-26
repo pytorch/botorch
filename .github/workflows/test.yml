@@ -27,7 +27,8 @@ jobs:
       env:
         ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
-        pip install --pre torch -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
+        # torch nightlies broke a lot of things, pinning to known good version while we investigate this
+        pip install --pre "torch<=2.3.0.dev20240222" -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
         pip install git+https://github.com/cornellius-gp/linear_operator.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git
         pip install .[test]
