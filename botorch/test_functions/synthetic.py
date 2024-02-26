@@ -592,9 +592,9 @@ class Powell(SyntheticTestFunction):
 
         P(x) = sum_{i=1}^d/4 (
             (x_{4i-3} + 10 x_{4i-2})**2
-            + 5 (x_{4i-1} - x_{4i})**2
-            + (x_{4i-2} - 2 x_{4i-1})**4
-            + 10 (x_{4i-3} - x_{4i})**4
+            \+ 5 (x_{4i-1} - x_{4i})**2
+            \+ (x_{4i-2} - 2 x_{4i-1})**4
+            \+ 10 (x_{4i-3} - x_{4i})**4
         )
 
     P has a global minimizer at `z = (0, ..., 0)` with `P(z) = 0`.
