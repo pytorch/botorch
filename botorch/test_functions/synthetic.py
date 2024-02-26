@@ -310,6 +310,16 @@ class EggHolder(SyntheticTestFunction):
 
 
 class Griewank(SyntheticTestFunction):
+    r"""Griewank synthetic test function.
+
+    The Griewank function is defined for any `d`, is typically evaluated on
+    `[-600, 600]^d`, and given by:
+
+        G(x) = sum_{i=1}^d x_i**2 / 4000 - prod_{i=1}^d cos(x_i / sqrt(i)) + 1
+
+    G has many widespread local minima, which are regularly distributed.
+    The global minimum is at `z = (0, ..., 0)` with `G(z) = 0`.
+    """
 
     _optimal_value = 0.0
 
