@@ -10,8 +10,6 @@ Helpers for handling objectives.
 
 from __future__ import annotations
 
-import warnings
-
 from typing import Callable, List, Optional, Union
 
 import torch
@@ -180,32 +178,6 @@ def compute_smoothed_feasibility_indicator(
         is_feasible = is_feasible + log_sigmoid(-constraint(samples) / e)
 
     return is_feasible if log else is_feasible.exp()
-
-
-# TODO: deprecate this function
-def soft_eval_constraint(lhs: Tensor, eta: float = 1e-3) -> Tensor:
-    r"""Element-wise evaluation of a constraint in a 'soft' fashion
-
-    `value(x) = 1 / (1 + exp(x / eta))`
-
-    Args:
-        lhs: The left hand side of the constraint `lhs <= 0`.
-        eta: The temperature parameter of the softmax function. As eta
-            decreases, this approximates the Heaviside step function.
-
-    Returns:
-        Element-wise 'soft' feasibility indicator of the same shape as `lhs`.
-        For each element `x`, `value(x) -> 0` as `x` becomes positive, and
-        `value(x) -> 1` as x becomes negative.
-    """
-    warnings.warn(
-        "`soft_eval_constraint` is deprecated. Please consider `torch.utils.sigmoid` "
-        + "with its `fat` and `log` options to compute feasibility indicators.",
-        DeprecationWarning,
-    )
-    if eta <= 0:
-        raise ValueError("eta must be positive.")
-    return torch.sigmoid(-lhs / eta)
 
 
 def apply_constraints(
