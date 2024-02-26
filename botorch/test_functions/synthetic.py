@@ -588,14 +588,15 @@ class Michalewicz(SyntheticTestFunction):
 class Powell(SyntheticTestFunction):
     r"""Powell synthetic test function.
 
-    `d`-dim function (usually evaluated on hypercube `[-4, 5]^d`):
+    `d`-dim function (usually evaluated on the hypercube `[-4, 5]^d`):
 
         P(x) = sum_{i=1}^d/4 (
-            (x_{4i-3} + 10 x_{4i-2})**2
-            + 5 (x_{4i-1} - x_{4i})**2
-            + (x_{4i-2} - 2 x_{4i-1})**4
-            + 10 (x_{4i-3} - x_{4i})**4
+        (x_{4i-3} + 10 x_{4i-2})**2
+        + 5 (x_{4i-1} - x_{4i})**2
+        + (x_{4i-2} - 2 x_{4i-1})**4
+        + 10 (x_{4i-3} - x_{4i})**4
         )
+
 
     P has a global minimizer at `z = (0, ..., 0)` with `P(z) = 0`.
     """
