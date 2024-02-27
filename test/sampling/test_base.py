@@ -36,21 +36,9 @@ class TestBaseMCSampler(BotorchTestCase):
         # Default seed.
         sampler = NonAbstractSampler(sample_shape=torch.Size([4]))
         self.assertIsInstance(sampler.seed, int)
-        # Deprecated args & error handling.
-        with self.assertWarnsRegex(DeprecationWarning, "positional argument"):
-            NonAbstractSampler(4)
+        # Error handling.
         with self.assertRaisesRegex(InputDataError, "sample_shape"):
             NonAbstractSampler(4.5)
-        with self.assertWarnsRegex(DeprecationWarning, "resample"):
-            NonAbstractSampler(sample_shape=torch.Size([4]), resample=False)
-        with self.assertRaisesRegex(RuntimeError, "StochasticSampler"):
-            NonAbstractSampler(sample_shape=torch.Size([4]), resample=True)
-        with self.assertWarnsRegex(DeprecationWarning, "collapse_batch"):
-            NonAbstractSampler(sample_shape=torch.Size([4]), collapse_batch_dims=True)
-        with self.assertRaisesRegex(RuntimeError, "ForkedRNGSampler"):
-            NonAbstractSampler(sample_shape=torch.Size([4]), collapse_batch_dims=False)
-        with self.assertRaisesRegex(RuntimeError, "unknown argument"):
-            NonAbstractSampler(sample_shape=torch.Size([4]), dummy_arg=True)
 
     def test_batch_range(self):
         posterior = MockPosterior()
