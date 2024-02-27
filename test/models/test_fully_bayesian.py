@@ -50,7 +50,11 @@ from botorch.models.fully_bayesian import (
     SaasPyroModel,
 )
 from botorch.models.transforms import Normalize, Standardize
-from botorch.posteriors.fully_bayesian import batched_bisect, GaussianMixturePosterior
+from botorch.posteriors.fully_bayesian import (
+    batched_bisect,
+    FullyBayesianPosterior,
+    GaussianMixturePosterior,
+)
 from botorch.sampling.get_sampler import get_sampler
 from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
@@ -752,6 +756,15 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 torch.Size([num_models, num_train + num_cond, num_dims]),
             )
 
+            # With batch size only on Y.
+            cond_model = model.condition_on_observations(
+                cond_X_nobatch, cond_Y, noise=cond_Yvar
+            )
+            self.assertEqual(
+                cond_model.train_inputs[0].shape,
+                torch.Size([num_models, num_train + num_cond, num_dims]),
+            )
+
             # test repeated conditining
             repeat_cond_X = cond_X + 5
             repeat_cond_model = cond_model.condition_on_observations(
@@ -814,6 +827,17 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 self.assertAllClose(
                     dist.cdf(x), q * torch.ones(1, 5, 1, **tkwargs), atol=1e-4
                 )
+
+    def test_deprecated_posterior(self) -> None:
+        mean = torch.randn(1, 5)
+        variance = torch.rand(1, 5)
+        covar = torch.diag_embed(variance)
+        mvn = MultivariateNormal(mean, to_linear_operator(covar))
+        with self.assertWarnsRegex(
+            DeprecationWarning, "`FullyBayesianPosterior` is marked for deprecation"
+        ):
+            posterior = FullyBayesianPosterior(distribution=mvn)
+        self.assertIsInstance(posterior, GaussianMixturePosterior)
 
 
 class TestPyroCatchNumericalErrors(BotorchTestCase):
