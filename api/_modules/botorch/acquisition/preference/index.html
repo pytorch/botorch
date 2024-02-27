@@ -29,7 +29,13 @@
 
 <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">Preference acquisition functions. This includes:</span>
-<span class="sd">Analytical EUBO acquisition function as introduced in [Lin2022preference]_.</span>
+<span class="sd">Analytical EUBO acquisition function as introduced in [Lin2022preference]_</span>
+<span class="sd">and its MC-based generalization qEUBO as proposed in [Astudillo2023qeubo]_.</span>
+
+<span class="sd">.. [Astudillo2023qeubo]</span>
+<span class="sd">    Astudillo, R., Lin, Z.J., Bakshy, E. and Frazier, P.I. qEUBO: A Decision-Theoretic</span>
+<span class="sd">    Acquisition Function for Preferential Bayesian Optimization. International</span>
+<span class="sd">    Conference on Artificial Intelligence and Statistics (AISTATS), 2023.</span>
 
 <span class="sd">.. [Lin2022preference]</span>
 <span class="sd">    Lin, Z.J., Astudillo, R., Frazier, P.I. and Bakshy, E. Preference Exploration</span>
@@ -50,10 +56,16 @@
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">AnalyticAcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.monte_carlo</span> <span class="kn">import</span> <span class="n">MCAcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">MCAcquisitionObjective</span><span class="p">,</span> <span class="n">PosteriorTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.models.deterministic</span> <span class="kn">import</span> <span class="n">DeterministicModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">match_batch_shape</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">concatenate_pending_points</span><span class="p">,</span>
+    <span class="n">match_batch_shape</span><span class="p">,</span>
+    <span class="n">t_batch_mode_transform</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Bernoulli</span><span class="p">,</span> <span class="n">Normal</span>
 
@@ -144,6 +156,83 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">previous_winner</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">acqf_val</span> <span class="o">=</span> <span class="n">acqf_val</span> <span class="o">+</span> <span class="n">pref_mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">acqf_val</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="qExpectedUtilityOfBestOption">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.preference.qExpectedUtilityOfBestOption">[docs]</a>
+<span class="k">class</span> <span class="nc">qExpectedUtilityOfBestOption</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based Expected Utility of Best Option (qEUBO)</span>
+
+<span class="sd">    This computes qEUBO by</span>
+<span class="sd">    (1) sampling the joint posterior over q points</span>
+<span class="sd">    (2) evaluating the maximum objective value accross the q points</span>
+<span class="sd">    (3) averaging over the samples</span>
+
+<span class="sd">    `qEUBO(X) = E[max Y], Y ~ f(X), where X = (x_1,...,x_q)`</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">pref_model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">outcome_model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DeterministicModel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""MC-based Expected Utility of Best Option (qEUBO) as proposed</span>
+<span class="sd">        in [Astudillo2023qeubo]_.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pref_model: The preference model that maps the outcomes (i.e., Y) to</span>
+<span class="sd">                scalar-valued utility.</span>
+<span class="sd">            outcome_model: A deterministic model that maps parameters (i.e., X) to</span>
+<span class="sd">                outcomes (i.e., Y). The outcome model f defines the search space of</span>
+<span class="sd">                Y = f(X). If model is None, we are directly calculating qEUBO on</span>
+<span class="sd">                the parameter space.</span>
+<span class="sd">             sampler: The sampler used to draw base samples. See `MCAcquisitionFunction`</span>
+<span class="sd">                more details.</span>
+<span class="sd">            objective: The MCAcquisitionObjective under which the samples are evaluated.</span>
+<span class="sd">                Defaults to `IdentityMCObjective()`.</span>
+<span class="sd">            posterior_transform: A PosteriorTransform (optional).</span>
+<span class="sd">            X_pending:  A `m x d`-dim Tensor of `m` design points that have been</span>
+<span class="sd">                submitted for function evaluation but have not yet been evaluated.</span>
+<span class="sd">                Concatenated into X upon forward call. Copied and set</span>
+<span class="sd">                to have no gradient.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">pref_model</span><span class="p">,</span>
+            <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+            <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># ensure the model is in eval mode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_module</span><span class="p">(</span><span class="s2">"outcome_model"</span><span class="p">,</span> <span class="n">outcome_model</span><span class="p">)</span>
+
+<div class="viewcode-block" id="qExpectedUtilityOfBestOption.forward">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.preference.qExpectedUtilityOfBestOption.forward">[docs]</a>
+    <span class="nd">@concatenate_pending_points</span>
+    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qEUBO on the candidate set `X`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q`</span>
+<span class="sd">                `d`-dim design points each.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape'`-dim Tensor of qEUBO values at the given design</span>
+<span class="sd">            points `X`, where `batch_shape'` is the broadcasted batch shape</span>
+<span class="sd">            of model and input `X`.</span>
+<span class="sd">        """</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">X</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_model</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+        <span class="n">_</span><span class="p">,</span> <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_samples_and_objectives</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
+        <span class="n">obj_best</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">return</span> <span class="n">obj_best</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
 </div>
 
 
@@ -271,7 +360,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2024 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

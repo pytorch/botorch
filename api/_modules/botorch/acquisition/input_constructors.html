@@ -95,13 +95,10 @@
     <span class="n">qNoisyExpectedHypervolumeImprovement</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.logei</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">qLogExpectedHypervolumeImprovement</span><span class="p">,</span>
     <span class="n">qLogNoisyExpectedHypervolumeImprovement</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.objective</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">AnalyticMultiOutputObjective</span><span class="p">,</span>
-    <span class="n">IdentityAnalyticMultiOutputObjective</span><span class="p">,</span>
-    <span class="n">IdentityMCMultiOutputObjective</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.objective</span> <span class="kn">import</span> <span class="n">IdentityMCMultiOutputObjective</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.utils</span> <span class="kn">import</span> <span class="n">get_default_partitioning_alpha</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ConstrainedMCObjective</span><span class="p">,</span>
@@ -929,7 +926,8 @@
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">objective_thresholds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AnalyticMultiOutputObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCMultiOutputObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">alpha</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">Y_pmean</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -951,15 +949,6 @@
         <span class="k">if</span> <span class="n">alpha</span> <span class="ow">is</span> <span class="kc">None</span>
         <span class="k">else</span> <span class="n">alpha</span>
     <span class="p">)</span>
-    <span class="c1"># This selects the objectives (a subset of the outcomes) and set each</span>
-    <span class="c1"># objective threshold to have the proper optimization direction.</span>
-    <span class="k">if</span> <span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">objective</span> <span class="o">=</span> <span class="n">IdentityAnalyticMultiOutputObjective</span><span class="p">()</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">RiskMeasureMCObjective</span><span class="p">):</span>
-        <span class="n">pre_obj</span> <span class="o">=</span> <span class="n">objective</span><span class="o">.</span><span class="n">preprocessing_function</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">pre_obj</span> <span class="o">=</span> <span class="n">objective</span>
-    <span class="n">ref_point</span> <span class="o">=</span> <span class="n">pre_obj</span><span class="p">(</span><span class="n">objective_thresholds</span><span class="p">)</span>
 
     <span class="c1"># Compute posterior mean (for ref point computation ref pareto frontier)</span>
     <span class="c1"># if one is not provided among arguments.</span>
@@ -968,28 +957,32 @@
             <span class="n">Y_pmean</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span>
     <span class="k">if</span> <span class="n">alpha</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">partitioning</span> <span class="o">=</span> <span class="n">NondominatedPartitioning</span><span class="p">(</span>
-            <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>
-            <span class="n">Y</span><span class="o">=</span><span class="n">pre_obj</span><span class="p">(</span><span class="n">Y_pmean</span><span class="p">),</span>
+            <span class="n">ref_point</span><span class="o">=</span><span class="n">objective_thresholds</span><span class="p">,</span>
+            <span class="n">Y</span><span class="o">=</span><span class="n">Y_pmean</span><span class="p">,</span>
             <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">partitioning</span> <span class="o">=</span> <span class="n">FastNondominatedPartitioning</span><span class="p">(</span>
-            <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>
-            <span class="n">Y</span><span class="o">=</span><span class="n">pre_obj</span><span class="p">(</span><span class="n">Y_pmean</span><span class="p">),</span>
+            <span class="n">ref_point</span><span class="o">=</span><span class="n">objective_thresholds</span><span class="p">,</span>
+            <span class="n">Y</span><span class="o">=</span><span class="n">Y_pmean</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">return</span> <span class="p">{</span>
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">"model"</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span>
-        <span class="s2">"ref_point"</span><span class="p">:</span> <span class="n">ref_point</span><span class="p">,</span>
+        <span class="s2">"ref_point"</span><span class="p">:</span> <span class="n">objective_thresholds</span><span class="p">,</span>
         <span class="s2">"partitioning"</span><span class="p">:</span> <span class="n">partitioning</span><span class="p">,</span>
-        <span class="s2">"objective"</span><span class="p">:</span> <span class="n">objective</span><span class="p">,</span>
-    <span class="p">}</span></div>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="n">posterior_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"posterior_transform"</span><span class="p">]</span> <span class="o">=</span> <span class="n">posterior_transform</span>
+    <span class="k">return</span> <span class="n">kwargs</span></div>
 
 
 
 <div class="viewcode-block" id="construct_inputs_qEHVI">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qEHVI">[docs]</a>
-<span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qExpectedHypervolumeImprovement</span><span class="p">)</span>
+<span class="nd">@acqf_input_constructor</span><span class="p">(</span>
+    <span class="n">qExpectedHypervolumeImprovement</span><span class="p">,</span> <span class="n">qLogExpectedHypervolumeImprovement</span>
+<span class="p">)</span>
 <span class="k">def</span> <span class="nf">construct_inputs_qEHVI</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
@@ -1003,7 +996,10 @@
     <span class="n">mc_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
     <span class="n">qmc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""Construct kwargs for `qExpectedHypervolumeImprovement` constructor."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Construct kwargs for `qExpectedHypervolumeImprovement` and</span>
+<span class="sd">    `qLogExpectedHypervolumeImprovement`.</span>
+<span class="sd">    """</span>
     <span class="n">X</span> <span class="o">=</span> <span class="n">_get_dataset_field</span><span class="p">(</span>
         <span class="n">training_data</span><span class="p">,</span>
         <span class="n">fieldname</span><span class="o">=</span><span class="s2">"X"</span><span class="p">,</span>
@@ -1020,31 +1016,49 @@
         <span class="n">feas</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">c</span><span class="p">(</span><span class="n">Y_pmean</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">Y_pmean</span> <span class="o">=</span> <span class="n">Y_pmean</span><span class="p">[</span><span class="n">feas</span><span class="p">]</span>
 
-    <span class="k">if</span> <span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">objective</span> <span class="o">=</span> <span class="n">IdentityMCMultiOutputObjective</span><span class="p">()</span>
+    <span class="n">num_objectives</span> <span class="o">=</span> <span class="n">objective_thresholds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
-    <span class="n">ehvi_kwargs</span> <span class="o">=</span> <span class="n">construct_inputs_EHVI</span><span class="p">(</span>
-        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-        <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span>
-        <span class="n">objective_thresholds</span><span class="o">=</span><span class="n">objective_thresholds</span><span class="p">,</span>
-        <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
-        <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span>
-        <span class="c1"># Pass `Y_pmean` that accounts for constraints to `construct_inputs_EHVI`</span>
-        <span class="c1"># to ensure that correct non-dominated partitioning is produced.</span>
-        <span class="n">Y_pmean</span><span class="o">=</span><span class="n">Y_pmean</span><span class="p">,</span>
+    <span class="n">alpha</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">get_default_partitioning_alpha</span><span class="p">(</span><span class="n">num_objectives</span><span class="o">=</span><span class="n">num_objectives</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">alpha</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="k">else</span> <span class="n">alpha</span>
     <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ref_point</span> <span class="o">=</span> <span class="n">objective_thresholds</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">Y_pmean</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">RiskMeasureMCObjective</span><span class="p">):</span>
+        <span class="n">ref_point</span> <span class="o">=</span> <span class="n">objective</span><span class="o">.</span><span class="n">preprocessing_function</span><span class="p">(</span><span class="n">objective_thresholds</span><span class="p">)</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">objective</span><span class="o">.</span><span class="n">preprocessing_function</span><span class="p">(</span><span class="n">Y_pmean</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ref_point</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">objective_thresholds</span><span class="p">)</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">Y_pmean</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">alpha</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">partitioning</span> <span class="o">=</span> <span class="n">NondominatedPartitioning</span><span class="p">(</span>
+            <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>
+            <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">partitioning</span> <span class="o">=</span> <span class="n">FastNondominatedPartitioning</span><span class="p">(</span>
+            <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>
+            <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">sampler</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">GPyTorchModel</span><span class="p">):</span>
         <span class="n">sampler</span> <span class="o">=</span> <span class="n">_get_sampler</span><span class="p">(</span><span class="n">mc_samples</span><span class="o">=</span><span class="n">mc_samples</span><span class="p">,</span> <span class="n">qmc</span><span class="o">=</span><span class="n">qmc</span><span class="p">)</span>
 
-    <span class="n">add_qehvi_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"model"</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span>
+        <span class="s2">"ref_point"</span><span class="p">:</span> <span class="n">ref_point</span><span class="p">,</span>
+        <span class="s2">"partitioning"</span><span class="p">:</span> <span class="n">partitioning</span><span class="p">,</span>
         <span class="s2">"sampler"</span><span class="p">:</span> <span class="n">sampler</span><span class="p">,</span>
         <span class="s2">"X_pending"</span><span class="p">:</span> <span class="n">X_pending</span><span class="p">,</span>
         <span class="s2">"constraints"</span><span class="p">:</span> <span class="n">constraints</span><span class="p">,</span>
         <span class="s2">"eta"</span><span class="p">:</span> <span class="n">eta</span><span class="p">,</span>
-    <span class="p">}</span>
-    <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">ehvi_kwargs</span><span class="p">,</span> <span class="o">**</span><span class="n">add_qehvi_kwargs</span><span class="p">}</span></div>
+        <span class="s2">"objective"</span><span class="p">:</span> <span class="n">objective</span><span class="p">,</span>
+    <span class="p">}</span></div>
 
 
 
@@ -1185,6 +1199,7 @@
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">candidate_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
     <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="c1"># TODO: qMES also supports other inputs, such as num_fantasies</span>
@@ -1197,6 +1212,7 @@
     <span class="n">_bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="o">**</span><span class="n">_kw</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">"model"</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span>
+        <span class="s2">"posterior_transform"</span><span class="p">:</span> <span class="n">posterior_transform</span><span class="p">,</span>
         <span class="s2">"candidate_set"</span><span class="p">:</span> <span class="n">_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">_rvs</span><span class="p">,</span>
         <span class="s2">"maximize"</span><span class="p">:</span> <span class="n">maximize</span><span class="p">,</span>
     <span class="p">}</span></div>
@@ -1329,13 +1345,11 @@
     <span class="n">X_baseline</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">objective_thresholds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">outcome_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">fidelity_weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">cost_intercept</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
     <span class="n">num_trace_observations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="n">candidate_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
     <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">optimize_objective_kwargs</span><span class="p">:</span> <span class="n">TOptimizeObjectiveKwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Construct kwargs for `qMultiFidelityMaxValueEntropy` constructor."""</span>
     <span class="n">inputs_mf</span> <span class="o">=</span> <span class="n">construct_inputs_mf_base</span><span class="p">(</span>
@@ -1353,23 +1367,7 @@
         <span class="n">maximize</span><span class="o">=</span><span class="n">maximize</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">X</span> <span class="o">=</span> <span class="n">_get_dataset_field</span><span class="p">(</span><span class="n">training_data</span><span class="p">,</span> <span class="s2">"X"</span><span class="p">,</span> <span class="n">first_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">_bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
-    <span class="n">_</span><span class="p">,</span> <span class="n">current_value</span> <span class="o">=</span> <span class="n">optimize_objective</span><span class="p">(</span>
-        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-        <span class="n">bounds</span><span class="o">=</span><span class="n">_bounds</span><span class="o">.</span><span class="n">t</span><span class="p">(),</span>
-        <span class="n">q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
-        <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">optimize_objective_kwargs</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="o">**</span><span class="n">inputs_mf</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">inputs_qmes</span><span class="p">,</span>
-        <span class="s2">"current_value"</span><span class="p">:</span> <span class="n">current_value</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span>
-        <span class="s2">"target_fidelities"</span><span class="p">:</span> <span class="n">target_fidelities</span><span class="p">,</span>
-    <span class="p">}</span></div>
+    <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">inputs_mf</span><span class="p">,</span> <span class="o">**</span><span class="n">inputs_qmes</span><span class="p">,</span> <span class="s2">"num_fantasies"</span><span class="p">:</span> <span class="n">num_fantasies</span><span class="p">}</span></div>
 
 
 
@@ -1378,34 +1376,53 @@
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">AnalyticExpectedUtilityOfBestOption</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">construct_inputs_analytic_eubo</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
-    <span class="n">pref_model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">pref_model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Model</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">previous_winner</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sample_multiplier</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Construct kwargs for the `AnalyticExpectedUtilityOfBestOption` constructor.</span>
 
+<span class="sd">    `model` is the primary model defined over the parameter space. It can be the</span>
+<span class="sd">    outcomde model in BOPE or the preference model in PBO. `pref_model` is the model</span>
+<span class="sd">    defined over the outcome/metric space, which is typically the preference model</span>
+<span class="sd">    in BOPE.</span>
+
+<span class="sd">    If both model and pref_model exist, we are performing Bayesian Optimization with</span>
+<span class="sd">    Preference Exploration (BOPE). When only pref_model is None, we are performing</span>
+<span class="sd">    preferential BO (PBO).</span>
+
 <span class="sd">    Args:</span>
-<span class="sd">        model: The outcome model to be used in the acquisition function.</span>
-<span class="sd">        pref_model: The preference model to be used in preference exploration.</span>
+<span class="sd">        model: The outcome model to be used in the acquisition function in BOPE</span>
+<span class="sd">            when pref_model exists; otherwise, model is the preference model and</span>
+<span class="sd">            we are doing Preferential BO</span>
+<span class="sd">        pref_model: The preference model to be used in preference exploration as in</span>
+<span class="sd">            BOPE; if None, we are doing PBO and model is the preference model.</span>
 <span class="sd">        previous_winner: The previous winner of the best option.</span>
 <span class="sd">        sample_multiplier: The scale factor for the single-sample model.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A dict mapping kwarg names of the constructor to values.</span>
 <span class="sd">    """</span>
-    <span class="c1"># construct a deterministic fixed single sample model from `model`</span>
-    <span class="c1"># i.e., performing EUBO-zeta by default as described</span>
-    <span class="c1"># in https://arxiv.org/abs/2203.11382</span>
-    <span class="c1"># using pref_model.dim instead of model.num_outputs here as MTGP's</span>
-    <span class="c1"># num_outputs could be tied to the number of tasks</span>
-    <span class="n">w</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">pref_model</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span> <span class="o">*</span> <span class="n">sample_multiplier</span>
-    <span class="n">one_sample_outcome_model</span> <span class="o">=</span> <span class="n">FixedSingleSampleModel</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">pref_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"pref_model"</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span>
+            <span class="s2">"outcome_model"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">"previous_winner"</span><span class="p">:</span> <span class="n">previous_winner</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># construct a deterministic fixed single sample model from `model`</span>
+        <span class="c1"># i.e., performing EUBO-zeta by default as described</span>
+        <span class="c1"># in https://arxiv.org/abs/2203.11382</span>
+        <span class="c1"># using pref_model.dim instead of model.num_outputs here as MTGP's</span>
+        <span class="c1"># num_outputs could be tied to the number of tasks</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">pref_model</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span> <span class="o">*</span> <span class="n">sample_multiplier</span>
+        <span class="n">one_sample_outcome_model</span> <span class="o">=</span> <span class="n">FixedSingleSampleModel</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"pref_model"</span><span class="p">:</span> <span class="n">pref_model</span><span class="p">,</span>
-        <span class="s2">"outcome_model"</span><span class="p">:</span> <span class="n">one_sample_outcome_model</span><span class="p">,</span>
-        <span class="s2">"previous_winner"</span><span class="p">:</span> <span class="n">previous_winner</span><span class="p">,</span>
-    <span class="p">}</span></div>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"pref_model"</span><span class="p">:</span> <span class="n">pref_model</span><span class="p">,</span>
+            <span class="s2">"outcome_model"</span><span class="p">:</span> <span class="n">one_sample_outcome_model</span><span class="p">,</span>
+            <span class="s2">"previous_winner"</span><span class="p">:</span> <span class="n">previous_winner</span><span class="p">,</span>
+        <span class="p">}</span></div>
 
 
 
@@ -1502,10 +1519,7 @@
     <span class="c1"># For most objectives, `obj` will have shape `1 x (batch_shape) x q`, but</span>
     <span class="c1"># with a `LearnedObjective` it can be `num_samples x (batch_shape) x q`.</span>
     <span class="n">obj</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">Y</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">X</span><span class="o">=</span><span class="n">X_baseline</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># taking mean over monte carlo samples</span>
     <span class="k">return</span> <span class="n">compute_best_feasible_objective</span><span class="p">(</span>
         <span class="n">samples</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span>
         <span class="n">obj</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span>
@@ -1514,7 +1528,7 @@
         <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
         <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
         <span class="n">X_baseline</span><span class="o">=</span><span class="n">X_baseline</span><span class="p">,</span>
-    <span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span></div>
+    <span class="p">)</span></div>
 
 
 
@@ -1704,7 +1718,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2024 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

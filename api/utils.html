@@ -517,7 +517,7 @@ remaining tasks are populated with 1, 2, …, len(datasets) - 1.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.datasets.ContextualDataset">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.datasets.</span></span><span class="sig-name descname"><span class="pre">ContextualDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datasets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_decomposition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context_buckets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_decomposition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#ContextualDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.ContextualDataset" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.datasets.</span></span><span class="sig-name descname"><span class="pre">ContextualDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datasets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_decomposition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_decomposition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#ContextualDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.ContextualDataset" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">SupervisedDataset</span></code></a></p>
 <p>This is a contextual dataset that is constructed from either a single
 dateset containing overall outcome or a list of datasets that each corresponds
@@ -528,10 +528,8 @@ to a context breakdown.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>datasets</strong> (<em>List</em><em>[</em><a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – A list of the datasets of individual tasks. Each dataset
 is expected to contain data for only one outcome.</p></li>
-<li><p><strong>parameter_decomposition</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – Dict from context name to list of indices
-of X corresponding to that context.</p></li>
-<li><p><strong>context_buckets</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – List of the context names in the order of dataset
-in datasets corresponding to each context outcome.</p></li>
+<li><p><strong>parameter_decomposition</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – Dict from context name to list of feature
+names corresponding to that context.</p></li>
 <li><p><strong>metric_decomposition</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em><em>]</em>) – Context breakdown metrics. Keys are context names.
 Values are the lists of metric names belonging to the context:
 {‘context1’: [‘m1_c1’], ‘context2’: [‘m1_c2’],}.</p></li>
@@ -719,6 +717,24 @@ decomposition with increasing jitter.</p></li>
 </dl>
 </dd></dl>
 </section>
+<section id="module-botorch.utils.multitask">
+<span id="multi-task-distribution-utils"></span><h2>Multi-Task Distribution Utils<a class="headerlink" href="#module-botorch.utils.multitask" title="Link to this heading">¶</a></h2>
+<p>Helpers for multitask modeling.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.multitask.separate_mtmvn">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.multitask.</span></span><span class="sig-name descname"><span class="pre">separate_mtmvn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mvn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multitask.html#separate_mtmvn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multitask.separate_mtmvn" title="Link to this definition">¶</a></dt>
+<dd><p>Separate a MTMVN into a list of MVNs, where covariance across data within each task
+are preserved, while covariance across task are dropped.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mvn</strong> (<em>MultitaskMultivariateNormal</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>List</em>[<em>MultivariateNormal</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+</section>
 <section id="module-botorch.utils.objective">
 <span id="objective"></span><h2>Objective<a class="headerlink" href="#module-botorch.utils.objective" title="Link to this heading">¶</a></h2>
 <p>Helpers for handling objectives.</p>
@@ -831,29 +847,6 @@ then estimated with the i-th eta value.</p></li>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A <cite>n_samples x b x q</cite>-dim tensor of feasibility indicator values.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tensor</em></p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py function">
-<dt class="sig sig-object py" id="botorch.utils.objective.soft_eval_constraint">
-<span class="sig-prename descclassname"><span class="pre">botorch.utils.objective.</span></span><span class="sig-name descname"><span class="pre">soft_eval_constraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lhs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/objective.html#soft_eval_constraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.objective.soft_eval_constraint" title="Link to this definition">¶</a></dt>
-<dd><p>Element-wise evaluation of a constraint in a ‘soft’ fashion</p>
-<p><cite>value(x) = 1 / (1 + exp(x / eta))</cite></p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>lhs</strong> (<em>Tensor</em>) – The left hand side of the constraint <cite>lhs &lt;= 0</cite>.</p></li>
-<li><p><strong>eta</strong> (<em>float</em>) – The temperature parameter of the softmax function. As eta
-decreases, this approximates the Heaviside step function.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Element-wise ‘soft’ feasibility indicator of the same shape as <cite>lhs</cite>.
-For each element <cite>x</cite>, <cite>value(x) -&gt; 0</cite> as <cite>x</cite> becomes positive, and
-<cite>value(x) -&gt; 1</cite> as x becomes negative.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Tensor</em></p>
@@ -1817,8 +1810,8 @@ Relative difference: 0.8348668001940709 (up to 1e-05 allowed)</p>
 <span class="sig-name descname"><span class="pre">test_num_constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#ConstrainedTestProblemTestCaseMixin.test_num_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.ConstrainedTestProblemTestCaseMixin.test_num_constraints" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="botorch.utils.testing.ConstrainedTestProblemTestCaseMixin.test_evaluate_slack_true">
-<span class="sig-name descname"><span class="pre">test_evaluate_slack_true</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#ConstrainedTestProblemTestCaseMixin.test_evaluate_slack_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.ConstrainedTestProblemTestCaseMixin.test_evaluate_slack_true" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.utils.testing.ConstrainedTestProblemTestCaseMixin.test_evaluate_slack">
+<span class="sig-name descname"><span class="pre">test_evaluate_slack</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#ConstrainedTestProblemTestCaseMixin.test_evaluate_slack"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.ConstrainedTestProblemTestCaseMixin.test_evaluate_slack" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
@@ -1926,7 +1919,7 @@ This is a tensor of shape <cite>sample_shape x base_sample_shape</cite>.</p></li
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.testing.</span></span><span class="sig-name descname"><span class="pre">MockModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MockModel" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>, <a class="reference internal" href="models.html#botorch.models.model.FantasizeMixin" title="botorch.models.model.FantasizeMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">FantasizeMixin</span></code></a></p>
 <p>Mock object that implements dummy methods and feeds through specified outputs</p>
-<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<p>Initialize internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="#botorch.utils.testing.MockPosterior" title="botorch.utils.testing.MockPosterior"><em>MockPosterior</em></a>) – </p>
@@ -1988,7 +1981,7 @@ shape <cite>broadcast(test_batch_shape, model.batch_shape) x q x m</cite>.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.utils.testing.MockModel.state_dict">
 <span class="sig-name descname"><span class="pre">state_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockModel.state_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MockModel.state_dict" title="Link to this definition">¶</a></dt>
-<dd><p>Returns a dictionary containing references to the whole state of the module.</p>
+<dd><p>Return a dictionary containing references to the whole state of the module.</p>
 <p>Both parameters and persistent buffers (e.g. running averages) are
 included. Keys are corresponding parameter and buffer names.
 Parameters and buffers set to <code class="docutils literal notranslate"><span class="pre">None</span></code> are not included.</p>
@@ -2041,8 +2034,8 @@ Default: <code class="docutils literal notranslate"><span class="pre">False</spa
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.utils.testing.MockModel.load_state_dict">
 <span class="sig-name descname"><span class="pre">load_state_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockModel.load_state_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MockModel.load_state_dict" title="Link to this definition">¶</a></dt>
-<dd><p>Copies parameters and buffers from <a class="reference internal" href="#botorch.utils.testing.MockModel.state_dict" title="botorch.utils.testing.MockModel.state_dict"><code class="xref py py-attr docutils literal notranslate"><span class="pre">state_dict</span></code></a> into
-this module and its descendants. If <code class="xref py py-attr docutils literal notranslate"><span class="pre">strict</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, then
+<dd><p>Copy parameters and buffers from <a class="reference internal" href="#botorch.utils.testing.MockModel.state_dict" title="botorch.utils.testing.MockModel.state_dict"><code class="xref py py-attr docutils literal notranslate"><span class="pre">state_dict</span></code></a> into this module and its descendants.</p>
+<p>If <code class="xref py py-attr docutils literal notranslate"><span class="pre">strict</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, then
 the keys of <a class="reference internal" href="#botorch.utils.testing.MockModel.state_dict" title="botorch.utils.testing.MockModel.state_dict"><code class="xref py py-attr docutils literal notranslate"><span class="pre">state_dict</span></code></a> must exactly match the keys returned
 by this module’s <code class="xref py py-meth docutils literal notranslate"><span class="pre">state_dict()</span></code> function.</p>
 <div class="admonition warning">
@@ -2272,7 +2265,7 @@ key-value pairs of type (string, <code class="xref py py-class docutils literal 
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.utils.torch.BufferDict.extra_repr">
 <span class="sig-name descname"><span class="pre">extra_repr</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/torch.html#BufferDict.extra_repr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.torch.BufferDict.extra_repr" title="Link to this definition">¶</a></dt>
-<dd><p>Set the extra representation of the module</p>
+<dd><p>Set the extra representation of the module.</p>
 <p>To print customized extra information, you should re-implement
 this method in your own modules. Both single-line and multi-line
 strings are acceptable.</p>
@@ -3859,7 +3852,7 @@ the space dominated by that Pareto frontier.</p>
 <span id="pareto"></span><h2>Pareto<a class="headerlink" href="#module-botorch.utils.multi_objective.pareto" title="Link to this heading">¶</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.multi_objective.pareto.is_non_dominated">
-<span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.pareto.</span></span><span class="sig-name descname"><span class="pre">is_non_dominated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deduplicate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/pareto.html#is_non_dominated"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.pareto.is_non_dominated" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.pareto.</span></span><span class="sig-name descname"><span class="pre">is_non_dominated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deduplicate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/pareto.html#is_non_dominated"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.pareto.is_non_dominated" title="Link to this definition">¶</a></dt>
 <dd><p>Computes the non-dominated front.</p>
 <p>Note: this assumes maximization.</p>
 <p>For small <cite>n</cite>, this method uses a highly parallel methodology
@@ -3871,6 +3864,7 @@ that is faster and has a lower memory footprint.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x n x m</cite>-dim tensor of outcomes.</p></li>
+<li><p><strong>maximize</strong> (<em>bool</em>) – If True, assume maximization (default).</p></li>
 <li><p><strong>deduplicate</strong> (<em>bool</em>) – A boolean indicating whether to only return
 unique points on the pareto frontier.</p></li>
 </ul>
@@ -5041,7 +5035,7 @@ when passed as a Tensor.</p>
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2024 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

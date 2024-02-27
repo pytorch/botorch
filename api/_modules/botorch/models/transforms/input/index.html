@@ -43,6 +43,7 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 <span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
 
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">UserInputWarning</span>
@@ -296,6 +297,7 @@
 
 <span class="sd">    :meta private:</span>
 <span class="sd">    """</span>
+
     <span class="n">reverse</span><span class="p">:</span> <span class="nb">bool</span>
 
     <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -550,6 +552,7 @@
         <span class="n">reverse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">min_range</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">,</span>
         <span class="n">learn_bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">almost_zero</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-12</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Normalize the inputs to the unit cube.</span>
 
@@ -570,10 +573,28 @@
 <span class="sd">                transform when called from within a `fantasize` call. Default: True.</span>
 <span class="sd">            reverse: A boolean indicating whether the forward pass should untransform</span>
 <span class="sd">                the inputs.</span>
-<span class="sd">            min_range: Amount of noise to add to the range to ensure no division by</span>
-<span class="sd">                zero errors.</span>
+<span class="sd">            min_range: If the range of an input dimension is smaller than `min_range`,</span>
+<span class="sd">                that input dimension will not be normalized. This is equivalent to</span>
+<span class="sd">                using bounds of `[0, 1]` for this dimension, and helps avoid division</span>
+<span class="sd">                by zero errors and related numerical issues. See the example below.</span>
+<span class="sd">                NOTE: This only applies if `learn_bounds=True`.</span>
 <span class="sd">            learn_bounds: Whether to learn the bounds in train mode. Defaults</span>
 <span class="sd">                to False if bounds are provided, otherwise defaults to True.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; t = Normalize(d=2)</span>
+<span class="sd">            &gt;&gt;&gt; t(torch.tensor([[3., 2.], [3., 6.]]))</span>
+<span class="sd">            ... tensor([[3., 2.],</span>
+<span class="sd">            ...         [3., 6.]])</span>
+<span class="sd">            &gt;&gt;&gt; t.eval()</span>
+<span class="sd">            ... Normalize()</span>
+<span class="sd">            &gt;&gt;&gt; t(torch.tensor([[3.5, 2.8]]))</span>
+<span class="sd">            ... tensor([[3.5, 0.2]])</span>
+<span class="sd">            &gt;&gt;&gt; t.bounds</span>
+<span class="sd">            ... tensor([[0., 2.],</span>
+<span class="sd">            ...         [1., 6.]])</span>
+<span class="sd">            &gt;&gt;&gt; t.coefficient</span>
+<span class="sd">            ... tensor([[1., 4.]])</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">learn_bounds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">learn_coefficients</span> <span class="o">=</span> <span class="n">learn_bounds</span>
@@ -638,9 +659,11 @@
         <span class="c1"># Aggregate mins and ranges over extra batch and marginal dims</span>
         <span class="n">batch_ndim</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">),</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># batch rank of `X`</span>
         <span class="n">reduce_dims</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="nb">range</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="n">batch_ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">),</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">amin</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">reduce_dims</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_coefficient</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">reduce_dims</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_coefficient</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">min_range</span><span class="p">)</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">amin</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">reduce_dims</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">coefficient</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">reduce_dims</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">offset</span>
+        <span class="n">almost_zero</span> <span class="o">=</span> <span class="n">coefficient</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_range</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_coefficient</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">almost_zero</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">coefficient</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">almost_zero</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Normalize.get_init_args">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Normalize.get_init_args">[docs]</a>
@@ -698,8 +721,11 @@
 <span class="sd">                transform in eval() mode. Default: True</span>
 <span class="sd">            reverse: A boolean indicating whether the forward pass should untransform</span>
 <span class="sd">                the inputs.</span>
-<span class="sd">            min_std: Amount of noise to add to the standard deviation to ensure no</span>
-<span class="sd">                division by zero errors.</span>
+<span class="sd">            min_std: If the standard deviation of an input dimension is smaller than</span>
+<span class="sd">                `min_std`, that input dimension will not be standardized. This is</span>
+<span class="sd">                equivalent to using a standard deviation of 1.0 and a mean of 0.0 for</span>
+<span class="sd">                this dimension, and helps avoid division by zero errors and related</span>
+<span class="sd">                numerical issues.</span>
 <span class="sd">        """</span>
         <span class="n">transform_dimension</span> <span class="o">=</span> <span class="n">d</span> <span class="k">if</span> <span class="n">indices</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
@@ -731,11 +757,13 @@
         <span class="c1"># Aggregate means and standard deviations over extra batch and marginal dims</span>
         <span class="n">batch_ndim</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">),</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># batch rank of `X`</span>
         <span class="n">reduce_dims</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="nb">range</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="n">batch_ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">),</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="n">coefficient</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">coefficient</span><span class="p">,</span> <span class="n">offset</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">values</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">torch</span><span class="o">.</span><span class="n">std_mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">reduce_dims</span><span class="p">,</span> <span class="n">unbiased</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_coefficient</span> <span class="o">=</span> <span class="n">coefficient</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">min_std</span><span class="p">)</span></div>
+        <span class="n">almost_zero</span> <span class="o">=</span> <span class="n">coefficient</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_std</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_coefficient</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">almost_zero</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">coefficient</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">almost_zero</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span></div>
 
 
 
@@ -1300,7 +1328,6 @@
 <div class="viewcode-block" id="FilterFeatures">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.FilterFeatures">[docs]</a>
 <span class="k">class</span> <span class="nc">FilterFeatures</span><span class="p">(</span><span class="n">InputTransform</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
-
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A transform that filters the input with a given set of features indices.</span>
 
 <span class="sd">    As an example, this can be used in a multiobjective optimization with `ModelListGP`</span>
@@ -1515,10 +1542,7 @@
 <div class="viewcode-block" id="OneHotToNumeric">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.OneHotToNumeric">[docs]</a>
 <span class="k">class</span> <span class="nc">OneHotToNumeric</span><span class="p">(</span><span class="n">InputTransform</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""Transform categorical parameters from a one-hot to a numeric representation.</span>
-
-<span class="sd">    This assumes that the categoricals are the trailing dimensions.</span>
-<span class="sd">    """</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Transform categorical parameters from a one-hot to a numeric representation."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -1556,27 +1580,32 @@
             <span class="nb">sorted</span><span class="p">(</span><span class="n">categorical_features</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">categorical_start_idx</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-            <span class="c1"># check that the trailing dimensions are categoricals</span>
-            <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_start_idx</span>
-            <span class="n">err_msg</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> requires that the categorical "</span>
-                <span class="s2">"parameters are the rightmost elements."</span>
-            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">onehot_idx</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">start</span> <span class="o">+</span> <span class="n">card</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">card</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">]</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">onehot_idx</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">idx</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Categorical features overlap."</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">max</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">dim</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Categorical features exceed the provided dimension."</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">numerical_idx</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">))</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">idx</span><span class="p">))</span>
+
+            <span class="n">offset</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ordinal_idx</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">card</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="c1"># the end of one one-hot representation should be followed</span>
-                <span class="c1"># by the start of the next</span>
-                <span class="k">if</span> <span class="n">end</span> <span class="o">!=</span> <span class="n">start</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">err_msg</span><span class="p">)</span>
-                <span class="c1"># This assumes that the categoricals are the trailing</span>
-                <span class="c1"># dimensions</span>
-                <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">card</span>
-            <span class="k">if</span> <span class="n">end</span> <span class="o">!=</span> <span class="n">dim</span><span class="p">:</span>
-                <span class="c1"># check end</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">err_msg</span><span class="p">)</span>
-            <span class="c1"># the numeric representation dimension is the total number of parameters</span>
-            <span class="c1"># (continuous, integer, and categorical)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">numeric_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_start_idx</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">categorical_features</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ordinal_idx</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">start</span> <span class="o">-</span> <span class="n">offset</span><span class="p">)</span>
+                <span class="n">offset</span> <span class="o">+=</span> <span class="n">card</span> <span class="o">-</span> <span class="mi">1</span>
+
+            <span class="n">reduced_dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ordinal_idx</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">numerical_idx</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">new_numerical_idx</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+                <span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">reduced_dim</span><span class="p">))</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ordinal_idx</span><span class="p">)</span>
+            <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">numeric_dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_numerical_idx</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span>
+            <span class="p">)</span>
 
 <div class="viewcode-block" id="OneHotToNumeric.transform">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.OneHotToNumeric.transform">[docs]</a>
@@ -1592,10 +1621,12 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">X_numeric</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">numeric_dim</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
-            <span class="n">idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_start_idx</span>
-            <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">card</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="n">X_numeric</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">start</span> <span class="p">:</span> <span class="n">start</span> <span class="o">+</span> <span class="n">card</span><span class="p">]</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-                <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="c1"># copy the numerical dims over</span>
+            <span class="n">X_numeric</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_numerical_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">numerical_idx</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span><span class="p">)):</span>
+                <span class="n">X_numeric</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ordinal_idx</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">onehot_idx</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span>
+                    <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
+                <span class="p">)</span>
             <span class="k">return</span> <span class="n">X_numeric</span>
         <span class="k">return</span> <span class="n">X</span></div>
 
@@ -1614,23 +1645,16 @@
 <span class="sd">            have been transformed to one-hot representation.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">numeric_dim</span>
-            <span class="n">one_hot_categoricals</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="c1"># note that self.categorical_features is sorted by the starting index</span>
-                <span class="c1"># in one-hot representation</span>
-                <span class="n">one_hot</span><span class="p">(</span>
-                    <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span><span class="p">)]</span><span class="o">.</span><span class="n">long</span><span class="p">(),</span>
-                    <span class="n">num_classes</span><span class="o">=</span><span class="n">cardinality</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">cardinality</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-            <span class="p">]</span>
-            <span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
-                <span class="p">[</span>
-                    <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_start_idx</span><span class="p">],</span>
-                    <span class="o">*</span><span class="n">one_hot_categoricals</span><span class="p">,</span>
-                <span class="p">],</span>
-                <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
-            <span class="p">)</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">s</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">numerical_idx</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">onehot_idx</span><span class="p">))</span>
+            <span class="n">X_onehot</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <span class="n">X_onehot</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">numerical_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_numerical_idx</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span><span class="p">)):</span>
+                <span class="n">X_onehot</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">onehot_idx</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">one_hot</span><span class="p">(</span>
+                    <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ordinal_idx</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">long</span><span class="p">(),</span>
+                    <span class="n">num_classes</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">onehot_idx</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X_onehot</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">X_onehot</span>
         <span class="k">return</span> <span class="n">X</span></div>
 
 
@@ -1700,7 +1724,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2024 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

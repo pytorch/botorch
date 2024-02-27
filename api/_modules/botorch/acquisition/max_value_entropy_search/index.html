@@ -877,6 +877,65 @@
 <span class="sd">        &gt;&gt;&gt; mf_gibbon = MF_qGIBBON(test_X)</span>
 <span class="sd">    """</span>
 
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">candidate_set</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">num_fantasies</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16</span><span class="p">,</span>
+        <span class="n">num_mv_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="n">num_y_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">use_gumbel</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">cost_aware_utility</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CostAwareUtility</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">project</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">X</span><span class="p">:</span> <span class="n">X</span><span class="p">,</span>
+        <span class="n">expand</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">X</span><span class="p">:</span> <span class="n">X</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Single-outcome max-value entropy search acquisition function.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model: A fitted single-outcome model.</span>
+<span class="sd">            candidate_set: A `n x d` Tensor including `n` candidate points to</span>
+<span class="sd">                discretize the design space, which will be used to sample the</span>
+<span class="sd">                max values from their posteriors.</span>
+<span class="sd">            cost_aware_utility: A CostAwareUtility computing the cost-transformed</span>
+<span class="sd">                utility from a candidate set and samples of increases in utility.</span>
+<span class="sd">            num_fantasies: Number of fantasies to generate. The higher this</span>
+<span class="sd">                number the more accurate the model (at the expense of model</span>
+<span class="sd">                complexity and performance) and it's only used when `X_pending`</span>
+<span class="sd">                is not `None`.</span>
+<span class="sd">            num_mv_samples: Number of max value samples.</span>
+<span class="sd">            num_y_samples: Number of posterior samples at specific design point `X`.</span>
+<span class="sd">            posterior_transform: A PosteriorTransform. If using a multi-output model,</span>
+<span class="sd">                a PosteriorTransform that transforms the multi-output posterior into a</span>
+<span class="sd">                single-output posterior is required.</span>
+<span class="sd">            use_gumbel: If True, use Gumbel approximation to sample the max values.</span>
+<span class="sd">            maximize: If True, consider the problem a maximization problem.</span>
+<span class="sd">            cost_aware_utility: A CostAwareUtility computing the cost-transformed</span>
+<span class="sd">                utility from a candidate set and samples of increases in utility.</span>
+<span class="sd">            project: A callable mapping a `batch_shape x q x d` tensor of design</span>
+<span class="sd">                points to a tensor of the same shape projected to the desired</span>
+<span class="sd">                target set (e.g. the target fidelities in case of multi-fidelity</span>
+<span class="sd">                optimization).</span>
+<span class="sd">            expand: A callable mapping a `batch_shape x q x d` input tensor to</span>
+<span class="sd">                a `batch_shape x (q + q_e)' x d`-dim output tensor, where the</span>
+<span class="sd">                `q_e` additional points in each q-batch correspond to</span>
+<span class="sd">                additional ("trace") observations.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">candidate_set</span><span class="o">=</span><span class="n">candidate_set</span><span class="p">,</span>
+            <span class="n">num_fantasies</span><span class="o">=</span><span class="n">num_fantasies</span><span class="p">,</span>
+            <span class="n">num_mv_samples</span><span class="o">=</span><span class="n">num_mv_samples</span><span class="p">,</span>
+            <span class="n">num_y_samples</span><span class="o">=</span><span class="n">num_y_samples</span><span class="p">,</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+            <span class="n">use_gumbel</span><span class="o">=</span><span class="n">use_gumbel</span><span class="p">,</span>
+            <span class="n">maximize</span><span class="o">=</span><span class="n">maximize</span><span class="p">,</span>
+            <span class="n">cost_aware_utility</span><span class="o">=</span><span class="n">cost_aware_utility</span><span class="p">,</span>
+            <span class="n">project</span><span class="o">=</span><span class="n">project</span><span class="p">,</span>
+            <span class="n">expand</span><span class="o">=</span><span class="n">expand</span><span class="p">,</span>
+        <span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">_compute_information_gain</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">mean_M</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">variance_M</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">covar_mM</span><span class="p">:</span> <span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -1051,7 +1110,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2024 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

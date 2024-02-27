@@ -1,0 +1,757 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/0.10.0/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/v/0.10.0/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/0.10.0/img/botorch.png"/><link rel="shortcut icon" href="/v/0.10.0/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-CXN3PGE3CC"></script><script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments); }
+              gtag('js', new Date());
+              gtag('config', 'G-CXN3PGE3CC');
+            </script><link rel="stylesheet" href="/v/0.10.0/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/0.10.0/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/0.10.0/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/0.10.0/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/0.10.0/css/main.css"/><script src="/v/0.10.0/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/0.10.0/"><img class="logo" src="/v/0.10.0/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/0.10.0/versions"><h3>0.10.0</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/0.10.0/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/0.10.0/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/0.10.0/api/" target="_self">API Reference</a></li><li class=""><a href="/v/0.10.0/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for botorch.utils.datasets</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
+
+<span class="sa">r</span><span class="sd">"""Representations for different kinds of datasets."""</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">InputDataError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.containers</span> <span class="kn">import</span> <span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">SliceContainer</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">long</span><span class="p">,</span> <span class="n">ones</span><span class="p">,</span> <span class="n">Tensor</span>
+
+
+<div class="viewcode-block" id="SupervisedDataset">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.SupervisedDataset">[docs]</a>
+<span class="k">class</span> <span class="nc">SupervisedDataset</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Base class for datasets consisting of labelled pairs `(X, Y)`</span>
+<span class="sd">    and an optional `Yvar` that stipulates observations variances so</span>
+<span class="sd">    that `Y[i] ~ N(f(X[i]), Yvar[i])`.</span>
+
+<span class="sd">    Example:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        X = torch.rand(16, 2)</span>
+<span class="sd">        Y = torch.rand(16, 1)</span>
+<span class="sd">        feature_names = ["learning_rate", "embedding_dim"]</span>
+<span class="sd">        outcome_names = ["neg training loss"]</span>
+<span class="sd">        A = SupervisedDataset(</span>
+<span class="sd">            X=X,</span>
+<span class="sd">            Y=Y,</span>
+<span class="sd">            feature_names=feature_names,</span>
+<span class="sd">            outcome_names=outcome_names,</span>
+<span class="sd">        )</span>
+<span class="sd">        B = SupervisedDataset(</span>
+<span class="sd">            X=DenseContainer(X, event_shape=X.shape[-1:]),</span>
+<span class="sd">            Y=DenseContainer(Y, event_shape=Y.shape[-1:]),</span>
+<span class="sd">            feature_names=feature_names,</span>
+<span class="sd">            outcome_names=outcome_names,</span>
+<span class="sd">        )</span>
+<span class="sd">        assert A == B</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">Y</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">feature_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">outcome_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">Yvar</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">validate_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Constructs a `SupervisedDataset`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `Tensor` or `BotorchContainer` representing the input features.</span>
+<span class="sd">            Y: A `Tensor` or `BotorchContainer` representing the outcomes.</span>
+<span class="sd">            feature_names: A list of names of the features in `X`.</span>
+<span class="sd">            outcome_names: A list of names of the outcomes in `Y`.</span>
+<span class="sd">            Yvar: An optional `Tensor` or `BotorchContainer` representing</span>
+<span class="sd">                the observation noise.</span>
+<span class="sd">            validate_init: If `True`, validates the input shapes.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_X</span> <span class="o">=</span> <span class="n">X</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_Y</span> <span class="o">=</span> <span class="n">Y</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_Yvar</span> <span class="o">=</span> <span class="n">Yvar</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feature_names</span> <span class="o">=</span> <span class="n">feature_names</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outcome_names</span> <span class="o">=</span> <span class="n">outcome_names</span>
+        <span class="k">if</span> <span class="n">validate_init</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_validate</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">X</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_Y</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Y</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Y</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Yvar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Yvar</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_Yvar</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Yvar</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Yvar</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_validate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">validate_feature_names</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">validate_outcome_names</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Checks that the shapes of the inputs are compatible with each other.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            validate_feature_names: By default, we validate that the length of</span>
+<span class="sd">                `feature_names` matches the # of columns of `self.X`. If a</span>
+<span class="sd">                particular dataset, e.g., `RankingDataset`, is known to violate</span>
+<span class="sd">                this assumption, this can be set to `False`.</span>
+<span class="sd">            validate_outcome_names: By default, we validate that the length of</span>
+<span class="sd">                `outcomes_names` matches the # of columns of `self.Y`. If a</span>
+<span class="sd">                particular dataset, e.g., `RankingDataset`, is known to violate</span>
+<span class="sd">                this assumption, this can be set to `False`.</span>
+<span class="sd">        """</span>
+        <span class="n">shape_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">,</span> <span class="n">BotorchContainer</span><span class="p">):</span>
+            <span class="n">shape_X</span> <span class="o">=</span> <span class="n">shape_X</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape_X</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="o">.</span><span class="n">event_shape</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">shape_X</span> <span class="o">=</span> <span class="n">shape_X</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">shape_Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_Y</span><span class="p">,</span> <span class="n">BotorchContainer</span><span class="p">):</span>
+            <span class="n">shape_Y</span> <span class="o">=</span> <span class="n">shape_Y</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape_Y</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_Y</span><span class="o">.</span><span class="n">event_shape</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">shape_Y</span> <span class="o">=</span> <span class="n">shape_Y</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">shape_X</span> <span class="o">!=</span> <span class="n">shape_Y</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Batch dimensions of `X` and `Y` are incompatible."</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">Yvar</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Shapes of `Y` and `Yvar` are incompatible."</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">validate_feature_names</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">feature_names</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"`X` must have the same number of columns as the number of "</span>
+                <span class="s2">"features in `feature_names`."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">validate_outcome_names</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outcome_names</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"`Y` must have the same number of columns as the number of "</span>
+                <span class="s2">"outcomes in `outcome_names`."</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">torch</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">X</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">torch</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">Y</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="p">(</span>
+                <span class="n">other</span><span class="o">.</span><span class="n">Yvar</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">Yvar</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="n">other</span><span class="o">.</span><span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">torch</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Yvar</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">Yvar</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_names</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">feature_names</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_names</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">outcome_names</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="FixedNoiseDataset">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.FixedNoiseDataset">[docs]</a>
+<span class="k">class</span> <span class="nc">FixedNoiseDataset</span><span class="p">(</span><span class="n">SupervisedDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A SupervisedDataset with an additional field `Yvar` that stipulates</span>
+<span class="sd">    observations variances so that `Y[i] ~ N(f(X[i]), Yvar[i])`.</span>
+
+<span class="sd">    NOTE: This is deprecated. Use `SupervisedDataset` instead.</span>
+<span class="sd">    Will be removed in a future release (~v0.11).</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">Y</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">Yvar</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">feature_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">outcome_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">validate_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize a `FixedNoiseDataset` -- deprecated!"""</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">"`FixedNoiseDataset` is deprecated. Use `SupervisedDataset` instead."</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span>
+            <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span>
+            <span class="n">feature_names</span><span class="o">=</span><span class="n">feature_names</span><span class="p">,</span>
+            <span class="n">outcome_names</span><span class="o">=</span><span class="n">outcome_names</span><span class="p">,</span>
+            <span class="n">Yvar</span><span class="o">=</span><span class="n">Yvar</span><span class="p">,</span>
+            <span class="n">validate_init</span><span class="o">=</span><span class="n">validate_init</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="RankingDataset">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.RankingDataset">[docs]</a>
+<span class="k">class</span> <span class="nc">RankingDataset</span><span class="p">(</span><span class="n">SupervisedDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A SupervisedDataset whose labelled pairs `(x, y)` consist of m-ary combinations</span>
+<span class="sd">    `x ∈ Z^{m}` of elements from a ground set `Z = (z_1, ...)` and ranking vectors</span>
+<span class="sd">    `y {0, ..., m - 1}^{m}` with properties:</span>
+
+<span class="sd">        a) Ranks start at zero, i.e. min(y) = 0.</span>
+<span class="sd">        b) Sorted ranks are contiguous unless one or more ties are present.</span>
+<span class="sd">        c) `k` ranks are skipped after a `k`-way tie.</span>
+
+<span class="sd">    Example:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        X = SliceContainer(</span>
+<span class="sd">            values=torch.rand(16, 2),</span>
+<span class="sd">            indices=torch.stack([torch.randperm(16)[:3] for _ in range(8)]),</span>
+<span class="sd">            event_shape=torch.Size([3 * 2]),</span>
+<span class="sd">        )</span>
+<span class="sd">        Y = DenseContainer(</span>
+<span class="sd">            torch.stack([torch.randperm(3) for _ in range(8)]),</span>
+<span class="sd">            event_shape=torch.Size([3])</span>
+<span class="sd">        )</span>
+<span class="sd">        feature_names = ["item_0", "item_1"]</span>
+<span class="sd">        outcome_names = ["ranking outcome"]</span>
+<span class="sd">        dataset = RankingDataset(</span>
+<span class="sd">            X=X,</span>
+<span class="sd">            Y=Y,</span>
+<span class="sd">            feature_names=feature_names,</span>
+<span class="sd">            outcome_names=outcome_names,</span>
+<span class="sd">        )</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">SliceContainer</span><span class="p">,</span>
+        <span class="n">Y</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">feature_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">outcome_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">validate_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct a `RankingDataset`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `SliceContainer` representing the input features being ranked.</span>
+<span class="sd">            Y: A `Tensor` or `BotorchContainer` representing the rankings.</span>
+<span class="sd">            feature_names: A list of names of the features in X.</span>
+<span class="sd">            outcome_names: A list of names of the outcomes in Y.</span>
+<span class="sd">            validate_init: If `True`, validates the input shapes.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span>
+            <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span>
+            <span class="n">feature_names</span><span class="o">=</span><span class="n">feature_names</span><span class="p">,</span>
+            <span class="n">outcome_names</span><span class="o">=</span><span class="n">outcome_names</span><span class="p">,</span>
+            <span class="n">Yvar</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">validate_init</span><span class="o">=</span><span class="n">validate_init</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_validate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_validate</span><span class="p">(</span><span class="n">validate_feature_names</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">validate_outcome_names</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">feature_names</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"The `values` field of `X` must have the same number of columns as "</span>
+                <span class="s2">"the number of features in `feature_names`."</span>
+            <span class="p">)</span>
+
+        <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span>
+        <span class="n">arity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="o">.</span><span class="n">indices</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">Y</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">Y</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">arity</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid ranking(s): out-of-bounds ranks detected."</span><span class="p">)</span>
+
+        <span class="c1"># Ensure that rankings are well-defined</span>
+        <span class="n">Y_sort</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">descending</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">y_incr</span> <span class="o">=</span> <span class="n">ones</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">long</span><span class="p">)</span>
+        <span class="n">y_prev</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">Y_sort</span><span class="o">.</span><span class="n">unbind</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">y</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid ranking(s): missing zero-th rank."</span><span class="p">)</span>
+                <span class="n">y_prev</span> <span class="o">=</span> <span class="n">y</span>
+                <span class="k">continue</span>
+
+            <span class="n">y_diff</span> <span class="o">=</span> <span class="n">y</span> <span class="o">-</span> <span class="n">y_prev</span>
+            <span class="n">y_prev</span> <span class="o">=</span> <span class="n">y</span>
+
+            <span class="c1"># Either a tie or next ranking when accounting for previous ties</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">((</span><span class="n">y_diff</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">y_diff</span> <span class="o">==</span> <span class="n">y_incr</span><span class="p">))</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid ranking(s): ranks not skipped after ties."</span><span class="p">)</span>
+
+            <span class="c1"># Same as: torch.where(y_diff == 0, y_incr + 1, 1)</span>
+            <span class="n">y_incr</span> <span class="o">=</span> <span class="n">y_incr</span> <span class="o">-</span> <span class="n">y_diff</span> <span class="o">+</span> <span class="mi">1</span></div>
+
+
+
+<div class="viewcode-block" id="MultiTaskDataset">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.MultiTaskDataset">[docs]</a>
+<span class="k">class</span> <span class="nc">MultiTaskDataset</span><span class="p">(</span><span class="n">SupervisedDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""This is a multi-task dataset that is constructed from the datasets of</span>
+<span class="sd">    individual tasks. It offers functionality to combine parts of individual</span>
+<span class="sd">    datasets to construct the inputs necessary for the `MultiTaskGP` models.</span>
+
+<span class="sd">    The datasets of individual tasks are allowed to represent different sets</span>
+<span class="sd">    of features. When there are heterogeneous feature sets, calling</span>
+<span class="sd">    `MultiTaskDataset.X` will result in an error.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">datasets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
+        <span class="n">target_outcome_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">task_feature_index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Construct a `MultiTaskDataset`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            datasets: A list of the datasets of individual tasks. Each dataset</span>
+<span class="sd">                is expected to contain data for only one outcome.</span>
+<span class="sd">            target_outcome_name: Name of the target outcome to be modeled.</span>
+<span class="sd">            task_feature_index: If the task feature is included in the Xs of the</span>
+<span class="sd">                individual datasets, this should be used to specify its index.</span>
+<span class="sd">                If omitted, the task feature will be appended while concatenating Xs.</span>
+<span class="sd">                If given, we sanity-check that the names of the task features</span>
+<span class="sd">                match between all datasets.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SupervisedDataset</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">ds</span><span class="o">.</span><span class="n">outcome_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">ds</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">datasets</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_outcome_name</span> <span class="o">=</span> <span class="n">target_outcome_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">task_feature_index</span> <span class="o">=</span> <span class="n">task_feature_index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_datasets</span><span class="p">(</span><span class="n">datasets</span><span class="o">=</span><span class="n">datasets</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feature_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="n">target_outcome_name</span><span class="p">]</span><span class="o">.</span><span class="n">feature_names</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outcome_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">target_outcome_name</span><span class="p">]</span>
+
+        <span class="c1"># Check if the datasets have identical feature sets.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">has_heterogeneous_features</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="n">datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">feature_names</span> <span class="o">!=</span> <span class="n">ds</span><span class="o">.</span><span class="n">feature_names</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="MultiTaskDataset.from_joint_dataset">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.MultiTaskDataset.from_joint_dataset">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_joint_dataset</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">dataset</span><span class="p">:</span> <span class="n">SupervisedDataset</span><span class="p">,</span>
+        <span class="n">task_feature_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">target_task_value</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">outcome_names_per_task</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultiTaskDataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct a `MultiTaskDataset` from a joint dataset that includes the</span>
+<span class="sd">        data for all tasks with the task feature index.</span>
+
+<span class="sd">        This will break down the joint dataset into individual datasets by the value</span>
+<span class="sd">        of the task feature. Each resulting dataset will have its outcome name set</span>
+<span class="sd">        based on `outcome_names_per_task`, with the missing values defaulting to</span>
+<span class="sd">        `task_&lt;task_feature&gt;` (except for the target task, which will retain the</span>
+<span class="sd">        original outcome name from the dataset).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            dataset: The joint dataset.</span>
+<span class="sd">            task_feature_index: The column index of the task feature in `dataset.X`.</span>
+<span class="sd">            target_task_value: The value of the task feature for the target task</span>
+<span class="sd">                in the dataset. The data for the target task is filtered according to</span>
+<span class="sd">                `dataset.X[task_feature_index] == target_task_value`.</span>
+<span class="sd">            outcome_names_per_task: Optional dictionary mapping task feature values</span>
+<span class="sd">                to the outcome names for each task. If not provided, the auxiliary</span>
+<span class="sd">                tasks will be named `task_&lt;task_feature&gt;` and the target task will</span>
+<span class="sd">                retain the outcome name from the dataset.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `MultiTaskDataset` instance.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">outcome_names</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                <span class="s2">"Dataset containing more than one outcome is not supported. "</span>
+                <span class="sa">f</span><span class="s2">"Got </span><span class="si">{</span><span class="n">dataset</span><span class="o">.</span><span class="n">outcome_names</span><span class="si">=}</span><span class="s2">."</span>
+            <span class="p">)</span>
+        <span class="n">outcome_names_per_task</span> <span class="o">=</span> <span class="n">outcome_names_per_task</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="c1"># Split datasets by task feature.</span>
+        <span class="n">datasets</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">all_task_features</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">X</span><span class="p">[:,</span> <span class="n">task_feature_index</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">task_value</span> <span class="ow">in</span> <span class="n">all_task_features</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="o">.</span><span class="n">long</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">():</span>
+            <span class="n">default_name</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">dataset</span><span class="o">.</span><span class="n">outcome_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">task_value</span> <span class="o">==</span> <span class="n">target_task_value</span>
+                <span class="k">else</span> <span class="sa">f</span><span class="s2">"task_</span><span class="si">{</span><span class="n">task_value</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+            <span class="n">outcome_name</span> <span class="o">=</span> <span class="n">outcome_names_per_task</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task_value</span><span class="p">,</span> <span class="n">default_name</span><span class="p">)</span>
+            <span class="n">filter_mask</span> <span class="o">=</span> <span class="n">all_task_features</span> <span class="o">==</span> <span class="n">task_value</span>
+            <span class="n">new_dataset</span> <span class="o">=</span> <span class="n">SupervisedDataset</span><span class="p">(</span>
+                <span class="n">X</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">X</span><span class="p">[</span><span class="n">filter_mask</span><span class="p">],</span>
+                <span class="n">Y</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">Y</span><span class="p">[</span><span class="n">filter_mask</span><span class="p">],</span>
+                <span class="n">Yvar</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">Yvar</span><span class="p">[</span><span class="n">filter_mask</span><span class="p">]</span> <span class="k">if</span> <span class="n">dataset</span><span class="o">.</span><span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">feature_names</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">feature_names</span><span class="p">,</span>
+                <span class="n">outcome_names</span><span class="o">=</span><span class="p">[</span><span class="n">outcome_name</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="n">datasets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_dataset</span><span class="p">)</span>
+        <span class="c1"># Return the new</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">datasets</span><span class="o">=</span><span class="n">datasets</span><span class="p">,</span>
+            <span class="n">target_outcome_name</span><span class="o">=</span><span class="n">outcome_names_per_task</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="n">target_task_value</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">outcome_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="p">),</span>
+            <span class="n">task_feature_index</span><span class="o">=</span><span class="n">task_feature_index</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_validate_datasets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datasets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Validates that:</span>
+<span class="sd">        * Each dataset models only one outcome;</span>
+<span class="sd">        * Each outcome is modeled by only one dataset;</span>
+<span class="sd">        * The target outcome is included in the datasets;</span>
+<span class="sd">        * The datasets do not model batched inputs;</span>
+<span class="sd">        * The task feature names of the datasets all match;</span>
+<span class="sd">        * Either all or none of the datasets specify Yvar.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">outcome_names</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                <span class="s2">"Datasets containing more than one outcome are not supported."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">datasets</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                <span class="s2">"Received multiple datasets for the same outcome. Each dataset "</span>
+                <span class="s2">"must contain data for a unique outcome. Got datasets with "</span>
+                <span class="sa">f</span><span class="s2">"outcome names: </span><span class="si">{</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">outcome_names</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">ds</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">datasets</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_outcome_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">InputDataError</span><span class="p">(</span>
+                <span class="s2">"Target outcome is not present in the datasets. "</span>
+                <span class="sa">f</span><span class="s2">"Got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">target_outcome_name</span><span class="si">=}</span><span class="s2"> and datasets for "</span>
+                <span class="sa">f</span><span class="s2">"outcomes </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                <span class="s2">"Datasets modeling batched inputs are not supported."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_feature_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tf_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">feature_names</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">task_feature_index</span><span class="p">]</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">name</span> <span class="o">!=</span> <span class="n">tf_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">tf_names</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+                <span class="k">raise</span> <span class="n">InputDataError</span><span class="p">(</span>
+                    <span class="s2">"Expected the names of the task features to match across all "</span>
+                    <span class="sa">f</span><span class="s2">"datasets. Got </span><span class="si">{</span><span class="n">tf_names</span><span class="si">}</span><span class="s2">."</span>
+                <span class="p">)</span>
+        <span class="n">all_Yvars</span> <span class="o">=</span> <span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">Yvar</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">]</span>
+        <span class="n">is_none</span> <span class="o">=</span> <span class="p">[</span><span class="n">yvar</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">yvar</span> <span class="ow">in</span> <span class="n">all_Yvars</span><span class="p">]</span>
+        <span class="c1"># Check that either all or None of the Yvars exist.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">is_none</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">is_none</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                <span class="s2">"Expected either all or none of the datasets to have a Yvar. "</span>
+                <span class="s2">"Only subset of datasets define Yvar, which is unsupported."</span>
+            <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">X</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Appends task features, if needed, and concatenates the Xs of datasets to</span>
+<span class="sd">        produce the `train_X` expected by `MultiTaskGP` and subclasses.</span>
+
+<span class="sd">        If appending the task features, 0 is reserved for the target task and the</span>
+<span class="sd">        remaining tasks are populated with 1, 2, ..., len(datasets) - 1.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_heterogeneous_features</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                <span class="s2">"Concatenating `X`s from datasets with heterogeneous feature sets "</span>
+                <span class="s2">"is not supported."</span>
+            <span class="p">)</span>
+        <span class="n">all_Xs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">next_task</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">outcome</span><span class="p">,</span> <span class="n">ds</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_feature_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># Append the task feature index.</span>
+                <span class="k">if</span> <span class="n">outcome</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_outcome_name</span><span class="p">:</span>
+                    <span class="n">task_feature</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">task_feature</span> <span class="o">=</span> <span class="n">next_task</span>
+                    <span class="n">next_task</span> <span class="o">=</span> <span class="n">next_task</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="n">all_Xs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="n">task_feature</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">all_Xs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">all_Xs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Concatenates Ys of the datasets."""</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">ds</span><span class="o">.</span><span class="n">Y</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">values</span><span class="p">()],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Yvar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Concatenates Yvars of the datasets if they exist."""</span>
+        <span class="n">all_Yvars</span> <span class="o">=</span> <span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">Yvar</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">all_Yvars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">all_Yvars</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MultiTaskDataset.get_dataset_without_task_feature">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.MultiTaskDataset.get_dataset_without_task_feature">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_dataset_without_task_feature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outcome_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SupervisedDataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A helper for extracting the child datasets with their task features removed.</span>
+
+<span class="sd">        If the task feature index is `None`, the dataset will be returned as is.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            outcome_name: The outcome name for the dataset to extract.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The dataset without the task feature.</span>
+<span class="sd">        """</span>
+        <span class="n">dataset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="n">outcome_name</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_feature_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">dataset</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">feature_names</span><span class="p">)))</span>
+        <span class="n">indices</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task_feature_index</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">SupervisedDataset</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">indices</span><span class="p">],</span>
+            <span class="n">Y</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span>
+            <span class="n">Yvar</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">Yvar</span><span class="p">,</span>
+            <span class="n">feature_names</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">fn</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">fn</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">feature_names</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span>
+            <span class="p">],</span>
+            <span class="n">outcome_names</span><span class="o">=</span><span class="p">[</span><span class="n">outcome_name</span><span class="p">],</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ContextualDataset">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.ContextualDataset">[docs]</a>
+<span class="k">class</span> <span class="nc">ContextualDataset</span><span class="p">(</span><span class="n">SupervisedDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""This is a contextual dataset that is constructed from either a single</span>
+<span class="sd">    dateset containing overall outcome or a list of datasets that each corresponds</span>
+<span class="sd">    to a context breakdown.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">datasets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
+        <span class="n">parameter_decomposition</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+        <span class="n">metric_decomposition</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Construct a `ContextualDataset`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            datasets: A list of the datasets of individual tasks. Each dataset</span>
+<span class="sd">                is expected to contain data for only one outcome.</span>
+<span class="sd">            parameter_decomposition: Dict from context name to list of feature</span>
+<span class="sd">                names corresponding to that context.</span>
+<span class="sd">            metric_decomposition: Context breakdown metrics. Keys are context names.</span>
+<span class="sd">                Values are the lists of metric names belonging to the context:</span>
+<span class="sd">                {'context1': ['m1_c1'], 'context2': ['m1_c2'],}.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SupervisedDataset</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">ds</span><span class="o">.</span><span class="n">outcome_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">ds</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">datasets</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feature_names</span> <span class="o">=</span> <span class="n">datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">feature_names</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outcome_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parameter_decomposition</span> <span class="o">=</span> <span class="n">parameter_decomposition</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metric_decomposition</span> <span class="o">=</span> <span class="n">metric_decomposition</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_datasets</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_decompositions</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">context_buckets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_context_buckets</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parameter_index_decomp</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">c</span><span class="p">:</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">feature_names</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">parameter_decomposition</span><span class="p">[</span><span class="n">c</span><span class="p">]]</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">context_buckets</span>
+        <span class="p">}</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">X</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">outcome_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">X</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Concatenates the Ys from the child datasets to create the Y expected</span>
+<span class="sd">        by LCEM model if there are multiple datasets; Or return the Y expected</span>
+<span class="sd">        by LCEA model if there is only one dataset.</span>
+<span class="sd">        """</span>
+        <span class="n">Ys</span> <span class="o">=</span> <span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">Y</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">Ys</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Ys</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">Ys</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Yvar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Concatenates the Yvars from the child datasets to create the Y expected</span>
+<span class="sd">        by LCEM model if there are multiple datasets; Or return the Yvar expected</span>
+<span class="sd">        by LCEA model if there is only one dataset.</span>
+<span class="sd">        """</span>
+        <span class="n">Yvars</span> <span class="o">=</span> <span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">Yvar</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+        <span class="k">if</span> <span class="n">Yvars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">Yvars</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Yvars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">Yvars</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_extract_context_buckets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Determines the context buckets from the data, and sets the</span>
+<span class="sd">        context_buckets attribute.</span>
+
+<span class="sd">        If we have an outcome for each context, we will lists the contexts</span>
+<span class="sd">        in the same order as the outcomes (i.e., the order of datasets).</span>
+
+<span class="sd">        If there is a single outcome (aggregated across contexts), the context</span>
+<span class="sd">        buckets are taken from the parameter decomposition.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outcome_names</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outcome_names</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">metric_decomposition</span>
+            <span class="p">),</span> <span class="s2">"Expected a single dataset, or one for each context bucket."</span>
+            <span class="n">context_buckets</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">outcome_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_names</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric_decomposition</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">outcome_name</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
+                        <span class="n">context_buckets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                        <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">context_buckets</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameter_decomposition</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">context_buckets</span>
+
+    <span class="k">def</span> <span class="nf">_validate_datasets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Validation of given datasets.</span>
+<span class="sd">        1. each dataset has same X.</span>
+<span class="sd">        2. metric_decomposition is not None if there are multiple datasets.</span>
+<span class="sd">        3. metric_decomposition contains all the outcomes in datasets.</span>
+<span class="sd">        4. value keys of parameter decomposition and the keys of</span>
+<span class="sd">        metric_decomposition match context buckets.</span>
+<span class="sd">        5. Yvar is None for all, or not for all.</span>
+<span class="sd">        """</span>
+        <span class="n">datasets</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">X</span>
+        <span class="n">Yvar_is_none</span> <span class="o">=</span> <span class="n">datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">Yvar</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">X</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">InputDataError</span><span class="p">(</span><span class="s2">"Require same X for context buckets"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">Yvar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="n">Yvar_is_none</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">InputDataError</span><span class="p">(</span>
+                    <span class="s2">"Require Yvar to be specified for all buckets, or for none"</span>
+                <span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">datasets</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric_decomposition</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">InputDataError</span><span class="p">(</span>
+                    <span class="s2">"metric_decomposition must be provided when there are"</span>
+                    <span class="o">+</span> <span class="s2">" multiple datasets."</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric_decomposition</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">InputDataError</span><span class="p">(</span>
+                    <span class="s2">"metric_decomposition is redundant when there is one "</span>
+                    <span class="o">+</span> <span class="s2">"dataset for overall outcome."</span>
+                <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_validate_decompositions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Checks that the decompositions are valid.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            InputDataError: If any of the decompositions are invalid.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric_decomposition</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metric_decomposition</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">existing_metrics</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric_decomposition</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">existing_metrics</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">v</span><span class="p">)):</span>
+                    <span class="k">raise</span> <span class="n">InputDataError</span><span class="p">(</span>
+                        <span class="s2">"metric_decomposition has same metric for multiple contexts."</span>
+                    <span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">!=</span> <span class="n">m</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="o">!=</span> <span class="n">m</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">InputDataError</span><span class="p">(</span>
+                        <span class="s2">"All values in metric_decomposition must have the same length."</span>
+                    <span class="p">)</span>
+                <span class="n">existing_metrics</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metric_decomposition</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameter_decomposition</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+            <span class="p">):</span>
+                <span class="k">raise</span> <span class="n">InputDataError</span><span class="p">(</span>
+                    <span class="s2">"Keys of metric and parameter decompositions do not match."</span>
+                <span class="p">)</span>
+
+            <span class="n">all_metrics</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric_decomposition</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="n">all_metrics</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">outcome</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_names</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">outcome</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_metrics</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">InputDataError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">outcome</span><span class="si">}</span><span class="s2"> is missing in metric_decomposition."</span>
+                    <span class="p">)</span></div>
+
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../../index.html">Documentation overview</a><ul>
+<li><a href="../../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/0.10.0/" class="nav-home"><img src="/v/0.10.0/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/0.10.0/docs/introduction">Introduction</a><a href="/v/0.10.0/docs/getting_started">Getting Started</a><a href="/v/0.10.0/tutorials/">Tutorials</a><a href="/v/0.10.0/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/0.10.0/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2024 Meta Platforms, Inc</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/0.10.0/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>
