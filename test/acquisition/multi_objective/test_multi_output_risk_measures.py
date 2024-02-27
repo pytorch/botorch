@@ -358,21 +358,23 @@ class TestMVaR(BotorchTestCase):
             self.assertTrue(torch.equal(dominated_count, expected_count))
 
             # test forward pass
-            # with `expectation=True`
-            mvar = MVaR(
-                n_w=10,
-                alpha=0.5,
-                expectation=True,
-            )
-            samples = torch.rand(2, 20, 2, **tkwargs)
-            mvar_exp = mvar(samples)
-            expected = [
-                mvar.get_mvar_set_via_counting(Y)[0].mean(dim=0)
-                for Y in samples.view(4, 10, 2)
-            ]
-            self.assertTrue(
-                torch.allclose(mvar_exp, torch.stack(expected).view(2, 2, 2))
-            )
+            for use_counting in (True, False):
+                # with `expectation=True`
+                mvar = MVaR(
+                    n_w=10,
+                    alpha=0.5,
+                    expectation=True,
+                    use_counting=use_counting,
+                )
+                samples = torch.rand(2, 20, 2, **tkwargs)
+                mvar_exp = mvar(samples)
+                expected = [
+                    mvar.get_mvar_set_via_counting(Y)[0].mean(dim=0)
+                    for Y in samples.view(4, 10, 2)
+                ]
+                self.assertTrue(
+                    torch.allclose(mvar_exp, torch.stack(expected).view(2, 2, 2))
+                )
 
             # m > 2
             samples = torch.rand(2, 20, 3, **tkwargs)
