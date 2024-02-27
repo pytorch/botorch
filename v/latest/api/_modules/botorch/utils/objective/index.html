@@ -33,8 +33,6 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">warnings</span>
-
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -214,35 +212,6 @@
         <span class="n">is_feasible</span> <span class="o">=</span> <span class="n">is_feasible</span> <span class="o">+</span> <span class="n">log_sigmoid</span><span class="p">(</span><span class="o">-</span><span class="n">constraint</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span> <span class="o">/</span> <span class="n">e</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">is_feasible</span> <span class="k">if</span> <span class="n">log</span> <span class="k">else</span> <span class="n">is_feasible</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span></div>
-
-
-
-<span class="c1"># TODO: deprecate this function</span>
-<div class="viewcode-block" id="soft_eval_constraint">
-<a class="viewcode-back" href="../../../utils.html#botorch.utils.objective.soft_eval_constraint">[docs]</a>
-<span class="k">def</span> <span class="nf">soft_eval_constraint</span><span class="p">(</span><span class="n">lhs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""Element-wise evaluation of a constraint in a 'soft' fashion</span>
-
-<span class="sd">    `value(x) = 1 / (1 + exp(x / eta))`</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        lhs: The left hand side of the constraint `lhs &lt;= 0`.</span>
-<span class="sd">        eta: The temperature parameter of the softmax function. As eta</span>
-<span class="sd">            decreases, this approximates the Heaviside step function.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        Element-wise 'soft' feasibility indicator of the same shape as `lhs`.</span>
-<span class="sd">        For each element `x`, `value(x) -&gt; 0` as `x` becomes positive, and</span>
-<span class="sd">        `value(x) -&gt; 1` as x becomes negative.</span>
-<span class="sd">    """</span>
-    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-        <span class="s2">"`soft_eval_constraint` is deprecated. Please consider `torch.utils.sigmoid` "</span>
-        <span class="o">+</span> <span class="s2">"with its `fat` and `log` options to compute feasibility indicators."</span><span class="p">,</span>
-        <span class="ne">DeprecationWarning</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="k">if</span> <span class="n">eta</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"eta must be positive."</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="o">-</span><span class="n">lhs</span> <span class="o">/</span> <span class="n">eta</span><span class="p">)</span></div>
 
 
 

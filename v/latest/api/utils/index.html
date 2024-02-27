@@ -854,29 +854,6 @@ then estimated with the i-th eta value.</p></li>
 </dl>
 </dd></dl>
 <dl class="py function">
-<dt class="sig sig-object py" id="botorch.utils.objective.soft_eval_constraint">
-<span class="sig-prename descclassname"><span class="pre">botorch.utils.objective.</span></span><span class="sig-name descname"><span class="pre">soft_eval_constraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lhs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/objective.html#soft_eval_constraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.objective.soft_eval_constraint" title="Link to this definition">¶</a></dt>
-<dd><p>Element-wise evaluation of a constraint in a ‘soft’ fashion</p>
-<p><cite>value(x) = 1 / (1 + exp(x / eta))</cite></p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>lhs</strong> (<em>Tensor</em>) – The left hand side of the constraint <cite>lhs &lt;= 0</cite>.</p></li>
-<li><p><strong>eta</strong> (<em>float</em>) – The temperature parameter of the softmax function. As eta
-decreases, this approximates the Heaviside step function.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Element-wise ‘soft’ feasibility indicator of the same shape as <cite>lhs</cite>.
-For each element <cite>x</cite>, <cite>value(x) -&gt; 0</cite> as <cite>x</cite> becomes positive, and
-<cite>value(x) -&gt; 1</cite> as x becomes negative.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tensor</em></p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.objective.apply_constraints">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.objective.</span></span><span class="sig-name descname"><span class="pre">apply_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">infeasible_cost</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/objective.html#apply_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.objective.apply_constraints" title="Link to this definition">¶</a></dt>
 <dd><p>Apply constraints using an infeasible_cost <cite>M</cite> for negative objectives.</p>
