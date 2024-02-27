@@ -10,13 +10,16 @@ on:
 jobs:
 
   tests-and-coverage-pip:
-    name: Tests and coverage (pip, Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    name: Tests+coverage (pip, py${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-14", "windows-latest"]
         python-version: ["3.9", "3.11"]
+        exclude:
+          - os: "macos-14"
+            python-version: "3.9"  # not available for macos-14
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
@@ -47,6 +50,9 @@ jobs:
       matrix:
         os: ["ubuntu-latest", "macos-14", "windows-latest"]
         python-version: ["3.9", "3.11"]
+        exclude:
+        - os: "macos-14"
+          python-version: "3.9"  # not available for macos-14
     steps:
     - uses: actions/checkout@v3
     - uses: conda-incubator/setup-miniconda@v2
@@ -58,6 +64,7 @@ jobs:
       shell: bash -l {0}
       env:
         ALLOW_LATEST_GPYTORCH_LINOP: true
+      if: $!{{ runner.os == 'macOS' && matrix.python-version == 3.9 }}
       run: |
         # avoid conda bug in >=23.10.0: https://github.com/conda/conda/issues/13412
         conda config --set solver classic
@@ -68,5 +75,6 @@ jobs:
         pip install .[test]
     - name: Unit tests
       shell: bash -l {0}
+      if: $!{{ runner.os == 'macOS' && matrix.python-version == 3.9 }}
       run: |
         pytest -ra
