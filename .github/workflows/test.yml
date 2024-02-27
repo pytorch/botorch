@@ -64,7 +64,6 @@ jobs:
       shell: bash -l {0}
       env:
         ALLOW_LATEST_GPYTORCH_LINOP: true
-      if: $!{{ runner.os == 'macOS' && matrix.python-version == 3.9 }}
       run: |
         # avoid conda bug in >=23.10.0: https://github.com/conda/conda/issues/13412
         conda config --set solver classic
@@ -75,6 +74,5 @@ jobs:
         pip install .[test]
     - name: Unit tests
       shell: bash -l {0}
-      if: $!{{ runner.os == 'macOS' && matrix.python-version == 3.9 }}
       run: |
         pytest -ra
