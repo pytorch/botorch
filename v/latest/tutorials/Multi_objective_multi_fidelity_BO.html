@@ -471,8 +471,6 @@ The model is initialized with random points, where the fidelity is sampled from 
             <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>
             <span class="n">sampler</span><span class="o">=</span><span class="n">SobolQMCNormalSampler</span><span class="p">(</span>
                 <span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">NUM_INNER_MC_SAMPLES</span><span class="p">]),</span>
-                <span class="n">resample</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                <span class="n">collapse_batch_dims</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="n">use_posterior_mean</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">),</span>

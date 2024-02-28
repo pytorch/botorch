@@ -324,8 +324,6 @@ def get_current_value(
             ref_point=ref_point,
             sampler=SobolQMCNormalSampler(
                 sample_shape=torch.Size([NUM_INNER_MC_SAMPLES]),
-                resample=False,
-                collapse_batch_dims=True,
             ),
             use_posterior_mean=True,
         ),

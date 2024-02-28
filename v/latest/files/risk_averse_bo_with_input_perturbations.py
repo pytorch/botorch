@@ -124,7 +124,7 @@ def optimize_acqf_and_get_observation():
     acqf = qNoisyExpectedImprovement(
         model=model,
         X_baseline=train_X,
-        sampler=SobolQMCNormalSampler(128),
+        sampler=SobolQMCNormalSampler(sample_shape=torch.Size([128])),
         objective=risk_measure,
         prune_baseline=True,
     )

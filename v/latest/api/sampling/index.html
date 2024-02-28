@@ -31,7 +31,7 @@
 <p>A dummy sampler for use with deterministic models.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.deterministic.DeterministicSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.deterministic.</span></span><span class="sig-name descname"><span class="pre">DeterministicSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/deterministic.html#DeterministicSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.deterministic.DeterministicSampler" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.deterministic.</span></span><span class="sig-name descname"><span class="pre">DeterministicSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/deterministic.html#DeterministicSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.deterministic.DeterministicSampler" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.sampling.stochastic_samplers.StochasticSampler" title="botorch.sampling.stochastic_samplers.StochasticSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">StochasticSampler</span></code></a></p>
 <p>A sampler that simply calls <cite>posterior.rsample</cite>, intended to be used with
 <cite>DeterministicModel</cite> &amp; <cite>DeterministicPosterior</cite>.</p>
@@ -46,7 +46,6 @@ deterministic models since their output is deterministic by definition.</p>
 <li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
 of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
 <li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
-<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -62,7 +61,7 @@ of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.
 deterministic optimization of acquisition functions with ensemble models.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.index_sampler.IndexSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.index_sampler.</span></span><span class="sig-name descname"><span class="pre">IndexSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/index_sampler.html#IndexSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.index_sampler.IndexSampler" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.index_sampler.</span></span><span class="sig-name descname"><span class="pre">IndexSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/index_sampler.html#IndexSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.index_sampler.IndexSampler" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></p>
 <p>A sampler that calls <cite>posterior.rsample_from_base_samples</cite> to
 generate the samples via index base samples.</p>
@@ -73,7 +72,6 @@ generate the samples via index base samples.</p>
 <li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
 of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
 <li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
-<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -136,7 +134,7 @@ given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
 acquisition functions and Gaussian posteriors.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.normal.NormalMCSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.normal.</span></span><span class="sig-name descname"><span class="pre">NormalMCSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/normal.html#NormalMCSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.normal.NormalMCSampler" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.normal.</span></span><span class="sig-name descname"><span class="pre">NormalMCSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/normal.html#NormalMCSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.normal.NormalMCSampler" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 <p>Base class for samplers producing (possibly QMC) N(0,1) samples.</p>
 <p>Subclasses must implement the <cite>_construct_base_samples</cite> method.</p>
@@ -147,7 +145,6 @@ acquisition functions and Gaussian posteriors.</p>
 <li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
 of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
 <li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
-<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -174,7 +171,7 @@ of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.normal.IIDNormalSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.normal.</span></span><span class="sig-name descname"><span class="pre">IIDNormalSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/normal.html#IIDNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.normal.IIDNormalSampler" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.normal.</span></span><span class="sig-name descname"><span class="pre">IIDNormalSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/normal.html#IIDNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.normal.IIDNormalSampler" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.sampling.normal.NormalMCSampler" title="botorch.sampling.normal.NormalMCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMCSampler</span></code></a></p>
 <p>Sampler for MC base samples using iid N(0,1) samples.</p>
 <p class="rubric">Example</p>
@@ -190,7 +187,6 @@ of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.
 <li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
 of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
 <li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
-<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -201,7 +197,7 @@ of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.normal.SobolQMCNormalSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.normal.</span></span><span class="sig-name descname"><span class="pre">SobolQMCNormalSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/normal.html#SobolQMCNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.normal.SobolQMCNormalSampler" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.normal.</span></span><span class="sig-name descname"><span class="pre">SobolQMCNormalSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/normal.html#SobolQMCNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.normal.SobolQMCNormalSampler" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.sampling.normal.NormalMCSampler" title="botorch.sampling.normal.NormalMCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMCSampler</span></code></a></p>
 <p>Sampler for quasi-MC N(0,1) base samples using Sobol sequences.</p>
 <p class="rubric">Example</p>
@@ -217,7 +213,6 @@ of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.
 <li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
 of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
 <li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
-<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -422,7 +417,7 @@ tensor, and the function returns None.</p></li>
 stochastic optimization of acquisition functions.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.stochastic_samplers.ForkedRNGSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.stochastic_samplers.</span></span><span class="sig-name descname"><span class="pre">ForkedRNGSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/stochastic_samplers.html#ForkedRNGSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.stochastic_samplers.ForkedRNGSampler" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.stochastic_samplers.</span></span><span class="sig-name descname"><span class="pre">ForkedRNGSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/stochastic_samplers.html#ForkedRNGSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.stochastic_samplers.ForkedRNGSampler" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></p>
 <p>A sampler using <cite>torch.fork_rng</cite> to enable replicable sampling
 from a posterior that does not support base samples.</p>
@@ -439,7 +434,6 @@ compatible with Sample Average Approximation.</p>
 <li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
 of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
 <li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
-<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -466,7 +460,7 @@ of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.stochastic_samplers.StochasticSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.stochastic_samplers.</span></span><span class="sig-name descname"><span class="pre">StochasticSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/stochastic_samplers.html#StochasticSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.stochastic_samplers.StochasticSampler" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.stochastic_samplers.</span></span><span class="sig-name descname"><span class="pre">StochasticSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/stochastic_samplers.html#StochasticSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.stochastic_samplers.StochasticSampler" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></p>
 <p>A sampler that simply calls <cite>posterior.rsample</cite> to generate the
 samples. This should only be used for stochastic optimization of the
@@ -481,7 +475,6 @@ under the hood.</p>
 <li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
 of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
 <li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
-<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
 </ul>
 </dd>
 </dl>
