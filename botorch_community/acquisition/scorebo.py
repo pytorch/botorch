@@ -14,6 +14,8 @@ References
     Self-Correcting Bayesian Optimization thorugh Bayesian Active Learning.
     In Proceedings of the Annual Conference on Neural Information
     Processing Systems (NeurIPS), 2023.
+
+Contributor: hvarfner
 """
 
 from __future__ import annotations

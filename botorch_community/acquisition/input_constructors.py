@@ -7,6 +7,8 @@
 r"""
 A registry of helpers for generating inputs to acquisition function
 constructors programmatically from a consistent input format.
+
+Contributor: hvarfner (bayesian_active_learning, scorebo)
 """
 
 from __future__ import annotations

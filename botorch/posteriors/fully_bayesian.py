@@ -103,11 +103,7 @@ class GaussianMixturePosterior(GPyTorchPosterior):
             if self._is_mt
             else distribution.variance.unsqueeze(-1)
         )
-        self._covariance_matrix = (
-            distribution.lazy_covariance_matrix
-            if self._is_mt
-            else distribution.lazy_covariance_matrix
-        )
+        self._covariance_matrix = distribution.lazy_covariance_matrix
 
         self._mixture_mean: Optional[Tensor] = None
         self._mixture_variance: Optional[Tensor] = None

@@ -27,6 +27,8 @@ References
     Bayesian Active Learning with Fully Bayesian Gaussian Processes.
     In Proceedings of the Annual Conference on Neural Information
     Processing Systems (NeurIPS), 2022.
+
+Contributor: hvarfner
 """
 
 from __future__ import annotations
