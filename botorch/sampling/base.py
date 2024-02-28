@@ -10,9 +10,8 @@ The base class for sampler modules to be used with MC-evaluated acquisition func
 
 from __future__ import annotations
 
-import warnings
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Tuple
+from typing import Optional, Tuple
 
 import torch
 from botorch.exceptions.errors import InputDataError
@@ -49,7 +48,6 @@ class MCSampler(Module, ABC):
         self,
         sample_shape: torch.Size,
         seed: Optional[int] = None,
-        **kwargs: Any,
     ) -> None:
         r"""Abstract base class for samplers.
 
@@ -57,37 +55,13 @@ class MCSampler(Module, ABC):
             sample_shape: The `sample_shape` of the samples to generate. The full shape
                 of the samples is given by `posterior._extended_shape(sample_shape)`.
             seed: An optional seed to use for sampling.
-            **kwargs: Catch-all for deprecated kwargs.
         """
         super().__init__()
         if not isinstance(sample_shape, torch.Size):
-            if isinstance(sample_shape, int):
-                sample_shape = torch.Size([sample_shape])
-                warnings.warn(
-                    "The first positional argument of samplers, `num_samples`, has "
-                    "been deprecated and replaced with `sample_shape`, which expects "
-                    "a `torch.Size` object.",
-                    DeprecationWarning,
-                )
-            else:
-                raise InputDataError(
-                    "Expected `sample_shape` to be a `torch.Size` object, "
-                    f"got {sample_shape}."
-                )
-        for k, v in kwargs.items():
-            if k == "resample":
-                if v is True:
-                    raise RuntimeError(KWARG_ERR_MSG.format(k, "StochasticSampler"))
-                else:
-                    warnings.warn(KWARGS_DEPRECATED_MSG.format(k), DeprecationWarning)
-            elif k == "collapse_batch_dims":
-                if v is False:
-                    raise RuntimeError(KWARG_ERR_MSG.format(k, "ForkedRNGSampler"))
-                else:
-                    warnings.warn(KWARGS_DEPRECATED_MSG.format(k), DeprecationWarning)
-            else:
-                raise RuntimeError(f"Recevied an unknown argument {k}: {v}.")
-
+            raise InputDataError(
+                "Expected `sample_shape` to be a `torch.Size` object, "
+                f"got {sample_shape}."
+            )
         self.sample_shape = sample_shape
         self.seed = seed if seed is not None else torch.randint(0, 1000000, (1,)).item()
         self.register_buffer("base_samples", None)
