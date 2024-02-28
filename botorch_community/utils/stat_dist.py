@@ -6,6 +6,7 @@
 
 """
 Helpers for computing statistical distances between Gaussian distributions.
+
 Contributor: hvarfner
 """
 
