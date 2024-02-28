@@ -371,16 +371,3 @@ class TestRandomRestartOptimization(TestBaseCandidateGeneration):
                 batch_candidates=batch_candidates, batch_values=batch_acq_values
             )
             self.assertTrue(-EPS <= candidates <= 1 + EPS)
-
-
-class TestDeprecateMinimize(BotorchTestCase):
-    def test_deprecate_minimize(self):
-        from botorch.generation.gen import minimize
-
-        with self.assertWarnsRegex(
-            DeprecationWarning, "botorch.generation.gen.minimize_with_timeout"
-        ):
-            try:
-                minimize(None, None)
-            except Exception:
-                pass
