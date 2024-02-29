@@ -2136,11 +2136,14 @@ deviations from a Standardize transform.</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.test_helpers.gen_multi_task_dataset">
-<span class="sig-prename descclassname"><span class="pre">botorch.utils.test_helpers.</span></span><span class="sig-name descname"><span class="pre">gen_multi_task_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">tkwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/test_helpers.html#gen_multi_task_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.test_helpers.gen_multi_task_dataset" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.test_helpers.</span></span><span class="sig-name descname"><span class="pre">gen_multi_task_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">tkwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/test_helpers.html#gen_multi_task_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.test_helpers.gen_multi_task_dataset" title="Link to this definition">¶</a></dt>
 <dd><p>Constructs a multi-task dataset with two tasks, each with 10 data points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>yvar</strong> (<em>float</em><em> | </em><em>None</em>) – </p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>yvar</strong> (<em>float</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>task_values</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tuple</em>[<a class="reference internal" href="#botorch.utils.datasets.MultiTaskDataset" title="botorch.utils.datasets.MultiTaskDataset"><em>MultiTaskDataset</em></a>, <em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>, <em>Tensor</em>]]</p>

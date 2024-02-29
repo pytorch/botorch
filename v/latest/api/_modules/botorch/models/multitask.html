@@ -107,6 +107,45 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
+<div class="viewcode-block" id="get_task_value_remapping">
+<a class="viewcode-back" href="../../../models.html#botorch.models.multitask.get_task_value_remapping">[docs]</a>
+<span class="k">def</span> <span class="nf">get_task_value_remapping</span><span class="p">(</span>
+    <span class="n">task_values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Construct an mapping of discrete task values to contiguous int-valued floats.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        task_values: A sorted long-valued tensor of task values.</span>
+<span class="sd">        dtype: The dtype of the model inputs (e.g. `X`), which the new</span>
+<span class="sd">            task values should have mapped to (e.g. float, double).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A tensor of shape `task_values.max() + 1` that maps task values</span>
+<span class="sd">        to new task values. The indexing operation `mapper[task_value]`</span>
+<span class="sd">        will produce a tensor of new task values, of the same shape as</span>
+<span class="sd">        the original. The elements of the `mapper` tensor that do not</span>
+<span class="sd">        appear in the original `task_values` are mapped to `nan`. The</span>
+<span class="sd">        return value will be `None`, when the task values are contiguous</span>
+<span class="sd">        integers starting from zero.</span>
+<span class="sd">    """</span>
+    <span class="n">task_range</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">task_values</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">task_values</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">task_values</span><span class="o">.</span><span class="n">device</span>
+    <span class="p">)</span>
+    <span class="n">mapper</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">task_values</span><span class="p">,</span> <span class="n">task_range</span><span class="p">):</span>
+        <span class="c1"># Create a tensor that maps task values to new task values.</span>
+        <span class="c1"># The number of tasks should be small, so this should be quite efficient.</span>
+        <span class="n">mapper</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">task_values</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,),</span>
+            <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">),</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span>
+            <span class="n">device</span><span class="o">=</span><span class="n">task_values</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">mapper</span><span class="p">[</span><span class="n">task_values</span><span class="p">]</span> <span class="o">=</span> <span class="n">task_range</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mapper</span></div>
+
+
+
 <div class="viewcode-block" id="MultiTaskGP">
 <a class="viewcode-back" href="../../../models.html#botorch.models.multitask.MultiTaskGP">[docs]</a>
 <span class="k">class</span> <span class="nc">MultiTaskGP</span><span class="p">(</span><span class="n">ExactGP</span><span class="p">,</span> <span class="n">MultiTaskGPyTorchModel</span><span class="p">,</span> <span class="n">FantasizeMixin</span><span class="p">):</span>
@@ -230,6 +269,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">task_covar_module</span> <span class="o">=</span> <span class="n">IndexKernel</span><span class="p">(</span>
             <span class="n">num_tasks</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_tasks</span><span class="p">,</span> <span class="n">rank</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_rank</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="n">task_covar_prior</span>
         <span class="p">)</span>
+        <span class="n">task_mapper</span> <span class="o">=</span> <span class="n">get_task_value_remapping</span><span class="p">(</span>
+            <span class="n">task_values</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+                <span class="n">all_tasks</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">train_X</span><span class="o">.</span><span class="n">device</span>
+            <span class="p">),</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">train_X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"_task_mapper"</span><span class="p">,</span> <span class="n">task_mapper</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_expected_task_values</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">all_tasks</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">input_transform</span> <span class="o">=</span> <span class="n">input_transform</span>
         <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -260,6 +307,7 @@
             <span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]))</span>
             <span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
         <span class="p">)</span>
+        <span class="n">task_idcs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map_tasks</span><span class="p">(</span><span class="n">task_values</span><span class="o">=</span><span class="n">task_idcs</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">x_basic</span><span class="p">,</span> <span class="n">task_idcs</span>
 
 <div class="viewcode-block" id="MultiTaskGP.forward">
@@ -295,7 +343,9 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="o">-</span><span class="n">d</span> <span class="o">&lt;=</span> <span class="n">task_feature</span> <span class="o">&lt;=</span> <span class="n">d</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Must have that -</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2"> &lt;= task_feature &lt;= </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">task_feature</span> <span class="o">=</span> <span class="n">task_feature</span> <span class="o">%</span> <span class="p">(</span><span class="n">d</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="n">all_tasks</span> <span class="o">=</span> <span class="n">train_X</span><span class="p">[:,</span> <span class="n">task_feature</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">all_tasks</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">train_X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">task_feature</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="nb">sorted</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="p">)</span>
         <span class="k">return</span> <span class="n">all_tasks</span><span class="p">,</span> <span class="n">task_feature</span><span class="p">,</span> <span class="n">d</span></div>
 
 

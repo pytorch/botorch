@@ -1438,6 +1438,32 @@ Apr 2010.</p>
 High-Dimensional Outputs. <a class="reference external" href="https://arxiv.org/abs/2106.12997">https://arxiv.org/abs/2106.12997</a>, Jun 2021.</p>
 </div>
 </div>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.models.multitask.get_task_value_remapping">
+<span class="sig-prename descclassname"><span class="pre">botorch.models.multitask.</span></span><span class="sig-name descname"><span class="pre">get_task_value_remapping</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#get_task_value_remapping"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.multitask.get_task_value_remapping" title="Link to this definition">¶</a></dt>
+<dd><p>Construct an mapping of discrete task values to contiguous int-valued floats.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task_values</strong> (<em>Tensor</em>) – A sorted long-valued tensor of task values.</p></li>
+<li><p><strong>dtype</strong> (<em>dtype</em>) – The dtype of the model inputs (e.g. <cite>X</cite>), which the new
+task values should have mapped to (e.g. float, double).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tensor of shape <cite>task_values.max() + 1</cite> that maps task values
+to new task values. The indexing operation <cite>mapper[task_value]</cite>
+will produce a tensor of new task values, of the same shape as
+the original. The elements of the <cite>mapper</cite> tensor that do not
+appear in the original <cite>task_values</cite> are mapped to <cite>nan</cite>. The
+return value will be <cite>None</cite>, when the task values are contiguous
+integers starting from zero.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em> | None</p>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.multitask.MultiTaskGP">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.multitask.</span></span><span class="sig-name descname"><span class="pre">MultiTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_covar_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#MultiTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP" title="Link to this definition">¶</a></dt>
