@@ -10,7 +10,6 @@ Model List GP Regression models.
 
 from __future__ import annotations
 
-from copy import deepcopy
 from typing import Any, List
 
 import torch
@@ -128,19 +127,6 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel, FantasizeMixin):
 
         kwargs_ = {**kwargs, "noise": noises} if noise is not None else kwargs
         return super().get_fantasy_model(inputs, targets, **kwargs_)
-
-    def subset_output(self, idcs: List[int]) -> ModelListGP:
-        r"""Subset the model along the submodel dimension.
-
-        Args:
-            idcs: The indices of submodels to subset the model to.
-
-        Returns:
-            The current model, subset to the specified submodels. If each model
-            is single-output, this will correspond to that subset of the
-            outputs.
-        """
-        return self.__class__(*[deepcopy(self.models[i]) for i in idcs])
 
     def _set_transformed_inputs(self) -> None:
         r"""Update training inputs with transformed inputs."""

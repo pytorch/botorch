@@ -12,6 +12,7 @@ from typing import List, Optional
 import torch
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions import OptimizationWarning
+from botorch.exceptions.errors import UnsupportedError
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.multitask import (
     FixedNoiseMultiTaskGP,
@@ -312,6 +313,9 @@ class TestMultiTaskGP(BotorchTestCase):
                 model.outcome_transform = tmp_tf
                 expected_var = tmp_tf.untransform_posterior(p_utf).variance
                 self.assertAllClose(posterior_f.variance, expected_var)
+            msg = "Subsetting outputs is not supported by `MultiTaskGPyTorchModel`."
+            with self.assertRaisesRegex(UnsupportedError, msg):
+                model.subset_output(idcs=[0])
 
             if task_values is not None:
                 test_x = torch.rand(2, 1, **tkwargs)
