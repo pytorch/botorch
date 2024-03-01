@@ -15,7 +15,6 @@ from __future__ import annotations
 import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from copy import deepcopy
 from typing import (
     Any,
     Callable,
@@ -576,10 +575,12 @@ class ModelList(Model):
         the model `m1` subset to its second output.
         """
         group_indices = self._get_group_subset_indices(idcs=idcs)
-        subset_models = [
-            deepcopy(self.models[grp_idx].subset_output(idcs=sub_idcs))
-            for grp_idx, sub_idcs in group_indices.items()
-        ]
+        subset_models = []
+        for grp_idx, sub_idcs in group_indices.items():
+            subset_model = self.models[grp_idx]
+            if sub_idcs is not None and subset_model.num_outputs != len(sub_idcs):
+                subset_model = subset_model.subset_output(idcs=sub_idcs)
+            subset_models.append(subset_model)
         if len(subset_models) == 1:
             return subset_models[0]
         return self.__class__(*subset_models)

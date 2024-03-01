@@ -21,7 +21,11 @@ from typing import Any, List, Optional, Tuple, TYPE_CHECKING, Union
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
-from botorch.exceptions.errors import BotorchTensorDimensionError, InputDataError
+from botorch.exceptions.errors import (
+    BotorchTensorDimensionError,
+    InputDataError,
+    UnsupportedError,
+)
 from botorch.exceptions.warnings import (
     _get_single_precision_warning,
     BotorchTensorDimensionWarning,
@@ -828,3 +832,16 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
         if posterior_transform is not None:
             return posterior_transform(posterior)
         return posterior
+
+    def subset_output(self, idcs: List[int]) -> MultiTaskGPyTorchModel:
+        r"""Returns a new model that only outputs a subset of the outputs.
+
+        Args:
+            idcs: A list of output indices, corresponding to the outputs to keep.
+
+        Returns:
+            A new model that only outputs the requested outputs.
+        """
+        raise UnsupportedError(
+            "Subsetting outputs is not supported by `MultiTaskGPyTorchModel`."
+        )
