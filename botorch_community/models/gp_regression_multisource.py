@@ -174,9 +174,11 @@ class SingleTaskAugmentedGP(SingleTaskGP):
         if train_Yvar is not None:
             train_Yvar = torch.cat(
                 [
-                    train_Yvar[s]
-                    if s == len(sources) - 1
-                    else train_Yvar[s][reliable_idxs[s]]
+                    (
+                        train_Yvar[s]
+                        if s == len(sources) - 1
+                        else train_Yvar[s][reliable_idxs[s]]
+                    )
                     for s in sources
                 ]
             )

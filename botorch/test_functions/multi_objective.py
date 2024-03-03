@@ -522,6 +522,7 @@ class DTLZ4(DTLZ2):
 
     The global Pareto-optimal front corresponds to x_i = 0.5 for x_i in X_m.
     """
+
     _alpha = 100.0
 
 
@@ -599,6 +600,7 @@ class GMM(MultiObjectiveTestProblem):
 
     See [Daulton2022]_ for details on this multi-objective problem.
     """
+
     dim = 2
     _bounds = [(0.0, 1.0), (0.0, 1.0)]
 
@@ -698,6 +700,7 @@ class Penicillin(MultiObjectiveTestProblem):
     The reference point was set using the `infer_reference_point` heuristic
     on the Pareto frontier over a large discrete set of random designs.
     """
+
     dim = 7
     num_objectives = 3
     _bounds = [
@@ -831,6 +834,7 @@ class ToyRobust(MultiObjectiveTestProblem):
     heuristic on the Pareto frontier over a large discrete set of
     random designs.
     """
+
     dim = 1
     _bounds = [(0.0, 0.7)]
     _ref_point = [-6.1397, -8.1942]
@@ -1342,6 +1346,7 @@ class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     This implementation is adapted from:
     https://github.com/anyoptimization/pymoo/blob/master/pymoo/problems/multi/mw.py
     """
+
     num_constraints = 2
     num_objectives = 2
     _ref_point = [1.2, 1.2]

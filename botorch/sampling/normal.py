@@ -122,13 +122,13 @@ class NormalMCSampler(MCSampler, ABC):
                     len(posterior.base_sample_shape) - len(batch_shape)
                 ) == 1
                 if single_output:
-                    self.base_samples[
-                        ..., : current_base_samples.shape[-1]
-                    ] = expanded_samples
+                    self.base_samples[..., : current_base_samples.shape[-1]] = (
+                        expanded_samples
+                    )
                 else:
-                    self.base_samples[
-                        ..., : current_base_samples.shape[-2], :
-                    ] = expanded_samples
+                    self.base_samples[..., : current_base_samples.shape[-2], :] = (
+                        expanded_samples
+                    )
 
 
 class IIDNormalSampler(NormalMCSampler):

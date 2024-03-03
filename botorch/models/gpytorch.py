@@ -61,6 +61,7 @@ class GPyTorchModel(Model, ABC):
 
     :meta private:
     """
+
     likelihood: Likelihood
 
     @staticmethod

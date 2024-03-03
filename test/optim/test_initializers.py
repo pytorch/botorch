@@ -1031,9 +1031,11 @@ class TestGenOneShotHVKGInitialConditions(BotorchTestCase):
                             mock.patch(
                                 "botorch.optim.optimize.optimize_acqf",
                                 return_value=(
-                                    mock_fantasy_cands[..., :1]
-                                    if is_mf_kg
-                                    else mock_fantasy_cands,
+                                    (
+                                        mock_fantasy_cands[..., :1]
+                                        if is_mf_kg
+                                        else mock_fantasy_cands
+                                    ),
                                     mock_fantasy_vals,
                                 ),
                             )
@@ -1357,9 +1359,11 @@ class TestSampleAroundBest(BotorchTestCase):
             for any_feas in (True, False):
                 Y_train = torch.stack(
                     [
-                        torch.linspace(-0.5, 0.5, X_train.shape[0], **tkwargs)
-                        if any_feas
-                        else torch.ones(X_train.shape[0], **tkwargs),
+                        (
+                            torch.linspace(-0.5, 0.5, X_train.shape[0], **tkwargs)
+                            if any_feas
+                            else torch.ones(X_train.shape[0], **tkwargs)
+                        ),
                         X_train.sum(dim=-1),
                     ],
                     dim=-1,

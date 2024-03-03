@@ -206,7 +206,12 @@ class TestQLowerBoundMultiObjectiveJointEntropySearch(BotorchTestCase):
         torch.manual_seed(1)
         tkwargs = {"device": self.device}
 
-        for (dtype, num_objectives, use_model_list, standardize_model,) in product(
+        for (
+            dtype,
+            num_objectives,
+            use_model_list,
+            standardize_model,
+        ) in product(
             (torch.float, torch.double),
             (1, 2, 3),
             (False, True),

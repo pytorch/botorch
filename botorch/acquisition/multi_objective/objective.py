@@ -58,6 +58,7 @@ class GenericMCMultiOutputObjective(GenericMCObjective, MCMultiOutputObjective):
     callable. In order to be able to use gradient-based acquisition function
     optimization it should be possible to backpropagate through the callable.
     """
+
     pass
 
 

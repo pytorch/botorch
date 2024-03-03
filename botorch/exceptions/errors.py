@@ -27,6 +27,7 @@ class CandidateGenerationError(BotorchError):
 
 class DeprecationError(BotorchError):
     r"""Exception raised due to deprecations"""
+
     pass
 
 

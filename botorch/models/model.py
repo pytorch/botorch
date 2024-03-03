@@ -408,9 +408,9 @@ class FantasizeMixin(ABC):
             with settings.propagate_grads(propagate_grads):
                 post_X = self.posterior(
                     X,
-                    observation_noise=True
-                    if observation_noise is None
-                    else observation_noise,
+                    observation_noise=(
+                        True if observation_noise is None else observation_noise
+                    ),
                 )
             Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x n' x m
             if observation_noise is not None:

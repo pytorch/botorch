@@ -29,6 +29,7 @@ GetTrainTargets = Dispatcher("get_train_targets")
 
 class TransformedModuleMixin:
     r"""Mixin that wraps a module's __call__ method with optional transforms."""
+
     input_transform: Optional[TInputTransform]
     output_transform: Optional[TOutputTransform]
 

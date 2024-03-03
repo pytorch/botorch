@@ -772,11 +772,7 @@ class SixHumpCamel(SyntheticTestFunction):
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         x1, x2 = X[..., 0], X[..., 1]
-        return (
-            (4 - 2.1 * x1**2 + x1**4 / 3) * x1**2
-            + x1 * x2
-            + (4 * x2**2 - 4) * x2**2
-        )
+        return (4 - 2.1 * x1**2 + x1**4 / 3) * x1**2 + x1 * x2 + (4 * x2**2 - 4) * x2**2
 
 
 class StyblinskiTang(SyntheticTestFunction):
@@ -922,6 +918,7 @@ class ConstrainedHartmann(Hartmann, ConstrainedSyntheticTestFunction):
     This is a constrained version of the standard Hartmann test function that
     uses `||x||_2 <= 1` as the constraint. This problem comes from [Letham2019]_.
     """
+
     num_constraints = 1
 
     def __init__(
@@ -957,6 +954,7 @@ class ConstrainedHartmannSmooth(Hartmann, ConstrainedSyntheticTestFunction):
     This is a constrained version of the standard Hartmann test function that
     uses `||x||_2^2 <= 1` as the constraint to obtain smoother constraint slack.
     """
+
     num_constraints = 1
 
     def __init__(

@@ -375,4 +375,5 @@ def consolidate_duplicates(
 
 class fantasize(_Flag):
     r"""A flag denoting whether we are currently in a `fantasize` context."""
+
     _state: bool = False

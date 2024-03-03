@@ -398,9 +398,9 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 gp1 = SaasFullyBayesianSingleTaskGP(
                     train_X=(train_X - lb) / (ub - lb),
                     train_Y=(train_Y - mu) / sigma,
-                    train_Yvar=train_Yvar / sigma**2
-                    if train_Yvar is not None
-                    else train_Yvar,
+                    train_Yvar=(
+                        train_Yvar / sigma**2 if train_Yvar is not None else train_Yvar
+                    ),
                 )
                 fit_fully_bayesian_model_nuts(
                     gp1, warmup_steps=8, num_samples=5, thinning=2, disable_progbar=True

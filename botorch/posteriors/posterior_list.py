@@ -73,9 +73,11 @@ class PosteriorList(Posterior):
             mcmc_samples = self._get_mcmc_batch_dimension()
             return torch.cat(
                 [
-                    x
-                    if isinstance(p, GaussianMixturePosterior)
-                    else self._reshape_tensor(x, mcmc_samples=mcmc_samples)
+                    (
+                        x
+                        if isinstance(p, GaussianMixturePosterior)
+                        else self._reshape_tensor(x, mcmc_samples=mcmc_samples)
+                    )
                     for x, p in zip(tensors, self.posteriors)
                 ],
                 dim=-1,

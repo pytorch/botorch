@@ -73,12 +73,14 @@ class OrthogonalAdditiveKernel(Kernel):
         )
         self.register_parameter(
             name="raw_coeffs_2",
-            parameter=nn.Parameter(
-                torch.zeros(*self.batch_shape, int(dim * (dim - 1) / 2), **tkwargs)
-                - 2 * log_d
-            )
-            if second_order
-            else None,
+            parameter=(
+                nn.Parameter(
+                    torch.zeros(*self.batch_shape, int(dim * (dim - 1) / 2), **tkwargs)
+                    - 2 * log_d
+                )
+                if second_order
+                else None
+            ),
         )
         if second_order:
             self._rev_triu_indices = torch.tensor(

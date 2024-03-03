@@ -28,6 +28,7 @@ class BotorchContainer(ABC):
 
     :meta private:
     """
+
     event_shape: Size
 
     def __post_init__(self, validate_init: bool = True) -> None:
@@ -67,6 +68,7 @@ class BotorchContainer(ABC):
 @dataclass(eq=False)
 class DenseContainer(BotorchContainer):
     r"""Basic representation of data stored as a dense Tensor."""
+
     values: Tensor
     event_shape: Size
 

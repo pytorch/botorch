@@ -362,9 +362,11 @@ class TestBatchedMultiOutputGPyTorchModel(BotorchTestCase):
             for input_batch_dim in (0, 3):
                 for num_outputs in (1, 2):
                     input_batch_shape, aug_batch_shape = get_batch_dims(
-                        train_X=train_X.unsqueeze(0).expand(3, 5, 1)
-                        if input_batch_dim == 3
-                        else train_X,
+                        train_X=(
+                            train_X.unsqueeze(0).expand(3, 5, 1)
+                            if input_batch_dim == 3
+                            else train_X
+                        ),
                         train_Y=train_Y[:, 0:1] if num_outputs == 1 else train_Y,
                     )
                     expected_input_batch_shape = (
@@ -373,9 +375,11 @@ class TestBatchedMultiOutputGPyTorchModel(BotorchTestCase):
                     self.assertEqual(input_batch_shape, expected_input_batch_shape)
                     self.assertEqual(
                         aug_batch_shape,
-                        expected_input_batch_shape + torch.Size([])
-                        if num_outputs == 1
-                        else expected_input_batch_shape + torch.Size([2]),
+                        (
+                            expected_input_batch_shape + torch.Size([])
+                            if num_outputs == 1
+                            else expected_input_batch_shape + torch.Size([2])
+                        ),
                     )
 
     def test_posterior_transform(self):

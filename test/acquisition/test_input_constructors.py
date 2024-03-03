@@ -97,8 +97,7 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 
 
-class DummyAcquisitionFunction(AcquisitionFunction):
-    ...
+class DummyAcquisitionFunction(AcquisitionFunction): ...
 
 
 class InputConstructorBaseTestCase(BotorchTestCase):
@@ -911,11 +910,11 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             for use_preprocessing in (True, False):
                 obj = MultiOutputExpectation(
                     n_w=3,
-                    preprocessing_function=WeightedMCMultiOutputObjective(
-                        torch.tensor([-1.0, -1.0])
-                    )
-                    if use_preprocessing
-                    else None,
+                    preprocessing_function=(
+                        WeightedMCMultiOutputObjective(torch.tensor([-1.0, -1.0]))
+                        if use_preprocessing
+                        else None
+                    ),
                 )
                 kwargs = c(
                     model=mm,
@@ -1118,11 +1117,11 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         for use_preprocessing in (True, False):
             obj = MultiOutputExpectation(
                 n_w=3,
-                preprocessing_function=WeightedMCMultiOutputObjective(
-                    torch.tensor([-1.0, -1.0])
-                )
-                if use_preprocessing
-                else None,
+                preprocessing_function=(
+                    WeightedMCMultiOutputObjective(torch.tensor([-1.0, -1.0]))
+                    if use_preprocessing
+                    else None
+                ),
             )
             kwargs = c(
                 model=mock_model,

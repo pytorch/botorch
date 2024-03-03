@@ -67,9 +67,11 @@ class TestEnsemblePosterior(BotorchTestCase):
             # test extended shape
             self.assertEqual(
                 p._extended_shape(torch.Size((128,))),
-                torch.Size((128, 5, 2))
-                if len(shape) == 3
-                else torch.Size((128, 2, 5, 2)),
+                (
+                    torch.Size((128, 5, 2))
+                    if len(shape) == 3
+                    else torch.Size((128, 2, 5, 2))
+                ),
             )
             # test rsample
             samples = p.rsample(torch.Size((1024,)))
