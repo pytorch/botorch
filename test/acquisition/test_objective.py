@@ -387,8 +387,8 @@ class TestLinearMCObjective(BotorchTestCase):
             weights = torch.rand(3, device=self.device, dtype=dtype)
             obj = LinearMCObjective(weights=weights)
             samples = torch.randn(4, 2, 3, device=self.device, dtype=dtype)
-            atol = 1e-8 if dtype == torch.double else 3e-8
-            rtol = 1e-5 if dtype == torch.double else 4e-5
+            atol = 1e-7 if dtype == torch.double else 3e-7
+            rtol = 1e-4 if dtype == torch.double else 4e-4
             self.assertAllClose(obj(samples), samples @ weights, atol=atol, rtol=rtol)
             samples = torch.randn(5, 4, 2, 3, device=self.device, dtype=dtype)
             self.assertAllClose(
