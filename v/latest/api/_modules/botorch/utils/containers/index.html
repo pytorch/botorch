@@ -51,6 +51,7 @@
 
 <span class="sd">    :meta private:</span>
 <span class="sd">    """</span>
+
     <span class="n">event_shape</span><span class="p">:</span> <span class="n">Size</span>
 
     <span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">validate_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -92,6 +93,7 @@
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">eq</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">DenseContainer</span><span class="p">(</span><span class="n">BotorchContainer</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Basic representation of data stored as a dense Tensor."""</span>
+
     <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span>
     <span class="n">event_shape</span><span class="p">:</span> <span class="n">Size</span>
 

@@ -315,9 +315,11 @@
 
     <span class="n">batch_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
         <span class="s2">"batch_limit"</span><span class="p">,</span>
-        <span class="n">opt_inputs</span><span class="o">.</span><span class="n">num_restarts</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">nonlinear_inequality_constraints</span>
-        <span class="k">else</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="p">(</span>
+            <span class="n">opt_inputs</span><span class="o">.</span><span class="n">num_restarts</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">nonlinear_inequality_constraints</span>
+            <span class="k">else</span> <span class="mi">1</span>
+        <span class="p">),</span>
     <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_optimize_batch_candidates</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="ne">Warning</span><span class="p">]]:</span>

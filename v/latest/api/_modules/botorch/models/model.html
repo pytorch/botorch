@@ -468,9 +468,9 @@
             <span class="k">with</span> <span class="n">settings</span><span class="o">.</span><span class="n">propagate_grads</span><span class="p">(</span><span class="n">propagate_grads</span><span class="p">):</span>
                 <span class="n">post_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
                     <span class="n">X</span><span class="p">,</span>
-                    <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span>
-                    <span class="k">if</span> <span class="n">observation_noise</span> <span class="ow">is</span> <span class="kc">None</span>
-                    <span class="k">else</span> <span class="n">observation_noise</span><span class="p">,</span>
+                    <span class="n">observation_noise</span><span class="o">=</span><span class="p">(</span>
+                        <span class="kc">True</span> <span class="k">if</span> <span class="n">observation_noise</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">observation_noise</span>
+                    <span class="p">),</span>
                 <span class="p">)</span>
             <span class="n">Y_fantasized</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">post_X</span><span class="p">)</span>  <span class="c1"># num_fantasies x batch_shape x n' x m</span>
             <span class="k">if</span> <span class="n">observation_noise</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
