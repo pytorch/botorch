@@ -408,7 +408,7 @@ The model is initialized with random points, where the fidelity is sampled from 
         <span class="n">raw_samples</span><span class="o">=</span><span class="n">RAW_SAMPLES</span><span class="p">,</span>  <span class="c1"># used for intialization heuristic</span>
         <span class="n">options</span><span class="o">=</span><span class="p">{</span>
             <span class="s2">"batch_limit"</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
-            <span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">20</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">200</span><span class="p">,</span>
+            <span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">3</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">200</span><span class="p">,</span>
             <span class="s2">"nonnegative"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
         <span class="p">},</span>
         <span class="n">sequential</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -449,7 +449,7 @@ The model is initialized with random points, where the fidelity is sampled from 
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 <span class="n">NUM_INNER_MC_SAMPLES</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">32</span>
-<span class="n">NUM_PARETO</span> <span class="o">=</span> <span class="mi">3</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">10</span>
+<span class="n">NUM_PARETO</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">10</span>
 <span class="n">NUM_FANTASIES</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">8</span>
 
 
@@ -484,9 +484,12 @@ The model is initialized with random points, where the fidelity is sampled from 
         <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">[:,</span> <span class="n">non_fidelity_dims</span><span class="p">],</span>
         <span class="n">q</span><span class="o">=</span><span class="n">NUM_PARETO</span><span class="p">,</span>
         <span class="n">num_restarts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="n">raw_samples</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
+        <span class="n">raw_samples</span><span class="o">=</span><span class="mi">2</span> <span class="o">*</span> <span class="n">RAW_SAMPLES</span><span class="p">,</span>
         <span class="n">return_best_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">"nonnegative"</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+        <span class="n">options</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"nonnegative"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">3</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">200</span><span class="p">,</span>
+        <span class="p">},</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">current_value</span>
 
@@ -542,7 +545,10 @@ The model is initialized with random points, where the fidelity is sampled from 
         <span class="n">q</span><span class="o">=</span><span class="n">BATCH_SIZE</span><span class="p">,</span>
         <span class="n">num_restarts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">raw_samples</span><span class="o">=</span><span class="n">RAW_SAMPLES</span><span class="p">,</span>  <span class="c1"># used for intialization heuristic</span>
-        <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">"batch_limit"</span><span class="p">:</span> <span class="mi">5</span><span class="p">},</span>
+        <span class="n">options</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"batch_limit"</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+            <span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">3</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">200</span><span class="p">,</span>
+        <span class="p">},</span>
     <span class="p">)</span>
     <span class="c1"># if the AF val is 0, set the fidelity parameter to zero</span>
     <span class="k">if</span> <span class="n">vals</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>

@@ -267,7 +267,7 @@ def optimize_MOMF_and_get_obs(
         raw_samples=RAW_SAMPLES,  # used for intialization heuristic
         options={
             "batch_limit": 5,
-            "maxiter": 20 if SMOKE_TEST else 200,
+            "maxiter": 3 if SMOKE_TEST else 200,
             "nonnegative": True,
         },
         sequential=True,
@@ -302,7 +302,7 @@ from botorch.models.deterministic import GenericDeterministicModel
 from torch import Tensor
 
 NUM_INNER_MC_SAMPLES = 2 if SMOKE_TEST else 32
-NUM_PARETO = 3 if SMOKE_TEST else 10
+NUM_PARETO = 1 if SMOKE_TEST else 10
 NUM_FANTASIES = 2 if SMOKE_TEST else 8
 
 
@@ -337,9 +337,12 @@ def get_current_value(
         bounds=bounds[:, non_fidelity_dims],
         q=NUM_PARETO,
         num_restarts=1,
-        raw_samples=1024,
+        raw_samples=2 * RAW_SAMPLES,
         return_best_only=True,
-        options={"nonnegative": True},
+        options={
+            "nonnegative": True,
+            "maxiter": 3 if SMOKE_TEST else 200,
+        },
     )
     return current_value
 
@@ -395,7 +398,10 @@ def optimize_HVKG_and_get_obs(
         q=BATCH_SIZE,
         num_restarts=1,
         raw_samples=RAW_SAMPLES,  # used for intialization heuristic
-        options={"batch_limit": 5},
+        options={
+            "batch_limit": 5,
+            "maxiter": 3 if SMOKE_TEST else 200,
+        },
     )
     # if the AF val is 0, set the fidelity parameter to zero
     if vals.item() == 0.0:
