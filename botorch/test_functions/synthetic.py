@@ -848,11 +848,11 @@ class ConstrainedSyntheticTestFunction(
             negate: If True, negate the function.
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
-        self.constraint_noise_std = self._validate_constraint_noise(
-            constraint_noise_std
-        )
         SyntheticTestFunction.__init__(
             self, noise_std=noise_std, negate=negate, bounds=bounds
+        )
+        self.constraint_noise_std = self._validate_constraint_noise(
+            constraint_noise_std
         )
 
     def _validate_constraint_noise(
@@ -939,9 +939,11 @@ class ConstrainedHartmann(Hartmann, ConstrainedSyntheticTestFunction):
             negate: If True, negate the function.
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
-        self._validate_constraint_noise(constraint_noise_std)
         Hartmann.__init__(
             self, dim=dim, noise_std=noise_std, negate=negate, bounds=bounds
+        )
+        self.constraint_noise_std = self._validate_constraint_noise(
+            constraint_noise_std
         )
 
     def evaluate_slack_true(self, X: Tensor) -> Tensor:
@@ -975,9 +977,11 @@ class ConstrainedHartmannSmooth(Hartmann, ConstrainedSyntheticTestFunction):
             negate: If True, negate the function.
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
-        self._validate_constraint_noise(constraint_noise_std)
         Hartmann.__init__(
             self, dim=dim, noise_std=noise_std, negate=negate, bounds=bounds
+        )
+        self.constraint_noise_std = self._validate_constraint_noise(
+            constraint_noise_std
         )
 
     def evaluate_slack_true(self, X: Tensor) -> Tensor:
