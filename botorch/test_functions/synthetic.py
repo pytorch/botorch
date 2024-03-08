@@ -772,11 +772,7 @@ class SixHumpCamel(SyntheticTestFunction):
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         x1, x2 = X[..., 0], X[..., 1]
-        return (
-            (4 - 2.1 * x1**2 + x1**4 / 3) * x1**2
-            + x1 * x2
-            + (4 * x2**2 - 4) * x2**2
-        )
+        return (4 - 2.1 * x1**2 + x1**4 / 3) * x1**2 + x1 * x2 + (4 * x2**2 - 4) * x2**2
 
 
 class StyblinskiTang(SyntheticTestFunction):
