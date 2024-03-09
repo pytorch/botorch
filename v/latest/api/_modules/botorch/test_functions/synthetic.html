@@ -996,11 +996,11 @@
 <span class="sd">            negate: If True, negate the function.</span>
 <span class="sd">            bounds: Custom bounds for the function specified as (lower, upper) pairs.</span>
 <span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">constraint_noise_std</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_constraint_noise</span><span class="p">(</span>
-            <span class="n">constraint_noise_std</span>
-        <span class="p">)</span>
         <span class="n">SyntheticTestFunction</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraint_noise_std</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_constraint_noise</span><span class="p">(</span>
+            <span class="n">constraint_noise_std</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_validate_constraint_noise</span><span class="p">(</span>
@@ -1099,9 +1099,11 @@
 <span class="sd">            negate: If True, negate the function.</span>
 <span class="sd">            bounds: Custom bounds for the function specified as (lower, upper) pairs.</span>
 <span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_constraint_noise</span><span class="p">(</span><span class="n">constraint_noise_std</span><span class="p">)</span>
         <span class="n">Hartmann</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraint_noise_std</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_constraint_noise</span><span class="p">(</span>
+            <span class="n">constraint_noise_std</span>
         <span class="p">)</span>
 
 <div class="viewcode-block" id="ConstrainedHartmann.evaluate_slack_true">
@@ -1141,9 +1143,11 @@
 <span class="sd">            negate: If True, negate the function.</span>
 <span class="sd">            bounds: Custom bounds for the function specified as (lower, upper) pairs.</span>
 <span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_constraint_noise</span><span class="p">(</span><span class="n">constraint_noise_std</span><span class="p">)</span>
         <span class="n">Hartmann</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraint_noise_std</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_constraint_noise</span><span class="p">(</span>
+            <span class="n">constraint_noise_std</span>
         <span class="p">)</span>
 
 <div class="viewcode-block" id="ConstrainedHartmannSmooth.evaluate_slack_true">
