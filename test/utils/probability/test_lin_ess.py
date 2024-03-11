@@ -25,11 +25,11 @@ class TestLinearEllipticalSliceSampler(BotorchTestCase):
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
             # test input validation
-            with self.assertRaises(BotorchError) as e:
+            with self.assertRaisesRegex(
+                BotorchError, "requires either inequality constraints or bounds"
+            ):
                 LinearEllipticalSliceSampler()
-                self.assertTrue(
-                    "requires either inequality constraints or bounds" in str(e)
-                )
+
             # special case: N(0, 1) truncated to negative numbers
             A = torch.ones(1, 1, **tkwargs)
             b = torch.zeros(1, 1, **tkwargs)
@@ -164,6 +164,20 @@ class TestLinearEllipticalSliceSampler(BotorchTestCase):
             self.assertEqual(samples.shape, torch.Size([3, 2]))
             self.assertTrue(sampler._is_feasible(samples.t()).all())
             self.assertFalse(torch.equal(sampler._x, sampler.x0))
+
+            # testing automatic unsqueezing
+            sampler = LinearEllipticalSliceSampler(
+                inequality_constraints=(A, b),
+                mean=mean.squeeze(-1),
+            )
+            self.assertEqual(sampler._mean.shape, mean.shape)
+
+            x0 = mean
+            sampler = LinearEllipticalSliceSampler(
+                inequality_constraints=(A, b),
+                interior_point=x0.squeeze(-1),
+            )
+            self.assertEqual(sampler.x0.shape, x0.shape)
 
     def test_multivariate(self):
         torch.manual_seed(torch.randint(100, torch.Size([])).item())
