@@ -127,11 +127,13 @@ class qSelfCorrectingBayesianOptimization(
         noiseless_posterior = self.conditional_model.posterior(
             X.unsqueeze(MCMC_DIM), observation_noise=False
         )
-        posterior = self.model.likelihood(noiseless_posterior.mvn)
+        posterior = self.conditional_model.posterior(
+            X.unsqueeze(MCMC_DIM), observation_noise=True
+        )
 
-        cond_means = posterior.mean.unsqueeze(-1)
         marg_mean = prev_posterior.mean.mean(dim=MCMC_DIM, keepdim=True)
-        cond_variances = posterior.variance.unsqueeze(-1)
+        cond_means = posterior.mean
+        cond_variances = posterior.variance
         cond_covar = posterior.covariance_matrix
 
         # the mixture variance is squeezed, need it unsqueezed
