@@ -7,9 +7,7 @@
 from __future__ import annotations
 
 import torch
-from botorch.acquisition.input_constructors import (
-    get_acqf_input_constructor,
-)
+from botorch.acquisition.input_constructors import get_acqf_input_constructor
 from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 from botorch_community.acquisition.bayesian_active_learning import (
     qBayesianActiveLearningByDisagreement,
@@ -97,9 +95,7 @@ class TestFullyBayesianAcquisitionFunctionInputConstructors(
         qStatisticalDistanceActiveLearning(**kwargs)
 
     def test_construct_inputs_bald(self) -> None:
-        func = get_acqf_input_constructor(
-            qBayesianActiveLearningByDisagreement
-        )
+        func = get_acqf_input_constructor(qBayesianActiveLearningByDisagreement)
         num_samples = 3
         model = SaasFullyBayesianSingleTaskGP(
             self.blockX_blockY[0].X, self.blockX_blockY[0].Y

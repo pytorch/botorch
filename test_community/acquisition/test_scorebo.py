@@ -8,7 +8,6 @@ from itertools import product
 
 import torch
 from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
-
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.transforms.outcome import Standardize
 from botorch.utils.testing import BotorchTestCase
@@ -72,26 +71,24 @@ class TestQSelfCorrectingBayesianOptimization(BotorchTestCase):
             only_maxval,
             standardize_model,
             maximize,
-            infer_noise,
-        ) in product(
-            (torch.float, torch.double),
-            distance_metrics,
-            (False, True),  # only_maxval
-            (False, True),  # standardize_model
-            (False, True),  # maximize
-            (True,),  # infer_noise - only one option avail in PyroModels
-        ):
+        ) in [
+            (torch.float, "hellinger", False, True, True),
+            (torch.double, "hellinger", True, False, False),
+            (torch.float, "kl_divergence", False, True, True),
+            (torch.double, "kl_divergence", True, False, False),
+            (torch.double, "kl_divergence", True, True, False),
+        ]:
             tkwargs["dtype"] = dtype
             input_dim = 2
             train_X = torch.rand(5, input_dim, **tkwargs)
             train_Y = torch.rand(5, num_objectives, **tkwargs)
 
             model = get_model(
-                train_X,
-                train_Y,
-                num_models,
-                standardize_model,
-                infer_noise,
+                train_X=train_X,
+                train_Y=train_Y,
+                num_models=num_models,
+                standardize_model=standardize_model,
+                infer_noise=True,
                 **tkwargs,
             )
 

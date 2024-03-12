@@ -9,8 +9,11 @@ from botorch_community.acquisition.bayesian_active_learning import (
     qBayesianVarianceReduction,
     qStatisticalDistanceActiveLearning,
 )
+
 # NOTE: This import is needed to register the input constructors.
-from botorch_community.acquisition.input_constructors import acqf_input_constructor
+from botorch_community.acquisition.input_constructors import (  # noqa F401
+    acqf_input_constructor,
+)
 from botorch_community.acquisition.scorebo import qSelfCorrectingBayesianOptimization
 
 __all__ = [

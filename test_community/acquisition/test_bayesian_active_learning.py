@@ -77,7 +77,12 @@ class TestQStatisticalDistanceActiveLearning(BotorchTestCase):
         distance_metrics = ("hellinger", "kl_divergence")
         num_objectives = 1
         num_models = 3
-        for (dtype, distance_metric, standardize_model, infer_noise,) in product(
+        for (
+            dtype,
+            distance_metric,
+            standardize_model,
+            infer_noise,
+        ) in product(
             (torch.float, torch.double),
             distance_metrics,
             (False, True),  # standardize_model
@@ -143,7 +148,11 @@ class TestQBayesianActiveLearningByDisagreement(BotorchTestCase):
         tkwargs = {"device": self.device}
         num_objectives = 1
         num_models = 3
-        for (dtype, standardize_model, infer_noise,) in product(
+        for (
+            dtype,
+            standardize_model,
+            infer_noise,
+        ) in product(
             (torch.float, torch.double),
             (False, True),  # standardize_model
             (True,),  # infer_noise - only one option avail in PyroModels
@@ -200,7 +209,11 @@ class TestQBayesianQueryByComittee(BotorchTestCase):
         tkwargs = {"device": self.device}
         num_objectives = 1
         num_models = 3
-        for (dtype, standardize_model, infer_noise,) in product(
+        for (
+            dtype,
+            standardize_model,
+            infer_noise,
+        ) in product(
             (torch.float, torch.double),
             (False, True),  # standardize_model
             (True,),  # infer_noise - only one option avail in PyroModels
@@ -257,7 +270,11 @@ class TestQBayesianVarianceReduction(BotorchTestCase):
         tkwargs = {"device": self.device}
         num_objectives = 1
         num_models = 3
-        for (dtype, standardize_model, infer_noise,) in product(
+        for (
+            dtype,
+            standardize_model,
+            infer_noise,
+        ) in product(
             (torch.float, torch.double),
             (False, True),  # standardize_model
             (True,),  # infer_noise - only one option avail in PyroModels

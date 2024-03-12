@@ -13,10 +13,9 @@ Contributor: hvarfner (bayesian_active_learning, scorebo)
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type
+from typing import List, Optional, Tuple
 
 import torch
-from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.input_constructors import acqf_input_constructor
 from botorch.acquisition.utils import get_optimal_samples
 from botorch.models.model import Model
