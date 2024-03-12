@@ -2,6 +2,46 @@
 
 The release log for BoTorch.
 
+## [0.10.0] -- Feb 26, 2024
+
+#### New Features
+* Introduce updated guidelines and a new directory for community contributions (#2167).
+* Add `qEUBO` preferential acquisition function (#2192).
+* Add Multi Information Source Augmented GP (#2152).
+
+#### Bug Fixes
+* Fix `condition_on_observations` in fully Bayesian models (#2151).
+* Fix for bug that occurs when splitting single-element bins, use default BoTorch kernel for BAxUS. (#2165).
+* Fix a bug when non-linear constraints are used with `q > 1` (#2168).
+* Remove unsupported `X_pending` from `qMultiFidelityLowerBoundMaxValueEntropy` constructor (#2193).
+* Don't allow `data_fidelities=[]` in `SingleTaskMultiFidelityGP` (#2195).
+* Fix `EHVI`, `qEHVI`, and `qLogEHVI` input constructors (#2196).
+* Fix input constructor for `qMultiFidelityMaxValueEntropy` (#2198).
+* Add ability to not deduplicate points in `_is_non_dominated_loop` (#2203).
+
+#### Other Changes
+* Minor improvements to `MVaR` risk measure (#2150).
+* Add support for multitask models to `ModelListGP` (#2154).
+* Support unspecified noise in `ContextualDataset` (#2155).
+* Update `HVKG` sampler to reflect the number of model outputs (#2160).
+* Release restriction in `OneHotToNumeric` that the categoricals are the trailing dimensions (#2166).
+* Standardize broadcasting logic of `q(Log)EI`'s `best_f` and `compute_best_feasible_objective` (#2171).
+* Use regular inheritance instead of dispatcher to special-case `PairwiseGP` logic (#2176).
+* Support `PBO` in `EUBO`'s input constructor (#2178).
+* Add `posterior_transform` to `qMaxValueEntropySearch`'s input constructor (#2181).
+* Do not normalize or standardize dimension if all values are equal (#2185).
+* Reap deprecated support for objective with 1 arg in `GenericMCObjective` (#2199).
+* Consistent signature for `get_objective_weights_transform` (#2200).
+* Update context order handling in `ContextualDataset` (#2205).
+* Update contextual models for use in MBM (#2206).
+* Remove `(Identity)AnalyticMultiOutputObjective` (#2208).
+* Reap deprecated support for `soft_eval_constraint` (#2223). Please use `botorch.utils.sigmoid` instead.
+
+#### Compatibility
+* Pin `mpmath <= 1.3.0` to avoid CI breakages due to removed modules in the
+  latest alpha release (#2222).
+
+
 ## [0.9.5] -- Dec 8, 2023
 
 #### New features

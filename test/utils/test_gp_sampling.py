@@ -548,9 +548,11 @@ class TestRandomFourierFeatures(BotorchTestCase):
                 with torch.random.fork_rng():
                     torch.manual_seed(0)
                     gp_samples = get_gp_samples(
-                        model=batched_to_model_list(model)
-                        if ((not use_batch_model) and (m > 1))
-                        else model,
+                        model=(
+                            batched_to_model_list(model)
+                            if ((not use_batch_model) and (m > 1))
+                            else model
+                        ),
                         num_outputs=m,
                         n_samples=n_samples,
                         num_rff_features=512,
@@ -561,9 +563,11 @@ class TestRandomFourierFeatures(BotorchTestCase):
                     self.assertEqual(samples.shape[1], 2)
                 self.assertIsInstance(
                     gp_samples,
-                    ModelList
-                    if ((not use_batch_model) and (m > 1))
-                    else DeterministicModel,
+                    (
+                        ModelList
+                        if ((not use_batch_model) and (m > 1))
+                        else DeterministicModel
+                    ),
                 )
                 Y_hat_rff = samples.mean(dim=0)
                 with torch.no_grad():
@@ -621,9 +625,11 @@ class TestRandomFourierFeatures(BotorchTestCase):
                     torch.manual_seed(28)
                     for _ in range(10):
                         gp_samples = get_gp_samples(
-                            model=batched_to_model_list(model)
-                            if ((not use_batch_model) and (m > 1))
-                            else model,
+                            model=(
+                                batched_to_model_list(model)
+                                if ((not use_batch_model) and (m > 1))
+                                else model
+                            ),
                             num_outputs=m,
                             n_samples=1,
                             num_rff_features=512,
@@ -632,9 +638,11 @@ class TestRandomFourierFeatures(BotorchTestCase):
                             means.append(model.posterior(X).mean)
                 samples = gp_samples.posterior(X).mean
                 self.assertEqual(samples.shape[:-1], X.shape[:-1])
-                self.assertIsInstance(gp_samples, ModelList) if (
-                    (not use_batch_model) and (m > 1)
-                ) else DeterministicModel
+                (
+                    self.assertIsInstance(gp_samples, ModelList)
+                    if ((not use_batch_model) and (m > 1))
+                    else DeterministicModel
+                )
                 Y_hat_rff = torch.stack(means, dim=0).mean(dim=0)
                 with torch.no_grad():
                     Y_hat = model.posterior(X).mean

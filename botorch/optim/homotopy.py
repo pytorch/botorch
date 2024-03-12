@@ -112,6 +112,7 @@ class HomotopyParameter:
     The parameter is expected to either be a torch parameter or a torch tensor which may
     correspond to a buffer of a module. The parameter has a corresponding schedule.
     """
+
     parameter: Union[Parameter, Tensor]
     schedule: HomotopySchedule
 

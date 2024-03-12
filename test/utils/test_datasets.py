@@ -359,7 +359,9 @@ class TestDatasets(BotorchTestCase):
         num_contexts = 3
         feature_names = [f"x_c{i}" for i in range(num_contexts)]
         parameter_decomposition = {
-            f"context_{i}": [f"x_c{i}"] for i in range(num_contexts)
+            "context_2": ["x_c2"],
+            "context_1": ["x_c1"],
+            "context_0": ["x_c0"],
         }
         context_buckets = list(parameter_decomposition.keys())
         context_outcome_list = [f"y:context_{i}" for i in range(num_contexts)]
@@ -377,7 +379,6 @@ class TestDatasets(BotorchTestCase):
         context_dt = ContextualDataset(
             datasets=dataset_list1,
             parameter_decomposition=parameter_decomposition,
-            context_buckets=context_buckets,
         )
         self.assertEqual(len(context_dt.datasets), len(dataset_list1))
         self.assertListEqual(context_dt.context_buckets, context_buckets)
@@ -410,35 +411,21 @@ class TestDatasets(BotorchTestCase):
         context_dt = ContextualDataset(
             datasets=dataset_list2,
             parameter_decomposition=parameter_decomposition,
-            context_buckets=context_buckets,
             metric_decomposition=metric_decomposition,
         )
         self.assertEqual(len(context_dt.datasets), len(dataset_list2))
-        self.assertListEqual(context_dt.context_buckets, context_buckets)
+        # Ordering should match datasets, not parameter_decomposition
+        context_order = [f"context_{i}" for i in range(num_contexts)]
+        self.assertListEqual(context_dt.context_buckets, context_order)
         self.assertListEqual(context_dt.outcome_names, context_outcome_list)
         self.assertListEqual(context_dt.feature_names, feature_names)
+        true_decomp = {f"context_{i}": [i] for i in range(3)}
+        self.assertEqual(context_dt.parameter_index_decomp, true_decomp)
         self.assertTrue(torch.equal(context_dt.X, dataset_list2[-1].X))
         self.assertEqual(context_dt.Y.shape[-1], len(context_outcome_list))
         self.assertEqual(context_dt.Yvar.shape[-1], len(context_outcome_list))
         for dt in dataset_list2:
             self.assertIs(context_dt.datasets[dt.outcome_names[0]], dt)
-
-        # test the ordering via context buckets
-        context_dt_reverse = ContextualDataset(
-            datasets=dataset_list2,
-            parameter_decomposition=parameter_decomposition,
-            context_buckets=context_buckets[::-1],  # reverse order
-            metric_decomposition=metric_decomposition,
-        )
-        self.assertListEqual(
-            context_dt_reverse.outcome_names, context_outcome_list[::-1]
-        )
-        self.assertTrue(
-            torch.equal(context_dt.Y, torch.flip(context_dt_reverse.Y, (1,)))
-        )
-        self.assertTrue(
-            torch.equal(context_dt.Yvar, torch.flip(context_dt_reverse.Yvar, (1,)))
-        )
 
         # Test handling None Yvar
         dataset_list3 = [
@@ -462,24 +449,36 @@ class TestDatasets(BotorchTestCase):
         context_dt3 = ContextualDataset(
             datasets=dataset_list3,
             parameter_decomposition=parameter_decomposition,
-            context_buckets=context_buckets,
             metric_decomposition=metric_decomposition,
         )
         self.assertIsNone(context_dt3.Yvar)
 
         # test dataset validation
-        wrong_metric_decomposition = {
+        wrong_metric_decomposition1 = {
             f"{c}": [f"y:{c}"] for c in context_buckets if c != "context_0"
         }
-        wrong_metric_decomposition["context_0"] = ["y:context_0", "y:context_1"]
+        wrong_metric_decomposition1["context_0"] = ["y:context_1"]
         with self.assertRaisesRegex(
-            ValueError, "context_0 bucket contains multiple outcomes"
+            InputDataError,
+            "metric_decomposition has same metric for multiple contexts.",
         ):
             ContextualDataset(
                 datasets=dataset_list2,
                 parameter_decomposition=parameter_decomposition,
-                context_buckets=context_buckets,
-                metric_decomposition=wrong_metric_decomposition,
+                metric_decomposition=wrong_metric_decomposition1,
+            )
+        wrong_metric_decomposition2 = {
+            f"{c}": [f"y:{c}"] for c in context_buckets if c != "context_0"
+        }
+        wrong_metric_decomposition2["context_0"] = ["y:context_0", "y:context_5"]
+        with self.assertRaisesRegex(
+            InputDataError,
+            "All values in metric_decomposition must have the same length",
+        ):
+            ContextualDataset(
+                datasets=dataset_list2,
+                parameter_decomposition=parameter_decomposition,
+                metric_decomposition=wrong_metric_decomposition2,
             )
 
         with self.assertRaisesRegex(
@@ -491,7 +490,7 @@ class TestDatasets(BotorchTestCase):
                     for m in context_outcome_list
                 ],
                 parameter_decomposition=parameter_decomposition,
-                context_buckets=context_buckets,
+                metric_decomposition=metric_decomposition,
             )
 
         with self.assertRaisesRegex(
@@ -501,7 +500,6 @@ class TestDatasets(BotorchTestCase):
             ContextualDataset(
                 datasets=dataset_list2,
                 parameter_decomposition=parameter_decomposition,
-                context_buckets=context_buckets,
             )
 
         with self.assertRaisesRegex(
@@ -512,31 +510,17 @@ class TestDatasets(BotorchTestCase):
             ContextualDataset(
                 datasets=dataset_list1,
                 parameter_decomposition=parameter_decomposition,
-                context_buckets=context_buckets,
                 metric_decomposition=metric_decomposition,
             )
 
         with self.assertRaisesRegex(
             InputDataError,
-            "Keys of parameter decomposition and context buckets do not match.",
-        ):
-            ContextualDataset(
-                datasets=dataset_list1,
-                parameter_decomposition=parameter_decomposition,
-                context_buckets=["context_0", "context_1"],
-            )
-
-        with self.assertRaisesRegex(
-            InputDataError,
-            "Keys of metric decomposition and context buckets do not match.",
+            "Keys of metric and parameter decompositions do not match.",
         ):
             ContextualDataset(
                 datasets=dataset_list2,
                 parameter_decomposition=parameter_decomposition,
-                context_buckets=context_buckets,
-                metric_decomposition={
-                    f"{c}": [f"y:{c}"] for c in context_buckets if c != "context_0"
-                },
+                metric_decomposition={f"x{c}": [f"y:{c}"] for c in context_buckets},
             )
 
         wrong_metric_decomposition = {
@@ -550,7 +534,6 @@ class TestDatasets(BotorchTestCase):
             ContextualDataset(
                 datasets=dataset_list2,
                 parameter_decomposition=parameter_decomposition,
-                context_buckets=context_buckets,
                 metric_decomposition=wrong_metric_decomposition,
             )
 
@@ -562,6 +545,5 @@ class TestDatasets(BotorchTestCase):
             ContextualDataset(
                 datasets=dataset_list3,
                 parameter_decomposition=parameter_decomposition,
-                context_buckets=context_buckets,
                 metric_decomposition=wrong_metric_decomposition,
             )

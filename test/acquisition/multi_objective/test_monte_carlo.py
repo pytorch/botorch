@@ -1773,6 +1773,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
 
             class DummyObjective(MultiOutputRiskMeasureMCObjective):
                 r"""A dummy set valued objective."""
+
                 _verify_output_shape = False
 
                 def forward(self, samples, X=None):

@@ -12,14 +12,16 @@ from typing import List, Optional
 import torch
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions import OptimizationWarning
+from botorch.exceptions.errors import UnsupportedError
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.multitask import (
     FixedNoiseMultiTaskGP,
+    get_task_value_remapping,
     KroneckerMultiTaskGP,
     MultiTaskGP,
 )
-from botorch.models.transforms.input import Normalize
-from botorch.models.transforms.outcome import Standardize
+from botorch.models.transforms.input import InputTransform, Normalize
+from botorch.models.transforms.outcome import OutcomeTransform, Standardize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.posteriors.transformed import TransformedPosterior
 from botorch.utils.test_helpers import gen_multi_task_dataset
@@ -48,11 +50,14 @@ from gpytorch.settings import max_cholesky_size, max_root_decomposition_size
 def _gen_model_and_data(
     task_feature: int = 0,
     output_tasks: Optional[List[int]] = None,
-    input_transform=None,
-    outcome_transform=None,
+    task_values: Optional[List[int]] = None,
+    input_transform: Optional[InputTransform] = None,
+    outcome_transform: Optional[OutcomeTransform] = None,
     **tkwargs
 ):
-    datasets, (train_X, train_Y, _) = gen_multi_task_dataset(**tkwargs)
+    datasets, (train_X, train_Y, _) = gen_multi_task_dataset(
+        task_values=task_values, **tkwargs
+    )
     model = MultiTaskGP(
         train_X,
         train_Y,
@@ -177,9 +182,9 @@ def _gen_kronecker_model_and_data(model_kwargs=None, batch_shape=None, **tkwargs
 
 class TestMultiTaskGP(BotorchTestCase):
     def test_MultiTaskGP(self):
-        bounds = torch.tensor([[-1.0, 0.0], [1.0, 1.0]])
-        for dtype, use_intf, use_octf in itertools.product(
-            (torch.float, torch.double), (False, True), (False, True)
+        bounds = torch.tensor([[0.0, 0.0], [1.0, 1.0]])
+        for dtype, use_intf, use_octf, task_values in itertools.product(
+            (torch.float, torch.double), (False, True), (False, True), [None, [0, 2]]
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
             octf = Standardize(m=1) if use_octf else None
@@ -190,7 +195,10 @@ class TestMultiTaskGP(BotorchTestCase):
                 else None
             )
             model, datasets, (train_X, train_Y) = _gen_model_and_data(
-                input_transform=intf, outcome_transform=octf, **tkwargs
+                task_values=task_values,
+                input_transform=intf,
+                outcome_transform=octf,
+                **tkwargs,
             )
             self.assertIsInstance(model, MultiTaskGP)
             self.assertEqual(model.num_outputs, 2)
@@ -246,7 +254,7 @@ class TestMultiTaskGP(BotorchTestCase):
 
             # test posterior w/ bad output index
             with self.assertRaises(ValueError):
-                model.posterior(test_x, output_indices=[2])
+                model.posterior(test_x, output_indices=[3])
 
             # test posterior (batch eval)
             test_x = torch.rand(3, 2, 1, **tkwargs)
@@ -272,7 +280,15 @@ class TestMultiTaskGP(BotorchTestCase):
             # test invalid task feature in X.
             invalid_x = test_x.clone()
             invalid_x[0, 0, 0] = 3
-            with self.assertRaisesRegex(ValueError, "task features in `X`"):
+            if task_values is None:
+                msg = "task features in `X`"
+            else:
+                msg = (
+                    r"Received invalid raw task values. Expected raw value to be in"
+                    r" \{0, 2\}, but got unexpected task values:"
+                    r" \{3\}."
+                )
+            with self.assertRaisesRegex(ValueError, msg):
                 model.posterior(invalid_x)
 
             # test that unsupported batch shape MTGPs throw correct error
@@ -297,6 +313,35 @@ class TestMultiTaskGP(BotorchTestCase):
                 model.outcome_transform = tmp_tf
                 expected_var = tmp_tf.untransform_posterior(p_utf).variance
                 self.assertAllClose(posterior_f.variance, expected_var)
+            msg = "Subsetting outputs is not supported by `MultiTaskGPyTorchModel`."
+            with self.assertRaisesRegex(UnsupportedError, msg):
+                model.subset_output(idcs=[0])
+
+            if task_values is not None:
+                test_x = torch.rand(2, 1, **tkwargs)
+                test_x_task = torch.zeros_like(test_x)
+                test_x_task[1, 0] = 2.0
+                test_x = torch.cat([test_x_task, test_x], dim=-1)
+                expected_task_mapper_non_nan = torch.tensor(
+                    [0.0, 1.0], dtype=dtype, device=self.device
+                )
+                self.assertTrue(
+                    torch.equal(
+                        model._task_mapper[[0, 2]], expected_task_mapper_non_nan
+                    )
+                )
+                self.assertTrue(torch.isnan(model._task_mapper[1]))
+
+                # test split inputs
+                _, task_idcs = model._split_inputs(test_x)
+                self.assertTrue(
+                    torch.equal(
+                        task_idcs,
+                        torch.tensor([[0.0], [1.0]], dtype=dtype, device=self.device),
+                    )
+                )
+            else:
+                self.assertIsNone(model._task_mapper)
 
     def test_MultiTaskGP_single_output(self):
         for dtype in (torch.float, torch.double):
@@ -836,3 +881,15 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             self.assertIsInstance(posterior_f.distribution, MultitaskMultivariateNormal)
             self.assertEqual(posterior_f.mean.shape, torch.Size([3, 2, 2]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([3, 2, 2]))
+
+
+class TestMultiTaskUtils(BotorchTestCase):
+    def test_get_task_value_remapping(self) -> None:
+        for dtype in (torch.float, torch.double):
+            task_values = torch.tensor([1, 3], dtype=torch.long, device=self.device)
+            expected_mapping_no_nan = torch.tensor(
+                [0.0, 1.0], dtype=dtype, device=self.device
+            )
+            mapping = get_task_value_remapping(task_values, dtype)
+            self.assertTrue(torch.equal(mapping[[1, 3]], expected_mapping_no_nan))
+            self.assertTrue(torch.isnan(mapping[[0, 2]]).all())

@@ -22,8 +22,6 @@ from botorch.acquisition.multi_objective.monte_carlo import (
 )
 from botorch.acquisition.multi_objective.multi_fidelity import MOMF
 from botorch.acquisition.multi_objective.objective import (
-    AnalyticMultiOutputObjective,
-    IdentityAnalyticMultiOutputObjective,
     IdentityMCMultiOutputObjective,
     MCMultiOutputObjective,
     UnstandardizeMCMultiOutputObjective,
@@ -44,9 +42,7 @@ __all__ = [
     "qNoisyExpectedHypervolumeImprovement",
     "MOMF",
     "qMultiObjectiveMaxValueEntropy",
-    "AnalyticMultiOutputObjective",
     "ExpectedHypervolumeImprovement",
-    "IdentityAnalyticMultiOutputObjective",
     "IdentityMCMultiOutputObjective",
     "MCMultiOutputObjective",
     "MultiObjectiveAnalyticAcquisitionFunction",

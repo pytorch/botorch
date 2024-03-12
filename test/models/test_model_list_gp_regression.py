@@ -11,7 +11,7 @@ from typing import Optional
 
 import torch
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
-from botorch.exceptions.errors import BotorchTensorDimensionError
+from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedError
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.gp_regression import SingleTaskGP
@@ -138,9 +138,8 @@ class TestModelListGP(BotorchTestCase):
 
         # test subset outputs
         subset_model = model.subset_output([1])
-        self.assertIsInstance(subset_model, ModelListGP)
-        self.assertEqual(len(subset_model.models), 1)
-        sd_subset = subset_model.models[0].state_dict()
+        self.assertIsInstance(subset_model, SingleTaskGP)
+        sd_subset = subset_model.state_dict()
         sd = model.models[1].state_dict()
         self.assertTrue(set(sd_subset.keys()) == set(sd.keys()))
         self.assertTrue(all(torch.equal(v, sd[k]) for k, v in sd_subset.items()))
@@ -351,9 +350,14 @@ class TestModelListGP(BotorchTestCase):
             torch.allclose(expected_covariance, posterior.covariance_matrix, atol=1e-5)
         )
         # test subset outputs
-        subset_model = model_list_gp.subset_output([1])
+        # Trying to subset outputs of a the multi-output MTGP should raise
+        # an exception
+        msg = "Subsetting outputs is not supported by `MultiTaskGPyTorchModel`."
+        with self.assertRaisesRegex(UnsupportedError, msg):
+            model_list_gp.subset_output([1])
+        subset_model = model_list_gp.subset_output([1, 2])
         self.assertEqual(subset_model.num_outputs, 2)
-        subset_model = model_list_gp.subset_output([0, 1])
+        subset_model = model_list_gp.subset_output([0, 1, 2])
         self.assertEqual(subset_model.num_outputs, 3)
         self.assertEqual(len(subset_model.models), 2)
         # Test condition on observations

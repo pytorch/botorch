@@ -36,6 +36,7 @@ if TYPE_CHECKING:
 
 class GPyTorchPosterior(TorchPosterior):
     r"""A posterior based on GPyTorch's multi-variate Normal distributions."""
+
     distribution: MultivariateNormal
 
     def __init__(

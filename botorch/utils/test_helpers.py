@@ -12,7 +12,7 @@ should be defined here to avoid relative imports.
 from __future__ import annotations
 
 import math
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
@@ -66,14 +66,16 @@ def standardize_moments(
 
 
 def gen_multi_task_dataset(
-    yvar: Optional[float] = None, **tkwargs
+    yvar: Optional[float] = None, task_values: Optional[List[int]] = None, **tkwargs
 ) -> Tuple[MultiTaskDataset, Tuple[Tensor, Tensor, Tensor]]:
     """Constructs a multi-task dataset with two tasks, each with 10 data points."""
     X = torch.linspace(0, 0.95, 10, **tkwargs) + 0.05 * torch.rand(10, **tkwargs)
     X = X.unsqueeze(dim=-1)
     Y1 = torch.sin(X * (2 * math.pi)) + torch.randn_like(X) * 0.2
     Y2 = torch.cos(X * (2 * math.pi)) + torch.randn_like(X) * 0.2
-    train_X = torch.cat([pad(X, (1, 0), value=i) for i in range(2)])
+    if task_values is None:
+        task_values = [0, 1]
+    train_X = torch.cat([pad(X, (1, 0), value=i) for i in task_values])
     train_Y = torch.cat([Y1, Y2])
 
     Yvar1 = None if yvar is None else torch.full_like(Y1, yvar)

@@ -286,9 +286,11 @@ def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> Tuple[Tensor, Tensor
 
     batch_limit: int = options.get(
         "batch_limit",
-        opt_inputs.num_restarts
-        if not opt_inputs.nonlinear_inequality_constraints
-        else 1,
+        (
+            opt_inputs.num_restarts
+            if not opt_inputs.nonlinear_inequality_constraints
+            else 1
+        ),
     )
 
     def _optimize_batch_candidates() -> Tuple[Tensor, Tensor, List[Warning]]:

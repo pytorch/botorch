@@ -310,6 +310,16 @@ class EggHolder(SyntheticTestFunction):
 
 
 class Griewank(SyntheticTestFunction):
+    r"""Griewank synthetic test function.
+
+    The Griewank function is defined for any `d`, is typically evaluated on
+    `[-600, 600]^d`, and given by:
+
+        G(x) = sum_{i=1}^d x_i**2 / 4000 - prod_{i=1}^d cos(x_i / sqrt(i)) + 1
+
+    G has many widespread local minima, which are regularly distributed.
+    The global minimum is at `z = (0, ..., 0)` with `G(z) = 0`.
+    """
 
     _optimal_value = 0.0
 
@@ -576,6 +586,20 @@ class Michalewicz(SyntheticTestFunction):
 
 
 class Powell(SyntheticTestFunction):
+    r"""Powell synthetic test function.
+
+    `d`-dim function (usually evaluated on the hypercube `[-4, 5]^d`):
+
+        P(x) = sum_{i=1}^d/4 (
+        (x_{4i-3} + 10 x_{4i-2})**2
+        + 5 (x_{4i-1} - x_{4i})**2
+        + (x_{4i-2} - 2 x_{4i-1})**4
+        + 10 (x_{4i-3} - x_{4i})**4
+        )
+
+
+    P has a global minimizer at `z = (0, ..., 0)` with `P(z) = 0`.
+    """
 
     _optimal_value = 0.0
 
@@ -748,11 +772,7 @@ class SixHumpCamel(SyntheticTestFunction):
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         x1, x2 = X[..., 0], X[..., 1]
-        return (
-            (4 - 2.1 * x1**2 + x1**4 / 3) * x1**2
-            + x1 * x2
-            + (4 * x2**2 - 4) * x2**2
-        )
+        return (4 - 2.1 * x1**2 + x1**4 / 3) * x1**2 + x1 * x2 + (4 * x2**2 - 4) * x2**2
 
 
 class StyblinskiTang(SyntheticTestFunction):
@@ -828,11 +848,11 @@ class ConstrainedSyntheticTestFunction(
             negate: If True, negate the function.
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
-        self.constraint_noise_std = self._validate_constraint_noise(
-            constraint_noise_std
-        )
         SyntheticTestFunction.__init__(
             self, noise_std=noise_std, negate=negate, bounds=bounds
+        )
+        self.constraint_noise_std = self._validate_constraint_noise(
+            constraint_noise_std
         )
 
     def _validate_constraint_noise(
@@ -898,6 +918,7 @@ class ConstrainedHartmann(Hartmann, ConstrainedSyntheticTestFunction):
     This is a constrained version of the standard Hartmann test function that
     uses `||x||_2 <= 1` as the constraint. This problem comes from [Letham2019]_.
     """
+
     num_constraints = 1
 
     def __init__(
@@ -918,9 +939,11 @@ class ConstrainedHartmann(Hartmann, ConstrainedSyntheticTestFunction):
             negate: If True, negate the function.
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
-        self._validate_constraint_noise(constraint_noise_std)
         Hartmann.__init__(
             self, dim=dim, noise_std=noise_std, negate=negate, bounds=bounds
+        )
+        self.constraint_noise_std = self._validate_constraint_noise(
+            constraint_noise_std
         )
 
     def evaluate_slack_true(self, X: Tensor) -> Tensor:
@@ -933,6 +956,7 @@ class ConstrainedHartmannSmooth(Hartmann, ConstrainedSyntheticTestFunction):
     This is a constrained version of the standard Hartmann test function that
     uses `||x||_2^2 <= 1` as the constraint to obtain smoother constraint slack.
     """
+
     num_constraints = 1
 
     def __init__(
@@ -953,9 +977,11 @@ class ConstrainedHartmannSmooth(Hartmann, ConstrainedSyntheticTestFunction):
             negate: If True, negate the function.
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
-        self._validate_constraint_noise(constraint_noise_std)
         Hartmann.__init__(
             self, dim=dim, noise_std=noise_std, negate=negate, bounds=bounds
+        )
+        self.constraint_noise_std = self._validate_constraint_noise(
+            constraint_noise_std
         )
 
     def evaluate_slack_true(self, X: Tensor) -> Tensor:

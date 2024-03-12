@@ -59,9 +59,11 @@ if os.environ.get("ALLOW_LATEST_GPYTORCH_LINOP"):
     # Allows more recent previously installed versions. If there is no
     # previously installed version, installs the latest release.
     install_requires = [
-        dep.replace("==", ">=")
-        if "gpytorch" in dep or "linear_operator" in dep
-        else dep
+        (
+            dep.replace("==", ">=")
+            if "gpytorch" in dep or "linear_operator" in dep
+            else dep
+        )
         for dep in install_requires
     ]
 

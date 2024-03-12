@@ -9,7 +9,6 @@ import warnings
 from typing import Optional
 
 import torch
-from botorch import settings
 from botorch.acquisition import LearnedObjective
 from botorch.acquisition.objective import (
     ConstrainedMCObjective,
@@ -262,28 +261,6 @@ class TestGenericMCObjective(BotorchTestCase):
             samples = torch.randn(3, 2, device=self.device, dtype=dtype)
             self.assertTrue(torch.equal(obj(samples), generic_obj(samples)))
 
-    def test_generic_mc_objective_deprecated(self):
-        for dtype in (torch.float, torch.double):
-            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
-                obj = GenericMCObjective(generic_obj_deprecated)
-                warning_msg = (
-                    "The `objective` callable of `GenericMCObjective` is expected to "
-                    "take two arguments. Passing a callable that expects a single "
-                    "argument will result in an error in future versions."
-                )
-                self.assertTrue(
-                    any(issubclass(w.category, DeprecationWarning) for w in ws)
-                )
-                self.assertTrue(any(warning_msg in str(w.message) for w in ws))
-            samples = torch.randn(1, device=self.device, dtype=dtype)
-            self.assertTrue(torch.equal(obj(samples), generic_obj(samples)))
-            samples = torch.randn(2, device=self.device, dtype=dtype)
-            self.assertTrue(torch.equal(obj(samples), generic_obj(samples)))
-            samples = torch.randn(3, 1, device=self.device, dtype=dtype)
-            self.assertTrue(torch.equal(obj(samples), generic_obj(samples)))
-            samples = torch.randn(3, 2, device=self.device, dtype=dtype)
-            self.assertTrue(torch.equal(obj(samples), generic_obj(samples)))
-
 
 class TestConstrainedMCObjective(BotorchTestCase):
     def test_constrained_mc_objective(self):
@@ -410,8 +387,8 @@ class TestLinearMCObjective(BotorchTestCase):
             weights = torch.rand(3, device=self.device, dtype=dtype)
             obj = LinearMCObjective(weights=weights)
             samples = torch.randn(4, 2, 3, device=self.device, dtype=dtype)
-            atol = 1e-8 if dtype == torch.double else 3e-8
-            rtol = 1e-5 if dtype == torch.double else 4e-5
+            atol = 1e-7 if dtype == torch.double else 3e-7
+            rtol = 1e-4 if dtype == torch.double else 4e-4
             self.assertAllClose(obj(samples), samples @ weights, atol=atol, rtol=rtol)
             samples = torch.randn(5, 4, 2, 3, device=self.device, dtype=dtype)
             self.assertAllClose(

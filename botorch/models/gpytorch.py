@@ -21,7 +21,11 @@ from typing import Any, List, Optional, Tuple, TYPE_CHECKING, Union
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
-from botorch.exceptions.errors import BotorchTensorDimensionError, InputDataError
+from botorch.exceptions.errors import (
+    BotorchTensorDimensionError,
+    InputDataError,
+    UnsupportedError,
+)
 from botorch.exceptions.warnings import (
     _get_single_precision_warning,
     BotorchTensorDimensionWarning,
@@ -57,6 +61,7 @@ class GPyTorchModel(Model, ABC):
 
     :meta private:
     """
+
     likelihood: Likelihood
 
     @staticmethod
@@ -710,6 +715,39 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
     :meta private:
     """
 
+    def _map_tasks(self, task_values: Tensor) -> Tensor:
+        """Map raw task values to the task indices used by the model.
+
+        Args:
+            task_values: A tensor of task values.
+
+        Returns:
+            A tensor of task indices with the same shape as the input
+                tensor.
+        """
+        if self._task_mapper is None:
+            if not (
+                torch.all(0 <= task_values) and torch.all(task_values < self.num_tasks)
+            ):
+                raise ValueError(
+                    "Expected all task features in `X` to be between 0 and "
+                    f"self.num_tasks - 1. Got {task_values}."
+                )
+        else:
+            task_values = task_values.long()
+
+            unexpected_task_values = set(task_values.unique().tolist()).difference(
+                self._expected_task_values
+            )
+            if len(unexpected_task_values) > 0:
+                raise ValueError(
+                    "Received invalid raw task values. Expected raw value to be in"
+                    f" {self._expected_task_values}, but got unexpected task values:"
+                    f" {unexpected_task_values}."
+                )
+            task_values = self._task_mapper[task_values]
+        return task_values
+
     def posterior(
         self,
         X: Tensor,
@@ -729,9 +767,9 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
                 model produces outputs for tasks in in `self._output_tasks` (specified
                 as `output_tasks` while constructing the model), which can overwritten
                 using `output_indices`.
-            output_indices: A list of indices, corresponding to the tasks over
-                which to compute the posterior. Only used if `X` does not include the
-                task feature. If omitted, defaults to `self._output_tasks`.
+            output_indices: A list of task values over which to compute the posterior.
+                Only used if `X` does not include the task feature. If omitted,
+                defaults to `self._output_tasks`.
             observation_noise: If True, add observation noise from the respective
                 likelihoods. If a Tensor, specifies the observation noise levels
                 to add.
@@ -746,35 +784,26 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
         """
         includes_task_feature = X.shape[-1] == self.num_non_task_features + 1
         if includes_task_feature:
-            # Make sure all task feature values are valid.
-            task_features = X[..., self._task_feature].unique()
-            if not (
-                (task_features >= 0).all() and (task_features < self.num_tasks).all()
-            ):
-                raise ValueError(
-                    "Expected all task features in `X` to be between 0 and "
-                    f"self.num_tasks - 1. Got {task_features}."
-                )
             if output_indices is not None:
                 raise ValueError(
                     "`output_indices` must be None when `X` includes task features."
                 )
+            task_features = X[..., self._task_feature].unique()
             num_outputs = 1
             X_full = X
         else:
             # Add the task features to construct the full X for evaluation.
-            if output_indices is None:
-                output_indices = self._output_tasks
-            num_outputs = len(output_indices)
-            if not all(0 <= i < self.num_tasks for i in output_indices):
-                raise ValueError(
-                    "Expected `output_indices` to be between 0 and self.num_tasks - 1. "
-                    f"Got {output_indices}."
-                )
-            X_full = _make_X_full(
-                X=X, output_indices=output_indices, tf=self._task_feature
+            task_features = torch.tensor(
+                self._output_tasks if output_indices is None else output_indices,
+                dtype=torch.long,
+                device=X.device,
             )
-
+            num_outputs = len(task_features)
+            X_full = _make_X_full(
+                X=X, output_indices=task_features.tolist(), tf=self._task_feature
+            )
+        # Make sure all task feature values are valid.
+        task_features = self._map_tasks(task_values=task_features)
         self.eval()  # make sure model is in eval mode
         # input transforms are applied at `posterior` in `eval` mode, and at
         # `model.forward()` at the training time
@@ -804,3 +833,16 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
         if posterior_transform is not None:
             return posterior_transform(posterior)
         return posterior
+
+    def subset_output(self, idcs: List[int]) -> MultiTaskGPyTorchModel:
+        r"""Returns a new model that only outputs a subset of the outputs.
+
+        Args:
+            idcs: A list of output indices, corresponding to the outputs to keep.
+
+        Returns:
+            A new model that only outputs the requested outputs.
+        """
+        raise UnsupportedError(
+            "Subsetting outputs is not supported by `MultiTaskGPyTorchModel`."
+        )

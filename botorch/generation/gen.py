@@ -283,7 +283,9 @@ def gen_candidates_scipy(
                 candidates = torch.from_numpy(x0).to(candidates).reshape(shapeX)
                 warnings.warn(
                     "SLSQP failed to converge to a solution the satisfies the "
-                    "non-linear constraints. Returning the feasible starting point."
+                    "non-linear constraints. Returning the feasible starting point.",
+                    OptimizationWarning,
+                    stacklevel=2,
                 )
                 break
 
@@ -462,6 +464,7 @@ def _process_scipy_result(res: OptimizeResult, options: Dict[str, Any]) -> None:
                 "Optimization failed within `scipy.optimize.minimize` with no "
                 "status returned to `res.`",
                 OptimizationWarning,
+                stacklevel=3,
             )
     elif not res.success:
         if (
@@ -486,16 +489,5 @@ def _process_scipy_result(res: OptimizeResult, options: Dict[str, Any]) -> None:
                     f"Optimization failed within `scipy.optimize.minimize` with status "
                     f"{res.status} and message {res.message}.",
                     OptimizationWarning,
+                    stacklevel=3,
                 )
-
-
-def minimize(*args, **kwargs):
-    """Deprecated, use `botorch.generation.gen.minimize_with_timeout`."""
-    # TODO: Reap this after the next stable Ax release.
-    warnings.warn(
-        "`botorch.generation.gen.minimize` is an alias for "
-        "`botorch.generation.gen.minimize_with_timeout` and will "
-        "be removed in a future release.",
-        DeprecationWarning,
-    )
-    return minimize_with_timeout(*args, **kwargs)

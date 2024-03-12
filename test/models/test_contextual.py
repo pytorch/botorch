@@ -135,10 +135,10 @@ class TestContextualGP(BotorchTestCase):
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
             datasets, (train_X, train_Y, train_Yvar) = _gen_datasets(**tkwargs)
-            decomposition = {"1": [0, 1], "2": [2, 3]}
+            decomposition = {"1": ["x0", "x1"], "2": ["x2", "x3"]}
+            decomposition_index = {"1": [0, 1], "2": [2, 3]}
 
-            model = LCEAGP(train_X, train_Y, train_Yvar, decomposition)
-            data_dict = model.construct_inputs(
+            data_dict = LCEAGP.construct_inputs(
                 training_data=datasets,
                 decomposition=decomposition,
                 train_embedding=False,
@@ -147,5 +147,5 @@ class TestContextualGP(BotorchTestCase):
             self.assertTrue(train_X.equal(data_dict["train_X"]))
             self.assertTrue(train_Y.equal(data_dict["train_Y"]))
             self.assertTrue(train_Yvar.equal(data_dict["train_Yvar"]))
-            self.assertDictEqual(data_dict["decomposition"], decomposition)
+            self.assertDictEqual(data_dict["decomposition"], decomposition_index)
             self.assertFalse(data_dict["train_embedding"])

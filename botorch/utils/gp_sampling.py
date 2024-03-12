@@ -102,9 +102,9 @@ class GPDraw(Module):
         # by default for performance reasonse.
         Ys = posterior.rsample_from_base_samples(
             torch.Size(),
-            base_samples=base_samples.squeeze(-1)
-            if self._num_outputs == 1
-            else base_samples,
+            base_samples=(
+                base_samples.squeeze(-1) if self._num_outputs == 1 else base_samples
+            ),
         )
         self.register_buffer("_Xs", X_eval)
         self.register_buffer("_Ys", Ys)

@@ -84,6 +84,42 @@ from linear_operator.operators import (
 from torch import Tensor
 
 
+def get_task_value_remapping(
+    task_values: Tensor, dtype: torch.dtype
+) -> Optional[Tensor]:
+    """Construct an mapping of discrete task values to contiguous int-valued floats.
+
+    Args:
+        task_values: A sorted long-valued tensor of task values.
+        dtype: The dtype of the model inputs (e.g. `X`), which the new
+            task values should have mapped to (e.g. float, double).
+
+    Returns:
+        A tensor of shape `task_values.max() + 1` that maps task values
+        to new task values. The indexing operation `mapper[task_value]`
+        will produce a tensor of new task values, of the same shape as
+        the original. The elements of the `mapper` tensor that do not
+        appear in the original `task_values` are mapped to `nan`. The
+        return value will be `None`, when the task values are contiguous
+        integers starting from zero.
+    """
+    task_range = torch.arange(
+        len(task_values), dtype=task_values.dtype, device=task_values.device
+    )
+    mapper = None
+    if not torch.equal(task_values, task_range):
+        # Create a tensor that maps task values to new task values.
+        # The number of tasks should be small, so this should be quite efficient.
+        mapper = torch.full(
+            (task_values.max().item() + 1,),
+            float("nan"),
+            dtype=dtype,
+            device=task_values.device,
+        )
+        mapper[task_values] = task_range.to(dtype=dtype)
+    return mapper
+
+
 class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
     r"""Multi-Task exact GP model using an ICM (intrinsic co-regionalization model)
     kernel. See [Bonilla2007MTGP]_ and [Swersky2013MTBO]_ for a reference on the
@@ -205,6 +241,14 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         self.task_covar_module = IndexKernel(
             num_tasks=self.num_tasks, rank=self._rank, prior=task_covar_prior
         )
+        task_mapper = get_task_value_remapping(
+            task_values=torch.tensor(
+                all_tasks, dtype=torch.long, device=train_X.device
+            ),
+            dtype=train_X.dtype,
+        )
+        self.register_buffer("_task_mapper", task_mapper)
+        self._expected_task_values = set(all_tasks)
         if input_transform is not None:
             self.input_transform = input_transform
         if outcome_transform is not None:
@@ -235,6 +279,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
             .view(batch_shape + torch.Size([-1, 1]))
             .to(dtype=torch.long)
         )
+        task_idcs = self._map_tasks(task_values=task_idcs)
         return x_basic, task_idcs
 
     def forward(self, x: Tensor) -> MultivariateNormal:
@@ -265,7 +310,9 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         if not (-d <= task_feature <= d):
             raise ValueError(f"Must have that -{d} <= task_feature <= {d}")
         task_feature = task_feature % (d + 1)
-        all_tasks = train_X[:, task_feature].unique().to(dtype=torch.long).tolist()
+        all_tasks = (
+            train_X[..., task_feature].unique(sorted=True).to(dtype=torch.long).tolist()
+        )
         return all_tasks, task_feature, d
 
     @classmethod

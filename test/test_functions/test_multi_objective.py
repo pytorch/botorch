@@ -277,7 +277,11 @@ class TestMW7(
 ):
     @property
     def functions(self) -> List[BaseTestProblem]:
-        return [MW7(dim=3), MW7(dim=3, noise_std=[0.1, 0.2])]
+        return [
+            MW7(dim=3),
+            MW7(dim=3, noise_std=[0.1, 0.2]),
+            MW7(dim=3, constraint_noise_std=[0.05, 0.025]),
+        ]
 
     def test_init(self):
         for f in self.functions:
@@ -452,6 +456,7 @@ class TestConstrainedBraninCurrin(
         return [
             ConstrainedBraninCurrin(),
             ConstrainedBraninCurrin(noise_std=[0.1, 0.2]),
+            ConstrainedBraninCurrin(constraint_noise_std=0.1),
         ]
 
 
