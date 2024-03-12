@@ -61,7 +61,7 @@ def get_model(
 
 class TestQSelfCorrectingBayesianOptimization(BotorchTestCase):
     def test_q_self_correcting_bayesian_optimization(self):
-        torch.manual_seed(1)
+        torch.manual_seed(5)
         tkwargs = {"device": self.device}
         distance_metrics = ("hellinger", "kl_divergence")
         num_objectives = 1
@@ -83,8 +83,8 @@ class TestQSelfCorrectingBayesianOptimization(BotorchTestCase):
         ):
             tkwargs["dtype"] = dtype
             input_dim = 2
-            train_X = torch.rand(4, input_dim, **tkwargs)
-            train_Y = torch.rand(4, num_objectives, **tkwargs)
+            train_X = torch.rand(5, input_dim, **tkwargs)
+            train_Y = torch.rand(5, num_objectives, **tkwargs)
 
             model = get_model(
                 train_X,

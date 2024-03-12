@@ -110,7 +110,7 @@ class qSelfCorrectingBayesianOptimization(
             ),
         )
         if distance_metric not in DISTANCE_METRICS.keys():
-            raise ValueError(
+            raise ValueError(  # pragma: no cover
                 f"Distance metric need to be one of {list(DISTANCE_METRICS.keys())}"
             )
         self.distance = DISTANCE_METRICS[distance_metric]
