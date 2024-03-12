@@ -234,7 +234,7 @@ class TestAugmentedSingleTaskGP(BotorchTestCase):
             fant_shape = torch.Size([2])
             # fantasize at different input points
             X_fant, Y_fant = _get_random_data(
-                batch_shape=fant_shape + torch.Size([]), m=1, d=d, n=3, **tkwargs
+                batch_shape=fant_shape, m=1, d=d, n=3, **tkwargs
             )
             c_kwargs = (
                 {"noise": torch.full_like(Y_fant, 0.01)}
@@ -265,60 +265,13 @@ class TestAugmentedSingleTaskGP(BotorchTestCase):
                 posterior = cm.posterior(test_X)
                 self.assertEqual(
                     posterior.mean.shape,
-                    fant_shape + torch.Size([]) + torch.Size([4, 1]),
+                    fant_shape + torch.Size([4, 1]),
                 )
                 posterior_same_inputs = cm_same_inputs.posterior(test_X)
                 self.assertEqual(
                     posterior_same_inputs.mean.shape,
-                    fant_shape + torch.Size([]) + torch.Size([4, 1]),
+                    fant_shape + torch.Size([4, 1]),
                 )
-
-                # check that fantasies of batched model are correct
-                if len(torch.Size([])) > 0 and test_X.dim() == 2:
-                    state_dict_non_batch = {
-                        key: (val[0] if val.numel() > 1 else val)
-                        for key, val in model.state_dict().items()
-                    }
-                    model_kwargs_non_batch = {
-                        "train_X": model_kwargs["train_X"][0],
-                        "train_Y": model_kwargs["train_Y"][0],
-                    }
-                    if "train_Yvar" in model_kwargs:
-                        model_kwargs_non_batch["train_Yvar"] = model_kwargs[
-                            "train_Yvar"
-                        ][0]
-                    if model_kwargs["outcome_transform"] is not None:
-                        model_kwargs_non_batch["outcome_transform"] = Standardize(m=1)
-                    model_non_batch = type(model)(**model_kwargs_non_batch)
-                    model_non_batch.load_state_dict(state_dict_non_batch)
-                    model_non_batch.eval()
-                    model_non_batch.likelihood.eval()
-                    model_non_batch.posterior(torch.rand(torch.Size([4, 1]), **tkwargs))
-                    c_kwargs = (
-                        {"noise": torch.full_like(Y_fant[0, 0, :], 0.01)}
-                        if isinstance(model, FixedNoiseGP)
-                        else {}
-                    )
-                    cm_non_batch = model_non_batch.condition_on_observations(
-                        X_fant[0][0], Y_fant[:, 0, :], **c_kwargs
-                    )
-                    non_batch_posterior = cm_non_batch.posterior(test_X)
-                    self.assertTrue(
-                        torch.allclose(
-                            posterior_same_inputs.mean[:, 0, ...],
-                            non_batch_posterior.mean,
-                            atol=1e-3,
-                        )
-                    )
-                    self.assertTrue(
-                        torch.allclose(
-                            posterior_same_inputs.distribution.covariance_matrix[
-                                :, 0, :, :
-                            ],
-                            non_batch_posterior.distribution.covariance_matrix,
-                            atol=1e-3,
-                        )
-                    )
 
     def test_fixed_noise_likelihood(self):
         for batch_shape, dtype in itertools.product(
