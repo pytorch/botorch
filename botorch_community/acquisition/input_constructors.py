@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
-from botorch.acquisition.input_constructors import allow_only_specific_variable_kwargs
+from botorch.acquisition.input_constructors import acqf_input_constructor
 from botorch.acquisition.utils import get_optimal_samples
 from botorch.models.model import Model
 from botorch_community.acquisition.bayesian_active_learning import (
@@ -30,57 +30,7 @@ from botorch_community.acquisition.scorebo import qSelfCorrectingBayesianOptimiz
 from torch import Tensor
 
 
-COMMUNITY_ACQF_INPUT_CONSTRUCTOR_REGISTRY = {}
-
-
-def get_community_acqf_input_constructor(
-    acqf_cls: Type[AcquisitionFunction],
-) -> Callable[..., Dict[str, Any]]:
-    r"""Get acquisition function input constructor from registry.
-
-    Args:
-        acqf_cls: The AcquisitionFunction class (not instance) for which
-            to retrieve the input constructor.
-
-    Returns:
-        The input constructor associated with `acqf_cls`.
-
-    """
-    if acqf_cls not in COMMUNITY_ACQF_INPUT_CONSTRUCTOR_REGISTRY:
-        raise RuntimeError(
-            f"Input constructor for acquisition class `{acqf_cls.__name__}` not "
-            "registered. Use the `@acqf_input_constructor` decorator to register "
-            "a new method."
-        )
-    return COMMUNITY_ACQF_INPUT_CONSTRUCTOR_REGISTRY[acqf_cls]
-
-
-def community_acqf_input_constructor(
-    *acqf_cls: Type[AcquisitionFunction],
-) -> Callable[..., AcquisitionFunction]:
-    r"""Decorator for registering acquisition function input constructors.
-
-    Args:
-        acqf_cls: The AcquisitionFunction classes (not instances) for which
-            to register the input constructor.
-    """
-    for acqf_cls_ in acqf_cls:
-        if acqf_cls_ in COMMUNITY_ACQF_INPUT_CONSTRUCTOR_REGISTRY:
-            raise ValueError(
-                "Cannot register duplicate arg constructor for acquisition "
-                f"class `{acqf_cls_.__name__}`"
-            )
-
-    def decorator(method):
-        method_kwargs = allow_only_specific_variable_kwargs(method)
-        for acqf_cls_ in acqf_cls:
-            COMMUNITY_ACQF_INPUT_CONSTRUCTOR_REGISTRY[acqf_cls_] = method_kwargs
-        return method
-
-    return decorator
-
-
-@community_acqf_input_constructor(
+@acqf_input_constructor(
     qBayesianQueryByComittee,
     qBayesianVarianceReduction,
 )
@@ -95,7 +45,7 @@ def construct_inputs_BAL(
     return inputs
 
 
-@community_acqf_input_constructor(qBayesianActiveLearningByDisagreement)
+@acqf_input_constructor(qBayesianActiveLearningByDisagreement)
 def construct_inputs_BALD(
     model: Model,
     X_pending: Optional[Tensor] = None,
@@ -107,7 +57,7 @@ def construct_inputs_BALD(
     return inputs
 
 
-@community_acqf_input_constructor(qStatisticalDistanceActiveLearning)
+@acqf_input_constructor(qStatisticalDistanceActiveLearning)
 def construct_inputs_SAL(
     model: Model,
     distance_metric: str = "hellinger",
@@ -121,7 +71,7 @@ def construct_inputs_SAL(
     return inputs
 
 
-@community_acqf_input_constructor(qSelfCorrectingBayesianOptimization)
+@acqf_input_constructor(qSelfCorrectingBayesianOptimization)
 def construct_inputs_SCoreBO(
     model: Model,
     bounds: List[Tuple[float, float]],

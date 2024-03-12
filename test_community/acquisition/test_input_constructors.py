@@ -7,15 +7,15 @@
 from __future__ import annotations
 
 import torch
+from botorch.acquisition.input_constructors import (
+    get_acqf_input_constructor,
+)
 from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 from botorch_community.acquisition.bayesian_active_learning import (
     qBayesianActiveLearningByDisagreement,
     qBayesianQueryByComittee,
     qBayesianVarianceReduction,
     qStatisticalDistanceActiveLearning,
-)
-from botorch_community.acquisition.input_constructors import (
-    get_community_acqf_input_constructor,
 )
 from botorch_community.acquisition.scorebo import qSelfCorrectingBayesianOptimization
 
@@ -26,7 +26,7 @@ class TestFullyBayesianAcquisitionFunctionInputConstructors(
     InputConstructorBaseTestCase
 ):
     def test_construct_inputs_scorebo(self) -> None:
-        func = get_community_acqf_input_constructor(qSelfCorrectingBayesianOptimization)
+        func = get_acqf_input_constructor(qSelfCorrectingBayesianOptimization)
         num_samples, num_optima = 3, 7
         model = SaasFullyBayesianSingleTaskGP(
             self.blockX_blockY[0].X, self.blockX_blockY[0].Y
@@ -66,7 +66,7 @@ class TestFullyBayesianAcquisitionFunctionInputConstructors(
         qSelfCorrectingBayesianOptimization(**kwargs)
 
     def test_construct_inputs_sal(self) -> None:
-        func = get_community_acqf_input_constructor(qStatisticalDistanceActiveLearning)
+        func = get_acqf_input_constructor(qStatisticalDistanceActiveLearning)
         num_samples = 3
         model = SaasFullyBayesianSingleTaskGP(
             self.blockX_blockY[0].X, self.blockX_blockY[0].Y
@@ -97,7 +97,7 @@ class TestFullyBayesianAcquisitionFunctionInputConstructors(
         qStatisticalDistanceActiveLearning(**kwargs)
 
     def test_construct_inputs_bald(self) -> None:
-        func = get_community_acqf_input_constructor(
+        func = get_acqf_input_constructor(
             qBayesianActiveLearningByDisagreement
         )
         num_samples = 3
@@ -128,7 +128,7 @@ class TestFullyBayesianAcquisitionFunctionInputConstructors(
         qBayesianActiveLearningByDisagreement(**kwargs)
 
     def test_construct_inputs_bqbc(self) -> None:
-        func = get_community_acqf_input_constructor(qBayesianQueryByComittee)
+        func = get_acqf_input_constructor(qBayesianQueryByComittee)
         num_samples = 3
         model = SaasFullyBayesianSingleTaskGP(
             self.blockX_blockY[0].X, self.blockX_blockY[0].Y
@@ -157,7 +157,7 @@ class TestFullyBayesianAcquisitionFunctionInputConstructors(
         qBayesianQueryByComittee(**kwargs)
 
     def test_construct_inputs_bayesian_variance_reduction(self) -> None:
-        func = get_community_acqf_input_constructor(qBayesianVarianceReduction)
+        func = get_acqf_input_constructor(qBayesianVarianceReduction)
         num_samples = 3
         model = SaasFullyBayesianSingleTaskGP(
             self.blockX_blockY[0].X, self.blockX_blockY[0].Y
