@@ -100,6 +100,12 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         subject to linear domain constraints `A x <= b` (intersected with box bounds,
         if provided).
         """
+        if interior_point is not None and interior_point.ndim == 1:
+            interior_point = interior_point.unsqueeze(-1)
+
+        if mean is not None and mean.ndim == 1:
+            mean = mean.unsqueeze(-1)
+
         super().__init__(
             inequality_constraints=inequality_constraints,
             # TODO: Support equality constraints?
@@ -510,5 +516,5 @@ def get_index_tensors(
     is_fixed = torch.as_tensor(fixed_indices)
     dtype, device = is_fixed.dtype, is_fixed.device
     dims = torch.arange(d, dtype=dtype, device=device)
-    not_fixed = torch.tensor([i for i in dims if i not in is_fixed])
+    not_fixed = torch.tensor([i for i in dims if i not in is_fixed], dtype=dtype)
     return is_fixed, not_fixed
