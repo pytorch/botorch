@@ -4,8 +4,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from itertools import product
-
 import torch
 from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 from botorch.models.gp_regression import SingleTaskGP
@@ -62,7 +60,6 @@ class TestQSelfCorrectingBayesianOptimization(BotorchTestCase):
     def test_q_self_correcting_bayesian_optimization(self):
         torch.manual_seed(5)
         tkwargs = {"device": self.device}
-        distance_metrics = ("hellinger", "kl_divergence")
         num_objectives = 1
         num_models = 3
         for (
