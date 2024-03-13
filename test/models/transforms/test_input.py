@@ -1131,12 +1131,12 @@ class TestInputTransforms(BotorchTestCase):
             X2 = tf.untransform(X_numeric)
             self.assertTrue(torch.equal(X2, X))
 
-            # test no
+            # test no categorical features.
             tf = OneHotToNumeric(dim=dim, categorical_features={})
             tf.eval()
             X_tf = tf(X)
             self.assertTrue(torch.equal(X, X_tf))
-            X2 = tf(X_tf)
+            X2 = tf.untransform(X_tf)
             self.assertTrue(torch.equal(X2, X_tf))
 
         # test no transform on eval
