@@ -131,9 +131,11 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_mt</span>
             <span class="k">else</span> <span class="n">distribution</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_covariance_matrix</span> <span class="o">=</span> <span class="n">distribution</span><span class="o">.</span><span class="n">lazy_covariance_matrix</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_mixture_mean</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_mixture_variance</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mixture_covariance_matrix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">mixture_mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -152,6 +154,21 @@
             <span class="n">t3</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_mean</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">MCMC_DIM</span><span class="p">)</span> <span class="o">/</span> <span class="n">num_mcmc_samples</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_mixture_variance</span> <span class="o">=</span> <span class="n">t1</span> <span class="o">+</span> <span class="n">t2</span> <span class="o">+</span> <span class="n">t3</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mixture_variance</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">mixture_covariance_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The posterior covariance matrix for the mixture of models."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mixture_covariance_matrix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">num_mcmc_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">MCMC_DIM</span><span class="p">]</span>
+            <span class="n">t1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_covariance_matrix</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">MCMC_DIM</span><span class="p">)</span> <span class="o">/</span> <span class="n">num_mcmc_samples</span>
+            <span class="n">mean_diff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mean</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mixture_mean</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">MCMC_DIM</span><span class="p">)</span>
+            <span class="n">t2</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">mean_diff</span><span class="p">,</span> <span class="n">mean_diff</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">MCMC_DIM</span><span class="p">)</span>
+                <span class="o">/</span> <span class="n">num_mcmc_samples</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_mixture_covariance_matrix</span> <span class="o">=</span> <span class="n">t1</span> <span class="o">+</span> <span class="n">t2</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mixture_covariance_matrix</span>
 
 <div class="viewcode-block" id="GaussianMixturePosterior.quantile">
 <a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.fully_bayesian.GaussianMixturePosterior.quantile">[docs]</a>
