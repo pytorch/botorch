@@ -187,7 +187,6 @@ class MixedSingleTaskGP(SingleTaskGP):
         training_data: SupervisedDataset,
         categorical_features: List[int],
         likelihood: Optional[Likelihood] = None,
-        **kwargs: Any,
     ) -> Dict[str, Any]:
         r"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`.
 
@@ -196,7 +195,7 @@ class MixedSingleTaskGP(SingleTaskGP):
             categorical_features: Column indices of categorical features.
             likelihood: Optional likelihood used to constuct the model.
         """
-        base_inputs = super().construct_inputs(training_data=training_data, **kwargs)
+        base_inputs = super().construct_inputs(training_data=training_data)
         return {
             **base_inputs,
             "cat_dims": categorical_features,

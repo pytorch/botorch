@@ -388,18 +388,28 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
         cls,
         training_data: Union[SupervisedDataset, MultiTaskDataset],
         task_feature: int,
+        output_tasks: Optional[List[int]] = None,
+        prior_config: Optional[dict] = None,
         rank: Optional[int] = None,
-        **kwargs: Any,
     ) -> Dict[str, Any]:
         r"""Construct `Model` keyword arguments from a dataset and other args.
 
         Args:
             training_data: A `SupervisedDataset` or a `MultiTaskDataset`.
             task_feature: Column index of embedded task indicator features.
+            output_tasks: A list of task indices for which to compute model
+                outputs for. If omitted, return outputs for all task indices.
+            prior_config: Configuration for inter-task covariance prior.
+                Should only be used if `task_covar_prior` is not passed directly. Must
+                contain `use_LKJ_prior` indicator and should contain float value `eta`.
             rank: The rank of the cross-task covariance matrix.
         """
         inputs = super().construct_inputs(
-            training_data=training_data, task_feature=task_feature, rank=rank, **kwargs
+            training_data=training_data,
+            task_feature=task_feature,
+            rank=rank,
+            output_tasks=output_tasks,
+            prior_config=prior_config,
         )
         inputs.pop("task_covar_prior")
         if "train_Yvar" not in inputs:
