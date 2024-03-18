@@ -66,17 +66,10 @@ def _check_strict_input(
             expected_attr = getattr(t_input, attr, None)
             found_attr = getattr(input_, attr, None)
             if expected_attr != found_attr:
-                msg = (
-                    "Cannot modify {attr} of {t_or_i} "
-                    "(expected {e_attr}, found {f_attr})."
+                raise RuntimeError(
+                    f"Cannot modify {attr} of {target_or_inputs} "
+                    f"(expected {expected_attr}, found {found_attr})."
                 )
-                msg = msg.format(
-                    attr=attr,
-                    e_attr=expected_attr,
-                    f_attr=found_attr,
-                    t_or_i=target_or_inputs,
-                )
-                raise RuntimeError(msg)
 
 
 def _scaled_psd_safe_cholesky(
@@ -836,7 +829,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
                 `comparisons` or `datapoints` is `None`, construct a prior-only
                 model.
             strict: `strict` argument as in gpytorch.models.exact_gp for compatibility
-                when using fit_gpytorch_model with input_transform.
+                when using fit_gpytorch_mll with input_transform.
             update_model: True if we want to refit the model (see _update) after
                 re-setting the data.
         """
