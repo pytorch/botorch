@@ -45,24 +45,6 @@ def delattr_ctx(
 
 
 @contextmanager
-def requires_grad_ctx(
-    module: Module, assignments: Dict[str, bool]
-) -> Generator[None, None, None]:
-    r"""Contextmanager for temporarily setting the requires_grad field of a module's
-    parameters."""
-    try:
-        cache = {}
-        for name, mode in assignments.items():
-            parameter = module.get_parameter(name)
-            cache[name] = parameter.requires_grad
-            parameter.requires_grad_(mode)
-        yield
-    finally:
-        for name, mode in cache.items():
-            module.get_parameter(name).requires_grad_(mode)
-
-
-@contextmanager
 def parameter_rollback_ctx(
     parameters: Dict[str, Tensor],
     checkpoint: Optional[Dict[str, TensorCheckpoint]] = None,
