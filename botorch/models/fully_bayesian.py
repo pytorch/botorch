@@ -319,7 +319,7 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
     with a Matern-5/2 kernel is used by default.
 
     You are expected to use `fit_fully_bayesian_model_nuts` to fit this model as it
-    isn't compatible with `fit_gpytorch_model`.
+    isn't compatible with `fit_gpytorch_mll`.
 
     Example:
         >>> saas_gp = SaasFullyBayesianSingleTaskGP(train_X, train_Y)
