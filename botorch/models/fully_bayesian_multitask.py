@@ -172,7 +172,7 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
     kernel by default.
 
     You are expected to use `fit_fully_bayesian_model_nuts` to fit this model as it
-    isn't compatible with `fit_gpytorch_model`.
+    isn't compatible with `fit_gpytorch_mll`.
 
     Example:
         >>> X1, X2 = torch.rand(10, 2), torch.rand(20, 2)
