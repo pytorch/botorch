@@ -24,11 +24,7 @@ from botorch.optim.closures import get_loss_closure_with_grads
 from botorch.optim.fit import fit_gpytorch_mll_scipy, fit_gpytorch_mll_torch
 from botorch.optim.utils import get_data_loader
 from botorch.settings import debug
-from botorch.utils.context_managers import (
-    module_rollback_ctx,
-    requires_grad_ctx,
-    TensorCheckpoint,
-)
+from botorch.utils.context_managers import module_rollback_ctx, TensorCheckpoint
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels import MaternKernel
 from gpytorch.mlls import ExactMarginalLogLikelihood, VariationalELBO
@@ -169,9 +165,7 @@ class TestFitFallback(BotorchTestCase):
         ]
         for should_fail in (True, False):
             optimizer.call_count = 0
-            with catch_warnings(), requires_grad_ctx(
-                module=mll, assignments={"model.mean_module.constant": False}
-            ), module_rollback_ctx(mll, checkpoint=ckpt):
+            with catch_warnings(), module_rollback_ctx(mll, checkpoint=ckpt):
                 try:
                     fit._fit_fallback(
                         mll,

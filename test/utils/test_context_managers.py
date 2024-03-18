@@ -13,7 +13,6 @@ from botorch.utils.context_managers import (
     delattr_ctx,
     module_rollback_ctx,
     parameter_rollback_ctx,
-    requires_grad_ctx,
     TensorCheckpoint,
     zero_grad_ctx,
 )
@@ -46,18 +45,6 @@ class TestContextManagers(BotorchTestCase):
         with self.assertRaisesRegex(ValueError, "Attribute .* missing"):
             with delattr_ctx(self.module, "z", enforce_hasattr=True):
                 pass  # pragma: no cover
-
-    def test_requires_grad_ctx(self):
-        # Test temporary setting of requires_grad field
-        with requires_grad_ctx(self.module, assignments={"a": False, "b": True}):
-            self.assertTrue(not self.module.a.requires_grad)
-            self.assertTrue(self.module.b.requires_grad)
-            self.assertTrue(self.module.c.requires_grad)
-
-        # Test that requires_grad fields get restored
-        self.assertTrue(self.module.a.requires_grad)
-        self.assertTrue(not self.module.b.requires_grad)
-        self.assertTrue(self.module.c.requires_grad)
 
     def test_parameter_rollback_ctx(self):
         # Test that only unfiltered parameters get rolled back
