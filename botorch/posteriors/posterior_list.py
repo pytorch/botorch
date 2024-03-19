@@ -154,19 +154,13 @@ class PosteriorList(Posterior):
         """
         return self._reshape_and_cat(tensors=[p.variance for p in self.posteriors])
 
-    def rsample(
-        self,
-        sample_shape: Optional[torch.Size] = None,
-    ) -> Tensor:
+    def rsample(self, sample_shape: Optional[torch.Size] = None) -> Tensor:
         r"""Sample from the posterior (with gradients).
 
         Args:
             sample_shape: A `torch.Size` object specifying the sample shape. To
                 draw `n` samples, set to `torch.Size([n])`. To draw `b` batches
                 of `n` samples each, set to `torch.Size([b, n])`.
-            base_samples: An (optional) Tensor of `N(0, I)` base samples of
-                appropriate dimension, typically obtained from a `Sampler`.
-                This is used for deterministic optimization. Deprecated.
 
         Returns:
             Samples from the posterior, a tensor of shape
