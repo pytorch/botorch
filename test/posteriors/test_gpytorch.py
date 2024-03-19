@@ -12,7 +12,7 @@ from unittest import mock
 import torch
 from botorch.exceptions import BotorchTensorDimensionError
 from botorch.posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
-from botorch.utils.testing import _get_test_posterior, BotorchTestCase, MockPosterior
+from botorch.utils.testing import _get_test_posterior, BotorchTestCase
 from gpytorch import settings as gpt_settings
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from linear_operator.operators import to_linear_operator
@@ -25,18 +25,7 @@ ROOT_DECOMP_PATH = (
 
 
 class TestGPyTorchPosterior(BotorchTestCase):
-    def test_GPyTorchPosterior(self):
-        # Test init & mvn property.
-        mock_mvn = MockPosterior()
-        with self.assertWarnsRegex(DeprecationWarning, "The `mvn` argument of"):
-            posterior = GPyTorchPosterior(mvn=mock_mvn)
-        self.assertIs(posterior.mvn, mock_mvn)
-        self.assertIs(posterior.distribution, mock_mvn)
-        with self.assertRaisesRegex(RuntimeError, "Got both a `distribution`"):
-            GPyTorchPosterior(mvn=mock_mvn, distribution=mock_mvn)
-        with self.assertRaisesRegex(RuntimeError, "GPyTorchPosterior must have"):
-            GPyTorchPosterior()
-
+    def test_GPyTorchPosterior(self) -> None:
         for dtype in (torch.float, torch.double):
             n = 3
             mean = torch.rand(n, dtype=dtype, device=self.device)
