@@ -80,10 +80,6 @@ class TestGPyTorchPosterior(BotorchTestCase):
                 posterior.rsample_from_base_samples(
                     sample_shape=torch.Size([3]), base_samples=base_samples
                 )
-            with self.assertRaisesRegex(RuntimeError, "sample_shape"):
-                posterior.rsample(
-                    sample_shape=torch.Size([3]), base_samples=base_samples
-                )
             # ensure consistent result
             for sample_shape in ([4], [4, 2]):
                 base_samples = torch.randn(
@@ -109,20 +105,6 @@ class TestGPyTorchPosterior(BotorchTestCase):
             self.assertEqual(density.shape, posterior._extended_shape(torch.Size([2])))
             expected = torch.stack([marginal.log_prob(q).exp() for q in q_val], dim=0)
             self.assertAllClose(density, expected)
-            # collapse_batch_dims
-            b_mean = torch.rand(2, 3, dtype=dtype, device=self.device)
-            b_variance = 1 + torch.rand(2, 3, dtype=dtype, device=self.device)
-            b_covar = torch.diag_embed(b_variance)
-            b_mvn = MultivariateNormal(b_mean, to_linear_operator(b_covar))
-            b_posterior = GPyTorchPosterior(distribution=b_mvn)
-            b_base_samples = torch.randn(4, 1, 3, 1, device=self.device, dtype=dtype)
-            with self.assertWarnsRegex(
-                DeprecationWarning, "`base_samples` with `rsample`"
-            ):
-                b_samples = b_posterior.rsample(
-                    sample_shape=torch.Size([4]), base_samples=b_base_samples
-                )
-            self.assertEqual(b_samples.shape, torch.Size([4, 2, 3, 1]))
 
     def test_GPyTorchPosterior_Multitask(self):
         for dtype in (torch.float, torch.double):
@@ -159,20 +141,6 @@ class TestGPyTorchPosterior(BotorchTestCase):
                 sample_shape=torch.Size([4, 2]), base_samples=base_samples2
             )
             self.assertAllClose(samples2_b1, samples2_b2)
-            # collapse_batch_dims
-            b_mean = torch.rand(2, 3, 2, dtype=dtype, device=self.device)
-            b_variance = 1 + torch.rand(2, 3, 2, dtype=dtype, device=self.device)
-            b_covar = torch.diag_embed(b_variance.view(2, 6))
-            b_mvn = MultitaskMultivariateNormal(b_mean, to_linear_operator(b_covar))
-            b_posterior = GPyTorchPosterior(distribution=b_mvn)
-            b_base_samples = torch.randn(4, 1, 3, 2, device=self.device, dtype=dtype)
-            with self.assertWarnsRegex(
-                DeprecationWarning, "`base_samples` with `rsample`"
-            ):
-                b_samples = b_posterior.rsample(
-                    sample_shape=torch.Size([4]), base_samples=b_base_samples
-                )
-            self.assertEqual(b_samples.shape, torch.Size([4, 2, 3, 2]))
 
     def test_degenerate_GPyTorchPosterior(self):
         for dtype, multi_task in (
