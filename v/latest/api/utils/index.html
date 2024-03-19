@@ -210,23 +210,6 @@ taken from the leading dimension of an n-dimensional source tensor.</p>
 </dl>
 </dd></dl>
 <dl class="py function">
-<dt class="sig sig-object py" id="botorch.utils.context_managers.requires_grad_ctx">
-<span class="sig-prename descclassname"><span class="pre">botorch.utils.context_managers.</span></span><span class="sig-name descname"><span class="pre">requires_grad_ctx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">assignments</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/context_managers.html#requires_grad_ctx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.context_managers.requires_grad_ctx" title="Link to this definition">¶</a></dt>
-<dd><p>Contextmanager for temporarily setting the requires_grad field of a module’s
-parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>Module</em>) – </p></li>
-<li><p><strong>assignments</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em>]</em>) – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Generator</em>[None, None, None]</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.context_managers.parameter_rollback_ctx">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.context_managers.</span></span><span class="sig-name descname"><span class="pre">parameter_rollback_ctx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">tkwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/context_managers.html#parameter_rollback_ctx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.context_managers.parameter_rollback_ctx" title="Link to this definition">¶</a></dt>
 <dd><p>Contextmanager that exits by rolling back a module’s state_dict.</p>

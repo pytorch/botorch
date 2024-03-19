@@ -2180,7 +2180,7 @@ datapoints are not transformed. If either <cite>datapoints</cite> or
 <cite>comparisons</cite> or <cite>datapoints</cite> is <cite>None</cite>, construct a prior-only
 model.</p></li>
 <li><p><strong>strict</strong> (<em>bool</em>) – <cite>strict</cite> argument as in gpytorch.models.exact_gp for compatibility
-when using fit_gpytorch_model with input_transform.</p></li>
+when using fit_gpytorch_mll with input_transform.</p></li>
 <li><p><strong>update_model</strong> (<em>bool</em>) – True if we want to refit the model (see _update) after
 re-setting the data.</p></li>
 </ul>
@@ -3013,7 +3013,7 @@ either normalize and standardize the data before constructing the model or use
 an <cite>input_transform</cite> and <cite>outcome_transform</cite>. The SAAS model <a class="reference internal" href="#eriksson2021saasbo" id="id17"><span>[Eriksson2021saasbo]</span></a>
 with a Matern-5/2 kernel is used by default.</p>
 <p>You are expected to use <cite>fit_fully_bayesian_model_nuts</cite> to fit this model as it
-isn’t compatible with <cite>fit_gpytorch_model</cite>.</p>
+isn’t compatible with <cite>fit_gpytorch_mll</cite>.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">saas_gp</span> <span class="o">=</span> <span class="n">SaasFullyBayesianSingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fit_fully_bayesian_model_nuts</span><span class="p">(</span><span class="n">saas_gp</span><span class="p">)</span>
@@ -3273,7 +3273,7 @@ output has been stratified standardized to have zero mean and unit variance for
 each task.The SAAS model <a class="reference internal" href="#eriksson2021saasbo" id="id18"><span>[Eriksson2021saasbo]</span></a> with a Matern-5/2 is used as data
 kernel by default.</p>
 <p>You are expected to use <cite>fit_fully_bayesian_model_nuts</cite> to fit this model as it
-isn’t compatible with <cite>fit_gpytorch_model</cite>.</p>
+isn’t compatible with <cite>fit_gpytorch_mll</cite>.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">i1</span><span class="p">,</span> <span class="n">i2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>

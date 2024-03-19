@@ -53,32 +53,6 @@ i.e. <cite>mll.training == False</cite>. Otherwise, <cite>mll</cite> will be in 
 </dl>
 </dd></dl>
 <dl class="py function">
-<dt class="sig sig-object py" id="botorch.fit.fit_gpytorch_model">
-<span class="sig-prename descclassname"><span class="pre">botorch.fit.</span></span><span class="sig-name descname"><span class="pre">fit_gpytorch_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_retries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/fit.html#fit_gpytorch_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.fit.fit_gpytorch_model" title="Link to this definition">¶</a></dt>
-<dd><p>Convenience method for fitting GPyTorch models using legacy API. For more
-details, see <cite>fit_gpytorch_mll</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – A GPyTorch MarginalLogLikelihood instance.</p></li>
-<li><p><strong>optimizer</strong> (<em>Callable</em><em> | </em><em>None</em>) – User specified optimization algorithm. When <cite>optimizer is None</cite>,
-this keyword argument is omitted when calling the dispatcher from inside
-<cite>fit_gpytorch_mll</cite>.</p></li>
-<li><p><strong>optimizer_kwargs</strong> (<em>dict</em><em> | </em><em>None</em>) – Keyword arguments passed to <cite>optimizer</cite>.</p></li>
-<li><p><strong>exclude</strong> (<em>Iterable</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Legacy argument for specifying parameters <cite>x</cite> that should be held fixed
-during optimization. Internally, used to temporarily set <cite>x.requires_grad</cite>
-to False.</p></li>
-<li><p><strong>max_retries</strong> (<em>int</em><em> | </em><em>None</em>) – Legacy name for <cite>max_attempts</cite>. When <cite>max_retries is None</cite>,
-this keyword argument is omitted when calling <cite>fit_gpytorch_mll</cite>.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>MarginalLogLikelihood</em></p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py function">
 <dt class="sig sig-object py" id="botorch.fit.fit_fully_bayesian_model_nuts">
 <span class="sig-prename descclassname"><span class="pre">botorch.fit.</span></span><span class="sig-name descname"><span class="pre">fit_fully_bayesian_model_nuts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tree_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warmup_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thinning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disable_progbar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jit_compile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/fit.html#fit_fully_bayesian_model_nuts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.fit.fit_fully_bayesian_model_nuts" title="Link to this definition">¶</a></dt>
 <dd><p>Fit a fully Bayesian model using the No-U-Turn-Sampler (NUTS)</p>
