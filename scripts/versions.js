@@ -13,10 +13,21 @@ const CompLibrary = require('../../core/CompLibrary');
 
 const Container = CompLibrary.Container;
 
+// We need to sort the versions descending numerically (not based on string representations)
+function compareVersions(v1, v2) {
+  const v1_arr = v1.split(".");
+  const v2_arr = v2.split(".");
+  for (let i = 0; i < v1_arr.length; i++) {
+    const diff = parseInt(v2_arr[i]) - parseInt(v1_arr[i]);
+    if (diff != 0) {return diff}
+  }
+  return 0
+}
+
 const CWD = process.cwd();
 
 const versions = require(`${CWD}/_versions.json`);
-versions.sort().reverse();
+versions.sort(compareVersions);
 
 function Versions(props) {
   const {config: siteConfig} = props;
