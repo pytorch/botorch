@@ -186,7 +186,6 @@ class Model(Module, ABC):
     def construct_inputs(
         cls,
         training_data: SupervisedDataset,
-        **kwargs: Any,
     ) -> Dict[str, Union[BotorchContainer, Tensor]]:
         """
         Construct `Model` keyword arguments from a `SupervisedDataset`.
@@ -194,7 +193,6 @@ class Model(Module, ABC):
         Args:
             training_data: A `SupervisedDataset`, with attributes `train_X`,
                 `train_Y`, and, optionally, `train_Yvar`.
-            kwargs: Ignored.
 
         Returns:
             A dict of keyword arguments that can be used to initialize a `Model`,
