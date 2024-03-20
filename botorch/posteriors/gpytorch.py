@@ -39,32 +39,13 @@ class GPyTorchPosterior(TorchPosterior):
 
     distribution: MultivariateNormal
 
-    def __init__(
-        self,
-        distribution: Optional[MultivariateNormal] = None,
-        mvn: Optional[MultivariateNormal] = None,
-    ) -> None:
+    def __init__(self, distribution: MultivariateNormal) -> None:
         r"""A posterior based on GPyTorch's multi-variate Normal distributions.
 
         Args:
             distribution: A GPyTorch MultivariateNormal (single-output case) or
                 MultitaskMultivariateNormal (multi-output case).
-            mvn: Deprecated.
         """
-        if mvn is not None:
-            if distribution is not None:
-                raise RuntimeError(
-                    "Got both a `distribution` and an `mvn` argument. "
-                    "Use the `distribution` only."
-                )
-            warnings.warn(
-                "The `mvn` argument of `GPyTorchPosterior`s has been renamed to "
-                "`distribution` and will be removed in a future version.",
-                DeprecationWarning,
-            )
-            distribution = mvn
-        if distribution is None:
-            raise RuntimeError("GPyTorchPosterior must have a distribution specified.")
         super().__init__(distribution=distribution)
         self._is_mt = isinstance(distribution, MultitaskMultivariateNormal)
 
@@ -172,6 +153,7 @@ class GPyTorchPosterior(TorchPosterior):
                 "Use of `base_samples` with `rsample` is deprecated. Use "
                 "`rsample_from_base_samples` instead.",
                 DeprecationWarning,
+                stacklevel=2,
             )
             if base_samples.shape[: len(sample_shape)] != sample_shape:
                 raise RuntimeError(
