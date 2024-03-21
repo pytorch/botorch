@@ -64,32 +64,13 @@
 
     <span class="n">distribution</span><span class="p">:</span> <span class="n">MultivariateNormal</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">distribution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MultivariateNormal</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">mvn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MultivariateNormal</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">distribution</span><span class="p">:</span> <span class="n">MultivariateNormal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""A posterior based on GPyTorch's multi-variate Normal distributions.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            distribution: A GPyTorch MultivariateNormal (single-output case) or</span>
 <span class="sd">                MultitaskMultivariateNormal (multi-output case).</span>
-<span class="sd">            mvn: Deprecated.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="n">mvn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">distribution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                    <span class="s2">"Got both a `distribution` and an `mvn` argument. "</span>
-                    <span class="s2">"Use the `distribution` only."</span>
-                <span class="p">)</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="s2">"The `mvn` argument of `GPyTorchPosterior`s has been renamed to "</span>
-                <span class="s2">"`distribution` and will be removed in a future version."</span><span class="p">,</span>
-                <span class="ne">DeprecationWarning</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">distribution</span> <span class="o">=</span> <span class="n">mvn</span>
-        <span class="k">if</span> <span class="n">distribution</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"GPyTorchPosterior must have a distribution specified."</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="n">distribution</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_is_mt</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">)</span>
 
@@ -202,6 +183,7 @@
                 <span class="s2">"Use of `base_samples` with `rsample` is deprecated. Use "</span>
                 <span class="s2">"`rsample_from_base_samples` instead."</span><span class="p">,</span>
                 <span class="ne">DeprecationWarning</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">sample_shape</span><span class="p">)]</span> <span class="o">!=</span> <span class="n">sample_shape</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>

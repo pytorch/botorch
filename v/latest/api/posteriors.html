@@ -187,17 +187,14 @@ the marginal distributions.</p>
 <p>Posterior module to be used with GPyTorch models.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.posteriors.gpytorch.GPyTorchPosterior">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.posteriors.gpytorch.</span></span><span class="sig-name descname"><span class="pre">GPyTorchPosterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">distribution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mvn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/gpytorch.html#GPyTorchPosterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.posteriors.gpytorch.</span></span><span class="sig-name descname"><span class="pre">GPyTorchPosterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">distribution</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/gpytorch.html#GPyTorchPosterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.posteriors.torch.TorchPosterior" title="botorch.posteriors.torch.TorchPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">TorchPosterior</span></code></a></p>
 <p>A posterior based on GPyTorch’s multi-variate Normal distributions.</p>
 <p>A posterior based on GPyTorch’s multi-variate Normal distributions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>distribution</strong> (<em>MultivariateNormal</em>) – A GPyTorch MultivariateNormal (single-output case) or
-MultitaskMultivariateNormal (multi-output case).</p></li>
-<li><p><strong>mvn</strong> (<em>Optional</em><em>[</em><em>MultivariateNormal</em><em>]</em>) – Deprecated.</p></li>
-</ul>
+<dd class="field-odd"><p><strong>distribution</strong> (<em>MultivariateNormal</em>) – A GPyTorch MultivariateNormal (single-output case) or
+MultitaskMultivariateNormal (multi-output case).</p>
 </dd>
 </dl>
 <dl class="py attribute">
