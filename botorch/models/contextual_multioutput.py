@@ -23,7 +23,7 @@ from botorch.models.transforms.outcome import OutcomeTransform
 from gpytorch.constraints import Interval
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.rbf_kernel import RBFKernel
-from linear_operator.operators import InterpolatedLinearOperator, LinearOperator
+from linear_operator.operators import LinearOperator
 from torch import Tensor
 from torch.nn import ModuleList
 
@@ -114,12 +114,18 @@ class LCEMGP(MultiTaskGP):
         self.to(train_X)
 
     def _eval_context_covar(self) -> LinearOperator:
-        """obtain context covariance matrix (num_contexts x num_contexts)"""
+        """Obtain the context covariance matrix, a linear operator
+        with shape (num_contexts x num_contexts).
+
+        This first generates the embedding features for all contexts,
+        then evaluates the task covariance matrix with those embeddings
+        to get the task covariance matrix.
+        """
         all_embs = self._task_embeddings()
         return self.task_covar_module(all_embs)
 
     def _task_embeddings(self) -> Tensor:
-        """generate embedding features for all contexts."""
+        """Generate embedding features for all contexts."""
         embeddings = [
             emb_layer(
                 self.context_cat_feature[:, i].to(
@@ -139,18 +145,34 @@ class LCEMGP(MultiTaskGP):
         return embeddings
 
     def task_covar_matrix(self, task_idcs: Tensor) -> Tensor:
-        r"""compute covariance matrix of a list of given context
+        r"""Compute the task covariance matrix for a given tensor of
+        task / context indices.
 
         Args:
-            task_idcs: (n x 1) or (b x n x 1) task indices tensor
+            task_idcs: Task index tensor of shape (n x 1) or (b x n x 1).
 
+        Returns:
+            Task covariance matrix of shape (b x n x n).
         """
-        covar_matrix = self._eval_context_covar()
-        return InterpolatedLinearOperator(
-            base_linear_op=covar_matrix,
-            left_interp_indices=task_idcs,
-            right_interp_indices=task_idcs,
-        ).to_dense()
+        # This is a tensor of shape (num_tasks x num_tasks).
+        covar_matrix = self._eval_context_covar().to_dense()
+        # Here, we index into the base covar matrix to extract
+        # the rows & columns corresponding to the task indices.
+        # First indexing operation picks the rows for each index in
+        # task indices (results in b x n x num_tasks). We then transpose
+        # to make the picked rows into columns (b x num_tasks x n), and
+        # pick the rows again to result in the final covariance matrix.
+        # The result is a symmetric tensor of shape (b x n x n).
+        # An alternative implementation could pick the columns directly
+        # by moving the transpose operation into the index of gather,
+        # however, this does not seem to make any noticeable difference.
+        base_idx = task_idcs.squeeze(-1)
+        expanded_idx = task_idcs.expand(
+            *([-1] * (task_idcs.dim() - 1)), task_idcs.shape[-2]
+        )
+        return (
+            covar_matrix[base_idx].transpose(-1, -2).gather(index=expanded_idx, dim=-2)
+        )
 
     def forward(self, x: Tensor) -> MultivariateNormal:
         if self.training:
@@ -209,6 +231,7 @@ class FixedNoiseLCEMGP(LCEMGP):
             "When `train_Yvar` is specified, `LCEMGP` behaves the same "
             "as the `FixedNoiseLCEMGP`.",
             DeprecationWarning,
+            stacklevel=2,
         )
 
         super().__init__(

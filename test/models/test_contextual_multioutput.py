@@ -14,6 +14,9 @@ from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from linear_operator.operators import LinearOperator
+from linear_operator.operators.interpolated_linear_operator import (
+    InterpolatedLinearOperator,
+)
 from torch import Tensor
 
 
@@ -34,14 +37,14 @@ class ContextualMultiOutputTest(BotorchTestCase):
 
             if fixed_noise:
                 train_yvar = torch.ones(10, 1, device=self.device, dtype=dtype) * 0.01
-                model = LCEMGP(
-                    train_X=train_x,
-                    train_Y=train_y,
-                    task_feature=d,
-                    train_Yvar=train_yvar,
-                )
             else:
-                model = LCEMGP(train_X=train_x, train_Y=train_y, task_feature=d)
+                train_yvar = None
+            model = LCEMGP(
+                train_X=train_x,
+                train_Y=train_y,
+                task_feature=d,
+                train_Yvar=train_yvar,
+            )
 
             self.assertIsInstance(model, LCEMGP)
             self.assertIsInstance(model, MultiTaskGP)
@@ -99,6 +102,18 @@ class ContextualMultiOutputTest(BotorchTestCase):
             embeddings2 = model2._task_embeddings()
             self.assertIsInstance(embeddings2, Tensor)
             self.assertEqual(embeddings2.shape, torch.Size([2, 3]))
+
+            # Check task_covar_matrix against previous implementation.
+            task_idcs = torch.randint(
+                low=0, high=2, size=torch.Size([8, 32, 1]), device=self.device
+            )
+            covar_matrix = model._eval_context_covar()
+            previous_covar = InterpolatedLinearOperator(
+                base_linear_op=covar_matrix,
+                left_interp_indices=task_idcs,
+                right_interp_indices=task_idcs,
+            ).to_dense()
+            self.assertAllClose(previous_covar, model.task_covar_matrix(task_idcs))
 
     def test_FixedNoiseLCEMGP(self):
         d = 1
