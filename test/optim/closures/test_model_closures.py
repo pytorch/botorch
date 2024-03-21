@@ -15,8 +15,8 @@ from botorch.optim.closures.model_closures import (
     get_loss_closure,
     get_loss_closure_with_grads,
 )
-from botorch.utils.testing import BotorchTestCase
 from botorch.optim.utils.model_utils import get_data_loader
+from botorch.utils.testing import BotorchTestCase
 from gpytorch import settings as gpytorch_settings
 from gpytorch.mlls import ExactMarginalLogLikelihood, SumMarginalLogLikelihood
 from torch.utils.data import DataLoader
