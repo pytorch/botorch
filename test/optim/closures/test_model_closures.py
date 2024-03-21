@@ -16,9 +16,10 @@ from botorch.optim.closures.model_closures import (
     get_loss_closure_with_grads,
 )
 from botorch.utils.testing import BotorchTestCase
+from botorch.optim.utils.model_utils import get_data_loader
 from gpytorch import settings as gpytorch_settings
 from gpytorch.mlls import ExactMarginalLogLikelihood, SumMarginalLogLikelihood
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader
 
 
 class TestLossClosures(BotorchTestCase):
@@ -68,8 +69,7 @@ class TestLossClosures(BotorchTestCase):
             if type(mll) is not ExactMarginalLogLikelihood:
                 continue
 
-            dataset = TensorDataset(*mll.model.train_inputs, mll.model.train_targets)
-            loader = DataLoader(dataset, batch_size=len(mll.model.train_targets))
+            loader = get_data_loader(mll.model)
             params = {n: p for n, p in mll.named_parameters() if p.requires_grad}
             A = get_loss_closure_with_grads(mll, params)
             (a, das) = A()
@@ -82,7 +82,9 @@ class TestLossClosures(BotorchTestCase):
             for da, db in zip_longest(das, dbs):
                 self.assertTrue(da.allclose(db))
 
-        loader = DataLoader(mll.model.train_targets, len(mll.model.train_targets))
+        loader = DataLoader(
+            mll.model.train_targets, len(mll.model.train_targets), num_workers=1
+        )
         closure = get_loss_closure_with_grads(mll, params, data_loader=loader)
         with self.assertRaisesRegex(TypeError, "Expected .* a batch of tensors"):
             closure()

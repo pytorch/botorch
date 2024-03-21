@@ -27,11 +27,17 @@ class TorchAttr(NamedTuple):
 
 
 def get_data_loader(
-    model: GPyTorchModel, batch_size: int = 1024, **kwargs: Any
+    model: GPyTorchModel,
+    batch_size: int = 1024,
+    num_workers: int = 1,
+    **kwargs: Any,
 ) -> DataLoader:
     dataset = TensorDataset(*model.train_inputs, model.train_targets)
     return DataLoader(
-        dataset=dataset, batch_size=min(batch_size, len(model.train_targets)), **kwargs
+        dataset=dataset,
+        batch_size=min(batch_size, len(model.train_targets)),
+        num_workers=num_workers,
+        **kwargs,
     )
 
 

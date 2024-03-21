@@ -66,7 +66,7 @@ class TestTorchPosterior(BotorchTestCase):
             posterior = TorchPosterior(Exponential(rate=torch.rand(1, 2, **tkwargs)))
             with tempfile.NamedTemporaryFile() as tmp_file:
                 torch.save(posterior, tmp_file.name)
-                loaded_posterior = torch.load(tmp_file.name)
+                loaded_posterior = torch.load(tmp_file.name, weights_only=False)
             self.assertEqual(posterior.dtype, loaded_posterior.dtype)
             self.assertEqual(posterior.device, loaded_posterior.device)
             self.assertTrue(

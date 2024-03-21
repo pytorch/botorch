@@ -75,6 +75,7 @@ class TestGetDataLoader(BotorchTestCase):
             _DataLoader.assert_called_once_with(
                 dataset="foo",
                 batch_size=2,
+                num_workers=1,
                 shuffle=True,
             )
 
