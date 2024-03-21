@@ -10,8 +10,6 @@ Posterior module to be used with GPyTorch models.
 
 from __future__ import annotations
 
-import warnings
-
 from contextlib import ExitStack
 from typing import Optional, Tuple, TYPE_CHECKING, Union
 
@@ -127,20 +125,13 @@ class GPyTorchPosterior(TorchPosterior):
             samples = samples.unsqueeze(-1)
         return samples
 
-    def rsample(
-        self,
-        sample_shape: Optional[torch.Size] = None,
-        base_samples: Optional[Tensor] = None,
-    ) -> Tensor:
+    def rsample(self, sample_shape: Optional[torch.Size] = None) -> Tensor:
         r"""Sample from the posterior (with gradients).
 
         Args:
             sample_shape: A `torch.Size` object specifying the sample shape. To
                 draw `n` samples, set to `torch.Size([n])`. To draw `b` batches
                 of `n` samples each, set to `torch.Size([b, n])`.
-            base_samples: An (optional) Tensor of `N(0, I)` base samples of
-                appropriate dimension, typically obtained from a `Sampler`.
-                This is used for deterministic optimization.
 
         Returns:
             Samples from the posterior, a tensor of shape
@@ -148,32 +139,10 @@ class GPyTorchPosterior(TorchPosterior):
         """
         if sample_shape is None:
             sample_shape = torch.Size([1])
-        if base_samples is not None:
-            warnings.warn(
-                "Use of `base_samples` with `rsample` is deprecated. Use "
-                "`rsample_from_base_samples` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if base_samples.shape[: len(sample_shape)] != sample_shape:
-                raise RuntimeError(
-                    "`sample_shape` disagrees with shape of `base_samples`. "
-                    f"Got {sample_shape=} and {base_samples.shape=}."
-                )
-            # get base_samples to the correct shape
-            base_samples = base_samples.expand(self._extended_shape(sample_shape))
-            if not self._is_mt:
-                # Remove output dimension in single output case.
-                base_samples = base_samples.squeeze(-1)
-            return self.rsample_from_base_samples(
-                sample_shape=sample_shape, base_samples=base_samples
-            )
         with ExitStack() as es:
             if linop_settings._fast_covar_root_decomposition.is_default():
                 es.enter_context(linop_settings._fast_covar_root_decomposition(False))
-            samples = self.distribution.rsample(
-                sample_shape=sample_shape, base_samples=base_samples
-            )
+            samples = self.distribution.rsample(sample_shape=sample_shape)
         # make sure there always is an output dimension
         if not self._is_mt:
             samples = samples.unsqueeze(-1)
