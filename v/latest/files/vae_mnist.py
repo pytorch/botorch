@@ -81,7 +81,7 @@ def get_pretrained_dir() -> str:
 
 cnn_weights_path = os.path.join(get_pretrained_dir(), "mnist_cnn.pt")
 cnn_model = Net().to(dtype=dtype, device=device)
-cnn_state_dict = torch.load(cnn_weights_path, map_location=device)
+cnn_state_dict = torch.load(cnn_weights_path, map_location=device, weights_only=True)
 cnn_model.load_state_dict(cnn_state_dict);
 
 
@@ -119,7 +119,7 @@ class VAE(nn.Module):
 
 vae_weights_path = os.path.join(get_pretrained_dir(), "mnist_vae.pt")
 vae_model = VAE().to(dtype=dtype, device=device)
-vae_state_dict = torch.load(vae_weights_path, map_location=device)
+vae_state_dict = torch.load(vae_weights_path, map_location=device, weights_only=True)
 vae_model.load_state_dict(vae_state_dict);
 
 

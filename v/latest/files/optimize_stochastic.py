@@ -31,7 +31,7 @@ d = 5
 bounds = torch.stack([-torch.ones(d), torch.ones(d)])
 
 train_X = bounds[0] + (bounds[1] - bounds[0]) * torch.rand(50, d)
-train_Y = 1 - torch.norm(train_X, dim=-1, keepdim=True)
+train_Y = 1 - torch.linalg.norm(train_X, dim=-1, keepdim=True)
 
 model = SingleTaskGP(train_X, train_Y)
 mll = ExactMarginalLogLikelihood(model.likelihood, model)

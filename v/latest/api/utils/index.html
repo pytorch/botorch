@@ -1856,15 +1856,12 @@ candidate produces same value regardless of its position on the t-batch.</p>
 <dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.utils.testing.MockPosterior.rsample">
-<span class="sig-name descname"><span class="pre">rsample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockPosterior.rsample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MockPosterior.rsample" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">rsample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockPosterior.rsample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MockPosterior.rsample" title="Link to this definition">¶</a></dt>
 <dd><p>Mock sample by repeating self._samples. If base_samples is provided,
 do a shape check but return the same mock samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>sample_shape</strong> (<em>Size</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>base_samples</strong> (<em>Tensor</em><em> | </em><em>None</em>) – </p></li>
-</ul>
+<dd class="field-odd"><p><strong>sample_shape</strong> (<em>Size</em><em> | </em><em>None</em>) – </p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>

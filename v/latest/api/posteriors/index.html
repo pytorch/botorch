@@ -80,14 +80,9 @@ generally not be necessary for the end user to invoke it manually.</p>
 <dd><p>Sample from the posterior (with gradients).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>sample_shape</strong> (<em>Size</em><em> | </em><em>None</em>) – A <cite>torch.Size</cite> object specifying the sample shape. To
+<dd class="field-odd"><p><strong>sample_shape</strong> (<em>Size</em><em> | </em><em>None</em>) – A <cite>torch.Size</cite> object specifying the sample shape. To
 draw <cite>n</cite> samples, set to <cite>torch.Size([n])</cite>. To draw <cite>b</cite> batches
-of <cite>n</cite> samples each, set to <cite>torch.Size([b, n])</cite>.</p></li>
-<li><p><strong>base_samples</strong> – An (optional) Tensor of <cite>N(0, I)</cite> base samples of
-appropriate dimension, typically obtained from a <cite>Sampler</cite>.
-This is used for deterministic optimization. Deprecated.</p></li>
-</ul>
+of <cite>n</cite> samples each, set to <cite>torch.Size([b, n])</cite>.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Samples from the posterior, a tensor of shape
@@ -248,18 +243,13 @@ a <cite>Sampler</cite>. This is used for deterministic optimization.</p></li>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.posteriors.gpytorch.GPyTorchPosterior.rsample">
-<span class="sig-name descname"><span class="pre">rsample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/gpytorch.html#GPyTorchPosterior.rsample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.rsample" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">rsample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/gpytorch.html#GPyTorchPosterior.rsample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.rsample" title="Link to this definition">¶</a></dt>
 <dd><p>Sample from the posterior (with gradients).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>sample_shape</strong> (<em>Size</em><em> | </em><em>None</em>) – A <cite>torch.Size</cite> object specifying the sample shape. To
+<dd class="field-odd"><p><strong>sample_shape</strong> (<em>Size</em><em> | </em><em>None</em>) – A <cite>torch.Size</cite> object specifying the sample shape. To
 draw <cite>n</cite> samples, set to <cite>torch.Size([n])</cite>. To draw <cite>b</cite> batches
-of <cite>n</cite> samples each, set to <cite>torch.Size([b, n])</cite>.</p></li>
-<li><p><strong>base_samples</strong> (<em>Tensor</em><em> | </em><em>None</em>) – An (optional) Tensor of <cite>N(0, I)</cite> base samples of
-appropriate dimension, typically obtained from a <cite>Sampler</cite>.
-This is used for deterministic optimization.</p></li>
-</ul>
+of <cite>n</cite> samples each, set to <cite>torch.Size([b, n])</cite>.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Samples from the posterior, a tensor of shape

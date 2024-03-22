@@ -100,7 +100,7 @@ new_point_mc
 # In[23]:
 
 
-torch.norm(new_point_mc - new_point_analytic)
+torch.linalg.norm(new_point_mc - new_point_analytic)
 
 
 # ### Using a torch optimizer on a stochastic acquisition function
@@ -149,7 +149,7 @@ new_point_torch_Adam
 # In[26]:
 
 
-torch.norm(new_point_torch_Adam - new_point_analytic)
+torch.linalg.norm(new_point_torch_Adam - new_point_analytic)
 
 
 # By changing the `optimizer` parameter to `gen_candidates_torch`, we can also try `torch.optim.SGD`. Note that without the adaptive step size selection of Adam, basic SGD does worse job at optimizing without further manual tuning of the optimization parameters.
@@ -179,5 +179,5 @@ new_point_torch_SGD
 # In[29]:
 
 
-torch.norm(new_point_torch_SGD - new_point_analytic)
+torch.linalg.norm(new_point_torch_SGD - new_point_analytic)
 

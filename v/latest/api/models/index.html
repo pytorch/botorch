@@ -2482,13 +2482,17 @@ outputs for. If omitted, return outputs for all task indices.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.contextual_multioutput.LCEMGP.task_covar_matrix">
 <span class="sig-name descname"><span class="pre">task_covar_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task_idcs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/contextual_multioutput.html#LCEMGP.task_covar_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.contextual_multioutput.LCEMGP.task_covar_matrix" title="Link to this definition">¶</a></dt>
-<dd><p>compute covariance matrix of a list of given context</p>
+<dd><p>Compute the task covariance matrix for a given tensor of
+task / context indices.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>task_idcs</strong> (<em>Tensor</em>) – (n x 1) or (b x n x 1) task indices tensor</p>
+<dd class="field-odd"><p><strong>task_idcs</strong> (<em>Tensor</em>) – Task index tensor of shape (n x 1) or (b x n x 1).</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Task covariance matrix of shape (b x n x n).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>

@@ -370,16 +370,11 @@
     <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">base_samples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Mock sample by repeating self._samples. If base_samples is provided,</span>
 <span class="sd">        do a shape check but return the same mock samples."""</span>
         <span class="k">if</span> <span class="n">sample_shape</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">sample_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">sample_shape</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">base_samples</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># check the base_samples shape is consistent with the sample_shape</span>
-            <span class="k">if</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">sample_shape</span><span class="p">)]</span> <span class="o">!=</span> <span class="n">sample_shape</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"sample_shape disagrees with base_samples."</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_samples</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">sample_shape</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span></div>
 
 
@@ -390,7 +385,12 @@
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
         <span class="n">base_samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">base_samples</span><span class="p">)</span></div>
+        <span class="k">if</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">sample_shape</span><span class="p">)]</span> <span class="o">!=</span> <span class="n">sample_shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">"`sample_shape` disagrees with shape of `base_samples`. "</span>
+                <span class="sa">f</span><span class="s2">"Got </span><span class="si">{</span><span class="n">sample_shape</span><span class="si">=}</span><span class="s2"> and </span><span class="si">{</span><span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="si">=}</span><span class="s2">."</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span><span class="n">sample_shape</span><span class="p">)</span></div>
 </div>
 
 
