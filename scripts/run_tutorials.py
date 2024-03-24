@@ -53,7 +53,7 @@ def run_script(
     if env is not None:
         env = {**os.environ, **env}
     run_out = subprocess.run(
-        ["papermill", tutorial, "|"],
+        ["papermill", tutorial],
         capture_output=True,
         text=True,
         env=env,
