@@ -15,7 +15,6 @@ from typing import Any, Dict, NamedTuple, Optional, Type
 import torch
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.gpytorch import GPyTorchModel
-from botorch.optim.utils import _filter_kwargs
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from torch import Tensor
@@ -47,11 +46,11 @@ def gen_loo_cv_folds(
             features.
         train_Y: A `n x (m)` or `batch_shape x n x (m)` (batch mode) tensor of
             training observations.
-        train_Yvar: A `batch_shape x n x (m)` or `batch_shape x n x (m)`
-            (batch mode) tensor of observed measurement noise.
+        train_Yvar: An `n x (m)` or `batch_shape x n x (m)` (batch mode) tensor
+            of observed measurement noise.
 
     Returns:
-        CVFolds tuple with the following fields
+        CVFolds NamedTuple with the following fields:
 
         - train_X: A `n x (n-1) x d` or `batch_shape x n x (n-1) x d` tensor of
           training features.
@@ -67,8 +66,10 @@ def gen_loo_cv_folds(
 
     Example:
         >>> train_X = torch.rand(10, 1)
-        >>> train_Y = torch.sin(6 * train_X) + 0.2 * torch.rand_like(train_X)
+        >>> train_Y = torch.rand_like(train_X)
         >>> cv_folds = gen_loo_cv_folds(train_X, train_Y)
+        >>> cv_folds.train_X.shape
+        torch.Size([10, 9, 1])
     """
     masks = torch.eye(train_X.shape[-2], dtype=torch.uint8, device=train_X.device)
     masks = masks.to(dtype=torch.bool)
@@ -111,6 +112,7 @@ def batch_cross_validation(
     cv_folds: CVFolds,
     fit_args: Optional[Dict[str, Any]] = None,
     observation_noise: bool = False,
+    model_init_kwargs: Optional[Dict[str, Any]] = None,
 ) -> CVResults:
     r"""Perform cross validation by using gpytorch batch mode.
 
@@ -120,6 +122,7 @@ def batch_cross_validation(
         mll_cls: A MarginalLogLikelihood class.
         cv_folds: A CVFolds tuple.
         fit_args: Arguments passed along to fit_gpytorch_mll.
+        model_init_kwargs: Keyword arguments passed to the model constructor.
 
     Returns:
         A CVResults tuple with the following fields
@@ -132,27 +135,48 @@ def batch_cross_validation(
           measurement noise.
 
     Example:
+        >>> import torch
+        >>> from botorch.cross_validation import (
+        ...     batch_cross_validation, gen_loo_cv_folds
+        >>>
+        >>> from botorch.models import SingleTaskGP
+        >>> from botorch.models.transforms.input import Normalize
+        >>> from botorch.models.transforms.outcome import Standardize
+        >>> from gpytorch.mlls import ExactMarginalLogLikelihood
+
         >>> train_X = torch.rand(10, 1)
-        >>> train_Y = torch.sin(6 * train_X) + 0.2 * torch.rand_like(train_X)
+        >>> train_Y = torch.rand_like(train_X)
         >>> cv_folds = gen_loo_cv_folds(train_X, train_Y)
+        >>> input_transform = Normalize(d=train_X.shape[-1])
+        >>> output_transform = Standardize(
+        ...     m=train_Y.shape[-1], batch_shape=cv_folds.train_Y.shape[:-2]
+        ... )
+        >>>
         >>> cv_results = batch_cross_validation(
-        >>>     SingleTaskGP,
-        >>>     ExactMarginalLogLikelihood,
-        >>>     cv_folds,
-        >>> )
+        ...    model_cls=SingleTaskGP,
+        ...    mll_cls=ExactMarginalLogLikelihood,
+        ...    cv_folds=cv_folds,
+        ...    model_init_kwargs={
+        ...        "input_transform": input_transform,
+        ...        "output_transform": output_transform,
+        ...    },
+        ... )
 
     WARNING: This function is currently very memory inefficient, use it only
         for problems of small size.
     """
-    fit_args = fit_args or {}
-    kwargs = {
-        "train_X": cv_folds.train_X,
-        "train_Y": cv_folds.train_Y,
-        "train_Yvar": cv_folds.train_Yvar,
-    }
-    model_cv = model_cls(**_filter_kwargs(model_cls, **kwargs))
+    model_init_kws = model_init_kwargs if model_init_kwargs is not None else {}
+    if cv_folds.train_Yvar is not None:
+        model_init_kws["train_Yvar"] = cv_folds.train_Yvar
+    model_cv = model_cls(
+        train_X=cv_folds.train_X,
+        train_Y=cv_folds.train_Y,
+        **model_init_kws,
+    )
     mll_cv = mll_cls(model_cv.likelihood, model_cv)
     mll_cv.to(cv_folds.train_X)
+
+    fit_args = fit_args or {}
     mll_cv = fit_gpytorch_mll(mll_cv, **fit_args)
 
     # Evaluate on the hold-out set in batch mode
