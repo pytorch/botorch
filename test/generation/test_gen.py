@@ -350,6 +350,35 @@ class TestGenCandidates(TestBaseCandidateGeneration):
             options={"disp": False, "with_grad": False},
         )
 
+    def test_gen_candidates_scipy_invalid_method(self) -> None:
+        """Test with method that doesn't support constraint / bounds."""
+        self._setUp(double=True, expand=True)
+        acqf = qExpectedImprovement(self.model, best_f=self.f_best)
+        with self.assertRaisesRegex(
+            RuntimeWarning,
+            "Method L-BFGS-B cannot handle constraints",
+        ):
+            gen_candidates_scipy(
+                initial_conditions=self.initial_conditions,
+                acquisition_function=acqf,
+                options={"method": "L-BFGS-B"},
+                inequality_constraints=[
+                    (torch.tensor([0]), torch.tensor([1]), 0),
+                    (torch.tensor([1]), torch.tensor([-1]), -1),
+                ],
+            )
+        with self.assertRaisesRegex(
+            RuntimeWarning,
+            "Method Newton-CG cannot handle bounds",
+        ):
+            gen_candidates_scipy(
+                initial_conditions=self.initial_conditions,
+                acquisition_function=acqf,
+                options={"method": "Newton-CG"},
+                lower_bounds=0,
+                upper_bounds=1,
+            )
+
 
 class TestRandomRestartOptimization(TestBaseCandidateGeneration):
     def test_random_restart_optimization(self):
