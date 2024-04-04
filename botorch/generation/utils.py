@@ -42,6 +42,7 @@ def _convert_nonlinear_inequality_constraints(
             "take a list of tuples. Passing a list of callables "
             "will result in an error in future versions.",
             DeprecationWarning,
+            stacklevel=3,
         )
 
     return nlcs

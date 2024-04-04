@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import time
+import warnings
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
 
 import numpy as np
@@ -77,6 +78,7 @@ def minimize_with_timeout(
         wrapped_callback = callback
 
     try:
+        warnings.filterwarnings("error", message="Method .* cannot handle")
         return optimize.minimize(
             fun=fun,
             x0=x0,
