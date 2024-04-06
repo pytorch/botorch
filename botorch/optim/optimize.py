@@ -153,6 +153,7 @@ def _raise_deprecation_warning_if_kwargs(fn_name: str, kwargs: Dict[str, Any]) -
             f"`{fn_name}` does not support arguments {list(kwargs.keys())}. In "
             "the future, this will become an error.",
             DeprecationWarning,
+            stacklevel=2,
         )
 
 
@@ -366,7 +367,7 @@ def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> Tuple[Tensor, Tensor
             f"warning(s):\n{[w.message for w in ws]}\nTrying again with a new "
             "set of initial conditions."
         )
-        warnings.warn(first_warn_msg, RuntimeWarning)
+        warnings.warn(first_warn_msg, RuntimeWarning, stacklevel=2)
 
         if not initial_conditions_provided:
             batch_initial_conditions = opt_inputs.get_ic_generator()(
@@ -392,6 +393,7 @@ def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> Tuple[Tensor, Tensor
                     "Optimization failed on the second try, after generating a "
                     "new set of initial conditions.",
                     RuntimeWarning,
+                    stacklevel=2,
                 )
 
     if opt_inputs.post_processing_func is not None:
