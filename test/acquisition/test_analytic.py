@@ -93,10 +93,6 @@ class TestExpectedImprovement(BotorchTestCase):
             ei_expected = torch.tensor(0.6978, device=self.device, dtype=dtype)
             self.assertAllClose(ei, ei_expected, atol=1e-4)
             self.assertAllClose(log_ei, ei_expected.log(), atol=1e-4)
-            with self.assertRaises(UnsupportedError):
-                module.set_X_pending(None)
-            with self.assertRaises(UnsupportedError):
-                log_module.set_X_pending(None)
             # test posterior transform (single-output)
             mean = torch.tensor([0.5], device=self.device, dtype=dtype)
             covar = torch.tensor([[0.16]], device=self.device, dtype=dtype)

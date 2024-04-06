@@ -37,7 +37,11 @@ from typing import Any, Callable, Optional
 
 import numpy as np
 import torch
-from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
+from botorch.acquisition.acquisition import (
+    AcquisitionFunction,
+    MCSamplerMixin,
+    XPendingMixin,
+)
 from botorch.acquisition.cost_aware import CostAwareUtility, InverseCostWeightedUtility
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions.errors import UnsupportedError
@@ -57,7 +61,7 @@ from torch import Tensor
 CLAMP_LB = 1.0e-8
 
 
-class MaxValueBase(AcquisitionFunction, ABC):
+class MaxValueBase(AcquisitionFunction, XPendingMixin, ABC):
     r"""Abstract base class for acquisition functions based on Max-value Entropy Search.
 
     This class provides the basic building blocks for constructing max-value

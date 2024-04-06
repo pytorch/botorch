@@ -8,7 +8,7 @@ from typing import List
 
 import torch
 from botorch.acquisition import LinearMCObjective, ScalarizedPosteriorTransform
-from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.acquisition import AcquisitionFunction, XPendingMixin
 from botorch.acquisition.analytic import ExpectedImprovement
 from botorch.acquisition.monte_carlo import qExpectedImprovement
 from botorch.acquisition.proximal import ProximalAcquisitionFunction
@@ -31,7 +31,7 @@ class DummyModel(GPyTorchModel):
         pass
 
 
-class DummyAcquisitionFunction(AcquisitionFunction):
+class DummyAcquisitionFunction(AcquisitionFunction, XPendingMixin):
     def forward(self, X):
         pass
 

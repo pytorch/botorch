@@ -20,6 +20,7 @@ import torch
 from botorch.acquisition.acquisition import (
     AcquisitionFunction,
     OneShotAcquisitionFunction,
+    XPendingMixin,
 )
 from botorch.acquisition.knowledge_gradient import qKnowledgeGradient
 from botorch.acquisition.multi_objective.hypervolume_knowledge_gradient import (
@@ -216,6 +217,11 @@ def _validate_sequential_inputs(opt_inputs: OptimizeAcqfInputs) -> None:
         raise NotImplementedError(
             "sequential optimization currently not supported for one-shot "
             "acquisition functions. Must have `sequential=False`."
+        )
+    if not isinstance(opt_inputs.acq_function, XPendingMixin):
+        raise NotImplementedError(
+            "Sequential optimization is only supported for acquisition "
+            "functions that support pending points."
         )
 
 
@@ -589,7 +595,7 @@ def _optimize_acqf(opt_inputs: OptimizeAcqfInputs) -> Tuple[Tensor, Tensor]:
 
 
 def optimize_acqf_cyclic(
-    acq_function: AcquisitionFunction,
+    acq_function: XPendingMixin,
     bounds: Tensor,
     q: int,
     num_restarts: int,
@@ -611,7 +617,7 @@ def optimize_acqf_cyclic(
     r"""Generate a set of `q` candidates via cyclic optimization.
 
     Args:
-        acq_function: An AcquisitionFunction
+        acq_function: An AcquisitionFunction with support for pending points.
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`
             (if inequality_constraints is provided, these bounds can be -inf and
             +inf, respectively).
@@ -725,7 +731,7 @@ def optimize_acqf_cyclic(
 
 
 def optimize_acqf_list(
-    acq_function_list: List[AcquisitionFunction],
+    acq_function_list: List[XPendingMixin],
     bounds: Tensor,
     num_restarts: int,
     raw_samples: Optional[int] = None,
@@ -745,7 +751,8 @@ def optimize_acqf_list(
     set as `X_pending`. This is also known as sequential greedy optimization.
 
     Args:
-        acq_function_list: A list of acquisition functions.
+        acq_function_list: A list of acquisition functions, each of which must
+            support pending points.
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`
             (if inequality_constraints is provided, these bounds can be -inf and
             +inf, respectively).
@@ -880,7 +887,8 @@ def optimize_acqf_mixed(
     proper conditioning on generated candidates).
 
     Args:
-        acq_function: An AcquisitionFunction
+        acq_function: An AcquisitionFunction; if q > 1, it must support pending
+            points, i.e., it must subclass `XPendingMixin`.
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`
             (if inequality_constraints is provided, these bounds can be -inf and
             +inf, respectively).
@@ -1186,7 +1194,8 @@ def optimize_acqf_discrete_local_search(
     the more general case.
 
     Args:
-        acq_function: An AcquisitionFunction
+        acq_function: An AcquisitionFunction. If q > 1, it must support pending
+            points, i.e. by subclassing `XPendingMixin`.
         discrete_choices: A list of possible discrete choices for each dimension.
             Each element in the list is expected to be a torch tensor.
         q: The number of candidates.

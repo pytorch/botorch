@@ -58,9 +58,6 @@ class TestMultiObjectiveAnalyticAcquisitionFunction(BotorchTestCase):
                 model=mm, posterior_transform=IdentityMCMultiOutputObjective()
             )
         acqf = DummyMultiObjectiveAnalyticAcquisitionFunction(model=mm)
-        # test set_X_pending
-        with self.assertRaises(UnsupportedError):
-            acqf.set_X_pending()
 
 
 class TestExpectedHypervolumeImprovement(BotorchTestCase):

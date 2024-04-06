@@ -36,7 +36,11 @@ from __future__ import annotations
 from typing import Optional
 
 import torch
-from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
+from botorch.acquisition.acquisition import (
+    AcquisitionFunction,
+    MCSamplerMixin,
+    XPendingMixin,
+)
 from botorch.models.fully_bayesian import MCMC_DIM, SaasFullyBayesianSingleTaskGP
 from botorch.models.model import Model
 from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
@@ -70,7 +74,7 @@ class FullyBayesianAcquisitionFunction(AcquisitionFunction):
             )
 
 
-class qBayesianVarianceReduction(FullyBayesianAcquisitionFunction):
+class qBayesianVarianceReduction(FullyBayesianAcquisitionFunction, XPendingMixin):
     def __init__(
         self,
         model: SaasFullyBayesianSingleTaskGP,
@@ -98,7 +102,7 @@ class qBayesianVarianceReduction(FullyBayesianAcquisitionFunction):
         return res.unsqueeze(-1)
 
 
-class qBayesianQueryByComittee(FullyBayesianAcquisitionFunction):
+class qBayesianQueryByComittee(FullyBayesianAcquisitionFunction, XPendingMixin):
     def __init__(
         self,
         model: SaasFullyBayesianSingleTaskGP,

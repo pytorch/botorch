@@ -26,7 +26,7 @@ from __future__ import annotations
 from typing import Any, Optional, Tuple
 
 import torch
-from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.acquisition import AcquisitionFunction, XPendingMixin
 from botorch.exceptions import InputDataError
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
@@ -37,7 +37,7 @@ from torch import Tensor
 from torch.distributions import Normal
 
 
-class qMultiObjectivePredictiveEntropySearch(AcquisitionFunction):
+class qMultiObjectivePredictiveEntropySearch(AcquisitionFunction, XPendingMixin):
     r"""The acquisition function for Predictive Entropy Search. The code supports
     both single and multiple objectives as well as batching.
 

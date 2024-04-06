@@ -15,7 +15,7 @@ from numbers import Number
 from typing import List, Optional, Sequence, Union
 
 import torch
-from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.acquisition import AcquisitionFunction, XPendingMixin
 from torch import Tensor
 from torch.nn import Module
 
@@ -49,7 +49,7 @@ def get_device_of_sequence(values: Sequence[Union[Tensor, float]]) -> torch.dtyp
     return torch.device("cuda") if any_cuda else torch.device("cpu")
 
 
-class FixedFeatureAcquisitionFunction(AcquisitionFunction):
+class FixedFeatureAcquisitionFunction(AcquisitionFunction, XPendingMixin):
     """A wrapper around AcquisitionFunctions to fix a subset of features.
 
     Example:

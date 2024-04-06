@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.acquisition import AcquisitionFunction, XPendingMixin
 from botorch.acquisition.monte_carlo import SampleReducingMCAcquisitionFunction
 from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
 from torch import Tensor
@@ -27,7 +27,7 @@ from torch import Tensor
 from torch.nn import Module
 
 
-class PriorGuidedAcquisitionFunction(AcquisitionFunction):
+class PriorGuidedAcquisitionFunction(AcquisitionFunction, XPendingMixin):
     r"""Class for weighting acquisition functions by a prior distribution.
 
     Supports MC and batch acquisition functions via

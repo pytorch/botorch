@@ -69,11 +69,6 @@ class MultiObjectiveAnalyticAcquisitionFunction(AcquisitionFunction):
         """
         pass  # pragma: no cover
 
-    def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
-        raise UnsupportedError(
-            "Analytic acquisition functions do not account for X_pending yet."
-        )
-
 
 class ExpectedHypervolumeImprovement(MultiObjectiveAnalyticAcquisitionFunction):
     def __init__(

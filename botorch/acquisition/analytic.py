@@ -81,11 +81,6 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
                 )
         self.posterior_transform = posterior_transform
 
-    def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
-        raise UnsupportedError(
-            "Analytic acquisition functions do not account for X_pending yet."
-        )
-
     def _mean_and_sigma(
         self, X: Tensor, compute_sigma: bool = True, min_var: float = 1e-12
     ) -> Tuple[Tensor, Optional[Tensor]]:

@@ -22,6 +22,35 @@ from torch import Tensor
 from torch.nn import Module
 
 
+class XPendingMixin(ABC):
+    r"""
+    Mixin for acquisition functions that require pending points.
+
+    :meta private:
+    """
+
+    X_pending: Optional[Tensor]
+
+    def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
+        r"""Informs the acquisition function about pending design points.
+
+        Args:
+            X_pending: `n x d` Tensor with `n` `d`-dim design points that have
+                been submitted for evaluation but have not yet been evaluated.
+        """
+        if X_pending is not None:
+            if X_pending.requires_grad:
+                warnings.warn(
+                    "Pending points require a gradient but the acquisition function"
+                    " will not provide a gradient to these points.",
+                    BotorchWarning,
+                    stacklevel=2,
+                )
+            self.X_pending = X_pending.detach().clone()
+        else:
+            self.X_pending = X_pending
+
+
 class AcquisitionFunction(Module, ABC):
     r"""Abstract base class for acquisition functions.
 
@@ -42,24 +71,6 @@ class AcquisitionFunction(Module, ABC):
         """
         super().__init__()
         self.model: Model = model
-
-    def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
-        r"""Informs the acquisition function about pending design points.
-
-        Args:
-            X_pending: `n x d` Tensor with `n` `d`-dim design points that have
-                been submitted for evaluation but have not yet been evaluated.
-        """
-        if X_pending is not None:
-            if X_pending.requires_grad:
-                warnings.warn(
-                    "Pending points require a gradient but the acquisition function"
-                    " will not provide a gradient to these points.",
-                    BotorchWarning,
-                )
-            self.X_pending = X_pending.detach().clone()
-        else:
-            self.X_pending = X_pending
 
     @abstractmethod
     def forward(self, X: Tensor) -> Tensor:
@@ -110,7 +121,7 @@ class OneShotAcquisitionFunction(AcquisitionFunction, ABC):
         pass  # pragma: no cover
 
 
-class MCSamplerMixin(ABC):
+class MCSamplerMixin(XPendingMixin, ABC):
     r"""A mix-in for adding sampler functionality into an acquisition function class.
 
     Attributes:

@@ -14,8 +14,7 @@ import math
 from typing import Any, Callable, List, Optional
 
 import torch
-from botorch.acquisition.acquisition import AcquisitionFunction
-from botorch.acquisition.analytic import AnalyticAcquisitionFunction
+from botorch.acquisition.acquisition import AcquisitionFunction, XPendingMixin
 from botorch.acquisition.objective import GenericMCObjective
 from botorch.exceptions import UnsupportedError
 from torch import Tensor
@@ -237,7 +236,7 @@ class PenalizedAcquisitionFunction(AcquisitionFunction):
         return self.raw_acqf.X_pending
 
     def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
-        if not isinstance(self.raw_acqf, AnalyticAcquisitionFunction):
+        if isinstance(self.raw_acqf, XPendingMixin):
             self.raw_acqf.set_X_pending(X_pending=X_pending)
         else:
             raise UnsupportedError(
