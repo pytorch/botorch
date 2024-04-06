@@ -27,7 +27,7 @@ from typing import Optional
 
 import torch
 from botorch import settings
-from botorch.acquisition.analytic import AnalyticAcquisitionFunction
+from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.monte_carlo import MCAcquisitionFunction
 from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
 from botorch.models.model import Model
@@ -37,7 +37,7 @@ from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_tr
 from torch import Tensor
 
 
-class qNegIntegratedPosteriorVariance(AnalyticAcquisitionFunction):
+class qNegIntegratedPosteriorVariance(AcquisitionFunction):
     r"""Batch Integrated Negative Posterior Variance for Active Learning.
 
     This acquisition function quantifies the (negative) integrated posterior variance
@@ -75,7 +75,8 @@ class qNegIntegratedPosteriorVariance(AnalyticAcquisitionFunction):
                 points that have been submitted for function evaluation but
                 have not yet been evaluated.
         """
-        super().__init__(model=model, posterior_transform=posterior_transform)
+        super().__init__(model=model)
+        self.posterior_transform = posterior_transform
         if sampler is None:
             # If no sampler is provided, we use the following dummy sampler for the
             # fantasize() method in forward. IMPORTANT: This assumes that the posterior

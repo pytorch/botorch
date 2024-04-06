@@ -12,6 +12,7 @@ from botorch.acquisition.fixed_feature import (
     get_dtype_of_sequence,
 )
 from botorch.acquisition.monte_carlo import qExpectedImprovement
+from botorch.exceptions import UnsupportedError
 from botorch.models import SingleTaskGP
 from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction
 
