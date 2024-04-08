@@ -182,6 +182,7 @@
             <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">fn_name</span><span class="si">}</span><span class="s2">` does not support arguments </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">. In "</span>
             <span class="s2">"the future, this will become an error."</span><span class="p">,</span>
             <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
         <span class="p">)</span>
 
 
@@ -395,7 +396,7 @@
             <span class="sa">f</span><span class="s2">"warning(s):</span><span class="se">\n</span><span class="si">{</span><span class="p">[</span><span class="n">w</span><span class="o">.</span><span class="n">message</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">w</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">ws</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">Trying again with a new "</span>
             <span class="s2">"set of initial conditions."</span>
         <span class="p">)</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">first_warn_msg</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">)</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">first_warn_msg</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">initial_conditions_provided</span><span class="p">:</span>
             <span class="n">batch_initial_conditions</span> <span class="o">=</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">get_ic_generator</span><span class="p">()(</span>
@@ -421,6 +422,7 @@
                     <span class="s2">"Optimization failed on the second try, after generating a "</span>
                     <span class="s2">"new set of initial conditions."</span><span class="p">,</span>
                     <span class="ne">RuntimeWarning</span><span class="p">,</span>
+                    <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
                 <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">post_processing_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
