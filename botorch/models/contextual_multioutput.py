@@ -45,6 +45,7 @@ class LCEMGP(MultiTaskGP):
         context_emb_feature: Optional[Tensor] = None,
         embs_dim_list: Optional[List[int]] = None,
         output_tasks: Optional[List[int]] = None,
+        all_tasks: Optional[List[int]] = None,
         input_transform: Optional[InputTransform] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
     ) -> None:
@@ -67,7 +68,9 @@ class LCEMGP(MultiTaskGP):
                 for each categorical variable.
             output_tasks: A list of task indices for which to compute model
                 outputs for. If omitted, return outputs for all task indices.
-
+            all_tasks: By default, MTGPs infer the list of all tasks from the task
+                features in `train_X`. This is an experimental feature that enables
+                creation of MTGPs with tasks that don't appear in the training data.
         """
         super().__init__(
             train_X=train_X,
@@ -75,13 +78,18 @@ class LCEMGP(MultiTaskGP):
             task_feature=task_feature,
             train_Yvar=train_Yvar,
             output_tasks=output_tasks,
+            all_tasks=all_tasks,
             input_transform=input_transform,
             outcome_transform=outcome_transform,
         )
         self.device = train_X.device
         #  context indices
-        all_tasks = train_X[:, task_feature].unique()
-        self.all_tasks = all_tasks.to(dtype=torch.long).tolist()
+        if all_tasks is None:
+            all_tasks = train_X[:, task_feature].unique()
+            self.all_tasks = all_tasks.to(dtype=torch.long).tolist()
+        else:
+            self.all_tasks = all_tasks
+            all_tasks = torch.tensor(all_tasks, dtype=torch.long)
         self.all_tasks.sort()  # unique in python does automatic sort; add for safety
 
         if context_cat_feature is None:
