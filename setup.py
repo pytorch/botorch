@@ -98,7 +98,7 @@ setup(
     ],
     long_description=long_description,
     long_description_content_type="text/markdown",
-    python_requires=">=3.10",
+    python_requires=f">={REQUIRED_MAJOR}.{REQUIRED_MINOR}",
     packages=find_packages(exclude=["test", "test.*"]),
     install_requires=install_requires,
     extras_require={
