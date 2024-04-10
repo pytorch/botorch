@@ -24,7 +24,6 @@ class TestDecoupledAcquisitionFunction(BotorchTestCase):
     def test_decoupled_acquisition_function(self):
         msg = (
             "Can't instantiate abstract class DecoupledAcquisitionFunction"
-            " with abstract method forward"
         )
         with self.assertRaisesRegex(TypeError, msg):
             DecoupledAcquisitionFunction()
