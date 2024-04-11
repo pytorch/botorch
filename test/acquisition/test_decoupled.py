@@ -22,10 +22,7 @@ class DummyDecoupledAcquisitionFunction(DecoupledAcquisitionFunction):
 
 class TestDecoupledAcquisitionFunction(BotorchTestCase):
     def test_decoupled_acquisition_function(self):
-        msg = (
-            "Can't instantiate abstract class DecoupledAcquisitionFunction"
-            " with abstract method forward"
-        )
+        msg = "Can't instantiate abstract class DecoupledAcquisitionFunction"
         with self.assertRaisesRegex(TypeError, msg):
             DecoupledAcquisitionFunction()
         # test raises error if model is not ModelList
