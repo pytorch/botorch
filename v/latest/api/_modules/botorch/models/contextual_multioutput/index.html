@@ -37,15 +37,17 @@
 <span class="sd">"""</span>
 
 <span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.models.multitask</span> <span class="kn">import</span> <span class="n">MultiTaskGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">MultiTaskDataset</span><span class="p">,</span> <span class="n">SupervisedDataset</span>
 <span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">Interval</span>
-<span class="kn">from</span> <span class="nn">gpytorch.distributions.multivariate_normal</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.rbf_kernel</span> <span class="kn">import</span> <span class="n">RBFKernel</span>
+<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.likelihood</span> <span class="kn">import</span> <span class="n">Likelihood</span>
+<span class="kn">from</span> <span class="nn">gpytorch.module</span> <span class="kn">import</span> <span class="n">Module</span>
 <span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="n">LinearOperator</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">ModuleList</span>
@@ -66,10 +68,14 @@
         <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">task_feature</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">mean_module</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">covar_module</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">likelihood</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Likelihood</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">context_cat_feature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">context_emb_feature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">embs_dim_list</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">output_tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">all_tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -81,6 +87,12 @@
 <span class="sd">            train_Yvar: An optional (n x 1) tensor of observed variances of each</span>
 <span class="sd">                training Y. If None, we infer the noise. Note that the inferred noise</span>
 <span class="sd">                is common across all tasks.</span>
+<span class="sd">            mean_module: The mean function to be used. Defaults to `ConstantMean`.</span>
+<span class="sd">            covar_module: The module for computing the covariance matrix between</span>
+<span class="sd">                the non-task features. Defaults to `MaternKernel`.</span>
+<span class="sd">            likelihood: A likelihood. The default is selected based on `train_Yvar`.</span>
+<span class="sd">                If `train_Yvar` is None, a standard `GaussianLikelihood` with inferred</span>
+<span class="sd">                noise level is used. Otherwise, a FixedNoiseGaussianLikelihood is used.</span>
 <span class="sd">            context_cat_feature: (n_contexts x k) one-hot encoded context</span>
 <span class="sd">                features. Rows are ordered by context indices, where k is the</span>
 <span class="sd">                number of categorical variables. If None, task indices will</span>
@@ -92,26 +104,46 @@
 <span class="sd">                for each categorical variable.</span>
 <span class="sd">            output_tasks: A list of task indices for which to compute model</span>
 <span class="sd">                outputs for. If omitted, return outputs for all task indices.</span>
-
+<span class="sd">            all_tasks: By default, multi-task GPs infer the list of all tasks from</span>
+<span class="sd">                the task features in `train_X`. This is an experimental feature that</span>
+<span class="sd">                enables creation of multi-task GPs with tasks that don't appear in the</span>
+<span class="sd">                training data. Note that when a task is not observed, the corresponding</span>
+<span class="sd">                task covariance will heavily depend on random initialization and may</span>
+<span class="sd">                behave unexpectedly.</span>
+<span class="sd">            input_transform: An input transform that is applied in the model's</span>
+<span class="sd">                forward pass.</span>
+<span class="sd">            outcome_transform: An outcome transform that is applied to the</span>
+<span class="sd">                training data during instantiation and to the posterior during</span>
+<span class="sd">                inference (that is, the `Posterior` obtained by calling</span>
+<span class="sd">                `.posterior` on the model will be on the original scale).</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
             <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span>
             <span class="n">task_feature</span><span class="o">=</span><span class="n">task_feature</span><span class="p">,</span>
             <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">,</span>
+            <span class="n">mean_module</span><span class="o">=</span><span class="n">mean_module</span><span class="p">,</span>
+            <span class="n">covar_module</span><span class="o">=</span><span class="n">covar_module</span><span class="p">,</span>
+            <span class="n">likelihood</span><span class="o">=</span><span class="n">likelihood</span><span class="p">,</span>
             <span class="n">output_tasks</span><span class="o">=</span><span class="n">output_tasks</span><span class="p">,</span>
+            <span class="n">all_tasks</span><span class="o">=</span><span class="n">all_tasks</span><span class="p">,</span>
             <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span>
             <span class="n">outcome_transform</span><span class="o">=</span><span class="n">outcome_transform</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">device</span>
-        <span class="c1">#  context indices</span>
-        <span class="n">all_tasks</span> <span class="o">=</span> <span class="n">train_X</span><span class="p">[:,</span> <span class="n">task_feature</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">all_tasks</span> <span class="o">=</span> <span class="n">all_tasks</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">all_tasks</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>  <span class="c1"># unique in python does automatic sort; add for safety</span>
+        <span class="k">if</span> <span class="n">all_tasks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">all_tasks_tensor</span> <span class="o">=</span> <span class="n">train_X</span><span class="p">[:,</span> <span class="n">task_feature</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">all_tasks</span> <span class="o">=</span> <span class="n">all_tasks_tensor</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">all_tasks_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">all_tasks</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">all_tasks</span> <span class="o">=</span> <span class="n">all_tasks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">all_tasks</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>  <span class="c1"># These are the context indices.</span>
 
         <span class="k">if</span> <span class="n">context_cat_feature</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">context_cat_feature</span> <span class="o">=</span> <span class="n">all_tasks</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">context_cat_feature</span> <span class="o">=</span> <span class="n">context_cat_feature</span>  <span class="c1"># row indices = context indices</span>
+            <span class="n">context_cat_feature</span> <span class="o">=</span> <span class="n">all_tasks_tensor</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">context_cat_feature</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">context_cat_feature</span>  <span class="c1"># row indices = context indices</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">context_emb_feature</span> <span class="o">=</span> <span class="n">context_emb_feature</span>
 
         <span class="c1">#  construct emb_dims based on categorical features</span>
@@ -130,7 +162,7 @@
                 <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">emb_dims</span>
             <span class="p">]</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">task_covar_module</span> <span class="o">=</span> <span class="n">RBFKernel</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">task_covar_module_base</span> <span class="o">=</span> <span class="n">RBFKernel</span><span class="p">(</span>
             <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">n_embs</span><span class="p">,</span>
             <span class="n">lengthscale_constraint</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span>
                 <span class="mf">0.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_value</span><span class="o">=</span><span class="mf">1.0</span>
@@ -147,7 +179,7 @@
 <span class="sd">        to get the task covariance matrix.</span>
 <span class="sd">        """</span>
         <span class="n">all_embs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task_embeddings</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_covar_module</span><span class="p">(</span><span class="n">all_embs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_covar_module_base</span><span class="p">(</span><span class="n">all_embs</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_task_embeddings</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Generate embedding features for all contexts."""</span>
@@ -169,9 +201,9 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">embeddings</span>
 
-<div class="viewcode-block" id="LCEMGP.task_covar_matrix">
-<a class="viewcode-back" href="../../../models.html#botorch.models.contextual_multioutput.LCEMGP.task_covar_matrix">[docs]</a>
-    <span class="k">def</span> <span class="nf">task_covar_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_idcs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="LCEMGP.task_covar_module">
+<a class="viewcode-back" href="../../../models.html#botorch.models.contextual_multioutput.LCEMGP.task_covar_module">[docs]</a>
+    <span class="k">def</span> <span class="nf">task_covar_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_idcs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the task covariance matrix for a given tensor of</span>
 <span class="sd">        task / context indices.</span>
 
@@ -202,19 +234,49 @@
         <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="LCEMGP.forward">
-<a class="viewcode-back" href="../../../models.html#botorch.models.contextual_multioutput.LCEMGP.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">x_basic</span><span class="p">,</span> <span class="n">task_idcs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_inputs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="c1"># Compute base mean and covariance</span>
-        <span class="n">mean_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">(</span><span class="n">x_basic</span><span class="p">)</span>
-        <span class="n">covar_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">(</span><span class="n">x_basic</span><span class="p">)</span>
-        <span class="c1"># Compute task covariances</span>
-        <span class="n">covar_i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_covar_matrix</span><span class="p">(</span><span class="n">task_idcs</span><span class="p">)</span>
-        <span class="n">covar</span> <span class="o">=</span> <span class="n">covar_x</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">covar_i</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean_x</span><span class="p">,</span> <span class="n">covar</span><span class="p">)</span></div>
+<div class="viewcode-block" id="LCEMGP.construct_inputs">
+<a class="viewcode-back" href="../../../models.html#botorch.models.contextual_multioutput.LCEMGP.construct_inputs">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">training_data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">,</span> <span class="n">MultiTaskDataset</span><span class="p">],</span>
+        <span class="n">task_feature</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">output_tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">context_cat_feature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">context_emb_feature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">embs_dim_list</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct `Model` keyword arguments from a dataset and other args.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            training_data: A `SupervisedDataset` or a `MultiTaskDataset`.</span>
+<span class="sd">            task_feature: Column index of embedded task indicator features.</span>
+<span class="sd">            output_tasks: A list of task indices for which to compute model</span>
+<span class="sd">                outputs for. If omitted, return outputs for all task indices.</span>
+<span class="sd">            context_cat_feature: (n_contexts x k) one-hot encoded context</span>
+<span class="sd">                features. Rows are ordered by context indices, where k is the</span>
+<span class="sd">                number of categorical variables. If None, task indices will</span>
+<span class="sd">                be used and k = 1.</span>
+<span class="sd">            context_emb_feature: (n_contexts x m) pre-given continuous</span>
+<span class="sd">                embedding features. Rows are ordered by context indices.</span>
+<span class="sd">            embs_dim_list: Embedding dimension for each categorical variable.</span>
+<span class="sd">                The length equals k. If None, the embedding dimension is set to 1</span>
+<span class="sd">                for each categorical variable.</span>
+<span class="sd">        """</span>
+        <span class="n">base_inputs</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">construct_inputs</span><span class="p">(</span>
+            <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span>
+            <span class="n">task_feature</span><span class="o">=</span><span class="n">task_feature</span><span class="p">,</span>
+            <span class="n">output_tasks</span><span class="o">=</span><span class="n">output_tasks</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">context_cat_feature</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">base_inputs</span><span class="p">[</span><span class="s2">"context_cat_feature"</span><span class="p">]</span> <span class="o">=</span> <span class="n">context_cat_feature</span>
+        <span class="k">if</span> <span class="n">context_emb_feature</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">base_inputs</span><span class="p">[</span><span class="s2">"context_emb_feature"</span><span class="p">]</span> <span class="o">=</span> <span class="n">context_emb_feature</span>
+        <span class="k">if</span> <span class="n">embs_dim_list</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">base_inputs</span><span class="p">[</span><span class="s2">"embs_dim_list"</span><span class="p">]</span> <span class="o">=</span> <span class="n">embs_dim_list</span>
+        <span class="k">return</span> <span class="n">base_inputs</span></div>
 </div>
 
 

@@ -166,6 +166,44 @@
             <span class="n">_reset_caches</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
 
 
+<span class="k">def</span> <span class="nf">update_abstractmethods</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Recalculate the set of abstract methods of an abstract class.</span>
+
+<span class="sd">    If a class has had one of its abstract methods implemented after the</span>
+<span class="sd">    class was created, the method will not be considered implemented until</span>
+<span class="sd">    this function is called. Alternatively, if a new abstract method has been</span>
+<span class="sd">    added to the class, it will only be considered an abstract method of the</span>
+<span class="sd">    class after this function is called.</span>
+
+<span class="sd">    This function should be called before any use is made of the class,</span>
+<span class="sd">    usually in class decorators that add methods to the subject class.</span>
+
+<span class="sd">    Returns cls, to allow usage as a class decorator.</span>
+
+<span class="sd">    If cls is not an instance of ABCMeta, does nothing.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s1">'__abstractmethods__'</span><span class="p">):</span>
+        <span class="c1"># We check for __abstractmethods__ here because cls might by a C</span>
+        <span class="c1"># implementation or a python implementation (especially during</span>
+        <span class="c1"># testing), and we want to handle both cases.</span>
+        <span class="k">return</span> <span class="bp">cls</span>
+
+    <span class="n">abstracts</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="c1"># Check the existing abstract methods of the parents, keep only the ones</span>
+    <span class="c1"># that are not implemented.</span>
+    <span class="k">for</span> <span class="n">scls</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__bases__</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">scls</span><span class="p">,</span> <span class="s1">'__abstractmethods__'</span><span class="p">,</span> <span class="p">()):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">"__isabstractmethod__"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+                <span class="n">abstracts</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="c1"># Also add any other newly added abstract methods.</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">"__isabstractmethod__"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="n">abstracts</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="bp">cls</span><span class="o">.</span><span class="n">__abstractmethods__</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">abstracts</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">cls</span>
+
+
 <span class="k">class</span> <span class="nc">ABC</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">ABCMeta</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Helper class that provides a standard way to create an ABC using</span>
 <span class="sd">    inheritance.</span>

@@ -177,6 +177,7 @@
         <span class="n">task_covar_prior</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Prior</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">output_tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">rank</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">all_tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -204,6 +205,12 @@
 <span class="sd">                full rank (i.e. number of tasks) kernel.</span>
 <span class="sd">            task_covar_prior : A Prior on the task covariance matrix. Must operate</span>
 <span class="sd">                on p.s.d. matrices. A common prior for this is the `LKJ` prior.</span>
+<span class="sd">            all_tasks: By default, multi-task GPs infer the list of all tasks from</span>
+<span class="sd">                the task features in `train_X`. This is an experimental feature that</span>
+<span class="sd">                enables creation of multi-task GPs with tasks that don't appear in the</span>
+<span class="sd">                training data. Note that when a task is not observed, the corresponding</span>
+<span class="sd">                task covariance will heavily depend on random initialization and may</span>
+<span class="sd">                behave unexpectedly.</span>
 <span class="sd">            input_transform: An input transform that is applied in the model's</span>
 <span class="sd">                forward pass.</span>
 <span class="sd">            outcome_transform: An outcome transform that is applied to the</span>
@@ -225,9 +232,12 @@
                 <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">transformed_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">)</span>
-        <span class="n">all_tasks</span><span class="p">,</span> <span class="n">task_feature</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_non_task_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_all_tasks</span><span class="p">(</span>
-            <span class="n">transformed_X</span><span class="p">,</span> <span class="n">task_feature</span><span class="p">,</span> <span class="n">output_tasks</span>
-        <span class="p">)</span>
+        <span class="p">(</span>
+            <span class="n">all_tasks_inferred</span><span class="p">,</span>
+            <span class="n">task_feature</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_non_task_features</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_all_tasks</span><span class="p">(</span><span class="n">transformed_X</span><span class="p">,</span> <span class="n">task_feature</span><span class="p">,</span> <span class="n">output_tasks</span><span class="p">)</span>
+        <span class="n">all_tasks</span> <span class="o">=</span> <span class="n">all_tasks</span> <span class="ow">or</span> <span class="n">all_tasks_inferred</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_tasks</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_tasks</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">outcome_transform</span><span class="p">(</span><span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">)</span>
@@ -396,13 +406,16 @@
         <span class="n">base_inputs</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">construct_inputs</span><span class="p">(</span>
             <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span> <span class="n">task_feature</span><span class="o">=</span><span class="n">task_feature</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="o">**</span><span class="n">base_inputs</span><span class="p">,</span>
-            <span class="s2">"task_feature"</span><span class="p">:</span> <span class="n">task_feature</span><span class="p">,</span>
-            <span class="s2">"output_tasks"</span><span class="p">:</span> <span class="n">output_tasks</span><span class="p">,</span>
-            <span class="s2">"task_covar_prior"</span><span class="p">:</span> <span class="n">task_covar_prior</span><span class="p">,</span>
-            <span class="s2">"rank"</span><span class="p">:</span> <span class="n">rank</span><span class="p">,</span>
-        <span class="p">}</span></div>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">training_data</span><span class="p">,</span> <span class="n">MultiTaskDataset</span><span class="p">):</span>
+            <span class="n">all_tasks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">training_data</span><span class="o">.</span><span class="n">datasets</span><span class="p">)))</span>
+            <span class="n">base_inputs</span><span class="p">[</span><span class="s2">"all_tasks"</span><span class="p">]</span> <span class="o">=</span> <span class="n">all_tasks</span>
+        <span class="k">if</span> <span class="n">task_covar_prior</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">base_inputs</span><span class="p">[</span><span class="s2">"task_covar_prior"</span><span class="p">]</span> <span class="o">=</span> <span class="n">task_covar_prior</span>
+        <span class="k">if</span> <span class="n">rank</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">base_inputs</span><span class="p">[</span><span class="s2">"rank"</span><span class="p">]</span> <span class="o">=</span> <span class="n">rank</span>
+        <span class="n">base_inputs</span><span class="p">[</span><span class="s2">"task_feature"</span><span class="p">]</span> <span class="o">=</span> <span class="n">task_feature</span>
+        <span class="n">base_inputs</span><span class="p">[</span><span class="s2">"output_tasks"</span><span class="p">]</span> <span class="o">=</span> <span class="n">output_tasks</span>
+        <span class="k">return</span> <span class="n">base_inputs</span></div>
 </div>
 
 
@@ -468,6 +481,7 @@
             <span class="s2">"When `train_Yvar` is specified, `MultiTaskGP` behaves the same "</span>
             <span class="s2">"as the `FixedNoiseMultiTaskGP`."</span><span class="p">,</span>
             <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>

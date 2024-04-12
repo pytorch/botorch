@@ -1493,10 +1493,6 @@ evaluated (or <cite>None</cite> if the sample has never been evaluated).</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.gp_sampling.GPDraw.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.gp_sampling.GPDraw.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.gp_sampling.RandomFourierFeatures">
@@ -1542,10 +1538,6 @@ a <cite>batch_shape</cite>, the output <cite>batch_shape</cite> will be
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.gp_sampling.RandomFourierFeatures.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.gp_sampling.RandomFourierFeatures.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.gp_sampling.get_deterministic_model_multi_samples">
@@ -2126,7 +2118,7 @@ deviations from a Standardize transform.</p>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tuple</em>[<a class="reference internal" href="#botorch.utils.datasets.MultiTaskDataset" title="botorch.utils.datasets.MultiTaskDataset"><em>MultiTaskDataset</em></a>, <em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>, <em>Tensor</em>]]</p>
+<dd class="field-even"><p><em>Tuple</em>[<a class="reference internal" href="#botorch.utils.datasets.MultiTaskDataset" title="botorch.utils.datasets.MultiTaskDataset"><em>MultiTaskDataset</em></a>, <em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>, <em>Tensor</em> | None]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2253,10 +2245,6 @@ key-value pairs of type (string, <code class="xref py py-class docutils literal 
 this method in your own modules. Both single-line and multi-line
 strings are acceptable.</p>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.torch.BufferDict.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.torch.BufferDict.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.utils.transforms">
@@ -3282,10 +3270,6 @@ box_decomposition <cite>i</cite>.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.utils.multi_objective.box_decompositions.utils">
@@ -3435,10 +3419,6 @@ that are sorted by the 0th dimension in increasing order.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.dominated.DominatedPartitioning.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.dominated.DominatedPartitioning.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.utils.multi_objective.hypervolume">
@@ -3782,10 +3762,6 @@ decomposition.</p></li>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.non_dominated.FastNondominatedPartitioning">
@@ -3825,10 +3801,6 @@ the space dominated by that Pareto frontier.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bd</span> <span class="o">=</span> <span class="n">FastNondominatedPartitioning</span><span class="p">(</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y1</span><span class="p">)</span>
 </pre></div>
 </div>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.non_dominated.FastNondominatedPartitioning.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.non_dominated.FastNondominatedPartitioning.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.utils.multi_objective.pareto">

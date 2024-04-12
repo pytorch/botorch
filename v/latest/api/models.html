@@ -1387,10 +1387,6 @@ been added and all test-time caches have been updated.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.model_list_gp_regression.ModelListGP.likelihood">
-<span class="sig-name descname"><span class="pre">likelihood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Likelihood</span></em><a class="headerlink" href="#botorch.models.model_list_gp_regression.ModelListGP.likelihood" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.models.multitask">
@@ -1448,7 +1444,7 @@ integers starting from zero.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.multitask.MultiTaskGP">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.multitask.</span></span><span class="sig-name descname"><span class="pre">MultiTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_covar_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#MultiTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.multitask.</span></span><span class="sig-name descname"><span class="pre">MultiTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_covar_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#MultiTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ExactGP</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">MultiTaskGPyTorchModel</span></code>, <a class="reference internal" href="#botorch.models.model.FantasizeMixin" title="botorch.models.model.FantasizeMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">FantasizeMixin</span></code></a></p>
 <p>Multi-Task exact GP model using an ICM (intrinsic co-regionalization model)
 kernel. See <a class="reference internal" href="#bonilla2007mtgp" id="id3"><span>[Bonilla2007MTGP]</span></a> and <a class="reference internal" href="#swersky2013mtbo" id="id4"><span>[Swersky2013MTBO]</span></a> for a reference on the
@@ -1486,6 +1482,12 @@ outputs for. If omitted, return outputs for all task indices.</p></li>
 full rank (i.e. number of tasks) kernel.</p></li>
 <li><p><strong>task_covar_prior</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>) – A Prior on the task covariance matrix. Must operate
 on p.s.d. matrices. A common prior for this is the <cite>LKJ</cite> prior.</p></li>
+<li><p><strong>all_tasks</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – By default, multi-task GPs infer the list of all tasks from
+the task features in <cite>train_X</cite>. This is an experimental feature that
+enables creation of multi-task GPs with tasks that don’t appear in the
+training data. Note that when a task is not observed, the corresponding
+task covariance will heavily depend on random initialization and may
+behave unexpectedly.</p></li>
 <li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>InputTransform</em><em>]</em>) – An input transform that is applied in the model’s
 forward pass.</p></li>
 <li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><em>OutcomeTransform</em><em>]</em>) – An outcome transform that is applied to the
@@ -1566,10 +1568,6 @@ contain <cite>use_LKJ_prior</cite> indicator and should contain float value <cit
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.multitask.MultiTaskGP.likelihood">
-<span class="sig-name descname"><span class="pre">likelihood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Likelihood</span></em><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP.likelihood" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.multitask.FixedNoiseMultiTaskGP">
@@ -1616,14 +1614,6 @@ inference (that is, the <cite>Posterior</cite> obtained by calling
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">FixedNoiseMultiTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.multitask.FixedNoiseMultiTaskGP.likelihood">
-<span class="sig-name descname"><span class="pre">likelihood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Likelihood</span></em><a class="headerlink" href="#botorch.models.multitask.FixedNoiseMultiTaskGP.likelihood" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.multitask.FixedNoiseMultiTaskGP.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.multitask.FixedNoiseMultiTaskGP.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.multitask.KroneckerMultiTaskGP">
@@ -1755,10 +1745,6 @@ If <cite>False</cite>, model is put in <cite>eval</cite> mode.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.multitask.KroneckerMultiTaskGP.likelihood">
-<span class="sig-name descname"><span class="pre">likelihood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Likelihood</span></em><a class="headerlink" href="#botorch.models.multitask.KroneckerMultiTaskGP.likelihood" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.models.higher_order_gp">
@@ -1858,10 +1844,6 @@ noises associated with the targets (if applicable).</p></li>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.higher_order_gp.FlattenedStandardize.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.higher_order_gp.FlattenedStandardize.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.higher_order_gp.HigherOrderGP">
@@ -2329,10 +2311,6 @@ so that it’s still compatible with fit_gpytorch_*.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.models.contextual">
@@ -2449,7 +2427,7 @@ Advances in Neural Information Processing Systems 33, NeurIPS 2020.</p>
 </div>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.contextual_multioutput.LCEMGP">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.contextual_multioutput.</span></span><span class="sig-name descname"><span class="pre">LCEMGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context_cat_feature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context_emb_feature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embs_dim_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/contextual_multioutput.html#LCEMGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.contextual_multioutput.LCEMGP" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.contextual_multioutput.</span></span><span class="sig-name descname"><span class="pre">LCEMGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context_cat_feature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context_emb_feature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embs_dim_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/contextual_multioutput.html#LCEMGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.contextual_multioutput.LCEMGP" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.multitask.MultiTaskGP" title="botorch.models.multitask.MultiTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiTaskGP</span></code></a></p>
 <p>The Multi-Task GP with the latent context embedding multioutput (LCE-M)
 kernel. See <a class="reference internal" href="#feng2020hdcps" id="id12"><span>[Feng2020HDCPS]</span></a> for a reference on the model and its use in Bayesian
@@ -2463,6 +2441,12 @@ optimization.</p>
 <li><p><strong>train_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – An optional (n x 1) tensor of observed variances of each
 training Y. If None, we infer the noise. Note that the inferred noise
 is common across all tasks.</p></li>
+<li><p><strong>mean_module</strong> (<em>Module</em><em> | </em><em>None</em>) – The mean function to be used. Defaults to <cite>ConstantMean</cite>.</p></li>
+<li><p><strong>covar_module</strong> (<em>Module</em><em> | </em><em>None</em>) – The module for computing the covariance matrix between
+the non-task features. Defaults to <cite>MaternKernel</cite>.</p></li>
+<li><p><strong>likelihood</strong> (<em>Likelihood</em><em> | </em><em>None</em>) – A likelihood. The default is selected based on <cite>train_Yvar</cite>.
+If <cite>train_Yvar</cite> is None, a standard <cite>GaussianLikelihood</cite> with inferred
+noise level is used. Otherwise, a FixedNoiseGaussianLikelihood is used.</p></li>
 <li><p><strong>context_cat_feature</strong> (<em>Tensor</em><em> | </em><em>None</em>) – (n_contexts x k) one-hot encoded context
 features. Rows are ordered by context indices, where k is the
 number of categorical variables. If None, task indices will
@@ -2474,14 +2458,24 @@ The length equals k. If None, the embedding dimension is set to 1
 for each categorical variable.</p></li>
 <li><p><strong>output_tasks</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of task indices for which to compute model
 outputs for. If omitted, return outputs for all task indices.</p></li>
-<li><p><strong>input_transform</strong> (<em>InputTransform</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>outcome_transform</strong> (<em>OutcomeTransform</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>all_tasks</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – By default, multi-task GPs infer the list of all tasks from
+the task features in <cite>train_X</cite>. This is an experimental feature that
+enables creation of multi-task GPs with tasks that don’t appear in the
+training data. Note that when a task is not observed, the corresponding
+task covariance will heavily depend on random initialization and may
+behave unexpectedly.</p></li>
+<li><p><strong>input_transform</strong> (<em>InputTransform</em><em> | </em><em>None</em>) – An input transform that is applied in the model’s
+forward pass.</p></li>
+<li><p><strong>outcome_transform</strong> (<em>OutcomeTransform</em><em> | </em><em>None</em>) – An outcome transform that is applied to the
+training data during instantiation and to the posterior during
+inference (that is, the <cite>Posterior</cite> obtained by calling
+<cite>.posterior</cite> on the model will be on the original scale).</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="botorch.models.contextual_multioutput.LCEMGP.task_covar_matrix">
-<span class="sig-name descname"><span class="pre">task_covar_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task_idcs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/contextual_multioutput.html#LCEMGP.task_covar_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.contextual_multioutput.LCEMGP.task_covar_matrix" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.models.contextual_multioutput.LCEMGP.task_covar_module">
+<span class="sig-name descname"><span class="pre">task_covar_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task_idcs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/contextual_multioutput.html#LCEMGP.task_covar_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.contextual_multioutput.LCEMGP.task_covar_module" title="Link to this definition">¶</a></dt>
 <dd><p>Compute the task covariance matrix for a given tensor of
 task / context indices.</p>
 <dl class="field-list simple">
@@ -2497,34 +2491,32 @@ task / context indices.</p>
 </dl>
 </dd></dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="botorch.models.contextual_multioutput.LCEMGP.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/contextual_multioutput.html#LCEMGP.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.contextual_multioutput.LCEMGP.forward" title="Link to this definition">¶</a></dt>
-<dd><p>Define the computation performed at every call.</p>
-<p>Should be overridden by all subclasses.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Although the recipe for forward pass needs to be defined within
-this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
-instead of this since the former takes care of running the
-registered hooks while the latter silently ignores them.</p>
-</div>
+<dt class="sig sig-object py" id="botorch.models.contextual_multioutput.LCEMGP.construct_inputs">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context_cat_feature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context_emb_feature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embs_dim_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/contextual_multioutput.html#LCEMGP.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.contextual_multioutput.LCEMGP.construct_inputs" title="Link to this definition">¶</a></dt>
+<dd><p>Construct <cite>Model</cite> keyword arguments from a dataset and other args.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><a class="reference internal" href="utils.html#botorch.utils.datasets.MultiTaskDataset" title="botorch.utils.datasets.MultiTaskDataset"><em>MultiTaskDataset</em></a>) – A <cite>SupervisedDataset</cite> or a <cite>MultiTaskDataset</cite>.</p></li>
+<li><p><strong>task_feature</strong> (<em>int</em>) – Column index of embedded task indicator features.</p></li>
+<li><p><strong>output_tasks</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of task indices for which to compute model
+outputs for. If omitted, return outputs for all task indices.</p></li>
+<li><p><strong>context_cat_feature</strong> (<em>Tensor</em><em> | </em><em>None</em>) – (n_contexts x k) one-hot encoded context
+features. Rows are ordered by context indices, where k is the
+number of categorical variables. If None, task indices will
+be used and k = 1.</p></li>
+<li><p><strong>context_emb_feature</strong> (<em>Tensor</em><em> | </em><em>None</em>) – (n_contexts x m) pre-given continuous
+embedding features. Rows are ordered by context indices.</p></li>
+<li><p><strong>embs_dim_list</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Embedding dimension for each categorical variable.
+The length equals k. If None, the embedding dimension is set to 1
+for each categorical variable.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>MultivariateNormal</em></p>
+<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.contextual_multioutput.LCEMGP.likelihood">
-<span class="sig-name descname"><span class="pre">likelihood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Likelihood</span></em><a class="headerlink" href="#botorch.models.contextual_multioutput.LCEMGP.likelihood" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.contextual_multioutput.LCEMGP.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.contextual_multioutput.LCEMGP.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.contextual_multioutput.FixedNoiseLCEMGP">
@@ -2555,14 +2547,6 @@ outputs for. If omitted, return outputs for all task indices.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.contextual_multioutput.FixedNoiseLCEMGP.likelihood">
-<span class="sig-name descname"><span class="pre">likelihood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Likelihood</span></em><a class="headerlink" href="#botorch.models.contextual_multioutput.FixedNoiseLCEMGP.likelihood" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.contextual_multioutput.FixedNoiseLCEMGP.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.contextual_multioutput.FixedNoiseLCEMGP.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.models.approximate_gp">
@@ -2617,10 +2601,6 @@ either a <cite>GaussianLikelihood</cite> (if <cite>num_outputs=1</cite>) or a
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.approximate_gp.ApproximateGPyTorchModel.likelihood">
-<span class="sig-name descname"><span class="pre">likelihood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Likelihood</span></em><a class="headerlink" href="#botorch.models.approximate_gp.ApproximateGPyTorchModel.likelihood" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.models.approximate_gp.ApproximateGPyTorchModel.num_outputs">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_outputs</span></span><a class="headerlink" href="#botorch.models.approximate_gp.ApproximateGPyTorchModel.num_outputs" title="Link to this definition">¶</a></dt>
@@ -2766,14 +2746,6 @@ uses <cite>GreedyVarianceReduction</cite>.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.approximate_gp.SingleTaskVariationalGP.likelihood">
-<span class="sig-name descname"><span class="pre">likelihood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Likelihood</span></em><a class="headerlink" href="#botorch.models.approximate_gp.SingleTaskVariationalGP.likelihood" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.approximate_gp.SingleTaskVariationalGP.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.approximate_gp.SingleTaskVariationalGP.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.models.approximate_gp.SingleTaskVariationalGP.batch_shape">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Size</span></em><a class="headerlink" href="#botorch.models.approximate_gp.SingleTaskVariationalGP.batch_shape" title="Link to this definition">¶</a></dt>
@@ -3269,7 +3241,7 @@ to the SAAS prior.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.fully_bayesian_multitask.</span></span><span class="sig-name descname"><span class="pre">SaasFullyBayesianMultiTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyro_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#SaasFullyBayesianMultiTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.fully_bayesian_multitask.</span></span><span class="sig-name descname"><span class="pre">SaasFullyBayesianMultiTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyro_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#SaasFullyBayesianMultiTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.multitask.MultiTaskGP" title="botorch.models.multitask.MultiTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiTaskGP</span></code></a></p>
 <p>A fully Bayesian multi-task GP model with the SAAS prior.</p>
 <p>This model assumes that the inputs have been normalized to [0, 1]^d and that the
@@ -3306,20 +3278,18 @@ Note that the inferred noise is common across all tasks.</p></li>
 outputs for. If omitted, return outputs for all task indices.</p></li>
 <li><p><strong>rank</strong> (<em>int</em><em> | </em><em>None</em>) – The num of learned task embeddings to be used in the task kernel.
 If omitted, use a full rank (i.e. number of tasks) kernel.</p></li>
+<li><p><strong>all_tasks</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – NOT SUPPORTED!</p></li>
 <li><p><strong>outcome_transform</strong> (<em>OutcomeTransform</em><em> | </em><em>None</em>) – An outcome transform that is applied to the
 training data during instantiation and to the posterior during
 inference (that is, the <cite>Posterior</cite> obtained by calling
 <cite>.posterior</cite> on the model will be on the original scale).</p></li>
 <li><p><strong>input_transform</strong> (<em>InputTransform</em><em> | </em><em>None</em>) – An input transform that is applied to the inputs <cite>X</cite>
 in the model’s forward pass.</p></li>
-<li><p><strong>pyro_model</strong> (<em>PyroModel</em><em> | </em><em>None</em>) – Optional <cite>PyroModel</cite>, defaults to <cite>MultitaskSaasPyroModel</cite>.</p></li>
+<li><p><strong>pyro_model</strong> (<a class="reference internal" href="#botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel" title="botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel"><em>MultitaskSaasPyroModel</em></a><em> | </em><em>None</em>) – Optional <cite>PyroModel</cite> that has the same signature as
+<cite>MultitaskSaasPyroModel</cite>. Defaults to <cite>MultitaskSaasPyroModel</cite>.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.likelihood">
-<span class="sig-name descname"><span class="pre">likelihood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Likelihood</span></em><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.likelihood" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.train">
 <span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#SaasFullyBayesianMultiTaskGP.train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.train" title="Link to this definition">¶</a></dt>
@@ -3451,24 +3421,6 @@ registered hooks while the latter silently ignores them.</p>
 </dl>
 </dd></dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.construct_inputs">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#SaasFullyBayesianMultiTaskGP.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.construct_inputs" title="Link to this definition">¶</a></dt>
-<dd><p>Construct <cite>Model</cite> keyword arguments from a dataset and other args.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><a class="reference internal" href="utils.html#botorch.utils.datasets.MultiTaskDataset" title="botorch.utils.datasets.MultiTaskDataset"><em>MultiTaskDataset</em></a>) – A <cite>SupervisedDataset</cite> or a <cite>MultiTaskDataset</cite>.</p></li>
-<li><p><strong>task_feature</strong> (<em>int</em>) – Column index of embedded task indicator features.</p></li>
-<li><p><strong>rank</strong> (<em>int</em><em> | </em><em>None</em>) – The rank of the cross-task covariance matrix.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.load_state_dict">
 <span class="sig-name descname"><span class="pre">load_state_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#SaasFullyBayesianMultiTaskGP.load_state_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.load_state_dict" title="Link to this definition">¶</a></dt>
 <dd><p>Custom logic for loading the state dict.</p>
@@ -3491,10 +3443,6 @@ simplify this method and eliminate some others.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 </section>
@@ -4200,10 +4148,6 @@ noises associated with the targets (if applicable).</p></li>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.outcome.Standardize.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.outcome.Standardize.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.transforms.outcome.Log">
@@ -4301,10 +4245,6 @@ observation noises associated with the training targets
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.outcome.Log.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.outcome.Log.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.transforms.outcome.Power">
@@ -4405,10 +4345,6 @@ observation noises associated with the training targets
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.outcome.Power.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.outcome.Power.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.transforms.outcome.Bilog">
@@ -4505,10 +4441,6 @@ observation noises associated with the training targets
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.outcome.Bilog.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.outcome.Bilog.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.models.transforms.input">
@@ -4542,18 +4474,6 @@ transforms on the module.</p>
 <span class="go">Normalize()</span>
 </pre></div>
 </div>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.input.ChainedInputTransform.transform_on_train">
-<span class="sig-name descname"><span class="pre">transform_on_train</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.ChainedInputTransform.transform_on_train" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.input.ChainedInputTransform.transform_on_eval">
-<span class="sig-name descname"><span class="pre">transform_on_eval</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.ChainedInputTransform.transform_on_eval" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.input.ChainedInputTransform.transform_on_fantasize">
-<span class="sig-name descname"><span class="pre">transform_on_fantasize</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.ChainedInputTransform.transform_on_fantasize" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.ChainedInputTransform.transform">
 <span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#ChainedInputTransform.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.ChainedInputTransform.transform" title="Link to this definition">¶</a></dt>
@@ -4708,10 +4628,6 @@ to False if bounds are provided, otherwise defaults to True.</p></li>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.input.Normalize.reverse">
-<span class="sig-name descname"><span class="pre">reverse</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.Normalize.reverse" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.InputStandardize">
@@ -4753,10 +4669,6 @@ numerical issues.</p></li>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.InputStandardize.means">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">means</span></span><a class="headerlink" href="#botorch.models.transforms.input.InputStandardize.means" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.input.InputStandardize.reverse">
-<span class="sig-name descname"><span class="pre">reverse</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.InputStandardize.reverse" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
@@ -4826,18 +4738,6 @@ rounding should be used. Default: False.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.input.Round.transform_on_train">
-<span class="sig-name descname"><span class="pre">transform_on_train</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.Round.transform_on_train" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.input.Round.transform_on_eval">
-<span class="sig-name descname"><span class="pre">transform_on_eval</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.Round.transform_on_eval" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.input.Round.transform_on_fantasize">
-<span class="sig-name descname"><span class="pre">transform_on_fantasize</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.Round.transform_on_fantasize" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.Round.transform">
 <span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Round.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.Round.transform" title="Link to this definition">¶</a></dt>
@@ -4902,10 +4802,6 @@ the inputs.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.input.Log10.reverse">
-<span class="sig-name descname"><span class="pre">reverse</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.Log10.reverse" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.Warp">
@@ -4945,10 +4841,6 @@ NOTE: This is only supported for single-output models.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.input.Warp.reverse">
-<span class="sig-name descname"><span class="pre">reverse</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.Warp.reverse" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.AppendFeatures">
@@ -5085,18 +4977,6 @@ transform when called from within a <cite>fantasize</cite> call. Default: True.<
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.input.FilterFeatures.transform_on_train">
-<span class="sig-name descname"><span class="pre">transform_on_train</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.FilterFeatures.transform_on_train" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.input.FilterFeatures.transform_on_eval">
-<span class="sig-name descname"><span class="pre">transform_on_eval</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.FilterFeatures.transform_on_eval" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.input.FilterFeatures.transform_on_fantasize">
-<span class="sig-name descname"><span class="pre">transform_on_fantasize</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.FilterFeatures.transform_on_fantasize" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.FilterFeatures.transform">
 <span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#FilterFeatures.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.FilterFeatures.transform" title="Link to this definition">¶</a></dt>
@@ -5236,18 +5116,6 @@ transform when called from within a <cite>fantasize</cite> call. Default: False.
 categoricals are transformed to integer representation.</p>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.input.OneHotToNumeric.transform_on_train">
-<span class="sig-name descname"><span class="pre">transform_on_train</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.OneHotToNumeric.transform_on_train" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.input.OneHotToNumeric.transform_on_eval">
-<span class="sig-name descname"><span class="pre">transform_on_eval</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.OneHotToNumeric.transform_on_eval" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.input.OneHotToNumeric.transform_on_fantasize">
-<span class="sig-name descname"><span class="pre">transform_on_fantasize</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.OneHotToNumeric.transform_on_fantasize" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.OneHotToNumeric.transform">
 <span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#OneHotToNumeric.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.OneHotToNumeric.transform" title="Link to this definition">¶</a></dt>
