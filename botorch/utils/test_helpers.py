@@ -67,7 +67,7 @@ def standardize_moments(
 
 def gen_multi_task_dataset(
     yvar: Optional[float] = None, task_values: Optional[List[int]] = None, **tkwargs
-) -> Tuple[MultiTaskDataset, Tuple[Tensor, Tensor, Tensor]]:
+) -> Tuple[MultiTaskDataset, Tuple[Tensor, Tensor, Optional[Tensor]]]:
     """Constructs a multi-task dataset with two tasks, each with 10 data points."""
     X = torch.linspace(0, 0.95, 10, **tkwargs) + 0.05 * torch.rand(10, **tkwargs)
     X = X.unsqueeze(dim=-1)
