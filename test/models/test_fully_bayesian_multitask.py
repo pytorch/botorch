@@ -583,7 +583,10 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
             )
             self.assertTrue(torch.equal(data_dict["train_X"], train_X))
             self.assertTrue(torch.equal(data_dict["train_Y"], train_Y))
-            self.assertAllClose(data_dict["train_Yvar"], train_Yvar)
+            if train_Yvar is not None:
+                self.assertAllClose(data_dict["train_Yvar"], train_Yvar)
+            else:
+                self.assertNotIn("train_Yvar", data_dict)
             self.assertEqual(data_dict["task_feature"], task_feature)
             self.assertEqual(data_dict["rank"], 1)
             self.assertTrue("task_covar_prior" not in data_dict)

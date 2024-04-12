@@ -8,7 +8,7 @@ r"""Multi-task Gaussian Process Regression models with fully Bayesian inference.
 """
 
 
-from typing import Any, Dict, List, Mapping, NoReturn, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, NoReturn, Optional, Tuple
 
 import pyro
 import torch
@@ -16,7 +16,6 @@ from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.fully_bayesian import (
     matern52_kernel,
     MIN_INFERRED_NOISE_LEVEL,
-    PyroModel,
     reshape_and_detach,
     SaasPyroModel,
 )
@@ -24,7 +23,6 @@ from botorch.models.multitask import MultiTaskGP
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.posteriors.fully_bayesian import GaussianMixturePosterior, MCMC_DIM
-from botorch.utils.datasets import MultiTaskDataset, SupervisedDataset
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels import MaternKernel
 from gpytorch.kernels.kernel import Kernel
@@ -200,9 +198,10 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
         train_Yvar: Optional[Tensor] = None,
         output_tasks: Optional[List[int]] = None,
         rank: Optional[int] = None,
+        all_tasks: Optional[List[int]] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
-        pyro_model: Optional[PyroModel] = None,
+        pyro_model: Optional[MultitaskSaasPyroModel] = None,
     ) -> None:
         r"""Initialize the fully Bayesian multi-task GP model.
 
@@ -216,13 +215,15 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
                 outputs for. If omitted, return outputs for all task indices.
             rank: The num of learned task embeddings to be used in the task kernel.
                 If omitted, use a full rank (i.e. number of tasks) kernel.
+            all_tasks: NOT SUPPORTED!
             outcome_transform: An outcome transform that is applied to the
                 training data during instantiation and to the posterior during
                 inference (that is, the `Posterior` obtained by calling
                 `.posterior` on the model will be on the original scale).
             input_transform: An input transform that is applied to the inputs `X`
                 in the model's forward pass.
-            pyro_model: Optional `PyroModel`, defaults to `MultitaskSaasPyroModel`.
+            pyro_model: Optional `PyroModel` that has the same signature as
+                `MultitaskSaasPyroModel`. Defaults to `MultitaskSaasPyroModel`.
         """
         if not (
             train_X.ndim == train_Y.ndim == 2
@@ -253,6 +254,12 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
             output_tasks=output_tasks,
             rank=rank,
         )
+        if all_tasks is not None and self._expected_task_values != set(all_tasks):
+            raise NotImplementedError(
+                "The `all_tasks` argument is not supported by SAAS MTGP. "
+                f"The training data includes tasks {self._expected_task_values}, "
+                f"got {all_tasks=}."
+            )
         self.to(train_X)
 
         self.mean_module = None
@@ -382,29 +389,6 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
         covar_i = self.task_covar_module(latent_features)
         covar = covar_x.mul(covar_i)
         return MultivariateNormal(mean_x, covar)
-
-    @classmethod
-    def construct_inputs(
-        cls,
-        training_data: Union[SupervisedDataset, MultiTaskDataset],
-        task_feature: int,
-        rank: Optional[int] = None,
-        **kwargs: Any,
-    ) -> Dict[str, Any]:
-        r"""Construct `Model` keyword arguments from a dataset and other args.
-
-        Args:
-            training_data: A `SupervisedDataset` or a `MultiTaskDataset`.
-            task_feature: Column index of embedded task indicator features.
-            rank: The rank of the cross-task covariance matrix.
-        """
-        inputs = super().construct_inputs(
-            training_data=training_data, task_feature=task_feature, rank=rank, **kwargs
-        )
-        inputs.pop("task_covar_prior")
-        if "train_Yvar" not in inputs:
-            inputs["train_Yvar"] = None
-        return inputs
 
     def load_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True):
         r"""Custom logic for loading the state dict.

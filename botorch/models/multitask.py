@@ -149,6 +149,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         task_covar_prior: Optional[Prior] = None,
         output_tasks: Optional[List[int]] = None,
         rank: Optional[int] = None,
+        all_tasks: Optional[List[int]] = None,
         input_transform: Optional[InputTransform] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
     ) -> None:
@@ -176,6 +177,12 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
                 full rank (i.e. number of tasks) kernel.
             task_covar_prior : A Prior on the task covariance matrix. Must operate
                 on p.s.d. matrices. A common prior for this is the `LKJ` prior.
+            all_tasks: By default, multi-task GPs infer the list of all tasks from
+                the task features in `train_X`. This is an experimental feature that
+                enables creation of multi-task GPs with tasks that don't appear in the
+                training data. Note that when a task is not observed, the corresponding
+                task covariance will heavily depend on random initialization and may
+                behave unexpectedly.
             input_transform: An input transform that is applied in the model's
                 forward pass.
             outcome_transform: An outcome transform that is applied to the
@@ -197,9 +204,12 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
                 X=train_X, input_transform=input_transform
             )
         self._validate_tensor_args(X=transformed_X, Y=train_Y, Yvar=train_Yvar)
-        all_tasks, task_feature, self.num_non_task_features = self.get_all_tasks(
-            transformed_X, task_feature, output_tasks
-        )
+        (
+            all_tasks_inferred,
+            task_feature,
+            self.num_non_task_features,
+        ) = self.get_all_tasks(transformed_X, task_feature, output_tasks)
+        all_tasks = all_tasks or all_tasks_inferred
         self.num_tasks = len(all_tasks)
         if outcome_transform is not None:
             train_Y, train_Yvar = outcome_transform(Y=train_Y, Yvar=train_Yvar)
@@ -360,13 +370,16 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         base_inputs = super().construct_inputs(
             training_data=training_data, task_feature=task_feature, **kwargs
         )
-        return {
-            **base_inputs,
-            "task_feature": task_feature,
-            "output_tasks": output_tasks,
-            "task_covar_prior": task_covar_prior,
-            "rank": rank,
-        }
+        if isinstance(training_data, MultiTaskDataset):
+            all_tasks = list(range(len(training_data.datasets)))
+            base_inputs["all_tasks"] = all_tasks
+        if task_covar_prior is not None:
+            base_inputs["task_covar_prior"] = task_covar_prior
+        if rank is not None:
+            base_inputs["rank"] = rank
+        base_inputs["task_feature"] = task_feature
+        base_inputs["output_tasks"] = output_tasks
+        return base_inputs
 
 
 class FixedNoiseMultiTaskGP(MultiTaskGP):
@@ -428,6 +441,7 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
             "When `train_Yvar` is specified, `MultiTaskGP` behaves the same "
             "as the `FixedNoiseMultiTaskGP`.",
             DeprecationWarning,
+            stacklevel=2,
         )
         super().__init__(
             train_X=train_X,
