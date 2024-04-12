@@ -166,6 +166,15 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
                 task_feature=4,
             )
         train_X, train_Y, train_Yvar, model = self._get_data_and_model(**tkwargs)
+        with self.assertRaisesRegex(
+            NotImplementedError, "`all_tasks` argument is not supported"
+        ):
+            SaasFullyBayesianMultiTaskGP(
+                train_X=train_X,
+                train_Y=train_Y,
+                task_feature=-1,
+                all_tasks=[0, 1, 2, 3],
+            )
         sampler = IIDNormalSampler(sample_shape=torch.Size([2]))
         with self.assertRaisesRegex(
             NotImplementedError, "Fantasize is not implemented!"
