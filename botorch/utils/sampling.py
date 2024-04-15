@@ -249,6 +249,7 @@ def sample_polytope(
     # pre-sample samples from hypersphere
     d = x0.size(0)
     # uniform samples from unit ball in d dims
+    # incrementing the seed by +1 to prevent correlation with the step size
     Rs = sample_hypersphere(
         d=d, n=n_tot, dtype=A.dtype, device=A.device, seed=seed + 1
     ).unsqueeze(-1)
