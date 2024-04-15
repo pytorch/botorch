@@ -14,15 +14,17 @@ References
 """
 
 import warnings
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import torch
 from botorch.models.multitask import MultiTaskGP
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
+from botorch.utils.datasets import MultiTaskDataset, SupervisedDataset
 from gpytorch.constraints import Interval
-from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.rbf_kernel import RBFKernel
+from gpytorch.likelihoods.likelihood import Likelihood
+from gpytorch.module import Module
 from linear_operator.operators import LinearOperator
 from torch import Tensor
 from torch.nn import ModuleList
@@ -41,10 +43,14 @@ class LCEMGP(MultiTaskGP):
         train_Y: Tensor,
         task_feature: int,
         train_Yvar: Optional[Tensor] = None,
+        mean_module: Optional[Module] = None,
+        covar_module: Optional[Module] = None,
+        likelihood: Optional[Likelihood] = None,
         context_cat_feature: Optional[Tensor] = None,
         context_emb_feature: Optional[Tensor] = None,
         embs_dim_list: Optional[List[int]] = None,
         output_tasks: Optional[List[int]] = None,
+        all_tasks: Optional[List[int]] = None,
         input_transform: Optional[InputTransform] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
     ) -> None:
@@ -56,6 +62,12 @@ class LCEMGP(MultiTaskGP):
             train_Yvar: An optional (n x 1) tensor of observed variances of each
                 training Y. If None, we infer the noise. Note that the inferred noise
                 is common across all tasks.
+            mean_module: The mean function to be used. Defaults to `ConstantMean`.
+            covar_module: The module for computing the covariance matrix between
+                the non-task features. Defaults to `MaternKernel`.
+            likelihood: A likelihood. The default is selected based on `train_Yvar`.
+                If `train_Yvar` is None, a standard `GaussianLikelihood` with inferred
+                noise level is used. Otherwise, a FixedNoiseGaussianLikelihood is used.
             context_cat_feature: (n_contexts x k) one-hot encoded context
                 features. Rows are ordered by context indices, where k is the
                 number of categorical variables. If None, task indices will
@@ -67,26 +79,46 @@ class LCEMGP(MultiTaskGP):
                 for each categorical variable.
             output_tasks: A list of task indices for which to compute model
                 outputs for. If omitted, return outputs for all task indices.
-
+            all_tasks: By default, multi-task GPs infer the list of all tasks from
+                the task features in `train_X`. This is an experimental feature that
+                enables creation of multi-task GPs with tasks that don't appear in the
+                training data. Note that when a task is not observed, the corresponding
+                task covariance will heavily depend on random initialization and may
+                behave unexpectedly.
+            input_transform: An input transform that is applied in the model's
+                forward pass.
+            outcome_transform: An outcome transform that is applied to the
+                training data during instantiation and to the posterior during
+                inference (that is, the `Posterior` obtained by calling
+                `.posterior` on the model will be on the original scale).
         """
         super().__init__(
             train_X=train_X,
             train_Y=train_Y,
             task_feature=task_feature,
             train_Yvar=train_Yvar,
+            mean_module=mean_module,
+            covar_module=covar_module,
+            likelihood=likelihood,
             output_tasks=output_tasks,
+            all_tasks=all_tasks,
             input_transform=input_transform,
             outcome_transform=outcome_transform,
         )
         self.device = train_X.device
-        #  context indices
-        all_tasks = train_X[:, task_feature].unique()
-        self.all_tasks = all_tasks.to(dtype=torch.long).tolist()
-        self.all_tasks.sort()  # unique in python does automatic sort; add for safety
+        if all_tasks is None:
+            all_tasks_tensor = train_X[:, task_feature].unique()
+            self.all_tasks = all_tasks_tensor.to(dtype=torch.long).tolist()
+        else:
+            all_tasks_tensor = torch.tensor(all_tasks, dtype=torch.long)
+            self.all_tasks = all_tasks
+        self.all_tasks.sort()  # These are the context indices.
 
         if context_cat_feature is None:
-            context_cat_feature = all_tasks.unsqueeze(-1).to(device=self.device)
-        self.context_cat_feature = context_cat_feature  # row indices = context indices
+            context_cat_feature = all_tasks_tensor.unsqueeze(-1).to(device=self.device)
+        self.context_cat_feature: Tensor = (
+            context_cat_feature  # row indices = context indices
+        )
         self.context_emb_feature = context_emb_feature
 
         #  construct emb_dims based on categorical features
@@ -105,7 +137,7 @@ class LCEMGP(MultiTaskGP):
                 for x, y in self.emb_dims
             ]
         )
-        self.task_covar_module = RBFKernel(
+        self.task_covar_module_base = RBFKernel(
             ard_num_dims=n_embs,
             lengthscale_constraint=Interval(
                 0.0, 2.0, transform=None, initial_value=1.0
@@ -122,7 +154,7 @@ class LCEMGP(MultiTaskGP):
         to get the task covariance matrix.
         """
         all_embs = self._task_embeddings()
-        return self.task_covar_module(all_embs)
+        return self.task_covar_module_base(all_embs)
 
     def _task_embeddings(self) -> Tensor:
         """Generate embedding features for all contexts."""
@@ -144,7 +176,7 @@ class LCEMGP(MultiTaskGP):
             )
         return embeddings
 
-    def task_covar_matrix(self, task_idcs: Tensor) -> Tensor:
+    def task_covar_module(self, task_idcs: Tensor) -> Tensor:
         r"""Compute the task covariance matrix for a given tensor of
         task / context indices.
 
@@ -174,17 +206,47 @@ class LCEMGP(MultiTaskGP):
             covar_matrix[base_idx].transpose(-1, -2).gather(index=expanded_idx, dim=-2)
         )
 
-    def forward(self, x: Tensor) -> MultivariateNormal:
-        if self.training:
-            x = self.transform_inputs(x)
-        x_basic, task_idcs = self._split_inputs(x)
-        # Compute base mean and covariance
-        mean_x = self.mean_module(x_basic)
-        covar_x = self.covar_module(x_basic)
-        # Compute task covariances
-        covar_i = self.task_covar_matrix(task_idcs)
-        covar = covar_x.mul(covar_i)
-        return MultivariateNormal(mean_x, covar)
+    @classmethod
+    def construct_inputs(
+        cls,
+        training_data: Union[SupervisedDataset, MultiTaskDataset],
+        task_feature: int,
+        output_tasks: Optional[List[int]] = None,
+        context_cat_feature: Optional[Tensor] = None,
+        context_emb_feature: Optional[Tensor] = None,
+        embs_dim_list: Optional[List[int]] = None,
+        **kwargs,
+    ) -> Dict[str, Any]:
+        r"""Construct `Model` keyword arguments from a dataset and other args.
+
+        Args:
+            training_data: A `SupervisedDataset` or a `MultiTaskDataset`.
+            task_feature: Column index of embedded task indicator features.
+            output_tasks: A list of task indices for which to compute model
+                outputs for. If omitted, return outputs for all task indices.
+            context_cat_feature: (n_contexts x k) one-hot encoded context
+                features. Rows are ordered by context indices, where k is the
+                number of categorical variables. If None, task indices will
+                be used and k = 1.
+            context_emb_feature: (n_contexts x m) pre-given continuous
+                embedding features. Rows are ordered by context indices.
+            embs_dim_list: Embedding dimension for each categorical variable.
+                The length equals k. If None, the embedding dimension is set to 1
+                for each categorical variable.
+        """
+        base_inputs = super().construct_inputs(
+            training_data=training_data,
+            task_feature=task_feature,
+            output_tasks=output_tasks,
+            **kwargs,
+        )
+        if context_cat_feature is not None:
+            base_inputs["context_cat_feature"] = context_cat_feature
+        if context_emb_feature is not None:
+            base_inputs["context_emb_feature"] = context_emb_feature
+        if embs_dim_list is not None:
+            base_inputs["embs_dim_list"] = embs_dim_list
+        return base_inputs
 
 
 class FixedNoiseLCEMGP(LCEMGP):

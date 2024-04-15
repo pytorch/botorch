@@ -17,6 +17,7 @@ from botorch.exceptions.errors import BotorchError
 from botorch.utils.constraints import get_monotonicity_constraints
 from botorch.utils.probability.lin_ess import LinearEllipticalSliceSampler
 from botorch.utils.testing import BotorchTestCase
+from linear_operator.operators import DiagLinearOperator
 from torch import Tensor
 
 
@@ -428,8 +429,23 @@ class TestLinearEllipticalSliceSampler(BotorchTestCase):
                     inequality_constraints=(A, b),
                     interior_point=interior_point,
                     fixed_indices=[0],
-                    covariance_root=torch.eye(d, **tkwargs),
+                    covariance_root=torch.full((d, d), 100, **tkwargs),
                 )
+
+            # providing a diagonal covariance_root should work with fixed indices
+            diag_root = torch.full((d,), 100, **tkwargs)
+            for covariance_root in [DiagLinearOperator(diag_root), diag_root.diag()]:
+                torch.manual_seed(1234)
+                sampler = LinearEllipticalSliceSampler(
+                    inequality_constraints=(A, b),
+                    interior_point=interior_point,
+                    fixed_indices=[0],
+                    covariance_root=covariance_root,
+                )
+                num_samples = 16
+                X_fixed = sampler.draw(n=num_samples)
+                self.assertTrue((X_fixed[:, 0] == interior_point[0]).all())
+                self.assertGreater(X_fixed.std().item(), 10.0)  # false if sigma = 1
 
             # high dimensional test case
             # Encodes order constraints on all d variables: Ax < b <-> x[i] < x[i + 1]

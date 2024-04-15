@@ -166,6 +166,15 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
                 task_feature=4,
             )
         train_X, train_Y, train_Yvar, model = self._get_data_and_model(**tkwargs)
+        with self.assertRaisesRegex(
+            NotImplementedError, "`all_tasks` argument is not supported"
+        ):
+            SaasFullyBayesianMultiTaskGP(
+                train_X=train_X,
+                train_Y=train_Y,
+                task_feature=-1,
+                all_tasks=[0, 1, 2, 3],
+            )
         sampler = IIDNormalSampler(sample_shape=torch.Size([2]))
         with self.assertRaisesRegex(
             NotImplementedError, "Fantasize is not implemented!"
@@ -583,7 +592,10 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
             )
             self.assertTrue(torch.equal(data_dict["train_X"], train_X))
             self.assertTrue(torch.equal(data_dict["train_Y"], train_Y))
-            self.assertAllClose(data_dict["train_Yvar"], train_Yvar)
+            if train_Yvar is not None:
+                self.assertAllClose(data_dict["train_Yvar"], train_Yvar)
+            else:
+                self.assertNotIn("train_Yvar", data_dict)
             self.assertEqual(data_dict["task_feature"], task_feature)
             self.assertEqual(data_dict["rank"], 1)
             self.assertTrue("task_covar_prior" not in data_dict)

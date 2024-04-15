@@ -10,6 +10,7 @@ from botorch.fit import fit_gpytorch_mll
 from botorch.models.contextual_multioutput import FixedNoiseLCEMGP, LCEMGP
 from botorch.models.multitask import MultiTaskGP
 from botorch.posteriors import GPyTorchPosterior
+from botorch.utils.test_helpers import gen_multi_task_dataset
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
@@ -22,27 +23,15 @@ from torch import Tensor
 
 class ContextualMultiOutputTest(BotorchTestCase):
     def test_LCEMGP(self):
-        d = 1
         for dtype, fixed_noise in ((torch.float, True), (torch.double, False)):
-            # test with batch evaluation
-            train_x = torch.rand(10, d, device=self.device, dtype=dtype)
-            train_y = torch.cos(train_x)
-            # 2 contexts here
-            task_indices = torch.tensor(
-                [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-                device=self.device,
-                dtype=dtype,
+            _, (train_x, train_y, train_yvar) = gen_multi_task_dataset(
+                yvar=0.01 if fixed_noise else None, dtype=dtype, device=self.device
             )
-            train_x = torch.cat([train_x, task_indices.unsqueeze(-1)], axis=1)
-
-            if fixed_noise:
-                train_yvar = torch.ones(10, 1, device=self.device, dtype=dtype) * 0.01
-            else:
-                train_yvar = None
+            task_feature = 0
             model = LCEMGP(
                 train_X=train_x,
                 train_Y=train_y,
-                task_feature=d,
+                task_feature=task_feature,
                 train_Yvar=train_yvar,
             )
 
@@ -65,20 +54,18 @@ class ContextualMultiOutputTest(BotorchTestCase):
             self.assertIsInstance(embeddings, Tensor)
             self.assertEqual(embeddings.shape, torch.Size([2, 1]))
 
-            test_x = torch.rand(5, d, device=self.device, dtype=dtype)
-            task_indices = torch.tensor(
-                [0.0, 0.0, 0.0, 0.0, 0.0], device=self.device, dtype=dtype
-            )
-            test_x = torch.cat([test_x, task_indices.unsqueeze(-1)], axis=1)
+            test_x = train_x[:5]
             self.assertIsInstance(model(test_x), MultivariateNormal)
 
             # test posterior
-            posterior_f = model.posterior(test_x[:, :d])
+            posterior_f = model.posterior(test_x[:, task_feature + 1 :])
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
             self.assertIsInstance(posterior_f.distribution, MultitaskMultivariateNormal)
 
             # test posterior w/ single output index
-            posterior_f = model.posterior(test_x[:, :d], output_indices=[0])
+            posterior_f = model.posterior(
+                test_x[:, task_feature + 1 :], output_indices=[0]
+            )
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
             self.assertIsInstance(posterior_f.distribution, MultivariateNormal)
 
@@ -87,9 +74,9 @@ class ContextualMultiOutputTest(BotorchTestCase):
             model2 = LCEMGP(
                 train_X=train_x,
                 train_Y=train_y,
-                task_feature=d,
+                task_feature=task_feature,
                 embs_dim_list=[2],  # increase dim from 1 to 2
-                context_emb_feature=torch.Tensor([[0.2], [0.3]]),
+                context_emb_feature=torch.tensor([[0.2], [0.3]]),
             )
             self.assertIsInstance(model2, LCEMGP)
             self.assertIsInstance(model2, MultiTaskGP)
@@ -113,37 +100,63 @@ class ContextualMultiOutputTest(BotorchTestCase):
                 left_interp_indices=task_idcs,
                 right_interp_indices=task_idcs,
             ).to_dense()
-            self.assertAllClose(previous_covar, model.task_covar_matrix(task_idcs))
+            self.assertAllClose(previous_covar, model.task_covar_module(task_idcs))
 
     def test_FixedNoiseLCEMGP(self):
-        d = 1
         for dtype in (torch.float, torch.double):
-            train_x = torch.rand(10, d, device=self.device, dtype=dtype)
-            train_y = torch.cos(train_x)
-            task_indices = torch.tensor(
-                [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0], device=self.device
+            _, (train_x, train_y, train_yvar) = gen_multi_task_dataset(
+                yvar=0.01, dtype=dtype, device=self.device
             )
-            train_x = torch.cat([train_x, task_indices.unsqueeze(-1)], axis=1)
-            train_yvar = torch.ones(10, 1, device=self.device, dtype=dtype) * 0.01
 
             with self.assertWarnsRegex(DeprecationWarning, "FixedNoiseLCEMGP"):
                 model = FixedNoiseLCEMGP(
                     train_X=train_x,
                     train_Y=train_y,
                     train_Yvar=train_yvar,
-                    task_feature=d,
+                    task_feature=0,
                 )
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
             fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 1}})
-
             self.assertIsInstance(model, FixedNoiseLCEMGP)
 
-            test_x = torch.rand(5, d, device=self.device, dtype=dtype)
-            task_indices = torch.tensor(
-                [0.0, 0.0, 0.0, 0.0, 0.0], device=self.device, dtype=dtype
-            )
-            test_x = torch.cat(
-                [test_x, task_indices.unsqueeze(-1)],
-                axis=1,
-            )
+            test_x = train_x[:5]
             self.assertIsInstance(model(test_x), MultivariateNormal)
+
+    def test_construct_inputs(self) -> None:
+        for with_embedding_inputs, yvar in ((True, None), (False, 0.01)):
+            dataset, (train_x, train_y, train_yvar) = gen_multi_task_dataset(
+                yvar=yvar, dtype=torch.double, device=self.device
+            )
+            model_inputs = LCEMGP.construct_inputs(
+                training_data=dataset,
+                task_feature=0,
+                embs_dim_list=[2] if with_embedding_inputs else None,
+                context_emb_feature=(
+                    torch.tensor([[0.2], [0.3]]) if with_embedding_inputs else None
+                ),
+                context_cat_feature=(
+                    torch.tensor([[0.4], [0.5]]) if with_embedding_inputs else None
+                ),
+            )
+            # Check that the model inputs are valid.
+            LCEMGP(**model_inputs)
+            # Check that the model inputs are as expected.
+            self.assertAllClose(model_inputs.pop("train_X"), train_x)
+            self.assertAllClose(model_inputs.pop("train_Y"), train_y)
+            if yvar is not None:
+                self.assertAllClose(model_inputs.pop("train_Yvar"), train_yvar)
+            if with_embedding_inputs:
+                self.assertEqual(model_inputs.pop("embs_dim_list"), [2])
+                self.assertAllClose(
+                    model_inputs.pop("context_emb_feature"),
+                    torch.tensor([[0.2], [0.3]]),
+                )
+                self.assertAllClose(
+                    model_inputs.pop("context_cat_feature"),
+                    torch.tensor([[0.4], [0.5]]),
+                )
+            self.assertEqual(model_inputs.pop("all_tasks"), [0, 1])
+            self.assertEqual(model_inputs.pop("task_feature"), 0)
+            self.assertIsNone(model_inputs.pop("output_tasks"))
+            # Check that there are no unexpected inputs.
+            self.assertEqual(model_inputs, {})
