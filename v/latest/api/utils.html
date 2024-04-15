@@ -4468,11 +4468,14 @@ dimensions that are constrained to be fixed to the values specified in
 the <cite>interior_point</cite>, which is required to be passed in conjunction with
 <cite>fixed_indices</cite>.</p></li>
 <li><p><strong>mean</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – The <cite>d x 1</cite>-dim mean of the MVN distribution (if omitted, use zero).</p></li>
-<li><p><strong>covariance_matrix</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – The <cite>d x d</cite>-dim covariance matrix of the MVN
+<li><p><strong>covariance_matrix</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>LinearOperator</em><em>]</em><em>]</em>) – The <cite>d x d</cite>-dim covariance matrix of the MVN
 distribution (if omitted, use the identity).</p></li>
-<li><p><strong>covariance_root</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>d x d</cite>-dim root of the covariance matrix such that
+<li><p><strong>covariance_root</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>LinearOperator</em><em>]</em><em>]</em>) – A <cite>d x d</cite>-dim root of the covariance matrix such that
 covariance_root @ covariance_root.T = covariance_matrix. NOTE: This
-matrix is assumed to be lower triangular.</p></li>
+matrix is assumed to be lower triangular. covariance_root can only be
+passed in conjunction with fixed_indices if covariance_root is a
+DiagLinearOperator. Otherwise the factorization would need to be re-
+computed, as we need to solve in <cite>standardize</cite>.</p></li>
 <li><p><strong>check_feasibility</strong> (<em>bool</em>) – If True, raise an error if the sampling results in an
 infeasible sample. This creates some overhead and so is switched off
 by default.</p></li>

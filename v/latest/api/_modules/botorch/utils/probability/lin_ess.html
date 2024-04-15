@@ -60,6 +60,7 @@
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">PolytopeSampler</span>
+<span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="n">DiagLinearOperator</span><span class="p">,</span> <span class="n">LinearOperator</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 <span class="n">_twopi</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span>
@@ -83,8 +84,8 @@
         <span class="n">interior_point</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">fixed_indices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">mean</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">covariance_matrix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">covariance_root</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">covariance_matrix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">LinearOperator</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">covariance_root</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">LinearOperator</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">check_feasibility</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">burnin</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">thinning</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
@@ -113,7 +114,10 @@
 <span class="sd">                distribution (if omitted, use the identity).</span>
 <span class="sd">            covariance_root: A `d x d`-dim root of the covariance matrix such that</span>
 <span class="sd">                covariance_root @ covariance_root.T = covariance_matrix. NOTE: This</span>
-<span class="sd">                matrix is assumed to be lower triangular.</span>
+<span class="sd">                matrix is assumed to be lower triangular. covariance_root can only be</span>
+<span class="sd">                passed in conjunction with fixed_indices if covariance_root is a</span>
+<span class="sd">                DiagLinearOperator. Otherwise the factorization would need to be re-</span>
+<span class="sd">                computed, as we need to solve in `standardize`.</span>
 <span class="sd">            check_feasibility: If True, raise an error if the sampling results in an</span>
 <span class="sd">                infeasible sample. This creates some overhead and so is switched off</span>
 <span class="sd">                by default.</span>
@@ -148,14 +152,16 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_Az</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bz</span> <span class="o">=</span> <span class="n">A</span><span class="p">,</span> <span class="n">b</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_is_fixed</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_not_fixed</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">fixed_indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">mean</span><span class="p">,</span> <span class="n">covariance_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fixed_features_initialization</span><span class="p">(</span>
-                <span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">,</span>
-                <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">,</span>
-                <span class="n">interior_point</span><span class="o">=</span><span class="n">interior_point</span><span class="p">,</span>
-                <span class="n">fixed_indices</span><span class="o">=</span><span class="n">fixed_indices</span><span class="p">,</span>
-                <span class="n">mean</span><span class="o">=</span><span class="n">mean</span><span class="p">,</span>
-                <span class="n">covariance_matrix</span><span class="o">=</span><span class="n">covariance_matrix</span><span class="p">,</span>
-                <span class="n">covariance_root</span><span class="o">=</span><span class="n">covariance_root</span><span class="p">,</span>
+            <span class="n">mean</span><span class="p">,</span> <span class="n">covariance_matrix</span><span class="p">,</span> <span class="n">covariance_root</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_fixed_features_initialization</span><span class="p">(</span>
+                    <span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">,</span>
+                    <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">,</span>
+                    <span class="n">interior_point</span><span class="o">=</span><span class="n">interior_point</span><span class="p">,</span>
+                    <span class="n">fixed_indices</span><span class="o">=</span><span class="n">fixed_indices</span><span class="p">,</span>
+                    <span class="n">mean</span><span class="o">=</span><span class="n">mean</span><span class="p">,</span>
+                    <span class="n">covariance_matrix</span><span class="o">=</span><span class="n">covariance_matrix</span><span class="p">,</span>
+                    <span class="n">covariance_root</span><span class="o">=</span><span class="n">covariance_root</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_mean</span> <span class="o">=</span> <span class="n">mean</span>
@@ -201,6 +207,9 @@
 <span class="w">        </span><span class="sd">"""Modifies the constraint system (A, b) due to fixed indices and assigns</span>
 <span class="sd">        the modified constraints system to `self._Az`, `self._bz`. NOTE: Needs to be</span>
 <span class="sd">        called prior to `self._standardization_initialization` in the constructor.</span>
+<span class="sd">        covariance_root and fixed_indices can both not be None only if covariance_root</span>
+<span class="sd">        is a DiagLinearOperator. Otherwise, the covariance matrix would need to be</span>
+<span class="sd">        refactorized.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Tuple of `mean` and `covariance_matrix` tensors of the non-fixed dimensions.</span>
@@ -210,10 +219,16 @@
                 <span class="s2">"If `fixed_indices` are provided, an interior point must also be "</span>
                 <span class="s2">"provided in order to infer feasible values of the fixed features."</span>
             <span class="p">)</span>
-        <span class="k">if</span> <span class="n">covariance_root</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"Provide either covariance_root or fixed_indices, not both."</span>
-            <span class="p">)</span>
+
+        <span class="n">root_is_diag</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">covariance_root</span><span class="p">,</span> <span class="n">DiagLinearOperator</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">covariance_root</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">root_is_diag</span><span class="p">:</span>
+            <span class="n">root_is_diag</span> <span class="o">=</span> <span class="p">(</span><span class="n">covariance_root</span><span class="o">.</span><span class="n">diag</span><span class="p">()</span><span class="o">.</span><span class="n">diag</span><span class="p">()</span> <span class="o">==</span> <span class="n">covariance_root</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">root_is_diag</span><span class="p">:</span>  <span class="c1"># convert the diagonal root to a DiagLinearOperator</span>
+                <span class="n">covariance_root</span> <span class="o">=</span> <span class="n">DiagLinearOperator</span><span class="p">(</span><span class="n">covariance_root</span><span class="o">.</span><span class="n">diagonal</span><span class="p">())</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># otherwise, fail</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"Provide either covariance_root or fixed_indices, not both."</span>
+                <span class="p">)</span>
         <span class="n">d</span> <span class="o">=</span> <span class="n">interior_point</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">is_fixed</span><span class="p">,</span> <span class="n">not_fixed</span> <span class="o">=</span> <span class="n">get_index_tensors</span><span class="p">(</span><span class="n">fixed_indices</span><span class="o">=</span><span class="n">fixed_indices</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_is_fixed</span> <span class="o">=</span> <span class="n">is_fixed</span>
@@ -230,7 +245,10 @@
             <span class="n">covariance_matrix</span> <span class="o">=</span> <span class="n">covariance_matrix</span><span class="p">[</span>
                 <span class="n">not_fixed</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">not_fixed</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
             <span class="p">]</span>
-        <span class="k">return</span> <span class="n">mean</span><span class="p">,</span> <span class="n">covariance_matrix</span>
+        <span class="k">if</span> <span class="n">root_is_diag</span><span class="p">:</span>  <span class="c1"># in the special case of diagonal root, can subselect</span>
+            <span class="n">covariance_root</span> <span class="o">=</span> <span class="n">DiagLinearOperator</span><span class="p">(</span><span class="n">covariance_root</span><span class="o">.</span><span class="n">diagonal</span><span class="p">()[</span><span class="n">not_fixed</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">mean</span><span class="p">,</span> <span class="n">covariance_matrix</span><span class="p">,</span> <span class="n">covariance_root</span>
 
     <span class="k">def</span> <span class="nf">_standardization_initialization</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""For non-standard mean and covariance, we're going to rewrite the problem as</span>
@@ -513,8 +531,10 @@
         <span class="n">z</span> <span class="o">=</span> <span class="n">x</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mean</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">z</span> <span class="o">=</span> <span class="n">z</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mean</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_covariance_root</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">z</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_covariance_root</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_covariance_root</span>
+        <span class="k">if</span> <span class="n">root</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">z</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="n">z</span>
 
     <span class="k">def</span> <span class="nf">_unstandardize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
