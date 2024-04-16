@@ -134,4 +134,3 @@ jobs:
       smoke_test: false
       use_stable_pytorch_gpytorch: false
       use_stable_ax: false
-      upload_artifact: true

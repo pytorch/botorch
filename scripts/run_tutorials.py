@@ -7,44 +7,18 @@
 from __future__ import annotations
 
 import argparse
-import datetime
 import os
 import subprocess
 import time
 from pathlib import Path
 from subprocess import CalledProcessError
-from typing import Any, Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
-import pandas as pd
 from memory_profiler import memory_usage
 
 
 IGNORE_ALWAYS = set()  # ignored in smoke tests and full runs
 RUN_IF_SMOKE_TEST_IGNORE_IF_STANDARD = set()  # only used in smoke tests
-
-
-def _read_command_line_output(command: str) -> str:
-    output = subprocess.run(command.split(" "), stdout=subprocess.PIPE).stdout.decode(
-        "utf-8"
-    )
-    return output
-
-
-def get_mode_as_str(smoke_test: bool) -> str:
-    return "smoke-test" if smoke_test else "standard"
-
-
-def get_output_file_path(smoke_test: bool) -> str:
-    """
-    On push and in the nightly cron, a csv will be uploaded to
-    https://github.com/pytorch/botorch/tree/artifacts/tutorial_performance_data .
-    So file name contains time (for uniqueness) and commit hash (for debugging)
-    """
-    commit_hash = _read_command_line_output("git rev-parse --short HEAD").strip("\n")
-    time = str(datetime.datetime.now())
-    mode = get_mode_as_str(smoke_test=smoke_test)
-    fname = f"{mode}_{commit_hash}_{time}.csv"
-    return fname
 
 
 def run_script(
@@ -64,7 +38,7 @@ def run_script(
 
 def run_tutorial(
     tutorial: Path, smoke_test: bool = False
-) -> Tuple[Optional[str], Dict[str, Any]]:
+) -> Tuple[Optional[str], Dict[str, float]]:
     """
     Runs the tutorial in a subprocess, catches any raised errors and returns
     them as a string, and returns runtime and memory information as a dict.
@@ -115,24 +89,8 @@ def run_tutorials(
     smoke_test: bool = False,
     name: Optional[str] = None,
 ) -> None:
-    """
-    Run each tutorial, print statements on how it ran, and write a data set as a csv
-    to a directory.
-    """
+    """Run each tutorial and print statements on its runtime and memory usage."""
     mode = "smoke test" if smoke_test else "standard"
-    results_already_stored = (
-        elt
-        for elt in os.listdir()
-        if elt[-4:] == ".csv" and elt.split("_")[0] in ("smoke-test", "standard")
-    )
-    for fname in results_already_stored:
-        raise RuntimeError(
-            f"There are already tutorial results files stored, such as {fname}. "
-            "This is not allowed because GitHub Actions will look for all "
-            "tutorial results files and write them to the 'artifacts' branch. "
-            "Please remove all files matching pattern "
-            "'standard_*.csv' or 'smoke-test_*.csv' in the current directory."
-        )
     print(f"Running tutorial(s) in {mode} mode.")
     if not smoke_test:
         print("This may take a long time...")
@@ -153,16 +111,6 @@ def run_tutorials(
         if len(tutorials) == 0:
             raise RuntimeError(f"Specified tutorial {name} not found in directory.")
 
-    df = pd.DataFrame(
-        {
-            "name": [t.name for t in tutorials],
-            "ran_successfully": False,
-            "runtime": float("nan"),
-            "start_mem": float("nan"),
-            "max_mem": float("nan"),
-        }
-    ).set_index("name")
-
     for tutorial in tutorials:
         if not include_ignored and tutorial.name in ignored_tutorials:
             print(f"Ignoring tutorial {tutorial.name}.")
@@ -179,18 +127,11 @@ def run_tutorials(
                 f"started at {performance_info['start_mem']} MB and the maximum"
                 f" was {performance_info['max_mem']} MB."
             )
-            df.loc[tutorial.name, "ran_successfully"] = True
-            for k in ["runtime", "start_mem", "max_mem"]:
-                df.loc[tutorial.name, k] = performance_info[k]
 
     if num_errors > 0:
         raise RuntimeError(
             f"Running {num_runs} tutorials resulted in {num_errors} errors."
         )
-
-    fname = get_output_file_path(smoke_test=smoke_test)
-    print(f"Writing report to {fname}.")
-    df.to_csv(fname)
 
 
 if __name__ == "__main__":
