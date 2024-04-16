@@ -304,26 +304,6 @@ class TestHypervolumeKnowledgeGradient(BotorchTestCase):
             self.assertTrue(
                 torch.equal(qHVKG.extract_candidates(X), X[..., : -n_f * num_pareto, :])
             )
-            # test that cost-weighted HVKG is clamped
-            with mock.patch.object(
-                ModelListGP, "fantasize", return_value=mfm
-            ) as patch_f:
-                with mock.patch(NO, new_callable=mock.PropertyMock) as mock_num_outputs:
-                    mock_num_outputs.return_value = 2
-                    qHVKG = acqf_class(
-                        model=model,
-                        num_fantasies=n_f,
-                        X_pending=X_pending,
-                        X_pending_evaluation_mask=X_pending_evaluation_mask,
-                        X_evaluation_mask=X_evaluation_mask,
-                        current_value=torch.tensor(1000, **tkwargs),
-                        ref_point=ref_point,
-                        num_pareto=num_pareto,
-                        cost_aware_utility=cost_aware_utility,
-                        **mf_kwargs,
-                    )
-                    val = qHVKG(X)
-                    self.assertEqual(val.item(), 0.0)
 
             # test mfkg
             if acqf_class == qMultiFidelityHypervolumeKnowledgeGradient:

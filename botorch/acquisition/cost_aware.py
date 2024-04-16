@@ -201,10 +201,7 @@ class InverseCostWeightedUtility(CostAwareUtility):
         # this will be of shape `num_fantasies x batch_shape` or `batch_shape`
         cost = cost.clamp_min(self._min_cost).sum(dim=-1)
 
-        # if we are doing inverse weighting on the sample level, clamp numerator.
-        if not self._use_mean:
-            deltas = deltas.clamp_min(0.0)
-
         # compute and return the ratio on the sample level - If `use_mean=True`
-        # this operation involves broadcasting the cost across fantasies
-        return deltas / cost
+        # this operation involves broadcasting the cost across fantasies.
+        # We multiply by the cost if the deltas are <= 0, see discussion #2914
+        return torch.where(deltas > 0, deltas / cost, deltas * cost)
