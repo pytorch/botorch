@@ -110,7 +110,7 @@ a <cite>model_batch_shape x n’ x m</cite>-dim tensor containing the average
 noise for each batch and output. <cite>noise</cite> must be in the
 outcome-transformed space if an outcome transform is used.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – An optional PosteriorTransform.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -172,7 +172,7 @@ model outputs, <cite>n’</cite> is the number of points per batch, and
 standard broadcasting semantics. If <cite>Y</cite> has fewer batch dimensions
 than <cite>X</cite>, it is assumed that the missing batch dimensions are
 the same for all <cite>Y</cite>.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -283,10 +283,10 @@ a <cite>condition_on_observations</cite> method.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>self</strong> (<em>TFantasizeMixin</em>) – </p></li>
-<li><p><strong>X</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>Y</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>self</strong> (<em>TFantasizeMixin</em>)</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>Y</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -302,9 +302,9 @@ a <cite>posterior</cite> method.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>observation_noise</strong> (<em>bool</em>) – </p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>X</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>observation_noise</strong> (<em>bool</em>)</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -320,8 +320,8 @@ a <cite>transform_inputs</cite> method.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>input_transform</strong> (<em>Module</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>X</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>input_transform</strong> (<em>Module</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -357,7 +357,7 @@ If None and using an inferred noise likelihood, the noise will be the
 inferred noise level. If using a fixed noise likelihood, the mean across
 the observation noise in the training data is used as observation noise.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – Will be passed to <cite>model.condition_on_observations</cite></p></li>
-<li><p><strong>self</strong> (<em>TFantasizeMixin</em>) – </p></li>
+<li><p><strong>self</strong> (<em>TFantasizeMixin</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -420,7 +420,7 @@ of the <cite>i</cite>-th model). <cite>observation_noise</cite> is assumed
 to be in the outcome-transformed space, if an outcome transform
 is used by the model.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="posteriors.html#botorch.posteriors.posterior_list.PosteriorList" title="botorch.posteriors.posterior_list.PosteriorList"><em>PosteriorList</em></a><em>]</em><em>, </em><em>Posterior</em><em>] </em><em>| </em><em>None</em>) – An optional PosteriorTransform.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -497,8 +497,8 @@ the model `m1</cite> subset to its second output.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>state_dict</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – </p></li>
-<li><p><strong>strict</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>state_dict</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>)</p></li>
+<li><p><strong>strict</strong> (<em>bool</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -534,7 +534,7 @@ noise level.</p></li>
 <li><p><strong>evaluation_mask</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>n’ x m</cite>-dim tensor of booleans indicating which
 outputs should be fantasized for a given design. This uses the same
 evaluation mask for all batches.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -978,7 +978,7 @@ registered hooks while the latter silently ignores them.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>MultivariateNormal</em></p>
@@ -998,13 +998,13 @@ Will be removed in a future release (~v0.12).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>train_X</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>train_Y</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>train_Yvar</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>covar_module</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>) – </p></li>
-<li><p><strong>mean_module</strong> (<em>Optional</em><em>[</em><em>Mean</em><em>]</em>) – </p></li>
-<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><em>OutcomeTransform</em><em>]</em>) – </p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>InputTransform</em><em>]</em>) – </p></li>
+<li><p><strong>train_X</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>train_Y</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>train_Yvar</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>covar_module</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>)</p></li>
+<li><p><strong>mean_module</strong> (<em>Optional</em><em>[</em><em>Mean</em><em>]</em>)</p></li>
+<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><em>OutcomeTransform</em><em>]</em>)</p></li>
+<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>InputTransform</em><em>]</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -1119,7 +1119,7 @@ registered hooks while the latter silently ignores them.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>MultivariateNormal</em></p>
@@ -1219,16 +1219,16 @@ Will be removed in a future release (~v0.11).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>train_X</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>train_Y</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>train_Yvar</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>iteration_fidelity</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – </p></li>
-<li><p><strong>data_fidelities</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>int</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>data_fidelity</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – </p></li>
-<li><p><strong>linear_truncated</strong> (<em>bool</em>) – </p></li>
-<li><p><strong>nu</strong> (<em>float</em>) – </p></li>
-<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><em>OutcomeTransform</em><em>]</em>) – </p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>InputTransform</em><em>]</em>) – </p></li>
+<li><p><strong>train_X</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>train_Y</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>train_Yvar</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>iteration_fidelity</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>data_fidelities</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>int</em><em>]</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>data_fidelity</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>linear_truncated</strong> (<em>bool</em>)</p></li>
+<li><p><strong>nu</strong> (<em>float</em>)</p></li>
+<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><em>OutcomeTransform</em><em>]</em>)</p></li>
+<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>InputTransform</em><em>]</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -1310,7 +1310,7 @@ and pass in the already transformed input.</p></li>
 <li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a>) – A <cite>SupervisedDataset</cite> containing the training data.</p></li>
 <li><p><strong>categorical_features</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – Column indices of categorical features.</p></li>
 <li><p><strong>likelihood</strong> (<em>Likelihood</em><em> | </em><em>None</em>) – Optional likelihood used to constuct the model.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1521,7 +1521,7 @@ registered hooks while the latter silently ignores them.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>MultivariateNormal</em></p>
@@ -1534,9 +1534,9 @@ registered hooks while the latter silently ignores them.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>train_X</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>task_feature</strong> (<em>int</em>) – </p></li>
-<li><p><strong>output_tasks</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>train_X</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>task_feature</strong> (<em>int</em>)</p></li>
+<li><p><strong>output_tasks</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1599,7 +1599,7 @@ forward pass.</p></li>
 training data during instantiation and to the posterior during
 inference (that is, the <cite>Posterior</cite> obtained by calling
 <cite>.posterior</cite> on the model will be on the original scale).</p></li>
-<li><p><strong>covar_module</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>) – </p></li>
+<li><p><strong>covar_module</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -1669,8 +1669,8 @@ correlations (in magnitude), correlations vanish as eta -&gt; inf.
 for the default LKJCovariancePrior task_covar_prior.
 - likelihood_rank: The rank of the task covariance matrix to fit.
 Defaults to 0 (which corresponds to a diagonal covariance matrix).</p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>InputTransform</em><em>]</em>) – </p></li>
-<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><em>OutcomeTransform</em><em>]</em>) – </p></li>
+<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>InputTransform</em><em>]</em>)</p></li>
+<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><em>OutcomeTransform</em><em>]</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -1688,7 +1688,7 @@ registered hooks while the latter silently ignores them.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>MultitaskMultivariateNormal</em></p>
@@ -1719,8 +1719,8 @@ observation noise (must be of shape <cite>(batch_shape) x q</cite>). It is
 assumed to be in the outcome-transformed space if an outcome
 transform is used.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>PosteriorTransform</em><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
-<li><p><strong>output_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>output_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1771,7 +1771,7 @@ of [a x b x c] will be squeezed to be a vector of [a * b * c].</p>
 <li><p><strong>batch_shape</strong> (<em>torch.Size</em>) – The batch_shape of the training targets.</p></li>
 <li><p><strong>min_stddv</strong> – The minimum standard deviation for which to perform
 standardization (if lower, only de-mean the data).</p></li>
-<li><p><strong>min_stdv</strong> (<em>float</em>) – </p></li>
+<li><p><strong>min_stdv</strong> (<em>float</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -1887,8 +1887,8 @@ manually enabled by the user during model fitting.</p>
 <li><p><strong>num_latent_dims</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Sizes for the latent dimensions.</p></li>
 <li><p><strong>learn_latent_pars</strong> (<em>bool</em>) – If true, learn the latent parameters.</p></li>
 <li><p><strong>latent_init</strong> (<em>str</em>) – [default or gp] how to initialize the latent parameters.</p></li>
-<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><em>OutcomeTransform</em><em>]</em>) – </p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>InputTransform</em><em>]</em>) – </p></li>
+<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><em>OutcomeTransform</em><em>]</em>)</p></li>
+<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>InputTransform</em><em>]</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -1906,7 +1906,7 @@ registered hooks while the latter silently ignores them.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>MultivariateNormal</em></p>
@@ -1960,7 +1960,7 @@ of the model outputs, <cite>n’</cite> is the number of points per batch, and
 standard broadcasting semantics. If <cite>Y</cite> has fewer batch dimensions
 than <cite>X</cite>, its is assumed that the missing batch dimensions are
 the same for all <cite>Y</cite>.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1993,7 +1993,7 @@ computes the posterior over all model outputs.</p></li>
 likelihood to the posterior. If a Tensor, use it directly as the
 observation noise (must be of shape <cite>(batch_shape) x q x m</cite>).</p></li>
 <li><p><strong>posterior_transform</strong> (<em>PosteriorTransform</em><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2014,7 +2014,7 @@ implemented, it computes another forwards call with the stacked data to get out
 the joint covariance across all data points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>joint_covariance_matrix</strong> (<em>LinearOperator</em>) – </p>
+<dd class="field-odd"><p><strong>joint_covariance_matrix</strong> (<em>LinearOperator</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
@@ -2235,7 +2235,7 @@ of the feature space and <cite>q</cite> is the number of points considered joint
 <li><p><strong>observation_noise</strong> (<em>bool</em>) – Ignored (since noise is not identifiable from scale
 in probit models).</p></li>
 <li><p><strong>posterior_transform</strong> (<em>PosteriorTransform</em><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2343,7 +2343,7 @@ the same order across contexts.</p></li>
 <li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a>) – A <cite>SupervisedDataset</cite> containing the training data.</p></li>
 <li><p><strong>decomposition</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Dictionary of context names and their indexes of the
 corresponding active context parameters.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2404,7 +2404,7 @@ context.</p></li>
 equals the number of categorical features k. If None, the embedding
 dimension is set to 1 for each categorical variable.</p></li>
 <li><p><strong>context_weight_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Known population weights of each context.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2612,7 +2612,7 @@ either a <cite>GaussianLikelihood</cite> (if <cite>num_outputs=1</cite>) or a
 <dd><p>Puts the model in <cite>eval</cite> mode.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>self</strong> (<em>TApproxModel</em>) – </p>
+<dd class="field-odd"><p><strong>self</strong> (<em>TApproxModel</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>TApproxModel</em></p>
@@ -2628,7 +2628,7 @@ either a <cite>GaussianLikelihood</cite> (if <cite>num_outputs=1</cite>) or a
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mode</strong> (<em>bool</em>) – A boolean denoting whether to put in <cite>train</cite> or <cite>eval</cite> mode.
 If <cite>False</cite>, model is put in <cite>eval</cite> mode.</p></li>
-<li><p><strong>self</strong> (<em>TApproxModel</em>) – </p></li>
+<li><p><strong>self</strong> (<em>TApproxModel</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2740,9 +2740,9 @@ variational distribution to make training easier.</p></li>
 <li><p><strong>inducing_point_allocator</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.utils.inducing_point_allocators.InducingPointAllocator" title="botorch.models.utils.inducing_point_allocators.InducingPointAllocator"><em>InducingPointAllocator</em></a><em>]</em>) – The <cite>InducingPointAllocator</cite> used to
 initialize the inducing point locations. If omitted,
 uses <cite>GreedyVarianceReduction</cite>.</p></li>
-<li><p><strong>learn_inducing_points</strong> (<em>bool</em>) – </p></li>
-<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><em>OutcomeTransform</em><em>]</em>) – </p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>InputTransform</em><em>]</em>) – </p></li>
+<li><p><strong>learn_inducing_points</strong> (<em>bool</em>)</p></li>
+<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><em>OutcomeTransform</em><em>]</em>)</p></li>
+<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>InputTransform</em><em>]</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -2809,8 +2809,8 @@ Seventh Conference on Uncertainty in Artificial Intelligence, 2021.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>lengthscale</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>X</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>lengthscale</strong> (<em>Tensor</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2825,8 +2825,8 @@ Seventh Conference on Uncertainty in Artificial Intelligence, 2021.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>lengthscale</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>X</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>lengthscale</strong> (<em>Tensor</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2841,8 +2841,8 @@ Seventh Conference on Uncertainty in Artificial Intelligence, 2021.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>target</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>new_value</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>target</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>new_value</strong> (<em>Tensor</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2896,9 +2896,9 @@ to the SAAS prior.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>concentration</strong> (<em>float</em>) – </p></li>
-<li><p><strong>rate</strong> (<em>float</em>) – </p></li>
-<li><p><strong>tkwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>concentration</strong> (<em>float</em>)</p></li>
+<li><p><strong>rate</strong> (<em>float</em>)</p></li>
+<li><p><strong>tkwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2912,7 +2912,7 @@ to the SAAS prior.</p>
 <dd><p>Sample the mean constant.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>tkwargs</strong> (<em>Any</em>) – </p>
+<dd class="field-odd"><p><strong>tkwargs</strong> (<em>Any</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
@@ -2925,7 +2925,7 @@ to the SAAS prior.</p>
 <dd><p>Sample the noise variance.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>tkwargs</strong> (<em>Any</em>) – </p>
+<dd class="field-odd"><p><strong>tkwargs</strong> (<em>Any</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
@@ -2939,9 +2939,9 @@ to the SAAS prior.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
-<li><p><strong>alpha</strong> (<em>float</em>) – </p></li>
-<li><p><strong>tkwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>dim</strong> (<em>int</em>)</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>)</p></li>
+<li><p><strong>tkwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2957,7 +2957,7 @@ to the SAAS prior.</p>
 tausq (global shrinkage).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – </p>
+<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Dict</em>[str, <em>Tensor</em>]</p>
@@ -2970,7 +2970,7 @@ tausq (global shrinkage).</p>
 <dd><p>Load the MCMC samples into the mean_module, covar_module, and likelihood.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – </p>
+<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tuple</em>[<em>Mean</em>, <em>Kernel</em>, <em>Likelihood</em>]</p>
@@ -3036,7 +3036,7 @@ over input data at this point.</p>
 <dd><p>Puts the model in <cite>train</cite> mode.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>mode</strong> (<em>bool</em>) – </p>
+<dd class="field-odd"><p><strong>mode</strong> (<em>bool</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -3051,7 +3051,7 @@ over input data at this point.</p>
 has been fitted in order to create a batched SingleTaskGP model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – </p>
+<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -3073,8 +3073,8 @@ construction logic into the Pyro model itself.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>state_dict</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – </p></li>
-<li><p><strong>strict</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>state_dict</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>)</p></li>
+<li><p><strong>strict</strong> (<em>bool</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -3088,7 +3088,7 @@ then <cite>self.covar_module</cite> will be None, <cite>check_if_fitted()</cite>
 rest of this method will not run.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>MultivariateNormal</em></p>
@@ -3114,7 +3114,7 @@ computes the posterior over all model outputs.</p></li>
 likelihood to the posterior. If a Tensor, use it directly as the
 observation noise (must be of shape <cite>(batch_shape) x q x m</cite>).</p></li>
 <li><p><strong>posterior_transform</strong> (<em>PosteriorTransform</em><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -3143,7 +3143,7 @@ sampled models.</p></li>
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x num_samples x 1</cite>-dim Tensor, where <cite>d</cite> is
 the dimension of the feature space and <cite>batch_shape</cite> is the number of
 sampled models.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -3208,7 +3208,7 @@ to the SAAS prior.</p>
 <span class="sig-name descname"><span class="pre">sample_latent_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">tkwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#MultitaskSaasPyroModel.sample_latent_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.sample_latent_features" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>tkwargs</strong> (<em>Any</em>) – </p>
+<dd class="field-odd"><p><strong>tkwargs</strong> (<em>Any</em>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3218,9 +3218,9 @@ to the SAAS prior.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>concentration</strong> (<em>float</em>) – </p></li>
-<li><p><strong>rate</strong> (<em>float</em>) – </p></li>
-<li><p><strong>tkwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>concentration</strong> (<em>float</em>)</p></li>
+<li><p><strong>rate</strong> (<em>float</em>)</p></li>
+<li><p><strong>tkwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -3231,7 +3231,7 @@ to the SAAS prior.</p>
 <dd><p>Load the MCMC samples into the mean_module, covar_module, and likelihood.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – </p>
+<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tuple</em>[<em>Mean</em>, <em>Kernel</em>, <em>Likelihood</em>, <em>Kernel</em>, <em>Parameter</em>]</p>
@@ -3296,7 +3296,7 @@ in the model’s forward pass.</p></li>
 <dd><p>Puts the model in <cite>train</cite> mode.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>mode</strong> (<em>bool</em>) – </p>
+<dd class="field-odd"><p><strong>mode</strong> (<em>bool</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -3366,7 +3366,7 @@ the observation noise in the training data is used as observation noise.</p></li
 has been fitted in order to create a batched MultiTaskGP model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – </p>
+<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -3387,11 +3387,11 @@ has been fitted in order to create a batched MultiTaskGP model.</p>
 </dd>
 <dt class="field-even">Parameters<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>output_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>observation_noise</strong> (<em>bool</em>) – </p></li>
-<li><p><strong>posterior_transform</strong> (<em>PosteriorTransform</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>X</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>output_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>observation_noise</strong> (<em>bool</em>)</p></li>
+<li><p><strong>posterior_transform</strong> (<em>PosteriorTransform</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -3413,7 +3413,7 @@ registered hooks while the latter silently ignores them.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>MultivariateNormal</em></p>
@@ -3437,8 +3437,8 @@ simplify this method and eliminate some others.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>state_dict</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – </p></li>
-<li><p><strong>strict</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>state_dict</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>)</p></li>
+<li><p><strong>strict</strong> (<em>bool</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -3464,12 +3464,12 @@ mean is considered.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ard_num_dims</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – </p></li>
-<li><p><strong>batch_shape</strong> (<em>Optional</em><em>[</em><em>torch.Size</em><em>]</em>) – </p></li>
-<li><p><strong>active_dims</strong> (<em>Optional</em><em>[</em><em>Tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>lengthscale_prior</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>) – </p></li>
-<li><p><strong>lengthscale_constraint</strong> (<em>Optional</em><em>[</em><em>Interval</em><em>]</em>) – </p></li>
-<li><p><strong>eps</strong> (<em>float</em>) – </p></li>
+<li><p><strong>ard_num_dims</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>batch_shape</strong> (<em>Optional</em><em>[</em><em>torch.Size</em><em>]</em>)</p></li>
+<li><p><strong>active_dims</strong> (<em>Optional</em><em>[</em><em>Tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>lengthscale_prior</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>)</p></li>
+<li><p><strong>lengthscale_constraint</strong> (<em>Optional</em><em>[</em><em>Interval</em><em>]</em>)</p></li>
+<li><p><strong>eps</strong> (<em>float</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -3498,7 +3498,7 @@ inputs <cite>x_1</cite> and <cite>x_2</cite> (we expect <cite>d = 1</cite>):</p>
 <cite>Positive</cite>.</p></li>
 <li><p><strong>active_dims</strong> – List of data dimensions to operate on. <cite>len(active_dims)</cite>
 should equal <cite>num_dimensions</cite>.</p></li>
-<li><p><strong>offset_prior</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>) – </p></li>
+<li><p><strong>offset_prior</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -3528,7 +3528,7 @@ Default is <cite>Positive</cite>.</p></li>
 <cite>Positive</cite>.</p></li>
 <li><p><strong>active_dims</strong> – List of data dimensions to operate on. <cite>len(active_dims)</cite>
 should equal <cite>num_dimensions</cite>.</p></li>
-<li><p><strong>offset_prior</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>) – </p></li>
+<li><p><strong>offset_prior</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -3611,7 +3611,7 @@ input data. If <cite>x1</cite> is a <cite>batch_shape x n x d</cite> tensor, thi
 be <cite>batch_shape</cite>.</p></li>
 <li><p><strong>active_dims</strong> – Compute the covariance of a subset of input dimensions. The
 numbers correspond to the indices of the dimensions.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -3645,7 +3645,7 @@ context.</p></li>
 equals to num of categorical features k. If None, the embedding
 dimension is set to 1 for each categorical variable.</p></li>
 <li><p><strong>context_weight_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Known population weights of each context.</p></li>
-<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -3828,8 +3828,8 @@ fixed at 1.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>utility</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>D</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>utility</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>D</strong> (<em>Tensor</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -4043,7 +4043,7 @@ outputs will be standardized.</p></li>
 <li><p><strong>batch_shape</strong> (<em>torch.Size</em>) – The batch_shape of the training targets.</p></li>
 <li><p><strong>min_stddv</strong> – The minimum standard deviation for which to perform
 standardization (if lower, only de-mean the data).</p></li>
-<li><p><strong>min_stdv</strong> (<em>float</em>) – </p></li>
+<li><p><strong>min_stdv</strong> (<em>float</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -4054,8 +4054,8 @@ standardization (if lower, only de-mean the data).</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>state_dict</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – </p></li>
-<li><p><strong>strict</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>state_dict</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>)</p></li>
+<li><p><strong>strict</strong> (<em>bool</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -4260,7 +4260,7 @@ power-transformed outcomes and un-transform the model posterior of that GP.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>outputs</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Which of the outputs to power-transform. If omitted, all
 outputs will be standardized.</p></li>
-<li><p><strong>power</strong> (<em>float</em>) – </p></li>
+<li><p><strong>power</strong> (<em>float</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -4581,7 +4581,7 @@ by zero errors and related numerical issues. See the example below.
 NOTE: This only applies if <cite>learn_bounds=True</cite>.</p></li>
 <li><p><strong>learn_bounds</strong> (<em>Optional</em><em>[</em><em>bool</em><em>]</em>) – Whether to learn the bounds in train mode. Defaults
 to False if bounds are provided, otherwise defaults to True.</p></li>
-<li><p><strong>almost_zero</strong> (<em>float</em>) – </p></li>
+<li><p><strong>almost_zero</strong> (<em>float</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -4658,7 +4658,7 @@ the inputs.</p></li>
 equivalent to using a standard deviation of 1.0 and a mean of 0.0 for
 this dimension, and helps avoid division by zero errors and related
 numerical issues.</p></li>
-<li><p><strong>transform_on_fantasize</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>transform_on_fantasize</strong> (<em>bool</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -4973,7 +4973,7 @@ transforms in train() mode. Default: True.</p></li>
 transform in eval() mode. Default: True.</p></li>
 <li><p><strong>transform_on_fantasize</strong> (<em>bool</em>) – A boolean indicating whether to apply the
 transform when called from within a <cite>fantasize</cite> call. Default: True.</p></li>
-<li><p><strong>feature_indices</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>feature_indices</strong> (<em>Tensor</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -5357,8 +5357,8 @@ and a Gamma(2.0, 0.15) prior for the output scale.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ard_num_dims</strong> (<em>int</em>) – </p></li>
-<li><p><strong>batch_shape</strong> (<em>Size</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>ard_num_dims</strong> (<em>int</em>)</p></li>
+<li><p><strong>batch_shape</strong> (<em>Size</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -5374,7 +5374,7 @@ several models. This uses a Gamma(1.1, 0.05) prior and constrains the
 noise level to be greater than MIN_INFERRED_NOISE_LEVEL (=1e-4).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>batch_shape</strong> (<em>Size</em><em> | </em><em>None</em>) – </p>
+<dd class="field-odd"><p><strong>batch_shape</strong> (<em>Size</em><em> | </em><em>None</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>GaussianLikelihood</em></p>
@@ -5416,7 +5416,7 @@ E.g. if obj=Zoo(), and attr=”tiger.age”, set_attribute(obj, attr, 3),
 would set the Zoo’s tiger’s age to three.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>attr</strong> (<em>str</em>) – </p>
+<dd class="field-odd"><p><strong>attr</strong> (<em>str</em>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -5428,7 +5428,7 @@ E.g. if obj=Zoo(), and attr=”tiger.age”, get_attribute(obj, attr),
 would return the Zoo’s tiger’s age.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>attr</strong> (<em>str</em>) – </p>
+<dd class="field-odd"><p><strong>attr</strong> (<em>str</em>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -5479,7 +5479,7 @@ independent outputs have better support in GPyTorch (see
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>batched_mo_model</strong> – The BatchedMultiOutputGPyTorchModel</p></li>
-<li><p><strong>batch_mo_model</strong> (<em>BatchedMultiOutputGPyTorchModel</em>) – </p></li>
+<li><p><strong>batch_mo_model</strong> (<em>BatchedMultiOutputGPyTorchModel</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -5865,7 +5865,7 @@ new_indices: new index of each original item in X, a tensor of size X.shape[-2]<
 <p>A flag denoting whether we are currently in a <cite>fantasize</cite> context.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>state</strong> (<em>bool</em>) – </p>
+<dd class="field-odd"><p><strong>state</strong> (<em>bool</em>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -5904,7 +5904,7 @@ new_indices: new index of each original item in X, a tensor of size X.shape[-2]<
 </ul></li>
 </ul>
 </div>
-<div id="searchbox" role="search" style="display: none">
+<search id="searchbox" role="search" style="display: none">
 <h3 id="searchlabel">Quick search</h3>
 <div class="searchformwrapper">
 <form action="search.html" class="search" method="get">
@@ -5912,7 +5912,7 @@ new_indices: new index of each original item in X, a tensor of size X.shape[-2]<
 <input type="submit" value="Go"/>
 </form>
 </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>

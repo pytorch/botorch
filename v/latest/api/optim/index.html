@@ -56,11 +56,11 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>step</strong> (<em>int</em>) – </p></li>
-<li><p><strong>fval</strong> (<em>float</em><em> | </em><em>int</em>) – </p></li>
-<li><p><strong>status</strong> (<a class="reference internal" href="#botorch.optim.core.OptimizationStatus" title="botorch.optim.core.OptimizationStatus"><em>OptimizationStatus</em></a>) – </p></li>
-<li><p><strong>runtime</strong> (<em>float</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>message</strong> (<em>str</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>step</strong> (<em>int</em>)</p></li>
+<li><p><strong>fval</strong> (<em>float</em><em> | </em><em>int</em>)</p></li>
+<li><p><strong>status</strong> (<a class="reference internal" href="#botorch.optim.core.OptimizationStatus" title="botorch.optim.core.OptimizationStatus"><em>OptimizationStatus</em></a>)</p></li>
+<li><p><strong>runtime</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>message</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -156,26 +156,26 @@ One of <cite>step_limit</cite>, <cite>stopping_criterion</cite>, or <cite>timeou
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>acq_function</strong> (<em>AcquisitionFunction</em>) – </p></li>
-<li><p><strong>bounds</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>q</strong> (<em>int</em>) – </p></li>
-<li><p><strong>num_restarts</strong> (<em>int</em>) – </p></li>
-<li><p><strong>raw_samples</strong> (<em>int</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em> | </em><em>str</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>nonlinear_inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Callable</em><em>, </em><em>bool</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>fixed_features</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>post_processing_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>batch_initial_conditions</strong> (<em>Tensor</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>return_best_only</strong> (<em>bool</em>) – </p></li>
-<li><p><strong>gen_candidates</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>, </em><em>AcquisitionFunction</em><em>, </em><em>Any</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>sequential</strong> (<em>bool</em>) – </p></li>
-<li><p><strong>ic_generator</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient" title="botorch.acquisition.knowledge_gradient.qKnowledgeGradient"><em>qKnowledgeGradient</em></a><em>, </em><em>Tensor</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em>] </em><em>| </em><em>None</em><em>, </em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em><em>, </em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em><em>]</em><em>, </em><em>Tensor</em><em> | </em><em>None</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>timeout_sec</strong> (<em>float</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>return_full_tree</strong> (<em>bool</em>) – </p></li>
-<li><p><strong>retry_on_optimization_warning</strong> (<em>bool</em>) – </p></li>
-<li><p><strong>ic_gen_kwargs</strong> (<em>Dict</em>) – </p></li>
+<li><p><strong>acq_function</strong> (<em>AcquisitionFunction</em>)</p></li>
+<li><p><strong>bounds</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>q</strong> (<em>int</em>)</p></li>
+<li><p><strong>num_restarts</strong> (<em>int</em>)</p></li>
+<li><p><strong>raw_samples</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em> | </em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>nonlinear_inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Callable</em><em>, </em><em>bool</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>fixed_features</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>post_processing_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>batch_initial_conditions</strong> (<em>Tensor</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>return_best_only</strong> (<em>bool</em>)</p></li>
+<li><p><strong>gen_candidates</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>, </em><em>AcquisitionFunction</em><em>, </em><em>Any</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>sequential</strong> (<em>bool</em>)</p></li>
+<li><p><strong>ic_generator</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient" title="botorch.acquisition.knowledge_gradient.qKnowledgeGradient"><em>qKnowledgeGradient</em></a><em>, </em><em>Tensor</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em>] </em><em>| </em><em>None</em><em>, </em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em><em>, </em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em><em>]</em><em>, </em><em>Tensor</em><em> | </em><em>None</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>timeout_sec</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>return_full_tree</strong> (<em>bool</em>)</p></li>
+<li><p><strong>retry_on_optimization_warning</strong> (<em>bool</em>)</p></li>
+<li><p><strong>ic_gen_kwargs</strong> (<em>Dict</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -344,7 +344,7 @@ optimization.</p></li>
 functions and <cite>gen_batch_initial_conditions</cite> otherwise. Must be specified
 for nonlinear inequality constraints.</p></li>
 <li><p><strong>timeout_sec</strong> (<em>float</em><em> | </em><em>None</em>) – Max amount of time optimization can run for.</p></li>
-<li><p><strong>return_full_tree</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>return_full_tree</strong> (<em>bool</em>)</p></li>
 <li><p><strong>retry_on_optimization_warning</strong> (<em>bool</em>) – Whether to retry candidate generation with a new
 set of initial conditions when it fails with an <cite>OptimizationWarning</cite>.</p></li>
 <li><p><strong>ic_gen_kwargs</strong> (<em>Any</em>) – Additional keyword arguments passed to function specified by
@@ -429,13 +429,13 @@ be used.</p></li>
 functions and <cite>gen_batch_initial_conditions</cite> otherwise. Must be specified
 for nonlinear inequality constraints.</p></li>
 <li><p><strong>timeout_sec</strong> (<em>float</em><em> | </em><em>None</em>) – Max amount of time optimization can run for.</p></li>
-<li><p><strong>return_full_tree</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>return_full_tree</strong> (<em>bool</em>)</p></li>
 <li><p><strong>retry_on_optimization_warning</strong> (<em>bool</em>) – Whether to retry candidate generation with a new
 set of initial conditions when it fails with an <cite>OptimizationWarning</cite>.</p></li>
 <li><p><strong>ic_gen_kwargs</strong> (<em>Any</em>) – Additional keyword arguments passed to function specified by
 <cite>ic_generator</cite></p></li>
-<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -521,8 +521,8 @@ functions and <cite>gen_batch_initial_conditions</cite> otherwise. Must be speci
 for nonlinear inequality constraints.</p></li>
 <li><p><strong>ic_gen_kwargs</strong> (<em>Dict</em><em> | </em><em>None</em>) – Additional keyword arguments passed to function specified by
 <cite>ic_generator</cite></p></li>
-<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -600,8 +600,8 @@ for nonlinear inequality constraints.</p></li>
 <cite>ic_generator</cite></p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – kwargs do nothing. This is provided so that the same arguments can
 be passed to different acquisition functions without raising an error.</p></li>
-<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -830,8 +830,8 @@ encoding an (in-)equality constraint of the form
 be one-dimensional, and the constraint is applied to all points within the
 <cite>q</cite>-batch.</p></li>
 <li><p><strong>d</strong> (<em>int</em>) – Dimensionality of the problem.</p></li>
-<li><p><strong>constraint</strong> (<em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – </p></li>
-<li><p><strong>q</strong> (<em>int</em>) – </p></li>
+<li><p><strong>constraint</strong> (<em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>q</strong> (<em>int</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
@@ -860,8 +860,8 @@ encoding an (in-)equality constraint of the form
 2-d Tensor, where in each row <cite>indices[i] = (k_i, l_i)</cite> the first index
 <cite>k_i</cite> corresponds to the <cite>k_i</cite>-th element of the <cite>q</cite>-batch and the second
 index <cite>l_i</cite> corresponds to the <cite>l_i</cite>-th feature of that element.</p></li>
-<li><p><strong>constraint</strong> (<em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – </p></li>
-<li><p><strong>d</strong> (<em>int</em>) – </p></li>
+<li><p><strong>constraint</strong> (<em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>d</strong> (<em>int</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
@@ -896,7 +896,7 @@ with each tuple encoding an inequality constraint of the form
 <li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>.</p></li>
-<li><p><strong>thinning</strong> (<em>int</em>) – </p></li>
+<li><p><strong>thinning</strong> (<em>int</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -947,8 +947,8 @@ the <cite>q</cite> candidates being initialized along the <cite>-2</cite> dimens
 shape should be <cite>num_pseudo_points x d</cite>. E.g., this should be
 <cite>num_fantasies x d</cite> for KG and <cite>num_fantasies*num_pareto x d</cite>
 for HVKG.</p></li>
-<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1010,8 +1010,8 @@ with each tuple encoding an inequality constraint of the form
 <li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>.</p></li>
-<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1078,8 +1078,8 @@ with each tuple encoding an inequality constraint of the form
 <li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>.</p></li>
-<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1403,7 +1403,7 @@ true for all elements.</p>
 <dd class="field-odd"><p>Stopping indicator (if True, stop the optimziation).</p>
 </dd>
 <dt class="field-even">Parameters<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>fvals</strong> (<em>Tensor</em>) – </p>
+<dd class="field-even"><p><strong>fvals</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
@@ -1458,7 +1458,7 @@ should be fixed to a particular value during generation.</p></li>
 this if you do not want to use default initialization strategy.</p></li>
 <li><p><strong>post_processing_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – Post processing function (such as roundingor clamping)
 that is applied before choosing the final candidate.</p></li>
-<li><p><strong>prune_tolerance</strong> (<em>float</em>) – </p></li>
+<li><p><strong>prune_tolerance</strong> (<em>float</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1492,7 +1492,7 @@ the gradients of <cite>parameters</cite> as positional arguments.</p></li>
 <li><p><strong>context_manager</strong> (<em>Callable</em>) – A ContextManager used to wrap each forward-backward call.
 When passed as <cite>None</cite>, <cite>context_manager</cite> defaults to a <cite>zero_grad_ctx</cite>
 that zeroes the gradients of <cite>parameters</cite> upon entry.</p></li>
-<li><p><strong>forward</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – </p></li>
+<li><p><strong>forward</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -1555,7 +1555,7 @@ training data from, e.g., <cite>mll.model</cite> should register this argument a
 <li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – A MarginalLogLikelihood instance whose negative defines the loss.</p></li>
 <li><p><strong>data_loader</strong> (<em>DataLoader</em><em> | </em><em>None</em>) – An optional DataLoader instance for cases where training
 data is passed in rather than obtained from <cite>mll.model</cite>.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1584,8 +1584,8 @@ data is passed in rather than obtained from <cite>mll.model</cite>.</p></li>
 <li><p><strong>context_manager</strong> (<em>Callable</em><em> | </em><em>None</em>) – An optional ContextManager used to wrap each forward-backward
 pass. Defaults to a <cite>zero_grad_ctx</cite> that zeroes the gradients of
 <cite>parameters</cite> upon entry. None may be passed as an alias for <cite>nullcontext</cite>.</p></li>
-<li><p><strong>backward</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>None</em><em>]</em>) – </p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>backward</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>None</em><em>]</em>)</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1695,9 +1695,9 @@ then this method attempts to use the model’s <cite>train_inputs</cite> as <cit
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>shape</strong> (<em>Size</em>) – </p></li>
-<li><p><strong>dtype</strong> (<em>dtype</em>) – </p></li>
-<li><p><strong>device</strong> (<em>device</em>) – </p></li>
+<li><p><strong>shape</strong> (<em>Size</em>)</p></li>
+<li><p><strong>dtype</strong> (<em>dtype</em>)</p></li>
+<li><p><strong>device</strong> (<em>device</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -1723,9 +1723,9 @@ then this method attempts to use the model’s <cite>train_inputs</cite> as <cit
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>GPyTorchModel</em>) – </p></li>
-<li><p><strong>batch_size</strong> (<em>int</em>) – </p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>model</strong> (<em>GPyTorchModel</em>)</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em>)</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1804,7 +1804,7 @@ define the set of names to be excluded.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<em>GPyTorchModel</em>) – A GPyTorchModel.</p></li>
-<li><p><strong>max_retries</strong> (<em>int</em>) – </p></li>
+<li><p><strong>max_retries</strong> (<em>int</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1842,10 +1842,10 @@ define the set of names to be excluded.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>tensors</strong> (<em>Iterator</em><em>[</em><em>Tensor</em><em>] </em><em>| </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – </p></li>
-<li><p><strong>out</strong> (<em>ndarray</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>str</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>as_array</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>ndarray</em><em>]</em>) – </p></li>
+<li><p><strong>tensors</strong> (<em>Iterator</em><em>[</em><em>Tensor</em><em>] </em><em>| </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p></li>
+<li><p><strong>out</strong> (<em>ndarray</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>as_array</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>ndarray</em><em>]</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1860,9 +1860,9 @@ define the set of names to be excluded.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>tensors</strong> (<em>Iterator</em><em>[</em><em>Tensor</em><em>] </em><em>| </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – </p></li>
-<li><p><strong>array</strong> (<em>ndarray</em>) – </p></li>
-<li><p><strong>as_tensor</strong> (<em>Callable</em><em>[</em><em>[</em><em>ndarray</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – </p></li>
+<li><p><strong>tensors</strong> (<em>Iterator</em><em>[</em><em>Tensor</em><em>] </em><em>| </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p></li>
+<li><p><strong>array</strong> (<em>ndarray</em>)</p></li>
+<li><p><strong>as_tensor</strong> (<em>Callable</em><em>[</em><em>[</em><em>ndarray</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1905,18 +1905,18 @@ track of the runtime and the optimization variables at the current iteration.</p
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>fun</strong> (<em>Callable</em><em>[</em><em>[</em><em>np.ndarray</em><em>, </em><em>*Any</em><em>]</em><em>, </em><em>float</em><em>]</em>) – </p></li>
-<li><p><strong>x0</strong> (<em>np.ndarray</em>) – </p></li>
-<li><p><strong>args</strong> (<em>Tuple</em><em>[</em><em>Any</em><em>, </em><em>...</em><em>]</em>) – </p></li>
-<li><p><strong>method</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – </p></li>
-<li><p><strong>jac</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>bool</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>hess</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>optimize.HessianUpdateStrategy</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>hessp</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>) – </p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>, </em><em>optimize.Bounds</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>tol</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – </p></li>
-<li><p><strong>callback</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>) – </p></li>
-<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>timeout_sec</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – </p></li>
+<li><p><strong>fun</strong> (<em>Callable</em><em>[</em><em>[</em><em>np.ndarray</em><em>, </em><em>*Any</em><em>]</em><em>, </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>x0</strong> (<em>np.ndarray</em>)</p></li>
+<li><p><strong>args</strong> (<em>Tuple</em><em>[</em><em>Any</em><em>, </em><em>...</em><em>]</em>)</p></li>
+<li><p><strong>method</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>jac</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>bool</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>hess</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>optimize.HessianUpdateStrategy</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>hessp</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>)</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>, </em><em>optimize.Bounds</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>tol</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>callback</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>)</p></li>
+<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>timeout_sec</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1975,8 +1975,8 @@ rhs is a scalar.</p></li>
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) == rhs</cite> (with <cite>indices</cite>
 and <cite>coefficients</cite> of the same form as in <cite>inequality_constraints</cite>).</p></li>
-<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2067,7 +2067,7 @@ is applied pointwise and is broadcasted over the q-batch. Else, the
 constraint has to evaluated over the whole q-batch and is a an
 inter-point constraint.</p></li>
 <li><p><strong>x</strong> (<em>Tensor</em>) – Tensor of shape (b x q x d).</p></li>
-<li><p><strong>is_intrapoint</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>is_intrapoint</strong> (<em>bool</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2247,8 +2247,8 @@ correspond to a buffer of a module. The parameter has a corresponding schedule.<
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>parameter</strong> (<em>Parameter</em><em> | </em><em>Tensor</em>) – </p></li>
-<li><p><strong>schedule</strong> (<a class="reference internal" href="#botorch.optim.homotopy.HomotopySchedule" title="botorch.optim.homotopy.HomotopySchedule"><em>HomotopySchedule</em></a>) – </p></li>
+<li><p><strong>parameter</strong> (<em>Parameter</em><em> | </em><em>Tensor</em>)</p></li>
+<li><p><strong>schedule</strong> (<a class="reference internal" href="#botorch.optim.homotopy.HomotopySchedule" title="botorch.optim.homotopy.HomotopySchedule"><em>HomotopySchedule</em></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -2353,7 +2353,7 @@ reinitialize the acquisition function which is needed when using qNEHVI.</p></li
 </ul></li>
 </ul>
 </div>
-<div id="searchbox" role="search" style="display: none">
+<search id="searchbox" role="search" style="display: none">
 <h3 id="searchlabel">Quick search</h3>
 <div class="searchformwrapper">
 <form action="search.html" class="search" method="get">
@@ -2361,7 +2361,7 @@ reinitialize the acquisition function which is needed when using qNEHVI.</p></li
 <input type="submit" value="Go"/>
 </form>
 </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>

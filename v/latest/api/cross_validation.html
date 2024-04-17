@@ -31,12 +31,12 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>train_X</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>test_X</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>train_Y</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>test_Y</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>train_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>test_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>train_X</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>test_X</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>train_Y</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>test_Y</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>train_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>test_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -79,10 +79,10 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>GPyTorchModel</em>) – </p></li>
-<li><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><em>GPyTorchPosterior</em></a>) – </p></li>
-<li><p><strong>observed_Y</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>observed_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>model</strong> (<em>GPyTorchModel</em>)</p></li>
+<li><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><em>GPyTorchPosterior</em></a>)</p></li>
+<li><p><strong>observed_Y</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>observed_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -164,7 +164,7 @@ internally. Note: Multi-task GPs are not currently supported.</p></li>
 <li><p><strong>cv_folds</strong> (<a class="reference internal" href="#botorch.cross_validation.CVFolds" title="botorch.cross_validation.CVFolds"><em>CVFolds</em></a>) – A CVFolds tuple.</p></li>
 <li><p><strong>fit_args</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Arguments passed along to fit_gpytorch_mll.</p></li>
 <li><p><strong>model_init_kwargs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Keyword arguments passed to the model constructor.</p></li>
-<li><p><strong>observation_noise</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>observation_noise</strong> (<em>bool</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -251,7 +251,7 @@ measurement noise.</p></li>
 </ul></li>
 </ul>
 </div>
-<div id="searchbox" role="search" style="display: none">
+<search id="searchbox" role="search" style="display: none">
 <h3 id="searchlabel">Quick search</h3>
 <div class="searchformwrapper">
 <form action="search.html" class="search" method="get">
@@ -259,7 +259,7 @@ measurement noise.</p></li>
 <input type="submit" value="Go"/>
 </form>
 </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>

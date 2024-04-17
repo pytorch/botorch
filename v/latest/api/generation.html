@@ -71,8 +71,8 @@ compatible with lower_bounds and upper_bounds!</p></li>
 <li><p><strong>timeout_sec</strong> (<em>float</em><em> | </em><em>None</em>) – Timeout (in seconds) for <cite>scipy.optimize.minimize</cite> routine -
 if provided, optimization will stop after this many seconds and return
 the best solution found so far.</p></li>
-<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -256,9 +256,9 @@ dimension) according to the maximum posterior value under the objective.</p></li
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>samples</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>num_samples</strong> (<em>int</em>) – </p></li>
+<li><p><strong>X</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>samples</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -422,7 +422,7 @@ dimension) according to the maximum posterior value under the objective.</p></li
 </ul></li>
 </ul>
 </div>
-<div id="searchbox" role="search" style="display: none">
+<search id="searchbox" role="search" style="display: none">
 <h3 id="searchlabel">Quick search</h3>
 <div class="searchformwrapper">
 <form action="search.html" class="search" method="get">
@@ -430,7 +430,7 @@ dimension) according to the maximum posterior value under the objective.</p></li
 <input type="submit" value="Go"/>
 </form>
 </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
