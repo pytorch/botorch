@@ -47,7 +47,6 @@ class SACGP(SingleTaskGP):
         cls,
         training_data: SupervisedDataset,
         decomposition: Dict[str, List[int]],
-        **kwargs: Any,
     ) -> Dict[str, Any]:
         r"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`.
 
@@ -56,7 +55,7 @@ class SACGP(SingleTaskGP):
             decomposition: Dictionary of context names and their indexes of the
                 corresponding active context parameters.
         """
-        base_inputs = super().construct_inputs(training_data=training_data, **kwargs)
+        base_inputs = super().construct_inputs(training_data=training_data)
         return {
             **base_inputs,
             "decomposition": decomposition,
@@ -127,7 +126,6 @@ class LCEAGP(SingleTaskGP):
         embs_feature_dict: Optional[Dict] = None,
         embs_dim_list: Optional[List[int]] = None,
         context_weight_dict: Optional[Dict] = None,
-        **kwargs: Any,
     ) -> Dict[str, Any]:
         r"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`.
 
@@ -147,7 +145,7 @@ class LCEAGP(SingleTaskGP):
                 dimension is set to 1 for each categorical variable.
             context_weight_dict: Known population weights of each context.
         """
-        base_inputs = super().construct_inputs(training_data=training_data, **kwargs)
+        base_inputs = super().construct_inputs(training_data=training_data)
         index_decomp = {
             c: [training_data.feature_names.index(i) for i in v]
             for c, v in decomposition.items()

@@ -31,7 +31,7 @@ model like `MultiTaskGP`.
 from __future__ import annotations
 
 import warnings
-from typing import NoReturn, Optional
+from typing import Dict, NoReturn, Optional, Union
 
 import torch
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
@@ -44,6 +44,8 @@ from botorch.models.utils.gpytorch_modules import (
     get_matern_kernel_with_gamma_prior,
     MIN_INFERRED_NOISE_LEVEL,
 )
+from botorch.utils.containers import BotorchContainer
+from botorch.utils.datasets import SupervisedDataset
 from gpytorch.constraints.constraints import GreaterThan
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.likelihoods.gaussian_likelihood import (
@@ -206,6 +208,31 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         if input_transform is not None:
             self.input_transform = input_transform
         self.to(train_X)
+
+    @classmethod
+    def construct_inputs(
+        cls, training_data: SupervisedDataset, *, task_feature: Optional[int] = None
+    ) -> Dict[str, Union[BotorchContainer, Tensor]]:
+        r"""Construct `SingleTaskGP` keyword arguments from a `SupervisedDataset`.
+
+        Args:
+            training_data: A `SupervisedDataset`, with attributes `train_X`,
+                `train_Y`, and, optionally, `train_Yvar`.
+            task_feature: Deprecated and allowed only for backward
+                compatibility; ignored.
+
+        Returns:
+            A dict of keyword arguments that can be used to initialize a `SingleTaskGP`,
+            with keys `train_X`, `train_Y`, and, optionally, `train_Yvar`.
+        """
+        if task_feature is not None:
+            warnings.warn(
+                "`task_feature` is deprecated and will be ignored. In the "
+                "future, this will be an error.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        return super().construct_inputs(training_data=training_data)
 
     def forward(self, x: Tensor) -> MultivariateNormal:
         if self.training:

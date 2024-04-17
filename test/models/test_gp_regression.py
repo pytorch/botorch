@@ -36,7 +36,7 @@ from gpytorch.mlls.noise_model_added_loss_term import NoiseModelAddedLossTerm
 from gpytorch.priors import GammaPrior
 
 
-class TestSingleTaskGP(BotorchTestCase):
+class TestGPRegressionBase(BotorchTestCase):
     def _get_model_and_data(
         self,
         batch_shape,
@@ -398,6 +398,28 @@ class TestSingleTaskGP(BotorchTestCase):
             self.assertEqual(X.shape, tf_X.shape)
 
 
+class TestSingleTaskGP(TestGPRegressionBase):
+    model_class = SingleTaskGP
+
+    def test_construct_inputs_task_feature_deprecated(self) -> None:
+        model, model_kwargs = self._get_model_and_data(
+            batch_shape=torch.Size([]),
+            m=1,
+            device=self.device,
+            dtype=torch.double,
+        )
+        X = model_kwargs["train_X"]
+        Y = model_kwargs["train_Y"]
+        training_data = SupervisedDataset(
+            X,
+            Y,
+            feature_names=[f"x{i}" for i in range(X.shape[-1])],
+            outcome_names=["y"],
+        )
+        with self.assertWarnsRegex(DeprecationWarning, "`task_feature` is deprecated"):
+            model.construct_inputs(training_data, task_feature=0)
+
+
 class TestFixedNoiseGP(TestSingleTaskGP):
     model_class = FixedNoiseGP
 
@@ -542,7 +564,7 @@ class TestFixedNoiseSingleTaskGP(TestFixedNoiseGP):
     model_class = SingleTaskGP
 
 
-class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
+class TestHeteroskedasticSingleTaskGP(TestGPRegressionBase):
     def _get_model_and_data(
         self, batch_shape, m, outcome_transform=None, input_transform=None, **tkwargs
     ):
