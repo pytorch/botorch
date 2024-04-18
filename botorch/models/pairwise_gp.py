@@ -781,7 +781,6 @@ class PairwiseGP(Model, GP, FantasizeMixin):
     def construct_inputs(
         cls,
         training_data: SupervisedDataset,
-        **kwargs: Any,
     ) -> Dict[str, Tensor]:
         r"""
         Construct `Model` keyword arguments from a `RankingDataset`.
@@ -789,7 +788,6 @@ class PairwiseGP(Model, GP, FantasizeMixin):
         Args:
             training_data: A `RankingDataset`, with attributes `train_X`,
                 `train_Y`, and, optionally, `train_Yvar`.
-            kwargs: Ignored.
 
         Returns:
             A dict of keyword arguments that can be used to initialize a

@@ -167,7 +167,6 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
         cls,
         training_data: SupervisedDataset,
         fidelity_features: List[int],
-        **kwargs,
     ) -> Dict[str, Any]:
         r"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`.
 
@@ -175,7 +174,7 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
             training_data: Dictionary of `SupervisedDataset`.
             fidelity_features: Index of fidelity parameter as input columns.
         """
-        inputs = super().construct_inputs(training_data=training_data, **kwargs)
+        inputs = super().construct_inputs(training_data=training_data)
         inputs["data_fidelities"] = fidelity_features
         return inputs
 
