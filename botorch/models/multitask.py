@@ -334,7 +334,6 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         task_covar_prior: Optional[Prior] = None,
         prior_config: Optional[dict] = None,
         rank: Optional[int] = None,
-        **kwargs,
     ) -> Dict[str, Any]:
         r"""Construct `Model` keyword arguments from a dataset and other args.
 
@@ -367,9 +366,8 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
                 raise ValueError(f"eta must be a real number, your eta was {eta}.")
             task_covar_prior = LKJCovariancePrior(num_tasks, eta, sd_prior)
 
-        base_inputs = super().construct_inputs(
-            training_data=training_data, task_feature=task_feature, **kwargs
-        )
+        # Call Model.construct_inputs to parse training data
+        base_inputs = super().construct_inputs(training_data=training_data)
         if isinstance(training_data, MultiTaskDataset):
             all_tasks = list(range(len(training_data.datasets)))
             base_inputs["all_tasks"] = all_tasks
