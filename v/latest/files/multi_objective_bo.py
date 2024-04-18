@@ -279,7 +279,7 @@ from botorch.utils.multi_objective.pareto import is_non_dominated
 warnings.filterwarnings("ignore", category=BadInitialCandidatesWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
-N_BATCH = 20 if not SMOKE_TEST else 10
+N_BATCH = 20 if not SMOKE_TEST else 5
 MC_SAMPLES = 128 if not SMOKE_TEST else 16
 
 verbose = True

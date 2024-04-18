@@ -309,7 +309,7 @@ verbose = False
 # Number of pairwise comparisons performed before checking posterior mean
 every_n_comps = 3
 # Total number of checking the maximum posterior mean
-n_check_post_mean = 5
+n_check_post_mean = 1 if SMOKE_TEST else 5
 n_outcome_model_initialization_points = 8
 within_session_results = []
 exp_candidate_results = []
