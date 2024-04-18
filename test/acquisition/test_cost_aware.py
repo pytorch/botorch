@@ -51,6 +51,9 @@ class TestCostAwareUtilities(BotorchTestCase):
 
                 X = torch.randn(*batch_shape, 3, 2, device=self.device, dtype=dtype)
                 deltas = torch.rand(4, *batch_shape, device=self.device, dtype=dtype)
+                neg_deltas = -torch.rand(
+                    4, *batch_shape, device=self.device, dtype=dtype
+                )
 
                 # test that sampler is required if use_mean=False
                 icwu = InverseCostWeightedUtility(mm, use_mean=False)
@@ -66,13 +69,36 @@ class TestCostAwareUtilities(BotorchTestCase):
                         any(issubclass(w.category, CostAwareWarning) for w in ws)
                     )
 
-                # basic test
+                # basic test for both positive and negative delta values
                 mm = MockModel(MockPosterior(mean=mean))
                 icwu = InverseCostWeightedUtility(mm)
                 ratios = icwu(X, deltas)
                 self.assertTrue(
                     torch.equal(ratios, deltas / mean.squeeze(-1).sum(dim=-1))
                 )
+                neg_ratios = icwu(X, neg_deltas)
+                self.assertTrue(
+                    torch.equal(neg_ratios, neg_deltas * mean.squeeze(-1).sum(dim=-1))
+                )
+
+                # test that ensures candidates of lower cost are preferred when they
+                # have equal, negative delta values
+                low_mean = 1 + torch.rand(
+                    *batch_shape, 2, 1, device=self.device, dtype=dtype
+                )
+                high_mean = 2 + torch.rand(
+                    *batch_shape, 2, 1, device=self.device, dtype=dtype
+                )
+                h_mm = MockModel(MockPosterior(mean=high_mean))
+                h_icwu = InverseCostWeightedUtility(h_mm)
+                # high cost ratios
+                h_ratios = h_icwu(X, neg_deltas)
+                l_mm = MockModel(MockPosterior(mean=low_mean))
+                l_icwu = InverseCostWeightedUtility(l_mm)
+                # low cost ratios
+                l_ratios = l_icwu(X, neg_deltas)
+                # assert that the low cost candidates are preferred
+                self.assertTrue(torch.all(h_ratios < l_ratios))
 
                 # sampling test
                 samples = 1 + torch.rand(  # event shape is q x m
