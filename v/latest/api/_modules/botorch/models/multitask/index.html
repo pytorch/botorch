@@ -370,7 +370,6 @@
         <span class="n">task_covar_prior</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Prior</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">prior_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">rank</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct `Model` keyword arguments from a dataset and other args.</span>
 
@@ -403,9 +402,8 @@
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"eta must be a real number, your eta was </span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
             <span class="n">task_covar_prior</span> <span class="o">=</span> <span class="n">LKJCovariancePrior</span><span class="p">(</span><span class="n">num_tasks</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="n">sd_prior</span><span class="p">)</span>
 
-        <span class="n">base_inputs</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">construct_inputs</span><span class="p">(</span>
-            <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span> <span class="n">task_feature</span><span class="o">=</span><span class="n">task_feature</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
-        <span class="p">)</span>
+        <span class="c1"># Call Model.construct_inputs to parse training data</span>
+        <span class="n">base_inputs</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">construct_inputs</span><span class="p">(</span><span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">training_data</span><span class="p">,</span> <span class="n">MultiTaskDataset</span><span class="p">):</span>
             <span class="n">all_tasks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">training_data</span><span class="o">.</span><span class="n">datasets</span><span class="p">)))</span>
             <span class="n">base_inputs</span><span class="p">[</span><span class="s2">"all_tasks"</span><span class="p">]</span> <span class="o">=</span> <span class="n">all_tasks</span>

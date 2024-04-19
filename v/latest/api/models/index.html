@@ -187,15 +187,12 @@ observations passed in via kwargs).</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.model.Model.construct_inputs">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#Model.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.Model.construct_inputs" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#Model.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.Model.construct_inputs" title="Link to this definition">¶</a></dt>
 <dd><p>Construct <cite>Model</cite> keyword arguments from a <cite>SupervisedDataset</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a>) – A <cite>SupervisedDataset</cite>, with attributes <cite>train_X</cite>,
-<cite>train_Y</cite>, and, optionally, <cite>train_Yvar</cite>.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – Ignored.</p></li>
-</ul>
+<dd class="field-odd"><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a>) – A <cite>SupervisedDataset</cite>, with attributes <cite>train_X</cite>,
+<cite>train_Y</cite>, and, optionally, <cite>train_Yvar</cite>.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A dict of keyword arguments that can be used to initialize a <cite>Model</cite>,
@@ -965,6 +962,28 @@ forward pass.</p></li>
 </dd>
 </dl>
 <dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.gp_regression.SingleTaskGP.construct_inputs">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#SingleTaskGP.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.SingleTaskGP.construct_inputs" title="Link to this definition">¶</a></dt>
+<dd><p>Construct <cite>SingleTaskGP</cite> keyword arguments from a <cite>SupervisedDataset</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a>) – A <cite>SupervisedDataset</cite>, with attributes <cite>train_X</cite>,
+<cite>train_Y</cite>, and, optionally, <cite>train_Yvar</cite>.</p></li>
+<li><p><strong>task_feature</strong> (<em>int</em><em> | </em><em>None</em>) – Deprecated and allowed only for backward
+compatibility; ignored.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dict of keyword arguments that can be used to initialize a <cite>SingleTaskGP</cite>,
+with keys <cite>train_X</cite>, <cite>train_Y</cite>, and, optionally, <cite>train_Yvar</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Dict</em>[str, <em>BotorchContainer</em> | <em>Tensor</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.gp_regression.SingleTaskGP.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#SingleTaskGP.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.SingleTaskGP.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Define the computation performed at every call.</p>
@@ -1195,7 +1214,7 @@ forward pass.</p></li>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP.construct_inputs">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fidelity_features</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression_fidelity.html#SingleTaskMultiFidelityGP.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP.construct_inputs" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fidelity_features</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression_fidelity.html#SingleTaskMultiFidelityGP.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP.construct_inputs" title="Link to this definition">¶</a></dt>
 <dd><p>Construct <cite>Model</cite> keyword arguments from a dict of <cite>SupervisedDataset</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1302,7 +1321,7 @@ and pass in the already transformed input.</p></li>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.gp_regression_mixed.MixedSingleTaskGP.construct_inputs">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">categorical_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression_mixed.html#MixedSingleTaskGP.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression_mixed.MixedSingleTaskGP.construct_inputs" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">categorical_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression_mixed.html#MixedSingleTaskGP.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression_mixed.MixedSingleTaskGP.construct_inputs" title="Link to this definition">¶</a></dt>
 <dd><p>Construct <cite>Model</cite> keyword arguments from a dict of <cite>SupervisedDataset</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1310,7 +1329,6 @@ and pass in the already transformed input.</p></li>
 <li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a>) – A <cite>SupervisedDataset</cite> containing the training data.</p></li>
 <li><p><strong>categorical_features</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – Column indices of categorical features.</p></li>
 <li><p><strong>likelihood</strong> (<em>Likelihood</em><em> | </em><em>None</em>) – Optional likelihood used to constuct the model.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1546,7 +1564,7 @@ registered hooks while the latter silently ignores them.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.multitask.MultiTaskGP.construct_inputs">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_covar_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#MultiTaskGP.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP.construct_inputs" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_covar_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#MultiTaskGP.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP.construct_inputs" title="Link to this definition">¶</a></dt>
 <dd><p>Construct <cite>Model</cite> keyword arguments from a dataset and other args.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2127,15 +2145,12 @@ shape <cite>broadcast(test_batch_shape, model.batch_shape) x q x m</cite>.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.pairwise_gp.PairwiseGP.construct_inputs">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseGP.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP.construct_inputs" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseGP.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP.construct_inputs" title="Link to this definition">¶</a></dt>
 <dd><p>Construct <cite>Model</cite> keyword arguments from a <cite>RankingDataset</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a>) – A <cite>RankingDataset</cite>, with attributes <cite>train_X</cite>,
-<cite>train_Y</cite>, and, optionally, <cite>train_Yvar</cite>.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – Ignored.</p></li>
-</ul>
+<dd class="field-odd"><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a>) – A <cite>RankingDataset</cite>, with attributes <cite>train_X</cite>,
+<cite>train_Y</cite>, and, optionally, <cite>train_Yvar</cite>.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A dict of keyword arguments that can be used to initialize a
@@ -2335,7 +2350,7 @@ the same order across contexts.</p></li>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.contextual.SACGP.construct_inputs">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decomposition</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/contextual.html#SACGP.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.contextual.SACGP.construct_inputs" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decomposition</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/contextual.html#SACGP.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.contextual.SACGP.construct_inputs" title="Link to this definition">¶</a></dt>
 <dd><p>Construct <cite>Model</cite> keyword arguments from a dict of <cite>SupervisedDataset</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2343,7 +2358,6 @@ the same order across contexts.</p></li>
 <li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a>) – A <cite>SupervisedDataset</cite> containing the training data.</p></li>
 <li><p><strong>decomposition</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Dictionary of context names and their indexes of the
 corresponding active context parameters.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2385,7 +2399,7 @@ dimension is set to 1 for each categorical variable.</p></li>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.contextual.LCEAGP.construct_inputs">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decomposition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_embedding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cat_feature_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embs_feature_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embs_dim_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context_weight_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/contextual.html#LCEAGP.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.contextual.LCEAGP.construct_inputs" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decomposition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_embedding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cat_feature_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embs_feature_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embs_dim_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context_weight_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/contextual.html#LCEAGP.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.contextual.LCEAGP.construct_inputs" title="Link to this definition">¶</a></dt>
 <dd><p>Construct <cite>Model</cite> keyword arguments from a dict of <cite>SupervisedDataset</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2404,7 +2418,6 @@ context.</p></li>
 equals the number of categorical features k. If None, the embedding
 dimension is set to 1 for each categorical variable.</p></li>
 <li><p><strong>context_weight_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Known population weights of each context.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>

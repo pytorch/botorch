@@ -222,7 +222,6 @@
     <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">training_data</span><span class="p">:</span> <span class="n">SupervisedDataset</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Construct `Model` keyword arguments from a `SupervisedDataset`.</span>
@@ -230,7 +229,6 @@
 <span class="sd">        Args:</span>
 <span class="sd">            training_data: A `SupervisedDataset`, with attributes `train_X`,</span>
 <span class="sd">                `train_Y`, and, optionally, `train_Yvar`.</span>
-<span class="sd">            kwargs: Ignored.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A dict of keyword arguments that can be used to initialize a `Model`,</span>
