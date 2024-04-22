@@ -94,6 +94,14 @@ class InverseCostWeightedUtility(CostAwareUtility):
     performs the inverse weighting on the sample level:
     `weighted utility = mean(u_1 / c_1, ..., u_N / c_N)`.
 
+    Where values in (u_1, ..., u_N) are negative, or for mean(U) < 0, the
+    weighted utility is instead calculated via scaling by the cost, i.e. if
+    `use_mean=True`: `weighted_utility = mean(U) * mean_cost` and if
+    `use_mean=False`:
+    `weighted utility = mean(u_1 * c_1, u_2 / c_2, u_3 * c_3, ..., u_N / c_N)`,
+    depending on whether (`u_*` >= 0), as with `u_2` and `u_N` in this case, or
+    (`u_*` < 0) as with `u_1` and `u_3`.
+
     The cost is additive across multiple elements of a q-batch.
     """
 
@@ -105,6 +113,8 @@ class InverseCostWeightedUtility(CostAwareUtility):
         min_cost: float = 1e-2,
     ) -> None:
         r"""Cost-aware utility that weights increase in utility by inverse cost.
+        For negative increases in utility, the utility is instead scaled by the
+        cost. See the class description for more information.
 
         Args:
             cost_model: A model of the cost of evaluating a candidate
@@ -145,7 +155,9 @@ class InverseCostWeightedUtility(CostAwareUtility):
         X_evaluation_mask: Optional[Tensor] = None,
         **kwargs: Any,
     ) -> Tensor:
-        r"""Evaluate the cost function on the candidates and improvements.
+        r"""Evaluate the cost function on the candidates and improvements. Note
+        that negative values of `deltas` are instead scaled by the cost, and not
+        inverse-weighted. See the class description for more information.
 
         Args:
             X: A `batch_shape x q x d`-dim Tensor of with `q` `d`-dim design
@@ -201,10 +213,7 @@ class InverseCostWeightedUtility(CostAwareUtility):
         # this will be of shape `num_fantasies x batch_shape` or `batch_shape`
         cost = cost.clamp_min(self._min_cost).sum(dim=-1)
 
-        # if we are doing inverse weighting on the sample level, clamp numerator.
-        if not self._use_mean:
-            deltas = deltas.clamp_min(0.0)
-
         # compute and return the ratio on the sample level - If `use_mean=True`
-        # this operation involves broadcasting the cost across fantasies
-        return deltas / cost
+        # this operation involves broadcasting the cost across fantasies.
+        # We multiply by the cost if the deltas are <= 0, see discussion #2914
+        return torch.where(deltas > 0, deltas / cost, deltas * cost)

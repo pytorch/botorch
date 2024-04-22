@@ -258,8 +258,7 @@ class qHypervolumeKnowledgeGradient(
             values = self.cost_aware_utility(
                 # exclude pending points
                 X=X_actual[..., :q, :],
-                # cost-weighting relies on nonnegative deltas
-                deltas=values.clamp_min(0.0),
+                deltas=values,
                 sampler=self.cost_sampler,
                 X_evaluation_mask=self.X_evaluation_mask,
             )
@@ -477,8 +476,7 @@ class qMultiFidelityHypervolumeKnowledgeGradient(qHypervolumeKnowledgeGradient):
             values = self.cost_aware_utility(
                 # exclude pending points
                 X=X_actual[..., :q, :],
-                # cost-weighting relies on nonnegative deltas
-                deltas=values.clamp_min(0.0),
+                deltas=values,
                 sampler=self.cost_sampler,
                 X_evaluation_mask=self.X_evaluation_mask,
             )
