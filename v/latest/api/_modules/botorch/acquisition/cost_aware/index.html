@@ -125,6 +125,14 @@
 <span class="sd">    performs the inverse weighting on the sample level:</span>
 <span class="sd">    `weighted utility = mean(u_1 / c_1, ..., u_N / c_N)`.</span>
 
+<span class="sd">    Where values in (u_1, ..., u_N) are negative, or for mean(U) &lt; 0, the</span>
+<span class="sd">    weighted utility is instead calculated via scaling by the cost, i.e. if</span>
+<span class="sd">    `use_mean=True`: `weighted_utility = mean(U) * mean_cost` and if</span>
+<span class="sd">    `use_mean=False`:</span>
+<span class="sd">    `weighted utility = mean(u_1 * c_1, u_2 / c_2, u_3 * c_3, ..., u_N / c_N)`,</span>
+<span class="sd">    depending on whether (`u_*` &gt;= 0), as with `u_2` and `u_N` in this case, or</span>
+<span class="sd">    (`u_*` &lt; 0) as with `u_1` and `u_3`.</span>
+
 <span class="sd">    The cost is additive across multiple elements of a q-batch.</span>
 <span class="sd">    """</span>
 
@@ -136,6 +144,8 @@
         <span class="n">min_cost</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Cost-aware utility that weights increase in utility by inverse cost.</span>
+<span class="sd">        For negative increases in utility, the utility is instead scaled by the</span>
+<span class="sd">        cost. See the class description for more information.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            cost_model: A model of the cost of evaluating a candidate</span>
@@ -178,7 +188,9 @@
         <span class="n">X_evaluation_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the cost function on the candidates and improvements.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the cost function on the candidates and improvements. Note</span>
+<span class="sd">        that negative values of `deltas` are instead scaled by the cost, and not</span>
+<span class="sd">        inverse-weighted. See the class description for more information.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x q x d`-dim Tensor of with `q` `d`-dim design</span>
@@ -234,13 +246,10 @@
         <span class="c1"># this will be of shape `num_fantasies x batch_shape` or `batch_shape`</span>
         <span class="n">cost</span> <span class="o">=</span> <span class="n">cost</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_min_cost</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 
-        <span class="c1"># if we are doing inverse weighting on the sample level, clamp numerator.</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_mean</span><span class="p">:</span>
-            <span class="n">deltas</span> <span class="o">=</span> <span class="n">deltas</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
-
         <span class="c1"># compute and return the ratio on the sample level - If `use_mean=True`</span>
-        <span class="c1"># this operation involves broadcasting the cost across fantasies</span>
-        <span class="k">return</span> <span class="n">deltas</span> <span class="o">/</span> <span class="n">cost</span></div>
+        <span class="c1"># this operation involves broadcasting the cost across fantasies.</span>
+        <span class="c1"># We multiply by the cost if the deltas are &lt;= 0, see discussion #2914</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">deltas</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">deltas</span> <span class="o">/</span> <span class="n">cost</span><span class="p">,</span> <span class="n">deltas</span> <span class="o">*</span> <span class="n">cost</span><span class="p">)</span></div>
 </div>
 
 </pre></div>

@@ -4676,8 +4676,17 @@ uses the posterior mean <cite>mean_cost</cite> of the cost model, i.e.
 samples <cite>C = (c_1, …, c_N)</cite> from the posterior of the cost model and
 performs the inverse weighting on the sample level:
 <cite>weighted utility = mean(u_1 / c_1, …, u_N / c_N)</cite>.</p>
+<p>Where values in (u_1, …, u_N) are negative, or for mean(U) &lt; 0, the
+weighted utility is instead calculated via scaling by the cost, i.e. if
+<cite>use_mean=True</cite>: <cite>weighted_utility = mean(U) * mean_cost</cite> and if
+<cite>use_mean=False</cite>:
+<cite>weighted utility = mean(u_1 * c_1, u_2 / c_2, u_3 * c_3, …, u_N / c_N)</cite>,
+depending on whether (<cite>u_*</cite> &gt;= 0), as with <cite>u_2</cite> and <cite>u_N</cite> in this case, or
+(<cite>u_*</cite> &lt; 0) as with <cite>u_1</cite> and <cite>u_3</cite>.</p>
 <p>The cost is additive across multiple elements of a q-batch.</p>
-<p>Cost-aware utility that weights increase in utility by inverse cost.</p>
+<p>Cost-aware utility that weights increase in utility by inverse cost.
+For negative increases in utility, the utility is instead scaled by the
+cost. See the class description for more information.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -4704,7 +4713,9 @@ too close to zero, which may cause numerical issues.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.cost_aware.InverseCostWeightedUtility.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deltas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_evaluation_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/cost_aware.html#InverseCostWeightedUtility.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.cost_aware.InverseCostWeightedUtility.forward" title="Link to this definition">¶</a></dt>
-<dd><p>Evaluate the cost function on the candidates and improvements.</p>
+<dd><p>Evaluate the cost function on the candidates and improvements. Note
+that negative values of <cite>deltas</cite> are instead scaled by the cost, and not
+inverse-weighted. See the class description for more information.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
