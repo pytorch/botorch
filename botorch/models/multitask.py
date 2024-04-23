@@ -35,6 +35,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
+from botorch.exceptions.errors import UnsupportedError
 from botorch.models.gpytorch import GPyTorchModel, MultiTaskGPyTorchModel
 from botorch.models.model import FantasizeMixin
 from botorch.models.transforms.input import InputTransform
@@ -209,6 +210,12 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
             task_feature,
             self.num_non_task_features,
         ) = self.get_all_tasks(transformed_X, task_feature, output_tasks)
+        if all_tasks is not None and not set(all_tasks_inferred).issubset(all_tasks):
+            raise UnsupportedError(
+                f"The provided {all_tasks=} does not contain all the task features "
+                f"inferred from the training data {all_tasks_inferred=}. "
+                "This is not allowed as it will lead to errors during model training."
+            )
         all_tasks = all_tasks or all_tasks_inferred
         self.num_tasks = len(all_tasks)
         if outcome_transform is not None:
