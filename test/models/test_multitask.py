@@ -181,7 +181,7 @@ def _gen_kronecker_model_and_data(model_kwargs=None, batch_shape=None, **tkwargs
 
 
 class TestMultiTaskGP(BotorchTestCase):
-    def test_MultiTaskGP(self):
+    def test_MultiTaskGP(self) -> None:
         bounds = torch.tensor([[0.0, 0.0], [1.0, 1.0]])
         for dtype, use_intf, use_octf, task_values in itertools.product(
             (torch.float, torch.double), (False, True), (False, True), [None, [0, 2]]
@@ -343,7 +343,7 @@ class TestMultiTaskGP(BotorchTestCase):
             else:
                 self.assertIsNone(model._task_mapper)
 
-    def test_MultiTaskGP_single_output(self):
+    def test_MultiTaskGP_single_output(self) -> None:
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
             model = _gen_model_single_output(**tkwargs)
@@ -386,7 +386,7 @@ class TestMultiTaskGP(BotorchTestCase):
             posterior_f_tf = model.posterior(test_x, posterior_transform=post_tf)
             self.assertTrue(torch.equal(posterior_f.mean, posterior_f_tf.mean))
 
-    def test_MultiTaskGP_fixed_prior(self):
+    def test_MultiTaskGP_fixed_prior(self) -> None:
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
             model = _gen_fixed_prior_model(**tkwargs)
@@ -396,7 +396,7 @@ class TestMultiTaskGP(BotorchTestCase):
                 model.task_covar_module.IndexKernelPrior, LKJCovariancePrior
             )
 
-    def test_MultiTaskGP_given_covar_module(self):
+    def test_MultiTaskGP_given_covar_module(self) -> None:
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
             model = _gen_given_covar_module_model(**tkwargs)
@@ -407,7 +407,7 @@ class TestMultiTaskGP(BotorchTestCase):
             self.assertAlmostEqual(model.covar_module.lengthscale_prior.loc, 0.0)
             self.assertAlmostEqual(model.covar_module.lengthscale_prior.scale, 1.0)
 
-    def test_custom_mean_and_likelihood(self):
+    def test_custom_mean_and_likelihood(self) -> None:
         tkwargs = {"device": self.device, "dtype": torch.double}
         _, (train_X, train_Y, _) = gen_multi_task_dataset(**tkwargs)
         mean_module = LinearMean(input_size=train_X.shape[-1])
@@ -422,14 +422,31 @@ class TestMultiTaskGP(BotorchTestCase):
         self.assertIs(model.mean_module, mean_module)
         self.assertIs(model.likelihood, likelihood)
 
+    def test_all_tasks_input(self) -> None:
+        _, (train_X, train_Y, _) = gen_multi_task_dataset(
+            dtype=torch.double, device=self.device
+        )
+        # Invalid: does not contain all tasks.
+        with self.assertRaisesRegex(
+            UnsupportedError, "does not contain all the task features"
+        ):
+            MultiTaskGP(train_X=train_X, train_Y=train_Y, task_feature=0, all_tasks=[0])
+        # Contains extra tasks.
+        model = MultiTaskGP(
+            train_X=train_X, train_Y=train_Y, task_feature=0, all_tasks=[0, 1, 2, 3]
+        )
+        self.assertEqual(model.num_tasks, 4)
+        # Check that IndexKernel knows of all tasks.
+        self.assertEqual(model.task_covar_module.raw_var.shape[-1], 4)
+
 
 class TestFixedNoiseMultiTaskGP(BotorchTestCase):
-    def test_deprecation_warning(self):
+    def test_deprecation_warning(self) -> None:
         tkwargs = {"device": self.device, "dtype": torch.float}
         with self.assertWarnsRegex(DeprecationWarning, "FixedNoise"):
             _gen_fixed_noise_model_and_data(use_fixed_noise_model_class=True, **tkwargs)
 
-    def test_FixedNoiseMultiTaskGP(self):
+    def test_FixedNoiseMultiTaskGP(self) -> None:
         bounds = torch.tensor([[-1.0, 0.0], [1.0, 1.0]])
         for dtype, use_intf, use_octf in itertools.product(
             (torch.float, torch.double), (False, True), (False, True)
@@ -534,7 +551,7 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             with self.assertRaises(RuntimeError):
                 FixedNoiseMultiTaskGP(train_X, train_Y, train_Yvar, 0, output_tasks=[2])
 
-    def test_FixedNoiseMultiTaskGP_single_output(self):
+    def test_FixedNoiseMultiTaskGP_single_output(self) -> None:
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
             model = _gen_fixed_noise_model_single_output(**tkwargs)
@@ -572,7 +589,7 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
             self.assertIsInstance(posterior_f.distribution, MultivariateNormal)
 
-    def test_FixedNoiseMultiTaskGP_fixed_prior(self):
+    def test_FixedNoiseMultiTaskGP_fixed_prior(self) -> None:
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
             model = _gen_fixed_noise_and_prior_model(**tkwargs)
@@ -582,7 +599,7 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
                 model.task_covar_module.IndexKernelPrior, LKJCovariancePrior
             )
 
-    def test_FixedNoiseMultiTaskGP_given_covar_module(self):
+    def test_FixedNoiseMultiTaskGP_given_covar_module(self) -> None:
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
             model = _gen_fixed_noise_and_given_covar_module_model(**tkwargs)
@@ -596,7 +613,7 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             )
             self.assertAlmostEqual(model.covar_module.lengthscale_prior.rate, 1.0)
 
-    def test_MultiTaskGP_construct_inputs(self):
+    def test_MultiTaskGP_construct_inputs(self) -> None:
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
             task_feature = 0
@@ -641,7 +658,7 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             self.assertTrue(torch.equal(data_dict["train_Y"], train_Y))
             self.assertIsInstance(data_dict["task_covar_prior"], LKJCovariancePrior)
 
-    def test_FixedNoiseMultiTaskGP_construct_inputs(self):
+    def test_FixedNoiseMultiTaskGP_construct_inputs(self) -> None:
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
             task_feature = 0
@@ -683,7 +700,7 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
 
 
 class TestKroneckerMultiTaskGP(BotorchTestCase):
-    def test_KroneckerMultiTaskGP_default(self):
+    def test_KroneckerMultiTaskGP_default(self) -> None:
         bounds = torch.tensor([[-1.0, 0.0], [1.0, 1.0]])
 
         for batch_shape, dtype, use_intf, use_octf in itertools.product(
@@ -792,7 +809,7 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             with self.assertRaises(NotImplementedError):
                 model.posterior(test_x, posterior_transform=post_tf)
 
-    def test_KroneckerMultiTaskGP_custom(self):
+    def test_KroneckerMultiTaskGP_custom(self) -> None:
         for batch_shape, dtype in itertools.product(
             (torch.Size(),),  # torch.Size([3])), TODO: Fix and test batch mode
             (torch.float, torch.double),
