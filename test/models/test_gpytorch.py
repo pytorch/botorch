@@ -16,6 +16,7 @@ from botorch.exceptions import (
     BotorchTensorDimensionWarning,
 )
 from botorch.exceptions.errors import DeprecationError, InputDataError
+from botorch.exceptions.warnings import InputDataWarning
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.gpytorch import (
     BatchedMultiOutputGPyTorchModel,
@@ -306,7 +307,7 @@ class TestGPyTorchModel(BotorchTestCase):
         self.assertTrue(torch.equal(post.mean, torch.zeros(3, 1, **tkwargs)))
 
     def test_float_warning_and_dtype_error(self):
-        with self.assertWarnsRegex(UserWarning, "double precision"):
+        with self.assertWarnsRegex(InputDataWarning, "double precision"):
             SimpleGPyTorchModel(torch.rand(5, 1), torch.randn(5, 1))
         with self.assertRaisesRegex(InputDataError, "same dtype"):
             SimpleGPyTorchModel(torch.rand(5, 1), torch.randn(5, 1, dtype=torch.double))

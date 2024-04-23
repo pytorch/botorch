@@ -29,6 +29,7 @@ from botorch.exceptions.errors import (
 from botorch.exceptions.warnings import (
     _get_single_precision_warning,
     BotorchTensorDimensionWarning,
+    InputDataWarning,
 )
 from botorch.models.model import Model, ModelList
 from botorch.models.utils import (
@@ -126,9 +127,10 @@ class GPyTorchModel(Model, ABC):
                 f"{Yvar.dtype if Yvar is not None else None} for Yvar."
             )
         if X.dtype != torch.float64:
-            # NOTE: Not using a BotorchWarning since those get ignored.
             warnings.warn(
-                _get_single_precision_warning(str(X.dtype)), UserWarning, stacklevel=2
+                _get_single_precision_warning(str(X.dtype)),
+                InputDataWarning,
+                stacklevel=3,  # Warn at model constructor call.
             )
 
     @property
