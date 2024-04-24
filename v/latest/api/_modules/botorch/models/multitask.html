@@ -58,6 +58,7 @@
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">PosteriorTransform</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span><span class="p">,</span> <span class="n">MultiTaskGPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">FantasizeMixin</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
@@ -237,6 +238,12 @@
             <span class="n">task_feature</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">num_non_task_features</span><span class="p">,</span>
         <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_all_tasks</span><span class="p">(</span><span class="n">transformed_X</span><span class="p">,</span> <span class="n">task_feature</span><span class="p">,</span> <span class="n">output_tasks</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">all_tasks</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">set</span><span class="p">(</span><span class="n">all_tasks_inferred</span><span class="p">)</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">all_tasks</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"The provided </span><span class="si">{</span><span class="n">all_tasks</span><span class="si">=}</span><span class="s2"> does not contain all the task features "</span>
+                <span class="sa">f</span><span class="s2">"inferred from the training data </span><span class="si">{</span><span class="n">all_tasks_inferred</span><span class="si">=}</span><span class="s2">. "</span>
+                <span class="s2">"This is not allowed as it will lead to errors during model training."</span>
+            <span class="p">)</span>
         <span class="n">all_tasks</span> <span class="o">=</span> <span class="n">all_tasks</span> <span class="ow">or</span> <span class="n">all_tasks_inferred</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_tasks</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_tasks</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
