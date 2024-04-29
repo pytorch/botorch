@@ -274,14 +274,20 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 mean, var = posterior.mean, posterior.variance
                 self.assertEqual(mean.shape, expected_shape)
                 self.assertEqual(var.shape, expected_shape)
-                # Mixture mean/variance/median/quantiles
+                # Mixture mean/variance/covariance/median/quantiles
                 mixture_mean = posterior.mixture_mean
                 mixture_variance = posterior.mixture_variance
+                mixture_covariance = posterior.mixture_covariance_matrix
                 quantile1 = posterior.quantile(value=torch.tensor(0.01))
                 quantile2 = posterior.quantile(value=torch.tensor(0.99))
                 self.assertEqual(mixture_mean.shape, torch.Size(batch_shape + [1]))
                 self.assertEqual(mixture_variance.shape, torch.Size(batch_shape + [1]))
                 self.assertTrue(mixture_variance.min() > 0.0)
+                self.assertEqual(
+                    mixture_covariance.shape, torch.Size(batch_shape + batch_shape[-1:])
+                )
+                # Check that it is PSD.
+                torch.linalg.cholesky(mixture_covariance.to_dense())
                 self.assertEqual(quantile1.shape, torch.Size(batch_shape + [1]))
                 self.assertEqual(quantile2.shape, torch.Size(batch_shape + [1]))
                 self.assertTrue((quantile2 > quantile1).all())
