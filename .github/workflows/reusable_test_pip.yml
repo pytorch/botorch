@@ -42,10 +42,10 @@ jobs:
         pip install .[test]
     - name: Unit tests and coverage -- BoTorch
       run: |
-        pytest -ra test/ --cov botorch/ --cov-report term-missing
+        pytest -ra test/ --cov botorch/ --cov-report term-missing --cov-report xml:botorch_cov.xml
     - name: Unit tests and coverage -- BoTorch Community
       run: |
-        pytest -ra test_community/ --cov botorch_community/ --cov-report term-missing
+        pytest -ra test_community/ --cov botorch_community/ --cov-report term-missing --cov-report xml:botorch_community_cov.xml
     - name: Upload coverage
       if: ${{ inputs.upload_coverage && runner.os == 'Linux' && matrix.python-version == 3.10 }}
       uses: codecov/codecov-action@v4
