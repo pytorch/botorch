@@ -10,6 +10,7 @@ jobs:
     uses: ./.github/workflows/reusable_test_pip.yml
     with:
       use_latest_pytorch_gpytorch: false
+      upload_coverage: false
     secrets: inherit
 
   tests-conda-stable:
