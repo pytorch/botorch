@@ -3,7 +3,13 @@ name: Reusable Test Workflow w/ pip
 on:
   workflow_call:
     inputs:
-      use_latest_pytorch_gpytorch: bool
+      use_latest_pytorch_gpytorch:
+        required: true
+        type: boolean
+      upload_coverage:
+        required: false
+        type: boolean
+        default: true
 
 
 jobs:
@@ -41,7 +47,7 @@ jobs:
       run: |
         pytest -ra test_community/ --cov=botorch_community/ --cov-report term-missing
     - name: Upload coverage
-      if: ${{ runner.os == 'Linux' && matrix.python-version == 3.10 }}
+      if: ${{ inputs.upload_coverage && runner.os == 'Linux' && matrix.python-version == 3.10 }}
       uses: codecov/codecov-action@v4
       with:
         fail_ci_if_error: true
