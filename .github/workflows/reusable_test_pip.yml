@@ -52,3 +52,4 @@ jobs:
       with:
         fail_ci_if_error: true
         token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./botorch_cov.xml,./botorch_community_cov.xml
