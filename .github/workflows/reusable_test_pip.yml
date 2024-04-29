@@ -40,10 +40,10 @@ jobs:
         pip install git+https://github.com/cornellius-gp/linear_operator.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git
         pip install .[test]
-    - name: Unit tests and coverage: BoTorch
+    - name: Unit tests and coverage -- BoTorch
       run: |
         pytest -ra test/ --cov=botorch/ --cov-report term-missing
-    - name: Unit tests and coverage: BoTorch Community
+    - name: Unit tests and coverage -- BoTorch Community
       run: |
         pytest -ra test_community/ --cov=botorch_community/ --cov-report term-missing
     - name: Upload coverage
