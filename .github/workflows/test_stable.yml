@@ -6,26 +6,12 @@ on:
 jobs:
 
   tests-and-coverage-pip-stable:
-    name: Tests and coverage (pip, Python ${{ matrix.python-version }}, ${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: ["ubuntu-latest", "macos-14", "windows-latest"]
-        python-version: ["3.10", "3.12"]
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        pip install gpytorch
-        pip install .[test]
-    - name: Unit tests and coverage
-      run: |
-        pytest -ra --cov=. --cov-report term-missing
+    name: Test & Coverage
+    uses: ./.github/workflows/reusable_test_pip.yml
+    with:
+      use_latest_pytorch_gpytorch: false
+      upload_coverage: false
+    secrets: inherit
 
   tests-conda-stable:
     name: Tests (conda, ${{ matrix.os }})
