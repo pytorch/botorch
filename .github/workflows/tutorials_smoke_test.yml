@@ -1,7 +1,9 @@
-name: Tutorials on PR
+name: Tutorials with smoke test
 
 on:
   pull_request:
+    branches: [ main ]
+  push:
     branches: [ main ]
   workflow_dispatch:
 
