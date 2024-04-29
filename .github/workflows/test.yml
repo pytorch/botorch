@@ -43,11 +43,11 @@ jobs:
         pip install git+https://github.com/cornellius-gp/linear_operator.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git
         pip install .[test]
-    - name: Unit tests: BoTorch
+    - name: Unit tests -- BoTorch
       shell: bash -l {0}
       run: |
         pytest -ra test/
-    - name: Unit tests: BoTorch Community
+    - name: Unit tests -- BoTorch Community
       shell: bash -l {0}
       run: |
         pytest -ra test_community/
