@@ -72,10 +72,6 @@ class TestPosteriorList(BotorchTestCase):
             p_1 = make_posterior(shape, dtype)
             p_2 = make_posterior(shape, dtype)
             p = PosteriorList(p_1, p_2)
-            with self.assertWarnsRegex(
-                DeprecationWarning, "The `event_shape` attribute"
-            ):
-                self.assertEqual(p.event_shape, p._extended_shape())
             with self.assertRaisesRegex(NotImplementedError, "base_sample_shape"):
                 p.base_sample_shape
             self.assertEqual(p._extended_shape(), shape + torch.Size([2]))
