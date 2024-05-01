@@ -1,0 +1,13 @@
+name: CPU info
+
+on:
+  workflow_dispatch:
+
+jobs:
+  cpu_info:
+    name: Get CPU info on runners
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get CPU info
+        run: |
+          lscpu | egrep 'Model name|Socket|Thread|NUMA|CPU\(s\)'
