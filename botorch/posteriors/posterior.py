@@ -10,8 +10,6 @@ Abstract base module for all botorch posteriors.
 
 from __future__ import annotations
 
-import warnings
-
 from abc import ABC, abstractmethod, abstractproperty
 from typing import Optional, Tuple
 
@@ -83,17 +81,6 @@ class Posterior(ABC):
         """
         with torch.no_grad():
             return self.rsample(sample_shape=sample_shape)
-
-    @property
-    def event_shape(self) -> torch.Size:
-        r"""The event shape (i.e. the shape of a single sample)."""
-        warnings.warn(
-            "The `event_shape` attribute of `Posterior` is deprecated. It will default "
-            "to the `event_shape` of the underlying distribution in a future version. "
-            "Use `_extended_shape` instead.",
-            DeprecationWarning,
-        )
-        return self._extended_shape()
 
     @abstractproperty
     def device(self) -> torch.device:
