@@ -10,6 +10,14 @@ on:
 
 jobs:
 
+  cpu_info:
+    name: Get CPU info on runners
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get CPU info
+        run: |
+          lscpu | egrep 'Model name|Socket|Thread|NUMA|CPU\(s\)'
+
   ufmt:
     name: Code formatting and sorting with ufmt
     runs-on: ubuntu-latest
