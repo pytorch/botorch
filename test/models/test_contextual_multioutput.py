@@ -123,9 +123,14 @@ class ContextualMultiOutputTest(BotorchTestCase):
             self.assertIsInstance(model(test_x), MultivariateNormal)
 
     def test_construct_inputs(self) -> None:
-        for with_embedding_inputs, yvar in ((True, None), (False, 0.01)):
+        for with_embedding_inputs, yvar, skip_task_features_in_datasets in zip(
+            (True, False), (None, 0.01), (True, False), strict=True
+        ):
             dataset, (train_x, train_y, train_yvar) = gen_multi_task_dataset(
-                yvar=yvar, dtype=torch.double, device=self.device
+                yvar=yvar,
+                skip_task_features_in_datasets=skip_task_features_in_datasets,
+                dtype=torch.double,
+                device=self.device,
             )
             model_inputs = LCEMGP.construct_inputs(
                 training_data=dataset,
@@ -139,11 +144,18 @@ class ContextualMultiOutputTest(BotorchTestCase):
                 ),
             )
             # Check that the model inputs are valid.
-            LCEMGP(**model_inputs)
+            model = LCEMGP(**model_inputs)
             # Check that the model inputs are as expected.
-            self.assertAllClose(model_inputs.pop("train_X"), train_x)
+            self.assertEqual(model.all_tasks, [0, 1])
+            if skip_task_features_in_datasets:
+                # In this case, the task feature is appended at the end.
+                self.assertAllClose(model_inputs.pop("train_X"), train_x[..., [1, 0]])
+                # all_tasks is inferred from data when task features are omitted.
+                self.assertEqual(model_inputs.pop("all_tasks"), [0, 1])
+            else:
+                self.assertAllClose(model_inputs.pop("train_X"), train_x)
             self.assertAllClose(model_inputs.pop("train_Y"), train_y)
-            if yvar is not None:
+            if train_yvar is not None:
                 self.assertAllClose(model_inputs.pop("train_Yvar"), train_yvar)
             if with_embedding_inputs:
                 self.assertEqual(model_inputs.pop("embs_dim_list"), [2])
@@ -155,7 +167,6 @@ class ContextualMultiOutputTest(BotorchTestCase):
                     model_inputs.pop("context_cat_feature"),
                     torch.tensor([[0.4], [0.5]]),
                 )
-            self.assertEqual(model_inputs.pop("all_tasks"), [0, 1])
             self.assertEqual(model_inputs.pop("task_feature"), 0)
             self.assertIsNone(model_inputs.pop("output_tasks"))
             # Check that there are no unexpected inputs.

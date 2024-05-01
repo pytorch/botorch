@@ -16,6 +16,7 @@ from typing import List, Optional, Tuple
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
+from botorch.exceptions.errors import UnsupportedError
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import FantasizeMixin, Model
 from botorch.models.transforms.outcome import Standardize
@@ -66,9 +67,24 @@ def standardize_moments(
 
 
 def gen_multi_task_dataset(
-    yvar: Optional[float] = None, task_values: Optional[List[int]] = None, **tkwargs
+    yvar: Optional[float] = None,
+    task_values: Optional[List[int]] = None,
+    skip_task_features_in_datasets: bool = False,
+    **tkwargs,
 ) -> Tuple[MultiTaskDataset, Tuple[Tensor, Tensor, Optional[Tensor]]]:
-    """Constructs a multi-task dataset with two tasks, each with 10 data points."""
+    """Constructs a multi-task dataset with two tasks, each with 10 data points.
+
+    Args:
+        yvar: The noise level to use for `train_Yvar`. If None, uses `train_Yvar=None`.
+        task_values: The values of the task features. If None, uses [0, 1].
+        skip_task_features_in_datasets: If True, the task features are not included in
+            Xs of the datasets used to construct the datasets. This is useful for
+            testing `MultiTaskDataset`.
+    """
+    if task_values is not None and skip_task_features_in_datasets:
+        raise UnsupportedError(  # pragma: no cover
+            "`task_values` and `skip_task_features_in_datasets` can't be used together."
+        )
     X = torch.linspace(0, 0.95, 10, **tkwargs) + 0.05 * torch.rand(10, **tkwargs)
     X = X.unsqueeze(dim=-1)
     Y1 = torch.sin(X * (2 * math.pi)) + torch.randn_like(X) * 0.2
@@ -81,24 +97,27 @@ def gen_multi_task_dataset(
     Yvar1 = None if yvar is None else torch.full_like(Y1, yvar)
     Yvar2 = None if yvar is None else torch.full_like(Y2, yvar)
     train_Yvar = None if yvar is None else torch.cat([Yvar1, Yvar2])
+    feature_slice = slice(1, None) if skip_task_features_in_datasets else slice(None)
     datasets = [
         SupervisedDataset(
-            X=train_X[:10],
+            X=train_X[:10, feature_slice],
             Y=Y1,
             Yvar=Yvar1,
-            feature_names=["task", "X"],
+            feature_names=["task", "X"][feature_slice],
             outcome_names=["y"],
         ),
         SupervisedDataset(
-            X=train_X[10:],
+            X=train_X[10:, feature_slice],
             Y=Y2,
             Yvar=Yvar2,
-            feature_names=["task", "X"],
+            feature_names=["task", "X"][feature_slice],
             outcome_names=["y1"],
         ),
     ]
     dataset = MultiTaskDataset(
-        datasets=datasets, target_outcome_name="y", task_feature_index=0
+        datasets=datasets,
+        target_outcome_name="y",
+        task_feature_index=None if skip_task_features_in_datasets else 0,
     )
     return dataset, (train_X, train_Y, train_Yvar)
 

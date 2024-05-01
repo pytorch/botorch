@@ -7,7 +7,7 @@
 import itertools
 import math
 import warnings
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 import torch
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
@@ -15,7 +15,6 @@ from botorch.exceptions import OptimizationWarning
 from botorch.exceptions.errors import UnsupportedError
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.multitask import (
-    FixedNoiseMultiTaskGP,
     get_task_value_remapping,
     KroneckerMultiTaskGP,
     MultiTaskGP,
@@ -48,60 +47,36 @@ from gpytorch.settings import max_cholesky_size, max_root_decomposition_size
 
 
 def _gen_model_and_data(
+    fixed_noise: bool,
     task_feature: int = 0,
     output_tasks: Optional[List[int]] = None,
     task_values: Optional[List[int]] = None,
+    skip_task_features_in_datasets: bool = False,
     input_transform: Optional[InputTransform] = None,
     outcome_transform: Optional[OutcomeTransform] = None,
     **tkwargs
 ):
-    datasets, (train_X, train_Y, _) = gen_multi_task_dataset(
-        task_values=task_values, **tkwargs
+    datasets, (train_X, train_Y, train_Yvar) = gen_multi_task_dataset(
+        yvar=0.05 if fixed_noise else None,
+        task_values=task_values,
+        skip_task_features_in_datasets=skip_task_features_in_datasets,
+        **tkwargs,
     )
     model = MultiTaskGP(
         train_X,
         train_Y,
-        task_feature=task_feature,
-        output_tasks=output_tasks,
-        input_transform=input_transform,
-        outcome_transform=outcome_transform,
-    )
-    return model.to(**tkwargs), datasets, (train_X, train_Y)
-
-
-def _gen_model_single_output(**tkwargs):
-    _, (train_X, train_Y, _) = gen_multi_task_dataset(**tkwargs)
-    model = MultiTaskGP(train_X, train_Y, task_feature=0, output_tasks=[1])
-    return model.to(**tkwargs)
-
-
-def _gen_fixed_noise_model_and_data(
-    task_feature: int = 0,
-    input_transform=None,
-    outcome_transform=None,
-    use_fixed_noise_model_class: bool = False,
-    **tkwargs
-):
-    datasets, (train_X, train_Y, train_Yvar) = gen_multi_task_dataset(
-        yvar=0.05, **tkwargs
-    )
-    model_class = FixedNoiseMultiTaskGP if use_fixed_noise_model_class else MultiTaskGP
-    model = model_class(
-        train_X,
-        train_Y,
         train_Yvar=train_Yvar,
         task_feature=task_feature,
+        output_tasks=output_tasks,
         input_transform=input_transform,
         outcome_transform=outcome_transform,
     )
     return model.to(**tkwargs), datasets, (train_X, train_Y, train_Yvar)
 
 
-def _gen_fixed_noise_model_single_output(**tkwargs):
-    _, (train_X, train_Y, train_Yvar) = gen_multi_task_dataset(yvar=0.05, **tkwargs)
-    model = FixedNoiseMultiTaskGP(
-        train_X, train_Y, train_Yvar, task_feature=0, output_tasks=[1]
-    )
+def _gen_model_single_output(**tkwargs):
+    _, (train_X, train_Y, _) = gen_multi_task_dataset(**tkwargs)
+    model = MultiTaskGP(train_X, train_Y, task_feature=0, output_tasks=[1])
     return model.to(**tkwargs)
 
 
@@ -125,32 +100,6 @@ def _gen_given_covar_module_model(**tkwargs):
         train_Y,
         task_feature=0,
         covar_module=RBFKernel(lengthscale_prior=LogNormalPrior(0.0, 1.0)),
-    )
-    return model.to(**tkwargs)
-
-
-def _gen_fixed_noise_and_prior_model(**tkwargs):
-    _, (train_X, train_Y, train_Yvar) = gen_multi_task_dataset(yvar=0.05, **tkwargs)
-    sd_prior = GammaPrior(2.0, 0.15)
-    sd_prior._event_shape = torch.Size([2])
-    model = FixedNoiseMultiTaskGP(
-        train_X,
-        train_Y,
-        train_Yvar,
-        task_feature=1,
-        task_covar_prior=LKJCovariancePrior(2, 0.6, sd_prior),
-    )
-    return model.to(**tkwargs)
-
-
-def _gen_fixed_noise_and_given_covar_module_model(**tkwargs):
-    _, (train_X, train_Y, train_Yvar) = gen_multi_task_dataset(yvar=0.05, **tkwargs)
-    model = FixedNoiseMultiTaskGP(
-        train_X,
-        train_Y,
-        train_Yvar,
-        task_feature=1,
-        covar_module=MaternKernel(nu=1.5, lengthscale_prior=GammaPrior(1.0, 1.0)),
     )
     return model.to(**tkwargs)
 
@@ -183,10 +132,15 @@ def _gen_kronecker_model_and_data(model_kwargs=None, batch_shape=None, **tkwargs
 class TestMultiTaskGP(BotorchTestCase):
     def test_MultiTaskGP(self) -> None:
         bounds = torch.tensor([[0.0, 0.0], [1.0, 1.0]])
-        for dtype, use_intf, use_octf, task_values in itertools.product(
-            (torch.float, torch.double), (False, True), (False, True), [None, [0, 2]]
+        for dtype, use_intf, use_octf, task_values, fixed_noise in zip(
+            (torch.float, torch.double),
+            (False, True),
+            (False, True),
+            (None, [0, 2]),
+            (False, True),
+            strict=True,
         ):
-            tkwargs = {"device": self.device, "dtype": dtype}
+            tkwargs: Dict[str, Any] = {"device": self.device, "dtype": dtype}
             octf = Standardize(m=1) if use_octf else None
 
             intf = (
@@ -194,7 +148,8 @@ class TestMultiTaskGP(BotorchTestCase):
                 if use_intf
                 else None
             )
-            model, datasets, (train_X, train_Y) = _gen_model_and_data(
+            model, datasets, (train_X, train_Y, train_Yvar) = _gen_model_and_data(
+                fixed_noise=fixed_noise,
                 task_values=task_values,
                 input_transform=intf,
                 outcome_transform=octf,
@@ -202,7 +157,10 @@ class TestMultiTaskGP(BotorchTestCase):
             )
             self.assertIsInstance(model, MultiTaskGP)
             self.assertEqual(model.num_outputs, 2)
-            self.assertIsInstance(model.likelihood, GaussianLikelihood)
+            if fixed_noise:
+                self.assertIsInstance(model.likelihood, FixedNoiseGaussianLikelihood)
+            else:
+                self.assertIsInstance(model.likelihood, GaussianLikelihood)
             self.assertIsInstance(model.mean_module, ConstantMean)
             self.assertIsInstance(model.covar_module, ScaleKernel)
             matern_kernel = model.covar_module.base_kernel
@@ -213,6 +171,14 @@ class TestMultiTaskGP(BotorchTestCase):
             self.assertEqual(
                 model.task_covar_module.covar_factor.shape[-1], model._rank
             )
+            if task_values is None:
+                self.assertEqual(model._task_mapper, None)
+                self.assertEqual(model._expected_task_values, {0, 1})
+            else:
+                self.assertEqual(model._task_mapper.shape, torch.Size([3]))
+                self.assertEqual(model._expected_task_values, set(task_values))
+            if use_octf:
+                self.assertIsInstance(model.outcome_transform, Standardize)
             if use_intf:
                 self.assertIsInstance(model.input_transform, Normalize)
 
@@ -345,7 +311,7 @@ class TestMultiTaskGP(BotorchTestCase):
 
     def test_MultiTaskGP_single_output(self) -> None:
         for dtype in (torch.float, torch.double):
-            tkwargs = {"device": self.device, "dtype": dtype}
+            tkwargs: Dict[str, Any] = {"device": self.device, "dtype": dtype}
             model = _gen_model_single_output(**tkwargs)
             self.assertIsInstance(model, MultiTaskGP)
             self.assertEqual(model.num_outputs, 1)
@@ -439,186 +405,17 @@ class TestMultiTaskGP(BotorchTestCase):
         # Check that IndexKernel knows of all tasks.
         self.assertEqual(model.task_covar_module.raw_var.shape[-1], 4)
 
-
-class TestFixedNoiseMultiTaskGP(BotorchTestCase):
-    def test_deprecation_warning(self) -> None:
-        tkwargs = {"device": self.device, "dtype": torch.float}
-        with self.assertWarnsRegex(DeprecationWarning, "FixedNoise"):
-            _gen_fixed_noise_model_and_data(use_fixed_noise_model_class=True, **tkwargs)
-
-    def test_FixedNoiseMultiTaskGP(self) -> None:
-        bounds = torch.tensor([[-1.0, 0.0], [1.0, 1.0]])
-        for dtype, use_intf, use_octf in itertools.product(
-            (torch.float, torch.double), (False, True), (False, True)
-        ):
-            tkwargs = {"device": self.device, "dtype": dtype}
-            octf = Standardize(m=1) if use_octf else None
-            intf = (
-                Normalize(d=2, bounds=bounds.to(**tkwargs), transform_on_train=True)
-                if use_intf
-                else None
-            )
-            model, _, (train_X, _, _) = _gen_fixed_noise_model_and_data(
-                input_transform=intf, outcome_transform=octf, **tkwargs
-            )
-            self.assertIsInstance(model, MultiTaskGP)
-            self.assertEqual(model.num_outputs, 2)
-            self.assertIsInstance(model.likelihood, FixedNoiseGaussianLikelihood)
-            self.assertIsInstance(model.mean_module, ConstantMean)
-            self.assertIsInstance(model.covar_module, ScaleKernel)
-            matern_kernel = model.covar_module.base_kernel
-            self.assertIsInstance(matern_kernel, MaternKernel)
-            self.assertIsInstance(matern_kernel.lengthscale_prior, GammaPrior)
-            self.assertIsInstance(model.task_covar_module, IndexKernel)
-            self.assertEqual(model._rank, 2)
-            self.assertEqual(
-                model.task_covar_module.covar_factor.shape[-1], model._rank
-            )
-            if use_octf:
-                self.assertIsInstance(model.outcome_transform, Standardize)
-            if use_intf:
-                self.assertIsInstance(model.input_transform, Normalize)
-
-            # test model fitting
-            mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=OptimizationWarning)
-                mll = fit_gpytorch_mll(
-                    mll, optimizer_kwargs={"options": {"maxiter": 1}}, max_attempts=1
-                )
-
-            # check that training data has input transform applied
-            # check that the train inputs have been transformed and set on the model
-            if use_intf:
-                self.assertTrue(
-                    torch.equal(model.train_inputs[0], model.input_transform(train_X))
-                )
-
-            # test posterior
-            test_x = torch.rand(2, 1, **tkwargs)
-            posterior_f = model.posterior(test_x)
-            self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.distribution, MultitaskMultivariateNormal)
-            self.assertEqual(posterior_f.mean.shape, torch.Size([2, 2]))
-            self.assertEqual(posterior_f.variance.shape, torch.Size([2, 2]))
-
-            # check posterior transform is applied
-            if use_octf:
-                posterior_pred = model.posterior(test_x)
-                tmp_tf = model.outcome_transform
-                del model.outcome_transform
-                pp_tf = model.posterior(test_x)
-                model.outcome_transform = tmp_tf
-                expected_var = tmp_tf.untransform_posterior(pp_tf).variance
-                self.assertAllClose(posterior_pred.variance, expected_var)
-
-            # test that posterior w/ observation noise raises appropriate error
-            with self.assertRaises(NotImplementedError):
-                model.posterior(test_x, observation_noise=True)
-            with self.assertRaises(NotImplementedError):
-                model.posterior(test_x, observation_noise=torch.rand(2, **tkwargs))
-
-            # test posterior w/ single output index
-            posterior_f = model.posterior(test_x, output_indices=[0])
-            self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.distribution, MultivariateNormal)
-            self.assertEqual(posterior_f.mean.shape, torch.Size([2, 1]))
-            self.assertEqual(posterior_f.variance.shape, torch.Size([2, 1]))
-
-            # test posterior w/ bad output index
-            with self.assertRaises(ValueError):
-                model.posterior(test_x, output_indices=[2])
-
-            # test posterior (batch eval)
-            test_x = torch.rand(3, 2, 1, **tkwargs)
-            posterior_f = model.posterior(test_x)
-            self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.distribution, MultitaskMultivariateNormal)
-
-            # test that unsupported batch shape MTGPs throw correct error
-            with self.assertRaises(ValueError):
-                FixedNoiseMultiTaskGP(
-                    torch.rand(2, 2, 2), torch.rand(2, 2, 1), torch.rand(2, 2, 1), 0
-                )
-
-            # test that bad feature index throws correct error
-            _, (train_X, train_Y, _) = gen_multi_task_dataset(**tkwargs)
-            train_Yvar = torch.full_like(train_Y, 0.05)
-            with self.assertRaises(ValueError):
-                FixedNoiseMultiTaskGP(train_X, train_Y, train_Yvar, 2)
-
-            # test that bad output task throws correct error
-            with self.assertRaises(RuntimeError):
-                FixedNoiseMultiTaskGP(train_X, train_Y, train_Yvar, 0, output_tasks=[2])
-
-    def test_FixedNoiseMultiTaskGP_single_output(self) -> None:
-        for dtype in (torch.float, torch.double):
-            tkwargs = {"device": self.device, "dtype": dtype}
-            model = _gen_fixed_noise_model_single_output(**tkwargs)
-            self.assertIsInstance(model, FixedNoiseMultiTaskGP)
-            self.assertEqual(model.num_outputs, 1)
-            self.assertIsInstance(model.likelihood, FixedNoiseGaussianLikelihood)
-            self.assertIsInstance(model.mean_module, ConstantMean)
-            self.assertIsInstance(model.covar_module, ScaleKernel)
-            matern_kernel = model.covar_module.base_kernel
-            self.assertIsInstance(matern_kernel, MaternKernel)
-            self.assertIsInstance(matern_kernel.lengthscale_prior, GammaPrior)
-            self.assertIsInstance(model.task_covar_module, IndexKernel)
-            self.assertEqual(model._rank, 2)
-            self.assertEqual(
-                model.task_covar_module.covar_factor.shape[-1], model._rank
-            )
-
-            # test model fitting
-            mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=OptimizationWarning)
-                mll = fit_gpytorch_mll(
-                    mll, optimizer_kwargs={"options": {"maxiter": 1}}, max_attempts=1
-                )
-
-            # test posterior
-            test_x = torch.rand(2, 1, **tkwargs)
-            posterior_f = model.posterior(test_x)
-            self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.distribution, MultivariateNormal)
-
-            # test posterior (batch eval)
-            test_x = torch.rand(3, 2, 1, **tkwargs)
-            posterior_f = model.posterior(test_x)
-            self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.distribution, MultivariateNormal)
-
-    def test_FixedNoiseMultiTaskGP_fixed_prior(self) -> None:
-        for dtype in (torch.float, torch.double):
-            tkwargs = {"device": self.device, "dtype": dtype}
-            model = _gen_fixed_noise_and_prior_model(**tkwargs)
-            self.assertIsInstance(model, FixedNoiseMultiTaskGP)
-            self.assertIsInstance(model.task_covar_module, IndexKernel)
-            self.assertIsInstance(
-                model.task_covar_module.IndexKernelPrior, LKJCovariancePrior
-            )
-
-    def test_FixedNoiseMultiTaskGP_given_covar_module(self) -> None:
-        for dtype in (torch.float, torch.double):
-            tkwargs = {"device": self.device, "dtype": dtype}
-            model = _gen_fixed_noise_and_given_covar_module_model(**tkwargs)
-            self.assertIsInstance(model, FixedNoiseMultiTaskGP)
-            self.assertIsInstance(model.task_covar_module, IndexKernel)
-            self.assertIsInstance(model.covar_module, MaternKernel)
-            self.assertAlmostEqual(model.covar_module.nu, 1.5)
-            self.assertIsInstance(model.covar_module.lengthscale_prior, GammaPrior)
-            self.assertAlmostEqual(
-                model.covar_module.lengthscale_prior.concentration, 1.0
-            )
-            self.assertAlmostEqual(model.covar_module.lengthscale_prior.rate, 1.0)
-
     def test_MultiTaskGP_construct_inputs(self) -> None:
-        for dtype in (torch.float, torch.double):
-            tkwargs = {"device": self.device, "dtype": dtype}
+        for dtype, fixed_noise, skip_task_features_in_datasets in zip(
+            (torch.float, torch.double), (True, False), (True, False), strict=True
+        ):
+            tkwargs: Dict[str, Any] = {"device": self.device, "dtype": dtype}
             task_feature = 0
-            model, datasets, (train_X, train_Y) = _gen_model_and_data(
-                task_feature=task_feature, **tkwargs
+            model, datasets, (train_X, train_Y, train_Yvar) = _gen_model_and_data(
+                fixed_noise=fixed_noise,
+                task_feature=task_feature,
+                skip_task_features_in_datasets=skip_task_features_in_datasets,
+                **tkwargs,
             )
 
             # Validate prior config.
@@ -654,48 +451,20 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             )
             self.assertEqual(data_dict["output_tasks"], [0])
             self.assertEqual(data_dict["task_feature"], task_feature)
-            self.assertTrue(torch.equal(data_dict["train_X"], train_X))
+            if skip_task_features_in_datasets:
+                # In this case, the task feature is appended at the end.
+                self.assertAllClose(data_dict["train_X"], train_X[..., [1, 0]])
+                # all_tasks is inferred from data when task features are omitted.
+                self.assertEqual(data_dict["all_tasks"], [0, 1])
+            else:
+                self.assertAllClose(data_dict["train_X"], train_X)
+                # all_tasks is not inferred when task features are included.
+                self.assertNotIn("all_tasks", data_dict)
             self.assertTrue(torch.equal(data_dict["train_Y"], train_Y))
-            self.assertIsInstance(data_dict["task_covar_prior"], LKJCovariancePrior)
-
-    def test_FixedNoiseMultiTaskGP_construct_inputs(self) -> None:
-        for dtype in (torch.float, torch.double):
-            tkwargs = {"device": self.device, "dtype": dtype}
-            task_feature = 0
-
-            (
-                model,
-                datasets,
-                (train_X, train_Y, train_Yvar),
-            ) = _gen_fixed_noise_model_and_data(task_feature=task_feature, **tkwargs)
-
-            #  Test only one of `task_covar_prior` and  `prior_config` can be passed.
-            with self.assertRaisesRegex(ValueError, "Only one of"):
-                model.construct_inputs(
-                    datasets,
-                    task_feature=task_feature,
-                    task_covar_prior=1,
-                    prior_config=1,
-                )
-
-            # Validate prior config.
-            with self.assertRaisesRegex(
-                ValueError, ".* only config for LKJ prior is supported"
-            ):
-                data_dict = model.construct_inputs(
-                    datasets,
-                    task_feature=task_feature,
-                    prior_config={"use_LKJ_prior": False},
-                )
-            data_dict = model.construct_inputs(
-                datasets,
-                task_feature=task_feature,
-                prior_config={"use_LKJ_prior": True, "eta": 0.6},
-            )
-            self.assertTrue(torch.equal(data_dict["train_X"], train_X))
-            self.assertTrue(torch.equal(data_dict["train_Y"], train_Y))
-            self.assertAllClose(data_dict["train_Yvar"], train_Yvar)
-            self.assertEqual(data_dict["task_feature"], task_feature)
+            if fixed_noise:
+                self.assertAllClose(data_dict["train_Yvar"], train_Yvar)
+            else:
+                self.assertNotIn("train_Yvar", data_dict)
             self.assertIsInstance(data_dict["task_covar_prior"], LKJCovariancePrior)
 
 
@@ -709,7 +478,7 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             (False, True),
             (False, True),
         ):
-            tkwargs = {"device": self.device, "dtype": dtype}
+            tkwargs: Dict[str, Any] = {"device": self.device, "dtype": dtype}
 
             octf = Standardize(m=2) if use_octf else None
 

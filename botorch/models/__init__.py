@@ -27,11 +27,7 @@ from botorch.models.gp_regression_mixed import MixedSingleTaskGP
 from botorch.models.higher_order_gp import HigherOrderGP
 from botorch.models.model import ModelList
 from botorch.models.model_list_gp_regression import ModelListGP
-from botorch.models.multitask import (
-    FixedNoiseMultiTaskGP,
-    KroneckerMultiTaskGP,
-    MultiTaskGP,
-)
+from botorch.models.multitask import KroneckerMultiTaskGP, MultiTaskGP
 from botorch.models.pairwise_gp import PairwiseGP, PairwiseLaplaceMarginalLogLikelihood
 
 __all__ = [
@@ -39,7 +35,6 @@ __all__ = [
     "AffineFidelityCostModel",
     "ApproximateGPyTorchModel",
     "FixedNoiseGP",
-    "FixedNoiseMultiTaskGP",
     "SaasFullyBayesianSingleTaskGP",
     "SaasFullyBayesianMultiTaskGP",
     "GenericDeterministicModel",

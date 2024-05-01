@@ -30,7 +30,6 @@ References
 from __future__ import annotations
 
 import math
-import warnings
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
@@ -375,7 +374,12 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
 
         # Call Model.construct_inputs to parse training data
         base_inputs = super().construct_inputs(training_data=training_data)
-        if isinstance(training_data, MultiTaskDataset):
+        if (
+            isinstance(training_data, MultiTaskDataset)
+            # If task features are included in the data, all tasks will have
+            # some observations and they may have different task features.
+            and training_data.task_feature_index is None
+        ):
             all_tasks = list(range(len(training_data.datasets)))
             base_inputs["all_tasks"] = all_tasks
         if task_covar_prior is not None:
@@ -385,81 +389,6 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         base_inputs["task_feature"] = task_feature
         base_inputs["output_tasks"] = output_tasks
         return base_inputs
-
-
-class FixedNoiseMultiTaskGP(MultiTaskGP):
-    r"""Multi-Task GP model using an ICM kernel, with known observation noise.
-
-    DEPRECATED: Please use `MultiTaskGP` with `train_Yvar` instead.
-    Will be removed in a future release (~v0.10).
-    """
-
-    def __init__(
-        self,
-        train_X: Tensor,
-        train_Y: Tensor,
-        train_Yvar: Tensor,
-        task_feature: int,
-        covar_module: Optional[Module] = None,
-        task_covar_prior: Optional[Prior] = None,
-        output_tasks: Optional[List[int]] = None,
-        rank: Optional[int] = None,
-        input_transform: Optional[InputTransform] = None,
-        outcome_transform: Optional[OutcomeTransform] = None,
-    ) -> None:
-        r"""
-        Args:
-            train_X: A `n x (d + 1)` or `b x n x (d + 1)` (batch mode) tensor
-                of training data. One of the columns should contain the task
-                features (see `task_feature` argument).
-            train_Y: A `n x 1` or `b x n x 1` (batch mode) tensor of training
-                observations.
-            train_Yvar: A `n` or `b x n` (batch mode) tensor of observed measurement
-                noise.
-            task_feature: The index of the task feature (`-d <= task_feature <= d`).
-            task_covar_prior : A Prior on the task covariance matrix. Must operate
-                on p.s.d. matrices. A common prior for this is the `LKJ` prior.
-            output_tasks: A list of task indices for which to compute model
-                outputs for. If omitted, return outputs for all task indices.
-            rank: The rank to be used for the index kernel. If omitted, use a
-                full rank (i.e. number of tasks) kernel.
-            input_transform: An input transform that is applied in the model's
-                forward pass.
-            outcome_transform: An outcome transform that is applied to the
-                training data during instantiation and to the posterior during
-                inference (that is, the `Posterior` obtained by calling
-                `.posterior` on the model will be on the original scale).
-
-        Example:
-            >>> X1, X2 = torch.rand(10, 2), torch.rand(20, 2)
-            >>> i1, i2 = torch.zeros(10, 1), torch.ones(20, 1)
-            >>> train_X = torch.cat([
-            >>>     torch.cat([X1, i1], -1), torch.cat([X2, i2], -1),
-            >>> ], dim=0)
-            >>> train_Y = torch.cat(f1(X1), f2(X2))
-            >>> train_Yvar = 0.1 + 0.1 * torch.rand_like(train_Y)
-            >>> model = FixedNoiseMultiTaskGP(train_X, train_Y, train_Yvar, -1)
-        """
-        warnings.warn(
-            "`FixedNoiseMultiTaskGP` has been deprecated and will be removed in a "
-            "future release. Please use the `MultiTaskGP` model instead. "
-            "When `train_Yvar` is specified, `MultiTaskGP` behaves the same "
-            "as the `FixedNoiseMultiTaskGP`.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        super().__init__(
-            train_X=train_X,
-            train_Y=train_Y,
-            train_Yvar=train_Yvar,
-            covar_module=covar_module,
-            task_feature=task_feature,
-            output_tasks=output_tasks,
-            rank=rank,
-            task_covar_prior=task_covar_prior,
-            input_transform=input_transform,
-            outcome_transform=outcome_transform,
-        )
 
 
 class KroneckerMultiTaskGP(ExactGP, GPyTorchModel, FantasizeMixin):
