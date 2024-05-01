@@ -2,6 +2,44 @@
 
 The release log for BoTorch.
 
+## [0.11.0] -- May 1, 2024
+
+#### Compatibility
+* Reqire Python >= 3.10 (#2293).
+
+#### New Features
+* SCoreBO and Bayesian Active Learning acquisition functions (#2163).
+
+#### Bug Fixes
+* Fix non-None constraint noise levels in some constrained test problems (#2241).
+* Fix inverse cost-weighted utility behaviour for non-positive acquisition values (#2297).
+
+#### Other Changes
+* Don't allow unused keyword arguments in `Model.construct_inputs` (#2186).
+* Re-map task values in MTGP if they are not contiguous integers starting from zero (#2230).
+* Unify `ModelList` and `ModelListGP` `subset_output` behavior (#2231).
+* Ensure `mean` and `interior_point` of `LinearEllipticalSliceSampler` have correct shapes (#2245).
+* Speed up task covariance of `LCEMGP` (#2260).
+* Improvements to `batch_cross_validation`, support for model init kwargs (#2269).
+* Support custom `all_tasks` for MTGPs (#2271).
+* Error out if scipy optimizer does not support bounds / constraints (#2282).
+* Support diagonal covariance root with fixed indices for `LinearEllipticalSliceSampler` (#2283).
+* Make `qNIPV` a subclass of `AcquisitionFunction` rather than `AnalyticAcquisitionFunction` (#2286).
+* Increase code-sharing of `LCEMGP` & define `construct_inputs` (#2291).
+
+#### Deprecations
+* Remove deprecated args from base `MCSampler` (#2228).
+* Remove deprecated `botorch/generation/gen/minimize` (#2229).
+* Remove `fit_gpytorch_model` (#2250).
+* Remove `requires_grad_ctx` (#2252).
+* Remove `base_samples` argument of `GPyTorchPosterior.rsample` (#2254).
+* Remove deprecated `mvn` argument to `GPyTorchPosterior` (#2255).
+* Remove deprecated `Posterior.event_shape` (#2320).
+* Remove `**kwargs` & deprecated `indices` argument of `Round` transform (#2321).
+* Remove `Standardize.load_state_dict` (#2322).
+* Remove `FixedNoiseMultiTaskGP` (#2323).
+
+
 ## [0.10.0] -- Feb 26, 2024
 
 #### New Features
