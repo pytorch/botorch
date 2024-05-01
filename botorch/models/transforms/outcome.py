@@ -22,11 +22,9 @@ References
 
 from __future__ import annotations
 
-import warnings
-
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from typing import Any, List, Mapping, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import torch
 from botorch.models.transforms.utils import (
@@ -255,19 +253,6 @@ class Standardize(OutcomeTransform):
         self._m = m
         self._batch_shape = batch_shape
         self._min_stdv = min_stdv
-
-    def load_state_dict(
-        self, state_dict: Mapping[str, Any], strict: bool = True
-    ) -> None:
-        r"""Custom logic for loading the state dict."""
-        if "_is_trained" not in state_dict:
-            warnings.warn(
-                "Key '_is_trained' not found in state_dict. Setting to True. "
-                "In a future release, this will result in an error.",
-                DeprecationWarning,
-            )
-            state_dict = {**state_dict, "_is_trained": torch.tensor(True)}
-        super().load_state_dict(state_dict, strict=strict)
 
     def forward(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
