@@ -5,12 +5,10 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
-import warnings
 from copy import deepcopy
 from random import randint
 
 import torch
-from botorch import settings
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.exceptions.warnings import UserInputWarning
 from botorch.models.transforms.input import (
@@ -620,10 +618,6 @@ class TestInputTransforms(BotorchTestCase):
         # basic init
         int_idcs = [0, 4]
         categorical_feats = {2: 2, 5: 3}
-        # test deprecation warning
-        with warnings.catch_warnings(record=True) as ws, settings.debug(True):
-            Round(indices=int_idcs)
-            self.assertTrue(any(issubclass(w.category, DeprecationWarning) for w in ws))
         round_tf = Round(
             integer_indices=int_idcs, categorical_features=categorical_feats
         )
