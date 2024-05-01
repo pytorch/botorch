@@ -19,8 +19,6 @@ jobs:
     name: Package and deploy to pypi.org
     runs-on: ubuntu-latest
     needs: tests-and-coverage-pip
-    strategy:
-      fail-fast: true
     steps:
     - uses: actions/checkout@v4
     - name: Fetch all history for all tags and branches
@@ -48,10 +46,8 @@ jobs:
 
   package-deploy-conda:
     name: Package conda and deploy to anaconda.org
-    runs-on: ubuntu-latest
+    runs-on: 4-core-ubuntu
     needs: tests-and-coverage-pip
-    strategy:
-      fail-fast: true
     steps:
     - uses: actions/checkout@v4
     - uses: conda-incubator/setup-miniconda@v3
