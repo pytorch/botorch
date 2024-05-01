@@ -155,7 +155,6 @@ class ContextualMultiOutputTest(BotorchTestCase):
                     model_inputs.pop("context_cat_feature"),
                     torch.tensor([[0.4], [0.5]]),
                 )
-            self.assertEqual(model_inputs.pop("all_tasks"), [0, 1])
             self.assertEqual(model_inputs.pop("task_feature"), 0)
             self.assertIsNone(model_inputs.pop("output_tasks"))
             # Check that there are no unexpected inputs.
