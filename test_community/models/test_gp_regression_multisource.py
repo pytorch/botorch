@@ -12,7 +12,7 @@ import torch
 
 from botorch import fit_gpytorch_mll
 from botorch.exceptions import InputDataError, OptimizationWarning
-from botorch.models import FixedNoiseGP, SingleTaskGP
+from botorch.models import SingleTaskGP
 from botorch.models.transforms import Normalize, Standardize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
@@ -238,14 +238,14 @@ class TestAugmentedSingleTaskGP(BotorchTestCase):
             )
             c_kwargs = (
                 {"noise": torch.full_like(Y_fant, 0.01)}
-                if isinstance(model, FixedNoiseGP)
+                if isinstance(model.likelihood, FixedNoiseGaussianLikelihood)
                 else {}
             )
             cm = model.condition_on_observations(X_fant, Y_fant, **c_kwargs)
             # fantasize at same input points (check proper broadcasting)
             c_kwargs_same_inputs = (
                 {"noise": torch.full_like(Y_fant[0], 0.01)}
-                if isinstance(model, FixedNoiseGP)
+                if isinstance(model.likelihood, FixedNoiseGaussianLikelihood)
                 else {}
             )
             cm_same_inputs = model.condition_on_observations(

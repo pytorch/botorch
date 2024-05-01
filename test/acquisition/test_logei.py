@@ -44,7 +44,6 @@ from botorch.acquisition.utils import prune_inferior_points
 from botorch.exceptions import BotorchWarning, UnsupportedError
 from botorch.exceptions.errors import BotorchError
 from botorch.models import ModelListGP, SingleTaskGP
-from botorch.models.gp_regression import FixedNoiseGP
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.low_rank import sample_cached_cholesky
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
@@ -738,7 +737,7 @@ class TestIsLog(BotorchTestCase):
 
         # single objective case
         X, Y = torch.rand(3, 2), torch.randn(3, 1)
-        model = FixedNoiseGP(train_X=X, train_Y=Y, train_Yvar=torch.rand_like(Y))
+        model = SingleTaskGP(train_X=X, train_Y=Y, train_Yvar=torch.rand_like(Y))
 
         # (q)LogEI
         for acqf_class in [LogExpectedImprovement, qLogExpectedImprovement]:
