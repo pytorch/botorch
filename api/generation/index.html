@@ -71,8 +71,8 @@ compatible with lower_bounds and upper_bounds!</p></li>
 <li><p><strong>timeout_sec</strong> (<em>float</em><em> | </em><em>None</em>) – Timeout (in seconds) for <cite>scipy.optimize.minimize</cite> routine -
 if provided, optimization will stop after this many seconds and return
 the best solution found so far.</p></li>
-<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -196,11 +196,6 @@ with the highest associated value.</p>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="py function">
-<dt class="sig sig-object py" id="botorch.generation.gen.minimize">
-<span class="sig-prename descclassname"><span class="pre">botorch.generation.gen.</span></span><span class="sig-name descname"><span class="pre">minimize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/gen.html#minimize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.gen.minimize" title="Link to this definition">¶</a></dt>
-<dd><p>Deprecated, use <cite>botorch.generation.gen.minimize_with_timeout</cite>.</p>
-</dd></dl>
 </section>
 <section id="module-botorch.generation.sampling">
 <span id="sampling-strategies"></span><h2>Sampling Strategies<a class="headerlink" href="#module-botorch.generation.sampling" title="Link to this heading">¶</a></h2>
@@ -261,17 +256,13 @@ dimension) according to the maximum posterior value under the objective.</p></li
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>samples</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>num_samples</strong> (<em>int</em>) – </p></li>
+<li><p><strong>X</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>samples</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>)</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.generation.sampling.MaxPosteriorSampling.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.generation.sampling.MaxPosteriorSampling.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.generation.sampling.BoltzmannSampling">
@@ -330,10 +321,6 @@ function, then its batch shape must be broadcastable to <cite>batch_shape</cite>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.generation.sampling.BoltzmannSampling.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.generation.sampling.BoltzmannSampling.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.generation.sampling.ConstrainedMaxPosteriorSampling">
@@ -397,10 +384,6 @@ dimension) according to the maximum posterior value under the objective.</p></li
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.generation.sampling.ConstrainedMaxPosteriorSampling.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.generation.sampling.ConstrainedMaxPosteriorSampling.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.generation.utils">
@@ -439,7 +422,7 @@ dimension) according to the maximum posterior value under the objective.</p></li
 </ul></li>
 </ul>
 </div>
-<div id="searchbox" role="search" style="display: none">
+<search id="searchbox" role="search" style="display: none">
 <h3 id="searchlabel">Quick search</h3>
 <div class="searchformwrapper">
 <form action="search.html" class="search" method="get">
@@ -447,7 +430,7 @@ dimension) according to the maximum posterior value under the objective.</p></li
 <input type="submit" value="Go"/>
 </form>
 </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>

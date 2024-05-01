@@ -73,27 +73,6 @@
 
 
 
-<div class="viewcode-block" id="requires_grad_ctx">
-<a class="viewcode-back" href="../../../utils.html#botorch.utils.context_managers.requires_grad_ctx">[docs]</a>
-<span class="nd">@contextmanager</span>
-<span class="k">def</span> <span class="nf">requires_grad_ctx</span><span class="p">(</span>
-    <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">assignments</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""Contextmanager for temporarily setting the requires_grad field of a module's</span>
-<span class="sd">    parameters."""</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">cache</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">mode</span> <span class="ow">in</span> <span class="n">assignments</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">parameter</span> <span class="o">=</span> <span class="n">module</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-            <span class="n">cache</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">parameter</span><span class="o">.</span><span class="n">requires_grad</span>
-            <span class="n">parameter</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="n">mode</span><span class="p">)</span>
-        <span class="k">yield</span>
-    <span class="k">finally</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">mode</span> <span class="ow">in</span> <span class="n">cache</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">module</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="n">mode</span><span class="p">)</span></div>
-
-
-
 <div class="viewcode-block" id="parameter_rollback_ctx">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.context_managers.parameter_rollback_ctx">[docs]</a>
 <span class="nd">@contextmanager</span>
@@ -250,7 +229,7 @@
 </ul></li>
 </ul>
 </div>
-<div id="searchbox" role="search" style="display: none">
+<search id="searchbox" role="search" style="display: none">
 <h3 id="searchlabel">Quick search</h3>
 <div class="searchformwrapper">
 <form action="../../../search.html" class="search" method="get">
@@ -258,7 +237,7 @@
 <input type="submit" value="Go"/>
 </form>
 </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>

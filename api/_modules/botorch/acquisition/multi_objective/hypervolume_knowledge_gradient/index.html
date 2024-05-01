@@ -285,8 +285,7 @@
             <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cost_aware_utility</span><span class="p">(</span>
                 <span class="c1"># exclude pending points</span>
                 <span class="n">X</span><span class="o">=</span><span class="n">X_actual</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">q</span><span class="p">,</span> <span class="p">:],</span>
-                <span class="c1"># cost-weighting relies on nonnegative deltas</span>
-                <span class="n">deltas</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mf">0.0</span><span class="p">),</span>
+                <span class="n">deltas</span><span class="o">=</span><span class="n">values</span><span class="p">,</span>
                 <span class="n">sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cost_sampler</span><span class="p">,</span>
                 <span class="n">X_evaluation_mask</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">X_evaluation_mask</span><span class="p">,</span>
             <span class="p">)</span>
@@ -516,8 +515,7 @@
             <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cost_aware_utility</span><span class="p">(</span>
                 <span class="c1"># exclude pending points</span>
                 <span class="n">X</span><span class="o">=</span><span class="n">X_actual</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">q</span><span class="p">,</span> <span class="p">:],</span>
-                <span class="c1"># cost-weighting relies on nonnegative deltas</span>
-                <span class="n">deltas</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mf">0.0</span><span class="p">),</span>
+                <span class="n">deltas</span><span class="o">=</span><span class="n">values</span><span class="p">,</span>
                 <span class="n">sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cost_sampler</span><span class="p">,</span>
                 <span class="n">X_evaluation_mask</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">X_evaluation_mask</span><span class="p">,</span>
             <span class="p">)</span>
@@ -635,7 +633,7 @@
 </ul></li>
 </ul>
 </div>
-<div id="searchbox" role="search" style="display: none">
+<search id="searchbox" role="search" style="display: none">
 <h3 id="searchlabel">Quick search</h3>
 <div class="searchformwrapper">
 <form action="../../../../search.html" class="search" method="get">
@@ -643,7 +641,7 @@
 <input type="submit" value="Go"/>
 </form>
 </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>

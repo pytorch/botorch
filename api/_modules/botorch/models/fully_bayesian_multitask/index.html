@@ -31,7 +31,7 @@
 <span class="sd">"""</span>
 
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">NoReturn</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">NoReturn</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">pyro</span>
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -39,7 +39,6 @@
 <span class="kn">from</span> <span class="nn">botorch.models.fully_bayesian</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">matern52_kernel</span><span class="p">,</span>
     <span class="n">MIN_INFERRED_NOISE_LEVEL</span><span class="p">,</span>
-    <span class="n">PyroModel</span><span class="p">,</span>
     <span class="n">reshape_and_detach</span><span class="p">,</span>
     <span class="n">SaasPyroModel</span><span class="p">,</span>
 <span class="p">)</span>
@@ -47,7 +46,6 @@
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.fully_bayesian</span> <span class="kn">import</span> <span class="n">GaussianMixturePosterior</span><span class="p">,</span> <span class="n">MCMC_DIM</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">MultiTaskDataset</span><span class="p">,</span> <span class="n">SupervisedDataset</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions.multivariate_normal</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">MaternKernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.kernel</span> <span class="kn">import</span> <span class="n">Kernel</span>
@@ -215,7 +213,7 @@
 <span class="sd">    kernel by default.</span>
 
 <span class="sd">    You are expected to use `fit_fully_bayesian_model_nuts` to fit this model as it</span>
-<span class="sd">    isn't compatible with `fit_gpytorch_model`.</span>
+<span class="sd">    isn't compatible with `fit_gpytorch_mll`.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; X1, X2 = torch.rand(10, 2), torch.rand(20, 2)</span>
@@ -243,9 +241,10 @@
         <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">output_tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">rank</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">all_tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">pyro_model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PyroModel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pyro_model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MultitaskSaasPyroModel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize the fully Bayesian multi-task GP model.</span>
 
@@ -259,13 +258,15 @@
 <span class="sd">                outputs for. If omitted, return outputs for all task indices.</span>
 <span class="sd">            rank: The num of learned task embeddings to be used in the task kernel.</span>
 <span class="sd">                If omitted, use a full rank (i.e. number of tasks) kernel.</span>
+<span class="sd">            all_tasks: NOT SUPPORTED!</span>
 <span class="sd">            outcome_transform: An outcome transform that is applied to the</span>
 <span class="sd">                training data during instantiation and to the posterior during</span>
 <span class="sd">                inference (that is, the `Posterior` obtained by calling</span>
 <span class="sd">                `.posterior` on the model will be on the original scale).</span>
 <span class="sd">            input_transform: An input transform that is applied to the inputs `X`</span>
 <span class="sd">                in the model's forward pass.</span>
-<span class="sd">            pyro_model: Optional `PyroModel`, defaults to `MultitaskSaasPyroModel`.</span>
+<span class="sd">            pyro_model: Optional `PyroModel` that has the same signature as</span>
+<span class="sd">                `MultitaskSaasPyroModel`. Defaults to `MultitaskSaasPyroModel`.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
             <span class="n">train_X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span>
@@ -296,6 +297,12 @@
             <span class="n">output_tasks</span><span class="o">=</span><span class="n">output_tasks</span><span class="p">,</span>
             <span class="n">rank</span><span class="o">=</span><span class="n">rank</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="k">if</span> <span class="n">all_tasks</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expected_task_values</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="n">all_tasks</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"The `all_tasks` argument is not supported by SAAS MTGP. "</span>
+                <span class="sa">f</span><span class="s2">"The training data includes tasks </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_expected_task_values</span><span class="si">}</span><span class="s2">, "</span>
+                <span class="sa">f</span><span class="s2">"got </span><span class="si">{</span><span class="n">all_tasks</span><span class="si">=}</span><span class="s2">."</span>
+            <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span> <span class="o">=</span> <span class="kc">None</span>
@@ -441,32 +448,6 @@
         <span class="k">return</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean_x</span><span class="p">,</span> <span class="n">covar</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="SaasFullyBayesianMultiTaskGP.construct_inputs">
-<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.construct_inputs">[docs]</a>
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span>
-        <span class="bp">cls</span><span class="p">,</span>
-        <span class="n">training_data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">,</span> <span class="n">MultiTaskDataset</span><span class="p">],</span>
-        <span class="n">task_feature</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">rank</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct `Model` keyword arguments from a dataset and other args.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            training_data: A `SupervisedDataset` or a `MultiTaskDataset`.</span>
-<span class="sd">            task_feature: Column index of embedded task indicator features.</span>
-<span class="sd">            rank: The rank of the cross-task covariance matrix.</span>
-<span class="sd">        """</span>
-        <span class="n">inputs</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">construct_inputs</span><span class="p">(</span>
-            <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span> <span class="n">task_feature</span><span class="o">=</span><span class="n">task_feature</span><span class="p">,</span> <span class="n">rank</span><span class="o">=</span><span class="n">rank</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
-        <span class="p">)</span>
-        <span class="n">inputs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"task_covar_prior"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="s2">"train_Yvar"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
-            <span class="n">inputs</span><span class="p">[</span><span class="s2">"train_Yvar"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">return</span> <span class="n">inputs</span></div>
-
-
 <div class="viewcode-block" id="SaasFullyBayesianMultiTaskGP.load_state_dict">
 <a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.load_state_dict">[docs]</a>
     <span class="k">def</span> <span class="nf">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
@@ -548,7 +529,7 @@
 </ul></li>
 </ul>
 </div>
-<div id="searchbox" role="search" style="display: none">
+<search id="searchbox" role="search" style="display: none">
 <h3 id="searchlabel">Quick search</h3>
 <div class="searchformwrapper">
 <form action="../../../search.html" class="search" method="get">
@@ -556,7 +537,7 @@
 <input type="submit" value="Go"/>
 </form>
 </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>

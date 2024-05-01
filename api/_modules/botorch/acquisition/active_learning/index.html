@@ -50,7 +50,7 @@
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.analytic</span> <span class="kn">import</span> <span class="n">AnalyticAcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.monte_carlo</span> <span class="kn">import</span> <span class="n">MCAcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">MCAcquisitionObjective</span><span class="p">,</span> <span class="n">PosteriorTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
@@ -62,7 +62,7 @@
 
 <div class="viewcode-block" id="qNegIntegratedPosteriorVariance">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.active_learning.qNegIntegratedPosteriorVariance">[docs]</a>
-<span class="k">class</span> <span class="nc">qNegIntegratedPosteriorVariance</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">qNegIntegratedPosteriorVariance</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Batch Integrated Negative Posterior Variance for Active Learning.</span>
 
 <span class="sd">    This acquisition function quantifies the (negative) integrated posterior variance</span>
@@ -100,7 +100,8 @@
 <span class="sd">                points that have been submitted for function evaluation but</span>
 <span class="sd">                have not yet been evaluated.</span>
 <span class="sd">        """</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span> <span class="o">=</span> <span class="n">posterior_transform</span>
         <span class="k">if</span> <span class="n">sampler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># If no sampler is provided, we use the following dummy sampler for the</span>
             <span class="c1"># fantasize() method in forward. IMPORTANT: This assumes that the posterior</span>
@@ -250,7 +251,7 @@
 </ul></li>
 </ul>
 </div>
-<div id="searchbox" role="search" style="display: none">
+<search id="searchbox" role="search" style="display: none">
 <h3 id="searchlabel">Quick search</h3>
 <div class="searchformwrapper">
 <form action="../../../search.html" class="search" method="get">
@@ -258,7 +259,7 @@
 <input type="submit" value="Go"/>
 </form>
 </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>

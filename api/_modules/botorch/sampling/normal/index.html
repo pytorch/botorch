@@ -150,13 +150,13 @@
                     <span class="nb">len</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">base_sample_shape</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">)</span>
                 <span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
                 <span class="k">if</span> <span class="n">single_output</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">base_samples</span><span class="p">[</span>
-                        <span class="o">...</span><span class="p">,</span> <span class="p">:</span> <span class="n">current_base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-                    <span class="p">]</span> <span class="o">=</span> <span class="n">expanded_samples</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">base_samples</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span> <span class="n">current_base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">expanded_samples</span>
+                    <span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">base_samples</span><span class="p">[</span>
-                        <span class="o">...</span><span class="p">,</span> <span class="p">:</span> <span class="n">current_base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="p">:</span>
-                    <span class="p">]</span> <span class="o">=</span> <span class="n">expanded_samples</span></div>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">base_samples</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span> <span class="n">current_base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">expanded_samples</span>
+                    <span class="p">)</span></div>
 
 
 
@@ -275,7 +275,7 @@
 </ul></li>
 </ul>
 </div>
-<div id="searchbox" role="search" style="display: none">
+<search id="searchbox" role="search" style="display: none">
 <h3 id="searchlabel">Quick search</h3>
 <div class="searchformwrapper">
 <form action="../../../search.html" class="search" method="get">
@@ -283,7 +283,7 @@
 <input type="submit" value="Go"/>
 </form>
 </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>

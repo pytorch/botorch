@@ -92,8 +92,8 @@ of linear inequalities <cite>A @ x &lt; b</cite>. <cite>A</cite> is <cite>(d - 1
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>values</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>event_shape</strong> (<em>Size</em>) – </p></li>
+<li><p><strong>values</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>event_shape</strong> (<em>Size</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -127,9 +127,9 @@ taken from the leading dimension of an n-dimensional source tensor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>values</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>indices</strong> (<em>LongTensor</em>) – </p></li>
-<li><p><strong>event_shape</strong> (<em>Size</em>) – </p></li>
+<li><p><strong>values</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>indices</strong> (<em>LongTensor</em>)</p></li>
+<li><p><strong>event_shape</strong> (<em>Size</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -170,9 +170,9 @@ taken from the leading dimension of an n-dimensional source tensor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>values</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>values</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -199,26 +199,9 @@ taken from the leading dimension of an n-dimensional source tensor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>instance</strong> (<em>object</em>) – </p></li>
-<li><p><strong>attrs</strong> (<em>str</em>) – </p></li>
-<li><p><strong>enforce_hasattr</strong> (<em>bool</em>) – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Generator</em>[None, None, None]</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py function">
-<dt class="sig sig-object py" id="botorch.utils.context_managers.requires_grad_ctx">
-<span class="sig-prename descclassname"><span class="pre">botorch.utils.context_managers.</span></span><span class="sig-name descname"><span class="pre">requires_grad_ctx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">assignments</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/context_managers.html#requires_grad_ctx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.context_managers.requires_grad_ctx" title="Link to this definition">¶</a></dt>
-<dd><p>Contextmanager for temporarily setting the requires_grad field of a module’s
-parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>Module</em>) – </p></li>
-<li><p><strong>assignments</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em>]</em>) – </p></li>
+<li><p><strong>instance</strong> (<em>object</em>)</p></li>
+<li><p><strong>attrs</strong> (<em>str</em>)</p></li>
+<li><p><strong>enforce_hasattr</strong> (<em>bool</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -240,7 +223,7 @@ state for the module (or some subset thereof).</p></li>
 <li><p><strong>**tkwargs</strong> (<em>Any</em>) – Keyword arguments passed to <cite>torch.Tensor.to</cite> when copying data from
 each tensor in <cite>module.state_dict()</cite> to the internally created checkpoint.
 Only adhered to when the <cite>checkpoint</cite> argument is None.</p></li>
-<li><p><strong>parameters</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – </p></li>
+<li><p><strong>parameters</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Yields<span class="colon">:</span></dt>
@@ -285,9 +268,9 @@ is cleared, no rollback will occur.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>parameters</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>Iterable</em><em>[</em><em>Tensor</em><em>]</em>) – </p></li>
-<li><p><strong>zero_on_enter</strong> (<em>bool</em>) – </p></li>
-<li><p><strong>zero_on_exit</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>parameters</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>Iterable</em><em>[</em><em>Tensor</em><em>]</em>)</p></li>
+<li><p><strong>zero_on_enter</strong> (<em>bool</em>)</p></li>
+<li><p><strong>zero_on_exit</strong> (<em>bool</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -365,12 +348,12 @@ Will be removed in a future release (~v0.11).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>]</em>) – </p></li>
-<li><p><strong>Y</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>]</em>) – </p></li>
-<li><p><strong>Yvar</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>]</em>) – </p></li>
-<li><p><strong>feature_names</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – </p></li>
-<li><p><strong>outcome_names</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – </p></li>
-<li><p><strong>validate_init</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>X</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>]</em>)</p></li>
+<li><p><strong>Y</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>]</em>)</p></li>
+<li><p><strong>Yvar</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>]</em>)</p></li>
+<li><p><strong>feature_names</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>outcome_names</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>validate_init</strong> (<em>bool</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -563,7 +546,7 @@ by LCEA model if there is only one dataset.</p>
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.dispatcher.</span></span><span class="sig-name descname"><span class="pre">type_bypassing_encoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/dispatcher.html#type_bypassing_encoder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.dispatcher.type_bypassing_encoder" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>arg</strong> (<em>Any</em>) – </p>
+<dd class="field-odd"><p><strong>arg</strong> (<em>Any</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Type</em></p>
@@ -613,7 +596,7 @@ of registered methods to determine compatibility.</p>
 <dd><p>Converts arguments into a tuple of types used during method lookup.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>args</strong> (<em>Any</em>) – </p>
+<dd class="field-odd"><p><strong>args</strong> (<em>Any</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tuple</em>[<em>Type</em>]</p>
@@ -627,8 +610,8 @@ of registered methods to determine compatibility.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>args</strong> (<em>Any</em>) – </p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>args</strong> (<em>Any</em>)</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -727,7 +710,7 @@ decomposition with increasing jitter.</p></li>
 are preserved, while covariance across task are dropped.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>mvn</strong> (<em>MultitaskMultivariateNormal</em>) – </p>
+<dd class="field-odd"><p><strong>mvn</strong> (<em>MultitaskMultivariateNormal</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>List</em>[<em>MultivariateNormal</em>]</p>
@@ -1391,8 +1374,8 @@ with each tuple encoding an inequality constraint of the form
 <li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – The random seed.</p></li>
 <li><p><strong>thinning</strong> (<em>int</em>) – The amount of thinning.</p></li>
 <li><p><strong>n_burnin</strong> (<em>int</em>) – The number of burn-in samples for the Markov chain sampler.</p></li>
-<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1446,7 +1429,7 @@ which acts as extra initial guesses for the optimization routine.</p></li>
 <li><p><strong>raw_samples</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The number of samples with which to query the samples initially.</p></li>
 <li><p><strong>num_restarts</strong> (<em>int</em>) – The number of points selected for gradient-based optimization.</p></li>
 <li><p><strong>maximize</strong> (<em>bool</em>) – Boolean indicating whether to maimize or minimize</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1478,7 +1461,7 @@ evaluation.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – The Model defining the GP prior.</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – </p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -1510,10 +1493,6 @@ evaluated (or <cite>None</cite> if the sample has never been evaluated).</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.gp_sampling.GPDraw.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.gp_sampling.GPDraw.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.gp_sampling.RandomFourierFeatures">
@@ -1559,10 +1538,6 @@ a <cite>batch_shape</cite>, the output <cite>batch_shape</cite> will be
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.gp_sampling.RandomFourierFeatures.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.gp_sampling.RandomFourierFeatures.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.gp_sampling.get_deterministic_model_multi_samples">
@@ -1596,8 +1571,8 @@ function samples.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>w</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>basis</strong> (<a class="reference internal" href="#botorch.utils.gp_sampling.RandomFourierFeatures" title="botorch.utils.gp_sampling.RandomFourierFeatures"><em>RandomFourierFeatures</em></a>) – </p></li>
+<li><p><strong>w</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>basis</strong> (<a class="reference internal" href="#botorch.utils.gp_sampling.RandomFourierFeatures" title="botorch.utils.gp_sampling.RandomFourierFeatures"><em>RandomFourierFeatures</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1724,7 +1699,7 @@ not have a method with the specified name.</p>
 <dd><p>Hook method for setting up the test fixture before exercising it.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>suppress_input_warnings</strong> (<em>bool</em>) – </p>
+<dd class="field-odd"><p><strong>suppress_input_warnings</strong> (<em>bool</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -1745,11 +1720,11 @@ Relative difference: 0.8348668001940709 (up to 1e-05 allowed)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>input</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>other</strong> (<em>Tensor</em><em> | </em><em>float</em>) – </p></li>
-<li><p><strong>rtol</strong> (<em>float</em>) – </p></li>
-<li><p><strong>atol</strong> (<em>float</em>) – </p></li>
-<li><p><strong>equal_nan</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>input</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>other</strong> (<em>Tensor</em><em> | </em><em>float</em>)</p></li>
+<li><p><strong>rtol</strong> (<em>float</em>)</p></li>
+<li><p><strong>atol</strong> (<em>float</em>)</p></li>
+<li><p><strong>equal_nan</strong> (<em>bool</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1873,15 +1848,12 @@ candidate produces same value regardless of its position on the t-batch.</p>
 <dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.utils.testing.MockPosterior.rsample">
-<span class="sig-name descname"><span class="pre">rsample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockPosterior.rsample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MockPosterior.rsample" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">rsample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockPosterior.rsample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MockPosterior.rsample" title="Link to this definition">¶</a></dt>
 <dd><p>Mock sample by repeating self._samples. If base_samples is provided,
 do a shape check but return the same mock samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>sample_shape</strong> (<em>Size</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>base_samples</strong> (<em>Tensor</em><em> | </em><em>None</em>) – </p></li>
-</ul>
+<dd class="field-odd"><p><strong>sample_shape</strong> (<em>Size</em><em> | </em><em>None</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
@@ -1922,7 +1894,7 @@ This is a tensor of shape <cite>sample_shape x base_sample_shape</cite>.</p></li
 <p>Initialize internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="#botorch.utils.testing.MockPosterior" title="botorch.utils.testing.MockPosterior"><em>MockPosterior</em></a>) – </p>
+<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="#botorch.utils.testing.MockPosterior" title="botorch.utils.testing.MockPosterior"><em>MockPosterior</em></a>)</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -2041,7 +2013,8 @@ by this module’s <code class="xref py py-meth docutils literal notranslate"><s
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>If <code class="xref py py-attr docutils literal notranslate"><span class="pre">assign</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code> the optimizer must be created after
-the call to <a class="reference internal" href="#botorch.utils.testing.MockModel.load_state_dict" title="botorch.utils.testing.MockModel.load_state_dict"><code class="xref py py-attr docutils literal notranslate"><span class="pre">load_state_dict</span></code></a>.</p>
+the call to <a class="reference internal" href="#botorch.utils.testing.MockModel.load_state_dict" title="botorch.utils.testing.MockModel.load_state_dict"><code class="xref py py-attr docutils literal notranslate"><span class="pre">load_state_dict</span></code></a> unless
+<code class="xref py py-func docutils literal notranslate"><span class="pre">get_swap_module_params_on_conversion()</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2051,13 +2024,11 @@ persistent buffers.</p></li>
 <li><p><strong>strict</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether to strictly enforce that the keys
 in <a class="reference internal" href="#botorch.utils.testing.MockModel.state_dict" title="botorch.utils.testing.MockModel.state_dict"><code class="xref py py-attr docutils literal notranslate"><span class="pre">state_dict</span></code></a> match the keys returned by this module’s
 <code class="xref py py-meth docutils literal notranslate"><span class="pre">state_dict()</span></code> function. Default: <code class="docutils literal notranslate"><span class="pre">True</span></code></p></li>
-<li><p><strong>assign</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether to assign items in the state
-dictionary to their corresponding keys in the module instead
-of copying them inplace into the module’s current parameters and buffers.
-When <code class="docutils literal notranslate"><span class="pre">False</span></code>, the properties of the tensors in the current
-module are preserved while when <code class="docutils literal notranslate"><span class="pre">True</span></code>, the properties of the
-Tensors in the state dict are preserved.
-Default: <code class="docutils literal notranslate"><span class="pre">False</span></code></p></li>
+<li><p><strong>assign</strong> (<em>bool</em><em>, </em><em>optional</em>) – When <code class="docutils literal notranslate"><span class="pre">False</span></code>, the properties of the tensors
+in the current module are preserved while when <code class="docutils literal notranslate"><span class="pre">True</span></code>, the
+properties of the Tensors in the state dict are preserved. The only
+exception is the <code class="docutils literal notranslate"><span class="pre">requires_grad</span></code> field of <code class="xref py py-class docutils literal notranslate">
+<span class="pre">Default:</span> <span class="pre">``False`</span></code></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2089,7 +2060,7 @@ exists in <a class="reference internal" href="#botorch.utils.testing.MockModel.s
 <span class="sig-name descname"><span class="pre">set_X_pending</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockAcquisitionFunction.set_X_pending"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MockAcquisitionFunction.set_X_pending" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X_pending</strong> (<em>Tensor</em><em> | </em><em>None</em>) – </p>
+<dd class="field-odd"><p><strong>X_pending</strong> (<em>Tensor</em><em> | </em><em>None</em>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2124,9 +2095,9 @@ deviations from a Standardize transform.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>transform</strong> (<a class="reference internal" href="models.html#botorch.models.transforms.outcome.Standardize" title="botorch.models.transforms.outcome.Standardize"><em>Standardize</em></a>) – </p></li>
-<li><p><strong>loc</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>covariance_matrix</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>transform</strong> (<a class="reference internal" href="models.html#botorch.models.transforms.outcome.Standardize" title="botorch.models.transforms.outcome.Standardize"><em>Standardize</em></a>)</p></li>
+<li><p><strong>loc</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>covariance_matrix</strong> (<em>Tensor</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2136,14 +2107,20 @@ deviations from a Standardize transform.</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.test_helpers.gen_multi_task_dataset">
-<span class="sig-prename descclassname"><span class="pre">botorch.utils.test_helpers.</span></span><span class="sig-name descname"><span class="pre">gen_multi_task_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">tkwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/test_helpers.html#gen_multi_task_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.test_helpers.gen_multi_task_dataset" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.test_helpers.</span></span><span class="sig-name descname"><span class="pre">gen_multi_task_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_task_features_in_datasets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">tkwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/test_helpers.html#gen_multi_task_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.test_helpers.gen_multi_task_dataset" title="Link to this definition">¶</a></dt>
 <dd><p>Constructs a multi-task dataset with two tasks, each with 10 data points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>yvar</strong> (<em>float</em><em> | </em><em>None</em>) – </p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>yvar</strong> (<em>float</em><em> | </em><em>None</em>) – The noise level to use for <cite>train_Yvar</cite>. If None, uses <cite>train_Yvar=None</cite>.</p></li>
+<li><p><strong>task_values</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – The values of the task features. If None, uses [0, 1].</p></li>
+<li><p><strong>skip_task_features_in_datasets</strong> (<em>bool</em>) – If True, the task features are not included in
+Xs of the datasets used to construct the datasets. This is useful for
+testing <cite>MultiTaskDataset</cite>.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tuple</em>[<a class="reference internal" href="#botorch.utils.datasets.MultiTaskDataset" title="botorch.utils.datasets.MultiTaskDataset"><em>MultiTaskDataset</em></a>, <em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>, <em>Tensor</em>]]</p>
+<dd class="field-even"><p><em>Tuple</em>[<a class="reference internal" href="#botorch.utils.datasets.MultiTaskDataset" title="botorch.utils.datasets.MultiTaskDataset"><em>MultiTaskDataset</em></a>, <em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>, <em>Tensor</em> | None]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2155,10 +2132,10 @@ predictive noise from the likelihood.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>posterior</strong> (<em>Posterior</em>) – </p></li>
-<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – </p></li>
-<li><p><strong>X</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>m</strong> (<em>int</em>) – </p></li>
+<li><p><strong>posterior</strong> (<em>Posterior</em>)</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>)</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>m</strong> (<em>int</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2270,10 +2247,6 @@ key-value pairs of type (string, <code class="xref py py-class docutils literal 
 this method in your own modules. Both single-line and multi-line
 strings are acceptable.</p>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.torch.BufferDict.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.torch.BufferDict.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.utils.transforms">
@@ -2476,7 +2449,7 @@ appropriately expanding the pending points to match the batch shape of <cite>X</
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>method</strong> (<em>Callable</em><em>[</em><em>[</em><em>Any</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><em>Any</em><em>]</em>) – </p>
+<dd class="field-odd"><p><strong>method</strong> (<em>Callable</em><em>[</em><em>[</em><em>Any</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><em>Any</em><em>]</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Callable</em>[[<em>Any</em>, <em>Tensor</em>], <em>Any</em>]</p>
@@ -2535,7 +2508,7 @@ where d is a feature dimension.</p></li>
 <li><p><strong>constraints</strong> (<em>inequality</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite>.</p></li>
-<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2602,9 +2575,9 @@ with each tuple encoding an inequality constraint of the form
 <li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – The seed for both feature and outcome samplers. If omitted,
 use a random seed.</p></li>
 <li><p><strong>verbose</strong> (<em>bool</em>) – An indicator for whether to log the results.</p></li>
-<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
-<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2648,9 +2621,9 @@ the returned Tensors should not be modified in-place.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>values</strong> (<em>Number</em><em> | </em><em>Iterator</em><em>[</em><em>Number</em><em>]</em>) – </p></li>
-<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>values</strong> (<em>Number</em><em> | </em><em>Iterator</em><em>[</em><em>Number</em><em>]</em>)</p></li>
+<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2664,8 +2637,8 @@ the returned Tensors should not be modified in-place.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>values</strong> (<em>Number</em><em> | </em><em>Iterator</em><em>[</em><em>Number</em><em>]</em>) – </p></li>
-<li><p><strong>ref</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>values</strong> (<em>Number</em><em> | </em><em>Iterator</em><em>[</em><em>Number</em><em>]</em>)</p></li>
+<li><p><strong>ref</strong> (<em>Tensor</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2696,7 +2669,7 @@ solve numerical issues of naive implementations.</p>
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">exp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#exp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.exp" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
@@ -2708,7 +2681,7 @@ solve numerical issues of naive implementations.</p>
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#log"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.log" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
@@ -2721,8 +2694,8 @@ solve numerical issues of naive implementations.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>a</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>b</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>a</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>b</strong> (<em>Tensor</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2736,8 +2709,8 @@ solve numerical issues of naive implementations.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>a</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>b</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>a</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>b</strong> (<em>Tensor</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2751,8 +2724,8 @@ solve numerical issues of naive implementations.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>a</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>b</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>a</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>b</strong> (<em>Tensor</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2766,8 +2739,8 @@ solve numerical issues of naive implementations.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>a</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>b</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>a</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>b</strong> (<em>Tensor</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2782,7 +2755,7 @@ solve numerical issues of naive implementations.</p>
 See <a class="reference internal" href="#maechler2012accurate" id="id4"><span>[Maechler2012accurate]</span></a> for details.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
@@ -2796,7 +2769,7 @@ See <a class="reference internal" href="#maechler2012accurate" id="id4"><span>[M
 See <a class="reference internal" href="#maechler2012accurate" id="id5"><span>[Maechler2012accurate]</span></a> for details.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
@@ -2809,7 +2782,7 @@ See <a class="reference internal" href="#maechler2012accurate" id="id5"><span>[M
 <dd><p>Computes the logarithm of the expit (a.k.a. sigmoid) function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
@@ -2823,8 +2796,8 @@ See <a class="reference internal" href="#maechler2012accurate" id="id5"><span>[M
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>a</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>b</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>a</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>b</strong> (<em>Tensor</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2951,10 +2924,10 @@ to max operator, becomes tighter as tau goes to 0. Needs to be positive.</p></li
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>dim</strong> (<em>int</em><em> | </em><em>Tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em>) – </p></li>
-<li><p><strong>keepdim</strong> (<em>bool</em>) – </p></li>
-<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – </p></li>
+<li><p><strong>X</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>dim</strong> (<em>int</em><em> | </em><em>Tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em>)</p></li>
+<li><p><strong>keepdim</strong> (<em>bool</em>)</p></li>
+<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2967,7 +2940,7 @@ to max operator, becomes tighter as tau goes to 0. Needs to be positive.</p></li
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">check_dtype_float32_or_float64</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#check_dtype_float32_or_float64"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.check_dtype_float32_or_float64" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -2983,8 +2956,8 @@ in the future.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – </p></li>
+<li><p><strong>x</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -3030,7 +3003,7 @@ to max operator, becomes tighter as tau goes to 0. Needs to be positive.</p></li
 default value is 2. Higher alpha parameters make the function behave more
 similarly to the standard logsumexp approximation to the max, so it is
 recommended to keep this value low or moderate, e.g. &lt; 10.</p></li>
-<li><p><strong>x</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>x</strong> (<em>Tensor</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -3057,7 +3030,7 @@ to min operator, becomes tighter as tau goes to 0. Needs to be positive.</p></li
 default value is 2. Higher alpha parameters make the function behave more
 similarly to the standard logsumexp approximation to the max, so it is
 recommended to keep this value low or moderate, e.g. &lt; 10.</p></li>
-<li><p><strong>x</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>x</strong> (<em>Tensor</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -3080,7 +3053,7 @@ recommended to keep this value low or moderate, e.g. &lt; 10.</p></li>
 <li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – Temperature parameter controlling the smoothness of the approximation. A
 smaller tau corresponds to a tighter approximation that leads to a sharper
 objective landscape that might be more difficult to optimize.</p></li>
-<li><p><strong>alpha</strong> (<em>float</em>) – </p></li>
+<li><p><strong>alpha</strong> (<em>float</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -3103,7 +3076,7 @@ objective landscape that might be more difficult to optimize.</p></li>
 <li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – Temperature parameter controlling the smoothness of the approximation. A
 smaller tau corresponds to a tighter approximation that leads to a sharper
 objective landscape that might be more difficult to optimize.</p></li>
-<li><p><strong>alpha</strong> (<em>float</em>) – </p></li>
+<li><p><strong>alpha</strong> (<em>float</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -3122,8 +3095,8 @@ of the logarithm becomes more complex in the future to ensure numerical stabilit
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>) – </p></li>
+<li><p><strong>X</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>Tensor</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -3157,7 +3130,7 @@ step function with a fat tail, i.e. <cite>O(1 / x^2)</cite> as <cite>x</cite> go
 <dd><p>Computes a Lorentzian, i.e. an un-normalized Cauchy density function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
@@ -3299,10 +3272,6 @@ box_decomposition <cite>i</cite>.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.utils.multi_objective.box_decompositions.utils">
@@ -3452,10 +3421,6 @@ that are sorted by the 0th dimension in increasing order.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.dominated.DominatedPartitioning.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.dominated.DominatedPartitioning.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.utils.multi_objective.hypervolume">
@@ -3698,7 +3663,7 @@ objective (e.g., MVaR) that produces <cite>s</cite> objective values for
 each point on the q-batch of <cite>X</cite>, we need to properly account
 for each objective while calculating the hypervolume contributions
 by using <cite>q_out = q * s</cite>.</p></li>
-<li><p><strong>device</strong> (<em>torch.device</em>) – </p></li>
+<li><p><strong>device</strong> (<em>torch.device</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -3718,7 +3683,7 @@ by using <cite>q_out = q * s</cite>.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>q</strong> (<em>int</em>) – An integer defininig the set {1, …, <cite>q</cite>} whose subsets to compute.</p></li>
-<li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>torch.device</em><em>]</em>) – </p></li>
+<li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>torch.device</em><em>]</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -3799,10 +3764,6 @@ decomposition.</p></li>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.non_dominated.FastNondominatedPartitioning">
@@ -3842,10 +3803,6 @@ the space dominated by that Pareto frontier.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bd</span> <span class="o">=</span> <span class="n">FastNondominatedPartitioning</span><span class="p">(</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y1</span><span class="p">)</span>
 </pre></div>
 </div>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.non_dominated.FastNondominatedPartitioning.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.non_dominated.FastNondominatedPartitioning.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.utils.multi_objective.pareto">
@@ -4029,7 +3986,7 @@ on random variables that have yet to be integrated out.</p></li>
 <li><p><strong>log_prob</strong> (<em>Tensor</em>) – Tensor of log probabilities.</p></li>
 <li><p><strong>log_prob_extra</strong> (<em>Tensor</em><em> | </em><em>None</em>) – Tensor of conditional log probabilities for the next random
 variable. Used when integrating over an odd number of random variables.</p></li>
-<li><p><strong>perm</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>perm</strong> (<em>Tensor</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -4046,8 +4003,8 @@ X ~ N(0, Σ). For details, see [Genz2016numerical] or <a class="reference intern
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>num_steps</strong> (<em>int</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>eps</strong> (<em>float</em>) – </p></li>
+<li><p><strong>num_steps</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>eps</strong> (<em>float</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -4078,7 +4035,7 @@ where <cite>t</cite> denotes the current step.</p>
 <dd><p>Swap random variables at <cite>pivot</cite> and <cite>step</cite> positions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>pivot</strong> (<em>LongTensor</em>) – </p>
+<dd class="field-odd"><p><strong>pivot</strong> (<em>LongTensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -4091,8 +4048,8 @@ where <cite>t</cite> denotes the current step.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>other</strong> (<a class="reference internal" href="#botorch.utils.probability.mvnxpb.MVNXPB" title="botorch.utils.probability.mvnxpb.MVNXPB"><em>MVNXPB</em></a>) – </p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+<li><p><strong>other</strong> (<a class="reference internal" href="#botorch.utils.probability.mvnxpb.MVNXPB" title="botorch.utils.probability.mvnxpb.MVNXPB"><em>MVNXPB</em></a>)</p></li>
+<li><p><strong>dim</strong> (<em>int</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -4105,7 +4062,7 @@ where <cite>t</cite> denotes the current step.</p>
 <span class="sig-name descname"><span class="pre">expand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">sizes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/probability/mvnxpb.html#MVNXPB.expand"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.probability.mvnxpb.MVNXPB.expand" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>sizes</strong> (<em>int</em>) – </p>
+<dd class="field-odd"><p><strong>sizes</strong> (<em>int</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="#botorch.utils.probability.mvnxpb.MVNXPB" title="botorch.utils.probability.mvnxpb.MVNXPB"><em>MVNXPB</em></a></p>
@@ -4120,12 +4077,12 @@ variables.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>covariance_matrix</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>bounds</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>cross_covariance_matrix</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>disable_pivoting</strong> (<em>bool</em>) – </p></li>
-<li><p><strong>jitter</strong> (<em>float</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>max_tries</strong> (<em>int</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>covariance_matrix</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>bounds</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>cross_covariance_matrix</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>disable_pivoting</strong> (<em>bool</em>)</p></li>
+<li><p><strong>jitter</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>max_tries</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -4194,7 +4151,7 @@ bounds for <cite>x</cite> so that <cite>bounds[…, 0] &lt; bounds[…, 1]</cite
 <dd><p>Approximates the true log probability.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>value</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>value</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
@@ -4292,7 +4249,7 @@ multiple, identical solves.</p>
 <dd><p>Computes the log probability <cite>ln p(Y = value | a &lt; X &lt; b)</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>value</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>value</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
@@ -4513,11 +4470,14 @@ dimensions that are constrained to be fixed to the values specified in
 the <cite>interior_point</cite>, which is required to be passed in conjunction with
 <cite>fixed_indices</cite>.</p></li>
 <li><p><strong>mean</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – The <cite>d x 1</cite>-dim mean of the MVN distribution (if omitted, use zero).</p></li>
-<li><p><strong>covariance_matrix</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – The <cite>d x d</cite>-dim covariance matrix of the MVN
+<li><p><strong>covariance_matrix</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>LinearOperator</em><em>]</em><em>]</em>) – The <cite>d x d</cite>-dim covariance matrix of the MVN
 distribution (if omitted, use the identity).</p></li>
-<li><p><strong>covariance_root</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>d x d</cite>-dim root of the covariance matrix such that
+<li><p><strong>covariance_root</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>LinearOperator</em><em>]</em><em>]</em>) – A <cite>d x d</cite>-dim root of the covariance matrix such that
 covariance_root @ covariance_root.T = covariance_matrix. NOTE: This
-matrix is assumed to be lower triangular.</p></li>
+matrix is assumed to be lower triangular. covariance_root can only be
+passed in conjunction with fixed_indices if covariance_root is a
+DiagLinearOperator. Otherwise the factorization would need to be re-
+computed, as we need to solve in <cite>standardize</cite>.</p></li>
 <li><p><strong>check_feasibility</strong> (<em>bool</em>) – If True, raise an error if the sampling results in an
 infeasible sample. This creates some overhead and so is switched off
 by default.</p></li>
@@ -4594,7 +4554,7 @@ that are contained in <cite>fixed_indices</cite> and False otherwise.</p>
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.probability.linalg.</span></span><span class="sig-name descname"><span class="pre">block_matrix_concat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">blocks</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/probability/linalg.html#block_matrix_concat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.probability.linalg.block_matrix_concat" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>blocks</strong> (<em>Sequence</em><em>[</em><em>Sequence</em><em>[</em><em>Tensor</em><em>]</em><em>]</em>) – </p>
+<dd class="field-odd"><p><strong>blocks</strong> (<em>Sequence</em><em>[</em><em>Sequence</em><em>[</em><em>Tensor</em><em>]</em><em>]</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
@@ -4628,11 +4588,11 @@ based on a precomputed Cholesky factor <cite>Kaa = Laa Laa^T</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>step</strong> (<em>int</em>) – </p></li>
-<li><p><strong>tril</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>perm</strong> (<em>LongTensor</em>) – </p></li>
-<li><p><strong>diag</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – </p></li>
-<li><p><strong>validate_init</strong> (<em>InitVar</em><em>[</em><em>bool</em><em>]</em>) – </p></li>
+<li><p><strong>step</strong> (<em>int</em>)</p></li>
+<li><p><strong>tril</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>perm</strong> (<em>LongTensor</em>)</p></li>
+<li><p><strong>diag</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>)</p></li>
+<li><p><strong>validate_init</strong> (<em>InitVar</em><em>[</em><em>bool</em><em>]</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -4662,7 +4622,7 @@ based on a precomputed Cholesky factor <cite>Kaa = Laa Laa^T</cite>.</p>
 <dd><p>Performs a single matrix decomposition step.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>eps</strong> (<em>float</em>) – </p>
+<dd class="field-odd"><p><strong>eps</strong> (<em>float</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -4674,7 +4634,7 @@ based on a precomputed Cholesky factor <cite>Kaa = Laa Laa^T</cite>.</p>
 <span class="sig-name descname"><span class="pre">pivot_</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pivot</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/probability/linalg.html#PivotedCholesky.pivot_"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.probability.linalg.PivotedCholesky.pivot_" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>pivot</strong> (<em>LongTensor</em>) – </p>
+<dd class="field-odd"><p><strong>pivot</strong> (<em>LongTensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -4686,7 +4646,7 @@ based on a precomputed Cholesky factor <cite>Kaa = Laa Laa^T</cite>.</p>
 <span class="sig-name descname"><span class="pre">expand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">sizes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/probability/linalg.html#PivotedCholesky.expand"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.probability.linalg.PivotedCholesky.expand" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>sizes</strong> (<em>int</em>) – </p>
+<dd class="field-odd"><p><strong>sizes</strong> (<em>int</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="#botorch.utils.probability.linalg.PivotedCholesky" title="botorch.utils.probability.linalg.PivotedCholesky"><em>PivotedCholesky</em></a></p>
@@ -4699,8 +4659,8 @@ based on a precomputed Cholesky factor <cite>Kaa = Laa Laa^T</cite>.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>other</strong> (<a class="reference internal" href="#botorch.utils.probability.linalg.PivotedCholesky" title="botorch.utils.probability.linalg.PivotedCholesky"><em>PivotedCholesky</em></a>) – </p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+<li><p><strong>other</strong> (<a class="reference internal" href="#botorch.utils.probability.linalg.PivotedCholesky" title="botorch.utils.probability.linalg.PivotedCholesky"><em>PivotedCholesky</em></a>)</p></li>
+<li><p><strong>dim</strong> (<em>int</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -4758,9 +4718,9 @@ the returned Tensors should not be modified in-place.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>values</strong> (<em>Number</em><em> | </em><em>Iterator</em><em>[</em><em>Number</em><em>]</em>) – </p></li>
-<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>) – </p></li>
-<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>values</strong> (<em>Number</em><em> | </em><em>Iterator</em><em>[</em><em>Number</em><em>]</em>)</p></li>
+<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -4774,8 +4734,8 @@ the returned Tensors should not be modified in-place.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>values</strong> (<em>Number</em><em> | </em><em>Iterator</em><em>[</em><em>Number</em><em>]</em>) – </p></li>
-<li><p><strong>ref</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>values</strong> (<em>Number</em><em> | </em><em>Iterator</em><em>[</em><em>Number</em><em>]</em>)</p></li>
+<li><p><strong>ref</strong> (<em>Tensor</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -4789,9 +4749,9 @@ the returned Tensors should not be modified in-place.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>shape</strong> (<em>Size</em>) – </p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
-<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>shape</strong> (<em>Size</em>)</p></li>
+<li><p><strong>dim</strong> (<em>int</em>)</p></li>
+<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -4805,9 +4765,9 @@ the returned Tensors should not be modified in-place.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>shape</strong> (<em>Size</em>) – </p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
-<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>shape</strong> (<em>Size</em>)</p></li>
+<li><p><strong>dim</strong> (<em>int</em>)</p></li>
+<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -4821,8 +4781,8 @@ the returned Tensors should not be modified in-place.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>deg</strong> (<em>int</em>) – </p></li>
-<li><p><strong>tkwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>deg</strong> (<em>int</em>)</p></li>
+<li><p><strong>tkwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -4836,7 +4796,7 @@ the returned Tensors should not be modified in-place.</p>
 <dd><p>Standard normal CDF.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
@@ -4849,7 +4809,7 @@ the returned Tensors should not be modified in-place.</p>
 <dd><p>Standard normal PDF.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
@@ -4862,7 +4822,7 @@ the returned Tensors should not be modified in-place.</p>
 <dd><p>Logarithm of standard normal pdf</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
@@ -5022,7 +4982,7 @@ when passed as a Tensor.</p>
 </ul></li>
 </ul>
 </div>
-<div id="searchbox" role="search" style="display: none">
+<search id="searchbox" role="search" style="display: none">
 <h3 id="searchlabel">Quick search</h3>
 <div class="searchformwrapper">
 <form action="search.html" class="search" method="get">
@@ -5030,7 +4990,7 @@ when passed as a Tensor.</p>
 <input type="submit" value="Go"/>
 </form>
 </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>

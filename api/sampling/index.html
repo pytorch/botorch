@@ -31,7 +31,7 @@
 <p>A dummy sampler for use with deterministic models.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.deterministic.DeterministicSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.deterministic.</span></span><span class="sig-name descname"><span class="pre">DeterministicSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/deterministic.html#DeterministicSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.deterministic.DeterministicSampler" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.deterministic.</span></span><span class="sig-name descname"><span class="pre">DeterministicSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/deterministic.html#DeterministicSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.deterministic.DeterministicSampler" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.sampling.stochastic_samplers.StochasticSampler" title="botorch.sampling.stochastic_samplers.StochasticSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">StochasticSampler</span></code></a></p>
 <p>A sampler that simply calls <cite>posterior.rsample</cite>, intended to be used with
 <cite>DeterministicModel</cite> &amp; <cite>DeterministicPosterior</cite>.</p>
@@ -46,14 +46,9 @@ deterministic models since their output is deterministic by definition.</p>
 <li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
 of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
 <li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
-<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.deterministic.DeterministicSampler.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.deterministic.DeterministicSampler.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.sampling.index_sampler">
@@ -62,7 +57,7 @@ of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.
 deterministic optimization of acquisition functions with ensemble models.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.index_sampler.IndexSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.index_sampler.</span></span><span class="sig-name descname"><span class="pre">IndexSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/index_sampler.html#IndexSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.index_sampler.IndexSampler" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.index_sampler.</span></span><span class="sig-name descname"><span class="pre">IndexSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/index_sampler.html#IndexSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.index_sampler.IndexSampler" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></p>
 <p>A sampler that calls <cite>posterior.rsample_from_base_samples</cite> to
 generate the samples via index base samples.</p>
@@ -73,7 +68,6 @@ generate the samples via index base samples.</p>
 <li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
 of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
 <li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
-<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -93,10 +87,6 @@ of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.index_sampler.IndexSampler.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.index_sampler.IndexSampler.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.sampling.get_sampler">
@@ -136,7 +126,7 @@ given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
 acquisition functions and Gaussian posteriors.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.normal.NormalMCSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.normal.</span></span><span class="sig-name descname"><span class="pre">NormalMCSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/normal.html#NormalMCSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.normal.NormalMCSampler" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.normal.</span></span><span class="sig-name descname"><span class="pre">NormalMCSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/normal.html#NormalMCSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.normal.NormalMCSampler" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 <p>Base class for samplers producing (possibly QMC) N(0,1) samples.</p>
 <p>Subclasses must implement the <cite>_construct_base_samples</cite> method.</p>
@@ -147,7 +137,6 @@ acquisition functions and Gaussian posteriors.</p>
 <li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
 of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
 <li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
-<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -167,14 +156,10 @@ of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.normal.NormalMCSampler.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.normal.NormalMCSampler.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.normal.IIDNormalSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.normal.</span></span><span class="sig-name descname"><span class="pre">IIDNormalSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/normal.html#IIDNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.normal.IIDNormalSampler" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.normal.</span></span><span class="sig-name descname"><span class="pre">IIDNormalSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/normal.html#IIDNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.normal.IIDNormalSampler" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.sampling.normal.NormalMCSampler" title="botorch.sampling.normal.NormalMCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMCSampler</span></code></a></p>
 <p>Sampler for MC base samples using iid N(0,1) samples.</p>
 <p class="rubric">Example</p>
@@ -190,18 +175,13 @@ of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.
 <li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
 of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
 <li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
-<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.normal.IIDNormalSampler.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.normal.IIDNormalSampler.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.normal.SobolQMCNormalSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.normal.</span></span><span class="sig-name descname"><span class="pre">SobolQMCNormalSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/normal.html#SobolQMCNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.normal.SobolQMCNormalSampler" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.normal.</span></span><span class="sig-name descname"><span class="pre">SobolQMCNormalSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/normal.html#SobolQMCNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.normal.SobolQMCNormalSampler" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.sampling.normal.NormalMCSampler" title="botorch.sampling.normal.NormalMCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMCSampler</span></code></a></p>
 <p>Sampler for quasi-MC N(0,1) base samples using Sobol sequences.</p>
 <p class="rubric">Example</p>
@@ -217,14 +197,9 @@ of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.
 <li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
 of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
 <li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
-<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.normal.SobolQMCNormalSampler.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.normal.SobolQMCNormalSampler.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.sampling.pairwise_samplers">
@@ -263,10 +238,6 @@ The returned samples are expected to have output dimension of 1.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pairwise_samplers.PairwiseMCSampler.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseMCSampler.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.pairwise_samplers.PairwiseIIDNormalSampler">
@@ -283,10 +254,6 @@ If None, use all possible pairwise comparisons.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pairwise_samplers.PairwiseIIDNormalSampler.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseIIDNormalSampler.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.pairwise_samplers.PairwiseSobolQMCNormalSampler">
@@ -303,10 +270,6 @@ If None, use all possible pairwise comparisons.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pairwise_samplers.PairwiseSobolQMCNormalSampler.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseSobolQMCNormalSampler.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.sampling.qmc">
@@ -422,7 +385,7 @@ tensor, and the function returns None.</p></li>
 stochastic optimization of acquisition functions.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.stochastic_samplers.ForkedRNGSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.stochastic_samplers.</span></span><span class="sig-name descname"><span class="pre">ForkedRNGSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/stochastic_samplers.html#ForkedRNGSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.stochastic_samplers.ForkedRNGSampler" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.stochastic_samplers.</span></span><span class="sig-name descname"><span class="pre">ForkedRNGSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/stochastic_samplers.html#ForkedRNGSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.stochastic_samplers.ForkedRNGSampler" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></p>
 <p>A sampler using <cite>torch.fork_rng</cite> to enable replicable sampling
 from a posterior that does not support base samples.</p>
@@ -439,7 +402,6 @@ compatible with Sample Average Approximation.</p>
 <li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
 of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
 <li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
-<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -459,14 +421,10 @@ of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.stochastic_samplers.ForkedRNGSampler.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.stochastic_samplers.ForkedRNGSampler.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.stochastic_samplers.StochasticSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.stochastic_samplers.</span></span><span class="sig-name descname"><span class="pre">StochasticSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/stochastic_samplers.html#StochasticSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.stochastic_samplers.StochasticSampler" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.stochastic_samplers.</span></span><span class="sig-name descname"><span class="pre">StochasticSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/stochastic_samplers.html#StochasticSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.stochastic_samplers.StochasticSampler" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></p>
 <p>A sampler that simply calls <cite>posterior.rsample</cite> to generate the
 samples. This should only be used for stochastic optimization of the
@@ -481,7 +439,6 @@ under the hood.</p>
 <li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
 of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
 <li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
-<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -501,10 +458,6 @@ of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.stochastic_samplers.StochasticSampler.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.stochastic_samplers.StochasticSampler.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <section id="pathwise-sampling">
 <h3>Pathwise Sampling<a class="headerlink" href="#pathwise-sampling" title="Link to this heading">¶</a></h3>
@@ -555,14 +508,6 @@ of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelEvaluationMap.input_transform">
-<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TInputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelEvaluationMap.input_transform" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelEvaluationMap.output_transform">
-<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TOutputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelEvaluationMap.output_transform" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelEvaluationMap.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/features/maps.html#KernelEvaluationMap.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelEvaluationMap.forward" title="Link to this definition">¶</a></dt>
@@ -577,7 +522,7 @@ registered hooks while the latter silently ignores them.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em> | <em>LinearOperator</em></p>
@@ -591,10 +536,6 @@ registered hooks while the latter silently ignores them.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelEvaluationMap.batch_shape">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Size</span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelEvaluationMap.batch_shape" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelEvaluationMap.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelEvaluationMap.training" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
@@ -619,14 +560,6 @@ n-dimensional feature map <span class="math notranslate nohighlight">\(\phi: \ma
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelFeatureMap.input_transform">
-<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TInputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelFeatureMap.input_transform" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelFeatureMap.output_transform">
-<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TOutputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelFeatureMap.output_transform" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelFeatureMap.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/features/maps.html#KernelFeatureMap.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelFeatureMap.forward" title="Link to this definition">¶</a></dt>
@@ -641,7 +574,7 @@ registered hooks while the latter silently ignores them.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
@@ -655,10 +588,6 @@ registered hooks while the latter silently ignores them.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelFeatureMap.batch_shape">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Size</span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelFeatureMap.batch_shape" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelFeatureMap.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelFeatureMap.training" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 </section>
@@ -689,7 +618,7 @@ and <a class="reference internal" href="#sutherland2015error" id="id4"><span>[su
 <li><p><strong>kernel</strong> (<em>Kernel</em>) – The kernel <span class="math notranslate nohighlight">\(k\)</span> to be represented via a finite-dim basis.</p></li>
 <li><p><strong>num_inputs</strong> (<em>int</em>) – The number of input features.</p></li>
 <li><p><strong>num_outputs</strong> (<em>int</em>) – The number of kernel features.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -708,14 +637,6 @@ and <a class="reference internal" href="#sutherland2015error" id="id4"><span>[su
 <p>Initialize internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="field-list simple">
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.SamplePath.input_transform">
-<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TInputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.SamplePath.input_transform" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.SamplePath.output_transform">
-<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TOutputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.SamplePath.output_transform" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathDict">
@@ -728,19 +649,11 @@ and <a class="reference internal" href="#sutherland2015error" id="id4"><span>[su
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>paths</strong> (<em>Optional</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><em>SamplePath</em></a><em>]</em><em>]</em>) – An optional mapping of strings to sample paths.</p></li>
 <li><p><strong>join</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>List</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – An optional callable used to combine each path’s outputs.</p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>TInputTransform</em><em>]</em>) – An optional input transform for the module.</p></li>
-<li><p><strong>output_transform</strong> (<em>Optional</em><em>[</em><em>TOutputTransform</em><em>]</em>) – An optional output transform for the module.</p></li>
+<li><p><strong>input_transform</strong> (<em>InputTransform</em><em> | </em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – An optional input transform for the module.</p></li>
+<li><p><strong>output_transform</strong> (<em>OutcomeTransform</em><em> | </em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – An optional output transform for the module.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathDict.input_transform">
-<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TInputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathDict.input_transform" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathDict.output_transform">
-<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TOutputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathDict.output_transform" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathDict.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/paths.html#PathDict.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathDict.forward" title="Link to this definition">¶</a></dt>
@@ -756,8 +669,8 @@ registered hooks while the latter silently ignores them.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>x</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -792,10 +705,6 @@ registered hooks while the latter silently ignores them.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathDict.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathDict.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathList">
@@ -808,19 +717,11 @@ registered hooks while the latter silently ignores them.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>paths</strong> (<em>Optional</em><em>[</em><em>Iterable</em><em>[</em><a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><em>SamplePath</em></a><em>]</em><em>]</em>) – An optional iterable of sample paths.</p></li>
 <li><p><strong>join</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>List</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – An optional callable used to combine each path’s outputs.</p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>TInputTransform</em><em>]</em>) – An optional input transform for the module.</p></li>
-<li><p><strong>output_transform</strong> (<em>Optional</em><em>[</em><em>TOutputTransform</em><em>]</em>) – An optional output transform for the module.</p></li>
+<li><p><strong>input_transform</strong> (<em>InputTransform</em><em> | </em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – An optional input transform for the module.</p></li>
+<li><p><strong>output_transform</strong> (<em>OutcomeTransform</em><em> | </em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – An optional output transform for the module.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathList.input_transform">
-<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TInputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathList.input_transform" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathList.output_transform">
-<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TOutputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathList.output_transform" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathList.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/paths.html#PathList.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathList.forward" title="Link to this definition">¶</a></dt>
@@ -836,8 +737,8 @@ registered hooks while the latter silently ignores them.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>x</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -845,10 +746,6 @@ registered hooks while the latter silently ignores them.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathList.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathList.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.GeneralizedLinearPath">
@@ -866,19 +763,11 @@ where z = input_transform(x).
 <li><p><strong>feature_map</strong> (<a class="reference internal" href="#botorch.sampling.pathwise.features.maps.FeatureMap" title="botorch.sampling.pathwise.features.maps.FeatureMap"><em>FeatureMap</em></a>) – A map used to featurize the module’s inputs.</p></li>
 <li><p><strong>weight</strong> (<em>Union</em><em>[</em><em>Parameter</em><em>, </em><em>Tensor</em><em>]</em>) – A tensor of weights used to combine input features.</p></li>
 <li><p><strong>bias_module</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>) – An optional module used to define additive offsets.</p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>TInputTransform</em><em>]</em>) – An optional input transform for the module.</p></li>
-<li><p><strong>output_transform</strong> (<em>Optional</em><em>[</em><em>TOutputTransform</em><em>]</em>) – An optional output transform for the module.</p></li>
+<li><p><strong>input_transform</strong> (<em>InputTransform</em><em> | </em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – An optional input transform for the module.</p></li>
+<li><p><strong>output_transform</strong> (<em>OutcomeTransform</em><em> | </em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – An optional output transform for the module.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.GeneralizedLinearPath.input_transform">
-<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TInputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.GeneralizedLinearPath.input_transform" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.GeneralizedLinearPath.output_transform">
-<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TOutputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.GeneralizedLinearPath.output_transform" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.GeneralizedLinearPath.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/paths.html#GeneralizedLinearPath.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.paths.GeneralizedLinearPath.forward" title="Link to this definition">¶</a></dt>
@@ -893,17 +782,13 @@ registered hooks while the latter silently ignores them.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.GeneralizedLinearPath.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.GeneralizedLinearPath.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.sampling.pathwise.prior_samplers">
@@ -921,7 +806,7 @@ final batch dimension.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<em>GP</em>) – The prior over functions.</p></li>
 <li><p><strong>sample_shape</strong> (<em>Size</em>) – The shape of the sample paths to be drawn.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -969,23 +854,11 @@ For more information, see <a class="reference internal" href="#wilson2020samplin
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>prior_paths</strong> (<a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><em>SamplePath</em></a>) – Sample paths used to represent the prior.</p></li>
 <li><p><strong>update_paths</strong> (<a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><em>SamplePath</em></a>) – Sample paths used to represent the data.</p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>TInputTransform</em><em>]</em>) – An optional input transform for the module.</p></li>
-<li><p><strong>output_transform</strong> (<em>Optional</em><em>[</em><em>TOutputTransform</em><em>]</em>) – An optional output transform for the module.</p></li>
+<li><p><strong>input_transform</strong> (<em>InputTransform</em><em> | </em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – An optional input transform for the module.</p></li>
+<li><p><strong>output_transform</strong> (<em>OutcomeTransform</em><em> | </em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – An optional output transform for the module.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.posterior_samplers.MatheronPath.input_transform">
-<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TInputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.posterior_samplers.MatheronPath.input_transform" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.posterior_samplers.MatheronPath.output_transform">
-<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TOutputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.posterior_samplers.MatheronPath.output_transform" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.posterior_samplers.MatheronPath.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.posterior_samplers.MatheronPath.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.posterior_samplers.draw_matheron_paths">
@@ -1004,8 +877,8 @@ final batch dimension.</p>
 a set of sample paths representing the prior.</p></li>
 <li><p><strong>update_strategy</strong> (<em>Callable</em><em>[</em><em>[</em><em>GP</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><em>SamplePath</em></a><em>]</em>) – A callable that takes a model and a tensor of prior process
 values and returns a set of sample paths representing the data.</p></li>
-<li><p><strong>prior_sampler</strong> (<em>Callable</em><em>[</em><em>[</em><em>GP</em><em>, </em><em>Size</em><em>]</em><em>, </em><a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><em>SamplePath</em></a><em>]</em>) – </p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>prior_sampler</strong> (<em>Callable</em><em>[</em><em>[</em><em>GP</em><em>, </em><em>Size</em><em>]</em><em>, </em><a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><em>SamplePath</em></a><em>]</em>)</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1036,7 +909,7 @@ For more information, see <a class="reference internal" href="#wilson2020samplin
 <li><p><strong>sample_values</strong> (<em>Tensor</em>) – Assumed values for <span class="math notranslate nohighlight">\(f(X)\)</span>.</p></li>
 <li><p><strong>likelihood</strong> (<em>Likelihood</em><em> | </em><em>None</em>) – An optional likelihood used to help define the desired
 update. Defaults to <cite>model.likelihood</cite> if it exists else None.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1084,8 +957,8 @@ registered hooks while the latter silently ignores them.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>values</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>values</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1093,10 +966,6 @@ registered hooks while the latter silently ignores them.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.TensorTransform.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.utils.TensorTransform.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.ChainedTransform">
@@ -1123,17 +992,13 @@ registered hooks while the latter silently ignores them.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>values</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>values</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.ChainedTransform.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.utils.ChainedTransform.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.SineCosineTransform">
@@ -1160,17 +1025,13 @@ registered hooks while the latter silently ignores them.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>values</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>values</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.SineCosineTransform.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.utils.SineCosineTransform.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.InverseLengthscaleTransform">
@@ -1197,17 +1058,13 @@ registered hooks while the latter silently ignores them.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>values</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>values</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.InverseLengthscaleTransform.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.utils.InverseLengthscaleTransform.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.OutputscaleTransform">
@@ -1235,17 +1092,13 @@ registered hooks while the latter silently ignores them.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>values</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>values</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.OutputscaleTransform.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.utils.OutputscaleTransform.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.FeatureSelector">
@@ -1276,17 +1129,13 @@ registered hooks while the latter silently ignores them.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>values</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>values</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.FeatureSelector.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.utils.FeatureSelector.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.OutcomeUntransformer">
@@ -1317,17 +1166,13 @@ registered hooks while the latter silently ignores them.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>values</strong> (<em>Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>values</strong> (<em>Tensor</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.OutcomeUntransformer.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.utils.OutcomeUntransformer.training" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.get_input_transform">
@@ -1335,7 +1180,7 @@ registered hooks while the latter silently ignores them.</p>
 <dd><p>Returns a model’s input_transform or None.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>model</strong> (<em>GPyTorchModel</em>) – </p>
+<dd class="field-odd"><p><strong>model</strong> (<em>GPyTorchModel</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>InputTransform</em> | None</p>
@@ -1348,7 +1193,7 @@ registered hooks while the latter silently ignores them.</p>
 <dd><p>Returns a wrapped version of a model’s outcome_transform or None.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>model</strong> (<em>GPyTorchModel</em>) – </p>
+<dd class="field-odd"><p><strong>model</strong> (<em>GPyTorchModel</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="#botorch.sampling.pathwise.utils.OutcomeUntransformer" title="botorch.sampling.pathwise.utils.OutcomeUntransformer"><em>OutcomeUntransformer</em></a> | None</p>
@@ -1401,7 +1246,7 @@ registered hooks while the latter silently ignores them.</p>
 </ul></li>
 </ul>
 </div>
-<div id="searchbox" role="search" style="display: none">
+<search id="searchbox" role="search" style="display: none">
 <h3 id="searchlabel">Quick search</h3>
 <div class="searchformwrapper">
 <form action="search.html" class="search" method="get">
@@ -1409,7 +1254,7 @@ registered hooks while the latter silently ignores them.</p>
 <input type="submit" value="Go"/>
 </form>
 </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>

@@ -409,7 +409,7 @@ the other strategies, this is not guaranteed for a optimization.</p>
 <span class="c1"># Number of pairwise comparisons performed before checking posterior mean</span>
 <span class="n">every_n_comps</span> <span class="o">=</span> <span class="mi">3</span>
 <span class="c1"># Total number of checking the maximum posterior mean</span>
-<span class="n">n_check_post_mean</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">n_check_post_mean</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">5</span>
 <span class="n">n_outcome_model_initialization_points</span> <span class="o">=</span> <span class="mi">8</span>
 <span class="n">within_session_results</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="n">exp_candidate_results</span> <span class="o">=</span> <span class="p">[]</span>

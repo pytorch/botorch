@@ -98,9 +98,11 @@
             <span class="n">mcmc_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_mcmc_batch_dimension</span><span class="p">()</span>
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
                 <span class="p">[</span>
-                    <span class="n">x</span>
-                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">GaussianMixturePosterior</span><span class="p">)</span>
-                    <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reshape_tensor</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">mcmc_samples</span><span class="o">=</span><span class="n">mcmc_samples</span><span class="p">)</span>
+                    <span class="p">(</span>
+                        <span class="n">x</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">GaussianMixturePosterior</span><span class="p">)</span>
+                        <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reshape_tensor</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">mcmc_samples</span><span class="o">=</span><span class="n">mcmc_samples</span><span class="p">)</span>
+                    <span class="p">)</span>
                     <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">tensors</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">posteriors</span><span class="p">)</span>
                 <span class="p">],</span>
                 <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
@@ -179,19 +181,13 @@
 
 <div class="viewcode-block" id="PosteriorList.rsample">
 <a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.posterior_list.PosteriorList.rsample">[docs]</a>
-    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample from the posterior (with gradients).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            sample_shape: A `torch.Size` object specifying the sample shape. To</span>
 <span class="sd">                draw `n` samples, set to `torch.Size([n])`. To draw `b` batches</span>
 <span class="sd">                of `n` samples each, set to `torch.Size([b, n])`.</span>
-<span class="sd">            base_samples: An (optional) Tensor of `N(0, I)` base samples of</span>
-<span class="sd">                appropriate dimension, typically obtained from a `Sampler`.</span>
-<span class="sd">                This is used for deterministic optimization. Deprecated.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Samples from the posterior, a tensor of shape</span>
@@ -244,7 +240,7 @@
 </ul></li>
 </ul>
 </div>
-<div id="searchbox" role="search" style="display: none">
+<search id="searchbox" role="search" style="display: none">
 <h3 id="searchlabel">Quick search</h3>
 <div class="searchformwrapper">
 <form action="../../../search.html" class="search" method="get">
@@ -252,7 +248,7 @@
 <input type="submit" value="Go"/>
 </form>
 </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>

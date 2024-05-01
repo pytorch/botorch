@@ -220,7 +220,7 @@ In doing so, we will also pass in the <code>InputPerturbation</code>. We will re
     <span class="n">acqf</span> <span class="o">=</span> <span class="n">qNoisyExpectedImprovement</span><span class="p">(</span>
         <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
         <span class="n">X_baseline</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
-        <span class="n">sampler</span><span class="o">=</span><span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="mi">128</span><span class="p">),</span>
+        <span class="n">sampler</span><span class="o">=</span><span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">128</span><span class="p">])),</span>
         <span class="n">objective</span><span class="o">=</span><span class="n">risk_measure</span><span class="p">,</span>
         <span class="n">prune_baseline</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>

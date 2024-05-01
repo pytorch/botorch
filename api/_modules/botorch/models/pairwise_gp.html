@@ -89,17 +89,10 @@
             <span class="n">expected_attr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">t_input</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="n">found_attr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">input_</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">expected_attr</span> <span class="o">!=</span> <span class="n">found_attr</span><span class="p">:</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="s2">"Cannot modify </span><span class="si">{attr}</span><span class="s2"> of </span><span class="si">{t_or_i}</span><span class="s2"> "</span>
-                    <span class="s2">"(expected </span><span class="si">{e_attr}</span><span class="s2">, found </span><span class="si">{f_attr}</span><span class="s2">)."</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Cannot modify </span><span class="si">{</span><span class="n">attr</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">target_or_inputs</span><span class="si">}</span><span class="s2"> "</span>
+                    <span class="sa">f</span><span class="s2">"(expected </span><span class="si">{</span><span class="n">expected_attr</span><span class="si">}</span><span class="s2">, found </span><span class="si">{</span><span class="n">found_attr</span><span class="si">}</span><span class="s2">)."</span>
                 <span class="p">)</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                    <span class="n">attr</span><span class="o">=</span><span class="n">attr</span><span class="p">,</span>
-                    <span class="n">e_attr</span><span class="o">=</span><span class="n">expected_attr</span><span class="p">,</span>
-                    <span class="n">f_attr</span><span class="o">=</span><span class="n">found_attr</span><span class="p">,</span>
-                    <span class="n">t_or_i</span><span class="o">=</span><span class="n">target_or_inputs</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">_scaled_psd_safe_cholesky</span><span class="p">(</span>
@@ -815,7 +808,6 @@
     <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">training_data</span><span class="p">:</span> <span class="n">SupervisedDataset</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Construct `Model` keyword arguments from a `RankingDataset`.</span>
@@ -823,7 +815,6 @@
 <span class="sd">        Args:</span>
 <span class="sd">            training_data: A `RankingDataset`, with attributes `train_X`,</span>
 <span class="sd">                `train_Y`, and, optionally, `train_Yvar`.</span>
-<span class="sd">            kwargs: Ignored.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A dict of keyword arguments that can be used to initialize a</span>
@@ -866,7 +857,7 @@
 <span class="sd">                `comparisons` or `datapoints` is `None`, construct a prior-only</span>
 <span class="sd">                model.</span>
 <span class="sd">            strict: `strict` argument as in gpytorch.models.exact_gp for compatibility</span>
-<span class="sd">                when using fit_gpytorch_model with input_transform.</span>
+<span class="sd">                when using fit_gpytorch_mll with input_transform.</span>
 <span class="sd">            update_model: True if we want to refit the model (see _update) after</span>
 <span class="sd">                re-setting the data.</span>
 <span class="sd">        """</span>
@@ -1307,7 +1298,7 @@
 </ul></li>
 </ul>
 </div>
-<div id="searchbox" role="search" style="display: none">
+<search id="searchbox" role="search" style="display: none">
 <h3 id="searchlabel">Quick search</h3>
 <div class="searchformwrapper">
 <form action="../../../search.html" class="search" method="get">
@@ -1315,7 +1306,7 @@
 <input type="submit" value="Go"/>
 </form>
 </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>

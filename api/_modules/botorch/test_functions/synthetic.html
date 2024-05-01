@@ -904,11 +904,7 @@
 <a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.SixHumpCamel.evaluate_true">[docs]</a>
     <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="p">(</span><span class="mi">4</span> <span class="o">-</span> <span class="mf">2.1</span> <span class="o">*</span> <span class="n">x1</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x1</span><span class="o">**</span><span class="mi">4</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="n">x1</span><span class="o">**</span><span class="mi">2</span>
-            <span class="o">+</span> <span class="n">x1</span> <span class="o">*</span> <span class="n">x2</span>
-            <span class="o">+</span> <span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">x2</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">4</span><span class="p">)</span> <span class="o">*</span> <span class="n">x2</span><span class="o">**</span><span class="mi">2</span>
-        <span class="p">)</span></div>
+        <span class="k">return</span> <span class="p">(</span><span class="mi">4</span> <span class="o">-</span> <span class="mf">2.1</span> <span class="o">*</span> <span class="n">x1</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x1</span><span class="o">**</span><span class="mi">4</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="n">x1</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x1</span> <span class="o">*</span> <span class="n">x2</span> <span class="o">+</span> <span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">x2</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">4</span><span class="p">)</span> <span class="o">*</span> <span class="n">x2</span><span class="o">**</span><span class="mi">2</span></div>
 </div>
 
 
@@ -1000,11 +996,11 @@
 <span class="sd">            negate: If True, negate the function.</span>
 <span class="sd">            bounds: Custom bounds for the function specified as (lower, upper) pairs.</span>
 <span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">constraint_noise_std</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_constraint_noise</span><span class="p">(</span>
-            <span class="n">constraint_noise_std</span>
-        <span class="p">)</span>
         <span class="n">SyntheticTestFunction</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraint_noise_std</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_constraint_noise</span><span class="p">(</span>
+            <span class="n">constraint_noise_std</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_validate_constraint_noise</span><span class="p">(</span>
@@ -1082,6 +1078,7 @@
 <span class="sd">    This is a constrained version of the standard Hartmann test function that</span>
 <span class="sd">    uses `||x||_2 &lt;= 1` as the constraint. This problem comes from [Letham2019]_.</span>
 <span class="sd">    """</span>
+
     <span class="n">num_constraints</span> <span class="o">=</span> <span class="mi">1</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -1102,9 +1099,11 @@
 <span class="sd">            negate: If True, negate the function.</span>
 <span class="sd">            bounds: Custom bounds for the function specified as (lower, upper) pairs.</span>
 <span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_constraint_noise</span><span class="p">(</span><span class="n">constraint_noise_std</span><span class="p">)</span>
         <span class="n">Hartmann</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraint_noise_std</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_constraint_noise</span><span class="p">(</span>
+            <span class="n">constraint_noise_std</span>
         <span class="p">)</span>
 
 <div class="viewcode-block" id="ConstrainedHartmann.evaluate_slack_true">
@@ -1123,6 +1122,7 @@
 <span class="sd">    This is a constrained version of the standard Hartmann test function that</span>
 <span class="sd">    uses `||x||_2^2 &lt;= 1` as the constraint to obtain smoother constraint slack.</span>
 <span class="sd">    """</span>
+
     <span class="n">num_constraints</span> <span class="o">=</span> <span class="mi">1</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -1143,9 +1143,11 @@
 <span class="sd">            negate: If True, negate the function.</span>
 <span class="sd">            bounds: Custom bounds for the function specified as (lower, upper) pairs.</span>
 <span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_constraint_noise</span><span class="p">(</span><span class="n">constraint_noise_std</span><span class="p">)</span>
         <span class="n">Hartmann</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraint_noise_std</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_constraint_noise</span><span class="p">(</span>
+            <span class="n">constraint_noise_std</span>
         <span class="p">)</span>
 
 <div class="viewcode-block" id="ConstrainedHartmannSmooth.evaluate_slack_true">
@@ -1399,7 +1401,7 @@
 </ul></li>
 </ul>
 </div>
-<div id="searchbox" role="search" style="display: none">
+<search id="searchbox" role="search" style="display: none">
 <h3 id="searchlabel">Quick search</h3>
 <div class="searchformwrapper">
 <form action="../../../search.html" class="search" method="get">
@@ -1407,7 +1409,7 @@
 <input type="submit" value="Go"/>
 </form>
 </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
