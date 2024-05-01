@@ -42,8 +42,6 @@ jobs:
     - name: Deploy to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
-        user: __token__
-        password: ${{ secrets.PYPI_TOKEN }}
         verbose: true
 
   package-deploy-conda:
