@@ -781,7 +781,6 @@ class Round(InputTransform, Module):
         transform_on_fantasize: bool = True,
         approximate: bool = False,
         tau: float = 1e-3,
-        **kwargs,
     ) -> None:
         r"""Initialize transform.
 
@@ -800,13 +799,6 @@ class Round(InputTransform, Module):
                 rounding should be used. Default: False.
             tau: The temperature parameter for approximate rounding.
         """
-        indices = kwargs.get("indices")
-        if indices is not None:
-            warn(
-                "`indices` is marked for deprecation in favor of `integer_indices`.",
-                DeprecationWarning,
-            )
-            integer_indices = indices
         if approximate and categorical_features is not None:
             raise NotImplementedError
         super().__init__()
