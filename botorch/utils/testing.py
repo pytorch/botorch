@@ -51,7 +51,7 @@ class BotorchTestCase(TestCase):
             warnings.filterwarnings(
                 "ignore",
                 message="The model inputs are of type",
-                category=UserWarning,
+                category=InputDataWarning,
             )
             warnings.filterwarnings(
                 "ignore",

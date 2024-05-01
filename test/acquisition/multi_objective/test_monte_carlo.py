@@ -702,6 +702,7 @@ class TestMultiObjectiveMCAcquisitionFunction(BotorchTestCase):
 
 class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
     def setUp(self):
+        super().setUp()
         self.ref_point = [0.0, 0.0, 0.0]
         self.Y_raw = torch.tensor(
             [
@@ -718,7 +719,6 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             ],
             device=self.device,
         )
-        super().setUp()
 
     def test_q_noisy_expected_hypervolume_improvement(self):
         for dtype in (torch.float, torch.double):

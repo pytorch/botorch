@@ -31,6 +31,7 @@ from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikeliho
 
 class TestObjectiveAndConstraintIntegration(BotorchTestCase):
     def setUp(self) -> None:
+        super().setUp()
         self.q = 3
         self.d = 2
         self.tkwargs = {"device": self.device, "dtype": torch.double}
