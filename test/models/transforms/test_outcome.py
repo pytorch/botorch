@@ -355,13 +355,6 @@ class TestOutcomeTransforms(BotorchTestCase):
                 self.assertFalse(new_transform._is_trained)
                 new_transform.load_state_dict(state_dict)
                 self.assertTrue(new_transform._is_trained)
-                # test deprecation error when loading state dict without _is_trained
-                state_dict.pop("_is_trained")
-                with self.assertWarnsRegex(
-                    DeprecationWarning,
-                    "Key '_is_trained' not found in state_dict. Setting to True.",
-                ):
-                    new_transform.load_state_dict(state_dict)
 
     def test_log(self):
         ms = (1, 2)
