@@ -46,7 +46,7 @@ jobs:
 
   package-deploy-conda:
     name: Package conda and deploy to anaconda.org
-    runs-on: 4-core-ubuntu
+    runs-on: 8-core-ubuntu
     needs: tests-and-coverage-pip
     steps:
     - uses: actions/checkout@v4
