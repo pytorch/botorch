@@ -53,7 +53,6 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -411,7 +410,12 @@
 
         <span class="c1"># Call Model.construct_inputs to parse training data</span>
         <span class="n">base_inputs</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">construct_inputs</span><span class="p">(</span><span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">training_data</span><span class="p">,</span> <span class="n">MultiTaskDataset</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">training_data</span><span class="p">,</span> <span class="n">MultiTaskDataset</span><span class="p">)</span>
+            <span class="c1"># If task features are included in the data, all tasks will have</span>
+            <span class="c1"># some observations and they may have different task features.</span>
+            <span class="ow">and</span> <span class="n">training_data</span><span class="o">.</span><span class="n">task_feature_index</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
             <span class="n">all_tasks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">training_data</span><span class="o">.</span><span class="n">datasets</span><span class="p">)))</span>
             <span class="n">base_inputs</span><span class="p">[</span><span class="s2">"all_tasks"</span><span class="p">]</span> <span class="o">=</span> <span class="n">all_tasks</span>
         <span class="k">if</span> <span class="n">task_covar_prior</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -422,84 +426,6 @@
         <span class="n">base_inputs</span><span class="p">[</span><span class="s2">"output_tasks"</span><span class="p">]</span> <span class="o">=</span> <span class="n">output_tasks</span>
         <span class="k">return</span> <span class="n">base_inputs</span></div>
 </div>
-
-
-
-<div class="viewcode-block" id="FixedNoiseMultiTaskGP">
-<a class="viewcode-back" href="../../../models.html#botorch.models.multitask.FixedNoiseMultiTaskGP">[docs]</a>
-<span class="k">class</span> <span class="nc">FixedNoiseMultiTaskGP</span><span class="p">(</span><span class="n">MultiTaskGP</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""Multi-Task GP model using an ICM kernel, with known observation noise.</span>
-
-<span class="sd">    DEPRECATED: Please use `MultiTaskGP` with `train_Yvar` instead.</span>
-<span class="sd">    Will be removed in a future release (~v0.10).</span>
-<span class="sd">    """</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">task_feature</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">covar_module</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">task_covar_prior</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Prior</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">output_tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">rank</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">        Args:</span>
-<span class="sd">            train_X: A `n x (d + 1)` or `b x n x (d + 1)` (batch mode) tensor</span>
-<span class="sd">                of training data. One of the columns should contain the task</span>
-<span class="sd">                features (see `task_feature` argument).</span>
-<span class="sd">            train_Y: A `n x 1` or `b x n x 1` (batch mode) tensor of training</span>
-<span class="sd">                observations.</span>
-<span class="sd">            train_Yvar: A `n` or `b x n` (batch mode) tensor of observed measurement</span>
-<span class="sd">                noise.</span>
-<span class="sd">            task_feature: The index of the task feature (`-d &lt;= task_feature &lt;= d`).</span>
-<span class="sd">            task_covar_prior : A Prior on the task covariance matrix. Must operate</span>
-<span class="sd">                on p.s.d. matrices. A common prior for this is the `LKJ` prior.</span>
-<span class="sd">            output_tasks: A list of task indices for which to compute model</span>
-<span class="sd">                outputs for. If omitted, return outputs for all task indices.</span>
-<span class="sd">            rank: The rank to be used for the index kernel. If omitted, use a</span>
-<span class="sd">                full rank (i.e. number of tasks) kernel.</span>
-<span class="sd">            input_transform: An input transform that is applied in the model's</span>
-<span class="sd">                forward pass.</span>
-<span class="sd">            outcome_transform: An outcome transform that is applied to the</span>
-<span class="sd">                training data during instantiation and to the posterior during</span>
-<span class="sd">                inference (that is, the `Posterior` obtained by calling</span>
-<span class="sd">                `.posterior` on the model will be on the original scale).</span>
-
-<span class="sd">        Example:</span>
-<span class="sd">            &gt;&gt;&gt; X1, X2 = torch.rand(10, 2), torch.rand(20, 2)</span>
-<span class="sd">            &gt;&gt;&gt; i1, i2 = torch.zeros(10, 1), torch.ones(20, 1)</span>
-<span class="sd">            &gt;&gt;&gt; train_X = torch.cat([</span>
-<span class="sd">            &gt;&gt;&gt;     torch.cat([X1, i1], -1), torch.cat([X2, i2], -1),</span>
-<span class="sd">            &gt;&gt;&gt; ], dim=0)</span>
-<span class="sd">            &gt;&gt;&gt; train_Y = torch.cat(f1(X1), f2(X2))</span>
-<span class="sd">            &gt;&gt;&gt; train_Yvar = 0.1 + 0.1 * torch.rand_like(train_Y)</span>
-<span class="sd">            &gt;&gt;&gt; model = FixedNoiseMultiTaskGP(train_X, train_Y, train_Yvar, -1)</span>
-<span class="sd">        """</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-            <span class="s2">"`FixedNoiseMultiTaskGP` has been deprecated and will be removed in a "</span>
-            <span class="s2">"future release. Please use the `MultiTaskGP` model instead. "</span>
-            <span class="s2">"When `train_Yvar` is specified, `MultiTaskGP` behaves the same "</span>
-            <span class="s2">"as the `FixedNoiseMultiTaskGP`."</span><span class="p">,</span>
-            <span class="ne">DeprecationWarning</span><span class="p">,</span>
-            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
-            <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span>
-            <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">,</span>
-            <span class="n">covar_module</span><span class="o">=</span><span class="n">covar_module</span><span class="p">,</span>
-            <span class="n">task_feature</span><span class="o">=</span><span class="n">task_feature</span><span class="p">,</span>
-            <span class="n">output_tasks</span><span class="o">=</span><span class="n">output_tasks</span><span class="p">,</span>
-            <span class="n">rank</span><span class="o">=</span><span class="n">rank</span><span class="p">,</span>
-            <span class="n">task_covar_prior</span><span class="o">=</span><span class="n">task_covar_prior</span><span class="p">,</span>
-            <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span>
-            <span class="n">outcome_transform</span><span class="o">=</span><span class="n">outcome_transform</span><span class="p">,</span>
-        <span class="p">)</span></div>
 
 
 

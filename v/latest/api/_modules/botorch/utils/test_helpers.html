@@ -39,6 +39,7 @@
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">PosteriorTransform</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">FantasizeMixin</span><span class="p">,</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">Standardize</span>
@@ -97,9 +98,24 @@
 <div class="viewcode-block" id="gen_multi_task_dataset">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.test_helpers.gen_multi_task_dataset">[docs]</a>
 <span class="k">def</span> <span class="nf">gen_multi_task_dataset</span><span class="p">(</span>
-    <span class="n">yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">task_values</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span>
+    <span class="n">yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">task_values</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">skip_task_features_in_datasets</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">tkwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">MultiTaskDataset</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]]:</span>
-<span class="w">    </span><span class="sd">"""Constructs a multi-task dataset with two tasks, each with 10 data points."""</span>
+<span class="w">    </span><span class="sd">"""Constructs a multi-task dataset with two tasks, each with 10 data points.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        yvar: The noise level to use for `train_Yvar`. If None, uses `train_Yvar=None`.</span>
+<span class="sd">        task_values: The values of the task features. If None, uses [0, 1].</span>
+<span class="sd">        skip_task_features_in_datasets: If True, the task features are not included in</span>
+<span class="sd">            Xs of the datasets used to construct the datasets. This is useful for</span>
+<span class="sd">            testing `MultiTaskDataset`.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">task_values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">skip_task_features_in_datasets</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>  <span class="c1"># pragma: no cover</span>
+            <span class="s2">"`task_values` and `skip_task_features_in_datasets` can't be used together."</span>
+        <span class="p">)</span>
     <span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.05</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
     <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">Y1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">X</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn_like</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.2</span>
@@ -112,24 +128,27 @@
     <span class="n">Yvar1</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">yvar</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">Y1</span><span class="p">,</span> <span class="n">yvar</span><span class="p">)</span>
     <span class="n">Yvar2</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">yvar</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">Y2</span><span class="p">,</span> <span class="n">yvar</span><span class="p">)</span>
     <span class="n">train_Yvar</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">yvar</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">Yvar1</span><span class="p">,</span> <span class="n">Yvar2</span><span class="p">])</span>
+    <span class="n">feature_slice</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="n">skip_task_features_in_datasets</span> <span class="k">else</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
     <span class="n">datasets</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">SupervisedDataset</span><span class="p">(</span>
-            <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">[:</span><span class="mi">10</span><span class="p">],</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">[:</span><span class="mi">10</span><span class="p">,</span> <span class="n">feature_slice</span><span class="p">],</span>
             <span class="n">Y</span><span class="o">=</span><span class="n">Y1</span><span class="p">,</span>
             <span class="n">Yvar</span><span class="o">=</span><span class="n">Yvar1</span><span class="p">,</span>
-            <span class="n">feature_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"task"</span><span class="p">,</span> <span class="s2">"X"</span><span class="p">],</span>
+            <span class="n">feature_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"task"</span><span class="p">,</span> <span class="s2">"X"</span><span class="p">][</span><span class="n">feature_slice</span><span class="p">],</span>
             <span class="n">outcome_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"y"</span><span class="p">],</span>
         <span class="p">),</span>
         <span class="n">SupervisedDataset</span><span class="p">(</span>
-            <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">[</span><span class="mi">10</span><span class="p">:],</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">[</span><span class="mi">10</span><span class="p">:,</span> <span class="n">feature_slice</span><span class="p">],</span>
             <span class="n">Y</span><span class="o">=</span><span class="n">Y2</span><span class="p">,</span>
             <span class="n">Yvar</span><span class="o">=</span><span class="n">Yvar2</span><span class="p">,</span>
-            <span class="n">feature_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"task"</span><span class="p">,</span> <span class="s2">"X"</span><span class="p">],</span>
+            <span class="n">feature_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"task"</span><span class="p">,</span> <span class="s2">"X"</span><span class="p">][</span><span class="n">feature_slice</span><span class="p">],</span>
             <span class="n">outcome_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"y1"</span><span class="p">],</span>
         <span class="p">),</span>
     <span class="p">]</span>
     <span class="n">dataset</span> <span class="o">=</span> <span class="n">MultiTaskDataset</span><span class="p">(</span>
-        <span class="n">datasets</span><span class="o">=</span><span class="n">datasets</span><span class="p">,</span> <span class="n">target_outcome_name</span><span class="o">=</span><span class="s2">"y"</span><span class="p">,</span> <span class="n">task_feature_index</span><span class="o">=</span><span class="mi">0</span>
+        <span class="n">datasets</span><span class="o">=</span><span class="n">datasets</span><span class="p">,</span>
+        <span class="n">target_outcome_name</span><span class="o">=</span><span class="s2">"y"</span><span class="p">,</span>
+        <span class="n">task_feature_index</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">skip_task_features_in_datasets</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">dataset</span><span class="p">,</span> <span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">)</span></div>
 
