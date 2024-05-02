@@ -18,6 +18,8 @@ jobs:
   package-deploy-pypi:
     name: Package and deploy to pypi.org
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write # This is required for PyPI OIDC authentication.
     needs: tests-and-coverage-pip
     steps:
     - uses: actions/checkout@v4
@@ -40,8 +42,6 @@ jobs:
     - name: Deploy to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
-        user: __token__
-        password: ${{ secrets.PYPI_TOKEN }}
         verbose: true
 
   package-deploy-conda:
