@@ -18,6 +18,8 @@ jobs:
   package-test-deploy-pypi:
     name: Package and test deployment to test.pypi.org
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write # This is required PyPI OIDC authentication.
     strategy:
       fail-fast: true
     steps:
@@ -56,8 +58,8 @@ jobs:
     - name: Deploy to Test PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
-        repository_url: https://test.pypi.org/legacy/
-        skip_existing: true
+        repository-url: https://test.pypi.org/legacy/
+        skip-existing: true
         verbose: true
 
   package-conda:
