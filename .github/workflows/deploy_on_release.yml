@@ -19,7 +19,7 @@ jobs:
     name: Package and deploy to pypi.org
     runs-on: ubuntu-latest
     permissions:
-      id-token: write # This is required PyPI OIDC authentication.
+      id-token: write # This is required for PyPI OIDC authentication.
     needs: tests-and-coverage-pip
     strategy:
       fail-fast: true
