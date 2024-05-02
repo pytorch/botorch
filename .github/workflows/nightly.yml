@@ -20,8 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write # This is required for PyPI OIDC authentication.
-    strategy:
-      fail-fast: true
     steps:
     - uses: actions/checkout@v4
     - name: Fetch all history for all tags and branches
@@ -64,9 +62,7 @@ jobs:
 
   package-conda:
     name: Test conda build
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
+    runs-on: 8-core-ubuntu
     steps:
     - uses: actions/checkout@v4
     - uses: conda-incubator/setup-miniconda@v3
