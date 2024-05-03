@@ -30,6 +30,8 @@ def is_non_dominated(
 
     Args:
         Y: A `(batch_shape) x n x m`-dim tensor of outcomes.
+            If any element of `Y` is NaN, the corresponding point
+            will be treated as a dominated point (returning False).
         maximize: If True, assume maximization (default).
         deduplicate: A boolean indicating whether to only return
             unique points on the pareto frontier.

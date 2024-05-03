@@ -158,6 +158,13 @@ class TestPareto(BotorchTestCase):
                 cargs = mock_is_non_dominated_loop.call_args[0]
                 self.assertTrue(torch.equal(cargs[0], y))
 
+    def test_is_non_dominated_with_nan(self) -> None:
+        # NaN should always evaluate to False.
+        Y = torch.rand(10, 2)
+        Y[3, 1] = float("nan")
+        Y[7, 0] = float("nan")
+        self.assertFalse(is_non_dominated(Y)[[3, 7]].any())
+
     def test_is_non_dominated_loop(self):
         n = 20
         tkwargs = {"device": self.device}
