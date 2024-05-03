@@ -84,7 +84,6 @@ class qHypervolumeKnowledgeGradient(
         current_value: Optional[Tensor] = None,
         use_posterior_mean: bool = True,
         cost_aware_utility: Optional[CostAwareUtility] = None,
-        **kwargs: Any,
     ) -> None:
         r"""q-Hypervolume Knowledge Gradient.
 

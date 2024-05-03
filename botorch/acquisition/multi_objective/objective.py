@@ -28,7 +28,7 @@ class MCMultiOutputObjective(MCAcquisitionObjective):
     _is_mo: bool = True
 
     @abstractmethod
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None, **kwargs) -> Tensor:
+    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         r"""Evaluate the multi-output objective on the samples.
 
         Args:

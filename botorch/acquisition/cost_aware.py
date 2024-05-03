@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Optional, Union
+from typing import Callable, Optional, Union
 
 import torch
 from botorch import settings
@@ -38,7 +38,9 @@ class CostAwareUtility(Module, ABC):
     """
 
     @abstractmethod
-    def forward(self, X: Tensor, deltas: Tensor, **kwargs: Any) -> Tensor:
+    def forward(
+        self, X: Tensor, deltas: Tensor, sampler: Optional[MCSampler] = None
+    ) -> Tensor:
         r"""Evaluate the cost-aware utility on the candidates and improvements.
 
         Args:
@@ -47,6 +49,8 @@ class CostAwareUtility(Module, ABC):
             deltas: A `num_fantasies x batch_shape`-dim Tensor of `num_fantasy`
                 samples from the marginal improvement in utility over the
                 current state at `X` for each t-batch.
+            sampler: A sampler used for sampling from the posterior of the cost
+                model. Some subclasses ignore this argument.
 
         Returns:
             A `num_fantasies x batch_shape`-dim Tensor of cost-transformed utilities.
@@ -67,7 +71,9 @@ class GenericCostAwareUtility(CostAwareUtility):
         super().__init__()
         self._cost_callable: Callable[[Tensor, Tensor], Tensor] = cost
 
-    def forward(self, X: Tensor, deltas: Tensor, **kwargs: Any) -> Tensor:
+    def forward(
+        self, X: Tensor, deltas: Tensor, sampler: Optional[MCSampler] = None
+    ) -> Tensor:
         r"""Evaluate the cost function on the candidates and improvements.
 
         Args:
@@ -76,6 +82,7 @@ class GenericCostAwareUtility(CostAwareUtility):
             deltas: A `num_fantasies x batch_shape`-dim Tensor of `num_fantasy`
                 samples from the marginal improvement in utility over the
                 current state at `X` for each t-batch.
+            sampler: Ignored.
 
         Returns:
             A `num_fantasies x batch_shape`-dim Tensor of cost-weighted utilities.
@@ -143,7 +150,7 @@ class InverseCostWeightedUtility(CostAwareUtility):
                 cost_objective = GenericMCObjective(lambda Y, X: Y.sum(dim=-1))
 
         self.cost_model = cost_model
-        self.cost_objective = cost_objective
+        self.cost_objective: MCAcquisitionObjective = cost_objective
         self._use_mean = use_mean
         self._min_cost = min_cost
 
@@ -153,7 +160,6 @@ class InverseCostWeightedUtility(CostAwareUtility):
         deltas: Tensor,
         sampler: Optional[MCSampler] = None,
         X_evaluation_mask: Optional[Tensor] = None,
-        **kwargs: Any,
     ) -> Tensor:
         r"""Evaluate the cost function on the candidates and improvements. Note
         that negative values of `deltas` are instead scaled by the cost, and not

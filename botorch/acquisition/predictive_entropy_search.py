@@ -15,7 +15,7 @@ optimizing the acquisition function using finite differences.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Optional
 
 from botorch.acquisition.multi_objective.predictive_entropy_search import (
     qMultiObjectivePredictiveEntropySearch,
@@ -53,7 +53,6 @@ class qPredictiveEntropySearch(qMultiObjectivePredictiveEntropySearch):
         ep_jitter: float = 1e-4,
         test_jitter: float = 1e-4,
         threshold: float = 1e-2,
-        **kwargs: Any,
     ) -> None:
         r"""Predictive entropy search acquisition function.
 

@@ -23,7 +23,7 @@ References:
 
 from __future__ import annotations
 
-from typing import Any, Optional, Tuple
+from typing import Optional, Tuple
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -107,7 +107,6 @@ class qMultiObjectivePredictiveEntropySearch(AcquisitionFunction):
         ep_jitter: float = 1e-4,
         test_jitter: float = 1e-4,
         threshold: float = 1e-2,
-        **kwargs: Any,
     ) -> None:
         r"""Multi-objective predictive entropy search acquisition function.
 
