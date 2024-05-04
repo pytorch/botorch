@@ -3820,7 +3820,9 @@ that is faster and has a lower memory footprint.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x n x m</cite>-dim tensor of outcomes.</p></li>
+<li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x n x m</cite>-dim tensor of outcomes.
+If any element of <cite>Y</cite> is NaN, the corresponding point
+will be treated as a dominated point (returning False).</p></li>
 <li><p><strong>maximize</strong> (<em>bool</em>) – If True, assume maximization (default).</p></li>
 <li><p><strong>deduplicate</strong> (<em>bool</em>) – A boolean indicating whether to only return
 unique points on the pareto frontier.</p></li>
