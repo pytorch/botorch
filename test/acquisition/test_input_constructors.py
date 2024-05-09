@@ -78,7 +78,10 @@ from botorch.acquisition.objective import (
     LinearMCObjective,
     ScalarizedPosteriorTransform,
 )
-from botorch.acquisition.preference import AnalyticExpectedUtilityOfBestOption
+from botorch.acquisition.preference import (
+    AnalyticExpectedUtilityOfBestOption,
+    qExpectedUtilityOfBestOption,
+)
 from botorch.acquisition.utils import (
     expand_trace_observations,
     project_to_target_fidelity,
@@ -393,7 +396,10 @@ class TestAnalyticAcquisitionFunctionInputConstructors(InputConstructorBaseTestC
                 with self.assertRaisesRegex(ValueError, "Field `X` must be shared"):
                     c(model=mock_model, training_data=self.multiX_multiY)
 
-    def test_construct_inputs_constrained_analytic_eubo(self) -> None:
+    def test_construct_inputs_eubo(self) -> None:
+        """test input constructor for analytical EUBO and MC qEUBO"""
+
+        # Set up
         # create dummy modellist gp
         n = 10
         X = torch.linspace(0, 0.95, n).unsqueeze(dim=-1)
@@ -409,21 +415,40 @@ class TestAnalyticAcquisitionFunctionInputConstructors(InputConstructorBaseTestC
         )
         self.assertEqual(model.num_outputs, 6)
 
-        c = get_acqf_input_constructor(AnalyticExpectedUtilityOfBestOption)
         mock_pref_model = self.mock_model
         # assume we only have a preference model with 2 outcomes
         mock_pref_model.dim = 2
         mock_pref_model.datapoints = torch.tensor([])
 
-        # test basic construction
-        kwargs = c(model=model, pref_model=mock_pref_model)
-        self.assertIsInstance(kwargs["outcome_model"], FixedSingleSampleModel)
-        self.assertIs(kwargs["pref_model"], mock_pref_model)
-        self.assertIsNone(kwargs["previous_winner"])
-        # test instantiation
-        AnalyticExpectedUtilityOfBestOption(**kwargs)
+        for eubo_acqf in (
+            AnalyticExpectedUtilityOfBestOption,
+            qExpectedUtilityOfBestOption,
+        ):
+            c = get_acqf_input_constructor(eubo_acqf)
+
+            # test basic construction
+            kwargs = c(model=model, pref_model=mock_pref_model)
+            self.assertIsInstance(kwargs["outcome_model"], FixedSingleSampleModel)
+            self.assertIs(kwargs["pref_model"], mock_pref_model)
+            if eubo_acqf is AnalyticExpectedUtilityOfBestOption:
+                self.assertIsNone(kwargs["previous_winner"])
+            # test instantiation
+            eubo_acqf(**kwargs)
+
+            # test sample_multiplier
+            torch.manual_seed(123)
+            kwargs = c(
+                model=model,
+                pref_model=mock_pref_model,
+                sample_multiplier=1e6,
+            )
+            # w by default is drawn from std normal and very unlikely to be > 10.0
+            self.assertTrue((kwargs["outcome_model"].w.abs() > 10.0).all())
+            # Check w has the right dimension that agrees with the preference model
+            self.assertEqual(kwargs["outcome_model"].w.shape[-1], mock_pref_model.dim)
 
         # test previous_winner
+        c = get_acqf_input_constructor(AnalyticExpectedUtilityOfBestOption)
         previous_winner = torch.randn(mock_pref_model.dim)
         kwargs = c(
             model=model,
@@ -433,18 +458,6 @@ class TestAnalyticAcquisitionFunctionInputConstructors(InputConstructorBaseTestC
         self.assertTrue(torch.equal(kwargs["previous_winner"], previous_winner))
         # test instantiation
         AnalyticExpectedUtilityOfBestOption(**kwargs)
-
-        # test sample_multiplier
-        torch.manual_seed(123)
-        kwargs = c(
-            model=model,
-            pref_model=mock_pref_model,
-            sample_multiplier=1e6,
-        )
-        # w by default is drawn from std normal and very unlikely to be > 10.0
-        self.assertTrue((kwargs["outcome_model"].w.abs() > 10.0).all())
-        # Check w has the right dimension that agrees with the preference model
-        self.assertEqual(kwargs["outcome_model"].w.shape[-1], mock_pref_model.dim)
 
 
 class TestMCAcquisitionFunctionInputConstructors(InputConstructorBaseTestCase):
