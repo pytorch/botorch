@@ -598,7 +598,6 @@ def warmstart_multistep(
     num_restarts: int,
     raw_samples: int,
     full_optimizer: Tensor,
-    **kwargs: Any,
 ) -> Tensor:
     r"""Warm-start initialization for multi-step look-ahead acquisition functions.
 
@@ -614,7 +613,6 @@ def warmstart_multistep(
         full_optimizer: The full tree of optimizers of the previous iteration of shape
             `batch_shape x q' x d`. Typically obtained by passing
             `return_best_only=False` and `return_full_tree=True` into `optimize_acqf`.
-        kwargs: Optimization kwargs.
 
     Returns:
         A `num_restarts x q' x d` tensor for initial points for optimization.

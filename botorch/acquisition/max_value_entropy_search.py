@@ -33,7 +33,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from math import log
-from typing import Any, Callable, Optional
+from typing import Callable, Optional
 
 import numpy as np
 import torch
@@ -155,7 +155,7 @@ class MaxValueBase(AcquisitionFunction, ABC):
     # ------- Abstract methods that need to be implemented by subclasses ------- #
 
     @abstractmethod
-    def _compute_information_gain(self, X: Tensor, **kwargs: Any) -> Tensor:
+    def _compute_information_gain(self, X: Tensor) -> Tensor:
         r"""Compute the information gain at the design points `X`.
 
         `num_fantasies = 1` for non-fantasized models.
@@ -163,7 +163,6 @@ class MaxValueBase(AcquisitionFunction, ABC):
          Args:
             X: A `batch_shape x 1 x d`-dim Tensor of `batch_shape` t-batches
                 with `1` `d`-dim design point each.
-            kwargs: Other keyword arguments used by subclasses.
 
         Returns:
             A `num_fantasies x batch_shape`-dim Tensor of information gains at the
@@ -174,11 +173,12 @@ class MaxValueBase(AcquisitionFunction, ABC):
     @abstractmethod
     def _sample_max_values(
         self, num_samples: int, X_pending: Optional[Tensor] = None
-    ) -> Tensor:
+    ) -> None:
         r"""Draw samples from the posterior over maximum values.
 
         These samples are used to compute Monte Carlo approximations of expectations
-        over the posterior over the function maximum.
+        over the posterior over the function maximum. This function sets
+        `self.posterior_max_values`.
 
         Args:
             num_samples: The number of samples to draw.
@@ -254,11 +254,12 @@ class DiscreteMaxValueBase(MaxValueBase):
 
     def _sample_max_values(
         self, num_samples: int, X_pending: Optional[Tensor] = None
-    ) -> Tensor:
+    ) -> None:
         r"""Draw samples from the posterior over maximum values on a discrete set.
 
         These samples are used to compute Monte Carlo approximations of expectations
-        over the posterior over the function maximum.
+        over the posterior over the function maximum. This function sets
+        `self.posterior_max_values`.
 
         Args:
             num_samples: The number of samples to draw.

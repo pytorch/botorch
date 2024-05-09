@@ -159,7 +159,7 @@ class ApproximateGPyTorchModel(GPyTorchModel):
             posterior = self.outcome_transform.untransform_posterior(posterior)
         return posterior
 
-    def forward(self, X, *args, **kwargs) -> MultivariateNormal:
+    def forward(self, X) -> MultivariateNormal:
         if self.training:
             X = self.transform_inputs(X)
         return self.model(X)

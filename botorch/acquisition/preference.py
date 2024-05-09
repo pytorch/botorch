@@ -28,7 +28,7 @@ and its MC-based generalization qEUBO as proposed in [Astudillo2023qeubo]_.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Optional
 
 import torch
 from botorch.acquisition import AnalyticAcquisitionFunction
@@ -211,7 +211,6 @@ class PairwiseBayesianActiveLearningByDisagreement(MCAcquisitionFunction):
         outcome_model: Optional[DeterministicModel] = None,
         num_samples: Optional[int] = 1024,
         std_noise: Optional[float] = 0.0,
-        **kwargs: Any,
     ) -> None:
         """
         Monte Carlo implementation of Bayesian Active Learning by Disagreement (BALD)

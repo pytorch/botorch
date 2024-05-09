@@ -17,7 +17,7 @@ q-acquisition functions we evaluate the joint value of the q-batch).
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Union
+from typing import Optional, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -45,14 +45,13 @@ class SamplingStrategy(Module, ABC):
     """
 
     @abstractmethod
-    def forward(self, X: Tensor, num_samples: int = 1, **kwargs: Any) -> Tensor:
+    def forward(self, X: Tensor, num_samples: int = 1) -> Tensor:
         r"""Sample according to the SamplingStrategy.
 
         Args:
             X: A `batch_shape x N x d`-dim Tensor from which to sample (in the `N`
                 dimension).
             num_samples: The number of samples to draw.
-            kwargs: Additional implementation-specific kwargs.
 
         Returns:
             A `batch_shape x num_samples x d`-dim Tensor of samples from `X`, where

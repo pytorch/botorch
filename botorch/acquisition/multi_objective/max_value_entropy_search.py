@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from math import pi
 
-from typing import Any, Callable, Optional, Tuple, Union
+from typing import Callable, Optional, Tuple, Union
 
 import torch
 from botorch.acquisition.max_value_entropy_search import qMaxValueEntropy
@@ -78,7 +78,6 @@ class qMultiObjectiveMaxValueEntropy(
         num_fantasies: int = 16,
         X_pending: Optional[Tensor] = None,
         sampler: Optional[MCSampler] = None,
-        **kwargs: Any,
     ) -> None:
         r"""Multi-objective max-value entropy search acquisition function.
 
@@ -165,7 +164,9 @@ class qMultiObjectiveMaxValueEntropy(
             self._sample_max_values()
 
     def _sample_max_values(self) -> None:
-        r"""Sample max values for MC approximation of the expectation in MES"""
+        """Sample max values for MC approximation of the expectation in MES.
+
+        Sets self.posterior_max_values."""
         with torch.no_grad():
             # num_samples x (num_fantasies) x n_pareto_points x m
             sampled_pfs = self.sample_pareto_frontiers(self.mo_model)
@@ -220,7 +221,6 @@ class qLowerBoundMultiObjectiveMaxValueEntropySearch(
         X_pending: Optional[Tensor] = None,
         estimation_type: str = "LB",
         num_samples: int = 64,
-        **kwargs: Any,
     ) -> None:
         r"""Lower bound multi-objective max-value entropy search acquisition function.
 
