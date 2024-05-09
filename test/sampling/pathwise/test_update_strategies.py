@@ -26,6 +26,7 @@ from botorch.utils.context_managers import delattr_ctx
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels import MaternKernel, RBFKernel, ScaleKernel
 from gpytorch.likelihoods import BernoulliLikelihood
+from gpytorch.models import ExactGP
 from linear_operator.operators import ZeroLinearOperator
 from linear_operator.utils.cholesky import psd_safe_cholesky
 from torch import Size
@@ -204,3 +205,20 @@ class TestPathwiseUpdates(BotorchTestCase):
             with patch.object(model, "likelihood", new=BernoulliLikelihood()):
                 with self.assertRaises(NotImplementedError):
                     gaussian_update(model=model, sample_values=sample_values)
+
+            with self.subTest("Exact models with `None` target_values"):
+                assert isinstance(model, ExactGP)
+                torch.manual_seed(0)
+                path_none_target_values = gaussian_update(
+                    model=model,
+                    sample_values=sample_values,
+                )
+                torch.manual_seed(0)
+                path_with_target_values = gaussian_update(
+                    model=model,
+                    sample_values=sample_values,
+                    target_values=get_train_targets(model, transformed=True),
+                )
+                self.assertAllClose(
+                    path_none_target_values.weight, path_with_target_values.weight
+                )

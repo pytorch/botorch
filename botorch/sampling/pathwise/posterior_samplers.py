@@ -139,7 +139,7 @@ def _draw_matheron_paths_ExactGP(
         update_paths = update_strategy(
             model=model,
             sample_values=sample_values,
-            train_targets=train_Y,
+            target_values=train_Y,
         )
 
     return MatheronPath(
