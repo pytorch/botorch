@@ -104,8 +104,8 @@ def get_loss_closure_with_grads(
 @GetLossClosureWithGrads.register(object, object, object, object)
 def _get_loss_closure_with_grads_fallback(
     mll: MarginalLogLikelihood,
-    _: object,
-    __: object,
+    _likelihood_type: object,
+    _model_type: object,
     data_loader: Optional[DataLoader],
     parameters: Dict[str, Tensor],
     reducer: Callable[[Tensor], Tensor] = Tensor.sum,
@@ -127,8 +127,8 @@ def _get_loss_closure_with_grads_fallback(
 @GetLossClosure.register(MarginalLogLikelihood, object, object, DataLoader)
 def _get_loss_closure_fallback_external(
     mll: MarginalLogLikelihood,
-    _: object,
-    __: object,
+    _likelihood_type: object,
+    _model_type: object,
     data_loader: DataLoader,
     **ignore: Any,
 ) -> Callable[[], Tensor]:
@@ -153,7 +153,7 @@ def _get_loss_closure_fallback_external(
 
 @GetLossClosure.register(MarginalLogLikelihood, object, object, NoneType)
 def _get_loss_closure_fallback_internal(
-    mll: MarginalLogLikelihood, _: object, __: object, ___: NoneType, **ignore: Any
+    mll: MarginalLogLikelihood, _: object, __: object, ___: None, **ignore: Any
 ) -> Callable[[], Tensor]:
     r"""Fallback loss closure with internally managed data."""
 
@@ -167,7 +167,7 @@ def _get_loss_closure_fallback_internal(
 
 @GetLossClosure.register(ExactMarginalLogLikelihood, object, object, NoneType)
 def _get_loss_closure_exact_internal(
-    mll: ExactMarginalLogLikelihood, _: object, __: object, ___: NoneType, **ignore: Any
+    mll: ExactMarginalLogLikelihood, _: object, __: object, ___: None, **ignore: Any
 ) -> Callable[[], Tensor]:
     r"""ExactMarginalLogLikelihood loss closure with internally managed data."""
 
@@ -183,7 +183,7 @@ def _get_loss_closure_exact_internal(
 
 @GetLossClosure.register(SumMarginalLogLikelihood, object, object, NoneType)
 def _get_loss_closure_sum_internal(
-    mll: SumMarginalLogLikelihood, _: object, __: object, ___: NoneType, **ignore: Any
+    mll: SumMarginalLogLikelihood, _: object, __: object, ___: None, **ignore: Any
 ) -> Callable[[], Tensor]:
     r"""SumMarginalLogLikelihood loss closure with internally managed data."""
 

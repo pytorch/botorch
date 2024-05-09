@@ -112,7 +112,6 @@ def _gaussian_update_ExactGP(
     points: Optional[Tensor] = None,
     noise_covariance: Optional[Union[Tensor, LinearOperator]] = None,
     scale_tril: Optional[Union[Tensor, LinearOperator]] = None,
-    **ignore: Any,
 ) -> GeneralizedLinearPath:
     if points is None:
         (points,) = get_train_inputs(model, transformed=True)
@@ -137,7 +136,7 @@ def _gaussian_update_ExactGP(
 @GaussianUpdate.register(ApproximateGPyTorchModel, (Likelihood, NoneType))
 def _gaussian_update_ApproximateGPyTorchModel(
     model: ApproximateGPyTorchModel,
-    likelihood: Union[Likelihood, NoneType],
+    likelihood: Optional[Likelihood],
     **kwargs: Any,
 ) -> GeneralizedLinearPath:
     return GaussianUpdate(
@@ -147,7 +146,7 @@ def _gaussian_update_ApproximateGPyTorchModel(
 
 @GaussianUpdate.register(ApproximateGP, (Likelihood, NoneType))
 def _gaussian_update_ApproximateGP(
-    model: ApproximateGP, likelihood: Union[Likelihood, NoneType], **kwargs: Any
+    model: ApproximateGP, likelihood: Optional[Likelihood], **kwargs: Any
 ) -> GeneralizedLinearPath:
     return GaussianUpdate(model, model.variational_strategy, **kwargs)
 

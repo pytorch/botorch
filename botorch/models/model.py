@@ -95,7 +95,6 @@ class Model(Module, ABC):
         output_indices: Optional[List[int]] = None,
         observation_noise: Union[bool, Tensor] = False,
         posterior_transform: Optional[PosteriorTransform] = None,
-        **kwargs: Any,
     ) -> Posterior:
         r"""Computes the posterior over model outputs at the provided points.
 
@@ -301,7 +300,9 @@ class FantasizeMixin(ABC):
 
     @abstractmethod
     def condition_on_observations(
-        self: TFantasizeMixin, X: Tensor, Y: Tensor, **kwargs: Any
+        self: TFantasizeMixin,
+        X: Tensor,
+        Y: Tensor,
     ) -> TFantasizeMixin:
         """
         Classes that inherit from `FantasizeMixin` must implement
@@ -314,7 +315,6 @@ class FantasizeMixin(ABC):
         X: Tensor,
         *args,
         observation_noise: bool = False,
-        **kwargs: Any,
     ) -> Posterior:
         """
         Classes that inherit from `FantasizeMixin` must implement
@@ -474,7 +474,6 @@ class ModelList(Model):
         output_indices: Optional[List[int]] = None,
         observation_noise: Union[bool, Tensor] = False,
         posterior_transform: Optional[Callable[[PosteriorList], Posterior]] = None,
-        **kwargs: Any,
     ) -> Posterior:
         r"""Computes the posterior over model outputs at the provided points.
 

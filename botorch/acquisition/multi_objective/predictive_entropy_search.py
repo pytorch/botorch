@@ -891,7 +891,7 @@ def _safe_update_omega(
         check_no_nans(omega_f_nat_cov_new)
         return omega_f_nat_mean_new, omega_f_nat_cov_new
 
-    except RuntimeError or InputDataError:
+    except (RuntimeError, InputDataError):
         return omega_f_nat_mean, omega_f_nat_cov
 
 
@@ -1070,7 +1070,7 @@ def _update_damping_when_converged(
     damping_factor: Tensor,
     iteration: Tensor,
     threshold: float = 1e-3,
-) -> Tensor:
+) -> Tuple[Tensor, Tensor, Tensor]:
     r"""Set the damping factor to 0 once converged. Convergence is determined by the
     relative change in the entries of the mean and covariance matrix.
 
@@ -1087,8 +1087,10 @@ def _update_damping_when_converged(
         damping_factor: A `batch_shape`-dim Tensor containing the damping factor.
 
     Returns:
-        A `batch_shape x param_shape`-dim Tensor containing the updated damping
+        - A `batch_shape x param_shape`-dim Tensor containing the updated damping
         factor.
+        - Difference between `mean_new` and `mean_old`
+        - Difference between `cov_new` and `cov_old`
     """
     df = damping_factor.clone()
     delta_mean = mean_new - mean_old
