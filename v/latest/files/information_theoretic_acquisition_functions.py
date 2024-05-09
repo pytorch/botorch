@@ -438,7 +438,6 @@ hypercell_bounds = compute_sample_box_decomposition(pf)
 # # Here we use the lower bound estimates for the MES and JES
 mes_lb = qLowerBoundMultiObjectiveMaxValueEntropySearch(
     model=model,
-    pareto_fronts=pf,
     hypercell_bounds=hypercell_bounds,
     estimation_type="LB",
 )
