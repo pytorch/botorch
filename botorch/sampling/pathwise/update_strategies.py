@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+from types import NoneType
+
 from typing import Any, Callable, Optional, Union
 
 import torch
@@ -20,7 +22,7 @@ from botorch.sampling.pathwise.utils import (
     TInputTransform,
 )
 from botorch.utils.dispatcher import Dispatcher
-from botorch.utils.types import DEFAULT, NoneType
+from botorch.utils.types import DEFAULT
 from gpytorch.kernels.kernel import Kernel
 from gpytorch.likelihoods import _GaussianLikelihoodBase, Likelihood
 from gpytorch.models import ApproximateGP, ExactGP, GP
@@ -136,7 +138,7 @@ def _gaussian_update_ExactGP(
 @GaussianUpdate.register(ApproximateGPyTorchModel, (Likelihood, NoneType))
 def _gaussian_update_ApproximateGPyTorchModel(
     model: ApproximateGPyTorchModel,
-    likelihood: Union[Likelihood, NoneType],
+    likelihood: Optional[Likelihood],
     **kwargs: Any,
 ) -> GeneralizedLinearPath:
     return GaussianUpdate(
@@ -146,7 +148,7 @@ def _gaussian_update_ApproximateGPyTorchModel(
 
 @GaussianUpdate.register(ApproximateGP, (Likelihood, NoneType))
 def _gaussian_update_ApproximateGP(
-    model: ApproximateGP, likelihood: Union[Likelihood, NoneType], **kwargs: Any
+    model: ApproximateGP, likelihood: Optional[Likelihood], **kwargs: Any
 ) -> GeneralizedLinearPath:
     return GaussianUpdate(model, model.variational_strategy, **kwargs)
 

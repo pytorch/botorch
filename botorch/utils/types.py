@@ -7,9 +7,6 @@
 from __future__ import annotations
 
 
-NoneType = type(None)  # stop gap for the return of NoneType in 3.10
-
-
 class _DefaultType(type):
     r"""
     Private class whose sole instance `DEFAULT` is as a special indicator

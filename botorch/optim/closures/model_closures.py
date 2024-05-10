@@ -9,11 +9,11 @@ r"""Utilities for building model-based closures."""
 from __future__ import annotations
 
 from itertools import chain, repeat
+from types import NoneType
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 
 from botorch.optim.closures.core import ForwardBackwardClosure
 from botorch.utils.dispatcher import Dispatcher, type_bypassing_encoder
-from botorch.utils.types import NoneType
 from gpytorch.mlls import (
     ExactMarginalLogLikelihood,
     MarginalLogLikelihood,
@@ -153,7 +153,7 @@ def _get_loss_closure_fallback_external(
 
 @GetLossClosure.register(MarginalLogLikelihood, object, object, NoneType)
 def _get_loss_closure_fallback_internal(
-    mll: MarginalLogLikelihood, _: object, __: object, ___: NoneType, **ignore: Any
+    mll: MarginalLogLikelihood, _: object, __: object, ___: None, **ignore: Any
 ) -> Callable[[], Tensor]:
     r"""Fallback loss closure with internally managed data."""
 
@@ -167,7 +167,7 @@ def _get_loss_closure_fallback_internal(
 
 @GetLossClosure.register(ExactMarginalLogLikelihood, object, object, NoneType)
 def _get_loss_closure_exact_internal(
-    mll: ExactMarginalLogLikelihood, _: object, __: object, ___: NoneType, **ignore: Any
+    mll: ExactMarginalLogLikelihood, _: object, __: object, ___: None, **ignore: Any
 ) -> Callable[[], Tensor]:
     r"""ExactMarginalLogLikelihood loss closure with internally managed data."""
 
@@ -183,7 +183,7 @@ def _get_loss_closure_exact_internal(
 
 @GetLossClosure.register(SumMarginalLogLikelihood, object, object, NoneType)
 def _get_loss_closure_sum_internal(
-    mll: SumMarginalLogLikelihood, _: object, __: object, ___: NoneType, **ignore: Any
+    mll: SumMarginalLogLikelihood, _: object, __: object, ___: None, **ignore: Any
 ) -> Callable[[], Tensor]:
     r"""SumMarginalLogLikelihood loss closure with internally managed data."""
 
