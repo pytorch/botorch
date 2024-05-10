@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+from types import NoneType
+
 from typing import Any, Callable, Optional, Union
 
 import torch
@@ -20,7 +22,7 @@ from botorch.sampling.pathwise.utils import (
     TInputTransform,
 )
 from botorch.utils.dispatcher import Dispatcher
-from botorch.utils.types import DEFAULT, NoneType
+from botorch.utils.types import DEFAULT
 from gpytorch.kernels.kernel import Kernel
 from gpytorch.likelihoods import _GaussianLikelihoodBase, Likelihood
 from gpytorch.models import ApproximateGP, ExactGP, GP

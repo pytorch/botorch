@@ -9,11 +9,11 @@ r"""Utilities for building model-based closures."""
 from __future__ import annotations
 
 from itertools import chain, repeat
+from types import NoneType
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 
 from botorch.optim.closures.core import ForwardBackwardClosure
 from botorch.utils.dispatcher import Dispatcher, type_bypassing_encoder
-from botorch.utils.types import NoneType
 from gpytorch.mlls import (
     ExactMarginalLogLikelihood,
     MarginalLogLikelihood,
