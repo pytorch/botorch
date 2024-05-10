@@ -28,7 +28,7 @@ from botorch.utils import manual_seed
 try:
     # Marking this as a manual import to avoid autodeps complaints
     # due to imports from non-existent file.
-    from botorch.version import version as __version__  # @manual
+    from botorch.version import version as __version__  # @manual  # noqa: F401
 except Exception:  # pragma: no cover
     __version__ = "Unknown"
 
