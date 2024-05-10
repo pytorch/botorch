@@ -133,7 +133,8 @@ class PyroModel:
 
     @abstractmethod
     def postprocess_mcmc_samples(
-        self, mcmc_samples: Dict[str, Tensor], **kwargs: Any
+        self,
+        mcmc_samples: Dict[str, Tensor],
     ) -> Dict[str, Tensor]:
         """Post-process the final MCMC samples."""
         pass  # pragma: no cover

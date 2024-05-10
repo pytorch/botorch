@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 from abc import ABC, abstractmethod
-from typing import Any, Tuple
+from typing import Tuple
 
 import torch
 from botorch.utils.probability.utils import (
@@ -41,7 +41,7 @@ class PairwiseLikelihood(Likelihood, ABC):
         """
         super().__init__(max_plate_nesting)
 
-    def forward(self, utility: Tensor, D: Tensor, **kwargs: Any) -> Bernoulli:
+    def forward(self, utility: Tensor, D: Tensor) -> Bernoulli:
         """Given the difference in (estimated) utility util_diff = f(v) - f(u),
         return a Bernoulli distribution object representing the likelihood of
         the user prefer v over u.

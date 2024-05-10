@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 
-from typing import Any, Type, Union
+from typing import Optional, Type, Union
 
 import torch
 from botorch.logging import logger
@@ -46,7 +46,10 @@ GetSampler = Dispatcher("get_sampler", encoder=_posterior_to_distribution_encode
 
 
 def get_sampler(
-    posterior: TorchPosterior, sample_shape: torch.Size, **kwargs: Any
+    posterior: TorchPosterior,
+    sample_shape: torch.Size,
+    *,
+    seed: Optional[int] = None,
 ) -> MCSampler:
     r"""Get the sampler for the given posterior.
 
@@ -58,24 +61,26 @@ def get_sampler(
         sample_shape: The sample shape of the samples produced by the
             given sampler. The full shape of the resulting samples is
             given by `posterior._extended_shape(sample_shape)`.
-        kwargs: Optional kwargs, passed down to the samplers during construction.
+        seed: Seed used to initialize sampler.
 
     Returns:
         The `MCSampler` object for the given posterior.
     """
-    kwargs["sample_shape"] = sample_shape
-    return GetSampler(posterior, **kwargs)
+    return GetSampler(posterior, sample_shape=sample_shape, seed=seed)
 
 
 @GetSampler.register(MultivariateNormal)
 def _get_sampler_mvn(
-    posterior: GPyTorchPosterior, sample_shape: torch.Size, **kwargs: Any
+    posterior: GPyTorchPosterior,
+    sample_shape: torch.Size,
+    *,
+    seed: Optional[int] = None,
 ) -> NormalMCSampler:
     r"""The Sobol normal sampler for the `MultivariateNormal` posterior.
 
     If the output dim is too large, falls back to `IIDNormalSampler`.
     """
-    sampler = SobolQMCNormalSampler(sample_shape=sample_shape, **kwargs)
+    sampler = SobolQMCNormalSampler(sample_shape=sample_shape, seed=seed)
     collapsed_shape = sampler._get_collapsed_shape(posterior=posterior)
     base_collapsed_shape = collapsed_shape[len(sample_shape) :]
     if base_collapsed_shape.numel() > SobolEngine.MAXDIM:
@@ -83,27 +88,32 @@ def _get_sampler_mvn(
             f"Output dim {base_collapsed_shape.numel()} is too large for the "
             "Sobol engine. Using IIDNormalSampler instead."
         )
-        sampler = IIDNormalSampler(sample_shape=sample_shape, **kwargs)
+        sampler = IIDNormalSampler(sample_shape=sample_shape, seed=seed)
     return sampler
 
 
 @GetSampler.register(TransformedPosterior)
 def _get_sampler_derived(
-    posterior: TransformedPosterior, sample_shape: torch.Size, **kwargs: Any
+    posterior: TransformedPosterior,
+    sample_shape: torch.Size,
+    *,
+    seed: Optional[int] = None,
 ) -> MCSampler:
     r"""Get the sampler for the underlying posterior."""
     return get_sampler(
-        posterior=posterior._posterior, sample_shape=sample_shape, **kwargs
+        posterior=posterior._posterior,
+        sample_shape=sample_shape,
+        seed=seed,
     )
 
 
 @GetSampler.register(PosteriorList)
 def _get_sampler_list(
-    posterior: PosteriorList, sample_shape: torch.Size, **kwargs: Any
+    posterior: PosteriorList, sample_shape: torch.Size, *, seed: Optional[int] = None
 ) -> MCSampler:
     r"""Get the `ListSampler` with the appropriate list of samplers."""
     samplers = [
-        get_sampler(posterior=p, sample_shape=sample_shape, **kwargs)
+        get_sampler(posterior=p, sample_shape=sample_shape, seed=seed)
         for p in posterior.posteriors
     ]
     return ListSampler(*samplers)
@@ -111,23 +121,29 @@ def _get_sampler_list(
 
 @GetSampler.register(DeterministicPosterior)
 def _get_sampler_deterministic(
-    posterior: DeterministicPosterior, sample_shape: torch.Size, **kwargs: Any
+    posterior: DeterministicPosterior,
+    sample_shape: torch.Size,
+    seed: Optional[int] = None,
 ) -> MCSampler:
     r"""Get the dummy `DeterministicSampler` for the `DeterministicPosterior`."""
-    return DeterministicSampler(sample_shape=sample_shape, **kwargs)
+    return DeterministicSampler(sample_shape=sample_shape, seed=seed)
 
 
 @GetSampler.register(EnsemblePosterior)
 def _get_sampler_ensemble(
-    posterior: EnsemblePosterior, sample_shape: torch.Size, **kwargs: Any
+    posterior: EnsemblePosterior,
+    sample_shape: torch.Size,
+    seed: Optional[int] = None,
 ) -> MCSampler:
     r"""Get the `IndexSampler` for the `EnsemblePosterior`."""
-    return IndexSampler(sample_shape=sample_shape, **kwargs)
+    return IndexSampler(sample_shape=sample_shape, seed=seed)
 
 
 @GetSampler.register(object)
 def _not_found_error(
-    posterior: Posterior, sample_shape: torch.Size, **kwargs: Any
+    posterior: Posterior,
+    sample_shape: torch.Size,
+    seed: Optional[int] = None,
 ) -> None:
     raise NotImplementedError(
         f"A registered `MCSampler` for posterior {posterior} is not found. You can "

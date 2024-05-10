@@ -1070,7 +1070,6 @@ class PairwiseGP(Model, GP, FantasizeMixin):
         output_indices: Optional[List[int]] = None,
         observation_noise: bool = False,
         posterior_transform: Optional[PosteriorTransform] = None,
-        **kwargs: Any,
     ) -> Posterior:
         r"""Computes the posterior over model outputs at the provided points.
 
@@ -1100,11 +1099,11 @@ class PairwiseGP(Model, GP, FantasizeMixin):
             return posterior_transform(posterior)
         return posterior
 
-    def condition_on_observations(self, X: Tensor, Y: Tensor, **kwargs: Any) -> Model:
+    def condition_on_observations(self, X: Tensor, Y: Tensor) -> Model:
         r"""Condition the model on new observations.
 
         Note that unlike other BoTorch models, PairwiseGP requires Y to be
-        pairwise comparisons
+        pairwise comparisons.
 
         Args:
             X: A `batch_shape x n x d` dimension tensor X

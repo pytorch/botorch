@@ -61,7 +61,7 @@ class FlattenedStandardize(Standardize):
     def __init__(
         self,
         output_shape: torch.Size,
-        batch_shape: torch.Size = None,
+        batch_shape: Optional[torch.Size] = None,
         min_stdv: float = 1e-8,
     ):
         r"""
@@ -385,7 +385,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         return super().get_fantasy_model(inputs, reshaped_targets, **kwargs)
 
     def condition_on_observations(
-        self, X: Tensor, Y: Tensor, **kwargs: Any
+        self, X: Tensor, Y: Tensor, noise: Optional[torch.Tensor] = None, **kwargs: Any
     ) -> HigherOrderGP:
         r"""Condition the model on new observations.
 
@@ -401,6 +401,9 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
                 standard broadcasting semantics. If `Y` has fewer batch dimensions
                 than `X`, its is assumed that the missing batch dimensions are
                 the same for all `Y`.
+            noise: If not None, a tensor of the same shape as `Y` representing
+                the noise variance associated with each observation.
+            kwargs: Passed to `condition_on_observations`.
 
         Returns:
             A `BatchedMultiOutputGPyTorchModel` object of the same type with
@@ -408,10 +411,9 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
             conditioned on the new observations `(X, Y)` (and possibly noise
             observations passed in via kwargs).
         """
-        noise = kwargs.get("noise")
         if hasattr(self, "outcome_transform"):
             # we need to apply transforms before shifting batch indices around
-            Y, noise = self.outcome_transform(Y, noise)
+            Y, noise = self.outcome_transform(Y=Y, Yvar=noise)
         self._validate_tensor_args(X=X, Y=Y, Yvar=noise, strict=False)
 
         # we don't need to do un-squeezing because Y already is batched
@@ -420,7 +422,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         #     kwargs.update({"noise": noise})
         fantasy_model = super(
             BatchedMultiOutputGPyTorchModel, self
-        ).condition_on_observations(X=X, Y=Y, **kwargs)
+        ).condition_on_observations(X=X, Y=Y, noise=noise, **kwargs)
         fantasy_model._input_batch_shape = fantasy_model.train_targets.shape[
             : (-1 if self._num_outputs == 1 else -2)
         ]
@@ -433,7 +435,6 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         output_indices: Optional[List[int]] = None,
         observation_noise: Union[bool, Tensor] = False,
         posterior_transform: Optional[PosteriorTransform] = None,
-        **kwargs: Any,
     ) -> GPyTorchPosterior:
         self.eval()  # make sure we're calling a posterior
 

@@ -17,7 +17,7 @@ r"""
 
 from __future__ import annotations
 
-from typing import Any, Optional, Union
+from typing import Optional, Union
 
 from botorch.models.approximate_gp import ApproximateGPyTorchModel
 from botorch.models.model_list_gp_regression import ModelListGP
@@ -88,7 +88,6 @@ def draw_matheron_paths(
     sample_shape: Size,
     prior_sampler: TPathwisePriorSampler = draw_kernel_feature_paths,
     update_strategy: TPathwiseUpdate = gaussian_update,
-    **kwargs: Any,
 ) -> MatheronPath:
     r"""Generates function draws from (an approximate) Gaussian process prior.
 
@@ -111,13 +110,28 @@ def draw_matheron_paths(
         sample_shape=sample_shape,
         prior_sampler=prior_sampler,
         update_strategy=update_strategy,
-        **kwargs,
     )
 
 
 @DrawMatheronPaths.register(ModelListGP)
-def _draw_matheron_paths_ModelListGP(model: ModelListGP, **kwargs: Any):
-    return PathList([draw_matheron_paths(m, **kwargs) for m in model.models])
+def _draw_matheron_paths_ModelListGP(
+    model: ModelListGP,
+    sample_shape: Size,
+    *,
+    prior_sampler: TPathwisePriorSampler = draw_kernel_feature_paths,
+    update_strategy: TPathwiseUpdate = gaussian_update,
+):
+    return PathList(
+        [
+            draw_matheron_paths(
+                model=m,
+                sample_shape=sample_shape,
+                prior_sampler=prior_sampler,
+                update_strategy=update_strategy,
+            )
+            for m in model.models
+        ]
+    )
 
 
 @DrawMatheronPaths.register(ExactGP)
@@ -156,7 +170,6 @@ def _draw_matheron_paths_ApproximateGP(
     sample_shape: Size,
     prior_sampler: TPathwisePriorSampler,
     update_strategy: TPathwiseUpdate,
-    **kwargs: Any,
 ) -> MatheronPath:
     # Note: Inducing points are assumed to be pre-transformed
     Z = (

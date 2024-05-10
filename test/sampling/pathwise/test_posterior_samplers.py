@@ -22,8 +22,8 @@ from torch.nn.functional import pad
 
 
 class TestPosteriorSamplers(BotorchTestCase):
-    def setUp(self) -> None:
-        super().setUp()
+    def setUp(self, suppress_input_warnings: bool = True) -> None:
+        super().setUp(suppress_input_warnings=suppress_input_warnings)
         tkwargs = {"device": self.device, "dtype": torch.float64}
         torch.manual_seed(0)
 
