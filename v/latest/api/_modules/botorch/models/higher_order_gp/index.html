@@ -86,7 +86,7 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">output_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
-        <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">batch_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">min_stdv</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
@@ -430,7 +430,7 @@
 <div class="viewcode-block" id="HigherOrderGP.condition_on_observations">
 <a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.HigherOrderGP.condition_on_observations">[docs]</a>
     <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HigherOrderGP</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Condition the model on new observations.</span>
 
@@ -446,6 +446,9 @@
 <span class="sd">                standard broadcasting semantics. If `Y` has fewer batch dimensions</span>
 <span class="sd">                than `X`, its is assumed that the missing batch dimensions are</span>
 <span class="sd">                the same for all `Y`.</span>
+<span class="sd">            noise: If not None, a tensor of the same shape as `Y` representing</span>
+<span class="sd">                the noise variance associated with each observation.</span>
+<span class="sd">            kwargs: Passed to `condition_on_observations`.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A `BatchedMultiOutputGPyTorchModel` object of the same type with</span>
@@ -453,10 +456,9 @@
 <span class="sd">            conditioned on the new observations `(X, Y)` (and possibly noise</span>
 <span class="sd">            observations passed in via kwargs).</span>
 <span class="sd">        """</span>
-        <span class="n">noise</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"noise"</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">):</span>
             <span class="c1"># we need to apply transforms before shifting batch indices around</span>
-            <span class="n">Y</span><span class="p">,</span> <span class="n">noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">noise</span><span class="p">)</span>
+            <span class="n">Y</span><span class="p">,</span> <span class="n">noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span><span class="p">(</span><span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">noise</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">noise</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
         <span class="c1"># we don't need to do un-squeezing because Y already is batched</span>
@@ -465,7 +467,7 @@
         <span class="c1">#     kwargs.update({"noise": noise})</span>
         <span class="n">fantasy_model</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span>
             <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">,</span> <span class="bp">self</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">condition_on_observations</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">condition_on_observations</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">noise</span><span class="o">=</span><span class="n">noise</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">fantasy_model</span><span class="o">.</span><span class="n">_input_batch_shape</span> <span class="o">=</span> <span class="n">fantasy_model</span><span class="o">.</span><span class="n">train_targets</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span>
             <span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
         <span class="p">]</span>
@@ -481,7 +483,6 @@
         <span class="n">output_indices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">observation_noise</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchPosterior</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>  <span class="c1"># make sure we're calling a posterior</span>
 

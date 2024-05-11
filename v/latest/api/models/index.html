@@ -85,7 +85,7 @@ Bayesian models.</p>
 <p>Initialize internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.model.Model.posterior">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#Model.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.Model.posterior" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#Model.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.Model.posterior" title="Link to this definition">¶</a></dt>
 <dd><p>Computes the posterior over model outputs at the provided points.</p>
 <dl class="simple">
 <dt>Note: The input transforms should be applied here using</dt><dd><p><cite>self.transform_inputs(X)</cite> after the <cite>self.eval()</cite> call and before
@@ -110,7 +110,6 @@ a <cite>model_batch_shape x n’ x m</cite>-dim tensor containing the average
 noise for each batch and output. <cite>noise</cite> must be in the
 outcome-transformed space if an outcome transform is used.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – An optional PosteriorTransform.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -274,7 +273,7 @@ def transform_inputs(self, …):</p>
 model.fantasize(X)</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.model.FantasizeMixin.condition_on_observations">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">condition_on_observations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#FantasizeMixin.condition_on_observations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.FantasizeMixin.condition_on_observations" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">condition_on_observations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#FantasizeMixin.condition_on_observations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.FantasizeMixin.condition_on_observations" title="Link to this definition">¶</a></dt>
 <dd><p>Classes that inherit from <cite>FantasizeMixin</cite> must implement
 a <cite>condition_on_observations</cite> method.</p>
 <dl class="field-list simple">
@@ -283,7 +282,6 @@ a <cite>condition_on_observations</cite> method.</p>
 <li><p><strong>self</strong> (<em>TFantasizeMixin</em>)</p></li>
 <li><p><strong>X</strong> (<em>Tensor</em>)</p></li>
 <li><p><strong>Y</strong> (<em>Tensor</em>)</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -293,7 +291,7 @@ a <cite>condition_on_observations</cite> method.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.model.FantasizeMixin.posterior">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#FantasizeMixin.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.FantasizeMixin.posterior" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#FantasizeMixin.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.FantasizeMixin.posterior" title="Link to this definition">¶</a></dt>
 <dd><p>Classes that inherit from <cite>FantasizeMixin</cite> must implement
 a <cite>posterior</cite> method.</p>
 <dl class="field-list simple">
@@ -301,7 +299,6 @@ a <cite>posterior</cite> method.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>Tensor</em>)</p></li>
 <li><p><strong>observation_noise</strong> (<em>bool</em>)</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -391,7 +388,7 @@ a deterministic function of the inputs.</p>
 </div>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.model.ModelList.posterior">
-<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#ModelList.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.ModelList.posterior" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#ModelList.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.ModelList.posterior" title="Link to this definition">¶</a></dt>
 <dd><p>Computes the posterior over model outputs at the provided points.</p>
 <dl class="simple">
 <dt>Note: The input transforms should be applied here using</dt><dd><p><cite>self.transform_inputs(X)</cite> after the <cite>self.eval()</cite> call and before
@@ -417,7 +414,6 @@ of the <cite>i</cite>-th model). <cite>observation_noise</cite> is assumed
 to be in the outcome-transformed space, if an outcome transform
 is used by the model.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="posteriors.html#botorch.posteriors.posterior_list.PosteriorList" title="botorch.posteriors.posterior_list.PosteriorList"><em>PosteriorList</em></a><em>]</em><em>, </em><em>Posterior</em><em>] </em><em>| </em><em>None</em>) – An optional PosteriorTransform.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1677,7 +1673,7 @@ registered hooks while the latter silently ignores them.</p>
 <dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.multitask.KroneckerMultiTaskGP.posterior">
-<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#KroneckerMultiTaskGP.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.multitask.KroneckerMultiTaskGP.posterior" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#KroneckerMultiTaskGP.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.multitask.KroneckerMultiTaskGP.posterior" title="Link to this definition">¶</a></dt>
 <dd><p>Computes the posterior over model outputs at the provided points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1692,7 +1688,6 @@ assumed to be in the outcome-transformed space if an outcome
 transform is used.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>PosteriorTransform</em><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
 <li><p><strong>output_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>)</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1740,7 +1735,7 @@ of [a x b x c] will be squeezed to be a vector of [a * b * c].</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>output_shape</strong> (<em>torch.Size</em>) – A <cite>n x output_shape</cite>-dim tensor of training targets.</p></li>
-<li><p><strong>batch_shape</strong> (<em>torch.Size</em>) – The batch_shape of the training targets.</p></li>
+<li><p><strong>batch_shape</strong> (<em>Optional</em><em>[</em><em>torch.Size</em><em>]</em>) – The batch_shape of the training targets.</p></li>
 <li><p><strong>min_stddv</strong> – The minimum standard deviation for which to perform
 standardization (if lower, only de-mean the data).</p></li>
 <li><p><strong>min_stdv</strong> (<em>float</em>)</p></li>
@@ -1916,7 +1911,7 @@ and all test-time caches have been updated.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.higher_order_gp.HigherOrderGP.condition_on_observations">
-<span class="sig-name descname"><span class="pre">condition_on_observations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#HigherOrderGP.condition_on_observations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.higher_order_gp.HigherOrderGP.condition_on_observations" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">condition_on_observations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#HigherOrderGP.condition_on_observations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.higher_order_gp.HigherOrderGP.condition_on_observations" title="Link to this definition">¶</a></dt>
 <dd><p>Condition the model on new observations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1932,7 +1927,9 @@ of the model outputs, <cite>n’</cite> is the number of points per batch, and
 standard broadcasting semantics. If <cite>Y</cite> has fewer batch dimensions
 than <cite>X</cite>, its is assumed that the missing batch dimensions are
 the same for all <cite>Y</cite>.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
+<li><p><strong>noise</strong> (<em>Tensor</em><em> | </em><em>None</em>) – If not None, a tensor of the same shape as <cite>Y</cite> representing
+the noise variance associated with each observation.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – Passed to <cite>condition_on_observations</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1948,7 +1945,7 @@ observations passed in via kwargs).</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.higher_order_gp.HigherOrderGP.posterior">
-<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#HigherOrderGP.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.higher_order_gp.HigherOrderGP.posterior" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#HigherOrderGP.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.higher_order_gp.HigherOrderGP.posterior" title="Link to this definition">¶</a></dt>
 <dd><p>Computes the posterior over model outputs at the provided points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1965,7 +1962,6 @@ computes the posterior over all model outputs.</p></li>
 likelihood to the posterior. If a Tensor, use it directly as the
 observation noise (must be of shape <cite>(batch_shape) x q x m</cite>).</p></li>
 <li><p><strong>posterior_transform</strong> (<em>PosteriorTransform</em><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2193,7 +2189,7 @@ should be the same as self.datapoints during training</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.pairwise_gp.PairwiseGP.posterior">
-<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseGP.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP.posterior" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseGP.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP.posterior" title="Link to this definition">¶</a></dt>
 <dd><p>Computes the posterior over model outputs at the provided points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2204,7 +2200,6 @@ of the feature space and <cite>q</cite> is the number of points considered joint
 <li><p><strong>observation_noise</strong> (<em>bool</em>) – Ignored (since noise is not identifiable from scale
 in probit models).</p></li>
 <li><p><strong>posterior_transform</strong> (<em>PosteriorTransform</em><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2221,17 +2216,17 @@ in probit models).</p></li>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.pairwise_gp.PairwiseGP.condition_on_observations">
-<span class="sig-name descname"><span class="pre">condition_on_observations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseGP.condition_on_observations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP.condition_on_observations" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">condition_on_observations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseGP.condition_on_observations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP.condition_on_observations" title="Link to this definition">¶</a></dt>
 <dd><p>Condition the model on new observations.</p>
 <p>Note that unlike other BoTorch models, PairwiseGP requires Y to be
-pairwise comparisons</p>
+pairwise comparisons.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x d</cite> dimension tensor X</p></li>
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A tensor of size <cite>batch_shape x m x 2</cite>. (i, j) means
 f_i is preferred over f_j</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – Not used.</p></li>
+<li><p><strong>kwargs</strong> – Not used.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
