@@ -6,7 +6,6 @@
 
 import itertools
 import warnings
-from inspect import signature
 from itertools import product
 from unittest import mock
 
@@ -114,10 +113,8 @@ class TestOptimizeAcqf(BotorchTestCase):
     @mock.patch("botorch.generation.gen.gen_candidates_torch")
     @mock.patch("botorch.optim.optimize.gen_batch_initial_conditions")
     @mock.patch("botorch.optim.optimize.gen_candidates_scipy")
-    @mock.patch("botorch.optim.utils.common.signature")
     def test_optimize_acqf_joint(
         self,
-        mock_signature,
         mock_gen_candidates_scipy,
         mock_gen_batch_initial_conditions,
         mock_gen_candidates_torch,
@@ -134,10 +131,6 @@ class TestOptimizeAcqf(BotorchTestCase):
                 mock_gen_candidates_scipy,
                 mock_gen_candidates_torch,
             ):
-                if mock_gen_candidates == mock_gen_candidates_torch:
-                    mock_signature.return_value = signature(gen_candidates_torch)
-                else:
-                    mock_signature.return_value = signature(gen_candidates_scipy)
 
                 mock_gen_batch_initial_conditions.return_value = torch.zeros(
                     num_restarts, q, 3, device=self.device, dtype=dtype
@@ -264,12 +257,14 @@ class TestOptimizeAcqf(BotorchTestCase):
             )
 
     @mock.patch("botorch.optim.optimize.gen_batch_initial_conditions")
-    @mock.patch("botorch.optim.optimize.gen_candidates_scipy")
-    @mock.patch("botorch.generation.gen.gen_candidates_torch")
-    @mock.patch("botorch.optim.utils.common.signature")
+    @mock.patch(
+        "botorch.optim.optimize.gen_candidates_scipy", wraps=gen_candidates_scipy
+    )
+    @mock.patch(
+        "botorch.generation.gen.gen_candidates_torch", wraps=gen_candidates_torch
+    )
     def test_optimize_acqf_sequential(
         self,
-        mock_signature,
         mock_gen_candidates_torch,
         mock_gen_candidates_scipy,
         mock_gen_batch_initial_conditions,
@@ -278,11 +273,6 @@ class TestOptimizeAcqf(BotorchTestCase):
         for mock_gen_candidates, timeout_sec in product(
             [mock_gen_candidates_scipy, mock_gen_candidates_torch], [None, 1e-4]
         ):
-            if mock_gen_candidates == mock_gen_candidates_torch:
-                mock_signature.return_value = signature(gen_candidates_torch)
-            else:
-                mock_signature.return_value = signature(gen_candidates_scipy)
-            mock_gen_candidates.__name__ = "gen_candidates"
             q = 3
             num_restarts = 2
             raw_samples = 10
@@ -1019,16 +1009,12 @@ class TestOptimizeAcqf(BotorchTestCase):
                     raw_samples=16,
                 )
 
-    @mock.patch("botorch.generation.gen.gen_candidates_torch")
     @mock.patch("botorch.optim.optimize.gen_batch_initial_conditions")
     @mock.patch("botorch.optim.optimize.gen_candidates_scipy")
-    @mock.patch("botorch.optim.utils.common.signature")
     def test_optimize_acqf_non_linear_constraints_sequential(
         self,
-        mock_signature,
         mock_gen_candidates_scipy,
         mock_gen_batch_initial_conditions,
-        mock_gen_candidates_torch,
     ):
         def nlc(x):
             return 4 * x[..., 2] - 5
@@ -1037,90 +1023,63 @@ class TestOptimizeAcqf(BotorchTestCase):
         num_restarts = 2
         raw_samples = 10
         options = {}
-        for mock_gen_candidates in (
-            mock_gen_candidates_torch,
-            mock_gen_candidates_scipy,
-        ):
-            if mock_gen_candidates == mock_gen_candidates_torch:
-                mock_signature.return_value = signature(gen_candidates_torch)
-            else:
-                mock_signature.return_value = signature(gen_candidates_scipy)
-            for dtype in (torch.float, torch.double):
-                mock_acq_function = MockAcquisitionFunction()
-                mock_gen_batch_initial_conditions.side_effect = [
-                    torch.zeros(num_restarts, 1, 3, device=self.device, dtype=dtype)
-                    for _ in range(q)
-                ]
-                gcs_return_vals = [
-                    (
-                        torch.tensor(
-                            [[[1.0, 2.0, 3.0]]], device=self.device, dtype=dtype
-                        ),
-                        torch.tensor([i], device=self.device, dtype=dtype),
-                    )
-                    # for nonlinear inequality constraints the batch_limit variable is
-                    # currently set to 1 by default and hence gen_candidates_scipy is
-                    # called num_restarts*q times
-                    for i in range(num_restarts * q)
-                ]
-                mock_gen_candidates.side_effect = gcs_return_vals
-                expected_candidates = torch.cat(
-                    [cands[0] for cands, _ in gcs_return_vals[::num_restarts]], dim=-2
+
+        for dtype in (torch.float, torch.double):
+            mock_acq_function = MockAcquisitionFunction()
+            mock_gen_batch_initial_conditions.side_effect = [
+                torch.zeros(num_restarts, 1, 3, device=self.device, dtype=dtype)
+                for _ in range(q)
+            ]
+            gcs_return_vals = [
+                (
+                    torch.tensor([[[1.0, 2.0, 3.0]]], device=self.device, dtype=dtype),
+                    torch.tensor([i], device=self.device, dtype=dtype),
                 )
-                bounds = torch.stack(
-                    [
-                        torch.zeros(3, device=self.device, dtype=dtype),
-                        4 * torch.ones(3, device=self.device, dtype=dtype),
-                    ]
+                # for nonlinear inequality constraints the batch_limit variable is
+                # currently set to 1 by default and hence gen_candidates_scipy is
+                # called num_restarts*q times
+                for i in range(num_restarts * q)
+            ]
+            mock_gen_candidates_scipy.side_effect = gcs_return_vals
+            expected_candidates = torch.cat(
+                [cands[0] for cands, _ in gcs_return_vals[::num_restarts]], dim=-2
+            )
+            bounds = torch.stack(
+                [
+                    torch.zeros(3, device=self.device, dtype=dtype),
+                    4 * torch.ones(3, device=self.device, dtype=dtype),
+                ]
+            )
+            with warnings.catch_warnings(record=True) as ws:
+                candidates, acq_value = optimize_acqf(
+                    acq_function=mock_acq_function,
+                    bounds=bounds,
+                    q=q,
+                    num_restarts=num_restarts,
+                    raw_samples=raw_samples,
+                    options=options,
+                    nonlinear_inequality_constraints=[nlc],
+                    sequential=True,
+                    ic_generator=mock_gen_batch_initial_conditions,
+                    gen_candidates=mock_gen_candidates_scipy,
                 )
-                with warnings.catch_warnings(record=True) as ws:
-                    candidates, acq_value = optimize_acqf(
-                        acq_function=mock_acq_function,
-                        bounds=bounds,
-                        q=q,
-                        num_restarts=num_restarts,
-                        raw_samples=raw_samples,
-                        options=options,
-                        nonlinear_inequality_constraints=[nlc],
-                        sequential=True,
-                        ic_generator=mock_gen_batch_initial_conditions,
-                        gen_candidates=mock_gen_candidates,
-                    )
-                if mock_gen_candidates == mock_gen_candidates_torch:
-                    self.assertEqual(len(ws), 3)
-                    message = (
-                        "Keyword arguments ['nonlinear_inequality_constraints']"
-                        " will be ignored because they are not allowed parameters for"
-                        " function gen_candidates. Allowed parameters are "
-                        " ['initial_conditions', 'acquisition_function', "
-                        "'lower_bounds', 'upper_bounds', 'optimizer', 'options',"
-                        " 'callback', 'fixed_features', 'timeout_sec']."
-                    )
-                    expected_warning_raised = (
-                        issubclass(w.category, UserWarning)
-                        and message == str(w.message)
-                        for w in ws
-                    )
-                    self.assertTrue(expected_warning_raised)
-                    # check message
-                else:
-                    self.assertEqual(len(ws), 0)
-                self.assertTrue(torch.equal(candidates, expected_candidates))
-                # Extract the relevant entries from gcs_return_vals to
-                # perform comparison with.
-                self.assertTrue(
-                    torch.equal(
-                        acq_value,
-                        torch.cat(
-                            [
-                                expected_acq_value
-                                for _, expected_acq_value in gcs_return_vals[
-                                    num_restarts - 1 :: num_restarts
-                                ]
+                self.assertEqual(len(ws), 0)
+            self.assertTrue(torch.equal(candidates, expected_candidates))
+            # Extract the relevant entries from gcs_return_vals to
+            # perform comparison with.
+            self.assertTrue(
+                torch.equal(
+                    acq_value,
+                    torch.cat(
+                        [
+                            expected_acq_value
+                            for _, expected_acq_value in gcs_return_vals[
+                                num_restarts - 1 :: num_restarts
                             ]
-                        ),
+                        ]
                     ),
-                )
+                ),
+            )
 
     def test_constraint_caching(self):
         def nlc(x):

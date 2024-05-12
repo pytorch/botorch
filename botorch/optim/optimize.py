@@ -36,7 +36,6 @@ from botorch.optim.initializers import (
     TGenInitialConditions,
 )
 from botorch.optim.stopping import ExpMAStoppingCriterion
-from botorch.optim.utils import _filter_kwargs
 from torch import Tensor
 
 INIT_OPTION_KEYS = {
@@ -314,8 +313,6 @@ def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> Tuple[Tensor, Tensor
             "timeout_sec": timeout_sec,
         }
 
-        # only add parameter constraints to gen_kwargs if they are specified
-        # to avoid unnecessary warnings in _filter_kwargs
         for constraint_name in [
             "inequality_constraints",
             "equality_constraints",
@@ -323,8 +320,6 @@ def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> Tuple[Tensor, Tensor
         ]:
             if (constraint := getattr(opt_inputs, constraint_name)) is not None:
                 gen_kwargs[constraint_name] = constraint
-
-        filtered_gen_kwargs = _filter_kwargs(opt_inputs.gen_candidates, **gen_kwargs)
 
         for i, batched_ics_ in enumerate(batched_ics):
             # optimize using random restart optimization
@@ -334,7 +329,7 @@ def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> Tuple[Tensor, Tensor
                     batch_candidates_curr,
                     batch_acq_values_curr,
                 ) = opt_inputs.gen_candidates(
-                    batched_ics_, opt_inputs.acq_function, **filtered_gen_kwargs
+                    batched_ics_, opt_inputs.acq_function, **gen_kwargs
                 )
             opt_warnings += ws
             batch_candidates_list.append(batch_candidates_curr)
