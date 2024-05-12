@@ -10,7 +10,6 @@ from botorch.optim.utils.acquisition_utils import (
     get_X_baseline,
 )
 from botorch.optim.utils.common import (
-    _filter_kwargs,
     _handle_numerical_errors,
     _warning_handler_template,
 )
@@ -31,7 +30,6 @@ from botorch.optim.utils.numpy_utils import (
 from botorch.optim.utils.timeout import minimize_with_timeout
 
 __all__ = [
-    "_filter_kwargs",
     "_handle_numerical_errors",
     "_warning_handler_template",
     "as_ndarray",
