@@ -62,7 +62,7 @@ jobs:
 
   package-conda:
     name: Test conda build
-    runs-on: 8-core-ubuntu
+    runs-on: 8-core
     steps:
     - uses: actions/checkout@v4
     - uses: conda-incubator/setup-miniconda@v3
