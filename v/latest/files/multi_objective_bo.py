@@ -472,7 +472,7 @@ from matplotlib.cm import ScalarMappable
 
 fig, axes = plt.subplots(1, 4, figsize=(23, 7), sharex=True, sharey=True)
 algos = ["Sobol", "qNParEGO", "qEHVI", "qNEHVI"]
-cm = plt.cm.get_cmap("viridis")
+cm = plt.get_cmap("viridis")
 
 batch_number = torch.cat(
     [
