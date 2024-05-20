@@ -129,7 +129,7 @@ def draw_sobol_normal_samples(
         >>> samples = draw_sobol_normal_samples(2, 16)
     """
     normal_qmc_engine = NormalQMCEngine(d=d, seed=seed, inv_transform=True)
-    samples = normal_qmc_engine.draw(n, dtype=torch.float if dtype is None else dtype)
+    samples = normal_qmc_engine.draw(n, dtype=dtype)
     return samples.to(device=device)
 
 
@@ -157,7 +157,6 @@ def sample_hypersphere(
     Example:
         >>> sample_hypersphere(d=5, n=10)
     """
-    dtype = torch.float if dtype is None else dtype
     if d == 1:
         rnd = torch.randint(0, 2, (n, 1), device=device, dtype=dtype)
         return 2 * rnd - 1
@@ -196,7 +195,6 @@ def sample_simplex(
     Example:
         >>> sample_simplex(d=3, n=10)
     """
-    dtype = torch.float if dtype is None else dtype
     if d == 1:
         return torch.ones(n, 1, device=device, dtype=dtype)
     if qmc:

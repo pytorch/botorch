@@ -11,10 +11,9 @@ Base class for test functions for optimization benchmarks.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import torch
-
 from botorch.exceptions.errors import InputDataError
 from torch import Tensor
 from torch.nn import Module
@@ -146,8 +145,8 @@ class ConstrainedBaseTestProblem(BaseTestProblem, ABC):
         pass  # pragma: no cover
 
 
-class MultiObjectiveTestProblem(BaseTestProblem):
-    r"""Base class for test multi-objective test functions.
+class MultiObjectiveTestProblem(BaseTestProblem, ABC):
+    r"""Base class for multi-objective test functions.
 
     TODO: add a pareto distance function that returns the distance
     between a provided point and the closest point on the true pareto front.
@@ -155,7 +154,7 @@ class MultiObjectiveTestProblem(BaseTestProblem):
 
     num_objectives: int
     _ref_point: List[float]
-    _max_hv: float
+    _max_hv: Optional[float] = None
 
     def __init__(
         self,
@@ -176,16 +175,16 @@ class MultiObjectiveTestProblem(BaseTestProblem):
                 f"must match the number of objectives ({len(self._ref_point)})"
             )
         super().__init__(noise_std=noise_std, negate=negate)
-        ref_point = torch.tensor(self._ref_point, dtype=torch.float)
+        ref_point = torch.tensor(self._ref_point, dtype=torch.get_default_dtype())
         if negate:
             ref_point *= -1
         self.register_buffer("ref_point", ref_point)
 
     @property
     def max_hv(self) -> float:
-        try:
+        if self._max_hv is not None:
             return self._max_hv
-        except AttributeError:
+        else:
             raise NotImplementedError(
                 f"Problem {self.__class__.__name__} does not specify maximal "
                 "hypervolume."

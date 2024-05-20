@@ -76,7 +76,7 @@ from __future__ import annotations
 import math
 from abc import ABC, abstractmethod
 from math import pi
-from typing import List, Union
+from typing import List, Tuple, Union
 
 import torch
 from botorch.exceptions.errors import UnsupportedError
@@ -170,7 +170,7 @@ class DH(MultiObjectiveTestProblem, ABC):
     """
 
     num_objectives = 2
-    _ref_point: float = [1.1, 1.1]
+    _ref_point: List[float] = [1.1, 1.1]
     _x_1_lb: float
     _area_under_curve: float
     _min_dim: int
@@ -286,7 +286,7 @@ class DH3(DH):
     _min_dim = 3
 
     @staticmethod
-    def _exp_args(x: Tensor) -> Tensor:
+    def _exp_args(x: Tensor) -> Tuple[Tensor, Tensor]:
         exp_arg_1 = -((x - 0.35) / 0.25).pow(2)
         exp_arg_2 = -((x - 0.85) / 0.03).pow(2)
         return exp_arg_1, exp_arg_2
@@ -1078,7 +1078,7 @@ class ZDT3(ZDT):
                 torch.linspace(
                     left + self._eps,
                     right - self._eps,
-                    n_per_part[i],
+                    int(n_per_part[i]),
                     dtype=self.bounds.dtype,
                     device=self.bounds.device,
                 )
@@ -1195,12 +1195,12 @@ class BNH(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         return torch.stack(
-            [4.0 * (X**2).sum(dim=-1), ((X - 5.0) ** 2).sum(dim=-1)], dim=-1
+            [4.0 * X.pow(2).sum(dim=-1), (X - 5.0).pow(2).sum(dim=-1)], dim=-1
         )
 
     def evaluate_slack_true(self, X: Tensor) -> Tensor:
-        c1 = 25.0 - (X[..., 0] - 5.0) ** 2 - X[..., 1] ** 2
-        c2 = (X[..., 0] - 8.0) ** 2 + (X[..., 1] + 3.0) ** 2 - 7.7
+        c1 = 25.0 - (X[..., 0] - 5.0).pow(2) - X[..., 1].pow(2)
+        c2 = (X[..., 0] - 8.0).pow(2) + (X[..., 1] + 3.0).pow(2) - 7.7
         return torch.stack([c1, c2], dim=-1)
 
 
@@ -1256,7 +1256,9 @@ class ConstrainedBraninCurrin(BraninCurrin, ConstrainedBaseTestProblem):
             negate: If True, negate the function.
         """
         super().__init__(noise_std=noise_std, negate=negate)
-        con_bounds = torch.tensor(self._con_bounds, dtype=torch.float).transpose(-1, -2)
+        con_bounds = torch.tensor(self._con_bounds, dtype=self.bounds.dtype).transpose(
+            -1, -2
+        )
         self.register_buffer("con_bounds", con_bounds)
         self.constraint_noise_std = constraint_noise_std
 
@@ -1373,7 +1375,7 @@ class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         super().__init__(noise_std=noise_std, negate=negate)
         self.constraint_noise_std = constraint_noise_std
 
-    def LA2(self, A, B, C, D, theta):
+    def LA2(self, A, B, C, D, theta) -> Tensor:
         return A * torch.sin(B * theta.pow(C)).pow(D)
 
     def evaluate_true(self, X: Tensor) -> Tensor:
@@ -1420,13 +1422,13 @@ class OSY(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         f1 = -(
-            25 * (X[..., 0] - 2) ** 2
-            + (X[..., 1] - 2) ** 2
-            + (X[..., 2] - 1) ** 2
-            + (X[..., 3] - 4) ** 2
-            + (X[..., 4] - 1) ** 2
+            25 * (X[..., 0] - 2).pow(2)
+            + (X[..., 1] - 2).pow(2)
+            + (X[..., 2] - 1).pow(2)
+            + (X[..., 3] - 4).pow(2)
+            + (X[..., 4] - 1).pow(2)
         )
-        f2 = (X**2).sum(-1)
+        f2 = X.pow(2).sum(-1)
         return torch.stack([f1, f2], dim=-1)
 
     def evaluate_slack_true(self, X: Tensor) -> Tensor:
@@ -1434,8 +1436,8 @@ class OSY(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         g2 = 6.0 - X[..., 0] - X[..., 1]
         g3 = 2.0 - X[..., 1] + X[..., 0]
         g4 = 2.0 - X[..., 0] + 3.0 * X[..., 1]
-        g5 = 4.0 - (X[..., 2] - 3.0) ** 2 - X[..., 3]
-        g6 = (X[..., 4] - 3.0) ** 2 + X[..., 5] - 4.0
+        g5 = 4.0 - (X[..., 2] - 3.0).pow(2) - X[..., 3]
+        g6 = (X[..., 4] - 3.0).pow(2) + X[..., 5] - 4.0
         return torch.stack([g1, g2, g3, g4, g5, g6], dim=-1)
 
 
@@ -1453,12 +1455,12 @@ class SRN(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     _ref_point = [0.0, 0.0]  # TODO: Determine proper reference point
 
     def evaluate_true(self, X: Tensor) -> Tensor:
-        obj1 = 2.0 + ((X - 2.0) ** 2).sum(dim=-1)
-        obj2 = 9.0 * X[..., 0] - (X[..., 1] - 1.0) ** 2
+        obj1 = 2.0 + (X - 2.0).pow(2).sum(dim=-1)
+        obj2 = 9.0 * X[..., 0] - (X[..., 1] - 1.0).pow(2)
         return torch.stack([obj1, obj2], dim=-1)
 
     def evaluate_slack_true(self, X: Tensor) -> Tensor:
-        c1 = 225.0 - ((X**2) ** 2).sum(dim=-1)
+        c1 = 225.0 - (X.pow(2)).pow(2).sum(dim=-1)
         c2 = -10.0 - X[..., 0] + 3 * X[..., 1]
         return torch.stack([c1, c2], dim=-1)
 
@@ -1490,8 +1492,8 @@ class WeldedBeam(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         # different numbers (see below).
         # f1 = WeldedBeam.evaluate_true(self, X)
         x1, x2, x3, x4 = X.unbind(-1)
-        f1 = 1.10471 * (x1**2) * x2 + 0.04811 * x3 * x4 * (14.0 + x2)
-        f2 = 2.1952 / (x4 * x3**3)
+        f1 = 1.10471 * x1.pow(2) * x2 + 0.04811 * x3 * x4 * (14.0 + x2)
+        f2 = 2.1952 / (x4 * x3.pow(3))
         return torch.stack([f1, f2], dim=-1)
 
     def evaluate_slack_true(self, X: Tensor) -> Tensor:
@@ -1509,17 +1511,17 @@ class WeldedBeam(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         # g3 = 1 / (5 - 0.125) * g3_
         # g4 = 1 / P * g6_
 
-        R = torch.sqrt(0.25 * (x2**2 + (x1 + x3) ** 2))
+        R = torch.sqrt(0.25 * (x2.pow(2) + (x1 + x3).pow(2)))
         M = P * (L + x2 / 2)
         # This `J` is different than the one in [CoelloCoello2002constraint]_
         # by a factor of 2 (sqrt(2) instead of sqrt(0.5))
-        J = 2 * math.sqrt(0.5) * x1 * x2 * (x2**2 / 12 + 0.25 * (x1 + x3) ** 2)
+        J = 2 * math.sqrt(0.5) * x1 * x2 * (x2.pow(2) / 12 + 0.25 * (x1 + x3).pow(2))
         t1 = P / (math.sqrt(2) * x1 * x2)
         t2 = M * R / J
-        t = torch.sqrt(t1**2 + t1 * t2 * x2 / R + t2**2)
-        s = 6 * P * L / (x4 * x3**2)
+        t = torch.sqrt(t1.pow(2) + t1 * t2 * x2 / R + t2.pow(2))
+        s = 6 * P * L / (x4 * x3.pow(2))
         # These numbers are also different from [CoelloCoello2002constraint]_
-        P_c = 64746.022 * (1 - 0.0282346 * x3) * x3 * x4**3
+        P_c = 64746.022 * (1 - 0.0282346 * x3) * x3 * x4.pow(3)
 
         g1 = (t - t_max) / t_max
         g2 = (s - s_max) / s_max
