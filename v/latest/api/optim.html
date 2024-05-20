@@ -1905,22 +1905,22 @@ track of the runtime and the optimization variables at the current iteration.</p
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>fun</strong> (<em>Callable</em><em>[</em><em>[</em><em>np.ndarray</em><em>, </em><em>*Any</em><em>]</em><em>, </em><em>float</em><em>]</em>)</p></li>
-<li><p><strong>x0</strong> (<em>np.ndarray</em>)</p></li>
+<li><p><strong>fun</strong> (<em>Callable</em><em>[</em><em>[</em><em>ndarray</em><em>, </em><em>...</em><em>]</em><em>, </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>x0</strong> (<em>ndarray</em>)</p></li>
 <li><p><strong>args</strong> (<em>Tuple</em><em>[</em><em>Any</em><em>, </em><em>...</em><em>]</em>)</p></li>
-<li><p><strong>method</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>)</p></li>
-<li><p><strong>jac</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>bool</em><em>]</em><em>]</em>)</p></li>
-<li><p><strong>hess</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>optimize.HessianUpdateStrategy</em><em>]</em><em>]</em>)</p></li>
-<li><p><strong>hessp</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>)</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>, </em><em>optimize.Bounds</em><em>]</em><em>]</em>)</p></li>
-<li><p><strong>tol</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>)</p></li>
-<li><p><strong>callback</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>)</p></li>
-<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>)</p></li>
-<li><p><strong>timeout_sec</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>method</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>jac</strong> (<em>str</em><em> | </em><em>Callable</em><em> | </em><em>bool</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>hess</strong> (<em>str</em><em> | </em><em>Callable</em><em> | </em><em>HessianUpdateStrategy</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>hessp</strong> (<em>Callable</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>bounds</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>Bounds</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>tol</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>callback</strong> (<em>Callable</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>timeout_sec</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>optimize.OptimizeResult</p>
+<dd class="field-even"><p><em>OptimizeResult</em></p>
 </dd>
 </dl>
 </dd></dl>
