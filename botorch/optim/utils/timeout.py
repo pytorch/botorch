@@ -16,7 +16,7 @@ from scipy import optimize
 
 
 def minimize_with_timeout(
-    fun: Callable[[np.ndarray, *Any], float],
+    fun: Callable[[np.ndarray, ...], float],
     x0: np.ndarray,
     args: Tuple[Any, ...] = (),
     method: Optional[str] = None,
@@ -40,7 +40,7 @@ def minimize_with_timeout(
     method that is injected to the scipy.optimize.minimize call and that keeps
     track of the runtime and the optimization variables at the current iteration.
     """
-    if timeout_sec:
+    if timeout_sec is not None:
 
         start_time = time.monotonic()
         callback_data = {"num_iterations": 0}  # update from withing callback below
