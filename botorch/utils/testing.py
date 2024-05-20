@@ -10,7 +10,7 @@ import math
 import warnings
 from abc import abstractproperty
 from collections import OrderedDict
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Sequence, Tuple, Union
 from unittest import mock, TestCase
 
 import torch
@@ -118,7 +118,7 @@ class BaseTestProblemTestCaseMixIn:
                     self.assertEqual(res.shape, batch_shape + tail_shape)
 
     @abstractproperty
-    def functions(self) -> List[BaseTestProblem]:
+    def functions(self) -> Sequence[BaseTestProblem]:
         # The functions that should be tested. Typically defined as a class
         # attribute on the test case subclassing this class.
         pass  # pragma: no cover
@@ -129,12 +129,13 @@ class SyntheticTestFunctionTestCaseMixin:
         for dtype in (torch.float, torch.double):
             for f in self.functions:
                 f.to(device=self.device, dtype=dtype)
-                try:
+                if f._optimal_value is None:
+                    with self.assertRaisesRegex(NotImplementedError, "optimal value"):
+                        f.optimal_value
+                else:
                     optval = f.optimal_value
                     optval_exp = -f._optimal_value if f.negate else f._optimal_value
                     self.assertEqual(optval, optval_exp)
-                except NotImplementedError:
-                    pass
 
     def test_optimizer(self):
         for dtype in (torch.float, torch.double):
@@ -164,7 +165,7 @@ class MultiObjectiveTestProblemTestCaseMixin:
         for dtype in (torch.float, torch.double):
             for f in self.functions:
                 f.to(device=self.device, dtype=dtype)
-                if not hasattr(f, "_max_hv"):
+                if f._max_hv is None:
                     with self.assertRaises(NotImplementedError):
                         f.max_hv
                 else:

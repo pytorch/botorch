@@ -58,7 +58,10 @@ class NormalQMCEngine:
         self._sobol_engine = SobolEngine(dimension=sobol_dim, scramble=True, seed=seed)
 
     def draw(
-        self, n: int = 1, out: Optional[Tensor] = None, dtype: torch.dtype = torch.float
+        self,
+        n: int = 1,
+        out: Optional[Tensor] = None,
+        dtype: Optional[torch.dtype] = None,
     ) -> Optional[Tensor]:
         r"""Draw `n` qMC samples from the standard Normal.
 
@@ -67,10 +70,12 @@ class NormalQMCEngine:
             out: An option output tensor. If provided, draws are put into this
                 tensor, and the function returns None.
             dtype: The desired torch data type (ignored if `out` is provided).
+                If None, uses `torch.get_default_dtype()`.
 
         Returns:
             A `n x d` tensor of samples if `out=None` and `None` otherwise.
         """
+        dtype = torch.get_default_dtype() if dtype is None else dtype
         # get base samples
         samples = self._sobol_engine.draw(n, dtype=dtype)
         if self._inv_transform:
