@@ -183,8 +183,8 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.test_functions.base.MultiObjectiveTestProblem">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.base.</span></span><span class="sig-name descname"><span class="pre">MultiObjectiveTestProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/base.html#MultiObjectiveTestProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.BaseTestProblem" title="botorch.test_functions.base.BaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseTestProblem</span></code></a></p>
-<p>Base class for test multi-objective test functions.</p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.BaseTestProblem" title="botorch.test_functions.base.BaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseTestProblem</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Base class for multi-objective test functions.</p>
 <p>TODO: add a pareto distance function that returns the distance
 between a provided point and the closest point on the true pareto front.</p>
 <p>Base constructor for multi-objective test functions.</p>
@@ -269,7 +269,7 @@ Technometrics, 2016.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.test_functions.synthetic.SyntheticTestFunction">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">SyntheticTestFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#SyntheticTestFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.BaseTestProblem" title="botorch.test_functions.base.BaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseTestProblem</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.BaseTestProblem" title="botorch.test_functions.base.BaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseTestProblem</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 <p>Base class for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -639,11 +639,6 @@ The global minimum is at <cite>z = (0, …, 0)</cite> with <cite>G(z) = 0</cite>
 </ul>
 </dd>
 </dl>
-<dl class="py property">
-<dt class="sig sig-object py" id="botorch.test_functions.synthetic.Hartmann.optimal_value">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">optimal_value</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#botorch.test_functions.synthetic.Hartmann.optimal_value" title="Link to this definition">¶</a></dt>
-<dd><p>The global minimum (maximum if negate=True) of the function.</p>
-</dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.test_functions.synthetic.Hartmann.optimizers">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">optimizers</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.test_functions.synthetic.Hartmann.optimizers" title="Link to this definition">¶</a></dt>
@@ -1028,7 +1023,7 @@ objective in a multiobjective problem.</p></li>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">ConstrainedSyntheticTestFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraint_noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#ConstrainedSyntheticTestFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.ConstrainedSyntheticTestFunction" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedBaseTestProblem</span></code></a>, <a class="reference internal" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="botorch.test_functions.synthetic.SyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">SyntheticTestFunction</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstrainedBaseTestProblem</span></code></a>, <a class="reference internal" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="botorch.test_functions.synthetic.SyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">SyntheticTestFunction</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 <p>Base class for constrained synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2981,7 +2976,12 @@ constraints.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.test_functions.multi_objective.MW7.LA2">
 <span class="sig-name descname"><span class="pre">LA2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">C</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#MW7.LA2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.MW7.LA2" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.test_functions.multi_objective.MW7.evaluate_true">
 <span class="sig-name descname"><span class="pre">evaluate_true</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#MW7.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.MW7.evaluate_true" title="Link to this definition">¶</a></dt>

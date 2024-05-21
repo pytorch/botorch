@@ -160,7 +160,7 @@
 <span class="sd">        &gt;&gt;&gt; samples = draw_sobol_normal_samples(2, 16)</span>
 <span class="sd">    """</span>
     <span class="n">normal_qmc_engine</span> <span class="o">=</span> <span class="n">NormalQMCEngine</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span> <span class="n">inv_transform</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">samples</span> <span class="o">=</span> <span class="n">normal_qmc_engine</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span> <span class="k">if</span> <span class="n">dtype</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">dtype</span><span class="p">)</span>
+    <span class="n">samples</span> <span class="o">=</span> <span class="n">normal_qmc_engine</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">samples</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span></div>
 
 
@@ -191,7 +191,6 @@
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; sample_hypersphere(d=5, n=10)</span>
 <span class="sd">    """</span>
-    <span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float</span> <span class="k">if</span> <span class="n">dtype</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">dtype</span>
     <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">rnd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
         <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">rnd</span> <span class="o">-</span> <span class="mi">1</span>
@@ -233,7 +232,6 @@
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; sample_simplex(d=3, n=10)</span>
 <span class="sd">    """</span>
-    <span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float</span> <span class="k">if</span> <span class="n">dtype</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">dtype</span>
     <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">qmc</span><span class="p">:</span>

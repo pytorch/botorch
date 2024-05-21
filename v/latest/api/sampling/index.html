@@ -310,7 +310,7 @@ underlying SobolEngine.</p></li>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.sampling.qmc.NormalQMCEngine.draw">
-<span class="sig-name descname"><span class="pre">draw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.float32</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/qmc.html#NormalQMCEngine.draw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.qmc.NormalQMCEngine.draw" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">draw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/qmc.html#NormalQMCEngine.draw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.qmc.NormalQMCEngine.draw" title="Link to this definition">¶</a></dt>
 <dd><p>Draw <cite>n</cite> qMC samples from the standard Normal.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -318,7 +318,8 @@ underlying SobolEngine.</p></li>
 <li><p><strong>n</strong> (<em>int</em>) – The number of samples to draw. As a best practice, use powers of 2.</p></li>
 <li><p><strong>out</strong> (<em>Tensor</em><em> | </em><em>None</em>) – An option output tensor. If provided, draws are put into this
 tensor, and the function returns None.</p></li>
-<li><p><strong>dtype</strong> (<em>dtype</em>) – The desired torch data type (ignored if <cite>out</cite> is provided).</p></li>
+<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>None</em>) – The desired torch data type (ignored if <cite>out</cite> is provided).
+If None, uses <cite>torch.get_default_dtype()</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
