@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import itertools
 import warnings
+from abc import ABC
 from typing import Any, Dict, Type
 from unittest import mock
 
@@ -29,6 +30,7 @@ from botorch.utils.sampling import (
     optimize_posterior_samples,
     PolytopeSampler,
     sample_hypersphere,
+    sample_polytope,
     sample_simplex,
     sparse_to_dense_constraints,
 )
@@ -304,8 +306,36 @@ class TestSampleUtils(BotorchTestCase):
                 ).draw(15, seed=0)[::3]
             self.assertTrue(torch.equal(samps, expected_samps))
 
+    def test_sample_polytope_infeasible(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Starting point does not satisfy"):
+            sample_polytope(
+                A=torch.tensor([[0.0, 0.0]]),
+                b=torch.tensor([[-1.0]]),
+                x0=torch.tensor([[0.0], [0.0]]),
+            )
 
-class PolytopeSamplerTestBase:
+    def test_sample_polytope_boundary(self) -> None:
+        # Check that sample_polytope does not get stuck at the boundary.
+        # This replicates https://github.com/pytorch/botorch/issues/2351.
+        samples = sample_polytope(
+            A=torch.tensor(
+                [
+                    [-1.0, -1.0],
+                    [0.0, 0.0],
+                    [-1.0, 0.0],
+                    [0.0, -1.0],
+                    [0.0, 0.0],
+                    [1.0, 0.0],
+                    [0.0, 1.0],
+                ]
+            ),
+            b=torch.tensor([[1.0], [1.0], [1.0], [1.0], [0.0], [0.0], [0.0]]),
+            x0=torch.tensor([[0.0], [0.0]]),
+        )
+        self.assertFalse((samples == 0).all())
+
+
+class PolytopeSamplerTestBase(ABC):
     sampler_class: Type[PolytopeSampler]
     sampler_kwargs: Dict[str, Any] = {}
 
