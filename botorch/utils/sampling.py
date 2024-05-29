@@ -239,35 +239,59 @@ def sample_polytope(
     Returns:
         (n, d) dim Tensor containing the resulting samples.
     """
+    # Check that starting point satisfies the constraints.
+    if not ((slack := A @ x0 - b) <= 0).all():
+        raise ValueError(
+            f"Starting point does not satisfy the constraints. Inputs: {A=},"
+            f"{b=}, {x0=}, A@x0-b={slack}."
+        )
+    # Remove rows where all elements of A are 0. This avoids nan and infs later.
+    # A may have zero rows in it when this is called from PolytopeSampler
+    # with equality constraints (which are absorbed into A & b).
+    non_zero_rows = torch.any(A != 0, dim=-1)
+    A = A[non_zero_rows]
+    b = b[non_zero_rows]
+
     n_tot = n + n0
     seed = seed if seed is not None else torch.randint(0, 1000000, (1,)).item()
     with manual_seed(seed=seed):
         rands = torch.rand(n_tot, dtype=A.dtype, device=A.device)
 
-    # pre-sample samples from hypersphere
-    d = x0.size(0)
-    # uniform samples from unit ball in d dims
-    # increment seed by +1 to avoid correlation with step size, see #2156 for details
+    # Sample uniformly from unit hypersphere in d dims.
+    # Increment seed by +1 to avoid correlation with step size, see #2156 for details.
     Rs = sample_hypersphere(
-        d=d, n=n_tot, dtype=A.dtype, device=A.device, seed=seed + 1
+        d=x0.shape[0], n=n_tot, dtype=A.dtype, device=A.device, seed=seed + 1
     ).unsqueeze(-1)
 
-    # compute matprods in batch
+    # Use batch operations for matrix multiplication.
     ARs = (A @ Rs).squeeze(-1)
     out = torch.empty(n, A.size(-1), dtype=A.dtype, device=A.device)
     x = x0.clone()
+    large_constant = torch.finfo().max
     for i, (ar, r, rnd) in enumerate(zip(ARs, Rs, rands)):
-        # given x, the next point in the chain is x+alpha*r
-        # it also satisfies A(x+alpha*r)<=b which implies A*alpha*r<=b-Ax
+        # Given x, the next point in the chain is x+alpha*r.
+        # It must satisfy A(x+alpha*r)<=b, which implies A*alpha*r<=b-Ax,
         # so alpha<=(b-Ax)/ar for ar>0, and alpha>=(b-Ax)/ar for ar<0.
-        # b - A @ x is always >= 0, clamping for numerical tolerances
+        # If x is at the boundary, b - Ax = 0. If ar > 0, then we must
+        # have alpha <= 0. If ar < 0, we must have alpha >= 0.
+        # ar == 0 is an unlikely event that provides no signal.
+        # b - A @ x is always >= 0, clamping for numerical tolerances.
         w = (b - A @ x).squeeze().clamp(min=0.0) / ar
-        pos = w >= 0
-        alpha_max = w[pos].min()
-        # important to include equality here in cases x is at the boundary
-        # of the polytope
-        neg = w <= 0
-        alpha_min = w[neg].max()
+        # Find upper bound for alpha. If there are no constraints on
+        # the upper bound of alpha, set it to a large value.
+        pos = w > 0
+        alpha_max = w[pos].min().item() if pos.any() else large_constant
+        # Find lower bound for alpha.
+        neg = w < 0
+        alpha_min = w[neg].max().item() if neg.any() else -large_constant
+        # Handle the boundary case.
+        if (w_eq_0 := (w == 0)).any():
+            # If ar > 0 at the boundary, alpha <= 0.
+            if w_eq_0.logical_and(ar > 0).any():
+                alpha_max = min(alpha_max, 0.0)
+            # If ar < 0 at the boundary, alpha >= 0.
+            if w_eq_0.logical_and(ar < 0).any():
+                alpha_min = max(alpha_min, 0.0)
         # alpha~Unif[alpha_min, alpha_max]
         alpha = alpha_min + rnd * (alpha_max - alpha_min)
         x = x + alpha * r
