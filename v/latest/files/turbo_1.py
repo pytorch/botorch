@@ -20,7 +20,7 @@ import math
 from dataclasses import dataclass
 
 import torch
-from botorch.acquisition import qExpectedImprovement
+from botorch.acquisition import qExpectedImprovement, qLogExpectedImprovement
 from botorch.fit import fit_gpytorch_mll
 from botorch.generation import MaxPosteriorSampling
 from botorch.models import SingleTaskGP
@@ -283,10 +283,61 @@ while not state.restart_triggered:  # Run until TuRBO converges
     )
 
 
-# ## GP-EI
-# As a baseline, we compare TuRBO to qEI
+# ## GP-LogEI
+# We compare TuRBO to qLogEI [2], a recent improvement to the expected improvement (EI) acquisition functions.
+# 
+# [2]: [Ament, Sebastian, et al., Unexpected Improvements to Expected Improvement for Bayesian Optimization. Advances in Neural Information Processing Systems. 2023](https://proceedings.neurips.cc/paper_files/paper/2023/file/419f72cbd568ad62183f8132a3605a2a-Paper-Conference.pdf)
+# 
+# 
 
 # In[8]:
+
+
+torch.manual_seed(0)
+
+X_logei = get_initial_points(dim, n_init)
+Y_logei = torch.tensor(
+    [eval_objective(x) for x in X_logei], dtype=dtype, device=device
+).unsqueeze(-1)
+
+# Cap the number of evals when running smoke test
+max_evals = min(len(Y_turbo), n_init + 2 * batch_size) if SMOKE_TEST else len(Y_turbo)
+while len(Y_logei) < max_evals:
+    train_Y = (Y_logei - Y_logei.mean()) / Y_logei.std()
+    likelihood = GaussianLikelihood(noise_constraint=Interval(1e-8, 1e-3))
+    model = SingleTaskGP(X_logei, train_Y, likelihood=likelihood)
+    mll = ExactMarginalLogLikelihood(model.likelihood, model)
+    fit_gpytorch_mll(mll)
+
+    # Create a batch
+    log_ei = qLogExpectedImprovement(model, train_Y.max())
+    candidate, acq_value = optimize_acqf(
+        log_ei,
+        bounds=torch.stack(
+            [
+                torch.zeros(dim, dtype=dtype, device=device),
+                torch.ones(dim, dtype=dtype, device=device),
+            ]
+        ),
+        q=batch_size,
+        num_restarts=NUM_RESTARTS,
+        raw_samples=RAW_SAMPLES,
+    )
+    Y_next = torch.tensor(
+        [eval_objective(x) for x in candidate], dtype=dtype, device=device
+    ).unsqueeze(-1)
+
+    # Append data
+    X_logei = torch.cat((X_logei, candidate), axis=0)
+    Y_logei = torch.cat((Y_logei, Y_next), axis=0)
+
+    # Print current status
+    print(f"{len(X_logei)}) Best value: {Y_logei.max().item():.2e}")
+
+
+# ## GP-EI
+
+# In[9]:
 
 
 torch.manual_seed(0)
@@ -331,7 +382,7 @@ while len(Y_ei) < len(Y_turbo):
 
 # ## Sobol
 
-# In[9]:
+# In[10]:
 
 
 X_Sobol = (
@@ -346,7 +397,7 @@ Y_Sobol = torch.tensor(
 
 # ## Compare the methods
 
-# In[10]:
+# In[11]:
 
 
 import matplotlib
@@ -357,8 +408,8 @@ from matplotlib import rc
 get_ipython().run_line_magic('matplotlib', 'inline')
 
 
-names = ["TuRBO-1", "EI", "Sobol"]
-runs = [Y_turbo, Y_ei, Y_Sobol]
+names = ["TuRBO-1", "LogEI", "EI", "Sobol"]
+runs = [Y_turbo, Y_logei, Y_ei, Y_Sobol]
 fig, ax = plt.subplots(figsize=(8, 6))
 
 for name, run in zip(names, runs):
@@ -379,13 +430,13 @@ plt.legend(
     loc="lower center",
     bbox_to_anchor=(0, -0.08, 1, 1),
     bbox_transform=plt.gcf().transFigure,
-    ncol=4,
+    ncol=5,
     fontsize=16,
 )
 plt.show()
 
 
-# In[11]:
+# In[ ]:
 
 
 
