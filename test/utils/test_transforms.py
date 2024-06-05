@@ -59,7 +59,7 @@ class TestStandardize(BotorchTestCase):
 
 
 class TestNormalizeAndUnnormalize(BotorchTestCase):
-    def test_normalize_unnormalize(self):
+    def test_normalize_unnormalize(self) -> None:
         for dtype in (torch.float, torch.double):
             X = torch.tensor([0.0, 0.25, 0.5], device=self.device, dtype=dtype).view(
                 -1, 1
@@ -85,6 +85,17 @@ class TestNormalizeAndUnnormalize(BotorchTestCase):
             X2_normalized = normalize(X2, bounds=bounds2)
             self.assertTrue(torch.equal(X2_normalized, expected_X2_normalized))
             self.assertTrue(torch.equal(X2, unnormalize(X2_normalized, bounds=bounds2)))
+
+    def test_with_constant_bounds(self) -> None:
+        X = torch.rand(10, 2, dtype=torch.double)
+        # First dimension is constant, second has a range of 1.
+        # The transform should just add 1 to each dimension.
+        bounds = -torch.ones(2, 2, dtype=torch.double)
+        bounds[1, 1] = 0.0
+        X_normalized = normalize(X, bounds=bounds)
+        self.assertAllClose(X_normalized, X + 1)
+        X_unnormalized = unnormalize(X_normalized, bounds=bounds)
+        self.assertAllClose(X_unnormalized, X)
 
 
 class BMIMTestClass(BotorchTestCase):

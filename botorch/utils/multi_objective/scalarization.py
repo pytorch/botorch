@@ -95,14 +95,8 @@ def get_chebyshev_scalarization(
             return -chebyshev_obj(Y=-Y)
 
         return obj
-    if Y.shape[-2] == 1:
-        # If there is only one observation, set the bounds to be
-        # [min(Y_m), min(Y_m) + 1] for each objective m. This ensures we do not
-        # divide by zero
-        Y_bounds = torch.cat([Y, Y + 1], dim=0)
-    else:
-        # Set the bounds to be [min(Y_m), max(Y_m)], for each objective m
-        Y_bounds = torch.stack([Y.min(dim=-2).values, Y.max(dim=-2).values])
+    # Set the bounds to be [min(Y_m), max(Y_m)], for each objective m.
+    Y_bounds = torch.stack([Y.min(dim=-2).values, Y.max(dim=-2).values])
 
     def obj(Y: Tensor, X: Optional[Tensor] = None) -> Tensor:
         # scale to [0,1]
