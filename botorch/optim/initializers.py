@@ -180,7 +180,7 @@ def sample_q_batches_from_polytope(
     q: int,
     bounds: Tensor,
     n_burnin: int,
-    thinning: int,
+    n_thinning: int,
     seed: int,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
@@ -192,8 +192,8 @@ def sample_q_batches_from_polytope(
         q: Number of samples per q-batch
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
         n_burnin: The number of burn-in samples for the Markov chain sampler.
-            thinning: The amount of thinning (number of steps to take between
-            returning samples).
+        n_thinning: The amount of thinning. The sampler will return every
+            `n_thinning` sample (after burn-in).
         seed: The random seed.
         inequality_constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
@@ -225,7 +225,7 @@ def sample_q_batches_from_polytope(
             ),
             seed=seed,
             n_burnin=n_burnin,
-            thinning=thinning * q,
+            n_thinning=n_thinning * q,
         )
     else:
         samples = get_polytope_samples(
@@ -235,7 +235,7 @@ def sample_q_batches_from_polytope(
             equality_constraints=equality_constraints,
             seed=seed,
             n_burnin=n_burnin,
-            thinning=thinning,
+            n_thinning=n_thinning,
         )
     return samples.view(n, q, -1).cpu()
 
@@ -250,7 +250,7 @@ def gen_batch_initial_conditions(
     options: Optional[Dict[str, Union[bool, float, int]]] = None,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    generator: Optional[Callable[[int, int, int], Tensor]] = None,
+    generator: Optional[Callable[[int, int, Optional[int]], Tensor]] = None,
     fixed_X_fantasies: Optional[Tensor] = None,
 ) -> Tensor:
     r"""Generate a batch of initial conditions for random-restart optimziation.
@@ -283,8 +283,8 @@ def gen_batch_initial_conditions(
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
         generator: Callable for generating samples that are then further
-            processed. It receives `n`, `q` and `seed` as arguments and
-            returns a tensor of shape `n x q x d`.
+            processed. It receives `n`, `q` and `seed` as arguments
+            and returns a tensor of shape `n x q x d`.
         fixed_X_fantasies: A fixed set of fantasy points to concatenate to
             the `q` candidates being initialized along the `-2` dimension. The
             shape should be `num_pseudo_points x d`. E.g., this should be
@@ -343,6 +343,7 @@ def gen_batch_initial_conditions(
             f"Sample dimension q*d={effective_dim} exceeding Sobol max dimension "
             f"({SobolEngine.MAXDIM}). Using iid samples instead.",
             SamplingWarning,
+            stacklevel=3,
         )
 
     while factor < max_factor:
@@ -367,7 +368,7 @@ def gen_batch_initial_conditions(
                     q=q,
                     bounds=bounds,
                     n_burnin=options.get("n_burnin", 10000),
-                    thinning=options.get("thinning", 32),
+                    n_thinning=options.get("n_thinning", 32),
                     seed=seed,
                     equality_constraints=equality_constraints,
                     inequality_constraints=inequality_constraints,

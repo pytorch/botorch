@@ -494,8 +494,8 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                     n=n,
                     q=q,
                     bounds=bounds,
-                    n_burnin=10000,
-                    thinning=32,
+                    n_burnin=20,
+                    n_thinning=4,
                     seed=42,
                     inequality_constraints=inequalities,
                     equality_constraints=equalities,
@@ -571,8 +571,8 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                             "alpha": 0.1,
                             "seed": seed,
                             "init_batch_limit": init_batch_limit,
-                            "thinning": 2,
                             "n_burnin": 3,
+                            "n_thinning": 2,
                         },
                         inequality_constraints=inequality_constraints,
                         equality_constraints=equality_constraints,
@@ -669,8 +669,8 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                             "alpha": 0.1,
                             "seed": seed,
                             "init_batch_limit": None,
-                            "thinning": 2,
                             "n_burnin": 3,
+                            "n_thinning": 2,
                         },
                         inequality_constraints=inequality_constraints,
                         equality_constraints=equality_constraints,
@@ -714,7 +714,7 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                 [True, False], [None, 1234], [None, 1], [None, {0: 0.5}]
             ):
 
-                def generator(n: int, q: int, seed: int):
+                def generator(n: int, q: int, seed: Optional[int]):
                     with manual_seed(seed):
                         X_rnd_nlzd = torch.rand(
                             n,
@@ -770,7 +770,7 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
     def test_error_generator_with_sample_around_best(self):
         tkwargs = {"device": self.device, "dtype": torch.double}
 
-        def generator(n: int, q: int, seed: int):
+        def generator(n: int, q: int, seed: Optional[int]):
             return torch.rand(n, q, 3).to(**tkwargs)
 
         with self.assertRaisesRegex(
