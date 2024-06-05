@@ -24,7 +24,6 @@ from botorch.acquisition.multi_objective.multi_fidelity import MOMF
 from botorch.acquisition.multi_objective.objective import (
     IdentityMCMultiOutputObjective,
     MCMultiOutputObjective,
-    UnstandardizeMCMultiOutputObjective,
     WeightedMCMultiOutputObjective,
 )
 from botorch.acquisition.multi_objective.utils import (
@@ -47,6 +46,5 @@ __all__ = [
     "MCMultiOutputObjective",
     "MultiObjectiveAnalyticAcquisitionFunction",
     "MultiObjectiveMCAcquisitionFunction",
-    "UnstandardizeMCMultiOutputObjective",
     "WeightedMCMultiOutputObjective",
 ]

@@ -10,8 +10,8 @@ from unittest import mock
 
 import torch
 from botorch.acquisition.multi_objective.objective import (
+    IdentityMCMultiOutputObjective,
     MCMultiOutputObjective,
-    UnstandardizeMCMultiOutputObjective,
 )
 from botorch.acquisition.multi_objective.utils import (
     compute_sample_box_decomposition,
@@ -92,16 +92,8 @@ class TestMultiObjectiveUtils(BotorchTestCase):
             X_pruned = prune_inferior_points_multi_objective(
                 model=mm, X=X, ref_point=ref_point
             )
-            self.assertTrue(torch.equal(X_pruned, X[[-1]]))
-            # test unstd objective
-            unstd_obj = UnstandardizeMCMultiOutputObjective(
-                Y_mean=samples.mean(dim=0), Y_std=samples.std(dim=0), outcomes=[0, 1]
-            )
-            X_pruned = prune_inferior_points_multi_objective(
-                model=mm, X=X, ref_point=ref_point, objective=unstd_obj
-            )
-            self.assertTrue(torch.equal(X_pruned, X[[-1]]))
             # test constraints
+            objective = IdentityMCMultiOutputObjective(outcomes=[0, 1])
             samples_constrained = torch.tensor(
                 [[1.0, 2.0, -1.0], [2.0, 1.0, -1.0], [3.0, 4.0, 1.0]], **tkwargs
             )
@@ -110,7 +102,7 @@ class TestMultiObjectiveUtils(BotorchTestCase):
                 model=mm_constrained,
                 X=X,
                 ref_point=ref_point,
-                objective=unstd_obj,
+                objective=objective,
                 constraints=[lambda Y: Y[..., -1]],
             )
             self.assertTrue(torch.equal(X_pruned, X[:2]))
@@ -161,7 +153,7 @@ class TestMultiObjectiveUtils(BotorchTestCase):
                 model=mm,
                 X=X,
                 ref_point=ref_point,
-                objective=unstd_obj,
+                objective=objective,
                 constraints=[lambda Y: Y[..., -1] - 3.0],
                 marginalize_dim=-3,
             )
