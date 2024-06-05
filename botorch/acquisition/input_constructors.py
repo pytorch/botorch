@@ -76,6 +76,7 @@ from botorch.acquisition.multi_objective.logei import (
     qLogNoisyExpectedHypervolumeImprovement,
 )
 from botorch.acquisition.multi_objective.objective import IdentityMCMultiOutputObjective
+from botorch.acquisition.multi_objective.parego import qLogNParEGO
 from botorch.acquisition.multi_objective.utils import get_default_partitioning_alpha
 from botorch.acquisition.objective import (
     ConstrainedMCObjective,
@@ -1112,6 +1113,84 @@ def construct_inputs_qLogNEHVI(
         ),
         "tau_relu": tau_relu,
         "tau_max": tau_max,
+    }
+
+
+@acqf_input_constructor(qLogNParEGO)
+def construct_inputs_qLogNParEGO(
+    model: Model,
+    training_data: MaybeDict[SupervisedDataset],
+    scalarization_weights: Optional[Tensor] = None,
+    objective: Optional[MCMultiOutputObjective] = None,
+    X_pending: Optional[Tensor] = None,
+    sampler: Optional[MCSampler] = None,
+    X_baseline: Optional[Tensor] = None,
+    prune_baseline: Optional[bool] = True,
+    cache_root: Optional[bool] = True,
+    constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+    eta: Union[Tensor, float] = 1e-3,
+    fat: bool = True,
+    tau_max: float = TAU_MAX,
+    tau_relu: float = TAU_RELU,
+):
+    r"""Construct kwargs for the `qLogNoisyExpectedImprovement` constructor.
+
+    Args:
+        model: The model to be used in the acquisition function.
+        training_data: Dataset(s) used to train the model.
+        scalarization_weights: A `m`-dim Tensor of weights to be used in the
+            Chebyshev scalarization. If omitted, samples from the unit simplex.
+        objective: The MultiOutputMCAcquisitionObjective under which the samples are
+            evaluated before applying Chebyshev scalarization.
+            Defaults to `IdentityMultiOutputObjective()`.
+        X_pending: A `m x d`-dim Tensor of `m` design points that have been
+            submitted for function evaluation but have not yet been evaluated.
+            Concatenated into X upon forward call.
+        sampler: The sampler used to draw base samples. If omitted, uses
+            the acquisition functions's default sampler.
+        X_baseline: A `batch_shape x r x d`-dim Tensor of `r` design points
+            that have already been observed. These points are considered as
+            the potential best design point. If omitted, checks that all
+            training_data have the same input features and take the first `X`.
+        prune_baseline: If True, remove points in `X_baseline` that are
+            highly unlikely to be the best point. This can significantly
+            improve performance and is generally recommended.
+        constraints: A list of constraint callables which map a Tensor of posterior
+            samples of dimension `sample_shape x batch-shape x q x m`-dim to a
+            `sample_shape x batch-shape x q`-dim Tensor. The associated constraints
+            are considered satisfied if the output is less than zero.
+        eta: Temperature parameter(s) governing the smoothness of the sigmoid
+            approximation to the constraint indicators. For more details, on this
+            parameter, see the docs of `compute_smoothed_feasibility_indicator`.
+        fat: Toggles the use of the fat-tailed non-linearities to smoothly approximate
+            the constraints indicator function.
+        tau_max: Temperature parameter controlling the sharpness of the smooth
+            approximations to max.
+        tau_relu: Temperature parameter controlling the sharpness of the smooth
+            approximations to ReLU.
+
+    Returns:
+        A dict mapping kwarg names of the constructor to values.
+    """
+    base_inputs = construct_inputs_qLogNEI(
+        model=model,
+        training_data=training_data,
+        objective=objective,
+        X_pending=X_pending,
+        sampler=sampler,
+        X_baseline=X_baseline,
+        prune_baseline=prune_baseline,
+        cache_root=cache_root,
+        constraints=constraints,
+        eta=eta,
+        fat=fat,
+        tau_max=tau_max,
+        tau_relu=tau_relu,
+    )
+    base_inputs.pop("posterior_transform", None)
+    return {
+        **base_inputs,
+        "scalarization_weights": scalarization_weights,
     }
 
 

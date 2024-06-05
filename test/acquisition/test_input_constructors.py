@@ -72,6 +72,7 @@ from botorch.acquisition.multi_objective.objective import (
     IdentityMCMultiOutputObjective,
     WeightedMCMultiOutputObjective,
 )
+from botorch.acquisition.multi_objective.parego import qLogNParEGO
 from botorch.acquisition.multi_objective.utils import get_default_partitioning_alpha
 from botorch.acquisition.objective import (
     ConstrainedMCObjective,
@@ -1161,6 +1162,26 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         )
         self.assertEqual(kwargs["alpha"], 0.0)
 
+    def test_construct_inputs_qLogNParEGO(self) -> None:
+        # Focusing on the unique attributes since the rest are same as qLogNEI.
+        c = get_acqf_input_constructor(qLogNParEGO)
+        kwargs = c(model=mock.Mock(), training_data=self.blockX_blockY)
+        self.assertTrue(torch.equal(kwargs["X_baseline"], self.blockX_blockY[0].X))
+        self.assertIsNone(kwargs["scalarization_weights"])
+        self.assertIsNone(kwargs["objective"])
+        self.assertNotIn("posterior_transform", kwargs)
+        # With custom objective & weights.
+        kwargs = c(
+            model=mock.Mock(),
+            training_data=self.blockX_blockY,
+            scalarization_weights=torch.zeros(2),
+            objective=IdentityMCMultiOutputObjective(outcomes=[0, 1]),
+        )
+        self.assertAllClose(kwargs["scalarization_weights"], torch.zeros(2))
+        self.assertIsInstance(kwargs["objective"], IdentityMCMultiOutputObjective)
+
+
+class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCase):
     def test_construct_inputs_kg(self) -> None:
         current_value = torch.tensor(1.23)
         with mock.patch(
@@ -1386,6 +1407,7 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
             ExpectedHypervolumeImprovement,
             qExpectedHypervolumeImprovement,
             qLogExpectedHypervolumeImprovement,
+            qLogNParEGO,
         ]
         self._test_constructor_base(
             classes=classes,

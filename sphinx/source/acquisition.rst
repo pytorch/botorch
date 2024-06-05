@@ -108,6 +108,11 @@ Multi-Objective Predictive Entropy Search Acquisition Functions
 .. automodule:: botorch.acquisition.multi_objective.predictive_entropy_search
     :members:
 
+ParEGO: Multi-Objective Acquisition Function with Chebyshev Scalarization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.multi_objective.parego
+    :members:
+
 The One-Shot Knowledge Gradient
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.knowledge_gradient
