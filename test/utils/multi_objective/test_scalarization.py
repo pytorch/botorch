@@ -120,3 +120,13 @@ class TestGetChebyshevScalarization(BotorchTestCase):
                     + 0.05 * (weights * normalized_neg_Y_test).sum(dim=-1)
                 )
                 self.assertAllClose(Y_transformed, expected_Y_transformed)
+
+                # Test that it works when Y is constant in each dimension.
+                objective_transform = get_chebyshev_scalarization(
+                    weights=weights, Y=torch.zeros(2, 2, **tkwargs), alpha=0.0
+                )
+                Y_transformed = objective_transform(Y_test)
+                self.assertFalse(Y_transformed.isnan().any())
+                self.assertFalse(Y_transformed.isinf().any())
+                expected_Y = -(-weights * Y_test).max(dim=-1).values
+                self.assertAllClose(Y_transformed, expected_Y)

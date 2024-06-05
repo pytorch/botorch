@@ -46,8 +46,31 @@ def standardize(Y: Tensor) -> Tensor:
     return (Y - Y.mean(dim=stddim, keepdim=True)) / Y_std
 
 
+def _update_constant_bounds(bounds: Tensor) -> Tensor:
+    r"""If the lower and upper bounds are identical for a dimension, set
+    the upper bound to lower bound + 1.
+
+    If any modification is needed, this will return a clone of the original
+    tensor to avoid in-place modification.
+
+    Args:
+        bounds: A `2 x d`-dim tensor of lower and upper bounds.
+
+    Returns:
+        A `2 x d`-dim tensor of updated lower and upper bounds.
+    """
+    if (constant_dims := (bounds[1] == bounds[0])).any():
+        bounds = bounds.clone()
+        bounds[1, constant_dims] = bounds[0, constant_dims] + 1
+    return bounds
+
+
 def normalize(X: Tensor, bounds: Tensor) -> Tensor:
     r"""Min-max normalize X w.r.t. the provided bounds.
+
+    NOTE: If the upper and lower bounds are identical for a dimension, that dimension
+    will not be scaled. Such dimensions will only be shifted as
+    `new_X[..., i] = X[..., i] - bounds[0, i]`. This avoids division by zero issues.
 
     Args:
         X: `... x d` tensor of data
@@ -65,11 +88,16 @@ def normalize(X: Tensor, bounds: Tensor) -> Tensor:
         >>> bounds = torch.stack([torch.zeros(3), 0.5 * torch.ones(3)])
         >>> X_normalized = normalize(X, bounds)
     """
+    bounds = _update_constant_bounds(bounds=bounds)
     return (X - bounds[0]) / (bounds[1] - bounds[0])
 
 
 def unnormalize(X: Tensor, bounds: Tensor) -> Tensor:
     r"""Un-normalizes X w.r.t. the provided bounds.
+
+    NOTE: If the upper and lower bounds are identical for a dimension, that dimension
+    will not be scaled. Such dimensions will only be shifted as
+    `new_X[..., i] = X[..., i] + bounds[0, i]`, matching the behavior of `normalize`.
 
     Args:
         X: `... x d` tensor of data
@@ -87,6 +115,7 @@ def unnormalize(X: Tensor, bounds: Tensor) -> Tensor:
         >>> bounds = torch.stack([torch.zeros(3), 0.5 * torch.ones(3)])
         >>> X = unnormalize(X_normalized, bounds)
     """
+    bounds = _update_constant_bounds(bounds=bounds)
     return X * (bounds[1] - bounds[0]) + bounds[0]
 
 
