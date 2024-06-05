@@ -15,6 +15,7 @@ from unittest import mock
 import numpy as np
 import torch
 from botorch.exceptions.errors import BotorchError
+from botorch.exceptions.warnings import UserInputWarning
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.sampling.pathwise import draw_matheron_paths
 from botorch.utils.sampling import (
@@ -26,7 +27,7 @@ from botorch.utils.sampling import (
     get_polytope_samples,
     HitAndRunPolytopeSampler,
     manual_seed,
-    normalize_linear_constraints,
+    normalize_sparse_linear_constraints,
     optimize_posterior_samples,
     PolytopeSampler,
     sample_hypersphere,
@@ -35,6 +36,25 @@ from botorch.utils.sampling import (
     sparse_to_dense_constraints,
 )
 from botorch.utils.testing import BotorchTestCase
+
+
+def _get_constraints(device: torch.device, dtype: torch.dtype):
+    bounds = torch.zeros(2, 3, device=device, dtype=dtype)
+    bounds[1] = 1.0
+    A = torch.tensor(
+        [
+            [-1.0, 0.0, 0.0],
+            [1.0, 0.0, 0.0],
+            [0.0, -1.0, 0.0],
+            [0.0, 0.0, -1.0],
+            [0.0, 4.0, 1.0],
+        ],
+        device=device,
+        dtype=dtype,
+    )
+    b = torch.tensor([[0.0], [1.0], [0.0], [0.0], [1.0]], device=device, dtype=dtype)
+    x0 = torch.tensor([[0.1], [0.1], [0.1]], device=device, dtype=dtype)
+    return bounds, A, b, x0
 
 
 class TestManualSeed(BotorchTestCase):
@@ -165,7 +185,7 @@ class TestSampleUtils(BotorchTestCase):
             expected_b = torch.tensor([[3.0]], **tkwargs)
             self.assertTrue(torch.equal(b, expected_b))
 
-    def test_normalize_linear_constraints(self):
+    def test_normalize_sparse_linear_constraints(self):
         tkwargs = {"device": self.device}
         for dtype in (torch.float, torch.double):
             tkwargs["dtype"] = dtype
@@ -179,7 +199,7 @@ class TestSampleUtils(BotorchTestCase):
             bounds = torch.tensor(
                 [[0.1, 0.3, 0.1, 30.0], [0.6, 0.7, 0.7, 700.0]], **tkwargs
             )
-            new_constraints = normalize_linear_constraints(bounds, constraints)
+            new_constraints = normalize_sparse_linear_constraints(bounds, constraints)
             expected_coefficients = torch.tensor([0.4000, 0.6000, 0.5000], **tkwargs)
             self.assertTrue(
                 torch.allclose(new_constraints[0][1], expected_coefficients)
@@ -187,7 +207,7 @@ class TestSampleUtils(BotorchTestCase):
             expected_rhs = 0.5
             self.assertAlmostEqual(new_constraints[0][-1], expected_rhs)
 
-    def test_normalize_linear_constraints_wrong_dtype(self):
+    def test_normalize_sparse_linear_constraints_wrong_dtype(self):
         for dtype in (torch.float, torch.double):
             with self.subTest(dtype=dtype):
                 tkwargs = {"device": self.device, "dtype": dtype}
@@ -201,7 +221,7 @@ class TestSampleUtils(BotorchTestCase):
                 bounds = torch.zeros(2, 4, **tkwargs)
                 msg = "tensors used as indices must be long, byte or bool tensors"
                 with self.assertRaises(IndexError, msg=msg):
-                    normalize_linear_constraints(bounds, constraints)
+                    normalize_sparse_linear_constraints(bounds, constraints)
 
     def test_find_interior_point(self):
         # basic problem: 1 <= x_1 <= 2, 2 <= x_2 <= 3
@@ -244,67 +264,63 @@ class TestSampleUtils(BotorchTestCase):
                     0.5,
                 )
             ]
-            dense_equality_constraints = sparse_to_dense_constraints(
-                d=4, constraints=equality_constraints
+            A, b = sparse_to_dense_constraints(d=4, constraints=inequality_constraints)
+            C, d = sparse_to_dense_constraints(d=4, constraints=equality_constraints)
+
+            samps = get_polytope_samples(
+                n=5,
+                bounds=bounds,
+                inequality_constraints=inequality_constraints,
+                equality_constraints=equality_constraints,
+                seed=0,
+                n_burnin=2,
+                n_thinning=3,
             )
-            with manual_seed(0):
-                samps = get_polytope_samples(
-                    n=5,
-                    bounds=bounds,
-                    inequality_constraints=inequality_constraints,
-                    equality_constraints=equality_constraints,
-                    seed=0,
-                    thinning=3,
-                    n_burnin=2,
-                )
-            (A, b) = sparse_to_dense_constraints(
-                d=4, constraints=inequality_constraints
-            )
-            dense_inequality_constraints = (-A, -b)
-            with manual_seed(0):
-                expected_samps = HitAndRunPolytopeSampler(
-                    bounds=bounds,
-                    inequality_constraints=dense_inequality_constraints,
-                    equality_constraints=dense_equality_constraints,
-                    n_burnin=2,
-                ).draw(15, seed=0)[::3]
+            expected_samps = HitAndRunPolytopeSampler(
+                bounds=bounds,
+                inequality_constraints=(-A, -b),
+                equality_constraints=(C, d),
+                n_burnin=2,
+                n_thinning=3,
+                seed=0,
+            ).draw(5)
             self.assertTrue(torch.equal(samps, expected_samps))
 
             # test no equality constraints
-            with manual_seed(0):
-                samps = get_polytope_samples(
-                    n=5,
-                    bounds=bounds,
-                    inequality_constraints=inequality_constraints,
-                    seed=0,
-                    thinning=3,
-                    n_burnin=2,
-                )
-            with manual_seed(0):
-                expected_samps = HitAndRunPolytopeSampler(
-                    bounds=bounds,
-                    inequality_constraints=dense_inequality_constraints,
-                    n_burnin=2,
-                ).draw(15, seed=0)[::3]
+            samps = get_polytope_samples(
+                n=5,
+                bounds=bounds,
+                inequality_constraints=inequality_constraints,
+                seed=0,
+                n_burnin=2,
+                n_thinning=3,
+            )
+            expected_samps = HitAndRunPolytopeSampler(
+                bounds=bounds,
+                inequality_constraints=(-A, -b),
+                n_burnin=2,
+                n_thinning=3,
+                seed=0,
+            ).draw(5)
             self.assertTrue(torch.equal(samps, expected_samps))
 
             # test no inequality constraints
-            with manual_seed(0):
-                samps = get_polytope_samples(
-                    n=5,
-                    bounds=bounds,
-                    equality_constraints=equality_constraints,
-                    seed=0,
-                    thinning=3,
-                    n_burnin=2,
-                )
-            with manual_seed(0):
-                expected_samps = HitAndRunPolytopeSampler(
-                    bounds=bounds,
-                    equality_constraints=dense_equality_constraints,
-                    n_burnin=2,
-                ).draw(15, seed=0)[::3]
-            self.assertTrue(torch.equal(samps, expected_samps))
+            samps = get_polytope_samples(
+                n=5,
+                bounds=bounds,
+                equality_constraints=equality_constraints,
+                seed=0,
+                n_burnin=2,
+                n_thinning=3,
+            )
+            expected_samps = HitAndRunPolytopeSampler(
+                bounds=bounds,
+                equality_constraints=(C, d),
+                n_burnin=2,
+                n_thinning=3,
+                seed=0,
+            ).draw(5)
+        self.assertTrue(torch.equal(samps, expected_samps))
 
     def test_sample_polytope_infeasible(self) -> None:
         with self.assertRaisesRegex(ValueError, "Starting point does not satisfy"):
@@ -338,80 +354,63 @@ class TestSampleUtils(BotorchTestCase):
 class PolytopeSamplerTestBase(ABC):
     sampler_class: Type[PolytopeSampler]
     sampler_kwargs: Dict[str, Any] = {}
-
-    def setUp(self):
-        super().setUp()
-        self.bounds = torch.zeros(2, 3, device=self.device)
-        self.bounds[1] = 1
-        self.A = torch.tensor(
-            [
-                [-1.0, 0.0, 0.0],
-                [1.0, 0.0, 0.0],
-                [0.0, -1.0, 0.0],
-                [0.0, 0.0, -1.0],
-                [0.0, 4.0, 1.0],
-            ],
-            device=self.device,
-        )
-        self.b = torch.tensor([[0.0], [1.0], [0.0], [0.0], [1.0]], device=self.device)
-        self.x0 = torch.tensor([0.1, 0.1, 0.1], device=self.device).unsqueeze(-1)
+    constructor_seed_kwarg: Dict[str, int] = {}
+    draw_seed_kwarg: Dict[str, int] = {}
 
     def test_sample_polytope(self):
         for dtype in (torch.float, torch.double):
-            A = self.A.to(dtype)
-            b = self.b.to(dtype)
-            x0 = self.x0.to(dtype)
-            bounds = self.bounds.to(dtype)
-            for interior_point in [x0, None]:
+            bounds, A, b, x0 = _get_constraints(device=self.device, dtype=dtype)
+            for interior_point in (x0, None):
                 sampler = self.sampler_class(
                     inequality_constraints=(A, b),
                     bounds=bounds,
                     interior_point=interior_point,
                     **self.sampler_kwargs,
                 )
-                samples = sampler.draw(n=10, seed=1)
-                self.assertEqual(((A @ samples.t() - b) > 0).sum().item(), 0)
+                samples = sampler.draw(n=10)
+                self.assertTrue(torch.all(A @ samples.t() - b <= 0).item())
                 self.assertTrue((samples <= bounds[1]).all())
                 self.assertTrue((samples >= bounds[0]).all())
-                # make sure we can draw mulitple samples
+                # make sure we can draw multiple samples
                 more_samples = sampler.draw(n=5)
-                self.assertEqual(((A @ more_samples.t() - b) > 0).sum().item(), 0)
+                self.assertTrue(torch.all(A @ more_samples.t() - b <= 0).item())
                 self.assertTrue((more_samples <= bounds[1]).all())
                 self.assertTrue((more_samples >= bounds[0]).all())
+                # the samples should all be unique
+                all_samples = torch.cat([samples, more_samples], dim=0)
+                self.assertEqual(
+                    len(all_samples), len(torch.unique(all_samples, dim=0))
+                )
 
     def test_sample_polytope_with_seed(self):
         for dtype in (torch.float, torch.double):
-            A = self.A.to(dtype)
-            b = self.b.to(dtype)
-            x0 = self.x0.to(dtype)
-            bounds = self.bounds.to(dtype)
-            for interior_point in [x0, None]:
+            bounds, A, b, x0 = _get_constraints(device=self.device, dtype=dtype)
+            for interior_point in (x0, None):
                 sampler1 = self.sampler_class(
                     inequality_constraints=(A, b),
                     bounds=bounds,
                     interior_point=interior_point,
                     **self.sampler_kwargs,
+                    **self.constructor_seed_kwarg,
                 )
                 sampler2 = self.sampler_class(
                     inequality_constraints=(A, b),
                     bounds=bounds,
                     interior_point=interior_point,
                     **self.sampler_kwargs,
+                    **self.constructor_seed_kwarg,
                 )
-                samples1 = sampler1.draw(n=10, seed=42)
-                samples2 = sampler2.draw(n=10, seed=42)
+                samples1 = sampler1.draw(n=10, **self.draw_seed_kwarg)
+                samples2 = sampler2.draw(n=10, **self.draw_seed_kwarg)
                 self.assertTrue(torch.allclose(samples1, samples2))
 
     def test_sample_polytope_with_eq_constraints(self):
         for dtype in (torch.float, torch.double):
-            A = self.A.to(dtype)
-            b = self.b.to(dtype)
-            x0 = self.x0.to(dtype)
-            bounds = self.bounds.to(dtype)
+            bounds, A, b, x0 = _get_constraints(device=self.device, dtype=dtype)
             C = torch.tensor([[1.0, -1, 0.0]], device=self.device, dtype=dtype)
             d = torch.zeros(1, 1, device=self.device, dtype=dtype)
 
-            for interior_point in [x0, None]:
+            for interior_point in (x0, None):
                 sampler = self.sampler_class(
                     inequality_constraints=(A, b),
                     equality_constraints=(C, d),
@@ -419,11 +418,9 @@ class PolytopeSamplerTestBase(ABC):
                     interior_point=interior_point,
                     **self.sampler_kwargs,
                 )
-                samples = sampler.draw(n=10, seed=1)
-                inequality_satisfied = ((A @ samples.t() - b) > 0).sum().item() == 0
-                equality_satisfied = (C @ samples.t() - d).abs().sum().item() < 1e-6
-                self.assertTrue(inequality_satisfied)
-                self.assertTrue(equality_satisfied)
+                samples = sampler.draw(n=10)
+                self.assertTrue(torch.all(A @ samples.t() - b <= 0).item())
+                self.assertLessEqual((C @ samples.t() - d).abs().sum().item(), 1e-6)
                 self.assertTrue((samples <= bounds[1]).all())
                 self.assertTrue((samples >= bounds[0]).all())
                 # test no inequality constraints
@@ -433,9 +430,8 @@ class PolytopeSamplerTestBase(ABC):
                     interior_point=interior_point,
                     **self.sampler_kwargs,
                 )
-                samples = sampler.draw(n=10, seed=1)
-                equality_satisfied = (C @ samples.t() - d).abs().sum().item() < 1e-6
-                self.assertTrue(equality_satisfied)
+                samples = sampler.draw(n=10)
+                self.assertLessEqual((C @ samples.t() - d).abs().sum().item(), 1e-6)
                 self.assertTrue((samples <= bounds[1]).all())
                 self.assertTrue((samples >= bounds[0]).all())
                 # test no inequality constraints or bounds
@@ -456,8 +452,10 @@ class PolytopeSamplerTestBase(ABC):
             x0 = torch.tensor([[0.1], [0.1]], device=self.device, dtype=dtype)
             C = torch.tensor([[1.0, -1.0]], device=self.device, dtype=dtype)
             d = torch.tensor([[0.0]], device=self.device, dtype=dtype)
-            bounds = self.bounds[:, :2].to(dtype=dtype)
-            for interior_point in [x0, None]:
+            bounds = torch.tensor(
+                [[0.0, 0.0], [1.0, 1.0]], device=self.device, dtype=dtype
+            )
+            for interior_point in (x0, None):
                 sampler = self.sampler_class(
                     inequality_constraints=(A, b),
                     equality_constraints=(C, d),
@@ -465,11 +463,9 @@ class PolytopeSamplerTestBase(ABC):
                     interior_point=interior_point,
                     **self.sampler_kwargs,
                 )
-                samples = sampler.draw(n=10, seed=1)
-                inequality_satisfied = ((A @ samples.t() - b) > 0).sum().item() == 0
-                equality_satisfied = (C @ samples.t() - d).abs().sum().item() < 1e-6
-                self.assertTrue(inequality_satisfied)
-                self.assertTrue(equality_satisfied)
+                samples = sampler.draw(n=10)
+                self.assertTrue(torch.all(A @ samples.t() - b <= 0).item())
+                self.assertLessEqual((C @ samples.t() - d).abs().sum().item(), 1e-6)
                 self.assertTrue((samples <= bounds[1]).all())
                 self.assertTrue((samples >= bounds[0]).all())
 
@@ -481,14 +477,18 @@ class PolytopeSamplerTestBase(ABC):
                 dtype=dtype,
             )
             b = torch.tensor([[0.0], [-1.0], [1.0]], device=self.device, dtype=dtype)
-            x0 = self.x0.to(dtype)
+            x0 = torch.tensor([[0.1], [0.1], [0.1]], device=self.device, dtype=dtype)
+            bounds = torch.zeros(2, 3, device=self.device, dtype=dtype)
+            bounds[1] = 1.0
 
             # testing for infeasibility of the initial point and
             # infeasibility of the original LP (status 2 of the linprog output).
-            for interior_point in [x0, None]:
+            for interior_point in (x0, None):
                 with self.assertRaises(ValueError):
                     self.sampler_class(
-                        inequality_constraints=(A, b), interior_point=interior_point
+                        inequality_constraints=(A, b),
+                        bounds=bounds,
+                        interior_point=interior_point,
                     )
 
             class Result:
@@ -499,16 +499,28 @@ class PolytopeSamplerTestBase(ABC):
             with mock.patch("scipy.optimize.linprog") as mock_linprog:
                 mock_linprog.return_value = Result()
                 with self.assertRaises(ValueError):
-                    self.sampler_class(inequality_constraints=(A, b))
+                    self.sampler_class(
+                        inequality_constraints=(A, b),
+                        bounds=bounds,
+                    )
 
 
 class TestHitAndRunPolytopeSampler(PolytopeSamplerTestBase, BotorchTestCase):
     sampler_class = HitAndRunPolytopeSampler
-    sampler_kwargs = {"n_burnin": 2}
+    sampler_kwargs = {"n_burnin": 2, "n_thinning": 2}
+    constructor_seed_kwarg = {"seed": 33125612}
+
+    def test_normalization_warning(self):
+        _, A, b, x0 = _get_constraints(device=self.device, dtype=torch.double)
+        with self.assertWarnsRegex(
+            UserInputWarning, "HitAndRunPolytopeSampler did not receive `bounds`"
+        ):
+            HitAndRunPolytopeSampler(inequality_constraints=(A, b), interior_point=x0)
 
 
 class TestDelaunayPolytopeSampler(PolytopeSamplerTestBase, BotorchTestCase):
     sampler_class = DelaunayPolytopeSampler
+    draw_seed_kwarg = {"seed": 33125612}
 
     def test_sample_polytope_unbounded(self):
         A = torch.tensor(
@@ -516,12 +528,13 @@ class TestDelaunayPolytopeSampler(PolytopeSamplerTestBase, BotorchTestCase):
             device=self.device,
         )
         b = torch.tensor([[0.0], [0.0], [0.0], [1.0]], device=self.device)
+        x0 = torch.tensor([[0.1], [0.1], [0.1]], device=self.device)
         with self.assertRaises(ValueError):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 self.sampler_class(
                     inequality_constraints=(A, b),
-                    interior_point=self.x0,
+                    interior_point=x0,
                     **self.sampler_kwargs,
                 )
 
