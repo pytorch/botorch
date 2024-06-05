@@ -14,15 +14,10 @@ from botorch.acquisition.multi_objective.objective import (
     FeasibilityWeightedMCMultiOutputObjective,
     IdentityMCMultiOutputObjective,
     MCMultiOutputObjective,
-    UnstandardizeMCMultiOutputObjective,
     WeightedMCMultiOutputObjective,
 )
-from botorch.acquisition.objective import (
-    IdentityMCObjective,
-    UnstandardizePosteriorTransform,
-)
+from botorch.acquisition.objective import IdentityMCObjective
 from botorch.exceptions.errors import BotorchError, BotorchTensorDimensionError
-from botorch.models.transforms.outcome import Standardize
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 
 
@@ -37,7 +32,7 @@ class TestIdentityMCMultiOutputObjective(BotorchTestCase):
         objective = IdentityMCMultiOutputObjective()
         with self.assertRaises(BotorchTensorDimensionError):
             IdentityMCMultiOutputObjective(outcomes=[0])
-        # test negative outcome without specifying num_outcomes
+        # Test negative outcome without specifying num_outcomes.
         with self.assertRaises(BotorchError):
             IdentityMCMultiOutputObjective(outcomes=[0, -1])
         for batch_shape, m, dtype in itertools.product(
@@ -45,6 +40,9 @@ class TestIdentityMCMultiOutputObjective(BotorchTestCase):
         ):
             samples = torch.rand(*batch_shape, 2, m, device=self.device, dtype=dtype)
             self.assertTrue(torch.equal(objective(samples), samples))
+        # Test negative outcome with num_outcomes.
+        objective = IdentityMCMultiOutputObjective(outcomes=[0, -1], num_outcomes=3)
+        self.assertEqual(objective.outcomes.tolist(), [0, 2])
 
 
 class TestWeightedMCMultiOutputObjective(BotorchTestCase):
@@ -138,73 +136,3 @@ class TestFeasibilityWeightedMCMultiOutputObjective(BotorchTestCase):
                     X_baseline=X,
                     constraint_idcs=[1, -1],
                 )
-
-
-class TestUnstandardizeMultiOutputObjective(BotorchTestCase):
-    def test_unstandardize_mo_objective(self):
-        Y_mean = torch.ones(2)
-        Y_std = torch.ones(2)
-        with self.assertRaises(BotorchTensorDimensionError):
-            UnstandardizeMCMultiOutputObjective(
-                Y_mean=Y_mean, Y_std=Y_std, outcomes=[0, 1, 2]
-            )
-        for objective_class in (
-            UnstandardizeMCMultiOutputObjective,
-            UnstandardizePosteriorTransform,
-        ):
-            with self.assertRaises(BotorchTensorDimensionError):
-                objective_class(Y_mean=Y_mean.unsqueeze(0), Y_std=Y_std)
-            with self.assertRaises(BotorchTensorDimensionError):
-                objective_class(Y_mean=Y_mean, Y_std=Y_std.unsqueeze(0))
-            objective = objective_class(Y_mean=Y_mean, Y_std=Y_std)
-            for batch_shape, m, outcomes, dtype in itertools.product(
-                ([], [3]), (2, 3), (None, [-2, -1]), (torch.float, torch.double)
-            ):
-                Y_mean = torch.rand(m, dtype=dtype, device=self.device)
-                Y_std = torch.rand(m, dtype=dtype, device=self.device).clamp_min(1e-3)
-                kwargs = {}
-                if objective_class == UnstandardizeMCMultiOutputObjective:
-                    kwargs["outcomes"] = outcomes
-                objective = objective_class(Y_mean=Y_mean, Y_std=Y_std, **kwargs)
-                if objective_class == UnstandardizePosteriorTransform:
-                    objective = objective_class(Y_mean=Y_mean, Y_std=Y_std)
-                    if outcomes is None:
-                        # passing outcomes is not currently supported
-                        mean = torch.rand(2, m, dtype=dtype, device=self.device)
-                        variance = variance = torch.rand(
-                            2, m, dtype=dtype, device=self.device
-                        )
-                        mock_posterior = MockPosterior(mean=mean, variance=variance)
-                        tf_posterior = objective(mock_posterior)
-                        tf = Standardize(m=m)
-                        tf.means = Y_mean
-                        tf.stdvs = Y_std
-                        tf._stdvs_sq = Y_std.pow(2)
-                        tf._is_trained = torch.tensor(True)
-                        tf.eval()
-                        expected_posterior = tf.untransform_posterior(mock_posterior)
-                        self.assertTrue(
-                            torch.equal(tf_posterior.mean, expected_posterior.mean)
-                        )
-                        self.assertTrue(
-                            torch.equal(
-                                tf_posterior.variance, expected_posterior.variance
-                            )
-                        )
-                        # testing evaluate specifically
-                        if objective_class == UnstandardizePosteriorTransform:
-                            Y = torch.randn_like(Y_mean) + Y_mean
-                            val = objective.evaluate(Y)
-                            val_expected = Y_mean + Y * Y_std
-                            self.assertTrue(torch.allclose(val, val_expected))
-                else:
-
-                    samples = torch.rand(
-                        *batch_shape, 2, m, dtype=dtype, device=self.device
-                    )
-                    obj_expected = samples * Y_std.to(dtype=dtype) + Y_mean.to(
-                        dtype=dtype
-                    )
-                    if outcomes is not None:
-                        obj_expected = obj_expected[..., outcomes]
-                    self.assertTrue(torch.equal(objective(samples), obj_expected))
