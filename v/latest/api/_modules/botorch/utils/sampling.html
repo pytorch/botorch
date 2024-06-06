@@ -39,14 +39,17 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span> <span class="nn">warnings</span>
+
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">scipy</span>
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchError</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">UserInputWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.qmc</span> <span class="kn">import</span> <span class="n">NormalQMCEngine</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">unnormalize</span>
 <span class="kn">from</span> <span class="nn">scipy.spatial</span> <span class="kn">import</span> <span class="n">Delaunay</span><span class="p">,</span> <span class="n">HalfspaceIntersection</span>
@@ -91,7 +94,7 @@
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">batch_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">batch_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Draw qMC samples from the box defined by bounds.</span>
@@ -258,6 +261,7 @@
     <span class="n">x0</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span>
     <span class="n">n0</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">n_thinning</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
@@ -265,15 +269,17 @@
 <span class="sd">    described via inequality constraints A*x&lt;=b.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        A: A Tensor describing inequality constraints</span>
-<span class="sd">            so that all samples satisfy Ax&lt;=b.</span>
-<span class="sd">        b: A Tensor describing the inequality constraints</span>
-<span class="sd">            so that all samples satisfy Ax&lt;=b.</span>
+<span class="sd">        A: A `m x d`-dim Tensor describing inequality constraints</span>
+<span class="sd">            so that all samples satisfy `Ax &lt;= b`.</span>
+<span class="sd">        b: A `m`-dim Tensor describing the inequality constraints</span>
+<span class="sd">            so that all samples satisfy `Ax &lt;= b`.</span>
 <span class="sd">        x0: A `d`-dim Tensor representing a starting point of the chain</span>
 <span class="sd">            satisfying the constraints.</span>
 <span class="sd">        n: The number of resulting samples kept in the output.</span>
 <span class="sd">        n0: The number of burn-in samples. The chain will produce</span>
 <span class="sd">            n+n0 samples but the first n0 samples are not saved.</span>
+<span class="sd">        n_thinning: The amount of thinnning. This function will return every</span>
+<span class="sd">            `n_thinning`-th sample from the chain (after burn-in).</span>
 <span class="sd">        seed: The seed for the sampler. If omitted, use a random seed.</span>
 
 <span class="sd">    Returns:</span>
@@ -292,7 +298,7 @@
     <span class="n">A</span> <span class="o">=</span> <span class="n">A</span><span class="p">[</span><span class="n">non_zero_rows</span><span class="p">]</span>
     <span class="n">b</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="n">non_zero_rows</span><span class="p">]</span>
 
-    <span class="n">n_tot</span> <span class="o">=</span> <span class="n">n</span> <span class="o">+</span> <span class="n">n0</span>
+    <span class="n">n_tot</span> <span class="o">=</span> <span class="n">n0</span> <span class="o">+</span> <span class="n">n</span> <span class="o">*</span> <span class="n">n_thinning</span>
     <span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span> <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1000000</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,))</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
     <span class="k">with</span> <span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">):</span>
         <span class="n">rands</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n_tot</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">A</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">A</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
@@ -332,11 +338,13 @@
             <span class="c1"># If ar &lt; 0 at the boundary, alpha &gt;= 0.</span>
             <span class="k">if</span> <span class="n">w_eq_0</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">ar</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
                 <span class="n">alpha_min</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">alpha_min</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
-        <span class="c1"># alpha~Unif[alpha_min, alpha_max]</span>
+        <span class="c1"># alpha ~ Uniform[alpha_min, alpha_max]</span>
         <span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha_min</span> <span class="o">+</span> <span class="n">rnd</span> <span class="o">*</span> <span class="p">(</span><span class="n">alpha_max</span> <span class="o">-</span> <span class="n">alpha_min</span><span class="p">)</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">r</span>
-        <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="n">n0</span><span class="p">:</span>  <span class="c1"># save samples after burn-in period</span>
-            <span class="n">out</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="n">n0</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">k</span> <span class="o">:=</span> <span class="n">i</span> <span class="o">-</span> <span class="n">n0</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># save samples after burn-in period</span>
+            <span class="n">idx</span><span class="p">,</span> <span class="n">rem</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">n_thinning</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">rem</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">out</span></div>
 
 
@@ -608,12 +616,11 @@
     <span class="c1"># -------- Abstract methods to be implemented by subclasses -------- #</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Draw samples from the polytope.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            n: The number of samples.</span>
-<span class="sd">            seed: The random seed.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A `n x d` Tensor of samples from the polytope.</span>
@@ -632,7 +639,9 @@
         <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">interior_point</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">n_burnin</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">n_burnin</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
+        <span class="n">n_thinning</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
+        <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""A sampler for sampling from a polyope using a hit-and-run algorithm.</span>
 
@@ -645,48 +654,107 @@
 <span class="sd">                `C @ x = d`, where `C` is a `n_eq_con x d`-dim Tensor and `d` is a</span>
 <span class="sd">                `n_eq_con x 1`-dim Tensor with `n_eq_con` the number of equalities.</span>
 <span class="sd">            bounds: A `2 x d`-dim tensor of box bounds, where `inf` (`-inf`) means</span>
-<span class="sd">                that the respective dimension is unbounded from above (below).</span>
+<span class="sd">                that the respective dimension is unbounded from above (below). If</span>
+<span class="sd">                omitted, no bounds (in addition to the above constraints) are applied.</span>
 <span class="sd">            interior_point: A `d x 1`-dim Tensor representing a point in the</span>
 <span class="sd">                (relative) interior of the polytope. If omitted, determined</span>
 <span class="sd">                automatically by solving a Linear Program.</span>
-<span class="sd">            n_burnin: The number of burn in samples.</span>
+<span class="sd">            n_burnin: The number of burn in samples. The sampler will discard</span>
+<span class="sd">                `n_burnin` samples before returning the first sample.</span>
+<span class="sd">            n_thinning: The amount of thinning. The sampler will return every</span>
+<span class="sd">                `n_thinning` sample (after burn-in). This may need to be increased</span>
+<span class="sd">                for sets of constraints that are difficult to satisfy (i.e. in which</span>
+<span class="sd">                case the volume of the constraint polytope is small relative to that</span>
+<span class="sd">                of its bounding box).</span>
+<span class="sd">            seed: The random seed.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">inequality_constraints</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">BotorchError</span><span class="p">(</span>
+                <span class="s2">"HitAndRunPolytopeSampler requires either inequality constraints "</span>
+                <span class="s2">"or bounds."</span>
+            <span class="p">)</span>
+        <span class="c1"># Normalize constraints to avoid the following issue:</span>
+        <span class="c1"># https://github.com/pytorch/botorch/issues/1225</span>
+        <span class="n">offset</span><span class="p">,</span> <span class="n">scale</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">inequality_constraints</span> <span class="ow">or</span> <span class="n">equality_constraints</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="s2">"HitAndRunPolytopeSampler did not receive `bounds`, which can "</span>
+                    <span class="s2">"lead to non-uniform sampling if the parameter ranges are very "</span>
+                    <span class="s2">"different (see https://github.com/pytorch/botorch/issues/1225)."</span><span class="p">,</span>
+                    <span class="n">UserInputWarning</span><span class="p">,</span>
+                    <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">inequality_constraints</span><span class="p">:</span>
+                    <span class="n">inequality_constraints</span> <span class="o">=</span> <span class="n">normalize_dense_linear_constraints</span><span class="p">(</span>
+                        <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">inequality_constraints</span>
+                    <span class="p">)</span>
+                <span class="k">if</span> <span class="n">equality_constraints</span><span class="p">:</span>
+                    <span class="n">equality_constraints</span> <span class="o">=</span> <span class="n">normalize_dense_linear_constraints</span><span class="p">(</span>
+                        <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">equality_constraints</span>
+                    <span class="p">)</span>
+                <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="n">bounds</span>
+                <span class="n">offset</span> <span class="o">=</span> <span class="n">lower</span>
+                <span class="n">scale</span> <span class="o">=</span> <span class="n">upper</span> <span class="o">-</span> <span class="n">lower</span>
+                <span class="k">if</span> <span class="n">interior_point</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="c1"># If provided, we also need to normalize the interior point</span>
+                    <span class="n">interior_point</span> <span class="o">=</span> <span class="p">(</span><span class="n">interior_point</span> <span class="o">-</span> <span class="n">offset</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">/</span> <span class="n">scale</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+                <span class="n">bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span>
+                <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mf">1.0</span>
+
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
             <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
             <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
             <span class="n">interior_point</span><span class="o">=</span><span class="n">interior_point</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">n_burnin</span> <span class="o">=</span> <span class="n">n_burnin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_burnin</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">n_burnin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_thinning</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">n_thinning</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_samples_generated</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">seed</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="n">offset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scale</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="n">scale</span>
 
 <div class="viewcode-block" id="HitAndRunPolytopeSampler.draw">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.HitAndRunPolytopeSampler.draw">[docs]</a>
-    <span class="k">def</span> <span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Draw samples from the polytope.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            n: The number of samples.</span>
-<span class="sd">            seed: The random seed.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A `n x d` Tensor of samples from the polytope.</span>
 <span class="sd">        """</span>
+        <span class="c1"># There are two layers of normalization. In the outer layer, the space</span>
+        <span class="c1"># has been normalized to the unit cube. In the inner layer, we remove</span>
+        <span class="c1"># any equality constraints and sample on the subspace defined by those</span>
+        <span class="c1"># equality constraints, with an additional shift to normalize the interior</span>
+        <span class="c1"># point to the origin. Below, after sampling in that inner layer, we have</span>
+        <span class="c1"># to reverse both layers of normalization.</span>
         <span class="n">transformed_samples</span> <span class="o">=</span> <span class="n">sample_polytope</span><span class="p">(</span>
-            <span class="c1"># run this on the cpu</span>
+            <span class="c1"># Run this on the cpu since there is a lot of looping going on</span>
             <span class="n">A</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">new_A</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span>
             <span class="n">b</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">x0</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span>
             <span class="n">x0</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nullC</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
             <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span>
-            <span class="n">n0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_burnin</span><span class="p">,</span>
-            <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span>
+            <span class="n">n0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_burnin</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_samples_generated</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="n">n_thinning</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_thinning</span><span class="p">,</span>
+            <span class="n">seed</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_seed</span><span class="p">,</span>
         <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">)</span>
+        <span class="c1"># Update the seed for the next call in a deterministic fashion</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_seed</span> <span class="o">+=</span> <span class="n">n</span>
+        <span class="c1"># Unnormalize the inner layer</span>
         <span class="n">init_shift</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x0</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
         <span class="n">samples</span> <span class="o">=</span> <span class="n">init_shift</span> <span class="o">+</span> <span class="n">transformed_samples</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">nullC</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
-        <span class="c1"># keep the last element of the resulting chain as</span>
-        <span class="c1"># the beginning of the next chain</span>
+        <span class="c1"># Keep the last element as the beginning of the next chain</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">x0</span> <span class="o">=</span> <span class="n">samples</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="c1"># reset counter so there is no burn-in for subsequent samples</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">n_burnin</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># Unnormalize the outer layer</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scale</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scale</span> <span class="o">*</span> <span class="n">samples</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_samples_generated</span> <span class="o">+=</span> <span class="n">n</span>
         <span class="k">return</span> <span class="n">samples</span></div>
 </div>
 
@@ -819,12 +887,12 @@
 
 
 
-<div class="viewcode-block" id="normalize_linear_constraints">
-<a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.normalize_linear_constraints">[docs]</a>
-<span class="k">def</span> <span class="nf">normalize_linear_constraints</span><span class="p">(</span>
+<div class="viewcode-block" id="normalize_sparse_linear_constraints">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.normalize_sparse_linear_constraints">[docs]</a>
+<span class="k">def</span> <span class="nf">normalize_sparse_linear_constraints</span><span class="p">(</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">constraints</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""Normalize linear constraints to the unit cube.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Normalize sparse linear constraints to the unit cube.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        bounds (Tensor): A `2 x d`-dim tensor containing the box bounds.</span>
@@ -834,7 +902,6 @@
 <span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs` or</span>
 <span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.</span>
 <span class="sd">    """</span>
-
     <span class="n">new_constraints</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">coefficient</span><span class="p">,</span> <span class="n">rhs</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">:</span>
         <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[:,</span> <span class="n">index</span><span class="p">]</span>
@@ -846,6 +913,32 @@
 
 
 
+<div class="viewcode-block" id="normalize_dense_linear_constraints">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.normalize_dense_linear_constraints">[docs]</a>
+<span class="k">def</span> <span class="nf">normalize_dense_linear_constraints</span><span class="p">(</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Normalize dense linear constraints to the unit cube.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        bounds: A `2 x d`-dim tensor containing the box bounds.</span>
+<span class="sd">        constraints: A tensor tuple `(A, b)` describing constraints</span>
+<span class="sd">            `A @ x (&lt;)= b`, where `A` is a `n_con x d`-dim Tensor and</span>
+<span class="sd">            `b` is a `n_con x 1`-dim Tensor, with `n_con` the number of</span>
+<span class="sd">            constraints and `d` the dimension of the sample space.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A tensor tuple `(A_nlz, b_nlz)` of normalized constraints.</span>
+<span class="sd">    """</span>
+    <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="n">bounds</span>
+    <span class="n">A</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">constraints</span>
+    <span class="n">A_nlz</span> <span class="o">=</span> <span class="p">(</span><span class="n">upper</span> <span class="o">-</span> <span class="n">lower</span><span class="p">)</span> <span class="o">*</span> <span class="n">A</span>
+    <span class="n">b_nlz</span> <span class="o">=</span> <span class="n">b</span> <span class="o">-</span> <span class="p">(</span><span class="n">A</span> <span class="o">@</span> <span class="n">lower</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">A_nlz</span><span class="p">,</span> <span class="n">b_nlz</span></div>
+
+
+
 <div class="viewcode-block" id="get_polytope_samples">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.get_polytope_samples">[docs]</a>
 <span class="k">def</span> <span class="nf">get_polytope_samples</span><span class="p">(</span>
@@ -854,15 +947,22 @@
     <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">thinning</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
     <span class="n">n_burnin</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10_000</span><span class="p">,</span>
+    <span class="n">n_thinning</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Sample from polytope defined by box bounds and (in)equality constraints.</span>
 
 <span class="sd">    This uses a hit-and-run Markov chain sampler.</span>
 
-<span class="sd">    TODO: make this method return the sampler object, to avoid doing burn-in</span>
-<span class="sd">    every time we draw samples.</span>
+<span class="sd">    NOTE: Much of the functionality of this method has been moved into</span>
+<span class="sd">    `HitAndRunPolytopeSampler`. If you want to repeatedly draw samples, you should</span>
+<span class="sd">    use `HitAndRunPolytopeSampler` directly in order to avoid repeatedly running</span>
+<span class="sd">    a burn-in of the chain. To do so, you need to convert the sparse constraint</span>
+<span class="sd">    format that `get_polytope_samples` expects to the dense constraint format that</span>
+<span class="sd">    `HitAndRunPolytopeSampler` expects. This can be done via the</span>
+<span class="sd">    `sparse_to_dense_constraints` method (but remember to adjust the constraint</span>
+<span class="sd">    from the `Ax &gt;= b` format expecxted here to the `Ax &lt;= b` format expected by</span>
+<span class="sd">    `PolytopeSampler` by multiplying both `A` and `b` by -1.)</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        n: The number of samples.</span>
@@ -874,46 +974,39 @@
 <span class="sd">            with each tuple encoding an inequality constraint of the form</span>
 <span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.</span>
 <span class="sd">        seed: The random seed.</span>
-<span class="sd">        thinning: The amount of thinning.</span>
 <span class="sd">        n_burnin: The number of burn-in samples for the Markov chain sampler.</span>
+<span class="sd">        n_thinning: The amount of thinnning. This function will return every</span>
+<span class="sd">            `n_thinning`-th sample from the chain (after burn-in).</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A `n x d`-dim tensor of samples.</span>
 <span class="sd">    """</span>
-    <span class="c1"># create tensors representing linear inequality constraints</span>
-    <span class="c1"># of the form Ax &gt;= b.</span>
     <span class="k">if</span> <span class="n">inequality_constraints</span><span class="p">:</span>
-        <span class="c1"># normalize_linear_constraints is called to solve this issue:</span>
-        <span class="c1"># https://github.com/pytorch/botorch/issues/1225</span>
-        <span class="n">constraints</span> <span class="o">=</span> <span class="n">normalize_linear_constraints</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">inequality_constraints</span><span class="p">)</span>
-
         <span class="n">A</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">sparse_to_dense_constraints</span><span class="p">(</span>
             <span class="n">d</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-            <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="c1"># Note the inequality constraints are of the form Ax &gt;= b,</span>
+        <span class="c1"># Note that the inequality constraints are of the form Ax &gt;= b,</span>
         <span class="c1"># but PolytopeSampler expects inequality constraints of the</span>
         <span class="c1"># form Ax &lt;= b, so we multiply by -1 below.</span>
-        <span class="n">dense_inequality_constraints</span> <span class="o">=</span> <span class="o">-</span><span class="n">A</span><span class="p">,</span> <span class="o">-</span><span class="n">b</span>
+        <span class="n">dense_inequality_constraints</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">A</span><span class="p">,</span> <span class="o">-</span><span class="n">b</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">dense_inequality_constraints</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">equality_constraints</span><span class="p">:</span>
-        <span class="n">constraints</span> <span class="o">=</span> <span class="n">normalize_linear_constraints</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">equality_constraints</span><span class="p">)</span>
         <span class="n">dense_equality_constraints</span> <span class="o">=</span> <span class="n">sparse_to_dense_constraints</span><span class="p">(</span>
-            <span class="n">d</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span>
+            <span class="n">d</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">constraints</span><span class="o">=</span><span class="n">equality_constraints</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">dense_equality_constraints</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">normalized_bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span>
-    <span class="n">normalized_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mf">1.0</span>
     <span class="n">polytope_sampler</span> <span class="o">=</span> <span class="n">HitAndRunPolytopeSampler</span><span class="p">(</span>
-        <span class="n">bounds</span><span class="o">=</span><span class="n">normalized_bounds</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
         <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">dense_inequality_constraints</span><span class="p">,</span>
         <span class="n">equality_constraints</span><span class="o">=</span><span class="n">dense_equality_constraints</span><span class="p">,</span>
         <span class="n">n_burnin</span><span class="o">=</span><span class="n">n_burnin</span><span class="p">,</span>
+        <span class="n">n_thinning</span><span class="o">=</span><span class="n">n_thinning</span><span class="p">,</span>
+        <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">samples</span> <span class="o">=</span> <span class="n">polytope_sampler</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n</span> <span class="o">*</span> <span class="n">thinning</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)[::</span><span class="n">thinning</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">samples</span> <span class="o">*</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div>
+    <span class="k">return</span> <span class="n">polytope_sampler</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">)</span></div>
 
 
 

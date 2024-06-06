@@ -257,58 +257,6 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">apply_feasibility_weights</span><span class="p">(</span><span class="n">samples</span><span class="p">),</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span></div>
 </div>
 
-
-
-<div class="viewcode-block" id="UnstandardizeMCMultiOutputObjective">
-<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.UnstandardizeMCMultiOutputObjective">[docs]</a>
-<span class="k">class</span> <span class="nc">UnstandardizeMCMultiOutputObjective</span><span class="p">(</span><span class="n">IdentityMCMultiOutputObjective</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""Objective that unstandardizes the samples.</span>
-
-<span class="sd">    TODO: remove this when MultiTask models support outcome transforms.</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; unstd_objective = UnstandardizeMCMultiOutputObjective(Y_mean, Y_std)</span>
-<span class="sd">        &gt;&gt;&gt; samples = sampler(posterior)</span>
-<span class="sd">        &gt;&gt;&gt; objective = unstd_objective(samples)</span>
-<span class="sd">    """</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">Y_mean</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y_std</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">outcomes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize objective.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            Y_mean: `m`-dim tensor of outcome means.</span>
-<span class="sd">            Y_std: `m`-dim tensor of outcome standard deviations.</span>
-<span class="sd">            outcomes: A list of `m' &lt;= m` indices that specifies which of the `m` model</span>
-<span class="sd">                outputs should be considered as the outcomes for MOO. If omitted, use</span>
-<span class="sd">                all model outcomes. Typically used for constrained optimization.</span>
-<span class="sd">        """</span>
-        <span class="k">if</span> <span class="n">Y_mean</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">Y_std</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">BotorchTensorDimensionError</span><span class="p">(</span>
-                <span class="s2">"Y_mean and Y_std must both be 1-dimensional, but got "</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">Y_mean</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">Y_std</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2">"</span>
-            <span class="p">)</span>
-        <span class="k">elif</span> <span class="n">outcomes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">outcomes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">Y_mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
-            <span class="k">raise</span> <span class="n">BotorchTensorDimensionError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Cannot specify more (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">outcomes</span><span class="p">)</span><span class="si">}</span><span class="s2">) outcomes than are present in "</span>
-                <span class="sa">f</span><span class="s2">"the normalization inputs (</span><span class="si">{</span><span class="n">Y_mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">)."</span>
-            <span class="p">)</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">outcomes</span><span class="o">=</span><span class="n">outcomes</span><span class="p">,</span> <span class="n">num_outcomes</span><span class="o">=</span><span class="n">Y_mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-        <span class="k">if</span> <span class="n">outcomes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">Y_mean</span> <span class="o">=</span> <span class="n">Y_mean</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcomes</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">Y_mean</span><span class="o">.</span><span class="n">device</span><span class="p">))</span>
-            <span class="n">Y_std</span> <span class="o">=</span> <span class="n">Y_std</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcomes</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">Y_mean</span><span class="o">.</span><span class="n">device</span><span class="p">))</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"Y_mean"</span><span class="p">,</span> <span class="n">Y_mean</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"Y_std"</span><span class="p">,</span> <span class="n">Y_std</span><span class="p">)</span>
-
-<div class="viewcode-block" id="UnstandardizeMCMultiOutputObjective.forward">
-<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.UnstandardizeMCMultiOutputObjective.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="n">samples</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">samples</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y_std</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y_mean</span></div>
-</div>
-
 </pre></div>
 </div>
 </div>

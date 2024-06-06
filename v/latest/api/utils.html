@@ -1025,10 +1025,10 @@ density n-polytopes. Technical report, Brown University, 2014.</p>
 to lower and upper bounds, respectively.</p></li>
 <li><p><strong>n</strong> (<em>int</em>) – The number of (q-batch) samples. As a best practice, use powers of 2.</p></li>
 <li><p><strong>q</strong> (<em>int</em>) – The size of each q-batch.</p></li>
-<li><p><strong>batch_shape</strong> (<em>Optional</em><em>[</em><em>Iterable</em><em>[</em><em>int</em><em>]</em><em>, </em><em>torch.Size</em><em>]</em>) – The batch shape of the samples. If given, returns samples
+<li><p><strong>batch_shape</strong> (<em>Iterable</em><em>[</em><em>int</em><em>] </em><em>| </em><em>Size</em><em> | </em><em>None</em>) – The batch shape of the samples. If given, returns samples
 of shape <cite>n x batch_shape x q x d</cite>, where each batch is an
 <cite>n x q x d</cite>-dim tensor of qMC samples.</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed used for initializing Owen scrambling. If None (default),
+<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – The seed used for initializing Owen scrambling. If None (default),
 use a random seed.</p></li>
 </ul>
 </dd>
@@ -1037,7 +1037,7 @@ use a random seed.</p></li>
 defined by bounds.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Tensor</p>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -1132,21 +1132,23 @@ and dtype specified by the input.</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.sampling.sample_polytope">
-<span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">sample_polytope</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#sample_polytope"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.sample_polytope" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">sample_polytope</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_thinning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#sample_polytope"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.sample_polytope" title="Link to this definition">¶</a></dt>
 <dd><p>Hit and run sampler from uniform sampling points from a polytope,
 described via inequality constraints A*x&lt;=b.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>Tensor</em>) – A Tensor describing inequality constraints
-so that all samples satisfy Ax&lt;=b.</p></li>
-<li><p><strong>b</strong> (<em>Tensor</em>) – A Tensor describing the inequality constraints
-so that all samples satisfy Ax&lt;=b.</p></li>
+<li><p><strong>A</strong> (<em>Tensor</em>) – A <cite>m x d</cite>-dim Tensor describing inequality constraints
+so that all samples satisfy <cite>Ax &lt;= b</cite>.</p></li>
+<li><p><strong>b</strong> (<em>Tensor</em>) – A <cite>m</cite>-dim Tensor describing the inequality constraints
+so that all samples satisfy <cite>Ax &lt;= b</cite>.</p></li>
 <li><p><strong>x0</strong> (<em>Tensor</em>) – A <cite>d</cite>-dim Tensor representing a starting point of the chain
 satisfying the constraints.</p></li>
 <li><p><strong>n</strong> (<em>int</em>) – The number of resulting samples kept in the output.</p></li>
 <li><p><strong>n0</strong> (<em>int</em>) – The number of burn-in samples. The chain will produce
 n+n0 samples but the first n0 samples are not saved.</p></li>
+<li><p><strong>n_thinning</strong> (<em>int</em>) – The amount of thinnning. This function will return every
+<cite>n_thinning</cite>-th sample from the chain (after burn-in).</p></li>
 <li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – The seed for the sampler. If omitted, use a random seed.</p></li>
 </ul>
 </dd>
@@ -1228,7 +1230,7 @@ variable <cite>s</cite> to <cite>s&lt;=1</cite>.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.sampling.HitAndRunPolytopeSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">HitAndRunPolytopeSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interior_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_burnin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#HitAndRunPolytopeSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.HitAndRunPolytopeSampler" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">HitAndRunPolytopeSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interior_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_burnin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_thinning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#HitAndRunPolytopeSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.HitAndRunPolytopeSampler" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PolytopeSampler</span></code></p>
 <p>A sampler for sampling from a polyope using a hit-and-run algorithm.</p>
 <p>A sampler for sampling from a polyope using a hit-and-run algorithm.</p>
@@ -1243,24 +1245,29 @@ the number of inequalities and <cite>d</cite> the dimension of the sample space.
 <cite>C @ x = d</cite>, where <cite>C</cite> is a <cite>n_eq_con x d</cite>-dim Tensor and <cite>d</cite> is a
 <cite>n_eq_con x 1</cite>-dim Tensor with <cite>n_eq_con</cite> the number of equalities.</p></li>
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>2 x d</cite>-dim tensor of box bounds, where <cite>inf</cite> (<cite>-inf</cite>) means
-that the respective dimension is unbounded from above (below).</p></li>
+that the respective dimension is unbounded from above (below). If
+omitted, no bounds (in addition to the above constraints) are applied.</p></li>
 <li><p><strong>interior_point</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>d x 1</cite>-dim Tensor representing a point in the
 (relative) interior of the polytope. If omitted, determined
 automatically by solving a Linear Program.</p></li>
-<li><p><strong>n_burnin</strong> (<em>int</em>) – The number of burn in samples.</p></li>
+<li><p><strong>n_burnin</strong> (<em>int</em>) – The number of burn in samples. The sampler will discard
+<cite>n_burnin</cite> samples before returning the first sample.</p></li>
+<li><p><strong>n_thinning</strong> (<em>int</em>) – The amount of thinning. The sampler will return every
+<cite>n_thinning</cite> sample (after burn-in). This may need to be increased
+for sets of constraints that are difficult to satisfy (i.e. in which
+case the volume of the constraint polytope is small relative to that
+of its bounding box).</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The random seed.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.utils.sampling.HitAndRunPolytopeSampler.draw">
-<span class="sig-name descname"><span class="pre">draw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#HitAndRunPolytopeSampler.draw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.HitAndRunPolytopeSampler.draw" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">draw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#HitAndRunPolytopeSampler.draw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.HitAndRunPolytopeSampler.draw" title="Link to this definition">¶</a></dt>
 <dd><p>Draw samples from the polytope.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>n</strong> (<em>int</em>) – The number of samples.</p></li>
-<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – The random seed.</p></li>
-</ul>
+<dd class="field-odd"><p><strong>n</strong> (<em>int</em>) – The number of samples.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A <cite>n x d</cite> Tensor of samples from the polytope.</p>
@@ -1334,9 +1341,9 @@ An alternative is the <cite>HitAndRunPolytopeSampler</cite>.</p>
 </dd></dl>
 </dd></dl>
 <dl class="py function">
-<dt class="sig sig-object py" id="botorch.utils.sampling.normalize_linear_constraints">
-<span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">normalize_linear_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#normalize_linear_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.normalize_linear_constraints" title="Link to this definition">¶</a></dt>
-<dd><p>Normalize linear constraints to the unit cube.</p>
+<dt class="sig sig-object py" id="botorch.utils.sampling.normalize_sparse_linear_constraints">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">normalize_sparse_linear_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#normalize_sparse_linear_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.normalize_sparse_linear_constraints" title="Link to this definition">¶</a></dt>
+<dd><p>Normalize sparse linear constraints to the unit cube.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1354,12 +1361,41 @@ an inequality constraint of the form
 </dl>
 </dd></dl>
 <dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.sampling.normalize_dense_linear_constraints">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">normalize_dense_linear_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#normalize_dense_linear_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.normalize_dense_linear_constraints" title="Link to this definition">¶</a></dt>
+<dd><p>Normalize dense linear constraints to the unit cube.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bounds</strong> (<em>Tensor</em>) – A <cite>2 x d</cite>-dim tensor containing the box bounds.</p></li>
+<li><p><strong>constraints</strong> (<em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em>) – A tensor tuple <cite>(A, b)</cite> describing constraints
+<cite>A @ x (&lt;)= b</cite>, where <cite>A</cite> is a <cite>n_con x d</cite>-dim Tensor and
+<cite>b</cite> is a <cite>n_con x 1</cite>-dim Tensor, with <cite>n_con</cite> the number of
+constraints and <cite>d</cite> the dimension of the sample space.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tensor tuple <cite>(A_nlz, b_nlz)</cite> of normalized constraints.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.sampling.get_polytope_samples">
-<span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">get_polytope_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thinning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_burnin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#get_polytope_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.get_polytope_samples" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">get_polytope_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_burnin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_thinning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#get_polytope_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.get_polytope_samples" title="Link to this definition">¶</a></dt>
 <dd><p>Sample from polytope defined by box bounds and (in)equality constraints.</p>
 <p>This uses a hit-and-run Markov chain sampler.</p>
-<p>TODO: make this method return the sampler object, to avoid doing burn-in
-every time we draw samples.</p>
+<p>NOTE: Much of the functionality of this method has been moved into
+<cite>HitAndRunPolytopeSampler</cite>. If you want to repeatedly draw samples, you should
+use <cite>HitAndRunPolytopeSampler</cite> directly in order to avoid repeatedly running
+a burn-in of the chain. To do so, you need to convert the sparse constraint
+format that <cite>get_polytope_samples</cite> expects to the dense constraint format that
+<cite>HitAndRunPolytopeSampler</cite> expects. This can be done via the
+<cite>sparse_to_dense_constraints</cite> method (but remember to adjust the constraint
+from the <cite>Ax &gt;= b</cite> format expecxted here to the <cite>Ax &lt;= b</cite> format expected by
+<cite>PolytopeSampler</cite> by multiplying both <cite>A</cite> and <cite>b</cite> by -1.)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1372,8 +1408,9 @@ with each tuple encoding an inequality constraint of the form
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>.</p></li>
 <li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – The random seed.</p></li>
-<li><p><strong>thinning</strong> (<em>int</em>) – The amount of thinning.</p></li>
 <li><p><strong>n_burnin</strong> (<em>int</em>) – The number of burn-in samples for the Markov chain sampler.</p></li>
+<li><p><strong>n_thinning</strong> (<em>int</em>) – The amount of thinnning. This function will return every
+<cite>n_thinning</cite>-th sample from the chain (after burn-in).</p></li>
 <li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
@@ -2280,6 +2317,9 @@ data point), this function will return 0 for that batch index.</p>
 <dt class="sig sig-object py" id="botorch.utils.transforms.normalize">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.transforms.</span></span><span class="sig-name descname"><span class="pre">normalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#normalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.transforms.normalize" title="Link to this definition">¶</a></dt>
 <dd><p>Min-max normalize X w.r.t. the provided bounds.</p>
+<p>NOTE: If the upper and lower bounds are identical for a dimension, that dimension
+will not be scaled. Such dimensions will only be shifted as
+<cite>new_X[…, i] = X[…, i] - bounds[0, i]</cite>. This avoids division by zero issues.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -2312,6 +2352,9 @@ contained within <cite>[0, 1]^d</cite>.</p>
 <dt class="sig sig-object py" id="botorch.utils.transforms.unnormalize">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.transforms.</span></span><span class="sig-name descname"><span class="pre">unnormalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#unnormalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.transforms.unnormalize" title="Link to this definition">¶</a></dt>
 <dd><p>Un-normalizes X w.r.t. the provided bounds.</p>
+<p>NOTE: If the upper and lower bounds are identical for a dimension, that dimension
+will not be scaled. Such dimensions will only be shifted as
+<cite>new_X[…, i] = X[…, i] + bounds[0, i]</cite>, matching the behavior of <cite>normalize</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
