@@ -186,7 +186,7 @@ def _verify_output_shape(acqf: Any, X: Tensor, output: Tensor) -> bool:
         # acqf does not have model or acqf.model does not define `batch_shape`
         warnings.warn(
             "Output shape checks failed! Expected output shape to match t-batch shape"
-            f"of X, but got output with shape {output.shape} for X with shape"
+            f"of X, but got output with shape {output.shape} for X with shape "
             f"{X.shape}. Make sure that this is the intended behavior!",
             RuntimeWarning,
         )
