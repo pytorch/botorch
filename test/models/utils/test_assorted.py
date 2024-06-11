@@ -141,6 +141,7 @@ class TestInputDataChecks(BotorchTestCase):
     def test_check_standardization(self):
         # Ensure that it is not filtered out.
         warnings.filterwarnings("always", category=InputDataWarning)
+        torch.manual_seed(0)
         Y = torch.randn(3, 4, 2)
         # check standardized input
         Yst = (Y - Y.mean(dim=-2, keepdim=True)) / Y.std(dim=-2, keepdim=True)
@@ -148,19 +149,33 @@ class TestInputDataChecks(BotorchTestCase):
             check_standardization(Y=Yst)
         self.assertFalse(any(issubclass(w.category, InputDataWarning) for w in ws))
         check_standardization(Y=Yst, raise_on_fail=True)
-        # check nonzero mean
+
+        # check standardized input with one observation
+        y = torch.zeros((3, 1, 2))
         with warnings.catch_warnings(record=True) as ws:
+            check_standardization(Y=y)
+        self.assertFalse(any(issubclass(w.category, InputDataWarning) for w in ws))
+        check_standardization(Y=y, raise_on_fail=True)
+
+        # check nonzero mean for case where >= 2 observations per batch
+        msg_more_than_1_obs = r"Data is not standardized \(std ="
+        with self.assertWarnsRegex(InputDataWarning, msg_more_than_1_obs):
             check_standardization(Y=Yst + 1)
-        self.assertTrue(any(issubclass(w.category, InputDataWarning) for w in ws))
-        self.assertTrue(any("not standardized" in str(w.message) for w in ws))
-        with self.assertRaises(InputDataError):
+        with self.assertRaisesRegex(InputDataError, msg_more_than_1_obs):
             check_standardization(Y=Yst + 1, raise_on_fail=True)
+
+        # check nonzero mean for case where < 2 observations per batch
+        msg_one_obs = r"Data is not standardized \(mean ="
+        y = torch.ones((3, 1, 2), dtype=torch.float32)
+        with self.assertWarnsRegex(InputDataWarning, msg_one_obs):
+            check_standardization(Y=y)
+        with self.assertRaisesRegex(InputDataError, msg_one_obs):
+            check_standardization(Y=y, raise_on_fail=True)
+
         # check non-unit variance
-        with warnings.catch_warnings(record=True) as ws:
+        with self.assertWarnsRegex(InputDataWarning, msg_more_than_1_obs):
             check_standardization(Y=Yst * 2)
-        self.assertTrue(any(issubclass(w.category, InputDataWarning) for w in ws))
-        self.assertTrue(any("not standardized" in str(w.message) for w in ws))
-        with self.assertRaises(InputDataError):
+        with self.assertRaisesRegex(InputDataError, msg_more_than_1_obs):
             check_standardization(Y=Yst * 2, raise_on_fail=True)
 
     def test_validate_input_scaling(self):

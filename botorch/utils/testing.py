@@ -60,7 +60,7 @@ class BotorchTestCase(TestCase):
             )
             warnings.filterwarnings(
                 "ignore",
-                message="Input data is not standardized.",
+                message="Data is not standardized.",
                 category=InputDataWarning,
             )
             warnings.filterwarnings(

@@ -286,7 +286,15 @@ class Standardize(OutcomeTransform):
                     f"Wrong output dimension. Y.size(-1) is {Y.size(-1)}; expected "
                     f"{self._m}."
                 )
-            stdvs = Y.std(dim=-2, keepdim=True)
+            if Y.shape[-2] < 1:
+                raise ValueError(f"Can't standardize with no observations. {Y.shape=}.")
+
+            elif Y.shape[-2] == 1:
+                stdvs = torch.ones(
+                    (*Y.shape[:-2], 1, Y.shape[-1]), dtype=Y.dtype, device=Y.device
+                )
+            else:
+                stdvs = Y.std(dim=-2, keepdim=True)
             stdvs = stdvs.where(stdvs >= self._min_stdv, torch.full_like(stdvs, 1.0))
             means = Y.mean(dim=-2, keepdim=True)
             if self._outputs is not None:
