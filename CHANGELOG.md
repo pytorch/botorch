@@ -2,6 +2,34 @@
 
 The release log for BoTorch.
 
+## [0.11.1] -- Jun 11, 2024
+
+#### New Features
+* Implement `qLogNParEGO` (#2364).
+* Support picking best of multiple fit attempts in `fit_gpytorch_mll` (#2373).
+
+#### Deprecations
+* Many functions that used to silently ignore arbitrary keyword arguments will now
+raise an exception when passed unsupported arguments (#2327, #2336).
+* Remove `UnstandardizeMCMultiOutputObjective` and `UnstandardizePosteriorTransform` (#2362).
+
+#### Bug Fixes
+* Remove correlation between the step size and the step direction in `sample_polytope` (#2290).
+* Fix pathwise sampler bug (#2337).
+* Explicitly check timeout against `None` so that `0.0` isn't ignored (#2348).
+* Fix boundary handling in `sample_polytope` (#2353).
+* Avoid division by zero in `normalize` & `unnormalize` when lower & upper bounds are equal (#2363).
+* Update `sample_all_priors` to support wider set of priors (#2371).
+
+#### Other Changes
+* Clarify `is_non_dominated` behavior with NaN (#2332).
+* Add input constructor for `qEUBO` (#2335).
+* Add `LogEI` as a baseline in the `TuRBO` tutorial (#2355).
+* Update polytope sampling code and add thinning capability (#2358).
+* Add initial objective values to initial state for sample efficiency (#2365).
+* Clarify behavior on standard deviations with <1 degree of freedom (#2357).
+
+
 ## [0.11.0] -- May 1, 2024
 
 #### Compatibility
