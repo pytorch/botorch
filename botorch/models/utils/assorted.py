@@ -171,7 +171,7 @@ def check_min_max_scaling(
             )
             if raise_on_fail:
                 raise InputDataError(msg)
-            warnings.warn(msg, InputDataWarning)
+            warnings.warn(msg, InputDataWarning, stacklevel=2)
 
 
 def check_standardization(
@@ -191,15 +191,28 @@ def check_standardization(
         raise_on_fail: If True, raise an exception instead of a warning.
     """
     with torch.no_grad():
-        Ymean, Ystd = torch.mean(Y, dim=-2), torch.std(Y, dim=-2)
-        if torch.abs(Ymean).max() > atol_mean or torch.abs(Ystd - 1).max() > atol_std:
-            msg = (
-                f"Input data is not standardized (mean = {Ymean}, std = {Ystd}). "
-                "Please consider scaling the input to zero mean and unit variance."
-            )
-            if raise_on_fail:
-                raise InputDataError(msg)
-            warnings.warn(msg, InputDataWarning)
+        Ymean = torch.mean(Y, dim=-2)
+        mean_not_zero = torch.abs(Ymean).max() > atol_mean
+        if Y.shape[-2] <= 1:
+            if mean_not_zero:
+                msg = (
+                    f"Data is not standardized (mean = {Ymean}). "
+                    "Please consider scaling the input to zero mean and unit variance."
+                )
+                if raise_on_fail:
+                    raise InputDataError(msg)
+                warnings.warn(msg, InputDataWarning, stacklevel=2)
+        else:
+            Ystd = torch.std(Y, dim=-2)
+            std_not_one = torch.abs(Ystd - 1).max() > atol_std
+            if mean_not_zero or std_not_one:
+                msg = (
+                    f"Data is not standardized (std = {Ystd}, mean = {Ymean}). "
+                    "Please consider scaling the input to zero mean and unit variance."
+                )
+                if raise_on_fail:
+                    raise InputDataError(msg)
+                warnings.warn(msg, InputDataWarning, stacklevel=2)
 
 
 def validate_input_scaling(
