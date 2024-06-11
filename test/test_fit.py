@@ -6,6 +6,7 @@
 
 import math
 from contextlib import ExitStack, nullcontext
+from copy import deepcopy
 from itertools import filterfalse, product
 from typing import Callable, Iterable, Optional
 from unittest.mock import MagicMock, patch
@@ -19,8 +20,8 @@ from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP, SingleTaskVariationalGP
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
-
 from botorch.optim.closures import get_loss_closure_with_grads
+from botorch.optim.core import OptimizationResult, OptimizationStatus
 from botorch.optim.fit import fit_gpytorch_mll_scipy, fit_gpytorch_mll_torch
 from botorch.optim.utils import get_data_loader
 from botorch.settings import debug
@@ -45,8 +46,9 @@ class MockOptimizer:
         self.warnings = warnings
         self.exception = exception
         self.call_count = 0
+        self.state_dicts = []
 
-    def __call__(self, mll, closure: Optional[Callable] = None):
+    def __call__(self, mll, closure: Optional[Callable] = None) -> OptimizationResult:
         self.call_count += 1
         for w in self.warnings:
             warn(str(w.message), w.category)
@@ -60,14 +62,21 @@ class MockOptimizer:
         if self.exception is not None:
             raise self.exception
 
-        return mll, None
+        self.state_dicts.append(deepcopy(mll.state_dict()))
+        return OptimizationResult(
+            fval=torch.rand(1).item(),
+            step=1,
+            status=OptimizationStatus.SUCCESS,
+            message="Mock Success!",
+            runtime=1.0,
+        )
 
 
 class TestFitAPI(BotorchTestCase):
     r"""Unit tests for general fitting API"""
 
-    def setUp(self) -> None:
-        super().setUp()
+    def setUp(self, suppress_input_warnings: bool = True) -> None:
+        super().setUp(suppress_input_warnings=suppress_input_warnings)
         with torch.random.fork_rng():
             torch.manual_seed(0)
             train_X = torch.linspace(0, 1, 10).unsqueeze(-1)
@@ -108,8 +117,8 @@ class TestFitAPI(BotorchTestCase):
 
 
 class TestFitFallback(BotorchTestCase):
-    def setUp(self) -> None:
-        super().setUp()
+    def setUp(self, suppress_input_warnings: bool = True) -> None:
+        super().setUp(suppress_input_warnings=suppress_input_warnings)
         with torch.random.fork_rng():
             torch.manual_seed(0)
             train_X = torch.linspace(0, 1, 10).unsqueeze(-1)
@@ -117,26 +126,22 @@ class TestFitFallback(BotorchTestCase):
 
             self.mlls = {}
             self.checkpoints = {}
-            for model_type, output_dim in product([SingleTaskGP], [1, 2]):
+            for fixed_noise, output_dim in product([True, False], [1, 2]):
                 train_Y = train_F.repeat(1, output_dim)
                 train_Y = train_Y + 0.1 * torch.randn_like(train_Y)
-                model = model_type(
+                model = SingleTaskGP(
                     train_X=train_X,
                     train_Y=train_Y,
+                    train_Yvar=torch.full_like(train_Y, 0.1) if fixed_noise else None,
                     input_transform=Normalize(d=1),
                     outcome_transform=Standardize(m=output_dim),
-                    **(
-                        {}
-                        if model_type is SingleTaskGP
-                        else {"train_Yvar": torch.full_like(train_Y, 0.1)}
-                    ),
                 )
                 self.assertIsInstance(model.covar_module.base_kernel, MaternKernel)
                 model.covar_module.base_kernel.nu = 2.5
 
                 mll = ExactMarginalLogLikelihood(model.likelihood, model)
                 for dtype in (torch.float32, torch.float64):
-                    key = model_type, output_dim
+                    key = fixed_noise, output_dim
                     self.mlls[key] = mll.to(dtype=dtype)
                     self.checkpoints[key] = {
                         k: TensorCheckpoint(
@@ -310,10 +315,43 @@ class TestFitFallback(BotorchTestCase):
                 all(v.equal(ckpt[k].values) for k, v in mll.state_dict().items())
             )
 
+    def test_pick_best_of_all_attempts(self) -> None:
+        mll = next(iter(self.mlls.values()))
+        optimizer = MockOptimizer()
+        max_attempts = 10
+        with patch("botorch.fit.logging.log") as mock_log:
+            fit._fit_fallback(
+                mll,
+                None,
+                None,
+                max_attempts=max_attempts,
+                pick_best_of_all_attempts=True,
+                optimizer=optimizer,
+            )
+        # Check that optimizer is called 3 times.
+        self.assertEqual(optimizer.call_count, max_attempts)
+        # Check that we log after each call.
+        self.assertEqual(mock_log.call_count, max_attempts)
+        # We have an increasing sequence of best MLL values.
+        mll_vals = []
+        for call in mock_log.call_args_list:
+            message = call.kwargs["msg"]
+            mll_val = message.split(" ")[-1][:-1]
+            mll_vals.append(float(mll_val))
+        self.assertEqual(mll_vals, sorted(mll_vals))
+        # Check that the returned MLL is in eval mode.
+        self.assertFalse(mll.training)
+        # Check that the state dict matches the state dict of best attempt.
+        final_statedict = mll.state_dict()
+        best_idx = mll_vals.index(max(mll_vals))
+        best_state_dict = optimizer.state_dicts[best_idx]
+        for key, val in final_statedict.items():
+            self.assertAllClose(val, best_state_dict[key])
 
-class TestFitFallbackAppoximate(BotorchTestCase):
-    def setUp(self) -> None:
-        super().setUp()
+
+class TestFitFallbackApproximate(BotorchTestCase):
+    def setUp(self, suppress_input_warnings: bool = True) -> None:
+        super().setUp(suppress_input_warnings=suppress_input_warnings)
         with torch.random.fork_rng():
             torch.manual_seed(0)
             train_X = torch.linspace(0, 1, 10).unsqueeze(-1)

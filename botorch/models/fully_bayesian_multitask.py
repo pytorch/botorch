@@ -48,7 +48,7 @@ class MultitaskSaasPyroModel(SaasPyroModel):
         train_Yvar: Optional[Tensor],
         task_feature: int,
         task_rank: Optional[int] = None,
-    ):
+    ) -> None:
         """Set the training data.
 
         Args:
@@ -276,7 +276,7 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
             task_feature=task_feature,
             task_rank=self._rank,
         )
-        self.pyro_model = pyro_model
+        self.pyro_model: MultitaskSaasPyroModel = pyro_model
         if outcome_transform is not None:
             self.outcome_transform = outcome_transform
         if input_transform is not None:
