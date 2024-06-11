@@ -114,7 +114,7 @@ class PyroModel:
 
     def set_inputs(
         self, train_X: Tensor, train_Y: Tensor, train_Yvar: Optional[Tensor] = None
-    ):
+    ) -> None:
         """Set the training data.
 
         Args:
@@ -162,7 +162,7 @@ class SaasPyroModel(PyroModel):
 
     def set_inputs(
         self, train_X: Tensor, train_Y: Tensor, train_Yvar: Optional[Tensor] = None
-    ):
+    ) -> None:
         super().set_inputs(train_X, train_Y, train_Yvar)
         self.ard_num_dims = self.train_X.shape[-1]
 
@@ -394,7 +394,7 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
         pyro_model.set_inputs(
             train_X=transformed_X, train_Y=train_Y, train_Yvar=train_Yvar
         )
-        self.pyro_model = pyro_model
+        self.pyro_model: PyroModel = pyro_model
         if outcome_transform is not None:
             self.outcome_transform = outcome_transform
         if input_transform is not None:

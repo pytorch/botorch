@@ -9,6 +9,7 @@ r"""Model fitting routines."""
 from __future__ import annotations
 
 import logging
+from copy import deepcopy
 from functools import partial
 from itertools import filterfalse
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Type, Union
@@ -118,10 +119,11 @@ def _fit_fallback(
     __: Type[object],
     *,
     closure: Optional[Callable[[], Tuple[Tensor, Sequence[Optional[Tensor]]]]] = None,
-    optimizer: Optional[Callable] = fit_gpytorch_mll_scipy,
+    optimizer: Callable = fit_gpytorch_mll_scipy,
     closure_kwargs: Optional[Dict[str, Any]] = None,
     optimizer_kwargs: Optional[Dict[str, Any]] = None,
     max_attempts: int = 5,
+    pick_best_of_all_attempts: bool = False,
     warning_handler: Callable[[WarningMessage], bool] = DEFAULT_WARNING_HANDLER,
     caught_exception_types: Tuple[Type[BaseException], ...] = (NotPSDError,),
     **ignore: Any,
@@ -137,11 +139,20 @@ def _fit_fallback(
         closure: Forward-backward closure for obtaining objective values and gradients.
             Responsible for setting parameters' `grad` attributes. If no closure is
             provided, one will be obtained by calling `get_loss_closure_with_grads`.
-        optimizer: The underlying optimization algorithm to run.
+        optimizer: The underlying optimization algorithm to run. Should return
+            an `OptimizationResult` object, whose `fval` field records the negative
+            MLL value. Defaults to `fit_gpytorch_mll_scipy`.
         closure_kwargs: Keyword arguments passed to `closure`.
         optimizer_kwargs: Keyword arguments passed to `optimizer`.
         max_attempts: The maximum number of fit attempts allowed. The attempt budget
             is NOT shared between calls to this method.
+        pick_best_of_all_attempts: If True, the model will be fit `max_attempts` times,
+            and the attempt that produces largest MLL value will be returned.
+            First attempt uses the initial hyper parameter values, the subsequent
+            attempts will call `sample_all_priors` to sample the initial values.
+            If any attempt produces an error, the resulting parameters are discarded.
+            If optimizer timeout is used, the `timeout_sec` will be used as is for
+            each attempt, and it should be manually adjusted accordingly.
         warning_handler: A function used to filter warnings produced when calling
             `optimizer`. Any unfiltered warnings (those for which `warning_handler`
             returns `False`) will be rethrown and trigger a model fitting retry.
@@ -168,6 +179,9 @@ def _fit_fallback(
     if closure_kwargs is not None:
         closure = partial(closure, **closure_kwargs)
 
+    # Record best MLL & corresponding state dict.
+    best_mll: float = -float("inf")
+    best_state_dict = None
     # Attempt to fit the model
     for attempt in range(1, 1 + max_attempts):
         # Wrap with rollback contextmanager so that each loop iteration reloads the
@@ -187,32 +201,55 @@ def _fit_fallback(
                 # Fit the model
                 with catch_warnings(record=True) as warning_list, debug(True):
                     simplefilter("always", category=OptimizationWarning)
-                    optimizer(mll, closure=closure, **optimizer_kwargs)
+                    result = optimizer(mll, closure=closure, **optimizer_kwargs)
 
-                # Resolved warnings and determine whether or not to retry
-                done = True
+                # Resolve warnings and determine whether or not to retry
+                success = True
                 for w in filterfalse(warning_handler, warning_list):
                     warn_explicit(str(w.message), w.category, w.filename, w.lineno)
-                    done = False
+                    success = False
 
-                if done:
+                if success and not pick_best_of_all_attempts:
+                    # If not picking best of all attempts, return the first
+                    # successful attempt.
                     ckpt.clear()  # do not rollback upon exiting
                     return mll.eval()
+                elif success:
+                    # Update best MLL and corresponding state dict.
+                    # Optimizers minimize negative MLL, so we negate fval.
+                    current_mll = -result.fval
+                    if current_mll > best_mll:
+                        best_mll = current_mll
+                        # Deepcopy is important here, otherwise they get updated.
+                        best_state_dict = deepcopy(mll.state_dict())
+                        message = f"Fit attempt #{attempt}: New best MLL: {best_mll}."
+                    else:
+                        message = (
+                            f"Fit attempt #{attempt}: Current MLL {current_mll} did "
+                            f"not beat best MLL so far {best_mll}."
+                        )
+                    logging.log(logging.DEBUG, msg=message)
 
-                # Ensure mll is in the right mode if fitting failed
+                # Ensure mll is in the right mode if going for another attempt.
                 mll = mll if mll.training else mll.train()
-                logging.log(
-                    logging.DEBUG,
-                    f"Fit attempt #{attempt} of {max_attempts} triggered retry policy"
-                    f"{'.' if attempt == max_attempts else '; retrying...'}",
-                )
+                if not success:
+                    logging.log(
+                        logging.DEBUG,
+                        f"Fit attempt #{attempt} of {max_attempts} triggered retry "
+                        f"policy {'.' if attempt == max_attempts else '; retrying...'}",
+                    )
 
             except caught_exception_types as err:
                 logging.log(
                     logging.DEBUG,
-                    f"Fit attempt #{attempt} of {max_attempts} failed with exception: "
+                    f"Fit attempt #{attempt} of {max_attempts} failed with exception:\n"
                     f"{err}",
                 )
+
+    # If picking best of all attempts, return MLL with best state dict.
+    if best_state_dict is not None:
+        mll.load_state_dict(best_state_dict)
+        return mll.eval()
 
     msg = "All attempts to fit the model have failed."
     if debug.off():
