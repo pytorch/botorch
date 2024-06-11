@@ -17,10 +17,12 @@
 
 import os
 import math
+import warnings
 from dataclasses import dataclass
 
 import torch
 from botorch.acquisition import qExpectedImprovement, qLogExpectedImprovement
+from botorch.exceptions import BadInitialCandidatesWarning
 from botorch.fit import fit_gpytorch_mll
 from botorch.generation import MaxPosteriorSampling
 from botorch.models import SingleTaskGP
@@ -34,8 +36,10 @@ from gpytorch.constraints import Interval
 from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
-from gpytorch.priors import HorseshoePrior
 
+
+warnings.filterwarnings("ignore", category=BadInitialCandidatesWarning)
+warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 dtype = torch.double
@@ -226,7 +230,7 @@ Y_turbo = torch.tensor(
     [eval_objective(x) for x in X_turbo], dtype=dtype, device=device
 ).unsqueeze(-1)
 
-state = TurboState(dim, batch_size=batch_size)
+state = TurboState(dim, batch_size=batch_size, best_value=max(Y_turbo).item())
 
 NUM_RESTARTS = 10 if not SMOKE_TEST else 2
 RAW_SAMPLES = 512 if not SMOKE_TEST else 4
