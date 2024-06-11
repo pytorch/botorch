@@ -161,7 +161,12 @@ def sample_all_priors(model: GPyTorchModel, max_retries: int = 100) -> None:
             )
         for i in range(max_retries):
             try:
-                setting_closure(module, prior.sample(closure(module).shape))
+                # Set sample shape, so that the prior samples have the same shape
+                # as `closure(module)` without having to be repeated.
+                closure_shape = closure(module).shape
+                prior_shape = prior._extended_shape()
+                sample_shape = closure_shape[: -len(prior_shape)]
+                setting_closure(module, prior.sample(sample_shape=sample_shape))
                 break
             except NotImplementedError:
                 warn(

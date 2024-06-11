@@ -25,13 +25,14 @@ from botorch.optim.utils import (
 )
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.constraints import GreaterThan
+from gpytorch.kernels import RBFKernel
 from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.priors import UniformPrior
 from gpytorch.priors.prior import Prior
-from gpytorch.priors.torch_priors import GammaPrior
+from gpytorch.priors.torch_priors import GammaPrior, NormalPrior
 
 
 class DummyPrior(Prior):
@@ -244,3 +245,26 @@ class TestSampleAllPriors(BotorchTestCase):
             original_state_dict = dict(deepcopy(mll.model.state_dict()))
             with self.assertRaises(RuntimeError):
                 sample_all_priors(model)
+
+    def test_with_multivariate_prior(self) -> None:
+        # This is modified from https://github.com/pytorch/botorch/issues/780.
+        for batch in (torch.Size([]), torch.Size([3])):
+            model = SingleTaskGP(
+                train_X=torch.randn(*batch, 2, 2),
+                train_Y=torch.randn(*batch, 2, 1),
+                covar_module=RBFKernel(
+                    ard_num_dims=2,
+                    batch_shape=batch,
+                    lengthscale_prior=NormalPrior(
+                        # Make this almost singular for easy comparison below.
+                        torch.tensor([[1.0, 1.0]]),
+                        torch.tensor(1e-10),
+                    ),
+                ),
+            )
+            # Check that the lengthscale is replaced with the sampled values.
+            original_lengthscale = model.covar_module.lengthscale
+            sample_all_priors(model)
+            new_lengthscale = model.covar_module.lengthscale
+            self.assertFalse(torch.allclose(original_lengthscale, new_lengthscale))
+            self.assertAllClose(new_lengthscale, torch.ones(*batch, 1, 2))
