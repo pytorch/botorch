@@ -7,6 +7,7 @@
 from botorch.models.kernels.categorical import CategoricalKernel
 from botorch.models.kernels.downsampling import DownsamplingKernel
 from botorch.models.kernels.exponential_decay import ExponentialDecayKernel
+from botorch.models.kernels.infinite_width_bnn import InfiniteWidthBNNKernel
 from botorch.models.kernels.linear_truncated_fidelity import (
     LinearTruncatedFidelityKernel,
 )
@@ -16,5 +17,6 @@ __all__ = [
     "CategoricalKernel",
     "DownsamplingKernel",
     "ExponentialDecayKernel",
+    "InfiniteWidthBNNKernel",
     "LinearTruncatedFidelityKernel",
 ]
