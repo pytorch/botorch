@@ -54,7 +54,7 @@ def _gen_model_and_data(
     skip_task_features_in_datasets: bool = False,
     input_transform: Optional[InputTransform] = None,
     outcome_transform: Optional[OutcomeTransform] = None,
-    **tkwargs
+    **tkwargs,
 ):
     datasets, (train_X, train_Y, train_Yvar) = gen_multi_task_dataset(
         yvar=0.05 if fixed_noise else None,
@@ -191,12 +191,26 @@ class TestMultiTaskGP(BotorchTestCase):
                 )
 
             # test posterior
+            batch_test_x = torch.rand(3, 2, 1, **tkwargs)
             test_x = torch.rand(2, 1, **tkwargs)
-            posterior_f = model.posterior(test_x)
+            posterior_f = model.posterior(batch_test_x)
+            posterior_y = model.posterior(batch_test_x, observation_noise=True)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
             self.assertIsInstance(posterior_f.distribution, MultitaskMultivariateNormal)
-            self.assertEqual(posterior_f.mean.shape, torch.Size([2, 2]))
-            self.assertEqual(posterior_f.variance.shape, torch.Size([2, 2]))
+            self.assertEqual(posterior_f.mean.shape, torch.Size([3, 2, 2]))
+            self.assertEqual(posterior_f.variance.shape, torch.Size([3, 2, 2]))
+            if fixed_noise:
+                noise_covar = torch.diag(
+                    torch.tensor([0.05, 0.1], **tkwargs).repeat_interleave(2)
+                ).expand(3, 4, 4)
+            else:
+                noise_covar = model.likelihood.noise_covar.noise * torch.eye(
+                    4, **tkwargs
+                ).expand(3, 4, 4)
+            expected_y_covar = posterior_f.covariance_matrix + noise_covar
+            self.assertTrue(
+                torch.allclose(posterior_y.covariance_matrix, expected_y_covar)
+            )
 
             # check that training data has input transform applied
             # check that the train inputs have been transformed and set on the model
@@ -206,13 +220,16 @@ class TestMultiTaskGP(BotorchTestCase):
                 )
 
             # test that posterior w/ observation noise raises appropriate error
-            with self.assertRaises(NotImplementedError):
-                model.posterior(test_x, observation_noise=True)
-            with self.assertRaises(NotImplementedError):
+            with self.assertRaisesRegex(
+                NotImplementedError,
+                "Passing a tensor of observations is not supported by MultiTaskGP.",
+            ):
                 model.posterior(test_x, observation_noise=torch.rand(2, **tkwargs))
 
             # test posterior w/ single output index
-            posterior_f = model.posterior(test_x, output_indices=[0])
+            posterior_f = model.posterior(
+                test_x, output_indices=[0], observation_noise=True
+            )
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
             self.assertIsInstance(posterior_f.distribution, MultivariateNormal)
             self.assertEqual(posterior_f.mean.shape, torch.Size([2, 1]))
@@ -387,6 +404,22 @@ class TestMultiTaskGP(BotorchTestCase):
         )
         self.assertIs(model.mean_module, mean_module)
         self.assertIs(model.likelihood, likelihood)
+
+    def test_multiple_output_indices(self) -> None:
+        tkwargs = {"device": self.device, "dtype": torch.double}
+        for fixed_noise in (True, False):
+            model, datasets, (train_X, train_Y, train_Yvar) = _gen_model_and_data(
+                task_values=[0, 1, 2], fixed_noise=fixed_noise, **tkwargs
+            )
+            test_X = torch.rand(2, 1, **tkwargs)
+            for observation_noise in (True, False):
+                posterior = model.posterior(
+                    test_X, output_indices=[0, 2], observation_noise=observation_noise
+                )
+                self.assertIsInstance(posterior, GPyTorchPosterior)
+                self.assertIsInstance(posterior.distribution, MultivariateNormal)
+                self.assertEqual(posterior.mean.shape, torch.Size([2, 2]))
+                self.assertEqual(posterior.variance.shape, torch.Size([2, 2]))
 
     def test_all_tasks_input(self) -> None:
         _, (train_X, train_Y, _) = gen_multi_task_dataset(
