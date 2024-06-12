@@ -146,7 +146,7 @@
 
     <span class="k">def</span> <span class="nf">set_inputs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">):</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Set the training data.</span>
 
 <span class="sd">        Args:</span>
@@ -198,7 +198,7 @@
 <a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasPyroModel.set_inputs">[docs]</a>
     <span class="k">def</span> <span class="nf">set_inputs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">):</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_inputs</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ard_num_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
 
@@ -455,7 +455,7 @@
         <span class="n">pyro_model</span><span class="o">.</span><span class="n">set_inputs</span><span class="p">(</span>
             <span class="n">train_X</span><span class="o">=</span><span class="n">transformed_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span> <span class="o">=</span> <span class="n">pyro_model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span><span class="p">:</span> <span class="n">PyroModel</span> <span class="o">=</span> <span class="n">pyro_model</span>
         <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">outcome_transform</span>
         <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>

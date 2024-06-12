@@ -226,7 +226,7 @@
             <span class="p">}</span>
             <span class="k">if</span> <span class="n">train_Yvar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_subset_batch_dict</span><span class="p">[</span><span class="s2">"likelihood.noise_covar.raw_noise"</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span> <span class="o">=</span> <span class="n">covar_module</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">:</span> <span class="n">Module</span> <span class="o">=</span> <span class="n">covar_module</span>
         <span class="c1"># TODO: Allow subsetting of other covar modules</span>
         <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">outcome_transform</span>
