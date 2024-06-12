@@ -88,6 +88,11 @@ class TestMultiObjectiveUtils(BotorchTestCase):
                 prune_inferior_points_multi_objective(
                     model=mm, X=X, max_frac=1.1, ref_point=ref_point
                 )
+            # test that invalid X is checked properly
+            with self.assertRaises(ValueError):
+                prune_inferior_points_multi_objective(
+                    model=mm, X=torch.empty(0, 0), ref_point=ref_point
+                )
             # test basic behaviour
             X_pruned = prune_inferior_points_multi_objective(
                 model=mm, X=X, ref_point=ref_point
