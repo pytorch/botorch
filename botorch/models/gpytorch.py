@@ -355,6 +355,57 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
             )
         return X, Y.squeeze(-1), None if Yvar is None else Yvar.squeeze(-1)
 
+    def _apply_noise(
+        self,
+        X: Tensor,
+        mvn: MultivariateNormal,
+        observation_noise: Union[bool, Tensor] = False,
+    ) -> MultivariateNormal:
+        """Adds the observation noise to the posterior.
+
+        Args:
+            X: A tensor of shape `batch_shape x q x d`.
+            mvn: A `MultivariateNormal` object representing the posterior over the true
+                latent function.
+            num_outputs: The number of outputs of the model.
+            observation_noise: If True, add the observation noise from the
+                likelihood to the posterior. If a Tensor, use it directly as the
+                observation noise (must be of shape `(batch_shape) x q x m`).
+
+        Returns:
+            The posterior predictive.
+        """
+        if observation_noise is False:
+            return mvn
+        # noise_shape is `broadcast(test_batch_shape, model.batch_shape) x m x q`
+        if self._num_outputs > 1:
+            noise_shape = X.shape[:-3] + torch.Size([self._num_outputs, X.shape[-2]])
+        else:
+            noise_shape = X.shape[:-1]
+        if torch.is_tensor(observation_noise):
+            # TODO: Validate noise shape
+            # make observation_noise's shape match noise_shape
+            if self.num_outputs > 1:
+                obs_noise = observation_noise.transpose(-1, -2)
+            else:
+                obs_noise = observation_noise.squeeze(-1)
+            mvn = self.likelihood(
+                mvn,
+                X,
+                noise=obs_noise.expand(noise_shape),
+            )
+        elif isinstance(self.likelihood, FixedNoiseGaussianLikelihood):
+            # Use the mean of the previous noise values (TODO: be smarter here).
+            observation_noise = self.likelihood.noise.mean(dim=-1, keepdim=True)
+            mvn = self.likelihood(
+                mvn,
+                X,
+                noise=observation_noise.expand(noise_shape),
+            )
+        else:
+            mvn = self.likelihood(mvn, X)
+        return mvn
+
     def posterior(
         self,
         X: Tensor,
@@ -397,35 +448,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
             # self(X) calls GPyTorch's ExactGP's __call__, which computes the posterior,
             # rather than e.g. SingleTaskGP's forward, which computes the prior.
             mvn = self(X)
-            if observation_noise is not False:
-                if self._num_outputs > 1:
-                    noise_shape = X.shape[:-3] + torch.Size(
-                        [self._num_outputs, X.shape[-2]]
-                    )
-                else:
-                    noise_shape = X.shape[:-1]
-                if torch.is_tensor(observation_noise):
-                    # TODO: Validate noise shape
-                    # make observation_noise `batch_shape x q x n`
-                    if self.num_outputs > 1:
-                        obs_noise = observation_noise.transpose(-1, -2)
-                    else:
-                        obs_noise = observation_noise.squeeze(-1)
-                    mvn = self.likelihood(
-                        mvn,
-                        X,
-                        noise=obs_noise.expand(noise_shape),
-                    )
-                elif isinstance(self.likelihood, FixedNoiseGaussianLikelihood):
-                    # Use the mean of the previous noise values (TODO: be smarter here).
-                    observation_noise = self.likelihood.noise.mean(dim=-1, keepdim=True)
-                    mvn = self.likelihood(
-                        mvn,
-                        X,
-                        noise=observation_noise.expand(noise_shape),
-                    )
-                else:
-                    mvn = self.likelihood(mvn, X)
+            mvn = self._apply_noise(X=X, mvn=mvn, observation_noise=observation_noise)
             if self._num_outputs > 1:
                 mean_x = mvn.mean
                 covar_x = mvn.lazy_covariance_matrix
@@ -752,6 +775,68 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
             task_values = self._task_mapper[task_values]
         return task_values
 
+    def _apply_noise(
+        self,
+        X: Tensor,
+        mvn: MultivariateNormal,
+        num_outputs: int,
+        observation_noise: Union[bool, Tensor],
+    ) -> MultivariateNormal:
+        """Adds the observation noise to the posterior.
+
+        If the likelihood is a `FixedNoiseGaussianLikelihood`, then
+        the average noise per task is computed, and a diagonal noise
+        matrix is added to the posterior covariance matrix, where
+        the noise per input is the average noise for its respective
+        task. If the likelihood is a Gaussian likelihood, then
+        currently there is a shared inferred noise level for all
+        tasks.
+
+        TODO: implement support for task-specific inferred noise levels.
+
+        Args:
+            X: A tensor of shape `batch_shape x q x d + 1`,
+                where `d` is the dimension of the feature space and the `+ 1`
+                dimension is the task feature / index.
+            mvn: A `MultivariateNormal` object representing the posterior over the true
+                latent function.
+            num_outputs: The number of outputs of the model.
+            observation_noise: If True, add observation noise from the respective
+                likelihood. Tensor input is currently not supported.
+
+        Returns:
+            The posterior predictive.
+        """
+        if torch.is_tensor(observation_noise):
+            raise NotImplementedError(
+                "Passing a tensor of observations is not supported by MultiTaskGP."
+            )
+        elif observation_noise is False:
+            return mvn
+        elif isinstance(self.likelihood, FixedNoiseGaussianLikelihood):
+            # get task features for test points
+            test_task_features = X[..., self._task_feature]
+            test_task_features = self._map_tasks(test_task_features).long()
+            unique_test_task_features = test_task_features.unique()
+            # get task features for training points
+            train_task_features = self.train_inputs[0][..., self._task_feature]
+            train_task_features = self._map_tasks(train_task_features).long()
+            noise_by_task = torch.zeros(self.num_tasks, dtype=X.dtype, device=X.device)
+            for task_feature in unique_test_task_features:
+                mask = train_task_features == task_feature
+                noise_by_task[task_feature] = self.likelihood.noise[mask].mean(
+                    dim=-1, keepdim=True
+                )
+            # noise_shape is `broadcast(test_batch_shape, model.batch_shape) x q`
+            noise_shape = X.shape[:-1]
+            observation_noise = noise_by_task[test_task_features].expand(noise_shape)
+            return self.likelihood(
+                mvn,
+                X,
+                noise=observation_noise,
+            )
+        return self.likelihood(mvn, X)
+
     def posterior(
         self,
         X: Tensor,
@@ -813,11 +898,12 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
         X_full = self.transform_inputs(X_full)
         with gpt_posterior_settings():
             mvn = self(X_full)
-            if observation_noise is not False:
-                raise NotImplementedError(
-                    "Specifying observation noise is not yet supported by "
-                    f"{self.__class__.__name__}."
-                )
+            mvn = self._apply_noise(
+                X=X_full,
+                mvn=mvn,
+                num_outputs=num_outputs,
+                observation_noise=observation_noise,
+            )
         # If single-output, return the posterior of a single-output model
         if num_outputs == 1:
             posterior = GPyTorchPosterior(distribution=mvn)

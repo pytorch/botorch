@@ -95,8 +95,14 @@ def gen_multi_task_dataset(
     train_Y = torch.cat([Y1, Y2])
 
     Yvar1 = None if yvar is None else torch.full_like(Y1, yvar)
-    Yvar2 = None if yvar is None else torch.full_like(Y2, yvar)
+    Yvar2 = None if yvar is None else torch.full_like(Y2, 2 * yvar)
     train_Yvar = None if yvar is None else torch.cat([Yvar1, Yvar2])
+    Y3 = torch.tan(X * (2 * math.pi)) + torch.randn_like(X) * 0.2
+    Yvar3 = None if yvar is None else torch.full_like(Y3, yvar)
+    if len(task_values) == 3:
+        train_Y = torch.cat([train_Y, Y3])
+        if train_Yvar is not None:
+            train_Yvar = torch.cat([train_Yvar, Yvar3])
     feature_slice = slice(1, None) if skip_task_features_in_datasets else slice(None)
     datasets = [
         SupervisedDataset(
@@ -107,13 +113,23 @@ def gen_multi_task_dataset(
             outcome_names=["y"],
         ),
         SupervisedDataset(
-            X=train_X[10:, feature_slice],
+            X=train_X[10:20, feature_slice],
             Y=Y2,
             Yvar=Yvar2,
             feature_names=["task", "X"][feature_slice],
             outcome_names=["y1"],
         ),
     ]
+    if len(task_values) == 3:
+        datasets.append(
+            SupervisedDataset(
+                X=train_X[20:, feature_slice],
+                Y=Y3,
+                Yvar=Yvar3,
+                feature_names=["task", "X"][feature_slice],
+                outcome_names=["y2"],
+            )
+        )
     dataset = MultiTaskDataset(
         datasets=datasets,
         target_outcome_name="y",
