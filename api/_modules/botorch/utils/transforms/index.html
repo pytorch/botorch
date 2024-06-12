@@ -72,10 +72,33 @@
 
 
 
+<span class="k">def</span> <span class="nf">_update_constant_bounds</span><span class="p">(</span><span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""If the lower and upper bounds are identical for a dimension, set</span>
+<span class="sd">    the upper bound to lower bound + 1.</span>
+
+<span class="sd">    If any modification is needed, this will return a clone of the original</span>
+<span class="sd">    tensor to avoid in-place modification.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        bounds: A `2 x d`-dim tensor of lower and upper bounds.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `2 x d`-dim tensor of updated lower and upper bounds.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">constant_dims</span> <span class="o">:=</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">constant_dims</span><span class="p">]</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">constant_dims</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">bounds</span>
+
+
 <div class="viewcode-block" id="normalize">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.normalize">[docs]</a>
 <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Min-max normalize X w.r.t. the provided bounds.</span>
+
+<span class="sd">    NOTE: If the upper and lower bounds are identical for a dimension, that dimension</span>
+<span class="sd">    will not be scaled. Such dimensions will only be shifted as</span>
+<span class="sd">    `new_X[..., i] = X[..., i] - bounds[0, i]`. This avoids division by zero issues.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        X: `... x d` tensor of data</span>
@@ -93,6 +116,7 @@
 <span class="sd">        &gt;&gt;&gt; bounds = torch.stack([torch.zeros(3), 0.5 * torch.ones(3)])</span>
 <span class="sd">        &gt;&gt;&gt; X_normalized = normalize(X, bounds)</span>
 <span class="sd">    """</span>
+    <span class="n">bounds</span> <span class="o">=</span> <span class="n">_update_constant_bounds</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div>
 
 
@@ -101,6 +125,10 @@
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.unnormalize">[docs]</a>
 <span class="k">def</span> <span class="nf">unnormalize</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Un-normalizes X w.r.t. the provided bounds.</span>
+
+<span class="sd">    NOTE: If the upper and lower bounds are identical for a dimension, that dimension</span>
+<span class="sd">    will not be scaled. Such dimensions will only be shifted as</span>
+<span class="sd">    `new_X[..., i] = X[..., i] + bounds[0, i]`, matching the behavior of `normalize`.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        X: `... x d` tensor of data</span>
@@ -118,6 +146,7 @@
 <span class="sd">        &gt;&gt;&gt; bounds = torch.stack([torch.zeros(3), 0.5 * torch.ones(3)])</span>
 <span class="sd">        &gt;&gt;&gt; X = unnormalize(X_normalized, bounds)</span>
 <span class="sd">    """</span>
+    <span class="n">bounds</span> <span class="o">=</span> <span class="n">_update_constant_bounds</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">X</span> <span class="o">*</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
 
 
@@ -192,7 +221,7 @@
         <span class="c1"># acqf does not have model or acqf.model does not define `batch_shape`</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
             <span class="s2">"Output shape checks failed! Expected output shape to match t-batch shape"</span>
-            <span class="sa">f</span><span class="s2">"of X, but got output with shape </span><span class="si">{</span><span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> for X with shape"</span>
+            <span class="sa">f</span><span class="s2">"of X, but got output with shape </span><span class="si">{</span><span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> for X with shape "</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">. Make sure that this is the intended behavior!"</span><span class="p">,</span>
             <span class="ne">RuntimeWarning</span><span class="p">,</span>
         <span class="p">)</span>

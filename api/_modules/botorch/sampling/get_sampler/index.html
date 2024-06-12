@@ -28,7 +28,7 @@
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.logging</span> <span class="kn">import</span> <span class="n">logger</span>
@@ -71,7 +71,10 @@
 <div class="viewcode-block" id="get_sampler">
 <a class="viewcode-back" href="../../../sampling.html#botorch.sampling.get_sampler.get_sampler">[docs]</a>
 <span class="k">def</span> <span class="nf">get_sampler</span><span class="p">(</span>
-    <span class="n">posterior</span><span class="p">:</span> <span class="n">TorchPosterior</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">posterior</span><span class="p">:</span> <span class="n">TorchPosterior</span><span class="p">,</span>
+    <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCSampler</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Get the sampler for the given posterior.</span>
 
@@ -83,25 +86,27 @@
 <span class="sd">        sample_shape: The sample shape of the samples produced by the</span>
 <span class="sd">            given sampler. The full shape of the resulting samples is</span>
 <span class="sd">            given by `posterior._extended_shape(sample_shape)`.</span>
-<span class="sd">        kwargs: Optional kwargs, passed down to the samplers during construction.</span>
+<span class="sd">        seed: Seed used to initialize sampler.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The `MCSampler` object for the given posterior.</span>
 <span class="sd">    """</span>
-    <span class="n">kwargs</span><span class="p">[</span><span class="s2">"sample_shape"</span><span class="p">]</span> <span class="o">=</span> <span class="n">sample_shape</span>
-    <span class="k">return</span> <span class="n">GetSampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">GetSampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span></div>
 
 
 
 <span class="nd">@GetSampler</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">MultivariateNormal</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">_get_sampler_mvn</span><span class="p">(</span>
-    <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span><span class="p">,</span>
+    <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NormalMCSampler</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The Sobol normal sampler for the `MultivariateNormal` posterior.</span>
 
 <span class="sd">    If the output dim is too large, falls back to `IIDNormalSampler`.</span>
 <span class="sd">    """</span>
-    <span class="n">sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
     <span class="n">collapsed_shape</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">_get_collapsed_shape</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">)</span>
     <span class="n">base_collapsed_shape</span> <span class="o">=</span> <span class="n">collapsed_shape</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">sample_shape</span><span class="p">)</span> <span class="p">:]</span>
     <span class="k">if</span> <span class="n">base_collapsed_shape</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="p">:</span>
@@ -109,27 +114,32 @@
             <span class="sa">f</span><span class="s2">"Output dim </span><span class="si">{</span><span class="n">base_collapsed_shape</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span><span class="si">}</span><span class="s2"> is too large for the "</span>
             <span class="s2">"Sobol engine. Using IIDNormalSampler instead."</span>
         <span class="p">)</span>
-        <span class="n">sampler</span> <span class="o">=</span> <span class="n">IIDNormalSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">sampler</span> <span class="o">=</span> <span class="n">IIDNormalSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">sampler</span>
 
 
 <span class="nd">@GetSampler</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">TransformedPosterior</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">_get_sampler_derived</span><span class="p">(</span>
-    <span class="n">posterior</span><span class="p">:</span> <span class="n">TransformedPosterior</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">posterior</span><span class="p">:</span> <span class="n">TransformedPosterior</span><span class="p">,</span>
+    <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCSampler</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Get the sampler for the underlying posterior."""</span>
     <span class="k">return</span> <span class="n">get_sampler</span><span class="p">(</span>
-        <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">_posterior</span><span class="p">,</span> <span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">_posterior</span><span class="p">,</span>
+        <span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span>
+        <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span>
     <span class="p">)</span>
 
 
 <span class="nd">@GetSampler</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">PosteriorList</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">_get_sampler_list</span><span class="p">(</span>
-    <span class="n">posterior</span><span class="p">:</span> <span class="n">PosteriorList</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">posterior</span><span class="p">:</span> <span class="n">PosteriorList</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCSampler</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Get the `ListSampler` with the appropriate list of samplers."""</span>
     <span class="n">samplers</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">get_sampler</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">get_sampler</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">posterior</span><span class="o">.</span><span class="n">posteriors</span>
     <span class="p">]</span>
     <span class="k">return</span> <span class="n">ListSampler</span><span class="p">(</span><span class="o">*</span><span class="n">samplers</span><span class="p">)</span>
@@ -137,23 +147,29 @@
 
 <span class="nd">@GetSampler</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">DeterministicPosterior</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">_get_sampler_deterministic</span><span class="p">(</span>
-    <span class="n">posterior</span><span class="p">:</span> <span class="n">DeterministicPosterior</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">posterior</span><span class="p">:</span> <span class="n">DeterministicPosterior</span><span class="p">,</span>
+    <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCSampler</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Get the dummy `DeterministicSampler` for the `DeterministicPosterior`."""</span>
-    <span class="k">return</span> <span class="n">DeterministicSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">DeterministicSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
 
 
 <span class="nd">@GetSampler</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">EnsemblePosterior</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">_get_sampler_ensemble</span><span class="p">(</span>
-    <span class="n">posterior</span><span class="p">:</span> <span class="n">EnsemblePosterior</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">posterior</span><span class="p">:</span> <span class="n">EnsemblePosterior</span><span class="p">,</span>
+    <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCSampler</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Get the `IndexSampler` for the `EnsemblePosterior`."""</span>
-    <span class="k">return</span> <span class="n">IndexSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">IndexSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
 
 
 <span class="nd">@GetSampler</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">_not_found_error</span><span class="p">(</span>
-    <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span>
+    <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
         <span class="sa">f</span><span class="s2">"A registered `MCSampler` for posterior </span><span class="si">{</span><span class="n">posterior</span><span class="si">}</span><span class="s2"> is not found. You can "</span>

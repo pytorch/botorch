@@ -46,7 +46,7 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
@@ -132,7 +132,6 @@
         <span class="n">ep_jitter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
         <span class="n">test_jitter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
         <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Multi-objective predictive entropy search acquisition function.</span>
 
@@ -924,7 +923,7 @@
         <span class="n">check_no_nans</span><span class="p">(</span><span class="n">omega_f_nat_cov_new</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">omega_f_nat_mean_new</span><span class="p">,</span> <span class="n">omega_f_nat_cov_new</span>
 
-    <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="ow">or</span> <span class="n">InputDataError</span><span class="p">:</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">RuntimeError</span><span class="p">,</span> <span class="n">InputDataError</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">omega_f_nat_mean</span><span class="p">,</span> <span class="n">omega_f_nat_cov</span>
 
 
@@ -1103,7 +1102,7 @@
     <span class="n">damping_factor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">iteration</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Set the damping factor to 0 once converged. Convergence is determined by the</span>
 <span class="sd">    relative change in the entries of the mean and covariance matrix.</span>
 
@@ -1120,8 +1119,10 @@
 <span class="sd">        damping_factor: A `batch_shape`-dim Tensor containing the damping factor.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        A `batch_shape x param_shape`-dim Tensor containing the updated damping</span>
+<span class="sd">        - A `batch_shape x param_shape`-dim Tensor containing the updated damping</span>
 <span class="sd">        factor.</span>
+<span class="sd">        - Difference between `mean_new` and `mean_old`</span>
+<span class="sd">        - Difference between `cov_new` and `cov_old`</span>
 <span class="sd">    """</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">damping_factor</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
     <span class="n">delta_mean</span> <span class="o">=</span> <span class="n">mean_new</span> <span class="o">-</span> <span class="n">mean_old</span>

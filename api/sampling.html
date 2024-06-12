@@ -93,7 +93,7 @@ of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.
 <span id="get-sampler-helper"></span><h2>Get Sampler Helper<a class="headerlink" href="#module-botorch.sampling.get_sampler" title="Link to this heading">¶</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.sampling.get_sampler.get_sampler">
-<span class="sig-prename descclassname"><span class="pre">botorch.sampling.get_sampler.</span></span><span class="sig-name descname"><span class="pre">get_sampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/get_sampler.html#get_sampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.get_sampler.get_sampler" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.sampling.get_sampler.</span></span><span class="sig-name descname"><span class="pre">get_sampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/get_sampler.html#get_sampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.get_sampler.get_sampler" title="Link to this definition">¶</a></dt>
 <dd><p>Get the sampler for the given posterior.</p>
 <p>The sampler can be used as <cite>sampler(posterior)</cite> to produce samples
 suitable for use in acquisition function optimization via SAA.</p>
@@ -104,7 +104,7 @@ suitable for use in acquisition function optimization via SAA.</p>
 <li><p><strong>sample_shape</strong> (<em>Size</em>) – The sample shape of the samples produced by the
 given sampler. The full shape of the resulting samples is
 given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – Optional kwargs, passed down to the samplers during construction.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – Seed used to initialize sampler.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -310,7 +310,7 @@ underlying SobolEngine.</p></li>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.sampling.qmc.NormalQMCEngine.draw">
-<span class="sig-name descname"><span class="pre">draw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.float32</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/qmc.html#NormalQMCEngine.draw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.qmc.NormalQMCEngine.draw" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">draw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/qmc.html#NormalQMCEngine.draw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.qmc.NormalQMCEngine.draw" title="Link to this definition">¶</a></dt>
 <dd><p>Draw <cite>n</cite> qMC samples from the standard Normal.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -318,7 +318,8 @@ underlying SobolEngine.</p></li>
 <li><p><strong>n</strong> (<em>int</em>) – The number of samples to draw. As a best practice, use powers of 2.</p></li>
 <li><p><strong>out</strong> (<em>Tensor</em><em> | </em><em>None</em>) – An option output tensor. If provided, draws are put into this
 tensor, and the function returns None.</p></li>
-<li><p><strong>dtype</strong> (<em>dtype</em>) – The desired torch data type (ignored if <cite>out</cite> is provided).</p></li>
+<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>None</em>) – The desired torch data type (ignored if <cite>out</cite> is provided).
+If None, uses <cite>torch.get_default_dtype()</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -862,7 +863,7 @@ For more information, see <a class="reference internal" href="#wilson2020samplin
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.posterior_samplers.draw_matheron_paths">
-<span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.posterior_samplers.</span></span><span class="sig-name descname"><span class="pre">draw_matheron_paths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_sampler=&lt;function</span> <span class="pre">draw_kernel_feature_paths&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_strategy=&lt;function</span> <span class="pre">gaussian_update&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/posterior_samplers.html#draw_matheron_paths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.posterior_samplers.draw_matheron_paths" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.posterior_samplers.</span></span><span class="sig-name descname"><span class="pre">draw_matheron_paths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_sampler=&lt;function</span> <span class="pre">draw_kernel_feature_paths&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_strategy=&lt;function</span> <span class="pre">gaussian_update&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/posterior_samplers.html#draw_matheron_paths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.posterior_samplers.draw_matheron_paths" title="Link to this definition">¶</a></dt>
 <dd><p>Generates function draws from (an approximate) Gaussian process prior.</p>
 <p>When evaluted, sample paths produced by this method return Tensors with dimensions
 <cite>sample_dims x batch_dims x [joint_dim]</cite>, where <cite>joint_dim</cite> denotes the penultimate
@@ -878,7 +879,6 @@ a set of sample paths representing the prior.</p></li>
 <li><p><strong>update_strategy</strong> (<em>Callable</em><em>[</em><em>[</em><em>GP</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><em>SamplePath</em></a><em>]</em>) – A callable that takes a model and a tensor of prior process
 values and returns a set of sample paths representing the data.</p></li>
 <li><p><strong>prior_sampler</strong> (<em>Callable</em><em>[</em><em>[</em><em>GP</em><em>, </em><em>Size</em><em>]</em><em>, </em><a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><em>SamplePath</em></a><em>]</em>)</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>

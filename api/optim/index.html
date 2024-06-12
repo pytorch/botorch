@@ -878,7 +878,7 @@ index <cite>l_i</cite> corresponds to the <cite>l_i</cite>-th feature of that el
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.optim.initializers.sample_q_batches_from_polytope">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.initializers.</span></span><span class="sig-name descname"><span class="pre">sample_q_batches_from_polytope</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_burnin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thinning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#sample_q_batches_from_polytope"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.initializers.sample_q_batches_from_polytope" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.initializers.</span></span><span class="sig-name descname"><span class="pre">sample_q_batches_from_polytope</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_burnin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_thinning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#sample_q_batches_from_polytope"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.initializers.sample_q_batches_from_polytope" title="Link to this definition">¶</a></dt>
 <dd><p>Samples <cite>n</cite> q-baches from a polytope of dimension <cite>d</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -886,9 +886,9 @@ index <cite>l_i</cite> corresponds to the <cite>l_i</cite>-th feature of that el
 <li><p><strong>n</strong> (<em>int</em>) – Number of q-batches to sample.</p></li>
 <li><p><strong>q</strong> (<em>int</em>) – Number of samples per q-batch</p></li>
 <li><p><strong>bounds</strong> (<em>Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
-<li><p><strong>n_burnin</strong> (<em>int</em>) – The number of burn-in samples for the Markov chain sampler.
-thinning: The amount of thinning (number of steps to take between
-returning samples).</p></li>
+<li><p><strong>n_burnin</strong> (<em>int</em>) – The number of burn-in samples for the Markov chain sampler.</p></li>
+<li><p><strong>n_thinning</strong> (<em>int</em>) – The amount of thinning. The sampler will return every
+<cite>n_thinning</cite> sample (after burn-in).</p></li>
 <li><p><strong>seed</strong> (<em>int</em>) – The random seed.</p></li>
 <li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
@@ -896,7 +896,6 @@ with each tuple encoding an inequality constraint of the form
 <li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>.</p></li>
-<li><p><strong>thinning</strong> (<em>int</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -939,9 +938,9 @@ with each tuple encoding an inequality constraint of the form
 <li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>.</p></li>
-<li><p><strong>generator</strong> (<em>Callable</em><em>[</em><em>[</em><em>int</em><em>, </em><em>int</em><em>, </em><em>int</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – Callable for generating samples that are then further
-processed. It receives <cite>n</cite>, <cite>q</cite> and <cite>seed</cite> as arguments and
-returns a tensor of shape <cite>n x q x d</cite>.</p></li>
+<li><p><strong>generator</strong> (<em>Callable</em><em>[</em><em>[</em><em>int</em><em>, </em><em>int</em><em>, </em><em>int</em><em> | </em><em>None</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – Callable for generating samples that are then further
+processed. It receives <cite>n</cite>, <cite>q</cite> and <cite>seed</cite> as arguments
+and returns a tensor of shape <cite>n x q x d</cite>.</p></li>
 <li><p><strong>fixed_X_fantasies</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A fixed set of fantasy points to concatenate to
 the <cite>q</cite> candidates being initialized along the <cite>-2</cite> dimension. The
 shape should be <cite>num_pseudo_points x d</cite>. E.g., this should be
@@ -1905,22 +1904,22 @@ track of the runtime and the optimization variables at the current iteration.</p
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>fun</strong> (<em>Callable</em><em>[</em><em>[</em><em>np.ndarray</em><em>, </em><em>*Any</em><em>]</em><em>, </em><em>float</em><em>]</em>)</p></li>
-<li><p><strong>x0</strong> (<em>np.ndarray</em>)</p></li>
+<li><p><strong>fun</strong> (<em>Callable</em><em>[</em><em>[</em><em>ndarray</em><em>, </em><em>...</em><em>]</em><em>, </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>x0</strong> (<em>ndarray</em>)</p></li>
 <li><p><strong>args</strong> (<em>Tuple</em><em>[</em><em>Any</em><em>, </em><em>...</em><em>]</em>)</p></li>
-<li><p><strong>method</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>)</p></li>
-<li><p><strong>jac</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>bool</em><em>]</em><em>]</em>)</p></li>
-<li><p><strong>hess</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>optimize.HessianUpdateStrategy</em><em>]</em><em>]</em>)</p></li>
-<li><p><strong>hessp</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>)</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>, </em><em>optimize.Bounds</em><em>]</em><em>]</em>)</p></li>
-<li><p><strong>tol</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>)</p></li>
-<li><p><strong>callback</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>)</p></li>
-<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>)</p></li>
-<li><p><strong>timeout_sec</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>method</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>jac</strong> (<em>str</em><em> | </em><em>Callable</em><em> | </em><em>bool</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>hess</strong> (<em>str</em><em> | </em><em>Callable</em><em> | </em><em>HessianUpdateStrategy</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>hessp</strong> (<em>Callable</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>bounds</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>Bounds</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>tol</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>callback</strong> (<em>Callable</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>timeout_sec</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>optimize.OptimizeResult</p>
+<dd class="field-even"><p><em>OptimizeResult</em></p>
 </dd>
 </dl>
 </dd></dl>

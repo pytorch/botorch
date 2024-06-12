@@ -201,7 +201,12 @@
             <span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_retries</span><span class="p">):</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">setting_closure</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">prior</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">closure</span><span class="p">(</span><span class="n">module</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+                <span class="c1"># Set sample shape, so that the prior samples have the same shape</span>
+                <span class="c1"># as `closure(module)` without having to be repeated.</span>
+                <span class="n">closure_shape</span> <span class="o">=</span> <span class="n">closure</span><span class="p">(</span><span class="n">module</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+                <span class="n">prior_shape</span> <span class="o">=</span> <span class="n">prior</span><span class="o">.</span><span class="n">_extended_shape</span><span class="p">()</span>
+                <span class="n">sample_shape</span> <span class="o">=</span> <span class="n">closure_shape</span><span class="p">[:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">prior_shape</span><span class="p">)]</span>
+                <span class="n">setting_closure</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">prior</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">))</span>
                 <span class="k">break</span>
             <span class="k">except</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
                 <span class="n">warn</span><span class="p">(</span>

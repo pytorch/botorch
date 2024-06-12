@@ -36,7 +36,7 @@
 
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
@@ -61,7 +61,9 @@
 <span class="sd">    """</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">deltas</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">deltas</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the cost-aware utility on the candidates and improvements.</span>
 
 <span class="sd">        Args:</span>
@@ -70,6 +72,8 @@
 <span class="sd">            deltas: A `num_fantasies x batch_shape`-dim Tensor of `num_fantasy`</span>
 <span class="sd">                samples from the marginal improvement in utility over the</span>
 <span class="sd">                current state at `X` for each t-batch.</span>
+<span class="sd">            sampler: A sampler used for sampling from the posterior of the cost</span>
+<span class="sd">                model. Some subclasses ignore this argument.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A `num_fantasies x batch_shape`-dim Tensor of cost-transformed utilities.</span>
@@ -94,7 +98,9 @@
 
 <div class="viewcode-block" id="GenericCostAwareUtility.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cost_aware.GenericCostAwareUtility.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">deltas</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">deltas</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the cost function on the candidates and improvements.</span>
 
 <span class="sd">        Args:</span>
@@ -103,6 +109,7 @@
 <span class="sd">            deltas: A `num_fantasies x batch_shape`-dim Tensor of `num_fantasy`</span>
 <span class="sd">                samples from the marginal improvement in utility over the</span>
 <span class="sd">                current state at `X` for each t-batch.</span>
+<span class="sd">            sampler: Ignored.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A `num_fantasies x batch_shape`-dim Tensor of cost-weighted utilities.</span>
@@ -174,7 +181,7 @@
                 <span class="n">cost_objective</span> <span class="o">=</span> <span class="n">GenericMCObjective</span><span class="p">(</span><span class="k">lambda</span> <span class="n">Y</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Y</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">cost_model</span> <span class="o">=</span> <span class="n">cost_model</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cost_objective</span> <span class="o">=</span> <span class="n">cost_objective</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cost_objective</span><span class="p">:</span> <span class="n">MCAcquisitionObjective</span> <span class="o">=</span> <span class="n">cost_objective</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_use_mean</span> <span class="o">=</span> <span class="n">use_mean</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_min_cost</span> <span class="o">=</span> <span class="n">min_cost</span>
 
@@ -186,7 +193,6 @@
         <span class="n">deltas</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">X_evaluation_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the cost function on the candidates and improvements. Note</span>
 <span class="sd">        that negative values of `deltas` are instead scaled by the cost, and not</span>

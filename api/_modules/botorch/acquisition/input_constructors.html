@@ -99,6 +99,7 @@
     <span class="n">qLogNoisyExpectedHypervolumeImprovement</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.objective</span> <span class="kn">import</span> <span class="n">IdentityMCMultiOutputObjective</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.parego</span> <span class="kn">import</span> <span class="n">qLogNParEGO</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.utils</span> <span class="kn">import</span> <span class="n">get_default_partitioning_alpha</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ConstrainedMCObjective</span><span class="p">,</span>
@@ -106,7 +107,10 @@
     <span class="n">MCAcquisitionObjective</span><span class="p">,</span>
     <span class="n">PosteriorTransform</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.preference</span> <span class="kn">import</span> <span class="n">AnalyticExpectedUtilityOfBestOption</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.preference</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AnalyticExpectedUtilityOfBestOption</span><span class="p">,</span>
+    <span class="n">qExpectedUtilityOfBestOption</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.risk_measures</span> <span class="kn">import</span> <span class="n">RiskMeasureMCObjective</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.utils</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">compute_best_feasible_objective</span><span class="p">,</span>
@@ -117,7 +121,7 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.models.cost</span> <span class="kn">import</span> <span class="n">AffineFidelityCostModel</span>
-<span class="kn">from</span> <span class="nn">botorch.models.deterministic</span> <span class="kn">import</span> <span class="n">FixedSingleSampleModel</span>
+<span class="kn">from</span> <span class="nn">botorch.models.deterministic</span> <span class="kn">import</span> <span class="n">DeterministicModel</span><span class="p">,</span> <span class="n">FixedSingleSampleModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
@@ -1192,6 +1196,87 @@
 
 
 
+<div class="viewcode-block" id="construct_inputs_qLogNParEGO">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qLogNParEGO">[docs]</a>
+<span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qLogNParEGO</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">construct_inputs_qLogNParEGO</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
+    <span class="n">scalarization_weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCMultiOutputObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">X_baseline</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">prune_baseline</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">cache_root</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">eta</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
+    <span class="n">fat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">tau_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">TAU_MAX</span><span class="p">,</span>
+    <span class="n">tau_relu</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">TAU_RELU</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Construct kwargs for the `qLogNoisyExpectedImprovement` constructor.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model: The model to be used in the acquisition function.</span>
+<span class="sd">        training_data: Dataset(s) used to train the model.</span>
+<span class="sd">        scalarization_weights: A `m`-dim Tensor of weights to be used in the</span>
+<span class="sd">            Chebyshev scalarization. If omitted, samples from the unit simplex.</span>
+<span class="sd">        objective: The MultiOutputMCAcquisitionObjective under which the samples are</span>
+<span class="sd">            evaluated before applying Chebyshev scalarization.</span>
+<span class="sd">            Defaults to `IdentityMultiOutputObjective()`.</span>
+<span class="sd">        X_pending: A `m x d`-dim Tensor of `m` design points that have been</span>
+<span class="sd">            submitted for function evaluation but have not yet been evaluated.</span>
+<span class="sd">            Concatenated into X upon forward call.</span>
+<span class="sd">        sampler: The sampler used to draw base samples. If omitted, uses</span>
+<span class="sd">            the acquisition functions's default sampler.</span>
+<span class="sd">        X_baseline: A `batch_shape x r x d`-dim Tensor of `r` design points</span>
+<span class="sd">            that have already been observed. These points are considered as</span>
+<span class="sd">            the potential best design point. If omitted, checks that all</span>
+<span class="sd">            training_data have the same input features and take the first `X`.</span>
+<span class="sd">        prune_baseline: If True, remove points in `X_baseline` that are</span>
+<span class="sd">            highly unlikely to be the best point. This can significantly</span>
+<span class="sd">            improve performance and is generally recommended.</span>
+<span class="sd">        constraints: A list of constraint callables which map a Tensor of posterior</span>
+<span class="sd">            samples of dimension `sample_shape x batch-shape x q x m`-dim to a</span>
+<span class="sd">            `sample_shape x batch-shape x q`-dim Tensor. The associated constraints</span>
+<span class="sd">            are considered satisfied if the output is less than zero.</span>
+<span class="sd">        eta: Temperature parameter(s) governing the smoothness of the sigmoid</span>
+<span class="sd">            approximation to the constraint indicators. For more details, on this</span>
+<span class="sd">            parameter, see the docs of `compute_smoothed_feasibility_indicator`.</span>
+<span class="sd">        fat: Toggles the use of the fat-tailed non-linearities to smoothly approximate</span>
+<span class="sd">            the constraints indicator function.</span>
+<span class="sd">        tau_max: Temperature parameter controlling the sharpness of the smooth</span>
+<span class="sd">            approximations to max.</span>
+<span class="sd">        tau_relu: Temperature parameter controlling the sharpness of the smooth</span>
+<span class="sd">            approximations to ReLU.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dict mapping kwarg names of the constructor to values.</span>
+<span class="sd">    """</span>
+    <span class="n">base_inputs</span> <span class="o">=</span> <span class="n">construct_inputs_qLogNEI</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span>
+        <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+        <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
+        <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
+        <span class="n">X_baseline</span><span class="o">=</span><span class="n">X_baseline</span><span class="p">,</span>
+        <span class="n">prune_baseline</span><span class="o">=</span><span class="n">prune_baseline</span><span class="p">,</span>
+        <span class="n">cache_root</span><span class="o">=</span><span class="n">cache_root</span><span class="p">,</span>
+        <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+        <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
+        <span class="n">fat</span><span class="o">=</span><span class="n">fat</span><span class="p">,</span>
+        <span class="n">tau_max</span><span class="o">=</span><span class="n">tau_max</span><span class="p">,</span>
+        <span class="n">tau_relu</span><span class="o">=</span><span class="n">tau_relu</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">base_inputs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"posterior_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="o">**</span><span class="n">base_inputs</span><span class="p">,</span>
+        <span class="s2">"scalarization_weights"</span><span class="p">:</span> <span class="n">scalarization_weights</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
 <div class="viewcode-block" id="construct_inputs_qMES">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qMES">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qMaxValueEntropy</span><span class="p">)</span>
@@ -1383,7 +1468,7 @@
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Construct kwargs for the `AnalyticExpectedUtilityOfBestOption` constructor.</span>
 
 <span class="sd">    `model` is the primary model defined over the parameter space. It can be the</span>
-<span class="sd">    outcomde model in BOPE or the preference model in PBO. `pref_model` is the model</span>
+<span class="sd">    outcome model in BOPE or the preference model in PBO. `pref_model` is the model</span>
 <span class="sd">    defined over the outcome/metric space, which is typically the preference model</span>
 <span class="sd">    in BOPE.</span>
 
@@ -1422,6 +1507,70 @@
             <span class="s2">"pref_model"</span><span class="p">:</span> <span class="n">pref_model</span><span class="p">,</span>
             <span class="s2">"outcome_model"</span><span class="p">:</span> <span class="n">one_sample_outcome_model</span><span class="p">,</span>
             <span class="s2">"previous_winner"</span><span class="p">:</span> <span class="n">previous_winner</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="construct_inputs_qeubo">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qeubo">[docs]</a>
+<span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qExpectedUtilityOfBestOption</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">construct_inputs_qeubo</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">pref_model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Model</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">outcome_model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DeterministicModel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sample_multiplier</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Construct kwargs for the `qExpectedUtilityOfBestOption` (qEUBO) constructor.</span>
+
+<span class="sd">    `model` is the primary model defined over the parameter space. It can be the</span>
+<span class="sd">    outcomde model in BOPE or the preference model in PBO. `pref_model` is the model</span>
+<span class="sd">    defined over the outcome/metric space, which is typically the preference model</span>
+<span class="sd">    in BOPE.</span>
+
+<span class="sd">    If both model and pref_model exist, we are performing Bayesian Optimization with</span>
+<span class="sd">    Preference Exploration (BOPE). When only pref_model is None, we are performing</span>
+<span class="sd">    preferential BO (PBO).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model: The outcome model to be used in the acquisition function in BOPE</span>
+<span class="sd">            when pref_model exists; otherwise, model is the preference model and</span>
+<span class="sd">            we are doing Preferential BO</span>
+<span class="sd">        pref_model: The preference model to be used in preference exploration as in</span>
+<span class="sd">            BOPE; if None, we are doing PBO and model is the preference model.</span>
+<span class="sd">        sample_multiplier: The scale factor for the single-sample model.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dict mapping kwarg names of the constructor to values.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">pref_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"pref_model"</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span>
+            <span class="s2">"outcome_model"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">"sampler"</span><span class="p">:</span> <span class="n">sampler</span><span class="p">,</span>
+            <span class="s2">"objective"</span><span class="p">:</span> <span class="n">objective</span><span class="p">,</span>
+            <span class="s2">"posterior_transform"</span><span class="p">:</span> <span class="n">posterior_transform</span><span class="p">,</span>
+            <span class="s2">"X_pending"</span><span class="p">:</span> <span class="n">X_pending</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># construct a deterministic fixed single sample model from `model`</span>
+        <span class="c1"># i.e., performing EUBO-zeta by default as described</span>
+        <span class="c1"># in https://arxiv.org/abs/2203.11382</span>
+        <span class="c1"># using pref_model.dim instead of model.num_outputs here as MTGP's</span>
+        <span class="c1"># num_outputs could be tied to the number of tasks</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">pref_model</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span> <span class="o">*</span> <span class="n">sample_multiplier</span>
+        <span class="n">one_sample_outcome_model</span> <span class="o">=</span> <span class="n">FixedSingleSampleModel</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"pref_model"</span><span class="p">:</span> <span class="n">pref_model</span><span class="p">,</span>
+            <span class="s2">"outcome_model"</span><span class="p">:</span> <span class="n">one_sample_outcome_model</span><span class="p">,</span>
+            <span class="s2">"sampler"</span><span class="p">:</span> <span class="n">sampler</span><span class="p">,</span>
+            <span class="s2">"objective"</span><span class="p">:</span> <span class="n">objective</span><span class="p">,</span>
+            <span class="s2">"posterior_transform"</span><span class="p">:</span> <span class="n">posterior_transform</span><span class="p">,</span>
+            <span class="s2">"X_pending"</span><span class="p">:</span> <span class="n">X_pending</span><span class="p">,</span>
         <span class="p">}</span></div>
 
 

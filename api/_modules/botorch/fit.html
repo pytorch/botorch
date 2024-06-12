@@ -32,6 +32,7 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">filterfalse</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
@@ -144,10 +145,11 @@
     <span class="n">__</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="nb">object</span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">closure</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="n">fit_gpytorch_mll_scipy</span><span class="p">,</span>
+    <span class="n">optimizer</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">fit_gpytorch_mll_scipy</span><span class="p">,</span>
     <span class="n">closure_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">optimizer_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">max_attempts</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="n">pick_best_of_all_attempts</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">warning_handler</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">WarningMessage</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="n">DEFAULT_WARNING_HANDLER</span><span class="p">,</span>
     <span class="n">caught_exception_types</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="ne">BaseException</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">NotPSDError</span><span class="p">,),</span>
     <span class="o">**</span><span class="n">ignore</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
@@ -163,11 +165,20 @@
 <span class="sd">        closure: Forward-backward closure for obtaining objective values and gradients.</span>
 <span class="sd">            Responsible for setting parameters' `grad` attributes. If no closure is</span>
 <span class="sd">            provided, one will be obtained by calling `get_loss_closure_with_grads`.</span>
-<span class="sd">        optimizer: The underlying optimization algorithm to run.</span>
+<span class="sd">        optimizer: The underlying optimization algorithm to run. Should return</span>
+<span class="sd">            an `OptimizationResult` object, whose `fval` field records the negative</span>
+<span class="sd">            MLL value. Defaults to `fit_gpytorch_mll_scipy`.</span>
 <span class="sd">        closure_kwargs: Keyword arguments passed to `closure`.</span>
 <span class="sd">        optimizer_kwargs: Keyword arguments passed to `optimizer`.</span>
 <span class="sd">        max_attempts: The maximum number of fit attempts allowed. The attempt budget</span>
 <span class="sd">            is NOT shared between calls to this method.</span>
+<span class="sd">        pick_best_of_all_attempts: If True, the model will be fit `max_attempts` times,</span>
+<span class="sd">            and the attempt that produces largest MLL value will be returned.</span>
+<span class="sd">            First attempt uses the initial hyper parameter values, the subsequent</span>
+<span class="sd">            attempts will call `sample_all_priors` to sample the initial values.</span>
+<span class="sd">            If any attempt produces an error, the resulting parameters are discarded.</span>
+<span class="sd">            If optimizer timeout is used, the `timeout_sec` will be used as is for</span>
+<span class="sd">            each attempt, and it should be manually adjusted accordingly.</span>
 <span class="sd">        warning_handler: A function used to filter warnings produced when calling</span>
 <span class="sd">            `optimizer`. Any unfiltered warnings (those for which `warning_handler`</span>
 <span class="sd">            returns `False`) will be rethrown and trigger a model fitting retry.</span>
@@ -194,6 +205,9 @@
     <span class="k">if</span> <span class="n">closure_kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">closure</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">closure</span><span class="p">,</span> <span class="o">**</span><span class="n">closure_kwargs</span><span class="p">)</span>
 
+    <span class="c1"># Record best MLL &amp; corresponding state dict.</span>
+    <span class="n">best_mll</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">)</span>
+    <span class="n">best_state_dict</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="c1"># Attempt to fit the model</span>
     <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">max_attempts</span><span class="p">):</span>
         <span class="c1"># Wrap with rollback contextmanager so that each loop iteration reloads the</span>
@@ -213,32 +227,55 @@
                 <span class="c1"># Fit the model</span>
                 <span class="k">with</span> <span class="n">catch_warnings</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">warning_list</span><span class="p">,</span> <span class="n">debug</span><span class="p">(</span><span class="kc">True</span><span class="p">):</span>
                     <span class="n">simplefilter</span><span class="p">(</span><span class="s2">"always"</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="n">OptimizationWarning</span><span class="p">)</span>
-                    <span class="n">optimizer</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">closure</span><span class="o">=</span><span class="n">closure</span><span class="p">,</span> <span class="o">**</span><span class="n">optimizer_kwargs</span><span class="p">)</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="n">optimizer</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">closure</span><span class="o">=</span><span class="n">closure</span><span class="p">,</span> <span class="o">**</span><span class="n">optimizer_kwargs</span><span class="p">)</span>
 
-                <span class="c1"># Resolved warnings and determine whether or not to retry</span>
-                <span class="n">done</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="c1"># Resolve warnings and determine whether or not to retry</span>
+                <span class="n">success</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">filterfalse</span><span class="p">(</span><span class="n">warning_handler</span><span class="p">,</span> <span class="n">warning_list</span><span class="p">):</span>
                     <span class="n">warn_explicit</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">message</span><span class="p">),</span> <span class="n">w</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">lineno</span><span class="p">)</span>
-                    <span class="n">done</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="n">success</span> <span class="o">=</span> <span class="kc">False</span>
 
-                <span class="k">if</span> <span class="n">done</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">success</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">pick_best_of_all_attempts</span><span class="p">:</span>
+                    <span class="c1"># If not picking best of all attempts, return the first</span>
+                    <span class="c1"># successful attempt.</span>
                     <span class="n">ckpt</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>  <span class="c1"># do not rollback upon exiting</span>
                     <span class="k">return</span> <span class="n">mll</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+                <span class="k">elif</span> <span class="n">success</span><span class="p">:</span>
+                    <span class="c1"># Update best MLL and corresponding state dict.</span>
+                    <span class="c1"># Optimizers minimize negative MLL, so we negate fval.</span>
+                    <span class="n">current_mll</span> <span class="o">=</span> <span class="o">-</span><span class="n">result</span><span class="o">.</span><span class="n">fval</span>
+                    <span class="k">if</span> <span class="n">current_mll</span> <span class="o">&gt;</span> <span class="n">best_mll</span><span class="p">:</span>
+                        <span class="n">best_mll</span> <span class="o">=</span> <span class="n">current_mll</span>
+                        <span class="c1"># Deepcopy is important here, otherwise they get updated.</span>
+                        <span class="n">best_state_dict</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
+                        <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Fit attempt #</span><span class="si">{</span><span class="n">attempt</span><span class="si">}</span><span class="s2">: New best MLL: </span><span class="si">{</span><span class="n">best_mll</span><span class="si">}</span><span class="s2">."</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">"Fit attempt #</span><span class="si">{</span><span class="n">attempt</span><span class="si">}</span><span class="s2">: Current MLL </span><span class="si">{</span><span class="n">current_mll</span><span class="si">}</span><span class="s2"> did "</span>
+                            <span class="sa">f</span><span class="s2">"not beat best MLL so far </span><span class="si">{</span><span class="n">best_mll</span><span class="si">}</span><span class="s2">."</span>
+                        <span class="p">)</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="n">message</span><span class="p">)</span>
 
-                <span class="c1"># Ensure mll is in the right mode if fitting failed</span>
+                <span class="c1"># Ensure mll is in the right mode if going for another attempt.</span>
                 <span class="n">mll</span> <span class="o">=</span> <span class="n">mll</span> <span class="k">if</span> <span class="n">mll</span><span class="o">.</span><span class="n">training</span> <span class="k">else</span> <span class="n">mll</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
-                <span class="n">logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
-                    <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span>
-                    <span class="sa">f</span><span class="s2">"Fit attempt #</span><span class="si">{</span><span class="n">attempt</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">max_attempts</span><span class="si">}</span><span class="s2"> triggered retry policy"</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'.'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">attempt</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">max_attempts</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'; retrying...'</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-                <span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">success</span><span class="p">:</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                        <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">"Fit attempt #</span><span class="si">{</span><span class="n">attempt</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">max_attempts</span><span class="si">}</span><span class="s2"> triggered retry "</span>
+                        <span class="sa">f</span><span class="s2">"policy </span><span class="si">{</span><span class="s1">'.'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">attempt</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">max_attempts</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'; retrying...'</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                    <span class="p">)</span>
 
             <span class="k">except</span> <span class="n">caught_exception_types</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
                     <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span>
-                    <span class="sa">f</span><span class="s2">"Fit attempt #</span><span class="si">{</span><span class="n">attempt</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">max_attempts</span><span class="si">}</span><span class="s2"> failed with exception: "</span>
+                    <span class="sa">f</span><span class="s2">"Fit attempt #</span><span class="si">{</span><span class="n">attempt</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">max_attempts</span><span class="si">}</span><span class="s2"> failed with exception:</span><span class="se">\n</span><span class="s2">"</span>
                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
                 <span class="p">)</span>
+
+    <span class="c1"># If picking best of all attempts, return MLL with best state dict.</span>
+    <span class="k">if</span> <span class="n">best_state_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">mll</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">best_state_dict</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">mll</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
 
     <span class="n">msg</span> <span class="o">=</span> <span class="s2">"All attempts to fit the model have failed."</span>
     <span class="k">if</span> <span class="n">debug</span><span class="o">.</span><span class="n">off</span><span class="p">():</span>

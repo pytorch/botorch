@@ -86,10 +86,12 @@
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">qExpectedImprovement</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">qExpectedImprovement</span><span class="p">,</span> <span class="n">qLogExpectedImprovement</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">BadInitialCandidatesWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.fit</span> <span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
 <span class="kn">from</span> <span class="nn">botorch.generation</span> <span class="kn">import</span> <span class="n">MaxPosteriorSampling</span>
 <span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
@@ -103,8 +105,10 @@
 <span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">MaternKernel</span><span class="p">,</span> <span class="n">ScaleKernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.likelihoods</span> <span class="kn">import</span> <span class="n">GaussianLikelihood</span>
 <span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
-<span class="kn">from</span> <span class="nn">gpytorch.priors</span> <span class="kn">import</span> <span class="n">HorseshoePrior</span>
 
+
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="n">BadInitialCandidatesWarning</span><span class="p">)</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">RuntimeWarning</span><span class="p">)</span>
 
 <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"cuda"</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">"cpu"</span><span class="p">)</span>
 <span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">double</span>
@@ -117,15 +121,11 @@
 <div class="output">
 <div class="output_area">
 <div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>I0128 075923.913 _utils_internal.py:179] NCCL_DEBUG env var is set to None
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>I0128 075923.914 _utils_internal.py:197] NCCL_DEBUG is forced to WARN from None
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[KeOps] Warning : omp.h header is not in the path, disabling OpenMP. To fix this, you can set the environment
+                  variable OMP_PATH to the location of the header before importing keopscore or pykeops,
+                  e.g. using os.environ: import os; os.environ['OMP_PATH'] = '/path/to/omp/header'
+[KeOps] Warning : Cuda libraries were not detected on the system or could not be loaded ; using cpu only mode
 </pre>
 </div>
 </div>
@@ -369,7 +369,7 @@
     <span class="p">[</span><span class="n">eval_objective</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">X_turbo</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span>
 <span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
-<span class="n">state</span> <span class="o">=</span> <span class="n">TurboState</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">TurboState</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">best_value</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="n">Y_turbo</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
 
 <span class="n">NUM_RESTARTS</span> <span class="o">=</span> <span class="mi">10</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">2</span>
 <span class="n">RAW_SAMPLES</span> <span class="o">=</span> <span class="mi">512</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">4</span>
@@ -434,601 +434,131 @@
 <div class="prompt"></div>
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>44) Best value: -1.17e+01, TR length: 8.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>48) Best value: -1.17e+01, TR length: 8.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>52) Best value: -1.11e+01, TR length: 8.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>56) Best value: -1.04e+01, TR length: 8.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>60) Best value: -1.04e+01, TR length: 8.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>64) Best value: -9.41e+00, TR length: 8.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>68) Best value: -9.41e+00, TR length: 8.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>72) Best value: -9.41e+00, TR length: 8.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>76) Best value: -9.41e+00, TR length: 8.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>80) Best value: -9.41e+00, TR length: 8.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>84) Best value: -8.82e+00, TR length: 8.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>88) Best value: -8.82e+00, TR length: 8.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>92) Best value: -8.82e+00, TR length: 8.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>96) Best value: -8.36e+00, TR length: 8.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>100) Best value: -7.93e+00, TR length: 8.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>104) Best value: -7.93e+00, TR length: 8.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>108) Best value: -7.93e+00, TR length: 8.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>112) Best value: -7.93e+00, TR length: 8.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>116) Best value: -7.93e+00, TR length: 8.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>120) Best value: -7.93e+00, TR length: 4.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>124) Best value: -6.72e+00, TR length: 4.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>128) Best value: -6.34e+00, TR length: 4.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>132) Best value: -6.01e+00, TR length: 4.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>136) Best value: -5.51e+00, TR length: 4.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>140) Best value: -5.51e+00, TR length: 4.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>144) Best value: -5.51e+00, TR length: 4.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>148) Best value: -5.45e+00, TR length: 4.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>152) Best value: -5.27e+00, TR length: 4.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>156) Best value: -5.27e+00, TR length: 4.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>160) Best value: -5.27e+00, TR length: 4.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>164) Best value: -5.27e+00, TR length: 4.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>168) Best value: -5.06e+00, TR length: 4.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>172) Best value: -5.06e+00, TR length: 4.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>176) Best value: -5.06e+00, TR length: 4.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>180) Best value: -5.06e+00, TR length: 4.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>184) Best value: -5.06e+00, TR length: 4.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>188) Best value: -5.06e+00, TR length: 2.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>192) Best value: -4.32e+00, TR length: 2.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>196) Best value: -3.86e+00, TR length: 2.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>200) Best value: -3.69e+00, TR length: 2.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>204) Best value: -3.69e+00, TR length: 2.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>208) Best value: -3.69e+00, TR length: 2.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>212) Best value: -3.69e+00, TR length: 2.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>216) Best value: -3.41e+00, TR length: 2.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>220) Best value: -3.41e+00, TR length: 2.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>224) Best value: -3.41e+00, TR length: 2.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>228) Best value: -3.41e+00, TR length: 2.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>232) Best value: -3.41e+00, TR length: 2.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>236) Best value: -3.41e+00, TR length: 1.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>240) Best value: -2.95e+00, TR length: 1.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>244) Best value: -2.65e+00, TR length: 1.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>248) Best value: -2.65e+00, TR length: 1.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>252) Best value: -2.65e+00, TR length: 1.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>256) Best value: -2.54e+00, TR length: 1.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>260) Best value: -2.54e+00, TR length: 1.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>264) Best value: -2.54e+00, TR length: 1.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>268) Best value: -2.38e+00, TR length: 1.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>272) Best value: -2.38e+00, TR length: 1.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>276) Best value: -2.38e+00, TR length: 1.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>280) Best value: -2.38e+00, TR length: 1.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>284) Best value: -2.38e+00, TR length: 1.00e-01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>288) Best value: -2.38e+00, TR length: 5.00e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>292) Best value: -1.91e+00, TR length: 5.00e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>296) Best value: -1.91e+00, TR length: 5.00e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>300) Best value: -1.91e+00, TR length: 5.00e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>304) Best value: -1.31e+00, TR length: 5.00e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>308) Best value: -1.31e+00, TR length: 5.00e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>312) Best value: -1.31e+00, TR length: 5.00e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>316) Best value: -1.31e+00, TR length: 5.00e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>320) Best value: -1.31e+00, TR length: 5.00e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>324) Best value: -1.31e+00, TR length: 2.50e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>328) Best value: -1.31e+00, TR length: 2.50e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>332) Best value: -1.31e+00, TR length: 2.50e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>336) Best value: -1.31e+00, TR length: 2.50e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>340) Best value: -1.31e+00, TR length: 2.50e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>344) Best value: -1.31e+00, TR length: 1.25e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>348) Best value: -1.14e+00, TR length: 1.25e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>352) Best value: -1.14e+00, TR length: 1.25e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>356) Best value: -1.14e+00, TR length: 1.25e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>360) Best value: -1.14e+00, TR length: 1.25e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>364) Best value: -1.12e+00, TR length: 1.25e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>368) Best value: -1.12e+00, TR length: 1.25e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>372) Best value: -1.12e+00, TR length: 1.25e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>376) Best value: -1.12e+00, TR length: 1.25e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>380) Best value: -1.12e+00, TR length: 1.25e-02
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>384) Best value: -1.12e+00, TR length: 6.25e-03
+48) Best value: -1.17e+01, TR length: 8.00e-01
+52) Best value: -1.12e+01, TR length: 8.00e-01
+56) Best value: -1.04e+01, TR length: 8.00e-01
+60) Best value: -1.04e+01, TR length: 8.00e-01
+64) Best value: -9.42e+00, TR length: 8.00e-01
+68) Best value: -9.42e+00, TR length: 8.00e-01
+72) Best value: -9.42e+00, TR length: 8.00e-01
+76) Best value: -9.42e+00, TR length: 8.00e-01
+80) Best value: -8.75e+00, TR length: 8.00e-01
+84) Best value: -8.75e+00, TR length: 8.00e-01
+88) Best value: -8.75e+00, TR length: 8.00e-01
+92) Best value: -8.75e+00, TR length: 8.00e-01
+96) Best value: -8.27e+00, TR length: 8.00e-01
+100) Best value: -8.27e+00, TR length: 8.00e-01
+104) Best value: -8.27e+00, TR length: 8.00e-01
+108) Best value: -8.27e+00, TR length: 8.00e-01
+112) Best value: -8.27e+00, TR length: 8.00e-01
+116) Best value: -8.27e+00, TR length: 4.00e-01
+120) Best value: -6.45e+00, TR length: 4.00e-01
+124) Best value: -6.45e+00, TR length: 4.00e-01
+128) Best value: -6.45e+00, TR length: 4.00e-01
+132) Best value: -6.45e+00, TR length: 4.00e-01
+136) Best value: -5.85e+00, TR length: 4.00e-01
+140) Best value: -5.85e+00, TR length: 4.00e-01
+144) Best value: -5.85e+00, TR length: 4.00e-01
+148) Best value: -5.70e+00, TR length: 4.00e-01
+152) Best value: -5.70e+00, TR length: 4.00e-01
+156) Best value: -5.70e+00, TR length: 4.00e-01
+160) Best value: -5.70e+00, TR length: 4.00e-01
+164) Best value: -5.70e+00, TR length: 4.00e-01
+168) Best value: -5.70e+00, TR length: 2.00e-01
+172) Best value: -4.70e+00, TR length: 2.00e-01
+176) Best value: -4.45e+00, TR length: 2.00e-01
+180) Best value: -4.03e+00, TR length: 2.00e-01
+184) Best value: -4.03e+00, TR length: 2.00e-01
+188) Best value: -4.03e+00, TR length: 2.00e-01
+192) Best value: -4.03e+00, TR length: 2.00e-01
+196) Best value: -4.03e+00, TR length: 2.00e-01
+200) Best value: -3.97e+00, TR length: 2.00e-01
+204) Best value: -3.97e+00, TR length: 2.00e-01
+208) Best value: -3.97e+00, TR length: 2.00e-01
+212) Best value: -3.97e+00, TR length: 2.00e-01
+216) Best value: -3.77e+00, TR length: 2.00e-01
+220) Best value: -3.77e+00, TR length: 2.00e-01
+224) Best value: -3.71e+00, TR length: 2.00e-01
+228) Best value: -3.67e+00, TR length: 2.00e-01
+232) Best value: -3.67e+00, TR length: 2.00e-01
+236) Best value: -3.67e+00, TR length: 2.00e-01
+240) Best value: -3.67e+00, TR length: 2.00e-01
+244) Best value: -3.67e+00, TR length: 2.00e-01
+248) Best value: -3.67e+00, TR length: 1.00e-01
+252) Best value: -3.23e+00, TR length: 1.00e-01
+256) Best value: -3.23e+00, TR length: 1.00e-01
+260) Best value: -3.23e+00, TR length: 1.00e-01
+264) Best value: -2.73e+00, TR length: 1.00e-01
+268) Best value: -2.73e+00, TR length: 1.00e-01
+272) Best value: -2.39e+00, TR length: 1.00e-01
+276) Best value: -2.39e+00, TR length: 1.00e-01
+280) Best value: -2.39e+00, TR length: 1.00e-01
+284) Best value: -2.39e+00, TR length: 1.00e-01
+288) Best value: -2.39e+00, TR length: 1.00e-01
+292) Best value: -2.39e+00, TR length: 5.00e-02
+296) Best value: -2.15e+00, TR length: 5.00e-02
+300) Best value: -2.15e+00, TR length: 5.00e-02
+304) Best value: -1.83e+00, TR length: 5.00e-02
+308) Best value: -1.83e+00, TR length: 5.00e-02
+312) Best value: -1.83e+00, TR length: 5.00e-02
+316) Best value: -1.83e+00, TR length: 5.00e-02
+320) Best value: -1.83e+00, TR length: 5.00e-02
+324) Best value: -1.73e+00, TR length: 5.00e-02
+328) Best value: -1.73e+00, TR length: 5.00e-02
+332) Best value: -1.73e+00, TR length: 5.00e-02
+336) Best value: -1.73e+00, TR length: 5.00e-02
+340) Best value: -1.66e+00, TR length: 5.00e-02
+344) Best value: -1.66e+00, TR length: 5.00e-02
+348) Best value: -1.66e+00, TR length: 5.00e-02
+352) Best value: -1.66e+00, TR length: 5.00e-02
+356) Best value: -1.62e+00, TR length: 5.00e-02
+360) Best value: -1.28e+00, TR length: 5.00e-02
+364) Best value: -1.28e+00, TR length: 5.00e-02
+368) Best value: -1.28e+00, TR length: 5.00e-02
+372) Best value: -1.28e+00, TR length: 5.00e-02
+376) Best value: -1.28e+00, TR length: 5.00e-02
+380) Best value: -1.28e+00, TR length: 2.50e-02
+384) Best value: -1.05e+00, TR length: 2.50e-02
+388) Best value: -1.05e+00, TR length: 2.50e-02
+392) Best value: -1.05e+00, TR length: 2.50e-02
+396) Best value: -1.05e+00, TR length: 2.50e-02
+400) Best value: -1.04e+00, TR length: 2.50e-02
+404) Best value: -1.04e+00, TR length: 2.50e-02
+408) Best value: -1.04e+00, TR length: 2.50e-02
+412) Best value: -1.04e+00, TR length: 2.50e-02
+416) Best value: -9.62e-01, TR length: 2.50e-02
+420) Best value: -9.62e-01, TR length: 2.50e-02
+424) Best value: -9.62e-01, TR length: 2.50e-02
+428) Best value: -9.62e-01, TR length: 2.50e-02
+432) Best value: -9.62e-01, TR length: 2.50e-02
+436) Best value: -8.91e-01, TR length: 2.50e-02
+440) Best value: -8.91e-01, TR length: 2.50e-02
+444) Best value: -7.98e-01, TR length: 2.50e-02
+448) Best value: -7.98e-01, TR length: 2.50e-02
+452) Best value: -7.98e-01, TR length: 2.50e-02
+456) Best value: -7.98e-01, TR length: 2.50e-02
+460) Best value: -7.98e-01, TR length: 2.50e-02
+464) Best value: -6.43e-01, TR length: 2.50e-02
+468) Best value: -6.43e-01, TR length: 2.50e-02
+472) Best value: -6.43e-01, TR length: 2.50e-02
+476) Best value: -6.43e-01, TR length: 2.50e-02
+480) Best value: -6.43e-01, TR length: 2.50e-02
+484) Best value: -6.43e-01, TR length: 1.25e-02
+488) Best value: -6.43e-01, TR length: 1.25e-02
+492) Best value: -6.06e-01, TR length: 1.25e-02
+496) Best value: -5.59e-01, TR length: 1.25e-02
+500) Best value: -3.93e-01, TR length: 1.25e-02
+504) Best value: -3.53e-01, TR length: 1.25e-02
+508) Best value: -3.53e-01, TR length: 1.25e-02
+512) Best value: -3.02e-01, TR length: 1.25e-02
+516) Best value: -2.70e-01, TR length: 1.25e-02
+520) Best value: -2.27e-01, TR length: 1.25e-02
+524) Best value: -1.81e-01, TR length: 1.25e-02
+528) Best value: -1.81e-01, TR length: 1.25e-02
+532) Best value: -1.81e-01, TR length: 1.25e-02
+536) Best value: -1.81e-01, TR length: 1.25e-02
+540) Best value: -1.81e-01, TR length: 1.25e-02
+544) Best value: -1.81e-01, TR length: 6.25e-03
 </pre>
 </div>
 </div>
@@ -1038,13 +568,207 @@
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="GP-EI">GP-EI<a class="anchor-link" href="#GP-EI">¶</a></h2><p>As a baseline, we compare TuRBO to qEI</p>
+<h2 id="GP-LogEI">GP-LogEI<a class="anchor-link" href="#GP-LogEI">¶</a></h2><p>We compare TuRBO to qLogEI [2], a recent improvement to the expected improvement (EI) acquisition functions.</p>
+<p>[2]: <a href="https://proceedings.neurips.cc/paper_files/paper/2023/file/419f72cbd568ad62183f8132a3605a2a-Paper-Conference.pdf">Ament, Sebastian, et al., Unexpected Improvements to Expected Improvement for Bayesian Optimization. Advances in Neural Information Processing Systems. 2023</a></p>
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
 <div class="prompt input_prompt">In [8]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">X_logei</span> <span class="o">=</span> <span class="n">get_initial_points</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">n_init</span><span class="p">)</span>
+<span class="n">Y_logei</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+    <span class="p">[</span><span class="n">eval_objective</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">X_logei</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span>
+<span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Cap the number of evals when running smoke test</span>
+<span class="n">max_evals</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">Y_turbo</span><span class="p">),</span> <span class="n">n_init</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">batch_size</span><span class="p">)</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">Y_turbo</span><span class="p">)</span>
+<span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">Y_logei</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">max_evals</span><span class="p">:</span>
+    <span class="n">train_Y</span> <span class="o">=</span> <span class="p">(</span><span class="n">Y_logei</span> <span class="o">-</span> <span class="n">Y_logei</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">/</span> <span class="n">Y_logei</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+    <span class="n">likelihood</span> <span class="o">=</span> <span class="n">GaussianLikelihood</span><span class="p">(</span><span class="n">noise_constraint</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="mf">1e-8</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">))</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">X_logei</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">likelihood</span><span class="o">=</span><span class="n">likelihood</span><span class="p">)</span>
+    <span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+    <span class="n">fit_gpytorch_mll</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
+
+    <span class="c1"># Create a batch</span>
+    <span class="n">log_ei</span> <span class="o">=</span> <span class="n">qLogExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+    <span class="n">candidate</span><span class="p">,</span> <span class="n">acq_value</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
+        <span class="n">log_ei</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span>
+            <span class="p">]</span>
+        <span class="p">),</span>
+        <span class="n">q</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+        <span class="n">num_restarts</span><span class="o">=</span><span class="n">NUM_RESTARTS</span><span class="p">,</span>
+        <span class="n">raw_samples</span><span class="o">=</span><span class="n">RAW_SAMPLES</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">Y_next</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">eval_objective</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">candidate</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Append data</span>
+    <span class="n">X_logei</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">X_logei</span><span class="p">,</span> <span class="n">candidate</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">Y_logei</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">Y_logei</span><span class="p">,</span> <span class="n">Y_next</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Print current status</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">X_logei</span><span class="p">)</span><span class="si">}</span><span class="s2">) Best value: </span><span class="si">{</span><span class="n">Y_logei</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>44) Best value: -1.15e+01
+48) Best value: -1.04e+01
+52) Best value: -1.02e+01
+56) Best value: -9.98e+00
+60) Best value: -9.62e+00
+64) Best value: -9.10e+00
+68) Best value: -9.10e+00
+72) Best value: -8.87e+00
+76) Best value: -8.87e+00
+80) Best value: -8.75e+00
+84) Best value: -8.18e+00
+88) Best value: -7.58e+00
+92) Best value: -7.24e+00
+96) Best value: -6.86e+00
+100) Best value: -6.75e+00
+104) Best value: -6.35e+00
+108) Best value: -5.74e+00
+112) Best value: -5.43e+00
+116) Best value: -5.25e+00
+120) Best value: -4.66e+00
+124) Best value: -4.66e+00
+128) Best value: -4.66e+00
+132) Best value: -4.66e+00
+136) Best value: -4.55e+00
+140) Best value: -4.36e+00
+144) Best value: -4.24e+00
+148) Best value: -4.22e+00
+152) Best value: -4.22e+00
+156) Best value: -3.97e+00
+160) Best value: -3.86e+00
+164) Best value: -3.63e+00
+168) Best value: -3.63e+00
+172) Best value: -3.59e+00
+176) Best value: -3.59e+00
+180) Best value: -3.59e+00
+184) Best value: -3.59e+00
+188) Best value: -3.20e+00
+192) Best value: -3.20e+00
+196) Best value: -3.20e+00
+200) Best value: -3.20e+00
+204) Best value: -3.20e+00
+208) Best value: -3.20e+00
+212) Best value: -2.64e+00
+216) Best value: -2.64e+00
+220) Best value: -2.64e+00
+224) Best value: -2.62e+00
+228) Best value: -2.62e+00
+232) Best value: -2.62e+00
+236) Best value: -2.62e+00
+240) Best value: -2.49e+00
+244) Best value: -2.49e+00
+248) Best value: -2.49e+00
+252) Best value: -2.49e+00
+256) Best value: -2.49e+00
+260) Best value: -2.49e+00
+264) Best value: -2.49e+00
+268) Best value: -2.49e+00
+272) Best value: -2.12e+00
+276) Best value: -2.12e+00
+280) Best value: -2.11e+00
+284) Best value: -2.11e+00
+288) Best value: -2.11e+00
+292) Best value: -2.11e+00
+296) Best value: -2.11e+00
+300) Best value: -2.11e+00
+304) Best value: -2.11e+00
+308) Best value: -2.11e+00
+312) Best value: -2.11e+00
+316) Best value: -2.11e+00
+320) Best value: -2.11e+00
+324) Best value: -2.11e+00
+328) Best value: -2.11e+00
+332) Best value: -2.11e+00
+336) Best value: -2.11e+00
+340) Best value: -2.11e+00
+344) Best value: -2.11e+00
+348) Best value: -2.11e+00
+352) Best value: -2.11e+00
+356) Best value: -2.11e+00
+360) Best value: -2.11e+00
+364) Best value: -2.11e+00
+368) Best value: -2.11e+00
+372) Best value: -2.11e+00
+376) Best value: -2.11e+00
+380) Best value: -2.11e+00
+384) Best value: -2.11e+00
+388) Best value: -2.11e+00
+392) Best value: -2.11e+00
+396) Best value: -2.11e+00
+400) Best value: -2.11e+00
+404) Best value: -2.11e+00
+408) Best value: -2.11e+00
+412) Best value: -2.11e+00
+416) Best value: -2.11e+00
+420) Best value: -2.11e+00
+424) Best value: -2.11e+00
+428) Best value: -2.11e+00
+432) Best value: -2.11e+00
+436) Best value: -2.11e+00
+440) Best value: -2.11e+00
+444) Best value: -2.11e+00
+448) Best value: -2.11e+00
+452) Best value: -2.11e+00
+456) Best value: -2.11e+00
+460) Best value: -2.11e+00
+464) Best value: -2.11e+00
+468) Best value: -2.11e+00
+472) Best value: -2.11e+00
+476) Best value: -2.11e+00
+480) Best value: -2.11e+00
+484) Best value: -2.11e+00
+488) Best value: -2.11e+00
+492) Best value: -2.11e+00
+496) Best value: -2.11e+00
+500) Best value: -2.11e+00
+504) Best value: -2.11e+00
+508) Best value: -2.11e+00
+512) Best value: -2.11e+00
+516) Best value: -2.11e+00
+520) Best value: -2.11e+00
+524) Best value: -2.11e+00
+528) Best value: -2.11e+00
+532) Best value: -2.11e+00
+536) Best value: -2.11e+00
+540) Best value: -2.11e+00
+544) Best value: -2.11e+00
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="GP-EI">GP-EI<a class="anchor-link" href="#GP-EI">¶</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [9]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -1094,1392 +818,132 @@
 <div class="output_area">
 <div class="prompt"></div>
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>44) Best value: -1.15e+01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>48) Best value: -1.05e+01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>52) Best value: -1.02e+01
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>56) Best value: -9.78e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>60) Best value: -9.30e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>64) Best value: -9.30e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>68) Best value: -8.58e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>72) Best value: -8.58e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>76) Best value: -8.58e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>80) Best value: -8.58e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>84) Best value: -8.58e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>88) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>92) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>96) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>100) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>104) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>108) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>112) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>116) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>120) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>124) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>128) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>132) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>136) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>140) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>144) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>148) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>152) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>156) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>160) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>164) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>168) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>172) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>176) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>180) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>184) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>188) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>192) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>196) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>200) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>204) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>208) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>212) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>216) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>220) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>224) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>228) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>232) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>236) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>240) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>244) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>248) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>252) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>256) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>260) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>264) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>268) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>272) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>276) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>280) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>284) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>288) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>292) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>296) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>300) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>304) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>308) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>312) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>316) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>320) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>324) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>328) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>332) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>336) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>340) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>344) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>348) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>352) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>356) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>360) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>364) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>368) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>372) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>376) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>380) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>384) Best value: -8.19e+00
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/mnt/xarfuse/uid-25696/50ffb8fb-seed-nspid4026533582_cgpid14602017-ns-4026533579/botorch/optim/initializers.py:208: BadInitialCandidatesWarning:
-
-Unable to find non-zero acquisition function values - initial conditions are being selected randomly.
-
+<pre>44) Best value: -1.13e+01
+48) Best value: -1.04e+01
+52) Best value: -9.96e+00
+56) Best value: -8.97e+00
+60) Best value: -8.73e+00
+64) Best value: -8.73e+00
+68) Best value: -8.73e+00
+72) Best value: -8.68e+00
+76) Best value: -8.68e+00
+80) Best value: -8.68e+00
+84) Best value: -8.68e+00
+88) Best value: -8.68e+00
+92) Best value: -8.68e+00
+96) Best value: -8.68e+00
+100) Best value: -8.68e+00
+104) Best value: -8.68e+00
+108) Best value: -8.68e+00
+112) Best value: -8.68e+00
+116) Best value: -8.68e+00
+120) Best value: -8.68e+00
+124) Best value: -8.68e+00
+128) Best value: -8.68e+00
+132) Best value: -8.68e+00
+136) Best value: -8.68e+00
+140) Best value: -8.68e+00
+144) Best value: -8.68e+00
+148) Best value: -8.68e+00
+152) Best value: -8.68e+00
+156) Best value: -8.68e+00
+160) Best value: -8.68e+00
+164) Best value: -8.68e+00
+168) Best value: -8.68e+00
+172) Best value: -8.68e+00
+176) Best value: -8.68e+00
+180) Best value: -8.68e+00
+184) Best value: -8.68e+00
+188) Best value: -8.68e+00
+192) Best value: -8.68e+00
+196) Best value: -8.68e+00
+200) Best value: -8.68e+00
+204) Best value: -8.68e+00
+208) Best value: -8.68e+00
+212) Best value: -8.68e+00
+216) Best value: -8.68e+00
+220) Best value: -8.68e+00
+224) Best value: -8.68e+00
+228) Best value: -8.68e+00
+232) Best value: -8.68e+00
+236) Best value: -8.68e+00
+240) Best value: -8.68e+00
+244) Best value: -8.68e+00
+248) Best value: -8.68e+00
+252) Best value: -8.68e+00
+256) Best value: -8.68e+00
+260) Best value: -8.68e+00
+264) Best value: -8.68e+00
+268) Best value: -8.68e+00
+272) Best value: -8.68e+00
+276) Best value: -8.68e+00
+280) Best value: -8.68e+00
+284) Best value: -8.68e+00
+288) Best value: -8.68e+00
+292) Best value: -8.68e+00
+296) Best value: -8.68e+00
+300) Best value: -8.68e+00
+304) Best value: -8.68e+00
+308) Best value: -8.68e+00
+312) Best value: -8.68e+00
+316) Best value: -8.68e+00
+320) Best value: -8.68e+00
+324) Best value: -8.68e+00
+328) Best value: -8.68e+00
+332) Best value: -8.68e+00
+336) Best value: -8.68e+00
+340) Best value: -8.68e+00
+344) Best value: -8.68e+00
+348) Best value: -8.68e+00
+352) Best value: -8.68e+00
+356) Best value: -8.68e+00
+360) Best value: -8.68e+00
+364) Best value: -8.68e+00
+368) Best value: -8.68e+00
+372) Best value: -8.68e+00
+376) Best value: -8.68e+00
+380) Best value: -8.68e+00
+384) Best value: -8.68e+00
+388) Best value: -8.68e+00
+392) Best value: -8.68e+00
+396) Best value: -8.68e+00
+400) Best value: -8.68e+00
+404) Best value: -8.68e+00
+408) Best value: -8.68e+00
+412) Best value: -8.68e+00
+416) Best value: -8.68e+00
+420) Best value: -8.68e+00
+424) Best value: -8.68e+00
+428) Best value: -8.68e+00
+432) Best value: -8.68e+00
+436) Best value: -8.68e+00
+440) Best value: -8.68e+00
+444) Best value: -8.68e+00
+448) Best value: -8.68e+00
+452) Best value: -8.68e+00
+456) Best value: -8.68e+00
+460) Best value: -8.68e+00
+464) Best value: -8.68e+00
+468) Best value: -8.68e+00
+472) Best value: -8.68e+00
+476) Best value: -8.68e+00
+480) Best value: -8.68e+00
+484) Best value: -8.68e+00
+488) Best value: -8.68e+00
+492) Best value: -8.68e+00
+496) Best value: -8.68e+00
+500) Best value: -8.68e+00
+504) Best value: -8.68e+00
+508) Best value: -8.68e+00
+512) Best value: -8.68e+00
+516) Best value: -8.68e+00
+520) Best value: -8.68e+00
+524) Best value: -8.68e+00
+528) Best value: -8.68e+00
+532) Best value: -8.68e+00
+536) Best value: -8.68e+00
+540) Best value: -8.68e+00
+544) Best value: -8.68e+00
 </pre>
 </div>
 </div>
@@ -2495,7 +959,7 @@ Unable to find non-zero acquisition function values - initial conditions are bei
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [9]:</div>
+<div class="prompt input_prompt">In [10]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">X_Sobol</span> <span class="o">=</span> <span class="p">(</span>
@@ -2520,7 +984,7 @@ Unable to find non-zero acquisition function values - initial conditions are bei
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [10]:</div>
+<div class="prompt input_prompt">In [11]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib</span>
@@ -2531,8 +995,8 @@ Unable to find non-zero acquisition function values - initial conditions are bei
 <span class="o">%</span><span class="k">matplotlib</span> inline
 
 
-<span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"TuRBO-1"</span><span class="p">,</span> <span class="s2">"EI"</span><span class="p">,</span> <span class="s2">"Sobol"</span><span class="p">]</span>
-<span class="n">runs</span> <span class="o">=</span> <span class="p">[</span><span class="n">Y_turbo</span><span class="p">,</span> <span class="n">Y_ei</span><span class="p">,</span> <span class="n">Y_Sobol</span><span class="p">]</span>
+<span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"TuRBO-1"</span><span class="p">,</span> <span class="s2">"LogEI"</span><span class="p">,</span> <span class="s2">"EI"</span><span class="p">,</span> <span class="s2">"Sobol"</span><span class="p">]</span>
+<span class="n">runs</span> <span class="o">=</span> <span class="p">[</span><span class="n">Y_turbo</span><span class="p">,</span> <span class="n">Y_logei</span><span class="p">,</span> <span class="n">Y_ei</span><span class="p">,</span> <span class="n">Y_Sobol</span><span class="p">]</span>
 <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
 
 <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">run</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="n">runs</span><span class="p">):</span>
@@ -2553,7 +1017,7 @@ Unable to find non-zero acquisition function values - initial conditions are bei
     <span class="n">loc</span><span class="o">=</span><span class="s2">"lower center"</span><span class="p">,</span>
     <span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.08</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
     <span class="n">bbox_transform</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">gcf</span><span class="p">()</span><span class="o">.</span><span class="n">transFigure</span><span class="p">,</span>
-    <span class="n">ncol</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">ncol</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
     <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
@@ -2565,16 +1029,8 @@ Unable to find non-zero acquisition function values - initial conditions are bei
 <div class="output">
 <div class="output_area">
 <div class="prompt"></div>
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>I0128 080236.236 font_manager.py:1349] generated new fontManager
-</pre>
-</div>
-</div>
-<div class="output_area">
-<div class="prompt"></div>
 <div class="output_png output_subarea">
-<img alt="No description has been provided for this image" src="data:image/png;base64,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
-"/>
+<img alt="No description has been provided for this image" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA+IAAAKBCAYAAADTDRELAAAAOXRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjkuMCwgaHR0cHM6Ly9tYXRwbG90bGliLm9yZy80BEi2AAAACXBIWXMAAA9hAAAPYQGoP6dpAACk+UlEQVR4nOzdd5hU1f3H8c/M7mxn+7K0pQlSBZEmEgNIsUeNBREFrFE00aBG/GlEEhWNJcZuEgU7tphEbCDFiihN6Yj0snS2lyn398dmx71Tts5O2Xm/nmcf55577rnfGc5e57vn3HMthmEYAgAAAAAAQWENdQAAAAAAAEQTEnEAAAAAAIKIRBwAAAAAgCAiEQcAAAAAIIhIxAEAAAAACCIScQAAAAAAgohEHAAAAACAICIRBwAAAAAgiEjEAQAAAAAIIhJxAAAQEnPmzJHFYpHFYtGUKVOa3F51WxaLpenBAQDQjEjEAQBhb/v27frHP/6hyy+/XP3791dGRoZsNpsyMzPVr18//eY3v9Fnn33W6Pa/++47TZ06Vb1791ZqaqpSU1PVu3dvTZ06Vd999129Y6yZCNb8sVqtatWqlTp06KA+ffro3HPP1b333qt58+apvLy80XE31uWXX26K76GHHgp6DAAARDOLYRhGqIMAAMCXVatW6frrr9e3335br/ojR47USy+9pI4dO9arfmVlpW6//XY9+eST8ve/Q4vFoptvvll/+ctfZLPZ/La1fft2denSpV7nrSkzM1OTJk3StGnTlJeX1+DjG6qoqEht2rRRaWmpu6xXr15av359s5/b05w5c3TllVdKkiZPnqw5c+Y0qb2aI+F8vQEAhLPYUAcAAIA/mzZt8krCjz/+ePXt21fZ2dk6duyYvv76a+3evVuStGTJEg0bNkxffPGFunbtWmf71157rV5++WX3dteuXXXyySdLkr755htt3bpVhmHo8ccfV2FhoV544YV6xz5p0iS1atXKvV1ZWamjR4/qwIEDWrVqlYqKiiRJR44c0eOPP67Zs2fr6aef1sSJE+t9jsZ4++23TUm4JG3YsEHfffedBg8e3KznBgAAVUjEAQBhr1u3brrmmmt0+eWXq3379qZ9LpdLc+bM0W9/+1uVlpZq7969mjhxor7++uta7xV+8cUX3Um41WrVo48+qt/97neyWq3udp944gndeuutcrlcevHFFzVixAhNmjSpXjHPnDlTnTt39rnP5XJp5cqVeuqpp/T666/LbreroKBAl19+ufbt26fbbrutXudojJdeesn9OjExUWVlZe5yEnEAAIKDe8QBAGGrbdu2mj17tjZu3Kg77rjDKwmXqpLoq666Sq+++qq77JtvvtH8+fP9tltRUaF7773Xvf2HP/xBt9xyizsJr273lltu0e233+4uu+eee1RZWdnEd1XV9qBBgzRnzhx99dVXpqn0d9xxhz744IMmn8OXbdu26YsvvpBUNY37kUcece974403AvLeAABA3UjEAQBha8SIEZoyZYpiYmLqrHvBBRdoyJAh7u3aktn//ve/2rVrlyQpLS1Nf/zjH/3Wveeee5SamipJ2rFjR8CT5MGDB2vRokXuc7hcLt1yyy1yOp0BPY8kvfzyy+57p0eMGKHrrrtOOTk5kqqmyM+bNy/g5wQAAN5IxAEALcbw4cPdr7dv3+633r///W/36/HjxyspKclv3aSkJF1yySXu7ffee69JMfpy3HHHmUant2zZorfeeiug5zAMw3Q//BVXXKHY2Fhdeuml7rKa09bry+l06q233tKkSZPUo0cP94r2WVlZGjp0qG6++WYtXLiwyYun7dy5Uz179nSv9D506FAdPny4SW2WlJTo2Wef1bnnnqtOnTopKSlJrVq1Uvfu3XXVVVdp0aJFfo9dtWqVO5aMjIx6r35fVFSklJQU97E//PBDk94DACAykYgDAFqMmveE1zaivHjxYvfrkSNH1tnuqFGj3K9rS86aYtKkSe7RaUmaO3duQNv/8ssvtXXrVklSQkKCLrroIklVCXm1jz76SAcPHqx3m1988YV69+6t8ePH65VXXtHmzZt17NgxORwOHTlyRN9++62eeOIJjRkzRnfeeWejY1+3bp1OOeUUbdq0SZI0duxYLVq0SFlZWY1u8+2331a3bt00depUzZs3Tzt37lRZWZmKi4u1ZcsWzZ49W6NHj9a5556rgoICr+MHDBiggQMHSpKOHTumd999t17nffPNN1VSUiKpajZEv379Gv0eAACRi0QcANBirFmzxv3a36PACgoKtG/fPvf2SSedVGe7Nevs2bNHhYWFTYjSt/j4eJ177rnu7S+//DKgj+CqOdp93nnnuafCDx48WD179pQk2e12vf766/Vqb+7cuRo9erQ2b97sLjv+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XrRoUZNi9FSdjP/mN7+RVDUVPJDJeM17zqv7USD5GhWvOTp+5ZVXNuk56ACAFsQAACDMVVZWGmeddZYhyZBkxMfHGwsWLGh0e2+99Za7rfT0dKO0tNRv3dLSUiM9Pd1d/9133/VZb9u2be46koxt27bVO54tW7YYqamp7mN79eplOJ3Ohr4tk1/96lfu9s4999wGHdu3b1/3sXfddZdp37Jly9z7LBaLsX79+kbHOHv2bHdbkydPdpe7XC7jN7/5jXtfbGys8dZbb9XZXs3P35c333zTvb9t27ZGWVlZo2P35ejRo0ZiYqIhyUhJSTF27dplJCQkGJIMq9Vq7Ny5M6DnAwBELv4sCwAIa9X3C1c/Azo2NlZvvfVWk6b4/upXv1KHDh0kSceOHdP999/vt+6f//xn96JlnTp1Mt1HHQjLly/XaaedpsLCQklSTEyMHn/88SaNnB48eFAfffSRe/vyyy9v0PE167/yyisyDMO9PWTIEA0fPlxS1f3PkyZNCui94lLVyPizzz6r6667TlLVyPhll12mt99+u0ntXnjhherWrZukqlX3p06danpvtSkuLlZJSUmtddLT03XJJZe461900UXuxQDHjRunvLy8JkQPAGhJSMQBAGHLMAxdffXVeueddyRJVqtVr7zyin71q181qd34+HjNnDnTvT1r1iw98cQT7pWtJcnlcumJJ57QQw895C7705/+pLi4uCadu7rt5cuX68orr9Tw4cNNi8H99a9/1bhx45rU/uuvvy673S6panG1c889t0HHT5gwQRaLRVLVQnWLFy827X/iiScUHx8vqeoPCb/85S9NC83VlJ+fr0ceeUQPP/xwg2KwWCx67rnnApqMx8TE6Nlnn1VMTIwkafbs2Tr77LPdK8v7snr1at1xxx3Ky8ur1z3xNaen1/xMWKQNAFCTxajvn4IBAAiyZ555RjfeeKN7u3v37g1KUp966qla90+aNEmvvPKKe/u4445z3wP9zTffuB+PJlXd3/viiy/6bWv79u2mldsnTZpkWmG8srJSx44d08GDB7Vy5Ur3CHi1jIwMPfvss+7HYDXFSSed5F6EbvLkyZozZ06D2xgxYoQ+//xzSVXvxXPhttdee01TpkwxPdKrR48eGjBggNLS0lRQUKD169dr7dq1crlcuvnmm/X444+b2pgzZ46uvPLKWuM0DEO/+c1v9I9//ENS1YyIN954QxdddJFX3eo/HlQf588//vEP3XDDDXI6ne7jevfurX79+ik1NVWlpaXat2+fvv/+ex08eNB93Jo1a9S3b1+/7Vbr27eve1V/SWrdurV2795tekQbACDKhW5WPAAAtZsxY4bpvt+G/tSloqLCuOmmmwyLxeK3DYvFYvzud78zKisra23L8x7x+v5kZWUZ06ZNM3bv3h2Qz+yHH34wtd/Ye+n//ve/u9tITk42ioqKvOosXLjQ6NKlS73ep+e95obh/x5xTy6Xy7j22mtN94y//fbbXvUa8m+/aNEio3v37vX+d+rTp4+xZ8+eOts1DMN4/PHHTcfedttt9ToOABA9YpuWxgMAELni4uL05JNP6oorrtCLL76oJUuWaM+ePZKqHlM2cuRIXX311aaVxBsrOTlZaWlpSktLU9euXTVo0CANGTJEo0ePdk/zDoSaI9dt27Zt9CrvF110kX7729+qoqJCJSUleueddzRlyhRTndNOO02bNm3S3LlzNW/ePC1fvlwHDhxQRUWF0tLS1K1bNw0bNkwXXHBBkx7HZrFY9Pzzz0uqGs12OByaMGGCO87GGDVqlDZs2KB///vf+uCDD/TNN98oPz9fhYWFSkpKUm5urnr27KlTTjlFZ555pk488cR6t/3rX/9at9xyi3ubaekAAE9MTQcAAAigl156yf1Hi1/84hf64osvQhsQACDssFgbAABAANV8dnjNxdsAAKjGiDgAAECArFq1SieddJIkKTMzU3v27FFCQkKIowIAhBtGxAEAAAKgvLxcv/3tb93b119/PUk4AMAnRsQBAAAa6amnntKWLVt07NgxLVy4ULt375YkZWdna9OmTcrMzAxxhACAcMSq6QAAAI30zjvv6LPPPjOVxcTE6IUXXiAJBwD4RSKOZuFyubR37161atVKFosl1OEAANAsnE6n+3V6erqGDh2qadOm6eSTT1ZhYWEIIwPQkhmGoaKiIrVr105WK3cbRyKmpqNZ7N69W3l5eaEOAwAAAGixdu3apQ4dOoQ6DDQCI+JoFq1atZIkbdu2jal5MLHb7Zo/f77GjRsnm80W6nAQJugX8IV+AX/oG/AlmvpFYWGh8vLy3N+5EXlIxNEsqqejt2rVSqmpqSGOBuHEbrcrKSlJqampLf5/kqg/+gV8oV/AH/oGfInGfsEtoJGL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ajzxxBPuxOLuu+820tLSjPHjx7uTvaKiIuOuu+5yt7FgwQKvc1cnXGlpaUZ8fLzx3HPPGWVlZYZhVCVGF110kfv4//znP17H//Of/3Qnnffff7+xb98+wzAMw+FwGMuXLzdOO+00Q5LRoUMHo6ioyOfnXJ2k3HHHHcaBAwcMwzCM8vJyr6TVH4fDYQwdOtT9Pl599VWjoqLCMAzD+Omnn4xzzjnHnYx9+OGHXsfPnj3b9O/dGHfffbchyWjdurXx9NNPG4cPHzYMwzAqKyuNxYsXGwMGDDAkGSeddJLhdDrdxy1btsz9+W7YsMFn2zt27HAngIsWLTLt+/Of/2w8/PDDxpo1awy73W4YRtUfBdauXWtMnDjRkGQkJycbe/bs8Wq3ORPx559/3pgxY4axfPly97+Fy+Uytm7datx8882GxWIxYmJi6vwDTW1qS8SffPJJ9+d63XXXuftlcXGx8de//tX9xwpff6CqPn96erphtVqNO++80zh48KBhGIZRUFBg3HPPPe62X3jhBdOx27dvd/9Ratq0aabP/dixY8YXX3xhTJ061Vi+fHmt7w0A4B+JOAC0UJ6JuGEYxgUXXGBIMk488UTD5XK5y4OViPfp08coLy/3OvaKK65w1xk7dqwptmrVI91XX321177qhMtXUmEYVUndL3/5S3cMNRUWFrpHzj/++GOf781utxsDBw40JBl//etfTftqjppOmzbN5/H1MXfuXHc7n3zyic8YqhP1vn37eu1vaiK+bds2IyYmxkhMTDRWr17ts05hYaHRoUMHQ5Lx3nvvmfb16NHDPSvBlwceeMCQZHTs2NHnv29tzj77bEOS8ec//9lrX3Mm4nWpngngq082NREvLS01MjMzDUnGhAkTfB77xBNPuPuMZ1Jcs1/6e/+//vWvDUnGmDFjTOVvvvmmIck4/vjja40dANB43CMOAFHkgQceUExMjFavXq033ngj6Of//e9/r/j4eK/y008/3f16+vTpslgsfuv88MMPftvPy8vTlVde6VVutVp19913S5LWrVvnXmFcqrqn+9ixYxowYIApjppiY2M1YcIESVX3zfpitVp1xx13+I2tLm+++aYkadiwYRo3bpzPGGbMmCGp6l72mu8hEObMmSOn06kzzjhD/fv391mnVatWOv/88yV5fw5XXHGFJOm1116TYRhex77yyiuSpIkTJ/r8963N2WefLUn68ssvG3Rcc2vOuBYsWOC+B9vfPe5Tp051P/bs9ddf91knPj5et912m8995513niTv36n09HRJUlFRkWntBgBA4JCIA0AU6dmzpztR/eMf/1ivxc8CaciQIT7Lc3Nz3a8HDx5ca52jR4/6bb96cS5fTj31VMXGxkqSli9f7i7/6quvJEkbNmxQmzZt/P786U9/klS1GJov3bp1U+vWrf3GVpfqmMaMGeO3zqhRoxQTE+P1HgKh+nOYP39+rZ/D7NmzJXl/DldccYUsFot27typzz77zLRvxYoV2rBhgyRp0qRJPs///fffa+rUqerXr59SU1NltVrdi5tNnTpVkrR79+6Avuf62Lp1q2677TYNHDhQ6enpiomJccd11llnNVtc1f++eXl5Ov74433WiYmJ0WmnnWaq76lPnz5+V9Jv166dJHktujZkyBBlZ2dr3759Gjp0qJ566ilt3LjR5x9YAACNExvqAAAAwXXvvffqtdde09atW/Xcc8/pt7/9bdDO3apVK5/l1QlyferU9seD9u3b+92XkJCgrKws7d+/XwcOHHCX7927V1LVauW1rSBdreZq3zU1JQmX5I6prveQnZ3t9R4CofpzKCkpqdcoqOfn0LFjR40YMUJLlizRK6+8YlqFvHo0fPDgwerZs6dXW0899ZRuvvlmuVwuSZLFYlFaWpp79kRZWZkKCwuDPjr73nvvacKECaqoqHCXpaamKiEhQRaLRZWVlTp69GizxFWf/iBJHTp0MNX35O/3Sfr5d8rhcJjK09PT9cYbb+iyyy7TunXr3NeItLQ0/fKXv9Qll1yi8ePHy2az1e/NAAC8MCIOAFGmffv27i/W9913n9fjqKJN9eOfxo8fL6Nq7ZRaf/w9wq16pDpSVX8Od9xxR70+hyVLlni1UT3a/c4776isrExSVZJXfRtE9fT1mjZs2KBbbrlFLpdLF198sb799luVl5fr6NGjys/PV35+vh577DFJCuqI7OHDhzVlyhRVVFTotNNO05IlS1RaWqqCggLt379f+fn5evvtt4MWT7CNGTNG27Zt08svv6zJkyere/fuKigo0Pvvv68rrrhCAwYM0J49e0IdJgBELBJxAIhC06dPV0ZGhg4cOKBHH3201ro1R6trGzEuKCgIWHyNVVtiUFFRocOHD0syj163adNGkv8p58FSHVNt05zLy8t9vodACMTncNFFFykxMVGFhYX6z3/+I6lqqvuBAwdks9nc99nX9M4778jpdKpXr16aO3euBg8erLi4OFOd/Pz8RsVT3Xcb028//PBDFRYWKiMjQ++//75GjBihxMTEgMRVH/XpDzX3B7o/SFJycrKuuOIKzZkzR5s3b9bu3bv10EMPKSEhwTRSDgBoOBJxAIhCGRkZmj59uiTp0Ucf1cGDB2utW23Xrl0+62zevFnHjh0LaIyN8dlnn/kdNf3iiy/cU3AHDRrkLh8+fLikqvuY9+3b1/xB+lEd08KFC/3WWbJkifs9+LuXvrGqP4dPP/20XlP0fam5mFv1dPTq/5555pnKzs72Oqa6T/Xv319Wq++vJZ9++mmj4qnuu/76rSQtW7bMZ3n1MT169FBSUlKD46p+L40dxa/uD7t379bmzZt91nE6nVq8eLGkwPcHX9q3b68//OEPuvXWWyVVLSgHAGgcEnEAiFK//e1v1aFDBxUVFenPf/6z33rJyck67rjjJFWtMO7L/fff3ywxNtTOnTv10ksveZW7XC498MADkqTevXvrhBNOcO+7+OKLlZ6eLrvdrmnTptWaOLlcrmb7g8Oll14qSVq6dKnmz5/vtd/hcLgXjOvbt6/69u0b0PNfddVVio2N1aFDh9yrs/tTWVnp95aG6unp8+fP148//ugeGfe3SFtaWpokac2aNT4/+48++sjnNPj6qF79/ZNPPvF5H/eiRYu0dOnSWuPavHmzzz9MrF692u9K5VLVveSSGt1fxo4dq6ysLEn+V01//vnn3ff2+5pt0Fg174n3pXpmgL8/nAAA6sYVFACiVGJiovsL/vvvv19r3eov+S+++KKeeeYZ9/2/u3bt0jXXXKM333zT76hhMKWlpemGG27QP/7xD3fytGvXLk2YMME9cnjfffeZjklPT9fjjz8uSZo7d67OPvtsLVu2zL1wmMvl0oYNG/Too4+qT58+mjdvXrPEfuGFF2ro0KGSpEsuuUSvv/66e2G6bdu26cILL3QnjX/5y18Cfv7jjjtOf/zjH93tT5o0SWvXrnXvdzgcWr16tf70pz+pW7duWr16tc92xo4dqzZt2sjhcOiyyy5TWVmZMjIydM455/isf8YZZ0iqeqzcjTfe6F7Bu6SkRM8//7wuuugid0LaUJdccomsVqsOHz6sCRMmuKdxl5WV6aWXXtIFF1ygzMxMn8eOGzdOVqtVR44c0cSJE923PVRWVuqtt97SuHHjal0IrfoPJevWrdPXX3/d4Nhr/n6+8cYbuv7667V//35JVQvlPfHEE7rlllskVa1vMHDgwAafw5+HHnpIZ555pl555RXT1PiKigq99dZbevjhhyX9/Pg2AEAjBO2J5QCAoJoxY4YhyejUqZPfOg6Hw+jZs6chyf2zePFir3pFRUVG79693XWsVquRnp5uSDJsNpvxxhtvGJ06dTIkGbNnzzYdu23bNvdx27Zt8xnH4sWL3XX8mT17tt/3M2LECEOSceeddxq/+MUv3HFlZGSY3tvdd9/tt/1nn33WiIuLc9eNj483srKyDJvNZmrj1VdfNR1X/TmPGDHCb9v1tXv3bqNPnz7uc8XFxbk/5+rP/W9/+5vPY2v7fOrL5XIZf/zjHw2LxeI+Z2JiopGVlWXExMSYPocvv/zSbzvTpk0z1f3Nb35T63kvvfRSU/309HT3+QYOHGg8+eSTft9bXZ//PffcY2o7LS3NiI2NNSQZ559/vnH33Xf7Pf6OO+7wOra6P3Tp0sV47bXX/PZbu91u9OjRw70/IyPD6NSpk9GpUyfj7bffdtebPHmyIcmYPHmyz/h///vfu9uwWCxGRkaGO35JxqhRo4zCwsIGfy6G4f/3rvrYmn0gMzPT1C969epl7Nu3z2/bAIDaMSIOAFEsJibGPWW7NikpKfryyy81bdo0denSRbGxsbLZbO5R2upp1aEWFxenhQsX6oEHHlCPHj1UUVGhtLQ0jR49Wh988EGtU/Cvv/56bdq0Sbfddpv69++v+Ph4HTt2TCkpKRo0aJB++9vfasGCBQGdAuypffv2Wr58uR577DGdfPLJSkxMVGlpqfLy8nTFFVdoxYoV+t3vftds57dYLPrTn/6kH374QVOnTlWvXr0UExOjgoICZWRk6JRTTtHtt9+ur7/+2n1PuS+e09D9TUuv9tprr+nxxx9Xv379FB8fL6fTqRNOOEGzZs3SV1995fc52PUxc+ZMvfLKKzr55JOVnJwsp9OpE088Uc8995z+9a9/1bra/YMPPqiXX35ZQ4YMUWJioux2u7p166b/+7//06pVq9zP4fYlNjZWCxcu1DXXXKMuXbqopKREO3bs0I4dOxr0pILHHntMixYt0oUXXqjc3FwVFxerVatWGjVqlF588UUtWLCg1pH5xrjuuuv097//XRMmTFDfvn2VlJTkXrju1FNP1eOPP66VK1e6F/gDADScxTCC+CwQAAAAAACiHCPiAAAAAAAEEYk4AAAAAABBRCIOAAAAAEAQkYgDAAAAABBEJOIAAAAAAAQRiTgAAAAAAEFEIg4AAAAAQBCRiAMAAAAAEEQk4gAAAAAABBGJOAAAAAAAQUQiDgAAAABAEJGIAwAAAAAQRCTiAAAAAAAEEYk4AAAAAABBRCIOAAAAAEAQkYgDAAAAABBEsY05yOFwyOFwBDoWAAAAAAAiitVqlc1mk8ViqfcxDUrES0tLdejQIZWUlDQ4OAAAAAAAWiKbzaZWrVopOztbMTExdda3GIZh1KfhyspKbdu2TTabTZmZmYqPj29Qxg8AAAAAQEtiGIacTqeKi4tVUFCg+Ph45eXl1ZmM1zsR3717t8rLy9WlS5d6ZfgAAAAAAESLsrIy7dy5U+np6crNza21br0WazMMQ6WlpUpLSyMJBwAAAADAQ2JiolJTU1VUVKS6xrvrlYjb7XY5nU4lJiYGJEAAAAAAAFqaVq1ayW63y26311qvXom4y+WSJEbDAQAAAADwozpnrs6h/WnQc8RZnA0AAAAAAN/qmzM3KBEHAAAAAABNQyIOAAAAAEAQkYgDAAAAABBEJOIBYLFYGvwzcuTIBp9nzpw5Xu1YrValpqZqwIABuvPOO3Xw4MEGxWm1WpWWlqbBgwdr1qxZKi0trTWGkpISPfbYYxo5cqRyc3MVFxen1q1ba8SIEXr00UdVXFzc4PdV06ZNm/Tkk09qypQpOuGEExQbGyuLxaL77ruvSe0ifHTu3FkWi0Vz5swJdSgm27dvr/fv7/bt230eV7Mckae6b9b1U7Pvhmt/RsP9+OOPuummm9S7d28lJycrISFBHTp00ODBg3XTTTfp3XffbfI5lixZ0ujvAI1R/b1hypQpQTkfmt+SJUt07bXXqnfv3srIyJDNZlNWVpaGDBmim266SZ9++qnPRyZNmTIloNeq6mtfsP6/V339jWTV3xc6d+4c6lBqFei+Emj33nuvLBaL7r333lCH0mSxoQ6gJZg8ebJXWX5+vj755BO/+3v27Nno8yUnJ+uiiy6SJDmdTu3YsUNLly7V6tWrNXv2bH3xxRfq3r273+NPP/10tWnTRpLkcDi0a9cuff3111q+fLleffVVffHFF8rMzPQ67quvvtJFF12k/Px8xcfHa/jw4crNzdWBAwf01Vdf6fPPP9fDDz+sd999V8OHD2/Ue3v22Wf1t7/9rVHHAoFy4YUXKiUlxe/+2vYh8g0fPlzdunXzu7+2fYhM//rXv3TZZZepoqJCWVlZGj58uHJycnT06FGtXr1aTz/9tObOnasLL7ww1KEiSh06dEgTJ07U/PnzJUnt27fX8OHDlZaWpoKCAq1du1ZPP/20nn76aQ0YMEArV64MccTRp3PnztqxY4e2bdsW9sk2wgOJeAD4+ovRkiVL3Il4oP+ilJ2d7dXmunXrNGLECO3fv1+33HKLPvjgA7/HT58+3euv8Zs3b9bw4cO1fv16PfDAA3rkkUdM+5ctW6bRo0eroqJCEyZM0JNPPqmsrCz3/qNHj+p3v/udXn31VY0ePVqff/65hgwZ0uD31rdvX912220aMGCATjrpJD3wwAN65ZVXGtwO0BSPPPII/xONYtdccw0jiFFk//79mjx5sioqKnTrrbfqvvvuU0JCgqnOihUr9M4774QoQkS7Y8eO6Re/+IU2bdqknj176plnntGoUaO86q1du1Z//etfNXfu3BBEibq0b99eGzZskM1mC3UoCBMk4v/f3r1HRVXtcQD/DjDDMAICAl5BJRRT0ixRJFERQRGNq4bK00KwRFOsKG+pGaubplfLzGfqSg2f+M5XippggoaioPlOESMN5Z0DDI/53T9Yc2KcGRgeouDvs9ZZS+ecfc6ewzln9m+f/WghunfvjujoaMyePRtHjx6FQqGAsbGx3ulffPFFREZGYt68eTh+/LjaurKyMgQFBUGhUMDf3x+bN2/WaB5kaWmJ2NhYKBQK7NixA0FBQbh+/XqdHzZvv/222v8NDLj3BGOMsSfnwIEDePToEezs7DQqoVV69+6N3r17N3HOGKsSFRWF69evo1OnTkhOToalpaXW7Xr06IHvv/8ekZGRTZxDpg+xWNygFrGs5WlwlKNUEnIfKZr1olRq9qV5kjw9PSESiZCQkKB1fX37PvTs2RMAUF5ejry8vDrnq3pz9eq2bt2KO3fuQCwWY8WKFTr76IhEIixbtgwSiQQZGRnYsmVLnfPQYimVgDyneS9K5VM5dVlZWYiKikKXLl0glUrRunVr9O/fH6tXr0ZlZaXWNESEdevWoU+fPpDJZGjTpg2GDx+O5OTkJu+j+axTkhJ5pXnNelHS07k2mztSKlGRl9esF2qE51J2djYAwMbGps5p8/LyMGvWLHTv3h0ymQxmZmbo3bs3Fi5ciJKSkhrTFhcXY9asWXBycoJUKoWdnR0mTpyIP//8U2eaa9euITw8HA4ODjA2NoaVlRW8vb2xffv2Oue9OXn48GG9l5r+Djk5OfXer1wu17nf+pTBdLl165ZQnvrmm290BuHV1adF4rZt2+Dt7Q0rKysYGxvDwcEBERERuHHjRq1p9+zZgwEDBsDc3BxmZmbw9PTEoUOHtG6bmZmJ//3vf/Dy8kLHjh1hbGwMCwsLDBgwAKtXr4aykcsaxcXFWLBgAVxcXGBmZgaZTIbu3bvj008/RX5+vsb21ftxV1RUYOHChejevTtMTExgbW2NgIAAXLt2TS2NaiyGzMxMAICjo6PauCKq8n5NfcSr94HftGkT+vbtC1NTU9jY2CA4OBh3794FUFW+Wb58OV599VW0atUK1tbWmDBhAh48eKCxz/LycmzatAmhoaHo1q0bzM3NYWJigq5du2L69Om4d+9eQ06tYObMmRCJRJg8ebLObX777TeIRCK0bdsW5eXlwue7d+/G22+/jR49esDS0hJSqRSOjo6IiIjA9evX65SP2uKn2sp/9+7dQ3R0NJydnYXnuaurK5YvX64RGzWWBr8Rzy8uQ++5xxojL09N6qdD0MZU/7fHz6qioiIAgKGhIaytreucPiUlBUDV2/Xq9u7dCwDw8fERgnVd2rZtCx8fHxw4cAD79u3T2j/+uVSSByzq/LRz0TAzbgGt6n5dNcTZs2fh6+uLvLw8dOzYEaNHj0ZhYSESEhKQnJyMPXv2YN++fZBIJGrppk6dilWrVsHAwAADBw5Eu3btcOnSJXh4eOD9999v0u/wrCtQFGBQ3KCnnY0GSQxMhJVUc1wLVrPKggLcdK/feB7Pii7JSTDSMqZJXXTs2BFAVUHx+PHj8Pb21ivd7du34eXlhczMTNjY2GDEiBEoLy/HiRMn8PHHHyMuLg7Hjh3TGjiVlZXB29sbFy9ehKenJ1xcXHDq1CmsW7cOhw4dwsmTJzXGejl48CDGjh2L0tJSdO3aFf7+/njw4AESExPx888/48iRI/j+++8bdC6eVba2tvVOu3z5ckydOlXrOmdnZ+Tk5NRrvzExMToL/AMHDsTly5frtd/HHThwAEqlEpaWlvDz82uUfVZHRJgwYQJiY2NhZGQEDw8P2Nra4vz581i/fj3i4uKwa9cu+Pr6ak2/dOlSfPPNN+jTpw/8/Pxw69YtJCYmIjExEUuXLkVUVJTa9hs3bsScOXPg6OiIF198Ef3798f9+/dx+vRpJCUlIT4+Hjt37myUgdny8vLg7e2NtLQ0mJubw8vLC2KxGImJiZg3bx62bNmCn3/+WWdXtMDAQOzfvx+DBg1Cz549kZKSgh07duCnn35CfHw8+vXrB6Bq3JCwsDDs3LkTcrlcY5yZ2srO1c2cORNfffUVPDw8MHz4cKSkpGDbtm1ISkpCeno6Jk+ejH379sHT0xOdOnVCUlISfvjhB1y4cAFnz55VKw9lZ2fjzTffROvWreHs7IyePXtCLpcjLS0Ny5Ytw7Zt25CcnNzgcU/Cw8OxYMECxMXFYcmSJRpdewBg/fr1AIDx48ertZYNCAiAsbExXnrpJXh5eaGiogK//fYb1q9fj+3btyM+Ph7u7u4Nyp8+Tp48idGjRyM/Px8vvPAChg4dCoVCgZSUFERFRWH//v04cOBAo3cr4KbpLYiqX7ivr6/eF0pFRQWysrIQGxuLTZs2QSaTYcaMGWrbpKamAtC/htXV1RUHDhzAuXPn6pB7xtQpFAqMGzcOeXl5mDx5MpYuXSpc17dv34a3tzeOHDmCzz//HPPmzRPS7du3D6tWrYKpqSmOHDmi9gBfvHgxPvzwwyb/LoyxZ9fo0aNhb2+PP//8E0OHDsWgQYPg7e0NFxcXuLq66nxTHhISgszMTIwcORJbtmxBq1atAFS9vfX19cX58+cxbdo0bN68WSPt6dOn4eTkhKtXrwoVAaWlpRg/fjx27dqFt956C6dPnxa2z87ORmhoKEpLSzF37lzMmjVLCFTOnTsHHx8frFu3Dq+99hreeeedxj5F7ClSlcFcXFyeSHe91atXIzY2FtbW1jh69CheffVVAFUB+ueff47PP/8cwcHBuHHjhtZ7YcmSJcJbV5W4uDgEBwcjOjoagwcPRo8ePYR1w4YNw+jRo9U+A6reRo4YMQK7d+/Gzp07MW7cuAZ/t3fffRdpaWlwc3PDwYMHhbGNHj16hICAAPz0008IDQ1FUlKSRtrMzEzI5XKcO3dOaHFaWVmJDz74AMuWLUNwcDCuX78OY2NjDBgwAAMGDEBCQgLkcnmDxplZu3Ytzp07h1deeQUAUFJSAh8fH5w6dQqDBg1CcXExrl27BgcHBwBVrTr69euHixcvYseOHWp/h9atW+PHH3+Er6+vWoBeXl6OmJgYzJ8/H++9916N40rpQ1WhkpSUhL179yIoKEhtfUVFBTZt2gSgKmivbvPmzfDz8xOen0DVtbdq1SpMnToVkyZNwqVLl57oiPl//fUX/P39UVBQgJUrVyIyMlK413JzcxEQEID4+HjMnz8fn332WaMemzvgNnOVlZW4ffs2PvnkE2zZsgUODg5YunRpjWkGDx4sNIERi8VwdHRETEwMfHx8cObMGY1+cKop0dq2batXnlTb1TSVGmO12bFjBzIzM2FnZ4clS5aoVS516tRJ6Mu5bNkylJaWCutUo+5HRUVp1KJGR0fD1dW11mM/3qys+qIqpLCWKzw8vMbpywoKCp52FlkjMjU1xfHjx+Hm5gYiQkJCAubMmYPXX38dtra26NWrF7777ju1rjCnTp3Cr7/+CplMhjVr1qgVIm1sbLBmzRoAVc19s7KytB73q6++EoJwAJBKpVi5ciVkMhnOnDmD5ORkYd3atWtRWFiI3r17Y/bs2WqF0j59+mD27NkAgEWLFjXOSWHPDNUbe10VQunp6ZgwYYLGcurUKb32r/ot/eyzz9R+30QiEWJiYtCzZ08UFBRg7dq1WtOPGjVKLfgDqt4k+/v7o6KiQqNM6urqqhGEA4CdnR0WLlwIoOr3v6Hu3r2LHTt2QCQSYc2aNWoDDJuammLt2rWQSqVITk5Wu9eq+/TTT4UgHKhqcbpo0SLY29sjMzOzUaY0fNx///tfIQgHABMTE0RHRwMALl26hKVLlwpBOFA1gPOUKVMAQGOMJzMzM4wcOVKj1aBYLMaXX34JOzs7HD58GH///XeD8x0REQHgnzff1R08eBAPHjxAnz59NP72gYGBas9PoOrae/fdd9GvXz9cvnwZV69ebXD+arJkyRLk5uZi6tSpmDJlilqFV5s2bRAbGwuxWIzly5drnRqwIfiNeDOUmZmptWaob9++iI+PR+vWrWtMX336MiJCdnY2Lly4gCNHjoCIEBsbq3fQrU1jX6Ts+aTqUxUUFKR14EF/f39YWloiPz8fqamp6N+/PyoqKoQf1McLBiohISE4e/Zsjceuafqy6gVn1jLVNn3Z44Ua1vx17doVZ86cQUpKCg4ePIhff/0V58+fx8OHD5GWloYpU6Zg165dOHjwICQSifB88vX11fp72bt3b7zyyitIT09HYmKixvPIwsICI0eO1Ehna2sLX19f7N69GwkJCUJloup4urp7TZw4ER999BFu3ryJe/fuwc7OrgFngzUnf/zxB3744QeNzz09PTFgwIAa02ZlZeHWrVsAtF9bIpEI4eHh+OCDD3DixAnMmjVLYxtd12RYWBh27dqldTwkhUKB+Ph4nD17Fg8ePIBCoQARCQFhXfsGa3Py5EkolUq4uLioBdMq9vb2GDZsGH788UecOHFCa/Nnbd/N2NgYgYGBWLx4MRISEhASEtLgvFY3YsQIjc9U3VSMjIzg4+Ojc72uPt/p6ek4fvw4MjIyIJfLhX74FRUVUCqV+P3339GrV68G5TsgIADTp0/HsWPHkJWVhfbt2wvrVMG5Klh/3O+//47Dhw/j999/x99//y1UeqrG77h+/TpeeumlBuWvJqoWAYGBgVrX29vbo0uXLrhy5Qpu3ryJF198sdGO3eBA3FImQeqnQxojL0+Npax5FaqqzyOuUChw9epVpKenIyUlBZGRkbVOW6Ft+rKSkhJMnjwZsbGxGDZsGFJTU2FoaAigqrYtKytLuCFqoxow4vHaW23TAVlbW+scpbZFMbGq6mPdnJk0bR9c1YBFjo6OWteLRCI4OjoiPz9f2DYnJ0d4O66rWZg+zcWep+nLLIwtkBiY+LSz0SAWxhaNur/nZfoyQwsLdEnWbJLZnBhaWDTq/vr27St0wyIiXLhwAYsWLcK2bdtw7NgxfPvtt5gxY0atzycA6Ny5M9LT07UOvvbCCy/obGqp2mf1N+m1Hc/CwgJWVlbIy8tDVlZWiwvEtQ1EpS9dlaoAcPXq1Xq/PJDJZDrX/fLLL/XapzaqMX90tTL08/NT+w5DhgzReDOqi+q6atOmDczNzbVu07lzZ7VtH6frmtR2HQPAmTNnEBgYKAw+po1qzKOG0Pcerb5tdRYWFrDQ8XzR9d0ag7bKftU13K5dOxgZaYZuZmZmAKDWOhAA5HI53nzzTezZs6fGYzbG+TY1NcW4ceOwYcMGxMbGCpU2Dx48wMGDByGVShEcHKyWprKyEtOmTcPq1atrvA8bI381uX37NoCqsR1q8/Dhw2crEDcwELWIgc6eJbWNGKltHvHdu3cjMDAQcXFx8PDwwLvvvlunY5qYmGDZsmXYuHEj0tPTcfjwYbz++usAqmr2s7Ky8Ouvv+q1L9Wgb483cddWY+vg4PB8BOIGBk0+0BnT7kn2M2qODEQGPNDZc0pkYNDggc5aMpFIBBcXF2zduhXFxcXYt28f9u7dqzGOypPCrcv+UZ8R7fVRn4Ft9WHViPeVi4sLNm7ciPPnz0OpVDa7aV2rX8fFxcUYPXo0srOzER4ejilTpsDJyQnm5uYwNDTEjRs30LVr12Zz7T+JfNb0963r337mzJnYs2cPunXrhgULFsDV1RXW1tZCqy53d3ecPn260b5HREQENmzYgB9++EEIxDdt2oSKigqMHTtWo2Lj22+/xXfffYd//etfWLx4Mdzd3dG2bVthsLeQkBBs3bq10fKnK75SfT527FiNZvKPq97FoTFw0/SnQHUD6OqToZr+oC78/f3xySefYO7cufjss88QGhpaaxP1x5mbm6NNmzbIycnB1atXhUB81KhR+PHHH3H06FHcv38f7dq107mPv/76C/Hx8QCg0eyuuTxY2bPB3t4ewD81ldpkZGSobdumTRsYGxtDoVAgMzNTa1OmO3fuNH5mGWMtmo+PD/bt2yf019Xn+aRap9q2upqeQ6p11Zt22tvb49q1azqPV1hYKEyZpe14rPny8/PDhx9+iPz8fBw6dKhRR05XXSu5ubkoKirS+la8pusYqPodrt6nWUXbdXzy5ElkZ2fDxcUF69at00hz8+bNOn8HXRp6jxYUFKCgoEDrW3Ft3+1ZpJrWMC4uTmvz/MY830DVG2UnJyfcuHEDSUlJ6N+/v/DiUFuzdFX+Vq9erbWrTl3zV9/4qkOHDrh58yY+/vhj9OnTp07HbKjmVa3WQqhueG2DDxQXF+PEiRP12u/MmTPRrl075ObmYvHixXVOX1hYiNzcXADqTblCQ0Ph4OCA8vJyTJs2TWdATUSYPn06ysvL4eDg0Oj9ZtjzRdV9Ii4uTqO5FVA1b2l+fr4wby9QNQCJajoRXfPYb9269clkmDHWLOlTSaxqRqsqeKueT4cPH9babevChQtIS0uDgYEBPDw8NNYXFBRg//79Gp8/fPgQhw8fVjtG9X9ra1kGQAhqunTpwoF4C+Pk5CT0XY2OjkZhYWGj7bt9+/ZC8+zHW1oCVfeG6vPBgwdr3cfGjRu1fh4bGwtA/TpWVRbpGmtFNbJ2Y/Dw8ICBgQHS0tKQnp6usf7+/fvCvVaX71ZWVoa4uDgA0OjmqQoEn9Sc03WlOt/VB3dTOXLkSL2n7quJalT0DRs2IDU1FZcuXUKHDh20TgtZU/4uX76MtLS0Oh27pvgKgM7R4YcPHw7gn4qBpsSB+FMwZEhVn/oVK1ao9UuRy+WYNGkS/vjjj3rtVyaTYc6cOQCqRgDMz8/XO21JSQmmT58OIoJEIhEuSqDqwbJ161ZIJBLs3r0boaGhQsCukp+fj7CwMOzYsUNte8bqa9y4cejYsSPu3buH6OhotR+2jIwMYRqyqKgotTkrp0+fDqBqbtMzZ86o7fPbb7/Vu4sFY+z5sHLlSoSFhWkdOZmIsHv3bixfvhwAhGl5BgwYADc3N5SUlCAyMhLFxcVCmpycHERGRgrbd+jQQetxP/zwQ7U+pgqFAlOnToVcLkffvn3Rv/8/c7y/8847MDc3x/nz5/Hll1+qVR5cuHABc+fOBYAmazbPmtaKFSvg5OSEmzdvwt3dHYmJ2sf1uHPnTp37LX/00UcAgC+++EItYCUizJ07F2lpabCwsNA5Ld6ePXs0xibauXMndu3aBSMjI7V5xJ2dnQFUje595coVtTRr1qwRAtzG0LFjR4wbNw5EhMjISLVyq6q8XVpaCnd3d53zVH/xxRf47bffhP8rlUp8/PHHyMrKQocOHTBmzBi17VUVdY01h3xDqc73smXL1D6/fv06Jk+e/ESOGRYWBgMDA2zfvh0rVqxQ+0xX/lasWKHWbPz+/ft466236lyh4eXlBQMDAxw5ckTtHiEiLF26VOco9zNmzICFhQUWL16Mr7/+GmVlZRrbZGRkNGpFUfXM1aqkpISuXLlCJSUl+mzOiOjEiRMEgLSd4rKyMurTpw8BoNatW9Prr79Ow4cPJxsbG7K3t6eIiAgCQDExMWrp1q9fTwDIwcFB53HLysqoc+fOBIBmzZqltk6Vn2HDhlFYWBiFhYXRW2+9Rb6+vmRra0sAyMDAgFavXq1134mJicJ2UqmUvL29KSQkhIYMGUJSqZQAkK2tLSUkJNT5fKmkpqaSm5ubsFhbWxMAat++vdrn9+7dq/cx2NPl4OBAAKhTp05qf9PHl9TUVEpJSSErKyvhug8MDKQRI0YI19uwYcNIoVBoHGPSpEkEgAwNDcnT05OCg4OpR48eZGhoSB988AEBoKFDh6qlycjIEO6RMWPGCPeItiU1NVVruoyMjCd9+tgTpLo2+/fvX+Pff/PmzRpp1q9f//Qyzhrkm2++Ee5hGxsb8vHxoZCQEBoxYgS98MILwrrx48dTZWWlkO7WrVvC39/W1pbGjh1Lo0aNInNzcwJALi4ulJeXp3YsVdmgX79+5ObmRjKZjPz8/CggIIDs7OyEfV27dk0jn/v37xeefd26daPg4GDy9vYmIyMjAkDh4eEaaVTlhrCwsEY/b6xpZWdnk7e3t3A9tm/fnvz8/Gj8+PE0ZswY6tmzJ4lEIgJAL7/8Ml26dEktfVhYmNZnlVKppDfffJMAkJGREXl7e1NwcDB17dqVAJCJiQkdOnRIIz+qa//9998nAOTq6kohISHk5uYm5HHx4sUa6UaNGkUASCKRkI+PDwUFBVG3bt1IJBLR7NmzdZZzdZWpa5KTk0OvvPKKUN4ePXo0jR07lmxsbAgAOTo6avxuq37TO3bsSG+88QaJxWIaOnQoBQUFCeXrVq1a0S+//KJxvOXLlxMAMjU1JX9/f5o4cSJNnDhRuJ9V+67r96spHdE/z5VBgwapfb5r1y61ayIoKIi8vLxILBaTl5cXubu7EwA6ceKEWjpd14q+fH19he8jEono1q1bWrc7c+YMSSQSAkBOTk4UEBBAvr6+ZGJiQt27d6c33nhDaz5iYmK0xklERO+9955a+c/f3586d+5MYrGYPvnkE63niagqxlHFHLa2tuTl5UWhoaHk5+cn/N3d3Nz0Pgf6xs4ciD8hNQXiRET5+fk0bdo0at++PYnFYrK3t6dJkyZRdna2zgtMn0CciGjr1q0EgMzMzCgnJ0f4XJWfxxepVEpOTk4UHh5O58+fr3Hff//9N3311Vfk4eFB1tbWZGRkRNbW1jRw4EBauHAhFRUV6XV+dKl+3mpaOOBpvlQ/3rUtqh+Gu3fv0tSpU6lTp04kkUjIzMyM+vXrR6tWraLy8nKtx1AqlbR27VpycXEhqVRKFhYW5OPjQydPnqTY2FgCQMHBwWppqgfUtS179uzRmo6vy+ZN32vzvffe00jDgXjzVVRURHv37qWoqCjq27ev8LtsYmJCnTt3puDgYPrpp5+0ps3NzaWZM2eSs7MzSaVSkslk1KtXL1qwYAEVFxdrbF+9wPzo0SOaMWMGOTo6kkQiobZt29KECRPo7t27OvN65coVCgsLE/JoYWFBgwcPpm3btmndngPxlufYsWMUERFBXbt2JXNzczIyMiJLS0tycXGhyMhIOnr0qFqFkUptwdWWLVvI09OTLCwsSCwWU4cOHWjChAlaK4WI/nn2ZWRk0Pbt26lfv35kampKrVq1ooEDB9L+/fu1pisrK6NFixbRyy+/TDKZjKysrMjHx4fi4+PrHajWRC6X0/z58+nVV18lmUxGUqmUnJ2dadasWRoVZUTqQW95eTnNmzePunXrRsbGxmRlZUVjxoyhy5cvaz1WZWUlzZ8/n7p37y5UmlUvzzR1IE5EdPLkSfL29iZra2uSyWTUo0cPmjdvHikUCho0aNATCcS3b98ufB9tearu4sWLNHLkSGrXrh1JpVLq0qUL/ec//6GioiKd+agpEFcqlfT111+Ts7MzSSQSsrKyon//+9+Umppa43kiqqrsmjNnDrm4uJCZmRlJJBJq3749ubu7U0xMDF28eFHvc6Bv7Cwiqr1zVGlpKTIyMuDo6KjWBJQxxpqbiIgIrF+/Hl9//TWio6OfdnYYY4wx9oy4c+cOHB0d4eDgwIO7snrTN3bmPuKMsRbn8uXLkMvlap8plUqsXbsWGzZs0DqfJWOMMcYYY02Fpy9jjLU4ixYtwvbt29GrVy/Y29tDLpfjypUruHPnDgwNDbFy5coap+FjjDHGGGPsSeJAnDHW4gQGBqKoqAipqalIS0tDRUUFbG1tERgYiPfffx+vvfba084iY4wxxhh7jnEfccYYY4wxxhhjrBFwH3HGGGOMMcYYY+wZxIE4Y4wxxhhjjDHWhDgQZ4wxxhhjjDHGmlCdAnE9upMzxhhjjDHGGGPPJX1jZr0CcUNDQwBAeXl5/XPEGGOMMcYYY4y1YAqFAgBgZFTzBGV6BeJisRjGxsYoLCzkt+KMMcYYY4wxxthjKisrkZeXh1atWtUaiOs1fRkAFBUV4c8//4SpqSlat24NsVgMkUjUKBlmjDHGGGOMMcaaGyJCZWUlSkpKUFhYCKVSiQ4dOsDExKTGdHoH4kBVMJ6TkyO8bmeMMcYYY4wxxp53hoaGkMlksLW1hUQiqXX7OgXiKuXl5aisrKxXBhljjDHGGGOMsZbCwMCgzi3G6xWIM8YYY4wxxhhjrH54HnHGGGOMMcYYY6wJcSDOGGOMMcYYY4w1IQ7EGWOMMcYYY4yxJsSBOGOMMcYYY4wx1oQ4EGeMMcYYY4wxxpoQB+KMMcYYY4wxxlgT4kCcMcYYY4wxxhhrQv8H2vglc8EsDhsAAAAASUVORK5CYII="/>
 </div>
 </div>
 </div>
@@ -2582,7 +1038,7 @@ Unable to find non-zero acquisition function values - initial conditions are bei
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [11]:</div>
+<div class="prompt input_prompt">In [ ]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span> 

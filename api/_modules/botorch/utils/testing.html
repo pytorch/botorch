@@ -33,7 +33,7 @@
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">abstractproperty</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 <span class="kn">from</span> <span class="nn">unittest</span> <span class="kn">import</span> <span class="n">mock</span><span class="p">,</span> <span class="n">TestCase</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -87,7 +87,7 @@
             <span class="p">)</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span>
                 <span class="s2">"ignore"</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">"Input data is not standardized."</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">"Data is not standardized."</span><span class="p">,</span>
                 <span class="n">category</span><span class="o">=</span><span class="n">InputDataWarning</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span>
@@ -155,7 +155,7 @@
 
 
     <span class="nd">@abstractproperty</span>
-    <span class="k">def</span> <span class="nf">functions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseTestProblem</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">functions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">BaseTestProblem</span><span class="p">]:</span>
         <span class="c1"># The functions that should be tested. Typically defined as a class</span>
         <span class="c1"># attribute on the test case subclassing this class.</span>
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
@@ -171,12 +171,13 @@
         <span class="k">for</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">functions</span><span class="p">:</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
-                <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">_optimal_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">assertRaisesRegex</span><span class="p">(</span><span class="ne">NotImplementedError</span><span class="p">,</span> <span class="s2">"optimal value"</span><span class="p">):</span>
+                        <span class="n">f</span><span class="o">.</span><span class="n">optimal_value</span>
+                <span class="k">else</span><span class="p">:</span>
                     <span class="n">optval</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">optimal_value</span>
                     <span class="n">optval_exp</span> <span class="o">=</span> <span class="o">-</span><span class="n">f</span><span class="o">.</span><span class="n">_optimal_value</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">negate</span> <span class="k">else</span> <span class="n">f</span><span class="o">.</span><span class="n">_optimal_value</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">optval</span><span class="p">,</span> <span class="n">optval_exp</span><span class="p">)</span>
-                <span class="k">except</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
-                    <span class="k">pass</span></div>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">optval</span><span class="p">,</span> <span class="n">optval_exp</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SyntheticTestFunctionTestCaseMixin.test_optimizer">
@@ -218,7 +219,7 @@
         <span class="k">for</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">functions</span><span class="p">:</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">"_max_hv"</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">_max_hv</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="ne">NotImplementedError</span><span class="p">):</span>
                         <span class="n">f</span><span class="o">.</span><span class="n">max_hv</span>
                 <span class="k">else</span><span class="p">:</span>
