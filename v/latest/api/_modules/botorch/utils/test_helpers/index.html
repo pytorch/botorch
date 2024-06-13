@@ -126,8 +126,14 @@
     <span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">Y1</span><span class="p">,</span> <span class="n">Y2</span><span class="p">])</span>
 
     <span class="n">Yvar1</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">yvar</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">Y1</span><span class="p">,</span> <span class="n">yvar</span><span class="p">)</span>
-    <span class="n">Yvar2</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">yvar</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">Y2</span><span class="p">,</span> <span class="n">yvar</span><span class="p">)</span>
+    <span class="n">Yvar2</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">yvar</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">Y2</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">yvar</span><span class="p">)</span>
     <span class="n">train_Yvar</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">yvar</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">Yvar1</span><span class="p">,</span> <span class="n">Yvar2</span><span class="p">])</span>
+    <span class="n">Y3</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="n">X</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn_like</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.2</span>
+    <span class="n">Yvar3</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">yvar</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">Y3</span><span class="p">,</span> <span class="n">yvar</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">task_values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">Y3</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">train_Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">train_Yvar</span><span class="p">,</span> <span class="n">Yvar3</span><span class="p">])</span>
     <span class="n">feature_slice</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="n">skip_task_features_in_datasets</span> <span class="k">else</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
     <span class="n">datasets</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">SupervisedDataset</span><span class="p">(</span>
@@ -138,13 +144,23 @@
             <span class="n">outcome_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"y"</span><span class="p">],</span>
         <span class="p">),</span>
         <span class="n">SupervisedDataset</span><span class="p">(</span>
-            <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">[</span><span class="mi">10</span><span class="p">:,</span> <span class="n">feature_slice</span><span class="p">],</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">[</span><span class="mi">10</span><span class="p">:</span><span class="mi">20</span><span class="p">,</span> <span class="n">feature_slice</span><span class="p">],</span>
             <span class="n">Y</span><span class="o">=</span><span class="n">Y2</span><span class="p">,</span>
             <span class="n">Yvar</span><span class="o">=</span><span class="n">Yvar2</span><span class="p">,</span>
             <span class="n">feature_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"task"</span><span class="p">,</span> <span class="s2">"X"</span><span class="p">][</span><span class="n">feature_slice</span><span class="p">],</span>
             <span class="n">outcome_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"y1"</span><span class="p">],</span>
         <span class="p">),</span>
     <span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">task_values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">datasets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">SupervisedDataset</span><span class="p">(</span>
+                <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">[</span><span class="mi">20</span><span class="p">:,</span> <span class="n">feature_slice</span><span class="p">],</span>
+                <span class="n">Y</span><span class="o">=</span><span class="n">Y3</span><span class="p">,</span>
+                <span class="n">Yvar</span><span class="o">=</span><span class="n">Yvar3</span><span class="p">,</span>
+                <span class="n">feature_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"task"</span><span class="p">,</span> <span class="s2">"X"</span><span class="p">][</span><span class="n">feature_slice</span><span class="p">],</span>
+                <span class="n">outcome_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"y2"</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
     <span class="n">dataset</span> <span class="o">=</span> <span class="n">MultiTaskDataset</span><span class="p">(</span>
         <span class="n">datasets</span><span class="o">=</span><span class="n">datasets</span><span class="p">,</span>
         <span class="n">target_outcome_name</span><span class="o">=</span><span class="s2">"y"</span><span class="p">,</span>
