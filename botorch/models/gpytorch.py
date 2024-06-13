@@ -378,10 +378,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
         if observation_noise is False:
             return mvn
         # noise_shape is `broadcast(test_batch_shape, model.batch_shape) x m x q`
-        if self._num_outputs > 1:
-            noise_shape = X.shape[:-3] + torch.Size([self._num_outputs, X.shape[-2]])
-        else:
-            noise_shape = X.shape[:-1]
+        noise_shape = mvn.batch_shape + mvn.event_shape
         if torch.is_tensor(observation_noise):
             # TODO: Validate noise shape
             # make observation_noise's shape match noise_shape
