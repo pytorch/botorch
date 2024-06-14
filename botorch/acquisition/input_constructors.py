@@ -81,6 +81,7 @@ from botorch.acquisition.multi_objective.utils import get_default_partitioning_a
 from botorch.acquisition.objective import (
     ConstrainedMCObjective,
     IdentityMCObjective,
+    LearnedObjective,
     MCAcquisitionObjective,
     PosteriorTransform,
 )
@@ -98,7 +99,7 @@ from botorch.acquisition.utils import (
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.cost import AffineFidelityCostModel
-from botorch.models.deterministic import DeterministicModel, FixedSingleSampleModel
+from botorch.models.deterministic import FixedSingleSampleModel
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
 from botorch.optim.optimize import optimize_acqf
@@ -214,14 +215,15 @@ def allow_only_specific_variable_kwargs(f: Callable[..., T]) -> Callable[..., T]
     in the signature of `f`. Any other keyword arguments will raise an error.
     """
     allowed = {
+        # `training_data` and/or `X_baseline` are needed to compute baselines
+        # for some EI-type acquisition functions.
         "training_data",
-        "objective",
-        "posterior_transform",
         "X_baseline",
-        "X_pending",
+        # Objective thresholds are needed for defining hypervolumes in
+        # multi-objective optimization.
         "objective_thresholds",
-        "constraints",
-        "target_fidelities",
+        # Used in input constructors for some lookahead acquisition functions
+        # such as qKnowledgeGradient.
         "bounds",
     }
 
@@ -860,7 +862,6 @@ def construct_inputs_EHVI(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
     objective_thresholds: Tensor,
-    objective: Optional[MCMultiOutputObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     alpha: Optional[float] = None,
@@ -1327,12 +1328,7 @@ def construct_inputs_qMFMES(
     training_data: MaybeDict[SupervisedDataset],
     bounds: List[Tuple[float, float]],
     target_fidelities: Dict[int, Union[int, float]],
-    objective: Optional[MCAcquisitionObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
     num_fantasies: int = 64,
-    X_baseline: Optional[Tensor] = None,
-    X_pending: Optional[Tensor] = None,
-    objective_thresholds: Optional[Tensor] = None,
     fidelity_weights: Optional[Dict[int, float]] = None,
     cost_intercept: float = 1.0,
     num_trace_observations: int = 0,
@@ -1364,6 +1360,8 @@ def construct_inputs_analytic_eubo(
     pref_model: Optional[Model] = None,
     previous_winner: Optional[Tensor] = None,
     sample_multiplier: Optional[float] = 1.0,
+    objective: Optional[LearnedObjective] = None,
+    posterior_transform: Optional[PosteriorTransform] = None,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for the `AnalyticExpectedUtilityOfBestOption` constructor.
 
@@ -1384,6 +1382,11 @@ def construct_inputs_analytic_eubo(
             BOPE; if None, we are doing PBO and model is the preference model.
         previous_winner: The previous winner of the best option.
         sample_multiplier: The scale factor for the single-sample model.
+        objective: Ignored. This argument is allowed to be passed then ignored
+            because of the way that EUBO is typically used in a BOPE loop.
+        posterior_transform: Ignored. This argument is allowed to be passed then
+            ignored because of the way that EUBO is typically used in a BOPE
+            loop.
 
     Returns:
         A dict mapping kwarg names of the constructor to values.
@@ -1414,7 +1417,6 @@ def construct_inputs_analytic_eubo(
 def construct_inputs_qeubo(
     model: Model,
     pref_model: Optional[Model] = None,
-    outcome_model: Optional[DeterministicModel] = None,
     sample_multiplier: Optional[float] = 1.0,
     sampler: Optional[MCSampler] = None,
     objective: Optional[MCAcquisitionObjective] = None,

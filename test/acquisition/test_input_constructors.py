@@ -1312,7 +1312,6 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
         constructor_args = {
             "model": None,
             "training_data": self.blockX_blockY,
-            "objective": None,
             "bounds": self.bounds,
             "candidate_size": 17,
             "target_fidelities": target_fidelities,
@@ -1340,7 +1339,6 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
         kwargs = func(
             model=model,
             training_data=self.blockX_blockY,
-            objective=LinearMCObjective(torch.rand(2)),
             bounds=self.bounds,
             num_optima=17,
             maximize=False,
