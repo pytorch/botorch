@@ -30,9 +30,7 @@ from typing import (
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.analytic import (
-    ConstrainedExpectedImprovement,
     ExpectedImprovement,
-    LogConstrainedExpectedImprovement,
     LogExpectedImprovement,
     LogNoisyExpectedImprovement,
     LogProbabilityOfImprovement,
@@ -363,42 +361,6 @@ def construct_inputs_ucb(
         "beta": beta,
         "maximize": maximize,
     }
-
-
-@acqf_input_constructor(
-    ConstrainedExpectedImprovement, LogConstrainedExpectedImprovement
-)
-def construct_inputs_constrained_ei(
-    model: Model,
-    training_data: MaybeDict[SupervisedDataset],
-    objective_index: int,
-    constraints: Dict[int, Tuple[Optional[float], Optional[float]]],
-    maximize: bool = True,
-) -> Dict[str, Any]:
-    r"""Construct kwargs for `ConstrainedExpectedImprovement`.
-
-    Args:
-        model: The model to be used in the acquisition function.
-        training_data: Dataset(s) used to train the model.
-        objective_index: The index of the objective.
-        constraints: A dictionary of the form `{i: [lower, upper]}`, where
-            `i` is the output index, and `lower` and `upper` are lower and upper
-            bounds on that output (resp. interpreted as -Inf / Inf if None)
-        maximize: If True, consider the problem a maximization problem.
-
-    Returns:
-        A dict mapping kwarg names of the constructor to values.
-    """
-    # TODO: Implement best point computation from training data
-    # best_f =
-    # return {
-    #     "model": model,
-    #     "best_f": best_f,
-    #     "objective_index": objective_index,
-    #     "constraints": constraints,
-    #     "maximize": maximize,
-    # }
-    raise NotImplementedError  # pragma: nocover
 
 
 @acqf_input_constructor(NoisyExpectedImprovement, LogNoisyExpectedImprovement)

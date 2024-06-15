@@ -12,6 +12,7 @@ When adding tests for a new input constructor, please add a new case to
 from __future__ import annotations
 
 import math
+from functools import reduce
 from typing import Callable, Type
 from unittest import mock
 from unittest.mock import MagicMock
@@ -1448,6 +1449,14 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
                 "bounds": self.bounds,
             },
         )
+        self.cases["qSimpleRegret"] = (
+            [qSimpleRegret],
+            {
+                "model": SingleTaskGP(self.blockX_blockY[0].X, self.blockX_blockY[0].Y),
+                "training_data": self.blockX_blockY,
+                "objective": LinearMCObjective(torch.rand(2)),
+            },
+        )
 
     def test_constructors_can_instantiate(self) -> None:
         for key, (classes, input_constructor_kwargs) in self.cases.items():
@@ -1460,3 +1469,11 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
                     )
                     # no assertions; we are just testing that this doesn't error
                     cls_(**acqf_kwargs)
+
+    def test_all_cases_covered(self) -> None:
+        all_classes_tested = reduce(
+            lambda x, y: x + y, [cls_list for cls_list, _ in self.cases.values()]
+        )
+        for acqf_cls in ACQF_INPUT_CONSTRUCTOR_REGISTRY.keys():
+            with self.subTest(acqf_cls=acqf_cls):
+                self.assertIn(acqf_cls, all_classes_tested)
