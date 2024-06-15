@@ -232,7 +232,7 @@ def construct_inputs_scalarized_ucb(
     model: Model,
     beta: float,
     weights: List[float],
-    **kwargs: Any,
+    posterior_transform: None,
 ) -> Dict[str, Any]:
     return {
         "model": model,
