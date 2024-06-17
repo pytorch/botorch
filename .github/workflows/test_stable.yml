@@ -33,6 +33,8 @@ jobs:
       run: |
         # avoid conda bug in >=23.10.0: https://github.com/conda/conda/issues/13412
         conda config --set solver classic
+        # avoid issues with numpy 2.0 on windows builds and in tensorboard
+        conda install -y "numpy<2.0"
         conda install -y -c pytorch pytorch cpuonly
         conda install -y pip scipy pytest
         conda install -y -c gpytorch gpytorch
