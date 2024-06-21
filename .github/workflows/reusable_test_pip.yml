@@ -52,4 +52,5 @@ jobs:
       with:
         fail_ci_if_error: true
         token: ${{ secrets.CODECOV_TOKEN }}
+        version: v0.6.0  # TODO: Unpin after codecov issue with 0.7.0 is resolved: https://github.com/codecov/codecov-cli/issues/460#issuecomment-2183042570
         files: ./botorch_cov.xml,./botorch_community_cov.xml
