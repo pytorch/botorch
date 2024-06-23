@@ -9,7 +9,6 @@ from typing import Optional, Type, Union
 
 import torch
 from botorch.logging import logger
-from botorch.posteriors.deterministic import DeterministicPosterior
 from botorch.posteriors.ensemble import EnsemblePosterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
@@ -17,7 +16,6 @@ from botorch.posteriors.posterior_list import PosteriorList
 from botorch.posteriors.torch import TorchPosterior
 from botorch.posteriors.transformed import TransformedPosterior
 from botorch.sampling.base import MCSampler
-from botorch.sampling.deterministic import DeterministicSampler
 from botorch.sampling.index_sampler import IndexSampler
 from botorch.sampling.list_sampler import ListSampler
 from botorch.sampling.normal import (
@@ -117,16 +115,6 @@ def _get_sampler_list(
         for p in posterior.posteriors
     ]
     return ListSampler(*samplers)
-
-
-@GetSampler.register(DeterministicPosterior)
-def _get_sampler_deterministic(
-    posterior: DeterministicPosterior,
-    sample_shape: torch.Size,
-    seed: Optional[int] = None,
-) -> MCSampler:
-    r"""Get the dummy `DeterministicSampler` for the `DeterministicPosterior`."""
-    return DeterministicSampler(sample_shape=sample_shape, seed=seed)
 
 
 @GetSampler.register(EnsemblePosterior)
