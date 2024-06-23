@@ -4,10 +4,16 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+"""
+When adding tests for a new input constructor, please add a new case to
+`TestInstantiationFromInputConstructor.setUp`.
+"""
+
 from __future__ import annotations
 
 import math
-from typing import Any, Callable, Sequence, Type
+from functools import reduce
+from typing import Callable, Type
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -1312,7 +1318,6 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
         constructor_args = {
             "model": None,
             "training_data": self.blockX_blockY,
-            "objective": None,
             "bounds": self.bounds,
             "candidate_size": 17,
             "target_fidelities": target_fidelities,
@@ -1340,7 +1345,6 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
         kwargs = func(
             model=model,
             training_data=self.blockX_blockY,
-            objective=LinearMCObjective(torch.rand(2)),
             bounds=self.bounds,
             num_optima=17,
             maximize=False,
@@ -1358,117 +1362,118 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
 
 
 class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
-    def _test_constructor_base(
-        self,
-        classes: Sequence[Type[AcquisitionFunction]],
-        **input_constructor_kwargs: Any,
-    ) -> None:
-        for cls_ in classes:
-            with self.subTest(cls_.__name__, cls_=cls_):
-                acqf_kwargs = get_acqf_input_constructor(cls_)(
-                    **input_constructor_kwargs
-                )
-                # no assertions; we are just testing that this doesn't error
-                cls_(**acqf_kwargs)
+    """End-to-end tests, ensuring that the input constructors are functional."""
 
-    def test_constructors_like_PosteriorMean(self) -> None:
-        classes = [PosteriorMean, UpperConfidenceBound, qUpperConfidenceBound]
-        self._test_constructor_base(classes=classes, model=self.mock_model)
-
-    def test_constructors_like_ExpectedImprovement(self) -> None:
-        classes = [
-            ExpectedImprovement,
-            LogExpectedImprovement,
-            ProbabilityOfImprovement,
-            LogProbabilityOfImprovement,
-            NoisyExpectedImprovement,
-            LogNoisyExpectedImprovement,
-            qExpectedImprovement,
-            qLogExpectedImprovement,
-            qNoisyExpectedImprovement,
-            qLogNoisyExpectedImprovement,
-            qProbabilityOfImprovement,
-        ]
-        model = SingleTaskGP(
+    def setUp(self, suppress_input_warnings: bool = True) -> None:
+        super().setUp(suppress_input_warnings=suppress_input_warnings)
+        # {key: (list of acquisition functions, arguments they accept)}
+        self.cases = {
+            "PosteriorMean-type": (
+                [PosteriorMean, UpperConfidenceBound, qUpperConfidenceBound],
+                {"model": self.mock_model},
+            ),
+        }
+        st_soo_model = SingleTaskGP(
             train_X=torch.rand((4, 2)),
             train_Y=torch.rand((4, 1)),
             train_Yvar=torch.ones((4, 1)),
         )
-        self._test_constructor_base(
-            classes=classes, model=model, training_data=self.blockX_blockY
+        self.cases["EI-type"] = (
+            [
+                ExpectedImprovement,
+                LogExpectedImprovement,
+                ProbabilityOfImprovement,
+                LogProbabilityOfImprovement,
+                NoisyExpectedImprovement,
+                LogNoisyExpectedImprovement,
+                qExpectedImprovement,
+                qLogExpectedImprovement,
+                qNoisyExpectedImprovement,
+                qLogNoisyExpectedImprovement,
+                qProbabilityOfImprovement,
+            ],
+            {"model": st_soo_model, "training_data": self.blockX_blockY},
         )
-
-    def test_constructors_like_qNEHVI(self) -> None:
-        objective_thresholds = torch.tensor([0.1, 0.2])
-        model = SingleTaskGP(train_X=torch.rand((3, 2)), train_Y=torch.rand((3, 2)))
-        classes = [
-            qNoisyExpectedHypervolumeImprovement,
-            qLogNoisyExpectedHypervolumeImprovement,
-            ExpectedHypervolumeImprovement,
-            qExpectedHypervolumeImprovement,
-            qLogExpectedHypervolumeImprovement,
-            qLogNParEGO,
-        ]
-        self._test_constructor_base(
-            classes=classes,
-            model=model,
-            training_data=self.blockX_blockY,
-            objective_thresholds=objective_thresholds,
-        )
-
-    def test_constructors_like_EHVI(self) -> None:
-        objective_thresholds = torch.tensor([0.1, 0.2])
-        model = SingleTaskGP(train_X=torch.rand((3, 2)), train_Y=torch.rand((3, 2)))
-        classes = [
-            ExpectedHypervolumeImprovement,
-            qExpectedHypervolumeImprovement,
-            qLogExpectedHypervolumeImprovement,
-        ]
-        self._test_constructor_base(
-            classes=classes,
-            model=model,
-            training_data=self.blockX_blockY,
-            objective_thresholds=objective_thresholds,
-        )
-
-    def test_constructors_like_qMaxValueEntropy(self) -> None:
         bounds = torch.ones((1, 2))
-        classes = [qMaxValueEntropy, qKnowledgeGradient]
-        self._test_constructor_base(
-            classes=classes,
-            model=SingleTaskGP(train_X=torch.rand((3, 1)), train_Y=torch.rand((3, 1))),
-            training_data=self.blockX_blockY,
-            bounds=bounds,
+        kg_model = SingleTaskGP(train_X=torch.rand((3, 1)), train_Y=torch.rand((3, 1)))
+        self.cases["Look-ahead"] = (
+            [qMaxValueEntropy, qKnowledgeGradient],
+            {
+                "model": kg_model,
+                "training_data": self.blockX_blockY,
+                "bounds": bounds,
+            },
+        )
+        self.cases["MF look-ahead"] = (
+            [qMultiFidelityKnowledgeGradient, qMultiFidelityMaxValueEntropy],
+            {
+                "model": kg_model,
+                "training_data": self.blockX_blockY,
+                "bounds": bounds,
+                "target_fidelities": {0: 0.987},
+                "num_fantasies": 30,
+            },
         )
 
-    def test_constructors_like_qMultiFidelityKnowledgeGradient(self) -> None:
-        classes = [qMultiFidelityKnowledgeGradient, qMultiFidelityMaxValueEntropy]
-        self._test_constructor_base(
-            classes=classes,
-            model=SingleTaskGP(train_X=torch.rand((3, 1)), train_Y=torch.rand((3, 1))),
-            training_data=self.blockX_blockY,
-            bounds=torch.ones((1, 2)),
-            target_fidelities={0: 0.987},
-            num_fantasies=30,
+        objective_thresholds = torch.tensor([0.1, 0.2])
+        st_moo_model = SingleTaskGP(
+            train_X=torch.rand((3, 2)), train_Y=torch.rand((3, 2))
         )
-
-    def test_eubo(self) -> None:
-        model = SingleTaskGP(train_X=torch.rand((3, 2)), train_Y=torch.rand((3, 2)))
+        self.cases["EHVI-type"] = (
+            [
+                qNoisyExpectedHypervolumeImprovement,
+                qLogNoisyExpectedHypervolumeImprovement,
+                ExpectedHypervolumeImprovement,
+                qExpectedHypervolumeImprovement,
+                qLogExpectedHypervolumeImprovement,
+                qLogNParEGO,
+            ],
+            {
+                "model": st_moo_model,
+                "objective_thresholds": objective_thresholds,
+                "training_data": self.blockX_blockY,
+            },
+        )
         pref_model = self.mock_model
         pref_model.dim = 2
         pref_model.datapoints = torch.tensor([])
 
-        classes = [AnalyticExpectedUtilityOfBestOption, qExpectedUtilityOfBestOption]
-        self._test_constructor_base(
-            classes=classes,
-            model=model,
-            pref_model=pref_model,
+        self.cases["EUBO"] = (
+            [AnalyticExpectedUtilityOfBestOption, qExpectedUtilityOfBestOption],
+            {"model": st_moo_model, "pref_model": pref_model},
+        )
+        self.cases["qJES"] = (
+            [qJointEntropySearch],
+            {
+                "model": SingleTaskGP(self.blockX_blockY[0].X, self.blockX_blockY[0].Y),
+                "bounds": self.bounds,
+            },
+        )
+        self.cases["qSimpleRegret"] = (
+            [qSimpleRegret],
+            {
+                "model": SingleTaskGP(self.blockX_blockY[0].X, self.blockX_blockY[0].Y),
+                "training_data": self.blockX_blockY,
+                "objective": LinearMCObjective(torch.rand(2)),
+            },
         )
 
-    def test_qjes(self) -> None:
-        model = SingleTaskGP(self.blockX_blockY[0].X, self.blockX_blockY[0].Y)
-        self._test_constructor_base(
-            classes=[qJointEntropySearch],
-            model=model,
-            bounds=self.bounds,
+    def test_constructors_can_instantiate(self) -> None:
+        for key, (classes, input_constructor_kwargs) in self.cases.items():
+            with self.subTest(
+                key, classes=classes, input_constructor_kwargs=input_constructor_kwargs
+            ):
+                for cls_ in classes:
+                    acqf_kwargs = get_acqf_input_constructor(cls_)(
+                        **input_constructor_kwargs
+                    )
+                    # no assertions; we are just testing that this doesn't error
+                    cls_(**acqf_kwargs)
+
+    def test_all_cases_covered(self) -> None:
+        all_classes_tested = reduce(
+            lambda x, y: x + y, [cls_list for cls_list, _ in self.cases.values()]
         )
+        for acqf_cls in ACQF_INPUT_CONSTRUCTOR_REGISTRY.keys():
+            with self.subTest(acqf_cls=acqf_cls):
+                self.assertIn(acqf_cls, all_classes_tested)

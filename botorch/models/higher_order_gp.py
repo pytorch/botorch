@@ -25,6 +25,7 @@ from botorch.models.model import FantasizeMixin
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform, Standardize
 from botorch.models.utils import gpt_posterior_settings
+from botorch.models.utils.assorted import fantasize as fantasize_flag
 from botorch.models.utils.gpytorch_modules import (
     get_gaussian_likelihood_with_gamma_prior,
 )
@@ -414,7 +415,9 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         if hasattr(self, "outcome_transform"):
             # we need to apply transforms before shifting batch indices around
             Y, noise = self.outcome_transform(Y=Y, Yvar=noise)
-        self._validate_tensor_args(X=X, Y=Y, Yvar=noise, strict=False)
+        # Do not check shapes when fantasizing as they are not expected to match.
+        if fantasize_flag.off():
+            self._validate_tensor_args(X=X, Y=Y, Yvar=noise, strict=False)
 
         # we don't need to do un-squeezing because Y already is batched
         # we don't support fixed noise here yet

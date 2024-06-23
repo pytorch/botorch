@@ -53,6 +53,10 @@
     {
       "id": "thompson_sampling",
       "title": "Bayesian optimization with large-scale Thompson sampling"
+    },
+    {
+      "id": "ibnn_bo",
+      "title": "Bayesian optimization with infinite-width neural networks"
     }
   ],
   "Multi-Objective Bayesian Optimization": [
