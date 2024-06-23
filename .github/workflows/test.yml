@@ -38,6 +38,8 @@ jobs:
       run: |
         # avoid conda bug in >=23.10.0: https://github.com/conda/conda/issues/13412
         conda config --set solver classic
+        # avoid issues with numpy 2.0 on windows builds and in tensorboard
+        conda install -y "numpy<2.0"
         conda install pytorch torchvision -c pytorch
         conda install -y pip scipy sphinx pytest flake8
         pip install git+https://github.com/cornellius-gp/linear_operator.git
