@@ -39,6 +39,7 @@ from botorch.models.utils import (
     mod_batch_shape,
     multioutput_to_batch_mode_transform,
 )
+from botorch.models.utils.assorted import fantasize as fantasize_flag
 from botorch.posteriors.fully_bayesian import GaussianMixturePosterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.utils.multitask import separate_mtmvn
@@ -246,9 +247,11 @@ class GPyTorchModel(Model, ABC):
             if not isinstance(self, BatchedMultiOutputGPyTorchModel):
                 # `noise` is assumed to already be outcome-transformed.
                 Y, _ = self.outcome_transform(Y=Y, Yvar=Yvar)
-        # validate using strict=False, since we cannot tell if Y has an explicit
-        # output dimension
-        self._validate_tensor_args(X=X, Y=Y, Yvar=Yvar, strict=False)
+        # Validate using strict=False, since we cannot tell if Y has an explicit
+        # output dimension. Do not check shapes when fantasizing as they are
+        # not expected to match.
+        if fantasize_flag.off():
+            self._validate_tensor_args(X=X, Y=Y, Yvar=Yvar, strict=False)
         if Y.size(-1) == 1:
             Y = Y.squeeze(-1)
             if Yvar is not None:
@@ -505,7 +508,9 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
             # We need to apply transforms before shifting batch indices around.
             # `noise` is assumed to already be outcome-transformed.
             Y, _ = self.outcome_transform(Y)
-        self._validate_tensor_args(X=X, Y=Y, Yvar=noise, strict=False)
+        # Do not check shapes when fantasizing as they are not expected to match.
+        if fantasize_flag.off():
+            self._validate_tensor_args(X=X, Y=Y, Yvar=noise, strict=False)
         inputs = X
         if self._num_outputs > 1:
             inputs, targets, noise = multioutput_to_batch_mode_transform(
