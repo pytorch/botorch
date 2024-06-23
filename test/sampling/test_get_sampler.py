@@ -37,7 +37,9 @@ class TestGetSampler(BotorchTestCase):
         big_mvn_posterior = GPyTorchPosterior(
             distribution=MultivariateNormal(torch.rand(22000), torch.eye(22000))
         )
-        sampler = get_sampler(posterior=big_mvn_posterior, sample_shape=torch.Size([n_samples]))
+        sampler = get_sampler(
+            posterior=big_mvn_posterior, sample_shape=torch.Size([n_samples])
+        )
         self.assertIsInstance(sampler, IIDNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([n_samples]))
 
@@ -50,9 +52,7 @@ class TestGetSampler(BotorchTestCase):
         self.assertEqual(sampler.sample_shape, torch.Size([n_samples]))
 
         # PosteriorList with transformed & original
-        post_list = PosteriorList(
-            tf_post, mvn_posterior
-        )
+        post_list = PosteriorList(tf_post, mvn_posterior)
         sampler = get_sampler(posterior=post_list, sample_shape=torch.Size([5]))
         self.assertIsInstance(sampler, ListSampler)
         self.assertIsInstance(sampler.samplers[0], IIDNormalSampler)
