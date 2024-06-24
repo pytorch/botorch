@@ -250,6 +250,20 @@ class TestGPyTorchModel(BotorchTestCase):
                     ):
                         GPyTorchModel._validate_tensor_args(X, Y, Yvar, strict=strict)
 
+    def test_condition_on_observations_tensor_validation(self) -> None:
+        model = SimpleGPyTorchModel(torch.rand(5, 1), torch.randn(5, 1))
+        model.posterior(torch.rand(2, 1))  # evaluate the model to form caches.
+        # Outside of fantasize, the inputs are validated.
+        with self.assertWarnsRegex(
+            BotorchTensorDimensionWarning, "Non-strict enforcement of"
+        ):
+            model.condition_on_observations(torch.randn(2, 1), torch.randn(5, 2, 1))
+        # Inside of fantasize, the inputs are not validated.
+        with fantasize(), warnings.catch_warnings(record=True) as ws:
+            warnings.filterwarnings("always", category=BotorchTensorDimensionWarning)
+            model.condition_on_observations(torch.randn(2, 1), torch.randn(5, 2, 1))
+        self.assertFalse(any(w.category is BotorchTensorDimensionWarning for w in ws))
+
     def test_fantasize_flag(self):
         train_X = torch.rand(5, 1)
         train_Y = torch.sin(train_X)
