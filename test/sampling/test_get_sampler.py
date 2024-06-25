@@ -12,7 +12,6 @@ from botorch.posteriors.transformed import TransformedPosterior
 from botorch.sampling.get_sampler import get_sampler
 from botorch.sampling.list_sampler import ListSampler
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
-from botorch.sampling.stochastic_samplers import StochasticSampler
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultivariateNormal
 from torch.distributions.gamma import Gamma
