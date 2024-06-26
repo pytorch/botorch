@@ -19,8 +19,8 @@ const bash = (...args) => `~~~bash\n${String.raw(...args)}\n~~~`;
 
 class HomeSplash extends React.Component {
   render() {
-    const {siteConfig, language = ''} = this.props;
-    const {baseUrl, docsUrl} = siteConfig;
+    const { siteConfig, language = '' } = this.props;
+    const { baseUrl, docsUrl } = siteConfig;
     const docsPart = `${docsUrl ? `${docsUrl}/` : ''}`;
     const langPart = `${language ? `${language}/` : ''}`;
     const docUrl = doc => `${baseUrl}${docsPart}${langPart}${doc}`;
@@ -79,8 +79,8 @@ class HomeSplash extends React.Component {
 
 class Index extends React.Component {
   render() {
-    const {config: siteConfig, language = ''} = this.props;
-    const {baseUrl} = siteConfig;
+    const { config: siteConfig, language = '' } = this.props;
+    const { baseUrl } = siteConfig;
 
     const Block = props => (
       <Container
@@ -118,7 +118,7 @@ from botorch.fit import fit_gpytorch_mll
 from botorch.utils import standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
-train_X = torch.rand(10, 2)
+train_X = torch.rand(10, 2, dtype=torch.double)
 Y = 1 - torch.linalg.norm(train_X - 0.5, dim=-1, keepdim=True)
 Y = Y + 0.1 * torch.randn_like(Y)  # add some noise
 train_Y = standardize(Y)
@@ -158,7 +158,7 @@ candidate  # tensor([0.4887, 0.5063])
       <div
         className="productShowcaseSection"
         id="quickstart"
-        style={{textAlign: 'center'}}>
+        style={{ textAlign: 'center' }}>
         <h2>Get Started</h2>
         <Container>
           <ol>
@@ -187,7 +187,7 @@ candidate  # tensor([0.4887, 0.5063])
     );
 
     const Features = () => (
-      <div className="productShowcaseSection" style={{textAlign: 'center'}}>
+      <div className="productShowcaseSection" style={{ textAlign: 'center' }}>
         <h2>Key Features</h2>
         <Block layout="threeColumn">
           {[
@@ -221,7 +221,7 @@ candidate  # tensor([0.4887, 0.5063])
       <div
         className="productShowcaseSection"
         id="reference"
-        style={{textAlign: 'center'}}>
+        style={{ textAlign: 'center' }}>
         <h2>References</h2>
         <Container>
           <a href={`https://arxiv.org/abs/1910.06403`}>{papertitle}</a>
