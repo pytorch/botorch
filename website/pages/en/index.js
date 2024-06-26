@@ -19,8 +19,8 @@ const bash = (...args) => `~~~bash\n${String.raw(...args)}\n~~~`;
 
 class HomeSplash extends React.Component {
   render() {
-    const { siteConfig, language = '' } = this.props;
-    const { baseUrl, docsUrl } = siteConfig;
+    const {siteConfig, language = ''} = this.props;
+    const {baseUrl, docsUrl} = siteConfig;
     const docsPart = `${docsUrl ? `${docsUrl}/` : ''}`;
     const langPart = `${language ? `${language}/` : ''}`;
     const docUrl = doc => `${baseUrl}${docsPart}${langPart}${doc}`;
@@ -79,8 +79,8 @@ class HomeSplash extends React.Component {
 
 class Index extends React.Component {
   render() {
-    const { config: siteConfig, language = '' } = this.props;
-    const { baseUrl } = siteConfig;
+    const {config: siteConfig, language = ''} = this.props;
+    const {baseUrl} = siteConfig;
 
     const Block = props => (
       <Container
@@ -187,7 +187,7 @@ candidate  # tensor([0.4887, 0.5063])
     );
 
     const Features = () => (
-      <div className="productShowcaseSection" style={{ textAlign: 'center' }}>
+      <div className="productShowcaseSection" style={{textAlign: 'center'}}>
         <h2>Key Features</h2>
         <Block layout="threeColumn">
           {[
@@ -221,7 +221,7 @@ candidate  # tensor([0.4887, 0.5063])
       <div
         className="productShowcaseSection"
         id="reference"
-        style={{ textAlign: 'center' }}>
+        style={{textAlign: 'center'}}>
         <h2>References</h2>
         <Container>
           <a href={`https://arxiv.org/abs/1910.06403`}>{papertitle}</a>
