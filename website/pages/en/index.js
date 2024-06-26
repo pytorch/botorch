@@ -158,7 +158,7 @@ candidate  # tensor([0.4887, 0.5063])
       <div
         className="productShowcaseSection"
         id="quickstart"
-        style={{ textAlign: 'center' }}>
+        style={{textAlign: 'center'}}>
         <h2>Get Started</h2>
         <Container>
           <ol>
