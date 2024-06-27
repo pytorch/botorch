@@ -166,25 +166,6 @@
 
 
 
-<span class="k">def</span> <span class="nf">_raise_deprecation_warning_if_kwargs</span><span class="p">(</span><span class="n">fn_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Raise a warning if kwargs are provided.</span>
-
-<span class="sd">    Some functions used to support **kwargs. The applicable parameters have now been</span>
-<span class="sd">    refactored to be named arguments, so no warning will be raised for users passing</span>
-<span class="sd">    the expected arguments. However, if a user had been passing an inapplicable</span>
-<span class="sd">    keyword argument, this will now raise a warning whereas in the past it did</span>
-<span class="sd">    nothing.</span>
-<span class="sd">    """</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">fn_name</span><span class="si">}</span><span class="s2">` does not support arguments </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">. In "</span>
-            <span class="s2">"the future, this will become an error."</span><span class="p">,</span>
-            <span class="ne">DeprecationWarning</span><span class="p">,</span>
-            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-        <span class="p">)</span>
-
-
 <span class="k">def</span> <span class="nf">_optimize_acqf_all_features_fixed</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -906,7 +887,6 @@
     <span class="n">batch_initial_conditions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">ic_generator</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TGenInitialConditions</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">ic_gen_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Optimize over a list of fixed_features and returns the best solution.</span>
 
@@ -960,8 +940,6 @@
 <span class="sd">            for nonlinear inequality constraints.</span>
 <span class="sd">        ic_gen_kwargs: Additional keyword arguments passed to function specified by</span>
 <span class="sd">            `ic_generator`</span>
-<span class="sd">        kwargs: kwargs do nothing. This is provided so that the same arguments can</span>
-<span class="sd">            be passed to different acquisition functions without raising an error.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A two-element tuple containing</span>
@@ -979,7 +957,6 @@
                 <span class="s2">"are currently not supported when `q &gt; 1`. This is needed to "</span>
                 <span class="s2">"compute the joint acquisition value."</span>
             <span class="p">)</span>
-    <span class="n">_raise_deprecation_warning_if_kwargs</span><span class="p">(</span><span class="s2">"optimize_acqf_mixed"</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
 
     <span class="n">ic_gen_kwargs</span> <span class="o">=</span> <span class="n">ic_gen_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
 
@@ -1059,7 +1036,6 @@
     <span class="n">choices</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">max_batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2048</span><span class="p">,</span>
     <span class="n">unique</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Optimize over a discrete set of points using batch evaluation.</span>
 
@@ -1077,8 +1053,6 @@
 <span class="sd">            a large training set.</span>
 <span class="sd">        unique: If True return unique choices, o/w choices may be repeated</span>
 <span class="sd">            (only relevant if `q &gt; 1`).</span>
-<span class="sd">        kwargs: kwargs do nothing. This is provided so that the same arguments can</span>
-<span class="sd">            be passed to different acquisition functions without raising an error.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A two-element tuple containing</span>
@@ -1093,7 +1067,6 @@
         <span class="p">)</span>
     <span class="k">if</span> <span class="n">choices</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">InputDataError</span><span class="p">(</span><span class="s2">"`choices` must be non-emtpy."</span><span class="p">)</span>
-    <span class="n">_raise_deprecation_warning_if_kwargs</span><span class="p">(</span><span class="s2">"optimize_acqf_discrete"</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
     <span class="n">choices_batched</span> <span class="o">=</span> <span class="n">choices</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">q</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">candidate_list</span><span class="p">,</span> <span class="n">acq_value_list</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
@@ -1214,7 +1187,6 @@
     <span class="n">batch_initial_conditions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">max_batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2048</span><span class="p">,</span>
     <span class="n">unique</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Optimize acquisition function over a lattice.</span>
 
@@ -1247,8 +1219,6 @@
 <span class="sd">            a large training set.</span>
 <span class="sd">        unique: If True return unique choices, o/w choices may be repeated</span>
 <span class="sd">            (only relevant if `q &gt; 1`).</span>
-<span class="sd">        kwargs: kwargs do nothing. This is provided so that the same arguments can</span>
-<span class="sd">            be passed to different acquisition functions without raising an error.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A two-element tuple containing</span>
@@ -1256,7 +1226,6 @@
 <span class="sd">        - a `q x d`-dim tensor of generated candidates.</span>
 <span class="sd">        - an associated acquisition value.</span>
 <span class="sd">    """</span>
-    <span class="n">_raise_deprecation_warning_if_kwargs</span><span class="p">(</span><span class="s2">"optimize_acqf_discrete_local_search"</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
     <span class="n">candidate_list</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">base_X_pending</span> <span class="o">=</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">X_pending</span> <span class="k">if</span> <span class="n">q</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="n">base_X_avoid</span> <span class="o">=</span> <span class="n">X_avoid</span>
