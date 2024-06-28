@@ -186,28 +186,3 @@ class CachedCholeskyMCSamplerMixin(MCSamplerMixin):
                 posterior=posterior, base_sampler=self.base_sampler
             )
             self.q_in = q_in
-
-
-# TODO: remove
-class CachedCholeskyMCAcquisitionFunction(CachedCholeskyMCSamplerMixin):
-    r"""DEPRECATED - USE CachedCholeskyMCSamplerMixin instead."""
-
-    def _setup(
-        self,
-        model: Model,
-        cache_root: bool = False,
-    ) -> None:
-        r"""Set class attributes and perform compatibility checks.
-
-        Args:
-            model: A model.
-            cache_root: A boolean indicating whether to cache the Cholesky.
-                This might be overridden in the model is not compatible.
-        """
-        warnings.warn(
-            "`CachedCholeskyMCAcquisitionFunction` is deprecated. Please switch to "
-            "`CachedCholeskyMCSamplerMixin` and replace any calls to _setup with the "
-            "constructor of the Mixin class.",
-            DeprecationWarning,
-        )
-        super().__init__(model=model, cache_root=cache_root, sampler=self.sampler)
