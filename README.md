@@ -57,7 +57,7 @@ Optimization simply use Ax.
 **Installation Requirements**
 - Python >= 3.10
 - PyTorch >= 1.13.1
-- gpytorch == 1.11
+- gpytorch == 1.12
 - linear_operator == 0.5.1
 - pyro-ppl >= 1.8.4
 - scipy
