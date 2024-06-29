@@ -212,34 +212,6 @@
                 <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span> <span class="n">base_sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_sampler</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">q_in</span> <span class="o">=</span> <span class="n">q_in</span>
-
-
-<span class="c1"># TODO: remove</span>
-<div class="viewcode-block" id="CachedCholeskyMCAcquisitionFunction">
-<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cached_cholesky.CachedCholeskyMCAcquisitionFunction">[docs]</a>
-<span class="k">class</span> <span class="nc">CachedCholeskyMCAcquisitionFunction</span><span class="p">(</span><span class="n">CachedCholeskyMCSamplerMixin</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""DEPRECATED - USE CachedCholeskyMCSamplerMixin instead."""</span>
-
-    <span class="k">def</span> <span class="nf">_setup</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
-        <span class="n">cache_root</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Set class attributes and perform compatibility checks.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            model: A model.</span>
-<span class="sd">            cache_root: A boolean indicating whether to cache the Cholesky.</span>
-<span class="sd">                This might be overridden in the model is not compatible.</span>
-<span class="sd">        """</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-            <span class="s2">"`CachedCholeskyMCAcquisitionFunction` is deprecated. Please switch to "</span>
-            <span class="s2">"`CachedCholeskyMCSamplerMixin` and replace any calls to _setup with the "</span>
-            <span class="s2">"constructor of the Mixin class."</span><span class="p">,</span>
-            <span class="ne">DeprecationWarning</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">cache_root</span><span class="o">=</span><span class="n">cache_root</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">)</span></div>
-
 </pre></div>
 </div>
 </div>
