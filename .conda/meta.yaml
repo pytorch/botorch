@@ -18,7 +18,7 @@ requirements:
     - setuptools_scm
   run:
     - pytorch >=1.13.1
-    - gpytorch ==1.11
+    - gpytorch ==1.12
     - linear_operator ==0.5.1
     - scipy
     - multipledispatch
