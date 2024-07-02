@@ -203,10 +203,16 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="c1"># Set sample shape, so that the prior samples have the same shape</span>
                 <span class="c1"># as `closure(module)` without having to be repeated.</span>
-                <span class="n">closure_shape</span> <span class="o">=</span> <span class="n">closure</span><span class="p">(</span><span class="n">module</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
                 <span class="n">prior_shape</span> <span class="o">=</span> <span class="n">prior</span><span class="o">.</span><span class="n">_extended_shape</span><span class="p">()</span>
-                <span class="n">sample_shape</span> <span class="o">=</span> <span class="n">closure_shape</span><span class="p">[:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">prior_shape</span><span class="p">)]</span>
-                <span class="n">setting_closure</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">prior</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">prior_shape</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="c1"># For a univariate prior we can sample the size of the closure.</span>
+                    <span class="c1"># Otherwise we will sample exactly the same value for all</span>
+                    <span class="c1"># lengthscales where we commonly specify a univariate prior.</span>
+                    <span class="n">setting_closure</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">prior</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">closure</span><span class="p">(</span><span class="n">module</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">closure_shape</span> <span class="o">=</span> <span class="n">closure</span><span class="p">(</span><span class="n">module</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+                    <span class="n">sample_shape</span> <span class="o">=</span> <span class="n">closure_shape</span><span class="p">[:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">prior_shape</span><span class="p">)]</span>
+                    <span class="n">setting_closure</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">prior</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">))</span>
                 <span class="k">break</span>
             <span class="k">except</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
                 <span class="n">warn</span><span class="p">(</span>
