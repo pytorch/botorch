@@ -138,6 +138,11 @@ Predictive Entropy Search Acquisition Functions
 .. automodule:: botorch.acquisition.predictive_entropy_search
     :members:
 
+H-Entropy Search Acquisition Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.hentropy_search
+    :members:
+
 Active Learning Acquisition Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.active_learning
