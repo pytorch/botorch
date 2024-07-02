@@ -12,11 +12,6 @@ Monte-Carlo Sampler API
 .. automodule:: botorch.sampling.base
     :members:
 
-Deterministic Sampler
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.sampling.deterministic
-    :members:
-
 Index Sampler
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.sampling.index_sampler
