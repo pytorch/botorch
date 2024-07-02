@@ -34,11 +34,6 @@ GPyTorch Posterior
 .. automodule:: botorch.posteriors.gpytorch
     :members:
 
-Determinstic Posterior
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.posteriors.deterministic
-    :members:
-
 Ensemble Posterior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.posteriors.ensemble
