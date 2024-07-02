@@ -164,18 +164,23 @@ class TestGPyTorchModel(BotorchTestCase):
             # test subset_output
             with self.assertRaises(NotImplementedError):
                 model.subset_output([0])
+
             # test fantasize
-            sampler = SobolQMCNormalSampler(sample_shape=torch.Size([2]))
-            cm = model.fantasize(torch.rand(2, 1, **tkwargs), sampler=sampler)
-            self.assertIsInstance(cm, SimpleGPyTorchModel)
-            self.assertEqual(cm.train_targets.shape, torch.Size([2, 7]))
-            cm = model.fantasize(
-                torch.rand(2, 1, **tkwargs),
-                sampler=sampler,
-                observation_noise=torch.rand(2, 1, **tkwargs),
-            )
-            self.assertIsInstance(cm, SimpleGPyTorchModel)
-            self.assertEqual(cm.train_targets.shape, torch.Size([2, 7]))
+            n_samps = 2
+            sampler = SobolQMCNormalSampler(sample_shape=torch.Size([n_samps]))
+            for n in [0, 2]:
+                x = torch.rand(n, 1, **tkwargs)
+                cm = model.fantasize(X=x, sampler=sampler)
+                self.assertIsInstance(cm, SimpleGPyTorchModel)
+                self.assertEqual(cm.train_targets.shape, torch.Size([n_samps, 5 + n]))
+                cm = model.fantasize(
+                    X=x,
+                    sampler=sampler,
+                    observation_noise=torch.rand(n, 1, **tkwargs),
+                )
+                self.assertIsInstance(cm, SimpleGPyTorchModel)
+                self.assertEqual(cm.train_targets.shape, torch.Size([n_samps, 5 + n]))
+
             # test that boolean observation noise is deprecated
             msg = "`fantasize` no longer accepts a boolean for `observation_noise`."
             with self.assertRaisesRegex(DeprecationError, msg):
