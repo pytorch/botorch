@@ -21,7 +21,7 @@ from copy import deepcopy
 
 from functools import partial
 
-from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union
+from typing import Callable, List, Optional, Tuple, TypeVar, Union
 
 import torch
 from botorch.acquisition.cached_cholesky import CachedCholeskyMCSamplerMixin
@@ -275,7 +275,7 @@ class qLogNoisyExpectedImprovement(
         cache_root: bool = True,
         tau_max: float = TAU_MAX,
         tau_relu: float = TAU_RELU,
-        **kwargs: Any,
+        marginalize_dim: Optional[int] = None,
     ) -> None:
         r"""q-Noisy Expected Improvement.
 
@@ -314,7 +314,7 @@ class qLogNoisyExpectedImprovement(
                 approximations to max.
             tau_relu: Temperature parameter controlling the sharpness of the smooth
                 approximations to ReLU.
-            kwargs: Here for qNEI for compatibility.
+            marginalize_dim: The dimension to marginalize over.
 
         TODO: similar to qNEHVI, when we are using sequential greedy candidate
         selection, we could incorporate pending points X_baseline and compute
@@ -343,7 +343,7 @@ class qLogNoisyExpectedImprovement(
             posterior_transform=posterior_transform,
             prune_baseline=prune_baseline,
             cache_root=cache_root,
-            **kwargs,
+            marginalize_dim=marginalize_dim,
         )
 
     def _sample_forward(self, obj: Tensor) -> Tensor:
@@ -372,7 +372,7 @@ class qLogNoisyExpectedImprovement(
         posterior_transform: Optional[PosteriorTransform] = None,
         prune_baseline: bool = False,
         cache_root: bool = True,
-        **kwargs: Any,
+        marginalize_dim: Optional[int] = None,
     ) -> None:
         CachedCholeskyMCSamplerMixin.__init__(
             self, model=model, cache_root=cache_root, sampler=sampler
@@ -383,7 +383,7 @@ class qLogNoisyExpectedImprovement(
                 X=X_baseline,
                 objective=objective,
                 posterior_transform=posterior_transform,
-                marginalize_dim=kwargs.get("marginalize_dim"),
+                marginalize_dim=marginalize_dim,
                 constraints=self._constraints,
             )
         self.register_buffer("X_baseline", X_baseline)
