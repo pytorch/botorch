@@ -26,31 +26,6 @@
 <span id="monte-carlo-sampler-api"></span><h2>Monte-Carlo Sampler API<a class="headerlink" href="#module-botorch.sampling.base" title="Link to this heading">¶</a></h2>
 <p>The base class for sampler modules to be used with MC-evaluated acquisition functions.</p>
 </section>
-<section id="module-botorch.sampling.deterministic">
-<span id="deterministic-sampler"></span><h2>Deterministic Sampler<a class="headerlink" href="#module-botorch.sampling.deterministic" title="Link to this heading">¶</a></h2>
-<p>A dummy sampler for use with deterministic models.</p>
-<dl class="py class">
-<dt class="sig sig-object py" id="botorch.sampling.deterministic.DeterministicSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.deterministic.</span></span><span class="sig-name descname"><span class="pre">DeterministicSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/deterministic.html#DeterministicSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.deterministic.DeterministicSampler" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.stochastic_samplers.StochasticSampler" title="botorch.sampling.stochastic_samplers.StochasticSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">StochasticSampler</span></code></a></p>
-<p>A sampler that simply calls <cite>posterior.rsample</cite>, intended to be used with
-<cite>DeterministicModel</cite> &amp; <cite>DeterministicPosterior</cite>.</p>
-<p>[DEPRECATED] - Use <cite>IndexSampler</cite> in conjunction with <cite>EnsemblePosterior</cite>
-instead of <cite>DeterministicSampler</cite> with <cite>DeterministicPosterior</cite>.</p>
-<p>This is effectively signals that <cite>StochasticSampler</cite> is safe to use with
-deterministic models since their output is deterministic by definition.</p>
-<p>Abstract base class for samplers.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
-of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-</section>
 <section id="module-botorch.sampling.index_sampler">
 <span id="index-sampler"></span><h2>Index Sampler<a class="headerlink" href="#module-botorch.sampling.index_sampler" title="Link to this heading">¶</a></h2>
 <p>Sampler to be used with <cite>EnsemblePosteriors</cite> to enable
