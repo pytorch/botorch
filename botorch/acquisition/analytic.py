@@ -601,7 +601,7 @@ class LogNoisyExpectedImprovement(AnalyticAcquisitionFunction):
 
     def __init__(
         self,
-        model: GPyTorchModel,
+        model: SingleTaskGP,
         X_observed: Tensor,
         num_fantasies: int = 20,
         maximize: bool = True,
@@ -651,6 +651,7 @@ class LogNoisyExpectedImprovement(AnalyticAcquisitionFunction):
         """
         # add batch dimension for broadcasting to fantasy models
         mean, sigma = self._mean_and_sigma(X.unsqueeze(-3))
+        print("Mean and sigma:", mean, sigma)
         u = _scaled_improvement(mean, sigma, self.best_f, self.maximize)
         log_ei = _log_ei_helper(u) + sigma.log()
         # this is mathematically - though not numerically - equivalent to log(mean(ei))
@@ -680,7 +681,7 @@ class NoisyExpectedImprovement(ExpectedImprovement):
 
     def __init__(
         self,
-        model: GPyTorchModel,
+        model: SingleTaskGP,
         X_observed: Tensor,
         num_fantasies: int = 20,
         maximize: bool = True,
@@ -1068,24 +1069,93 @@ def _get_noiseless_fantasy_model(
             "Only SingleTaskGP models with known observation noise "
             "are currently supported for fantasy-based NEI & LogNEI."
         )
+    
+    # # initialize a copy of SingleTaskGP on the original training inputs
+    # # this makes SingleTaskGP a non-batch GP, so that the same hyperparameters
+    # # are used across all batches (by default, a GP with batched training data
+    # # uses independent hyperparameters for each batch).
+    # fantasy_model = SingleTaskGP(
+    #     train_X=model.train_inputs[0],
+    #     train_Y=model.train_targets.unsqueeze(-1),
+    #     train_Yvar=model.likelihood.noise_covar.noise.unsqueeze(-1),
+    # )
+    # # update training inputs/targets to be batch mode fantasies
+    # fantasy_model.set_train_data(
+    #     inputs=batch_X_observed, targets=Y_fantasized, strict=False
+    # )
+    # # use noiseless fantasies
+    # fantasy_model.likelihood.noise_covar.noise = torch.full_like(Y_fantasized, 1e-7)
+    # # load hyperparameters from original model
+    # state_dict = deepcopy(model.state_dict())
+    # fantasy_model.load_state_dict(state_dict)
+    # return fantasy_model
+
+
+    # # initialize a copy of SingleTaskGP on the original training inputs
+    # # this makes SingleTaskGP a non-batch GP, so that the same hyperparameters
+    # # are used across all batches (by default, a GP with batched training data
+    # # uses independent hyperparameters for each batch).
+    # fantasy_model = deepcopy(model)
+    # # update training inputs/targets to be batch mode fantasies
+    # fantasy_model.set_train_data(
+    #     inputs=batch_X_observed, targets=Y_fantasized, strict=False
+    # )
+    # # use noiseless fantasies
+    # fantasy_model.likelihood.noise_covar.noise = torch.full_like(Y_fantasized, 1e-7)
+    # # load hyperparameters from original model
+    # state_dict = deepcopy(model.state_dict())
+    # fantasy_model.load_state_dict(state_dict)
+    # return fantasy_model
+
+
+
+
+    outcome_transform = deepcopy(getattr(model, "outcome_transform", None))
     # initialize a copy of SingleTaskGP on the original training inputs
     # this makes SingleTaskGP a non-batch GP, so that the same hyperparameters
     # are used across all batches (by default, a GP with batched training data
     # uses independent hyperparameters for each batch).
+    # print(model.train_inputs[0])
+    # exit()
+    # from botorch.models.transforms.outcome import Standardize
     fantasy_model = SingleTaskGP(
         train_X=model.train_inputs[0],
         train_Y=model.train_targets.unsqueeze(-1),
         train_Yvar=model.likelihood.noise_covar.noise.unsqueeze(-1),
+        covar_module=deepcopy(model.covar_module),
+        mean_module=deepcopy(model.mean_module),
+        outcome_transform=outcome_transform,
+        input_transform=deepcopy(getattr(model, "input_transform", None))
     )
+
+    if outcome_transform is not None:
+        outcome_transform.means = outcome_transform.means.expand(batch_X_observed.size(0), *outcome_transform.means.shape)
+        outcome_transform.stdvs = outcome_transform.stdvs.expand(batch_X_observed.size(0), *outcome_transform.stdvs.shape)
+        outcome_transform._stdvs_sq = outcome_transform._stdvs_sq.expand(batch_X_observed.size(0), *outcome_transform._stdvs_sq.shape)
+
+    Yvar = torch.full_like(Y_fantasized, 1e-7)
+    # Need to transform the outcome just as in the SingleTaskGP constructor.
+    if outcome_transform is not None:
+        # Need to unsqueeze for BoTorch and then squeeze again for GPyTorch
+        print("OLD Y_fantasized:", Y_fantasized)
+        Y_fantasized, Yvar = outcome_transform(Y_fantasized.unsqueeze(-1), Yvar.unsqueeze(-1))
+        Y_fantasized = Y_fantasized.squeeze(-1)
+        Yvar = Yvar.squeeze(-1)
+        print("NEW Y_fantasized:", Y_fantasized)
+
     # update training inputs/targets to be batch mode fantasies
     fantasy_model.set_train_data(
         inputs=batch_X_observed, targets=Y_fantasized, strict=False
     )
     # use noiseless fantasies
-    fantasy_model.likelihood.noise_covar.noise = torch.full_like(Y_fantasized, 1e-7)
-    # load hyperparameters from original model
-    state_dict = deepcopy(model.state_dict())
-    fantasy_model.load_state_dict(state_dict)
+    fantasy_model.likelihood.noise_covar.noise = Yvar
+
+    # This calls _set_transformed_inputs
+    # Need to do this AFTER setting all the data
+    # so that the right data is transformed
+    fantasy_model.eval()
+    
+
     return fantasy_model
 
 

@@ -4,6 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import itertools
 import math
 
 import torch
@@ -36,6 +37,7 @@ from botorch.posteriors import GPyTorchPosterior
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
+from botorch.models.transforms import Normalize, Standardize
 
 
 NEI_NOISE = [
@@ -807,7 +809,12 @@ class TestConstrainedExpectedImprovement(BotorchTestCase):
 
 
 class TestNoisyExpectedImprovement(BotorchTestCase):
-    def _get_model(self, dtype=torch.float):
+    def _get_model(self,
+                   dtype=torch.float,
+                   outcome_transform=None,
+                   input_transform=None,
+                   low_x=0.0,
+                   hi_x=1.0):
         state_dict = {
             "mean_module.raw_constant": torch.tensor([-0.0066]),
             "covar_module.raw_outputscale": torch.tensor(1.0143),
@@ -819,22 +826,44 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
             "covar_module.outputscale_prior.concentration": torch.tensor(2.0),
             "covar_module.outputscale_prior.rate": torch.tensor(0.1500),
         }
-        train_x = torch.linspace(0, 1, 10, device=self.device, dtype=dtype).unsqueeze(
-            -1
-        )
+        train_x = torch.linspace(
+            low_x, hi_x, 10, device=self.device, dtype=dtype).unsqueeze(-1)
         train_y = torch.sin(train_x * (2 * math.pi))
         noise = torch.tensor(NEI_NOISE, device=self.device, dtype=dtype)
         train_y += noise
+        print("train_y ORIGINAL:", train_y)
         train_yvar = torch.full_like(train_y, 0.25**2)
-        model = SingleTaskGP(train_X=train_x, train_Y=train_y, train_Yvar=train_yvar)
-        model.load_state_dict(state_dict)
+        model = SingleTaskGP(train_X=train_x, train_Y=train_y, train_Yvar=train_yvar,
+                             outcome_transform=outcome_transform,
+                             input_transform=input_transform)
+        model.load_state_dict(state_dict, strict=False)
         model.to(train_x)
         model.eval()
+        print("DA model.train_inputs::::::", model.train_inputs)
         return model
 
     def test_noisy_expected_improvement(self):
-        for dtype in (torch.float, torch.double):
-            model = self._get_model(dtype=dtype)
+        for dtype, use_octf, use_intf, bounds in itertools.product(
+            (torch.float, torch.double),
+            (False, True),
+            (False, True),
+            (torch.tensor([[-5.05], [3.1]]), torch.tensor([[0.0], [1.0]]))
+        ):
+            octf = Standardize(m=1) if use_octf else None
+            intf = (
+                Normalize(d=1,
+                          bounds=bounds.to(device=self.device, dtype=dtype),
+                          transform_on_train=True)
+                if use_intf
+                else None
+            )
+            low_x = bounds[0].item() if use_intf else 0.0
+            hi_x = bounds[1].item() if use_intf else 1.0
+            model = self._get_model(dtype=dtype,
+                                    outcome_transform=octf,
+                                    input_transform=intf,
+                                    low_x=low_x,
+                                    hi_x=hi_x)
             X_observed = model.train_inputs[0]
             nfan = 5
             nEI = NoisyExpectedImprovement(model, X_observed, num_fantasies=nfan)
@@ -844,11 +873,23 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
             self.assertTrue(hasattr(LogNEI, "best_f"))
             self.assertIsInstance(LogNEI.model, SingleTaskGP)
             self.assertIsInstance(LogNEI.model.likelihood, FixedNoiseGaussianLikelihood)
+            # Make sure _get_noiseless_fantasy_model gives them
+            # the same state_dict 
+            self.assertEqual(LogNEI.model.state_dict(), model.state_dict())
+            # if use_octf is not None:
+            #     means = LogNEI.model.train_targets.mean(dim=-1)
+            #     self.assertAllClose(torch.zeros_like(means),
+            #                         means)
+            #     stdevs = LogNEI.model.train_targets.std(dim=-1)
+            #     self.assertAllClose(stdevs,
+            #                         torch.ones_like(stdevs))
+            
             LogNEI.model = nEI.model  # let the two share their values and fantasies
             LogNEI.best_f = nEI.best_f
 
             X_test = torch.tensor(
-                [[[0.25]], [[0.75]]],
+                [[[0.25 * (hi_x - low_x) + low_x]],
+                 [[0.75 * (hi_x - low_x) + low_x]]],
                 device=X_observed.device,
                 dtype=dtype,
             )
@@ -872,7 +913,7 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
             self.assertEqual(val.shape, torch.Size([2]))
             # test values
             self.assertGreater(val[0].item(), 8e-5)
-            self.assertLess(val[1].item(), 1e-6)
+            self.assertLess(val[1].item(), 1e-6, msg=f"{dtype=}, {use_octf=}, {use_intf=}, {bounds=}")
             # test gradient
             val.sum().backward()
             self.assertGreater(X_test.grad[0].abs().item(), 8e-6)
@@ -885,6 +926,9 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
             self.assertAllClose(
                 X_test.grad[0], X_test_log.grad[0], atol=atol, rtol=rtol
             )
+
+            # if use_octf:
+            #     self.assertAllClose()
 
             # test inferred noise model
             other_model = SingleTaskGP(X_observed, model.train_targets.unsqueeze(-1))
