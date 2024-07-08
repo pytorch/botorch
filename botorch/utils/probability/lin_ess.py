@@ -159,9 +159,14 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         self._z = self._transform(self._x)
 
         # We will need the following repeatedly, let's allocate them once
-        self._zero = torch.zeros(1, **tkwargs)
-        self._nan = torch.tensor(float("nan"), **tkwargs)
-        self._full_angular_range = torch.tensor([0.0, _twopi], **tkwargs)
+        batch = 1
+        self.zeros = torch.zeros((batch, 1), **tkwargs)
+        self.ones = torch.ones((batch, 1), **tkwargs)
+        self.indices_batch = torch.arange(batch, dtype=torch.int64, device=tkwargs['device'])
+
+        # self._zero = torch.zeros(1, **tkwargs)
+        # self._nan = torch.tensor(float("nan"), **tkwargs)
+
         self.check_feasibility = check_feasibility
         self._lifetime_samples = 0
         if burnin > 0:
@@ -294,15 +299,20 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         Returns:
             A `1`-dim Tensor containing the rotation angle (radians).
         """
-        rot_angle, rot_slices = self._find_rotated_intersections(nu)
-        rot_lengths = rot_slices[:, 1] - rot_slices[:, 0]
-        cum_lengths = torch.cumsum(rot_lengths, dim=0)
-        cum_lengths = torch.cat((self._zero, cum_lengths), dim=0)
-        rnd_angle = cum_lengths[-1] * torch.rand(
-            1, device=cum_lengths.device, dtype=cum_lengths.dtype
-        )
-        idx = torch.searchsorted(cum_lengths, rnd_angle) - 1
-        return (rot_slices[idx, 0] + rnd_angle + rot_angle) - cum_lengths[idx]
+        left, right = self._find_active_intersection_angles(nu)
+        left, right = self._trim_intervals(left, right)
+
+        csum = right.sub(left).clamp(min=0.).cumsum(dim=-1)
+
+        u = csum[:, -1] * torch.rand(right.size(-2), dtype=right.dtype, device=right.device)
+
+        # The returned index i satisfies csum[i - 1] < u <= csum[i]
+        idx = torch.searchsorted(csum, u.unsqueeze(-1)).squeeze(-1)
+
+        # Do a zero padding so that padded_csum[i] = csum[i - 1]
+        padded_csum = torch.cat([self.zeros, csum], dim=-1)
+
+        return u - padded_csum[self.indices_batch, idx] + left[self.indices_batch, idx]
 
     def _get_cart_coords(self, nu: Tensor, theta: Tensor) -> Tensor:
         r"""Determine location on ellipsoid in cartesian coordinates.
@@ -316,130 +326,69 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         """
         return self._z * torch.cos(theta) + nu * torch.sin(theta)
 
-    def _find_rotated_intersections(self, nu: Tensor) -> Tuple[Tensor, Tensor]:
-        r"""Finds rotated intersections.
+    def _trim_intervals(self, left, right):
+        """Trim the intervals by a small positive constant.
+        """
+        gap = torch.clamp(right - left, min=0.)
+        eps = gap.mul(0.25).clamp(max=1e-6 if gap.dtype == torch.float32 else 1e-12)
 
-        Rotates the intersections by the rotation angle and makes sure that all
-        angles lie in [0, 2*pi].
+        return left + eps, right - eps
+
+    def _find_active_intersection_angles(self, nu) -> Tuple(Tensor, Tensor):
+        alpha, beta = self._find_intersection_angles(nu)
+
+        # It's easier to put the batch as the first dimension,
+        # because torch.searchsorted only supports searching in the last dimension
+        alpha, beta = alpha.T, beta.T
+
+        srted, indices = torch.sort(alpha, descending=False)
+        cummax = beta[self.indices_batch.unsqueeze(-1), indices].cummax(dim=-1).values
+
+        srted = torch.cat([srted, self.ones * 2 * math.pi], dim=-1)
+        cummax = torch.cat([self.zeros, cummax], dim=-1)
+
+        return cummax, srted
+
+    def _find_intersection_angles(self, nu: Tensor) -> Tuple(Tensor, Tensor):
+        """Compute all 2 * m intersections of the ellipse and the linear constraints.
+        If the i-th linear inequality constraint has zero intersection with the ellipse, we
+        will create two dummy intersection angles alpha_i = beta_i = 0.
 
         Args:
-            nu: A `d x 1`-dim tensor (the "new" direction, drawn from N(0, I)).
+            nu: A `batch x d`-dim tensor (the "new" directions, drawn from N(0, I)).
 
         Returns:
-            A two-tuple containing rotation angle (scalar) and a
-            `num_active / 2 x 2`-dim tensor of shifted angles.
+            alpha: A tensor of size `m x batch`, where `m` is the number of inequality constraints.
+            beta:  A tensor of size `m x batch`, where `m` is the number of inequality constraints.
         """
-        slices = self._find_active_intersections(nu)
-        rot_angle = slices[0]
-        slices = (slices - rot_angle).reshape(-1, 2)
-        # Ensuring that we don't sample within numerical precision of the boundaries
-        # due to resulting instabilities in the constraint satisfaction.
-        eps = 1e-6 if slices.dtype == torch.float32 else 1e-12
-        eps = torch.tensor(eps, dtype=slices.dtype, device=slices.device)
-        eps = eps.minimum(slices.diff(dim=-1).abs() / 4)
-        slices = slices + torch.cat((eps, -eps), dim=-1)
-        # NOTE: The remainder call relies on the epsilon contraction, since the
-        # remainder of_twopi divided by _twopi is zero, not _twopi.
-        return rot_angle, slices.remainder(_twopi)
+        p = self._Az @ self._z
+        q = self._Az @ nu
 
-    def _find_active_intersections(self, nu: Tensor) -> Tensor:
-        """
-        Find angles of those intersections that are at the boundary of the integration
-        domain by adding and subtracting a small angle and evaluating on the ellipse
-        to see if we are on the boundary of the integration domain.
+        radius = torch.sqrt(p ** 2 + q ** 2)
+        # if radius.abs().lt(1e-6).any():
+        #     warnings.warn("The ellipse has an extremely small volume. This may cause numerical issues.")
 
-        Args:
-            nu: A `d x 1`-dim tensor (the "new" direction, drawn from N(0, I)).
+        ratio = self._bz / radius
+        # if ratio.min().le(-1. + 1e-6):
+        #     warnings.warn("The ellipse is almost outside the domain. This may cause numerical issues.")
 
-        Returns:
-            A `num_active`-dim tensor containing the angles of active intersection in
-            increasing order so that activation happens in positive direction. If a
-            slice crosses `theta=0`, the first angle is appended at the end of the
-            tensor. Every element of the returned tensor defines a slice for elliptical
-            slice sampling.
-        """
-        theta = self._find_intersection_angles(nu)
-        theta_active, delta_active = self._active_theta_and_delta(
-            nu=nu,
-            theta=theta,
-        )
-        if theta_active.numel() == 0:
-            theta_active = self._full_angular_range
-            # TODO: What about `self.ellipse_in_domain = False` in the original code?
-        elif delta_active[0] == -1:  # ensuring that the first interval is feasible
+        has_solution = ratio < 1.
 
-            theta_active = torch.cat((theta_active[1:], theta_active[:1]))
+        arccos = torch.arccos(ratio)
+        arccos[~has_solution] = 0.
+        arctan = torch.arctan2(q, p)
 
-        return theta_active.view(-1)
+        theta1 = arctan + arccos
+        theta2 = arctan - arccos
 
-    def _find_intersection_angles(self, nu: Tensor) -> Tensor:
-        """Compute all of the up to 2*n_ineq_con intersections of the ellipse
-        and the linear constraints.
+        # translate every angle to [0, 2 * pi]
+        theta1 = theta1 + theta1.lt(0.) * _twopi
+        theta2 = theta2 + theta2.lt(0.) * _twopi
 
-        For background, see equation (2) in
-        http://proceedings.mlr.press/v108/gessner20a/gessner20a.pdf
+        alpha = torch.minimum(theta1, theta2)
+        beta = torch.maximum(theta1, theta2)
 
-        Args:
-            nu: A `d x 1`-dim tensor (the "new" direction, drawn from N(0, I)).
-
-        Returns:
-            An `M`-dim tensor, where `M <= 2 * n_ineq_con` (with `M = n_ineq_con`
-            if all intermediate computations yield finite numbers).
-        """
-        # Compared to the implementation in https://github.com/alpiges/LinConGauss
-        # we need to flip the sign of A b/c the original algorithm considers
-        # A @ x + b >= 0 feasible, whereas we consider A @ x - b <= 0 feasible.
-        g1 = -self._Az @ self._z
-        g2 = -self._Az @ nu
-        r = torch.sqrt(g1**2 + g2**2)
-        phi = 2 * torch.atan(g2 / (r + g1)).squeeze()
-
-        arg = -(self._bz / r).squeeze()
-        # Write NaNs if there is no intersection
-        arg = torch.where(torch.absolute(arg) <= 1, arg, self._nan)
-        # Two solutions per linear constraint, shape of theta: (n_ineq_con, 2)
-        acos_arg = torch.arccos(arg)
-        theta = torch.stack((phi + acos_arg, phi - acos_arg), dim=-1)
-        theta = theta[torch.isfinite(theta)]  # shape: `n_ineq_con - num_not_finite`
-        theta = torch.where(theta < 0, theta + _twopi, theta)  # in [0, 2*pi]
-        return torch.sort(theta).values
-
-    def _active_theta_and_delta(self, nu: Tensor, theta: Tensor) -> Tensor:
-        r"""Determine active indices.
-
-        Args:
-            nu: A `d x 1`-dim tensor (the "new" direction, drawn from N(0, I)).
-            theta: A sorted `M`-dim tensor of intersection angles in [0, 2pi].
-
-        Returns:
-            A tuple of Tensors of active constraint intersection angles `theta_active`,
-            and the change in the feasibility of the points on the ellipse on the left
-            and right of the active intersection angles `delta_active`. `delta_active`
-            is is negative if decreasing the angle renders the sample feasible, and
-            positive if increasing the angle renders the sample feasible.
-        """
-        # In order to determine if an angle that gives rise to an intersection with a
-        # constraint boundary leads to a change in the feasibility of the solution,
-        # we evaluate the constraints on the midpoint of the intersection angles.
-        # This gets rid of the `delta_theta` parameter in the original implementation,
-        # which cannot be set universally since it can be both 1) too large, when
-        # the distance in adjacent intersection angles is small, and 2) too small,
-        # when it approaches the numerical precision limit.
-        # The implementation below solves both problems and gets rid of the parameter.
-        if len(theta) < 2:  # if we have no or only a tangential intersection
-            theta_active = torch.tensor([], dtype=theta.dtype, device=theta.device)
-            delta_active = torch.tensor([], dtype=int, device=theta.device)
-            return theta_active, delta_active
-        theta_mid = (theta[:-1] + theta[1:]) / 2  # midpoints of intersection angles
-        last_mid = (theta[:1] + theta[-1:] + _twopi) / 2
-        last_mid = last_mid.where(last_mid < _twopi, last_mid - _twopi)
-        theta_mid = torch.cat((last_mid, theta_mid, last_mid), dim=0)
-        samples_mid = self._get_cart_coords(nu=nu, theta=theta_mid)
-        delta_feasibility = (
-            self._is_feasible(samples_mid, transformed=True).to(dtype=int).diff()
-        )
-        active_indices = delta_feasibility.nonzero()
-        return theta[active_indices], delta_feasibility[active_indices]
+        return alpha, beta
 
     def _is_feasible(self, points: Tensor, transformed: bool = False) -> Tensor:
         r"""Returns a Boolean tensor indicating whether the `points` are feasible,
