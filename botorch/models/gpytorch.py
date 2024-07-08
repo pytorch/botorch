@@ -437,9 +437,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
         self.eval()  # make sure model is in eval mode
         # input transforms are applied at `posterior` in `eval` mode, and at
         # `model.forward()` at the training time
-        print("posterior: ORIGINAL INPUTS:", X)
         X = self.transform_inputs(X)
-        print("posterior: NEW INPUTS:", X)
         with gpt_posterior_settings():
             # insert a dimension for the output dimension
             if self._num_outputs > 1:
