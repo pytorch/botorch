@@ -295,10 +295,10 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         r"""Draw the rotation angle.
 
         Args:
-            nu: A `d x 1`-dim tensor (the "new" direction, drawn from N(0, I)).
+            nu: A `d x batch`-dim tensor (the "new" direction, drawn from N(0, I)).
 
         Returns:
-            A `1`-dim Tensor containing the rotation angle (radians).
+            A `batch`-dim Tensor containing the rotation angle (radians).
         """
         left, right = self._find_active_intersection_angles(nu)
         left, right = self._trim_intervals(left, right)
@@ -336,6 +336,17 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         return left + eps, right - eps
 
     def _find_active_intersection_angles(self, nu) -> Tuple(Tensor, Tensor):
+        """Construct the active intersection angles.
+
+        Args:
+            nu: A `d x batch`-dim tensor (the "new" direction, drawn from N(0, I)).
+
+        Returns:
+            A tuple (left, right) of two tensors of size `batch x m` representing the active intersection angles.
+            For the i-th Markov chain and the j-th constraint, the angles left[i, j] and right[i, j]
+            are active if and only if left[i, j] <= right[i, j]. If left[i, j] > right[i, j], they will
+            be ignored when computing the cumulative length in self._draw_angle.
+        """
         alpha, beta = self._find_intersection_angles(nu)
 
         # It's easier to put the batch as the first dimension,
@@ -351,16 +362,17 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         return cummax, srted
 
     def _find_intersection_angles(self, nu: Tensor) -> Tuple(Tensor, Tensor):
-        """Compute all 2 * m intersections of the ellipse and the linear constraints.
-        If the i-th linear inequality constraint has zero intersection with the ellipse, we
-        will create two dummy intersection angles alpha_i = beta_i = 0.
+        """Compute all 2 * m intersections of the ellipse and the linear constraints, where
+        `m = n_ineq_con` is the number of inequality constraints. If the i-th linear inequality
+        constraint has no intersection with the ellipse, we will create two dummy intersection
+        angles alpha_i = beta_i = 0.
 
         Args:
-            nu: A `batch x d`-dim tensor (the "new" directions, drawn from N(0, I)).
+            nu: A `d x batch`-dim tensor (the "new" directions, drawn from N(0, I)).
 
         Returns:
-            alpha: A tensor of size `m x batch`, where `m` is the number of inequality constraints.
-            beta:  A tensor of size `m x batch`, where `m` is the number of inequality constraints.
+            A tuple of two tensors of size `m x batch`. The first tensor represent the
+            smaller intersection angles. The second tensor represent the larger intersection angles.
         """
         p = self._Az @ self._z
         q = self._Az @ nu
