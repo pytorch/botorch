@@ -373,15 +373,12 @@ class TestLinearEllipticalSliceSampler(BotorchTestCase):
                 check_feasibility=True,
             )
             nu = torch.full((d, 1), lower_bound + 2, **tkwargs)
-            theta_active = sampler._find_active_intersections(nu)
-            self.assertTrue(
-                torch.equal(theta_active, sampler._full_angular_range.view(-1))
-            )
-            rot_angle, slices = sampler._find_rotated_intersections(nu)
-            self.assertEqual(rot_angle, 0.0)
-            self.assertAllClose(
-                slices, torch.tensor([[0.0, 2 * torch.pi]], **tkwargs), atol=atol
-            )
+
+            # Get the left and right endpoints of the active intervals.
+            # Since the entire ellipse is feasible, the cumulative length should be 2 * math.pi.
+            left, right = sampler._find_active_intersection_angles(nu)
+            csum = right.sub(left).clamp(min=0.).cumsum(dim=-1)
+            self.assertAllClose(csum[:, -1].item(), 2 * math.pi)
 
             # 2) testing tangential intersection of ellipse with constraint
             nu = torch.full((d, 1), lower_bound, **tkwargs)
@@ -390,10 +387,13 @@ class TestLinearEllipticalSliceSampler(BotorchTestCase):
                 inequality_constraints=(A, b),
                 check_feasibility=True,
             )
-            nu = torch.full((d, 1), lower_bound + 1, **tkwargs)
-            # nu[1] += 1
-            theta_active = sampler._find_active_intersections(nu)
-            self.assertTrue(theta_active.numel() % 2 == 0)
+            nu = torch.zeros((d, 1), **tkwargs)
+
+            # The ellipse is tangent to the domain, but it is still entirely contained in the domain.
+            # Therefore, the cumulative length should be 2 * math.pi.
+            left, right = sampler._find_active_intersection_angles(nu)
+            csum = right.sub(left).clamp(min=0.).cumsum(dim=-1)
+            self.assertAllClose(csum[:, -1].item(), 2 * math.pi)
 
             # testing error message for infeasible sample
             sampler.check_feasibility = True
