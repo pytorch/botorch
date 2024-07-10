@@ -64,6 +64,7 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         check_feasibility: bool = False,
         burnin: int = 0,
         thinning: int = 0,
+        chains: int = 1,
     ) -> None:
         r"""Initialize LinearEllipticalSliceSampler.
 
@@ -99,6 +100,7 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
             burnin: Number of samples to generate upon initialization to warm up the
                 sampler.
             thinning: Number of samples to skip before returning a sample in `draw`.
+            chains: Number of Markov chains to launch.
 
         This sampler samples from a multivariante Normal `N(mean, covariance_matrix)`
         subject to linear domain constraints `A x <= b` (intersected with box bounds,
@@ -158,14 +160,13 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         self._x = self.x0.clone()
         self._z = self._transform(self._x)
 
-        # We will need the following repeatedly, let's allocate them once
-        batch = 1
-        self.zeros = torch.zeros((batch, 1), **tkwargs)
-        self.ones = torch.ones((batch, 1), **tkwargs)
-        self.indices_batch = torch.arange(batch, dtype=torch.int64, device=tkwargs['device'])
+        if chains > 1:
+            self._z = self._z.expand(-1, chains)
 
-        # self._zero = torch.zeros(1, **tkwargs)
-        # self._nan = torch.tensor(float("nan"), **tkwargs)
+        # We will need the following repeatedly, let's allocate them once
+        self.zeros = torch.zeros((chains, 1), **tkwargs)
+        self.ones = torch.ones((chains, 1), **tkwargs)
+        self.indices_batch = torch.arange(chains, dtype=torch.int64, device=tkwargs['device'])
 
         self.check_feasibility = check_feasibility
         self._lifetime_samples = 0
@@ -274,10 +275,10 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         """
         nu = torch.randn_like(self._z)
         theta = self._draw_angle(nu=nu)
-        z = self._get_cart_coords(nu=nu, theta=theta)
-        self._z[:] = z
-        x = self._untransform(z)
-        self._x[:] = x
+
+        self._z = z = self._get_cart_coords(nu=nu, theta=theta)
+        self._x = x = self._untransform(z)
+
         self._lifetime_samples += 1
         if self.check_feasibility and (not self._is_feasible(self._x)):
             Axmb = self.A @ self._x - self.b
