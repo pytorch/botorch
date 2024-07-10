@@ -462,3 +462,44 @@ class TestLinearEllipticalSliceSampler(BotorchTestCase):
             self.assertEqual(X_high_d.shape, torch.Size([16, d]))
             self.assertTrue(sampler._is_feasible(X_high_d.T).all())
             self.assertEqual(sampler.lifetime_samples, num_samples)
+
+    def test_batch_mcmc(self):
+        d = 5
+        for i in range(2):
+            torch.manual_seed(i)
+
+            for dtype, atol in zip((torch.float, torch.double), (2e-5, 1e-12)):
+                tkwargs = {"device": self.device, "dtype": dtype}
+
+                # special case: N(0, I) truncated by a symmetric box
+                bounds = torch.cat(
+                    [-1 * torch.ones(1, d, **tkwargs), torch.ones(1, d, **tkwargs)],
+                    dim=0,
+                )
+
+                # Run a single Markov chain.
+                sampler = LinearEllipticalSliceSampler(
+                    bounds=bounds,
+                    check_feasibility=True,
+                    burnin=100,
+                )
+                samples = sampler.draw(n=100)
+                self.assertEqual(samples.shape, torch.Size([100, d]))
+
+                # Run 100 Markov chains.
+                batch_sampler = LinearEllipticalSliceSampler(
+                    bounds=bounds,
+                    check_feasibility=True,
+                    burnin=100,
+                    chains=100,
+                )
+                batch_samples = batch_sampler.draw(n=100)
+                self.assertEqual(batch_samples.shape, torch.Size([100 * 100, d]))
+
+                # The ground truth mean is zero thanks to symmetry, and
+                # thus the norm of sample mean is the estimation error.
+                # Use more Markov chains should have strictly smaller error.
+                self.assertGreater(
+                    samples.mean(dim=0).norm(),
+                    batch_samples.mean(dim=0).norm(),
+                )
