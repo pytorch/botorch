@@ -280,7 +280,7 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         self._x = x = self._untransform(z)
 
         self._lifetime_samples += 1
-        if self.check_feasibility and (not self._is_feasible(self._x)):
+        if self.check_feasibility and (not self._is_feasible(self._x).all()):
             Axmb = self.A @ self._x - self.b
             violated_indices = Axmb > 0
             raise RuntimeError(
