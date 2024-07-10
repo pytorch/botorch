@@ -166,7 +166,9 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         # We will need the following repeatedly, let's allocate them once
         self.zeros = torch.zeros((chains, 1), **tkwargs)
         self.ones = torch.ones((chains, 1), **tkwargs)
-        self.indices_batch = torch.arange(chains, dtype=torch.int64, device=tkwargs['device'])
+        self.indices_batch = torch.arange(
+            chains, dtype=torch.int64, device=tkwargs["device"]
+        )
 
         self.check_feasibility = check_feasibility
         self._lifetime_samples = 0
@@ -303,9 +305,11 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         left, right = self._find_active_intersection_angles(nu)
         left, right = self._trim_intervals(left, right)
 
-        csum = right.sub(left).clamp(min=0.).cumsum(dim=-1)
+        csum = right.sub(left).clamp(min=0.0).cumsum(dim=-1)
 
-        u = csum[:, -1] * torch.rand(right.size(-2), dtype=right.dtype, device=right.device)
+        u = csum[:, -1] * torch.rand(
+            right.size(-2), dtype=right.dtype, device=right.device
+        )
 
         # The returned index i satisfies csum[i - 1] < u <= csum[i]
         idx = torch.searchsorted(csum, u.unsqueeze(-1)).squeeze(-1)
@@ -328,9 +332,8 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         return self._z * torch.cos(theta) + nu * torch.sin(theta)
 
     def _trim_intervals(self, left, right):
-        """Trim the intervals by a small positive constant.
-        """
-        gap = torch.clamp(right - left, min=0.)
+        """Trim the intervals by a small positive constant."""
+        gap = torch.clamp(right - left, min=0.0)
         eps = gap.mul(0.25).clamp(max=1e-6 if gap.dtype == torch.float32 else 1e-12)
 
         return left + eps, right - eps
@@ -377,7 +380,7 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         p = self._Az @ self._z
         q = self._Az @ nu
 
-        radius = torch.sqrt(p ** 2 + q ** 2)
+        radius = torch.sqrt(p**2 + q**2)
         # if radius.abs().lt(1e-6).any():
         #     warnings.warn("The ellipse has an extremely small volume. This may cause numerical issues.")
 
@@ -385,18 +388,18 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         # if ratio.min().le(-1. + 1e-6):
         #     warnings.warn("The ellipse is almost outside the domain. This may cause numerical issues.")
 
-        has_solution = ratio < 1.
+        has_solution = ratio < 1.0
 
         arccos = torch.arccos(ratio)
-        arccos[~has_solution] = 0.
+        arccos[~has_solution] = 0.0
         arctan = torch.arctan2(q, p)
 
         theta1 = arctan + arccos
         theta2 = arctan - arccos
 
         # translate every angle to [0, 2 * pi]
-        theta1 = theta1 + theta1.lt(0.) * _twopi
-        theta2 = theta2 + theta2.lt(0.) * _twopi
+        theta1 = theta1 + theta1.lt(0.0) * _twopi
+        theta2 = theta2 + theta2.lt(0.0) * _twopi
 
         alpha = torch.minimum(theta1, theta2)
         beta = torch.maximum(theta1, theta2)
