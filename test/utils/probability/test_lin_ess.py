@@ -375,7 +375,7 @@ class TestLinearEllipticalSliceSampler(BotorchTestCase):
             nu = torch.full((d, 1), lower_bound + 2, **tkwargs)
 
             # Get the left and right endpoints of the active intervals.
-            # Since the entire ellipse is feasible, the cumulative length should be 2 * math.pi.
+            # As the entire ellipse is feasible, the cumulative length should be 2 * pi.
             left, right = sampler._find_active_intersection_angles(nu)
             csum = right.sub(left).clamp(min=0.0).cumsum(dim=-1)
             self.assertAllClose(csum[:, -1].item(), 2 * math.pi)
@@ -389,8 +389,8 @@ class TestLinearEllipticalSliceSampler(BotorchTestCase):
             )
             nu = torch.zeros((d, 1), **tkwargs)
 
-            # The ellipse is tangent to the domain, but it is still entirely contained in the domain.
-            # Therefore, the cumulative length should be 2 * math.pi.
+            # The ellipse is tangent to the domain, but it is still entirely contained
+            # in the domain. Therefore, the cumulative length should be 2 * pi.
             left, right = sampler._find_active_intersection_angles(nu)
             csum = right.sub(left).clamp(min=0.0).cumsum(dim=-1)
             self.assertAllClose(csum[:, -1].item(), 2 * math.pi)

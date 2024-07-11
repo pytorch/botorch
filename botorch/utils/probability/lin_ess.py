@@ -345,10 +345,11 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
             nu: A `d x batch`-dim tensor (the "new" direction, drawn from N(0, I)).
 
         Returns:
-            A tuple (left, right) of two tensors of size `batch x m` representing the active intersection angles.
-            For the i-th Markov chain and the j-th constraint, the angles left[i, j] and right[i, j]
-            are active if and only if left[i, j] <= right[i, j]. If left[i, j] > right[i, j], they will
-            be ignored when computing the cumulative length in self._draw_angle.
+            A tuple (left, right) of two tensors of size `batch x m` representing the
+            active intersection angles. For the i-th Markov chain and the j-th
+            constraint, the pair of angles left[i, j] and right[i, j] is active if and
+            only if left[i, j] <= right[i, j]. If left[i, j] > right[i, j], they will be
+            ignored when computing the cumulative length in self._draw_angle.
         """
         alpha, beta = self._find_intersection_angles(nu)
 
@@ -366,27 +367,30 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
 
     def _find_intersection_angles(self, nu: Tensor) -> Tuple(Tensor, Tensor):
         """Compute all 2 * m intersections of the ellipse and the linear constraints, where
-        `m = n_ineq_con` is the number of inequality constraints. If the i-th linear inequality
-        constraint has no intersection with the ellipse, we will create two dummy intersection
-        angles alpha_i = beta_i = 0.
+        `m = n_ineq_con` is the number of inequality constraints. If the i-th linear
+        inequality constraint has no intersection with the ellipse, we will create two
+        dummy intersection angles alpha_i = beta_i = 0.
 
         Args:
             nu: A `d x batch`-dim tensor (the "new" directions, drawn from N(0, I)).
 
         Returns:
-            A tuple of two tensors of size `m x batch`. The first tensor represent the
-            smaller intersection angles. The second tensor represent the larger intersection angles.
+            A tuple of two tensors with the same size `m x batch`. The first tensor
+            represents the smaller intersection angles. The second tensor represents the
+            larger intersection angles.
         """
         p = self._Az @ self._z
         q = self._Az @ nu
 
         radius = torch.sqrt(p**2 + q**2)
         # if radius.abs().lt(1e-6).any():
-        #     warnings.warn("The ellipse has an extremely small volume. This may cause numerical issues.")
+        #     warnings.warn("The ellipse has an extremely small volume.
+        # This may cause numerical issues.")
 
         ratio = self._bz / radius
         # if ratio.min().le(-1. + 1e-6):
-        #     warnings.warn("The ellipse is almost outside the domain. This may cause numerical issues.")
+        #     warnings.warn("The ellipse is almost outside the domain.
+        # This may cause numerical issues.")
 
         has_solution = ratio < 1.0
 
