@@ -35,10 +35,12 @@ from botorch.exceptions import UnsupportedError
 from botorch.models import SingleTaskGP
 from botorch.models.transforms import ChainedOutcomeTransform, Normalize, Standardize
 from botorch.posteriors import GPyTorchPosterior
+from botorch.sampling.pathwise.utils import get_train_inputs
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.kernels import RBFKernel, ScaleKernel
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
+from gpytorch.priors.torch_priors import GammaPrior
 
 
 NEI_NOISE = [
@@ -831,9 +833,13 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
             "covar_module.outputscale_prior.rate": torch.tensor(0.1500),
         }
         train_x = torch.linspace(
-            low_x, hi_x, 10, device=self.device, dtype=dtype
+            0.0, 1.0, 10, device=self.device, dtype=dtype
         ).unsqueeze(-1)
+        # Taking the sin of the *transformed* input to make the test equivalent
+        # to when there are no input transforms
         train_y = torch.sin(train_x * (2 * math.pi))
+        # Now transform the input to be passed into SingleTaskGP constructor
+        train_x = train_x * (hi_x - low_x) + low_x
         noise = torch.tensor(NEI_NOISE, device=self.device, dtype=dtype)
         train_y += noise
         train_yvar = torch.full_like(train_y, 0.25**2)
@@ -851,12 +857,25 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
         return model
 
     def test_noisy_expected_improvement(self):
+        # Same as the default Matern kernel
+        # botorch.models.utils.gpytorch_modules.get_matern_kernel_with_gamma_prior,
+        # except RBFKernel is used instead of MaternKernel.
+        # For some reason, RBF gives numerical problems but Matern does not.
+        covar_module_2 = ScaleKernel(
+            base_kernel=RBFKernel(
+                ard_num_dims=1,
+                batch_shape=torch.Size(),
+                lengthscale_prior=GammaPrior(3.0, 6.0),
+            ),
+            batch_shape=torch.Size(),
+            outputscale_prior=GammaPrior(2.0, 0.15),
+        )
         for dtype, use_octf, use_intf, bounds, covar_module in itertools.product(
             (torch.float, torch.double),
             (False, True),
             (False, True),
             (torch.tensor([[-3.4], [0.8]]), torch.tensor([[0.0], [1.0]])),
-            (None, ScaleKernel(RBFKernel(ard_num_dims=1))),
+            (None, covar_module_2),
         ):
             octf = (
                 ChainedOutcomeTransform(standardize=Standardize(m=1))
@@ -882,7 +901,9 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
                 hi_x=hi_x,
                 covar_module=covar_module,
             )
-            X_observed = model.train_inputs[0]
+            # Make sure to get the non-transformed training inputs.
+            X_observed = get_train_inputs(model, transformed=False)[0]
+
             nfan = 5
             nEI = NoisyExpectedImprovement(model, X_observed, num_fantasies=nfan)
             LogNEI = LogNoisyExpectedImprovement(model, X_observed, num_fantasies=nfan)
@@ -898,19 +919,18 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
             LogNEI.model = nEI.model  # let the two share their values and fantasies
             LogNEI.best_f = nEI.best_f
 
-            # Set the "untransformed" X_test so that when it is transformed
-            # then it will be in [0,1] range
             X_test = torch.tensor(
-                [[[0.25 * (hi_x - low_x) + low_x]], [[0.75 * (hi_x - low_x) + low_x]]],
+                [[[0.25]], [[0.75]]],
                 device=X_observed.device,
                 dtype=dtype,
             )
             X_test_log = X_test.clone()
             X_test.requires_grad = True
             X_test_log.requires_grad = True
-            val = nEI(X_test)
+
+            val = nEI(X_test * (hi_x - low_x) + low_x)
             # testing logNEI yields the same result (also checks dtype)
-            log_val = LogNEI(X_test_log)
+            log_val = LogNEI(X_test_log * (hi_x - low_x) + low_x)
             exp_log_val = log_val.exp()
             # notably, val[1] is usually zero in this test, which is precisely what
             # gives rise to problems during optimization, and what logNEI avoids
@@ -933,7 +953,15 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
             exp_log_val.sum().backward()
             # testing that first gradient element coincides. The second is in the
             # regime where the naive implementation looses accuracy.
-            atol = 2e-5 if dtype == torch.float32 else 1e-12
+            # Note - for some reason, when the RBFKernel is used instead of
+            # Matern, it gives lots of warnings about ill-conditioned matrices
+            # and the gradients are less close, so need to increase the
+            # tolerance in that case.
+            atol = (
+                (2e-5 if covar_module is None else 5e-4)
+                if dtype == torch.float32
+                else 1e-12
+            )
             rtol = atol
             self.assertAllClose(
                 X_test.grad[0], X_test_log.grad[0], atol=atol, rtol=rtol

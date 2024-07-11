@@ -1072,20 +1072,27 @@ def _get_noiseless_fantasy_model(
     # this makes SingleTaskGP a non-batch GP, so that the same hyperparameters
     # are used across all batches (by default, a GP with batched training data
     # uses independent hyperparameters for each batch).
-    outcome_transform = deepcopy(getattr(model, "outcome_transform", None))
+
+    # Could pass in the outcome_transform and input_transform here,
+    # however that would make them be applied in SingleTaskGP.__init__ which is
+    # unnecessary. So we will instead set them afterwards.
     fantasy_model = SingleTaskGP(
         train_X=model.train_inputs[0],
         train_Y=model.train_targets.unsqueeze(-1),
         train_Yvar=model.likelihood.noise_covar.noise.unsqueeze(-1),
         covar_module=deepcopy(model.covar_module),
         mean_module=deepcopy(model.mean_module),
-        outcome_transform=outcome_transform,
-        input_transform=deepcopy(getattr(model, "input_transform", None)),
     )
 
     Yvar = torch.full_like(Y_fantasized, 1e-7)
-    # Need to transform the outcome just as in the SingleTaskGP constructor.
+
+    # Set the outcome and input transforms of the fantasy model.
+    # The transforms should already be in eval mode but just set them to be sure
+    outcome_transform = getattr(model, "outcome_transform", None)
     if outcome_transform is not None:
+        outcome_transform = deepcopy(outcome_transform).eval()
+        fantasy_model.outcome_transform = outcome_transform
+        # Need to transform the outcome just as in the SingleTaskGP constructor.
         # Need to unsqueeze for BoTorch and then squeeze again for GPyTorch.
         # Not transforming Yvar because 1e-7 is already close to 0 and it is a
         # relative, not absolute, value.
@@ -1093,6 +1100,9 @@ def _get_noiseless_fantasy_model(
             Y_fantasized.unsqueeze(-1), Yvar.unsqueeze(-1)
         )
         Y_fantasized = Y_fantasized.squeeze(-1)
+    input_transform = getattr(model, "input_transform", None)
+    if input_transform is not None:
+        fantasy_model.input_transform = deepcopy(input_transform).eval()
 
     # update training inputs/targets to be batch mode fantasies
     fantasy_model.set_train_data(
