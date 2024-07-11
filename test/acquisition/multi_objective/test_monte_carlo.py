@@ -10,6 +10,7 @@ from itertools import product
 from math import pi
 from typing import Any, Dict, Optional, Type
 from unittest import mock
+from warnings import catch_warnings, simplefilter
 
 import torch
 from botorch import settings
@@ -34,7 +35,7 @@ from botorch.acquisition.multi_objective.objective import (
 )
 from botorch.acquisition.objective import IdentityMCObjective
 from botorch.exceptions.errors import BotorchError, UnsupportedError
-from botorch.exceptions.warnings import BotorchWarning
+from botorch.exceptions.warnings import BotorchWarning, NumericsWarning
 from botorch.models import (
     GenericDeterministicModel,
     HigherOrderGP,
@@ -127,9 +128,11 @@ class TestMultiObjectiveMCAcquisitionFunction(BotorchTestCase):
     def test_q_expected_hypervolume_improvement(self):
         for dtype in (torch.float, torch.double):
             with self.subTest(dtype=dtype):
-                self._test_q_expected_hypervolume_improvement(
-                    acqf_class=qExpectedHypervolumeImprovement, dtype=dtype
-                )
+                with catch_warnings():
+                    simplefilter("ignore", category=NumericsWarning)
+                    self._test_q_expected_hypervolume_improvement(
+                        acqf_class=qExpectedHypervolumeImprovement, dtype=dtype
+                    )
 
     # separating out LogEI test to avoid timeouts
     def test_q_log_expected_hypervolume_improvement(self):
@@ -172,6 +175,7 @@ class TestMultiObjectiveMCAcquisitionFunction(BotorchTestCase):
         # the event shape is `b x q x m` = 1 x 1 x 2
         samples = torch.zeros(1, 1, 2, **tkwargs)
         mm = MockModel(MockPosterior(samples=samples))
+
         # test error if there is not pareto_Y initialized in partitioning
         with self.assertRaises(BotorchError):
             acqf_class(model=mm, ref_point=ref_point, partitioning=partitioning)
@@ -179,6 +183,13 @@ class TestMultiObjectiveMCAcquisitionFunction(BotorchTestCase):
         # test error if ref point has wrong shape
         with self.assertRaises(ValueError):
             acqf_class(model=mm, ref_point=ref_point[:1], partitioning=partitioning)
+
+        # test that legacy version raises a warning
+        if acqf_class is qExpectedHypervolumeImprovement:
+            with self.assertWarnsRegex(
+                NumericsWarning, ".* qLogExpectedHypervolumeImprovement .*"
+            ):
+                acqf_class(model=mm, ref_point=ref_point, partitioning=partitioning)
 
         X = torch.zeros(1, 1, **tkwargs)
         # basic test
@@ -565,10 +576,12 @@ class TestMultiObjectiveMCAcquisitionFunction(BotorchTestCase):
     def test_constrained_q_expected_hypervolume_improvement(self):
         for dtype in (torch.float, torch.double):
             with self.subTest(dtype=dtype):
-                self._test_constrained_q_expected_hypervolume_improvement(
-                    acqf_class=qExpectedHypervolumeImprovement,
-                    dtype=dtype,
-                )
+                with catch_warnings():
+                    simplefilter("ignore", category=NumericsWarning)
+                    self._test_constrained_q_expected_hypervolume_improvement(
+                        acqf_class=qExpectedHypervolumeImprovement,
+                        dtype=dtype,
+                    )
 
     def test_constrained_q_log_expected_hypervolume_improvement(self):
         for dtype in (torch.float, torch.double):
@@ -722,14 +735,16 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
 
     def test_q_noisy_expected_hypervolume_improvement(self):
         for dtype in (torch.float, torch.double):
-            self._test_q_noisy_expected_hypervolume_improvement_m1(
-                qNoisyExpectedHypervolumeImprovement, dtype
-            )
-            for m in (2, 3):
-                with self.subTest(dtype=dtype, m=m):
-                    self._test_q_noisy_expected_hypervolume_improvement(
-                        qNoisyExpectedHypervolumeImprovement, dtype, m
-                    )
+            with catch_warnings():
+                simplefilter("ignore", category=NumericsWarning)
+                self._test_q_noisy_expected_hypervolume_improvement_m1(
+                    qNoisyExpectedHypervolumeImprovement, dtype
+                )
+                for m in (2, 3):
+                    with self.subTest(dtype=dtype, m=m):
+                        self._test_q_noisy_expected_hypervolume_improvement(
+                            qNoisyExpectedHypervolumeImprovement, dtype, m
+                        )
 
     def test_q_log_noisy_expected_hypervolume_improvement(self):
         for dtype in (torch.float, torch.double):
@@ -808,6 +823,19 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             baseline_samples,
             tkwargs,
         ) = self._setup_qnehvi_test(dtype=dtype, m=m)
+
+        if acqf_class is qNoisyExpectedHypervolumeImprovement:
+            with self.assertWarnsRegex(
+                NumericsWarning, ".* qLogNoisyExpectedHypervolumeImprovement .*"
+            ):
+                acqf_class(
+                    model=mm,
+                    ref_point=ref_point,
+                    X_baseline=X_baseline,
+                    sampler=sampler,
+                    cache_root=False,
+                )
+
         acqf = acqf_class(
             model=mm,
             ref_point=ref_point,
@@ -1310,9 +1338,11 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             (True, False),
         ):
             with self.subTest(dtype=dtype, fat=fat):
-                self._test_constrained_q_noisy_expected_hypervolume_improvement(
-                    qNoisyExpectedHypervolumeImprovement, dtype, fat
-                )
+                with catch_warnings():
+                    simplefilter("ignore", category=NumericsWarning)
+                    self._test_constrained_q_noisy_expected_hypervolume_improvement(
+                        qNoisyExpectedHypervolumeImprovement, dtype, fat
+                    )
 
     def test_constrained_q_log_noisy_expected_hypervolume_improvement(self) -> None:
         for dtype, fat in product(
@@ -1567,7 +1597,9 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             qLogNoisyExpectedHypervolumeImprovement,
         ):
             with self.subTest(acqf_class.__name__):
-                self._test_prune_baseline(acqf_class)
+                with catch_warnings():
+                    simplefilter("ignore", category=NumericsWarning)
+                    self._test_prune_baseline(acqf_class)
 
     def _test_prune_baseline(self, acqf_class: Type[AcquisitionFunction]):
         # test prune_baseline
@@ -1608,7 +1640,9 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             qLogNoisyExpectedHypervolumeImprovement,
         ):
             with self.subTest(acqf_class.__name__):
-                self._test_cache_root(acqf_class)
+                with catch_warnings():
+                    simplefilter("ignore", category=NumericsWarning)
+                    self._test_cache_root(acqf_class)
 
     def _test_cache_root(self, acqf_class: Type[AcquisitionFunction]):
         sample_cached_path = (
@@ -1740,13 +1774,15 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 model = SingleTaskGP(
                     train_x, train_y, outcome_transform=Standardize(m=2)
                 )
-                acqf = acqf_class(
-                    model=model,
-                    X_baseline=train_x,
-                    ref_point=torch.ones(2),
-                    sampler=IIDNormalSampler(sample_shape=torch.Size([1])),
-                    cache_root=True,
-                )
+                with catch_warnings():
+                    simplefilter("ignore", category=NumericsWarning)
+                    acqf = acqf_class(
+                        model=model,
+                        X_baseline=train_x,
+                        ref_point=torch.ones(2),
+                        sampler=IIDNormalSampler(sample_shape=torch.Size([1])),
+                        cache_root=True,
+                    )
                 self.assertIsNotNone(acqf._baseline_L)
                 self.assertEqual(acqf(train_x[:1]).shape, torch.Size([1]))
                 self.assertEqual(acqf(train_x.unsqueeze(-2)).shape, torch.Size([3]))
@@ -1757,7 +1793,9 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             qLogNoisyExpectedHypervolumeImprovement,
         ):
             with self.subTest(acqf_class.__name__):
-                self._test_with_set_valued_objectives(acqf_class)
+                with catch_warnings():
+                    simplefilter("ignore", category=NumericsWarning)
+                    self._test_with_set_valued_objectives(acqf_class)
 
     def _test_with_set_valued_objectives(
         self, acqf_class: Type[AcquisitionFunction]
@@ -1817,7 +1855,9 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             qLogNoisyExpectedHypervolumeImprovement,
         ):
             with self.subTest(acqf_class.__name__):
-                self._test_deterministic(acqf_class)
+                with catch_warnings():
+                    simplefilter("ignore", category=NumericsWarning)
+                    self._test_deterministic(acqf_class)
 
     def _test_deterministic(self, acqf_class: Type[AcquisitionFunction]):
         for dtype, prune in ((torch.float, False), (torch.double, True)):
@@ -1845,7 +1885,9 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             qLogNoisyExpectedHypervolumeImprovement,
         ):
             with self.subTest(acqf_class.__name__):
-                self._test_with_multitask(acqf_class)
+                with catch_warnings():
+                    simplefilter("ignore", category=NumericsWarning)
+                    self._test_with_multitask(acqf_class)
 
     def _test_with_multitask(self, acqf_class: Type[AcquisitionFunction]):
         # Verify that _set_sampler works with MTGP, KroneckerMTGP and HOGP.
@@ -1950,13 +1992,15 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             qLogNoisyExpectedHypervolumeImprovement,
         ):
             with self.subTest(acqf_class.__name__):
-                # This calls _set_sampler which used to error out in
-                # NormalMCSampler._update_base_samples with TransformedPosterior
-                # due to the missing batch_shape (fixed in #1625).
-                acqf_class(
-                    model=mm,
-                    ref_point=torch.tensor([0.0, 0.0]),
-                    X_baseline=torch.rand(3, 2),
-                    sampler=sampler,
-                    cache_root=False,
-                )
+                with catch_warnings():
+                    simplefilter("ignore", category=NumericsWarning)
+                    # This calls _set_sampler which used to error out in
+                    # NormalMCSampler._update_base_samples with TransformedPosterior
+                    # due to the missing batch_shape (fixed in #1625).
+                    acqf_class(
+                        model=mm,
+                        ref_point=torch.tensor([0.0, 0.0]),
+                        X_baseline=torch.rand(3, 2),
+                        sampler=sampler,
+                        cache_root=False,
+                    )
