@@ -40,6 +40,7 @@ from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.kernels import RBFKernel, ScaleKernel
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
+from gpytorch.module import Module
 from gpytorch.priors.torch_priors import GammaPrior
 
 
@@ -877,119 +878,127 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
             (torch.tensor([[-3.4], [0.8]]), torch.tensor([[0.0], [1.0]])),
             (None, covar_module_2),
         ):
-            octf = (
-                ChainedOutcomeTransform(standardize=Standardize(m=1))
-                if use_octf
-                else None
-            )
-            intf = (
-                Normalize(
-                    d=1,
-                    bounds=bounds.to(device=self.device, dtype=dtype),
-                    transform_on_train=True,
-                )
-                if use_intf
-                else None
-            )
-            low_x = bounds[0].item() if use_intf else 0.0
-            hi_x = bounds[1].item() if use_intf else 1.0
-            model = self._get_model(
-                dtype=dtype,
-                outcome_transform=octf,
-                input_transform=intf,
-                low_x=low_x,
-                hi_x=hi_x,
-                covar_module=covar_module,
-            )
-            # Make sure to get the non-transformed training inputs.
-            X_observed = get_train_inputs(model, transformed=False)[0]
-
-            nfan = 5
-            nEI = NoisyExpectedImprovement(model, X_observed, num_fantasies=nfan)
-            LogNEI = LogNoisyExpectedImprovement(model, X_observed, num_fantasies=nfan)
-            # before assigning, check that the attributes exist
-            self.assertTrue(hasattr(LogNEI, "model"))
-            self.assertTrue(hasattr(LogNEI, "best_f"))
-            self.assertIsInstance(LogNEI.model, SingleTaskGP)
-            self.assertIsInstance(LogNEI.model.likelihood, FixedNoiseGaussianLikelihood)
-            # Make sure _get_noiseless_fantasy_model gives them
-            # the same state_dict
-            self.assertEqual(LogNEI.model.state_dict(), model.state_dict())
-
-            LogNEI.model = nEI.model  # let the two share their values and fantasies
-            LogNEI.best_f = nEI.best_f
-
-            X_test = torch.tensor(
-                [[[0.25]], [[0.75]]],
-                device=X_observed.device,
-                dtype=dtype,
-            )
-            X_test_log = X_test.clone()
-            X_test.requires_grad = True
-            X_test_log.requires_grad = True
-
-            val = nEI(X_test * (hi_x - low_x) + low_x)
-            # testing logNEI yields the same result (also checks dtype)
-            log_val = LogNEI(X_test_log * (hi_x - low_x) + low_x)
-            exp_log_val = log_val.exp()
-            # notably, val[1] is usually zero in this test, which is precisely what
-            # gives rise to problems during optimization, and what logNEI avoids
-            # since it generally takes a large negative number (<-2000) and has
-            # strong gradient signals in this regime.
-            rtol = 1e-12 if dtype == torch.double else 1e-6
-            atol = rtol
-            self.assertAllClose(exp_log_val, val, atol=atol, rtol=rtol)
-            # test basics
-            self.assertEqual(val.dtype, dtype)
-            self.assertEqual(val.device.type, X_observed.device.type)
-            self.assertEqual(val.shape, torch.Size([2]))
-            # test values
-            self.assertGreater(val[0].item(), 8e-5)
-            self.assertLess(val[1].item(), 1e-6)
-            # test gradient
-            val.sum().backward()
-            self.assertGreater(X_test.grad[0].abs().item(), 8e-6)
-            # testing gradient through exp of log computation
-            exp_log_val.sum().backward()
-            # testing that first gradient element coincides. The second is in the
-            # regime where the naive implementation looses accuracy.
-            # Note - for some reason, when the RBFKernel is used instead of
-            # Matern, it gives lots of warnings about ill-conditioned matrices
-            # and the gradients are less close, so need to increase the
-            # tolerance in that case.
-            atol = (
-                (2e-5 if covar_module is None else 5e-4)
-                if dtype == torch.float32
-                else 1e-12
-            )
-            rtol = atol
-            self.assertAllClose(
-                X_test.grad[0], X_test_log.grad[0], atol=atol, rtol=rtol
+            self._test_noisy_expected_imrpovement(
+                dtype, use_octf, use_intf, bounds, covar_module
             )
 
-            # test inferred noise model
-            other_model = SingleTaskGP(X_observed, model.train_targets.unsqueeze(-1))
-            for constructor in (
-                NoisyExpectedImprovement,
-                LogNoisyExpectedImprovement,
-            ):
-                with self.assertRaises(UnsupportedError):
-                    constructor(other_model, X_observed, num_fantasies=5)
-                # Test constructor with minimize
-                acqf = constructor(model, X_observed, num_fantasies=5, maximize=False)
-                # test evaluation without gradients enabled
-                with torch.no_grad():
-                    acqf(X_test)
+    def _test_noisy_expected_imrpovement(
+        self,
+        dtype: torch.dtype,
+        use_octf: bool,
+        use_intf: bool,
+        bounds: torch.Tensor,
+        covar_module: Module,
+    ) -> None:
+        octf = (
+            ChainedOutcomeTransform(standardize=Standardize(m=1)) if use_octf else None
+        )
+        intf = (
+            Normalize(
+                d=1,
+                bounds=bounds.to(device=self.device, dtype=dtype),
+                transform_on_train=True,
+            )
+            if use_intf
+            else None
+        )
+        low_x = bounds[0].item() if use_intf else 0.0
+        hi_x = bounds[1].item() if use_intf else 1.0
+        model = self._get_model(
+            dtype=dtype,
+            outcome_transform=octf,
+            input_transform=intf,
+            low_x=low_x,
+            hi_x=hi_x,
+            covar_module=covar_module,
+        )
+        # Make sure to get the non-transformed training inputs.
+        X_observed = get_train_inputs(model, transformed=False)[0]
 
-                # testing gradients are only propagated if X_observed requires them
-                # i.e. kernel hyper-parameters are not tracked through to best_f
-                X_observed.requires_grad = False
-                acqf = constructor(model, X_observed, num_fantasies=5)
-                self.assertFalse(acqf.best_f.requires_grad)
+        nfan = 5
+        nEI = NoisyExpectedImprovement(model, X_observed, num_fantasies=nfan)
+        LogNEI = LogNoisyExpectedImprovement(model, X_observed, num_fantasies=nfan)
+        # before assigning, check that the attributes exist
+        self.assertTrue(hasattr(LogNEI, "model"))
+        self.assertTrue(hasattr(LogNEI, "best_f"))
+        self.assertIsInstance(LogNEI.model, SingleTaskGP)
+        self.assertIsInstance(LogNEI.model.likelihood, FixedNoiseGaussianLikelihood)
+        # Make sure _get_noiseless_fantasy_model gives them
+        # the same state_dict
+        self.assertEqual(LogNEI.model.state_dict(), model.state_dict())
 
-                X_observed.requires_grad = True
-                acqf = constructor(model, X_observed, num_fantasies=5)
-                self.assertTrue(acqf.best_f.requires_grad)
+        LogNEI.model = nEI.model  # let the two share their values and fantasies
+        LogNEI.best_f = nEI.best_f
+
+        X_test = torch.tensor(
+            [[[0.25]], [[0.75]]],
+            device=X_observed.device,
+            dtype=dtype,
+        )
+        X_test_log = X_test.clone()
+        X_test.requires_grad = True
+        X_test_log.requires_grad = True
+
+        val = nEI(X_test * (hi_x - low_x) + low_x)
+        # testing logNEI yields the same result (also checks dtype)
+        log_val = LogNEI(X_test_log * (hi_x - low_x) + low_x)
+        exp_log_val = log_val.exp()
+        # notably, val[1] is usually zero in this test, which is precisely what
+        # gives rise to problems during optimization, and what logNEI avoids
+        # since it generally takes a large negative number (<-2000) and has
+        # strong gradient signals in this regime.
+        rtol = 1e-12 if dtype == torch.double else 1e-6
+        atol = rtol
+        self.assertAllClose(exp_log_val, val, atol=atol, rtol=rtol)
+        # test basics
+        self.assertEqual(val.dtype, dtype)
+        self.assertEqual(val.device.type, X_observed.device.type)
+        self.assertEqual(val.shape, torch.Size([2]))
+        # test values
+        self.assertGreater(val[0].item(), 8e-5)
+        self.assertLess(val[1].item(), 1e-6)
+        # test gradient
+        val.sum().backward()
+        self.assertGreater(X_test.grad[0].abs().item(), 8e-6)
+        # testing gradient through exp of log computation
+        exp_log_val.sum().backward()
+        # testing that first gradient element coincides. The second is in the
+        # regime where the naive implementation looses accuracy.
+        # Note - for some reason, when the RBFKernel is used instead of
+        # Matern, it gives lots of warnings about ill-conditioned matrices
+        # and the gradients are less close, so need to increase the
+        # tolerance in that case.
+        atol = (
+            (2e-5 if covar_module is None else 5e-3)
+            if dtype == torch.float32
+            else 1e-12
+        )
+        rtol = atol
+        self.assertAllClose(X_test.grad[0], X_test_log.grad[0], atol=atol, rtol=rtol)
+
+        # test inferred noise model
+        other_model = SingleTaskGP(X_observed, model.train_targets.unsqueeze(-1))
+        for constructor in (
+            NoisyExpectedImprovement,
+            LogNoisyExpectedImprovement,
+        ):
+            with self.assertRaises(UnsupportedError):
+                constructor(other_model, X_observed, num_fantasies=5)
+            # Test constructor with minimize
+            acqf = constructor(model, X_observed, num_fantasies=5, maximize=False)
+            # test evaluation without gradients enabled
+            with torch.no_grad():
+                acqf(X_test)
+
+            # testing gradients are only propagated if X_observed requires them
+            # i.e. kernel hyper-parameters are not tracked through to best_f
+            X_observed.requires_grad = False
+            acqf = constructor(model, X_observed, num_fantasies=5)
+            self.assertFalse(acqf.best_f.requires_grad)
+
+            X_observed.requires_grad = True
+            acqf = constructor(model, X_observed, num_fantasies=5)
+            self.assertTrue(acqf.best_f.requires_grad)
 
 
 class TestScalarizedPosteriorMean(BotorchTestCase):
