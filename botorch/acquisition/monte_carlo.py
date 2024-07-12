@@ -43,6 +43,7 @@ from botorch.acquisition.utils import (
     repeat_to_match_aug_dim,
 )
 from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.warnings import legacy_ei_numerics_warning
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
 from botorch.utils.objective import compute_smoothed_feasibility_indicator
@@ -348,6 +349,10 @@ class qExpectedImprovement(SampleReducingMCAcquisitionFunction):
         >>> sampler = SobolQMCNormalSampler(1024)
         >>> qEI = qExpectedImprovement(model, best_f, sampler)
         >>> qei = qEI(test_X)
+
+    NOTE: It is strongly recommended to use qLogExpectedImprovement instead
+    of regular qEI, as it can lead to substantially improved BO performance through
+    improved numerics. See https://arxiv.org/abs/2310.20708 for details.
     """
 
     def __init__(
@@ -387,6 +392,7 @@ class qExpectedImprovement(SampleReducingMCAcquisitionFunction):
                 approximation to the constraint indicators. For more details, on this
                 parameter, see the docs of `compute_smoothed_feasibility_indicator`.
         """
+        legacy_ei_numerics_warning(legacy_name=type(self).__name__)
         super().__init__(
             model=model,
             sampler=sampler,
@@ -428,6 +434,10 @@ class qNoisyExpectedImprovement(
         >>> sampler = SobolQMCNormalSampler(1024)
         >>> qNEI = qNoisyExpectedImprovement(model, train_X, sampler)
         >>> qnei = qNEI(test_X)
+
+    NOTE: It is strongly recommended to use qLogNoisyExpectedImprovement instead
+    of regular qNEI, as it can lead to substantially improved BO performance through
+    improved numerics. See https://arxiv.org/abs/2310.20708 for details.
     """
 
     def __init__(
@@ -484,6 +494,7 @@ class qNoisyExpectedImprovement(
         the incremental qNEI from the new point. This would greatly increase
         efficiency for large batches.
         """
+        legacy_ei_numerics_warning(legacy_name=type(self).__name__)
         super().__init__(
             model=model,
             sampler=sampler,

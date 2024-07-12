@@ -10,7 +10,7 @@ import math
 import warnings
 from abc import abstractproperty
 from collections import OrderedDict
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from typing import Any, List, Optional, Sequence, Tuple
 from unittest import mock, TestCase
 
 import torch
@@ -71,8 +71,8 @@ class BotorchTestCase(TestCase):
 
     def assertAllClose(
         self,
-        input: torch.Tensor,
-        other: Union[torch.Tensor, float],
+        input: Any,
+        other: Any,
         rtol: float = 1e-05,
         atol: float = 1e-08,
         equal_nan: bool = False,

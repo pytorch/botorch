@@ -20,7 +20,7 @@ from botorch.acquisition.monte_carlo import (
     qProbabilityOfImprovement,
 )
 from botorch.acquisition.objective import LearnedObjective
-from botorch.exceptions.warnings import InputDataWarning
+from botorch.exceptions.warnings import InputDataWarning, NumericsWarning
 from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
 from botorch.sampling.normal import SobolQMCNormalSampler
@@ -112,7 +112,9 @@ class TestObjectiveAndConstraintIntegration(BotorchTestCase):
                     sampler=SobolQMCNormalSampler(torch.Size([4])),
                     **kws,
                 )
-                acqf = acqf_cls(**inputs)
+                with catch_warnings():
+                    simplefilter("ignore", category=NumericsWarning)
+                    acqf = acqf_cls(**inputs)
                 acq_val = acqf(test_x)
                 self.assertEqual(acq_val.shape.numel(), test_x.shape[:-2].numel())
 
@@ -173,12 +175,9 @@ class TestObjectiveAndConstraintIntegration(BotorchTestCase):
             (qNoisyExpectedImprovement, {"prune_baseline": prune_baseline}),
             (qLogNoisyExpectedImprovement, {"prune_baseline": prune_baseline}),
             (qExpectedImprovement, {}),
-            (qProbabilityOfImprovement, {}),
             (qLogExpectedImprovement, {}),
+            (qProbabilityOfImprovement, {}),
         ]:
-            # Not working.
-            if train_batch_shape.numel() > 1 and acqf_cls == qLogExpectedImprovement:
-                continue
             input_constructor = get_acqf_input_constructor(acqf_cls=acqf_cls)
 
             with self.subTest(
@@ -188,7 +187,11 @@ class TestObjectiveAndConstraintIntegration(BotorchTestCase):
                 test_batch_shape=test_batch_shape,
                 acqf_cls=acqf_cls,
             ):
-                acqf = acqf_cls(**input_constructor(**input_constructor_kwargs, **kws))
+                with catch_warnings():
+                    simplefilter("ignore", category=NumericsWarning)
+                    acqf = acqf_cls(
+                        **input_constructor(**input_constructor_kwargs, **kws)
+                    )
                 acq_val = acqf(test_x)
                 self.assertEqual(acq_val.shape.numel(), test_x.shape[:-2].numel())
 
@@ -199,11 +202,16 @@ class TestObjectiveAndConstraintIntegration(BotorchTestCase):
                 test_batch_shape=test_batch_shape,
                 acqf_cls=acqf_cls,
             ):
-                acqf = acqf_cls(
-                    **input_constructor(
-                        constraints=constraints, **input_constructor_kwargs, **kws
+                with catch_warnings():
+                    simplefilter("ignore", category=NumericsWarning)
+                    acqf = acqf_cls(
+                        **input_constructor(**input_constructor_kwargs, **kws)
                     )
-                )
+                    acqf = acqf_cls(
+                        **input_constructor(
+                            constraints=constraints, **input_constructor_kwargs, **kws
+                        )
+                    )
                 self.assertEqual(acq_val.shape.numel(), test_x.shape[:-2].numel())
                 acq_val = acqf(test_x)
 
@@ -263,15 +271,17 @@ class TestInputConstructorIntegration(BotorchTestCase):
         ]:
             with self.subTest(acqf_cls=acqf_cls):
                 input_constructor = get_acqf_input_constructor(acqf_cls=acqf_cls)
-                acqf = acqf_cls(
-                    **input_constructor(
-                        model=model,
-                        training_data=training_data,
-                        X_baseline=train_x,
-                        sampler=SobolQMCNormalSampler(torch.Size([4])),
-                        **kws,
+                with catch_warnings():
+                    simplefilter("ignore", category=NumericsWarning)
+                    acqf = acqf_cls(
+                        **input_constructor(
+                            model=model,
+                            training_data=training_data,
+                            X_baseline=train_x,
+                            sampler=SobolQMCNormalSampler(torch.Size([4])),
+                            **kws,
+                        )
                     )
-                )
                 acq_val = acqf(test_x)
                 self.assertEqual(acq_val.numel(), torch.Size(test_batch_shape).numel())
 

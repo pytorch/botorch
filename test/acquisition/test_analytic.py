@@ -6,6 +6,7 @@
 
 import itertools
 import math
+from warnings import catch_warnings, simplefilter
 
 import torch
 from botorch.acquisition import qAnalyticProbabilityOfImprovement
@@ -32,6 +33,7 @@ from botorch.acquisition.objective import (
     ScalarizedPosteriorTransform,
 )
 from botorch.exceptions import UnsupportedError
+from botorch.exceptions.warnings import NumericsWarning
 from botorch.models import SingleTaskGP
 from botorch.models.transforms import ChainedOutcomeTransform, Normalize, Standardize
 from botorch.posteriors import GPyTorchPosterior
@@ -76,180 +78,185 @@ class TestAnalyticAcquisitionFunction(BotorchTestCase):
 
 
 class TestExpectedImprovement(BotorchTestCase):
+
     def test_expected_improvement(self):
+        mean = torch.tensor([[-0.5]], device=self.device)
+        variance = torch.ones(1, 1, device=self.device)
+        model = MockModel(MockPosterior(mean=mean, variance=variance))
+        with self.assertWarnsRegex(NumericsWarning, ".* LogExpectedImprovement .*"):
+            ExpectedImprovement(model=model, best_f=0.0)
+
         for dtype in (torch.float, torch.double):
-            mean = torch.tensor([[-0.5]], device=self.device, dtype=dtype)
-            variance = torch.ones(1, 1, device=self.device, dtype=dtype)
-            mm = MockModel(MockPosterior(mean=mean, variance=variance))
+            with catch_warnings():
+                simplefilter("ignore", category=NumericsWarning)
+                self._test_expected_improvement(dtype=dtype)
 
-            # basic test
-            module = ExpectedImprovement(model=mm, best_f=0.0)
-            log_module = LogExpectedImprovement(model=mm, best_f=0.0)
-            X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
-            ei, log_ei = module(X), log_module(X)
-            ei_expected = torch.tensor(0.19780, device=self.device, dtype=dtype)
-            self.assertAllClose(ei, ei_expected, atol=1e-4)
-            self.assertAllClose(log_ei, ei_expected.log(), atol=1e-4)
-
-            # test maximize
-            module = ExpectedImprovement(model=mm, best_f=0.0, maximize=False)
-            log_module = LogExpectedImprovement(model=mm, best_f=0.0, maximize=False)
-            X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
-            ei, log_ei = module(X), log_module(X)
-            ei_expected = torch.tensor(0.6978, device=self.device, dtype=dtype)
-            self.assertAllClose(ei, ei_expected, atol=1e-4)
-            self.assertAllClose(log_ei, ei_expected.log(), atol=1e-4)
-            with self.assertRaises(UnsupportedError):
-                module.set_X_pending(None)
-            with self.assertRaises(UnsupportedError):
-                log_module.set_X_pending(None)
-            # test posterior transform (single-output)
-            mean = torch.tensor([0.5], device=self.device, dtype=dtype)
-            covar = torch.tensor([[0.16]], device=self.device, dtype=dtype)
-            mvn = MultivariateNormal(mean, covar)
-            p = GPyTorchPosterior(mvn)
-            mm = MockModel(p)
-            weights = torch.tensor([0.5], device=self.device, dtype=dtype)
-            transform = ScalarizedPosteriorTransform(weights)
-            ei = ExpectedImprovement(
-                model=mm, best_f=0.0, posterior_transform=transform
-            )
-            log_ei = LogExpectedImprovement(
-                model=mm, best_f=0.0, posterior_transform=transform
-            )
-            X = torch.rand(1, 2, device=self.device, dtype=dtype)
-            ei_expected = torch.tensor(0.2601, device=self.device, dtype=dtype)
-            self.assertAllClose(ei(X), ei_expected, atol=1e-4)
-            self.assertAllClose(log_ei(X), ei_expected.log(), atol=1e-4)
-
-            # test posterior transform (multi-output)
-            mean = torch.tensor([[-0.25, 0.5]], device=self.device, dtype=dtype)
-            covar = torch.tensor(
-                [[[0.5, 0.125], [0.125, 0.5]]], device=self.device, dtype=dtype
-            )
-            mvn = MultitaskMultivariateNormal(mean, covar)
-            p = GPyTorchPosterior(mvn)
-            mm = MockModel(p)
-            weights = torch.tensor([2.0, 1.0], device=self.device, dtype=dtype)
-            transform = ScalarizedPosteriorTransform(weights)
-            ei = ExpectedImprovement(
-                model=mm, best_f=0.0, posterior_transform=transform
-            )
-            log_ei = LogExpectedImprovement(
-                model=mm, best_f=0.0, posterior_transform=transform
-            )
-            X = torch.rand(1, 2, device=self.device, dtype=dtype)
-            ei_expected = torch.tensor([0.6910], device=self.device, dtype=dtype)
-            self.assertAllClose(ei(X), ei_expected, atol=1e-4)
-            self.assertAllClose(log_ei(X), ei_expected.log(), atol=1e-4)
-
-            # making sure we compare the lower branch of _log_ei_helper to _ei_helper
-            z = torch.tensor(-2.13, dtype=dtype, device=self.device)
-            self.assertAllClose(_log_ei_helper(z), _ei_helper(z).log(), atol=1e-6)
-
-            # numerical stress test for log EI
-            digits = 100 if dtype == torch.float64 else 20
-            zero = torch.tensor([0], dtype=dtype, device=self.device)
-            ten = torch.tensor(10, dtype=dtype, device=self.device)
-            digits_tensor = torch.arange(0, digits, dtype=dtype, device=self.device)
-            large_z = ten ** (digits_tensor)
-            small_z = ten ** (-digits_tensor)
-            # flipping the appropriate tensors so that elements are in increasing order
-            test_z = [-large_z.flip(-1), -small_z, zero, small_z.flip(-1), large_z]
-            for z in test_z:
-                z.requires_grad = True
-                y = _log_ei_helper(z)  # noqa
-                # check that y isn't NaN of Inf
-                self.assertFalse(y.isnan().any())
-                self.assertFalse(y.isinf().any())
-                # function values should increase with z
-                self.assertTrue((y.diff() >= 0).all())
-                # lets check the backward pass
-                y.sum().backward()
-                # check that gradients aren't NaN of Inf
-                g = z.grad
-                self.assertFalse(g.isnan().any())
-                self.assertFalse(g.isinf().any())
-                self.assertTrue((g >= 0).all())  # gradient is positive for all z
-
+        z = torch.tensor(-2.13, dtype=torch.float16, device=self.device)
         with self.assertRaises(TypeError):
-            _log_ei_helper(z.to(dtype=torch.float16))
+            _log_ei_helper(z)
+
+    def _test_expected_improvement(self, dtype: torch.dtype) -> None:
+        mean = torch.tensor([[-0.5]], device=self.device, dtype=dtype)
+        variance = torch.ones(1, 1, device=self.device, dtype=dtype)
+        mm = MockModel(MockPosterior(mean=mean, variance=variance))
+
+        # basic test
+        module = ExpectedImprovement(model=mm, best_f=0.0)
+        log_module = LogExpectedImprovement(model=mm, best_f=0.0)
+        X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
+        ei, log_ei = module(X), log_module(X)
+        ei_expected = torch.tensor(0.19780, device=self.device, dtype=dtype)
+        self.assertAllClose(ei, ei_expected, atol=1e-4)
+        self.assertAllClose(log_ei, ei_expected.log(), atol=1e-4)
+
+        # test maximize
+        module = ExpectedImprovement(model=mm, best_f=0.0, maximize=False)
+        log_module = LogExpectedImprovement(model=mm, best_f=0.0, maximize=False)
+        X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
+        ei, log_ei = module(X), log_module(X)
+        ei_expected = torch.tensor(0.6978, device=self.device, dtype=dtype)
+        self.assertAllClose(ei, ei_expected, atol=1e-4)
+        self.assertAllClose(log_ei, ei_expected.log(), atol=1e-4)
+        with self.assertRaises(UnsupportedError):
+            module.set_X_pending(None)
+        with self.assertRaises(UnsupportedError):
+            log_module.set_X_pending(None)
+        # test posterior transform (single-output)
+        mean = torch.tensor([0.5], device=self.device, dtype=dtype)
+        covar = torch.tensor([[0.16]], device=self.device, dtype=dtype)
+        mvn = MultivariateNormal(mean, covar)
+        p = GPyTorchPosterior(mvn)
+        mm = MockModel(p)
+        weights = torch.tensor([0.5], device=self.device, dtype=dtype)
+        transform = ScalarizedPosteriorTransform(weights)
+        ei = ExpectedImprovement(model=mm, best_f=0.0, posterior_transform=transform)
+        log_ei = LogExpectedImprovement(
+            model=mm, best_f=0.0, posterior_transform=transform
+        )
+        X = torch.rand(1, 2, device=self.device, dtype=dtype)
+        ei_expected = torch.tensor(0.2601, device=self.device, dtype=dtype)
+        self.assertAllClose(ei(X), ei_expected, atol=1e-4)
+        self.assertAllClose(log_ei(X), ei_expected.log(), atol=1e-4)
+
+        # test posterior transform (multi-output)
+        mean = torch.tensor([[-0.25, 0.5]], device=self.device, dtype=dtype)
+        covar = torch.tensor(
+            [[[0.5, 0.125], [0.125, 0.5]]], device=self.device, dtype=dtype
+        )
+        mvn = MultitaskMultivariateNormal(mean, covar)
+        p = GPyTorchPosterior(mvn)
+        mm = MockModel(p)
+        weights = torch.tensor([2.0, 1.0], device=self.device, dtype=dtype)
+        transform = ScalarizedPosteriorTransform(weights)
+        ei = ExpectedImprovement(model=mm, best_f=0.0, posterior_transform=transform)
+        log_ei = LogExpectedImprovement(
+            model=mm, best_f=0.0, posterior_transform=transform
+        )
+        X = torch.rand(1, 2, device=self.device, dtype=dtype)
+        ei_expected = torch.tensor([0.6910], device=self.device, dtype=dtype)
+        self.assertAllClose(ei(X), ei_expected, atol=1e-4)
+        self.assertAllClose(log_ei(X), ei_expected.log(), atol=1e-4)
+
+        # making sure we compare the lower branch of _log_ei_helper to _ei_helper
+        z = torch.tensor(-2.13, dtype=dtype, device=self.device)
+        self.assertAllClose(_log_ei_helper(z), _ei_helper(z).log(), atol=1e-6)
+
+        # numerical stress test for log EI
+        digits = 100 if dtype == torch.float64 else 20
+        zero = torch.tensor([0], dtype=dtype, device=self.device)
+        ten = torch.tensor(10, dtype=dtype, device=self.device)
+        digits_tensor = torch.arange(0, digits, dtype=dtype, device=self.device)
+        large_z = ten ** (digits_tensor)
+        small_z = ten ** (-digits_tensor)
+        # flipping the appropriate tensors so that elements are in increasing order
+        test_z = [-large_z.flip(-1), -small_z, zero, small_z.flip(-1), large_z]
+        for z in test_z:
+            z.requires_grad = True
+            y = _log_ei_helper(z)  # noqa
+            # check that y isn't NaN of Inf
+            self.assertFalse(y.isnan().any())
+            self.assertFalse(y.isinf().any())
+            # function values should increase with z
+            self.assertTrue((y.diff() >= 0).all())
+            # lets check the backward pass
+            y.sum().backward()
+            # check that gradients aren't NaN of Inf
+            g = z.grad
+            self.assertFalse(g.isnan().any())
+            self.assertFalse(g.isinf().any())
+            self.assertTrue((g >= 0).all())  # gradient is positive for all z
 
     def test_expected_improvement_batch(self):
         for dtype in (torch.float, torch.double):
-            mean = torch.tensor([-0.5, 0.0, 0.5], device=self.device, dtype=dtype).view(
-                3, 1, 1
-            )
-            variance = torch.ones(3, 1, 1, device=self.device, dtype=dtype)
-            mm = MockModel(MockPosterior(mean=mean, variance=variance))
-            module = ExpectedImprovement(model=mm, best_f=0.0)
-            log_module = LogExpectedImprovement(model=mm, best_f=0.0)
-            X = torch.empty(3, 1, 1, device=self.device, dtype=dtype)  # dummy
-            ei, log_ei = module(X), log_module(X)
-            ei_expected = torch.tensor(
-                [0.19780, 0.39894, 0.69780], device=self.device, dtype=dtype
-            )
-            self.assertAllClose(ei, ei_expected, atol=1e-4)
-            self.assertAllClose(log_ei, ei_expected.log(), atol=1e-4)
-            # check for proper error if multi-output model
-            mean2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
-            variance2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
-            mm2 = MockModel(MockPosterior(mean=mean2, variance=variance2))
-            with self.assertRaises(UnsupportedError):
-                ExpectedImprovement(model=mm2, best_f=0.0)
-            with self.assertRaises(UnsupportedError):
-                LogExpectedImprovement(model=mm2, best_f=0.0)
-            # test posterior transform (single-output)
-            mean = torch.tensor([[[0.5]], [[0.25]]], device=self.device, dtype=dtype)
-            covar = torch.tensor(
-                [[[[0.16]]], [[[0.125]]]], device=self.device, dtype=dtype
-            )
-            mvn = MultivariateNormal(mean, covar)
-            p = GPyTorchPosterior(mvn)
-            mm = MockModel(p)
-            weights = torch.tensor([0.5], device=self.device, dtype=dtype)
-            transform = ScalarizedPosteriorTransform(weights)
-            ei = ExpectedImprovement(
-                model=mm, best_f=0.0, posterior_transform=transform
-            )
-            log_ei = LogExpectedImprovement(
-                model=mm, best_f=0.0, posterior_transform=transform
-            )
-            X = torch.rand(2, 1, 2, device=self.device, dtype=dtype)
-            ei_expected = torch.tensor(
-                [[0.2601], [0.1500]], device=self.device, dtype=dtype
-            )
-            self.assertAllClose(ei(X), ei_expected, atol=1e-4)
-            self.assertAllClose(log_ei(X), ei(X).log(), atol=1e-4)
+            with catch_warnings():
+                simplefilter("ignore", category=NumericsWarning)
+                self._test_expected_improvement_batch(dtype=dtype)
 
-            # test posterior transform (multi-output)
-            mean = torch.tensor(
-                [[[-0.25, 0.5]], [[0.2, -0.1]]], device=self.device, dtype=dtype
-            )
-            covar = torch.tensor(
-                [[[0.5, 0.125], [0.125, 0.5]], [[0.25, -0.1], [-0.1, 0.25]]],
-                device=self.device,
-                dtype=dtype,
-            )
-            mvn = MultitaskMultivariateNormal(mean, covar)
-            p = GPyTorchPosterior(mvn)
-            mm = MockModel(p)
-            weights = torch.tensor([2.0, 1.0], device=self.device, dtype=dtype)
-            transform = ScalarizedPosteriorTransform(weights)
-            ei = ExpectedImprovement(
-                model=mm, best_f=0.0, posterior_transform=transform
-            )
-            log_ei = LogExpectedImprovement(
-                model=mm, best_f=0.0, posterior_transform=transform
-            )
-            X = torch.rand(2, 1, 2, device=self.device, dtype=dtype)
-            ei_expected = torch.tensor(
-                [0.6910, 0.5371], device=self.device, dtype=dtype
-            )
-            self.assertAllClose(ei(X), ei_expected, atol=1e-4)
-            self.assertAllClose(log_ei(X), ei_expected.log(), atol=1e-4)
+    def _test_expected_improvement_batch(self, dtype):
+        mean = torch.tensor([-0.5, 0.0, 0.5], device=self.device, dtype=dtype).view(
+            3, 1, 1
+        )
+        variance = torch.ones(3, 1, 1, device=self.device, dtype=dtype)
+        mm = MockModel(MockPosterior(mean=mean, variance=variance))
+        module = ExpectedImprovement(model=mm, best_f=0.0)
+        log_module = LogExpectedImprovement(model=mm, best_f=0.0)
+        X = torch.empty(3, 1, 1, device=self.device, dtype=dtype)  # dummy
+        ei, log_ei = module(X), log_module(X)
+        ei_expected = torch.tensor(
+            [0.19780, 0.39894, 0.69780], device=self.device, dtype=dtype
+        )
+        self.assertAllClose(ei, ei_expected, atol=1e-4)
+        self.assertAllClose(log_ei, ei_expected.log(), atol=1e-4)
+        # check for proper error if multi-output model
+        mean2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
+        variance2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
+        mm2 = MockModel(MockPosterior(mean=mean2, variance=variance2))
+        with self.assertRaises(UnsupportedError):
+            ExpectedImprovement(model=mm2, best_f=0.0)
+        with self.assertRaises(UnsupportedError):
+            LogExpectedImprovement(model=mm2, best_f=0.0)
+        # test posterior transform (single-output)
+        mean = torch.tensor([[[0.5]], [[0.25]]], device=self.device, dtype=dtype)
+        covar = torch.tensor([[[[0.16]]], [[[0.125]]]], device=self.device, dtype=dtype)
+        mvn = MultivariateNormal(mean, covar)
+        p = GPyTorchPosterior(mvn)
+        mm = MockModel(p)
+        weights = torch.tensor([0.5], device=self.device, dtype=dtype)
+        transform = ScalarizedPosteriorTransform(weights)
+        ei = ExpectedImprovement(model=mm, best_f=0.0, posterior_transform=transform)
+        log_ei = LogExpectedImprovement(
+            model=mm, best_f=0.0, posterior_transform=transform
+        )
+        X = torch.rand(2, 1, 2, device=self.device, dtype=dtype)
+        ei_expected = torch.tensor(
+            [[0.2601], [0.1500]], device=self.device, dtype=dtype
+        )
+        self.assertAllClose(ei(X), ei_expected, atol=1e-4)
+        self.assertAllClose(log_ei(X), ei(X).log(), atol=1e-4)
 
-        # test bad posterior transform class
+        # test posterior transform (multi-output)
+        mean = torch.tensor(
+            [[[-0.25, 0.5]], [[0.2, -0.1]]], device=self.device, dtype=dtype
+        )
+        covar = torch.tensor(
+            [[[0.5, 0.125], [0.125, 0.5]], [[0.25, -0.1], [-0.1, 0.25]]],
+            device=self.device,
+            dtype=dtype,
+        )
+        mvn = MultitaskMultivariateNormal(mean, covar)
+        p = GPyTorchPosterior(mvn)
+        mm = MockModel(p)
+        weights = torch.tensor([2.0, 1.0], device=self.device, dtype=dtype)
+        transform = ScalarizedPosteriorTransform(weights)
+        ei = ExpectedImprovement(model=mm, best_f=0.0, posterior_transform=transform)
+        log_ei = LogExpectedImprovement(
+            model=mm, best_f=0.0, posterior_transform=transform
+        )
+        X = torch.rand(2, 1, 2, device=self.device, dtype=dtype)
+        ei_expected = torch.tensor([0.6910, 0.5371], device=self.device, dtype=dtype)
+        self.assertAllClose(ei(X), ei_expected, atol=1e-4)
+        self.assertAllClose(log_ei(X), ei_expected.log(), atol=1e-4)
+
         with self.assertRaises(UnsupportedError):
             ExpectedImprovement(
                 model=mm, best_f=0.0, posterior_transform=IdentityMCObjective()
@@ -605,211 +612,228 @@ class TestUpperConfidenceBound(BotorchTestCase):
 
 class TestConstrainedExpectedImprovement(BotorchTestCase):
     def test_constrained_expected_improvement(self):
-        for dtype in (torch.float, torch.double):
-            # one constraint
-            mean = torch.tensor(
-                [[-0.5, 0.0]], device=self.device, dtype=dtype
-            ).unsqueeze(dim=-2)
-            variance = torch.ones(1, 2, device=self.device, dtype=dtype).unsqueeze(
-                dim=-2
-            )
-            mm = MockModel(MockPosterior(mean=mean, variance=variance))
-            kwargs = {
-                "model": mm,
-                "best_f": 0.0,
-                "objective_index": 0,
-                "constraints": {1: [None, 0]},
-            }
-            module = ConstrainedExpectedImprovement(**kwargs)
-            log_module = LogConstrainedExpectedImprovement(**kwargs)
-
-            # test initialization
-            for k in [
-                "con_lower_inds",
-                "con_upper_inds",
-                "con_both_inds",
-                "con_both",
-                "con_lower",
-                "con_upper",
-            ]:
-                self.assertIn(k, module._buffers)
-                self.assertIn(k, log_module._buffers)
-
-            X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
-            ei = module(X)
-            ei_expected_unconstrained = torch.tensor(
-                [0.19780], device=self.device, dtype=dtype
-            )
-            ei_expected = ei_expected_unconstrained * 0.5
-            self.assertAllClose(ei, ei_expected, atol=1e-4)
-            log_ei = log_module(X)
-            self.assertAllClose(log_ei, ei.log(), atol=1e-5)
-            # testing LogCEI and CEI for lower, upper, and simultaneous bounds
-            for bounds in [[None, 0], [0, None], [0, 1]]:
-                kwargs["constraints"] = {1: bounds}
-                module = ConstrainedExpectedImprovement(**kwargs)
-                log_module = LogConstrainedExpectedImprovement(**kwargs)
-                ei, log_ei = module(X), log_module(X)
-                self.assertAllClose(log_ei, ei.log(), atol=1e-5)
-
-            constructors = [
-                ConstrainedExpectedImprovement,
-                LogConstrainedExpectedImprovement,
-            ]
-            for constructor in constructors:
-                # check that error raised if no constraints
-                with self.assertRaises(ValueError):
-                    module = constructor(
-                        model=mm, best_f=0.0, objective_index=0, constraints={}
-                    )
-
-                # check that error raised if objective is a constraint
-                with self.assertRaises(ValueError):
-                    module = constructor(
-                        model=mm,
-                        best_f=0.0,
-                        objective_index=0,
-                        constraints={0: [None, 0]},
-                    )
-
-                # check that error raised if constraint lower > upper
-                with self.assertRaises(ValueError):
-                    module = constructor(
-                        model=mm, best_f=0.0, objective_index=0, constraints={0: [1, 0]}
-                    )
-
-            # three constraints
-            N = torch.distributions.Normal(loc=0.0, scale=1.0)
-            a = N.icdf(torch.tensor(0.75))  # get a so that P(-a <= N <= a) = 0.5
-            mean = torch.tensor(
-                [[-0.5, 0.0, 5.0, 0.0]], device=self.device, dtype=dtype
-            ).unsqueeze(dim=-2)
-            variance = torch.ones(1, 4, device=self.device, dtype=dtype).unsqueeze(
-                dim=-2
-            )
-            mm = MockModel(MockPosterior(mean=mean, variance=variance))
-            kwargs = {
-                "model": mm,
-                "best_f": 0.0,
-                "objective_index": 0,
-                "constraints": {1: [None, 0], 2: [5.0, None], 3: [-a, a]},
-            }
-            module = ConstrainedExpectedImprovement(**kwargs)
-            log_module = LogConstrainedExpectedImprovement(**kwargs)
-            X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
-            ei = module(X)
-            ei_expected_unconstrained = torch.tensor(
-                [0.19780], device=self.device, dtype=dtype
-            )
-            ei_expected = ei_expected_unconstrained * 0.5 * 0.5 * 0.5
-            self.assertAllClose(ei, ei_expected, atol=1e-4)
-            # testing log module with regular implementation
-            log_ei = log_module(X)
-            self.assertAllClose(log_ei, ei_expected.log(), atol=1e-4)
-            # test maximize
-            kwargs = {
-                "model": mm,
-                "best_f": 0.0,
-                "objective_index": 0,
-                "constraints": {1: [None, 0]},
-                "maximize": False,
-            }
-            module_min = ConstrainedExpectedImprovement(**kwargs)
-            log_module_min = LogConstrainedExpectedImprovement(**kwargs)
-            ei_min = module_min(X)
-            ei_expected_unconstrained_min = torch.tensor(
-                [0.6978], device=self.device, dtype=dtype
-            )
-            ei_expected_min = ei_expected_unconstrained_min * 0.5
-            self.assertAllClose(ei_min, ei_expected_min, atol=1e-4)
-            log_ei_min = log_module_min(X)
-            self.assertAllClose(log_ei_min, ei_min.log(), atol=1e-4)
-
-            # test invalid onstraints
-            for constructor in constructors:
-                with self.assertRaises(ValueError):
-                    constructor(
-                        model=mm,
-                        best_f=0.0,
-                        objective_index=0,
-                        constraints={1: [1.0, -1.0]},
-                    )
-
-            # numerical stress test for _compute_log_prob_feas, which gets added to
-            # log_ei in the forward pass, a quantity we already tested above
-            # the limits here are determined by the largest power of ten x, such that
-            #                          x - (b - a) < x
-            # evaluates to true. In this test, the bounds are a, b = -digits, digits.
-            digits = 10 if dtype == torch.float64 else 5
-            zero = torch.tensor([0], dtype=dtype, device=self.device)
-            ten = torch.tensor(10, dtype=dtype, device=self.device)
-            digits_tensor = 1 + torch.arange(
-                -digits, digits, dtype=dtype, device=self.device
-            )
-            X_positive = ten ** (digits_tensor)
-            # flipping -X_positive so that elements are in increasing order
-            means = torch.cat((-X_positive.flip(-1), zero, X_positive)).unsqueeze(-1)
-            means.requires_grad = True
-            log_module = LogConstrainedExpectedImprovement(
-                model=mm,
+        mean = torch.tensor([[-0.5]], device=self.device)
+        variance = torch.ones(1, 1, device=self.device)
+        model = MockModel(MockPosterior(mean=mean, variance=variance))
+        with self.assertWarnsRegex(
+            NumericsWarning, ".* LogConstrainedExpectedImprovement .*"
+        ):
+            ConstrainedExpectedImprovement(
+                model=model,
                 best_f=0.0,
-                objective_index=1,
-                constraints={0: [-5, 5]},
+                objective_index=0,
+                constraints={1: [None, 0]},
             )
-            log_prob = _compute_log_prob_feas(
-                log_module, means=means, sigmas=torch.ones_like(means)
-            )
-            log_prob.sum().backward()
-            self.assertFalse(log_prob.isnan().any())
-            self.assertFalse(log_prob.isinf().any())
-            self.assertFalse(means.grad.isnan().any())
-            self.assertFalse(means.grad.isinf().any())
-            # probability of feasibility increases until X = 0, decreases from there on
-            prob_diff = log_prob.diff()
-            k = len(X_positive)
-            eps = 1e-6 if dtype == torch.float32 else 1e-15
-            self.assertTrue((prob_diff[:k] > -eps).all())
-            self.assertTrue((means.grad[:k] > -eps).all())
-            # probability has stationary point at zero
-            mean_grad_at_zero = means.grad[len(X_positive)]
-            self.assertTrue(
-                torch.allclose(mean_grad_at_zero, torch.zeros_like(mean_grad_at_zero))
-            )
-            # probability increases again
-            self.assertTrue((prob_diff[-k:] < eps).all())
-            self.assertTrue((means.grad[-k:] < eps).all())
+
+        for dtype in (torch.float, torch.double):
+            with catch_warnings():
+                simplefilter("ignore", category=NumericsWarning)
+                self._test_constrained_expected_improvement(dtype=dtype)
+
+    def _test_constrained_expected_improvement(self, dtype: torch.dtype) -> None:
+        # one constraint
+        mean = torch.tensor([[-0.5, 0.0]], device=self.device, dtype=dtype).unsqueeze(
+            dim=-2
+        )
+        variance = torch.ones(1, 2, device=self.device, dtype=dtype).unsqueeze(dim=-2)
+        mm = MockModel(MockPosterior(mean=mean, variance=variance))
+        kwargs = {
+            "model": mm,
+            "best_f": 0.0,
+            "objective_index": 0,
+            "constraints": {1: [None, 0]},
+        }
+        module = ConstrainedExpectedImprovement(**kwargs)
+        log_module = LogConstrainedExpectedImprovement(**kwargs)
+
+        # test initialization
+        for k in [
+            "con_lower_inds",
+            "con_upper_inds",
+            "con_both_inds",
+            "con_both",
+            "con_lower",
+            "con_upper",
+        ]:
+            self.assertIn(k, module._buffers)
+            self.assertIn(k, log_module._buffers)
+
+        X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
+        ei = module(X)
+        ei_expected_unconstrained = torch.tensor(
+            [0.19780], device=self.device, dtype=dtype
+        )
+        ei_expected = ei_expected_unconstrained * 0.5
+        self.assertAllClose(ei, ei_expected, atol=1e-4)
+        log_ei = log_module(X)
+        self.assertAllClose(log_ei, ei.log(), atol=1e-5)
+        # testing LogCEI and CEI for lower, upper, and simultaneous bounds
+        for bounds in [[None, 0], [0, None], [0, 1]]:
+            kwargs["constraints"] = {1: bounds}
+            module = ConstrainedExpectedImprovement(**kwargs)
+            log_module = LogConstrainedExpectedImprovement(**kwargs)
+            ei, log_ei = module(X), log_module(X)
+            self.assertAllClose(log_ei, ei.log(), atol=1e-5)
+
+        constructors = [
+            ConstrainedExpectedImprovement,
+            LogConstrainedExpectedImprovement,
+        ]
+        for constructor in constructors:
+            # check that error raised if no constraints
+            with self.assertRaises(ValueError):
+                module = constructor(
+                    model=mm, best_f=0.0, objective_index=0, constraints={}
+                )
+
+            # check that error raised if objective is a constraint
+            with self.assertRaises(ValueError):
+                module = constructor(
+                    model=mm,
+                    best_f=0.0,
+                    objective_index=0,
+                    constraints={0: [None, 0]},
+                )
+
+            # check that error raised if constraint lower > upper
+            with self.assertRaises(ValueError):
+                module = constructor(
+                    model=mm, best_f=0.0, objective_index=0, constraints={0: [1, 0]}
+                )
+
+        # three constraints
+        N = torch.distributions.Normal(loc=0.0, scale=1.0)
+        a = N.icdf(torch.tensor(0.75))  # get a so that P(-a <= N <= a) = 0.5
+        mean = torch.tensor(
+            [[-0.5, 0.0, 5.0, 0.0]], device=self.device, dtype=dtype
+        ).unsqueeze(dim=-2)
+        variance = torch.ones(1, 4, device=self.device, dtype=dtype).unsqueeze(dim=-2)
+        mm = MockModel(MockPosterior(mean=mean, variance=variance))
+        kwargs = {
+            "model": mm,
+            "best_f": 0.0,
+            "objective_index": 0,
+            "constraints": {1: [None, 0], 2: [5.0, None], 3: [-a, a]},
+        }
+        module = ConstrainedExpectedImprovement(**kwargs)
+        log_module = LogConstrainedExpectedImprovement(**kwargs)
+        X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
+        ei = module(X)
+        ei_expected_unconstrained = torch.tensor(
+            [0.19780], device=self.device, dtype=dtype
+        )
+        ei_expected = ei_expected_unconstrained * 0.5 * 0.5 * 0.5
+        self.assertAllClose(ei, ei_expected, atol=1e-4)
+        # testing log module with regular implementation
+        log_ei = log_module(X)
+        self.assertAllClose(log_ei, ei_expected.log(), atol=1e-4)
+        # test maximize
+        kwargs = {
+            "model": mm,
+            "best_f": 0.0,
+            "objective_index": 0,
+            "constraints": {1: [None, 0]},
+            "maximize": False,
+        }
+        module_min = ConstrainedExpectedImprovement(**kwargs)
+        log_module_min = LogConstrainedExpectedImprovement(**kwargs)
+        ei_min = module_min(X)
+        ei_expected_unconstrained_min = torch.tensor(
+            [0.6978], device=self.device, dtype=dtype
+        )
+        ei_expected_min = ei_expected_unconstrained_min * 0.5
+        self.assertAllClose(ei_min, ei_expected_min, atol=1e-4)
+        log_ei_min = log_module_min(X)
+        self.assertAllClose(log_ei_min, ei_min.log(), atol=1e-4)
+
+        # test invalid onstraints
+        for constructor in constructors:
+            with self.assertRaises(ValueError):
+                constructor(
+                    model=mm,
+                    best_f=0.0,
+                    objective_index=0,
+                    constraints={1: [1.0, -1.0]},
+                )
+
+        # numerical stress test for _compute_log_prob_feas, which gets added to
+        # log_ei in the forward pass, a quantity we already tested above
+        # the limits here are determined by the largest power of ten x, such that
+        #                          x - (b - a) < x
+        # evaluates to true. In this test, the bounds are a, b = -digits, digits.
+        digits = 10 if dtype == torch.float64 else 5
+        zero = torch.tensor([0], dtype=dtype, device=self.device)
+        ten = torch.tensor(10, dtype=dtype, device=self.device)
+        digits_tensor = 1 + torch.arange(
+            -digits, digits, dtype=dtype, device=self.device
+        )
+        X_positive = ten ** (digits_tensor)
+        # flipping -X_positive so that elements are in increasing order
+        means = torch.cat((-X_positive.flip(-1), zero, X_positive)).unsqueeze(-1)
+        means.requires_grad = True
+        log_module = LogConstrainedExpectedImprovement(
+            model=mm,
+            best_f=0.0,
+            objective_index=1,
+            constraints={0: [-5, 5]},
+        )
+        log_prob = _compute_log_prob_feas(
+            log_module, means=means, sigmas=torch.ones_like(means)
+        )
+        log_prob.sum().backward()
+        self.assertFalse(log_prob.isnan().any())
+        self.assertFalse(log_prob.isinf().any())
+        self.assertFalse(means.grad.isnan().any())
+        self.assertFalse(means.grad.isinf().any())
+        # probability of feasibility increases until X = 0, decreases from there on
+        prob_diff = log_prob.diff()
+        k = len(X_positive)
+        eps = 1e-6 if dtype == torch.float32 else 1e-15
+        self.assertTrue((prob_diff[:k] > -eps).all())
+        self.assertTrue((means.grad[:k] > -eps).all())
+        # probability has stationary point at zero
+        mean_grad_at_zero = means.grad[len(X_positive)]
+        self.assertTrue(
+            torch.allclose(mean_grad_at_zero, torch.zeros_like(mean_grad_at_zero))
+        )
+        # probability increases again
+        self.assertTrue((prob_diff[-k:] < eps).all())
+        self.assertTrue((means.grad[-k:] < eps).all())
 
     def test_constrained_expected_improvement_batch(self):
         for dtype in (torch.float, torch.double):
-            mean = torch.tensor(
-                [[-0.5, 0.0, 5.0, 0.0], [0.0, 0.0, 5.0, 0.0], [0.5, 0.0, 5.0, 0.0]],
-                device=self.device,
-                dtype=dtype,
-            ).unsqueeze(dim=-2)
-            variance = torch.ones(3, 4, device=self.device, dtype=dtype).unsqueeze(
-                dim=-2
-            )
-            N = torch.distributions.Normal(loc=0.0, scale=1.0)
-            a = N.icdf(torch.tensor(0.75))  # get a so that P(-a <= N <= a) = 0.5
-            mm = MockModel(MockPosterior(mean=mean, variance=variance))
-            kwargs = {
-                "model": mm,
-                "best_f": 0.0,
-                "objective_index": 0,
-                "constraints": {1: [None, 0], 2: [5.0, None], 3: [-a, a]},
-            }
-            module = ConstrainedExpectedImprovement(**kwargs)
-            log_module = LogConstrainedExpectedImprovement(**kwargs)
-            X = torch.empty(3, 1, 1, device=self.device, dtype=dtype)  # dummy
-            ei, log_ei = module(X), log_module(X)
-            self.assertTrue(ei.shape == torch.Size([3]))
-            self.assertTrue(log_ei.shape == torch.Size([3]))
-            ei_expected_unconstrained = torch.tensor(
-                [0.19780, 0.39894, 0.69780], device=self.device, dtype=dtype
-            )
-            ei_expected = ei_expected_unconstrained * 0.5 * 0.5 * 0.5
-            self.assertAllClose(ei, ei_expected, atol=1e-4)
-            self.assertAllClose(log_ei, ei.log(), atol=1e-4)
+            with catch_warnings():
+                simplefilter("ignore", category=NumericsWarning)
+                self._test_constrained_expected_improvement_batch(dtype=dtype)
+
+    def _test_constrained_expected_improvement_batch(self, dtype: torch.dtype) -> None:
+        mean = torch.tensor(
+            [[-0.5, 0.0, 5.0, 0.0], [0.0, 0.0, 5.0, 0.0], [0.5, 0.0, 5.0, 0.0]],
+            device=self.device,
+            dtype=dtype,
+        ).unsqueeze(dim=-2)
+        variance = torch.ones(3, 4, device=self.device, dtype=dtype).unsqueeze(dim=-2)
+        N = torch.distributions.Normal(loc=0.0, scale=1.0)
+        a = N.icdf(torch.tensor(0.75))  # get a so that P(-a <= N <= a) = 0.5
+        mm = MockModel(MockPosterior(mean=mean, variance=variance))
+        kwargs = {
+            "model": mm,
+            "best_f": 0.0,
+            "objective_index": 0,
+            "constraints": {1: [None, 0], 2: [5.0, None], 3: [-a, a]},
+        }
+        module = ConstrainedExpectedImprovement(**kwargs)
+        log_module = LogConstrainedExpectedImprovement(**kwargs)
+        X = torch.empty(3, 1, 1, device=self.device, dtype=dtype)  # dummy
+        ei, log_ei = module(X), log_module(X)
+        self.assertTrue(ei.shape == torch.Size([3]))
+        self.assertTrue(log_ei.shape == torch.Size([3]))
+        ei_expected_unconstrained = torch.tensor(
+            [0.19780, 0.39894, 0.69780], device=self.device, dtype=dtype
+        )
+        ei_expected = ei_expected_unconstrained * 0.5 * 0.5 * 0.5
+        self.assertAllClose(ei, ei_expected, atol=1e-4)
+        self.assertAllClose(log_ei, ei.log(), atol=1e-4)
 
 
 class TestNoisyExpectedImprovement(BotorchTestCase):
@@ -858,6 +882,14 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
         return model
 
     def test_noisy_expected_improvement(self):
+        model = self._get_model(dtype=torch.float64)
+        X_observed = model.train_inputs[0]
+        nfan = 5
+        with self.assertWarnsRegex(
+            NumericsWarning, ".* LogNoisyExpectedImprovement .*"
+        ):
+            NoisyExpectedImprovement(model, X_observed, num_fantasies=nfan)
+          
         # Same as the default Matern kernel
         # botorch.models.utils.gpytorch_modules.get_matern_kernel_with_gamma_prior,
         # except RBFKernel is used instead of MaternKernel.
@@ -878,11 +910,17 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
             (torch.tensor([[-3.4], [0.8]]), torch.tensor([[0.0], [1.0]])),
             (None, covar_module_2),
         ):
-            self._test_noisy_expected_imrpovement(
-                dtype, use_octf, use_intf, bounds, covar_module
-            )
+            with catch_warnings():
+                simplefilter("ignore", category=NumericsWarning)
+                self._test_noisy_expected_improvement(
+                    dtype=dtype, 
+                    use_octf=use_octf,
+                    use_inf=use_intf,
+                    bounds=bounds,
+                    covar_module=covar_module,
+                )
 
-    def _test_noisy_expected_imrpovement(
+    def _test_noisy_expected_improvement(
         self,
         dtype: torch.dtype,
         use_octf: bool,
@@ -926,7 +964,7 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
         # Make sure _get_noiseless_fantasy_model gives them
         # the same state_dict
         self.assertEqual(LogNEI.model.state_dict(), model.state_dict())
-
+        
         LogNEI.model = nEI.model  # let the two share their values and fantasies
         LogNEI.best_f = nEI.best_f
 
@@ -963,7 +1001,8 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
         # testing gradient through exp of log computation
         exp_log_val.sum().backward()
         # testing that first gradient element coincides. The second is in the
-        # regime where the naive implementation looses accuracy.
+        # regime where the naive implementation loses accuracy.
+
         # Note - for some reason, when the RBFKernel is used instead of
         # Matern, it gives lots of warnings about ill-conditioned matrices
         # and the gradients are less close, so need to increase the
@@ -973,6 +1012,7 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
             if dtype == torch.float32
             else 1e-12
         )
+
         rtol = atol
         self.assertAllClose(X_test.grad[0], X_test_log.grad[0], atol=atol, rtol=rtol)
 

@@ -24,6 +24,7 @@ import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions import UnsupportedError
+from botorch.exceptions.warnings import legacy_ei_numerics_warning
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.model import Model
 from botorch.utils.constants import get_constants_like
@@ -310,9 +311,9 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
         >>> EI = ExpectedImprovement(model, best_f=0.2)
         >>> ei = EI(test_X)
 
-    NOTE: It is *strongly* recommended to use LogExpectedImprovement instead of regular
-    EI, because it solves the vanishing gradient problem by taking special care of
-    numerical computations and can lead to substantially improved BO performance.
+    NOTE: It is strongly recommended to use LogExpectedImprovement instead of regular
+    EI, as it can lead to substantially improved BO performance through improved
+    numerics. See https://arxiv.org/abs/2310.20708 for details.
     """
 
     def __init__(
@@ -333,6 +334,7 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
                 single-output posterior is required.
             maximize: If True, consider the problem a maximization problem.
         """
+        legacy_ei_numerics_warning(legacy_name=type(self).__name__)
         super().__init__(model=model, posterior_transform=posterior_transform)
         self.register_buffer("best_f", torch.as_tensor(best_f))
         self.maximize = maximize
@@ -357,7 +359,7 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
 
 
 class LogExpectedImprovement(AnalyticAcquisitionFunction):
-    r"""Logarithm of single-outcome Expected Improvement (analytic).
+    r"""Single-outcome Log Expected Improvement (analytic).
 
     Computes the logarithm of the classic Expected Improvement acquisition function, in
     a numerically robust manner. In particular, the implementation takes special care
@@ -519,6 +521,10 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
         >>> constraints = {0: (0.0, None)}
         >>> cEI = ConstrainedExpectedImprovement(model, 0.2, 1, constraints)
         >>> cei = cEI(test_X)
+
+    NOTE: It is strongly recommended to use LogConstrainedExpectedImprovement instead
+    of regular CEI, as it can lead to substantially improved BO performance through
+    improved numerics. See https://arxiv.org/abs/2310.20708 for details.
     """
 
     def __init__(
@@ -541,6 +547,7 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
                 bounds on that output (resp. interpreted as -Inf / Inf if None)
             maximize: If True, consider the problem a maximization problem.
         """
+        legacy_ei_numerics_warning(legacy_name=type(self).__name__)
         # Use AcquisitionFunction constructor to avoid check for posterior transform.
         super(AnalyticAcquisitionFunction, self).__init__(model=model)
         self.posterior_transform = None
@@ -675,6 +682,10 @@ class NoisyExpectedImprovement(ExpectedImprovement):
         >>> model = SingleTaskGP(train_X, train_Y, train_Yvar=train_Yvar)
         >>> NEI = NoisyExpectedImprovement(model, train_X)
         >>> nei = NEI(test_X)
+
+    NOTE: It is strongly recommended to use LogNoisyExpectedImprovement instead
+    of regular NEI, as it can lead to substantially improved BO performance through
+    improved numerics. See https://arxiv.org/abs/2310.20708 for details.
     """
 
     def __init__(
@@ -695,6 +706,7 @@ class NoisyExpectedImprovement(ExpectedImprovement):
                 complexity and performance).
             maximize: If True, consider the problem a maximization problem.
         """
+        legacy_ei_numerics_warning(legacy_name=type(self).__name__)
         # sample fantasies
         from botorch.sampling.normal import SobolQMCNormalSampler
 
