@@ -66,6 +66,7 @@
     <span class="n">repeat_to_match_aug_dim</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">legacy_ei_numerics_warning</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.objective</span> <span class="kn">import</span> <span class="n">compute_smoothed_feasibility_indicator</span>
@@ -388,6 +389,10 @@
 <span class="sd">        &gt;&gt;&gt; sampler = SobolQMCNormalSampler(1024)</span>
 <span class="sd">        &gt;&gt;&gt; qEI = qExpectedImprovement(model, best_f, sampler)</span>
 <span class="sd">        &gt;&gt;&gt; qei = qEI(test_X)</span>
+
+<span class="sd">    NOTE: It is strongly recommended to use qLogExpectedImprovement instead</span>
+<span class="sd">    of regular qEI, as it can lead to substantially improved BO performance through</span>
+<span class="sd">    improved numerics. See https://arxiv.org/abs/2310.20708 for details.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -427,6 +432,7 @@
 <span class="sd">                approximation to the constraint indicators. For more details, on this</span>
 <span class="sd">                parameter, see the docs of `compute_smoothed_feasibility_indicator`.</span>
 <span class="sd">        """</span>
+        <span class="n">legacy_ei_numerics_warning</span><span class="p">(</span><span class="n">legacy_name</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
             <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
@@ -471,6 +477,10 @@
 <span class="sd">        &gt;&gt;&gt; sampler = SobolQMCNormalSampler(1024)</span>
 <span class="sd">        &gt;&gt;&gt; qNEI = qNoisyExpectedImprovement(model, train_X, sampler)</span>
 <span class="sd">        &gt;&gt;&gt; qnei = qNEI(test_X)</span>
+
+<span class="sd">    NOTE: It is strongly recommended to use qLogNoisyExpectedImprovement instead</span>
+<span class="sd">    of regular qNEI, as it can lead to substantially improved BO performance through</span>
+<span class="sd">    improved numerics. See https://arxiv.org/abs/2310.20708 for details.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -527,6 +537,7 @@
 <span class="sd">        the incremental qNEI from the new point. This would greatly increase</span>
 <span class="sd">        efficiency for large batches.</span>
 <span class="sd">        """</span>
+        <span class="n">legacy_ei_numerics_warning</span><span class="p">(</span><span class="n">legacy_name</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
             <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>

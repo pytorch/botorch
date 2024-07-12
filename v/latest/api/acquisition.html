@@ -506,9 +506,9 @@ single-outcome.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">ei</span> <span class="o">=</span> <span class="n">EI</span><span class="p">(</span><span class="n">test_X</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>NOTE: It is <em>strongly</em> recommended to use LogExpectedImprovement instead of regular
-EI, because it solves the vanishing gradient problem by taking special care of
-numerical computations and can lead to substantially improved BO performance.</p>
+<p>NOTE: It is strongly recommended to use LogExpectedImprovement instead of regular
+EI, as it can lead to substantially improved BO performance through improved
+numerics. See <a class="reference external" href="https://arxiv.org/abs/2310.20708">https://arxiv.org/abs/2310.20708</a> for details.</p>
 <p>Single-outcome Expected Improvement (analytic).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -548,7 +548,7 @@ given design points <cite>X</cite>.</p>
 <dt class="sig sig-object py" id="botorch.acquisition.analytic.LogExpectedImprovement">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.analytic.</span></span><span class="sig-name descname"><span class="pre">LogExpectedImprovement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/analytic.html#LogExpectedImprovement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.analytic.LogExpectedImprovement" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.analytic.AnalyticAcquisitionFunction" title="botorch.acquisition.analytic.AnalyticAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnalyticAcquisitionFunction</span></code></a></p>
-<p>Logarithm of single-outcome Expected Improvement (analytic).</p>
+<p>Single-outcome Log Expected Improvement (analytic).</p>
 <p>Computes the logarithm of the classic Expected Improvement acquisition function, in
 a numerically robust manner. In particular, the implementation takes special care
 to avoid numerical issues in the computation of the acquisition value and its
@@ -674,6 +674,9 @@ upper bounds for the i-th constraint, respectively.</p>
 &gt;&gt;&gt; constraints = {0: (0.0, None)}
 &gt;&gt;&gt; cEI = ConstrainedExpectedImprovement(model, 0.2, 1, constraints)
 &gt;&gt;&gt; cei = cEI(test_X)</p>
+<p>NOTE: It is strongly recommended to use LogConstrainedExpectedImprovement instead
+of regular CEI, as it can lead to substantially improved BO performance through
+improved numerics. See <a class="reference external" href="https://arxiv.org/abs/2310.20708">https://arxiv.org/abs/2310.20708</a> for details.</p>
 <p>Analytic Constrained Expected Improvement.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -782,6 +785,9 @@ to the model. (required for noiseless fantasies).</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">nei</span> <span class="o">=</span> <span class="n">NEI</span><span class="p">(</span><span class="n">test_X</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>NOTE: It is strongly recommended to use LogNoisyExpectedImprovement instead
+of regular NEI, as it can lead to substantially improved BO performance through
+improved numerics. See <a class="reference external" href="https://arxiv.org/abs/2310.20708">https://arxiv.org/abs/2310.20708</a> for details.</p>
 <p>Single-outcome Noisy Expected Improvement (via fantasies).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1155,6 +1161,9 @@ batch shape of model and input <cite>X</cite>.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">qei</span> <span class="o">=</span> <span class="n">qEI</span><span class="p">(</span><span class="n">test_X</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>NOTE: It is strongly recommended to use qLogExpectedImprovement instead
+of regular qEI, as it can lead to substantially improved BO performance through
+improved numerics. See <a class="reference external" href="https://arxiv.org/abs/2310.20708">https://arxiv.org/abs/2310.20708</a> for details.</p>
 <p>q-Expected Improvement.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1203,6 +1212,9 @@ over previously observed points is computed for each sample and averaged.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">qnei</span> <span class="o">=</span> <span class="n">qNEI</span><span class="p">(</span><span class="n">test_X</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>NOTE: It is strongly recommended to use qLogNoisyExpectedImprovement instead
+of regular qNEI, as it can lead to substantially improved BO performance through
+improved numerics. See <a class="reference external" href="https://arxiv.org/abs/2310.20708">https://arxiv.org/abs/2310.20708</a> for details.</p>
 <p>q-Noisy Expected Improvement.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>

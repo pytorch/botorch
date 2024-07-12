@@ -47,6 +47,7 @@
 <span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">PosteriorTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">legacy_ei_numerics_warning</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
@@ -360,9 +361,9 @@
 <span class="sd">        &gt;&gt;&gt; EI = ExpectedImprovement(model, best_f=0.2)</span>
 <span class="sd">        &gt;&gt;&gt; ei = EI(test_X)</span>
 
-<span class="sd">    NOTE: It is *strongly* recommended to use LogExpectedImprovement instead of regular</span>
-<span class="sd">    EI, because it solves the vanishing gradient problem by taking special care of</span>
-<span class="sd">    numerical computations and can lead to substantially improved BO performance.</span>
+<span class="sd">    NOTE: It is strongly recommended to use LogExpectedImprovement instead of regular</span>
+<span class="sd">    EI, as it can lead to substantially improved BO performance through improved</span>
+<span class="sd">    numerics. See https://arxiv.org/abs/2310.20708 for details.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -383,6 +384,7 @@
 <span class="sd">                single-output posterior is required.</span>
 <span class="sd">            maximize: If True, consider the problem a maximization problem.</span>
 <span class="sd">        """</span>
+        <span class="n">legacy_ei_numerics_warning</span><span class="p">(</span><span class="n">legacy_name</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"best_f"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">best_f</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span> <span class="o">=</span> <span class="n">maximize</span>
@@ -413,7 +415,7 @@
 <div class="viewcode-block" id="LogExpectedImprovement">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.LogExpectedImprovement">[docs]</a>
 <span class="k">class</span> <span class="nc">LogExpectedImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""Logarithm of single-outcome Expected Improvement (analytic).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Single-outcome Log Expected Improvement (analytic).</span>
 
 <span class="sd">    Computes the logarithm of the classic Expected Improvement acquisition function, in</span>
 <span class="sd">    a numerically robust manner. In particular, the implementation takes special care</span>
@@ -587,6 +589,10 @@
 <span class="sd">        &gt;&gt;&gt; constraints = {0: (0.0, None)}</span>
 <span class="sd">        &gt;&gt;&gt; cEI = ConstrainedExpectedImprovement(model, 0.2, 1, constraints)</span>
 <span class="sd">        &gt;&gt;&gt; cei = cEI(test_X)</span>
+
+<span class="sd">    NOTE: It is strongly recommended to use LogConstrainedExpectedImprovement instead</span>
+<span class="sd">    of regular CEI, as it can lead to substantially improved BO performance through</span>
+<span class="sd">    improved numerics. See https://arxiv.org/abs/2310.20708 for details.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -609,6 +615,7 @@
 <span class="sd">                bounds on that output (resp. interpreted as -Inf / Inf if None)</span>
 <span class="sd">            maximize: If True, consider the problem a maximization problem.</span>
 <span class="sd">        """</span>
+        <span class="n">legacy_ei_numerics_warning</span><span class="p">(</span><span class="n">legacy_name</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
         <span class="c1"># Use AcquisitionFunction constructor to avoid check for posterior transform.</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span> <span class="o">=</span> <span class="kc">None</span>
@@ -755,6 +762,10 @@
 <span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(train_X, train_Y, train_Yvar=train_Yvar)</span>
 <span class="sd">        &gt;&gt;&gt; NEI = NoisyExpectedImprovement(model, train_X)</span>
 <span class="sd">        &gt;&gt;&gt; nei = NEI(test_X)</span>
+
+<span class="sd">    NOTE: It is strongly recommended to use LogNoisyExpectedImprovement instead</span>
+<span class="sd">    of regular NEI, as it can lead to substantially improved BO performance through</span>
+<span class="sd">    improved numerics. See https://arxiv.org/abs/2310.20708 for details.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -775,6 +786,7 @@
 <span class="sd">                complexity and performance).</span>
 <span class="sd">            maximize: If True, consider the problem a maximization problem.</span>
 <span class="sd">        """</span>
+        <span class="n">legacy_ei_numerics_warning</span><span class="p">(</span><span class="n">legacy_name</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
         <span class="c1"># sample fantasies</span>
         <span class="kn">from</span> <span class="nn">botorch.sampling.normal</span> <span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
 
