@@ -491,7 +491,7 @@ class TestLinearEllipticalSliceSampler(BotorchTestCase):
                     bounds=bounds,
                     check_feasibility=True,
                     burnin=100,
-                    chains=100,
+                    num_chains=100,
                 )
                 batch_samples = batch_sampler.draw(n=100)
                 self.assertEqual(batch_samples.shape, torch.Size([100 * 100, d]))

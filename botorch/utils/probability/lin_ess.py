@@ -160,14 +160,14 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         self._x = self.x0.clone()
         self._z = self._transform(self._x)
 
-        if chains > 1:
-            self._z = self._z.expand(-1, chains)
+        if num_chains > 1:
+            self._z = self._z.expand(-1, num_chains).clone()
 
         # We will need the following repeatedly, let's allocate them once
-        self.zeros = torch.zeros((chains, 1), **tkwargs)
-        self.ones = torch.ones((chains, 1), **tkwargs)
+        self.zeros = torch.zeros((num_chains, 1), **tkwargs)
+        self.ones = torch.ones((num_chains, 1), **tkwargs)
         self.indices_batch = torch.arange(
-            chains, dtype=torch.int64, device=tkwargs["device"]
+            num_chains, dtype=torch.int64, device=tkwargs["device"]
         )
 
         self.check_feasibility = check_feasibility
