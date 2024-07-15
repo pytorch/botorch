@@ -338,7 +338,7 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         """
         return self._z * torch.cos(theta) + nu * torch.sin(theta)
 
-    def _trim_intervals(self, left, right) -> Tuple[Tensor, Tensor]:
+    def _trim_intervals(self, left: Tensor, right: Tensor) -> Tuple[Tensor, Tensor]:
         """Trim the intervals by a small positive constant. This encourages the Markov
         chain to stay in the interior of the domain.
         """
@@ -347,7 +347,7 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
 
         return left + eps, right - eps
 
-    def _find_active_intersection_angles(self, nu) -> Tuple[Tensor, Tensor]:
+    def _find_active_intersection_angles(self, nu: Tensor) -> Tuple[Tensor, Tensor]:
         """Construct the active intersection angles.
 
         Args:
