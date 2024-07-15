@@ -331,7 +331,7 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         """
         return self._z * torch.cos(theta) + nu * torch.sin(theta)
 
-    def _trim_intervals(self, left, right):
+    def _trim_intervals(self, left, right) -> Tuple[Tensor, Tensor]:
         """Trim the intervals by a small positive constant."""
         gap = torch.clamp(right - left, min=0.0)
         eps = gap.mul(0.25).clamp(max=1e-6 if gap.dtype == torch.float32 else 1e-12)
