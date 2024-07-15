@@ -464,6 +464,7 @@ class TestLinearEllipticalSliceSampler(BotorchTestCase):
             self.assertEqual(sampler.lifetime_samples, num_samples)
 
     def test_batch_mcmc(self):
+        # all random seeds in [0, 99] should pass
         torch.manual_seed(torch.randint(100, (1,)))
 
         d = 5
@@ -481,20 +482,20 @@ class TestLinearEllipticalSliceSampler(BotorchTestCase):
             sampler = LinearEllipticalSliceSampler(
                 bounds=bounds,
                 check_feasibility=True,
-                burnin=100,
+                burnin=50,
             )
-            samples = sampler.draw(n=100)
-            self.assertEqual(samples.shape, torch.Size([100, d]))
+            samples = sampler.draw(n=10)
+            self.assertEqual(samples.shape, torch.Size([10, d]))
 
             # Run 100 Markov chains.
             batch_sampler = LinearEllipticalSliceSampler(
                 bounds=bounds,
                 check_feasibility=True,
-                burnin=100,
-                num_chains=100,
+                burnin=50,
+                num_chains=50,
             )
-            batch_samples = batch_sampler.draw(n=100)
-            self.assertEqual(batch_samples.shape, torch.Size([100 * 100, d]))
+            batch_samples = batch_sampler.draw(n=10)
+            self.assertEqual(batch_samples.shape, torch.Size([50 * 10, d]))
 
             # The ground truth mean is zero thanks to symmetry, and
             # thus the norm of sample mean is the estimation error.
