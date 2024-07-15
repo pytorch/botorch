@@ -377,7 +377,7 @@ class TestLinearEllipticalSliceSampler(BotorchTestCase):
             # Get the left and right endpoints of the active intervals.
             # As the entire ellipse is feasible, the cumulative length should be 2 * pi.
             left, right = sampler._find_active_intersection_angles(nu)
-            csum = right.sub(left).clamp(min=0.0).cumsum(dim=-1)
+            csum = (right - left).clamp(min=0.0).cumsum(dim=-1)
             self.assertAllClose(csum[:, -1].item(), 2 * math.pi)
 
             # 2) testing tangential intersection of ellipse with constraint

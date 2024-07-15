@@ -64,7 +64,7 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         check_feasibility: bool = False,
         burnin: int = 0,
         thinning: int = 0,
-        chains: int = 1,
+        num_chains: int = 1,
     ) -> None:
         r"""Initialize LinearEllipticalSliceSampler.
 
@@ -338,7 +338,7 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
 
         return left + eps, right - eps
 
-    def _find_active_intersection_angles(self, nu) -> Tuple(Tensor, Tensor):
+    def _find_active_intersection_angles(self, nu) -> Tuple[Tensor, Tensor]:
         """Construct the active intersection angles.
 
         Args:
@@ -365,7 +365,7 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
 
         return cummax, srted
 
-    def _find_intersection_angles(self, nu: Tensor) -> Tuple(Tensor, Tensor):
+    def _find_intersection_angles(self, nu: Tensor) -> Tuple[Tensor, Tensor]:
         """Compute all 2 * m intersections of the ellipse and the linear constraints, where
         `m = n_ineq_con` is the number of inequality constraints. If the i-th linear
         inequality constraint has no intersection with the ellipse, we will create two
@@ -383,14 +383,8 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         q = self._Az @ nu
 
         radius = torch.sqrt(p**2 + q**2)
-        # if radius.abs().lt(1e-6).any():
-        #     warnings.warn("The ellipse has an extremely small volume.
-        # This may cause numerical issues.")
 
         ratio = self._bz / radius
-        # if ratio.min().le(-1. + 1e-6):
-        #     warnings.warn("The ellipse is almost outside the domain.
-        # This may cause numerical issues.")
 
         has_solution = ratio < 1.0
 
