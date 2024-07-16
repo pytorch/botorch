@@ -12,22 +12,24 @@ References
     A. Gessner, O. Kanjilal, and P. Hennig. Integrals over gaussians under
     linear domain constraints. AISTATS 2020.
 
+.. [Wu2024]
+    K. Wu, and J. Gardner. A Fast, Robust Elliptical Slice Sampling Implementation for
+    Linearly Truncated Multivariate Normal Distributions. arXiv:2407.10449. 2024.
 
 This implementation is based (with multiple changes / optimiations) on
 the following implementations based on the algorithm in [Gessner2020]_:
 - https://github.com/alpiges/LinConGauss
 - https://github.com/wjmaddox/pytorch_ess
 
+In addition, the active intervals (from which the angle is sampled) are computed using
+the improved algorithm described in [Wu2024]_:
+https://github.com/kayween/linear-ess
+
 The implementation here differentiates itself from the original implementations with:
 1) Support for fixed feature equality constraints.
 2) Support for non-standard Normal distributions.
 3) Numerical stability improvements, especially relevant for high-dimensional cases.
-
-Notably, this implementation does not rely on an adaptive `delta_theta` parameter in
-order to determine if two neighboring constraint intersection angles `theta` lead to a
-change in the feasibility of the sample. This both simplifies the implementation and
-makes it more robust to numerical imprecisions when two constraint intersection angles
-are close to each other.
+4) Support multiple Markov chains running in parallel.
 """
 
 from __future__ import annotations
@@ -47,7 +49,6 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
     r"""Linear Elliptical Slice Sampler.
 
     Ideas:
-    - Add batch support, broadcasting over parallel chains.
     - Optimize computations if possible, potentially with torch.compile.
     - Extend fixed features constraint to general linear equality constraints.
     """
