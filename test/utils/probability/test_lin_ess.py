@@ -487,7 +487,7 @@ class TestLinearEllipticalSliceSampler(BotorchTestCase):
             samples = sampler.draw(n=10)
             self.assertEqual(samples.shape, torch.Size([10, d]))
 
-            # Run 100 Markov chains.
+            # Run 50 Markov chains.
             batch_sampler = LinearEllipticalSliceSampler(
                 bounds=bounds,
                 check_feasibility=True,
