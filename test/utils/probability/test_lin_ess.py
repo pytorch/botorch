@@ -469,7 +469,7 @@ class TestLinearEllipticalSliceSampler(BotorchTestCase):
 
         d = 5
 
-        for dtype, atol in zip((torch.float, torch.double), (2e-5, 1e-12)):
+        for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
 
             # special case: N(0, I) truncated by a symmetric box
