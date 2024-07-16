@@ -26,6 +26,7 @@ from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions import UnsupportedError
 from botorch.exceptions.warnings import legacy_ei_numerics_warning
 from botorch.models.gp_regression import SingleTaskGP
+from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
 from botorch.utils.constants import get_constants_like
 from botorch.utils.probability import MVNXPB
@@ -39,6 +40,7 @@ from botorch.utils.probability.utils import (
 from botorch.utils.safe_math import log1mexp, logmeanexp
 from botorch.utils.transforms import convert_to_target_pre_hook, t_batch_mode_transform
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
+
 from torch import Tensor
 from torch.nn.functional import pad
 
@@ -607,7 +609,7 @@ class LogNoisyExpectedImprovement(AnalyticAcquisitionFunction):
 
     def __init__(
         self,
-        model: SingleTaskGP,
+        model: GPyTorchModel,
         X_observed: Tensor,
         num_fantasies: int = 20,
         maximize: bool = True,
@@ -616,7 +618,8 @@ class LogNoisyExpectedImprovement(AnalyticAcquisitionFunction):
         r"""Single-outcome Noisy Log Expected Improvement (via fantasies).
 
         Args:
-            model: A fitted single-outcome model.
+            model: A fitted single-outcome model. Only SingleTaskGP models with
+                known observation noise are currently supported.
             X_observed: A `n x d` Tensor of observed points that are likely to
                 be the best observed points so far.
             num_fantasies: The number of fantasies to generate. The higher this
@@ -624,6 +627,7 @@ class LogNoisyExpectedImprovement(AnalyticAcquisitionFunction):
                 complexity and performance).
             maximize: If True, consider the problem a maximization problem.
         """
+        _check_noisyei_model(model)
         # sample fantasies
         from botorch.sampling.normal import SobolQMCNormalSampler
 
@@ -690,7 +694,7 @@ class NoisyExpectedImprovement(ExpectedImprovement):
 
     def __init__(
         self,
-        model: SingleTaskGP,
+        model: GPyTorchModel,
         X_observed: Tensor,
         num_fantasies: int = 20,
         maximize: bool = True,
@@ -698,7 +702,8 @@ class NoisyExpectedImprovement(ExpectedImprovement):
         r"""Single-outcome Noisy Expected Improvement (via fantasies).
 
         Args:
-            model: A fitted single-outcome model.
+            model: A fitted single-outcome model. Only SingleTaskGP models with
+                known observation noise are currently supported.
             X_observed: A `n x d` Tensor of observed points that are likely to
                 be the best observed points so far.
             num_fantasies: The number of fantasies to generate. The higher this
@@ -706,6 +711,7 @@ class NoisyExpectedImprovement(ExpectedImprovement):
                 complexity and performance).
             maximize: If True, consider the problem a maximization problem.
         """
+        _check_noisyei_model(model)
         legacy_ei_numerics_warning(legacy_name=type(self).__name__)
         # sample fantasies
         from botorch.sampling.normal import SobolQMCNormalSampler
@@ -1054,6 +1060,21 @@ def _log_abs_u_Phi_div_phi(u: Tensor) -> Tensor:
     return torch.log(torch.special.erfcx(a * u) * u.abs()) + b
 
 
+def _check_noisyei_model(model: GPyTorchModel) -> None:
+    message = (
+        "Only single-output SingleTaskGP models with known observation noise "
+        "are currently supported for fantasy-based NEI & LogNEI."
+    )
+    if not isinstance(model, SingleTaskGP):
+        raise UnsupportedError(f"{message} Model is not a SingleTaskGP.")
+    if not isinstance(model.likelihood, FixedNoiseGaussianLikelihood):
+        raise UnsupportedError(
+            f"{message} Model likelihood is not a FixedNoiseGaussianLikelihood."
+        )
+    if model.num_outputs != 1:
+        raise UnsupportedError(f"{message} Model has {model.num_outputs} outputs.")
+
+
 def _get_noiseless_fantasy_model(
     model: SingleTaskGP, batch_X_observed: Tensor, Y_fantasized: Tensor
 ) -> SingleTaskGP:
@@ -1072,14 +1093,6 @@ def _get_noiseless_fantasy_model(
     Returns:
         The fantasy model.
     """
-    if not isinstance(model, SingleTaskGP) or not isinstance(
-        model.likelihood, FixedNoiseGaussianLikelihood
-    ):
-        raise UnsupportedError(
-            "Only SingleTaskGP models with known observation noise "
-            "are currently supported for fantasy-based NEI & LogNEI."
-        )
-
     # initialize a copy of SingleTaskGP on the original training inputs
     # this makes SingleTaskGP a non-batch GP, so that the same hyperparameters
     # are used across all batches (by default, a GP with batched training data
