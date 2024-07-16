@@ -10,11 +10,13 @@ Utilities for converting between different models.
 
 from __future__ import annotations
 
+import warnings
 from copy import deepcopy
 from typing import Dict, Optional, Set, Tuple
 
 import torch
 from botorch.exceptions import UnsupportedError
+from botorch.exceptions.warnings import BotorchWarning
 from botorch.models.gp_regression import HeteroskedasticSingleTaskGP
 from botorch.models.gp_regression_fidelity import SingleTaskMultiFidelityGP
 from botorch.models.gp_regression_mixed import MixedSingleTaskGP
@@ -24,7 +26,14 @@ from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 from torch import Tensor
-from torch.nn import Module
+from torch.nn import Module, ModuleList
+
+DEPRECATION_MESSAGE = (
+    "Model converter code is deprecated and will be removed in v0.13 release. "
+    "Its correct behavior is dependent on some assumptions about model priors "
+    "that do not always hold. Use it at your own risk! See "
+    "https://github.com/cornellius-gp/gpytorch/issues/2550."
+)
 
 
 def _get_module(module: Module, name: str) -> Module:
@@ -49,14 +58,24 @@ def _get_module(module: Module, name: str) -> Module:
     return current
 
 
-def _check_compatibility(models: ModelListGP) -> None:
-    """Check if a ModelListGP can be converted."""
+def _check_compatibility(models: ModuleList) -> None:
+    """Check if the submodels of a ModelListGP are compatible with the converter."""
     # Check that all submodules are of the same type.
     for modn, mod in models[0].named_modules():
         mcls = mod.__class__
         if not all(isinstance(_get_module(m, modn), mcls) for m in models[1:]):
             raise UnsupportedError(
                 "Sub-modules must be of the same type across models."
+            )
+        if "prior" in modn and len(mod.state_dict()) == 0:
+            warnings.warn(
+                "Model converter cannot verify compatibility of GPyTorch priors "
+                "that do not register their parameters as buffers. If the prior "
+                "is different than the default prior set by the model constructor "
+                "this may not work correctly. Use it at your own risk! See "
+                "https://github.com/cornellius-gp/gpytorch/issues/2550.",
+                BotorchWarning,
+                stacklevel=3,
             )
 
     # Check that each model is a BatchedMultiOutputGPyTorchModel.
@@ -128,6 +147,7 @@ def model_list_to_batched(model_list: ModelListGP) -> BatchedMultiOutputGPyTorch
         >>> list_gp = ModelListGP(gp1, gp2)
         >>> batch_gp = model_list_to_batched(list_gp)
     """
+    warnings.warn(DEPRECATION_MESSAGE, DeprecationWarning, stacklevel=2)
     was_training = model_list.training
     model_list.train()
     models = model_list.models
@@ -260,6 +280,7 @@ def batched_to_model_list(batch_model: BatchedMultiOutputGPyTorchModel) -> Model
         >>> batch_gp = SingleTaskGP(train_X, train_Y)
         >>> list_gp = batched_to_model_list(batch_gp)
     """
+    warnings.warn(DEPRECATION_MESSAGE, DeprecationWarning, stacklevel=2)
     was_training = batch_model.training
     batch_model.train()
     # TODO: Add support for HeteroskedasticSingleTaskGP.
@@ -363,6 +384,7 @@ def batched_multi_output_to_single_output(
         >>> batch_mo_gp = SingleTaskGP(train_X, train_Y)
         >>> batch_so_gp = batched_multioutput_to_single_output(batch_gp)
     """
+    warnings.warn(DEPRECATION_MESSAGE, DeprecationWarning, stacklevel=2)
     was_training = batch_mo_model.training
     batch_mo_model.train()
     # TODO: Add support for HeteroskedasticSingleTaskGP.

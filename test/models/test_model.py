@@ -10,7 +10,7 @@ from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions.errors import InputDataError
 from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.model import Model, ModelDict, ModelList
-from botorch.posteriors.deterministic import DeterministicPosterior
+from botorch.posteriors.ensemble import EnsemblePosterior
 from botorch.posteriors.posterior_list import PosteriorList
 from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
@@ -35,7 +35,10 @@ class DummyPosteriorTransform(PosteriorTransform):
 
     def forward(self, posterior):
         return PosteriorList(
-            *[DeterministicPosterior(2 * p.mean + 1) for p in posterior.posteriors]
+            *[
+                EnsemblePosterior(2 * p.mean.unsqueeze(0) + 1)
+                for p in posterior.posteriors
+            ]
         )
 
 

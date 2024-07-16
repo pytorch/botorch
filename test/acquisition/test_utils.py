@@ -246,6 +246,9 @@ class TestPruneInferiorPoints(BotorchTestCase):
             # test that invalid max_frac is checked properly
             with self.assertRaises(ValueError):
                 prune_inferior_points(model=mm, X=X, max_frac=1.1)
+            # test that invalid X is checked properly
+            with self.assertRaises(ValueError):
+                prune_inferior_points(model=mm, X=torch.empty(0, 0))
             # test basic behaviour
             X_pruned = prune_inferior_points(model=mm, X=X)
             self.assertTrue(torch.equal(X_pruned, X[[-1]]))

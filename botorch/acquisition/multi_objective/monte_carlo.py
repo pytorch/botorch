@@ -36,6 +36,7 @@ from botorch.acquisition.multi_objective.objective import (
     MCMultiOutputObjective,
 )
 from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.warnings import legacy_ei_numerics_warning
 from botorch.models.model import Model
 from botorch.models.transforms.input import InputPerturbation
 from botorch.sampling.base import MCSampler
@@ -199,6 +200,7 @@ class qExpectedHypervolumeImprovement(
             fat: A Boolean flag indicating whether to use the heavy-tailed approximation
                 of the constraint indicator.
         """
+        legacy_ei_numerics_warning(legacy_name=type(self).__name__)
         if len(ref_point) != partitioning.num_outcomes:
             raise ValueError(
                 "The length of the reference point must match the number of outcomes. "
@@ -408,6 +410,7 @@ class qNoisyExpectedHypervolumeImprovement(
             marginalize_dim: A batch dimension that should be marginalized. For example,
                 this is useful when using a batched fully Bayesian model.
         """
+        legacy_ei_numerics_warning(legacy_name=type(self).__name__)
         MultiObjectiveMCAcquisitionFunction.__init__(
             self,
             model=model,

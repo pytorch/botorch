@@ -7,6 +7,7 @@
 
 import torch
 from botorch.exceptions import UnsupportedError
+from botorch.exceptions.warnings import BotorchWarning
 from botorch.models import (
     HeteroskedasticSingleTaskGP,
     ModelListGP,
@@ -16,6 +17,7 @@ from botorch.models import (
 from botorch.models.converter import (
     batched_multi_output_to_single_output,
     batched_to_model_list,
+    DEPRECATION_MESSAGE,
     model_list_to_batched,
 )
 from botorch.models.transforms.input import AppendFeatures, Normalize
@@ -25,6 +27,7 @@ from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels import RBFKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
+from gpytorch.priors import LogNormalPrior
 
 
 class TestConverters(BotorchTestCase):
@@ -41,7 +44,8 @@ class TestConverters(BotorchTestCase):
             self.assertIsInstance(list_gp.models[0].likelihood, GaussianLikelihood)
             # test observed noise
             batch_gp = SingleTaskGP(train_X, train_Y, torch.rand_like(train_Y))
-            list_gp = batched_to_model_list(batch_gp)
+            with self.assertWarnsRegex(DeprecationWarning, DEPRECATION_MESSAGE):
+                list_gp = batched_to_model_list(batch_gp)
             self.assertIsInstance(list_gp, ModelListGP)
             self.assertIsInstance(
                 list_gp.models[0].likelihood, FixedNoiseGaussianLikelihood
@@ -108,7 +112,8 @@ class TestConverters(BotorchTestCase):
             self.assertIsInstance(batch_gp, SingleTaskGP)
             self.assertIsInstance(batch_gp.likelihood, GaussianLikelihood)
             # test degenerate (single model)
-            batch_gp = model_list_to_batched(ModelListGP(gp1))
+            with self.assertWarnsRegex(DeprecationWarning, DEPRECATION_MESSAGE):
+                batch_gp = model_list_to_batched(ModelListGP(gp1))
             self.assertEqual(batch_gp._num_outputs, 1)
             # test mixing different likelihoods
             gp2 = SingleTaskGP(train_X, train_Y1, torch.ones_like(train_Y1))
@@ -240,6 +245,27 @@ class TestConverters(BotorchTestCase):
             with self.assertRaises(UnsupportedError):
                 model_list_to_batched(list_gp)
 
+    def test_model_list_to_batched_with_different_prior(self) -> None:
+        # The goal is to test priors that don't have their parameters
+        # recorded in the state dict.
+        train_X = torch.rand(10, 2, device=self.device, dtype=torch.double)
+        gp1 = SingleTaskGP(
+            train_X=train_X,
+            train_Y=train_X.sum(dim=-1, keepdim=True),
+            covar_module=RBFKernel(
+                ard_num_dims=2, lengthscale_prior=LogNormalPrior(3.0, 6.0)
+            ),
+        )
+        gp2 = SingleTaskGP(
+            train_X=train_X,
+            train_Y=train_X.max(dim=-1, keepdim=True).values,
+            covar_module=RBFKernel(
+                ard_num_dims=2, lengthscale_prior=LogNormalPrior(2.0, 4.0)
+            ),
+        )
+        with self.assertWarnsRegex(BotorchWarning, "Model converter cannot verify"):
+            model_list_to_batched(ModelListGP(gp1, gp2))
+
     def test_roundtrip(self):
         for dtype in (torch.float, torch.double):
             train_X = torch.rand(10, 2, device=self.device, dtype=dtype)
@@ -288,7 +314,10 @@ class TestConverters(BotorchTestCase):
                 dim=1,
             )
             batched_mo_model = SingleTaskGP(train_X, train_Y)
-            batched_so_model = batched_multi_output_to_single_output(batched_mo_model)
+            with self.assertWarnsRegex(DeprecationWarning, DEPRECATION_MESSAGE):
+                batched_so_model = batched_multi_output_to_single_output(
+                    batched_mo_model
+                )
             self.assertIsInstance(batched_so_model, SingleTaskGP)
             self.assertEqual(batched_so_model.num_outputs, 1)
             # test non-batched models

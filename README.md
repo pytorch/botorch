@@ -57,7 +57,7 @@ Optimization simply use Ax.
 **Installation Requirements**
 - Python >= 3.10
 - PyTorch >= 1.13.1
-- gpytorch == 1.11
+- gpytorch == 1.12
 - linear_operator == 0.5.1
 - pyro-ppl >= 1.8.4
 - scipy
@@ -150,35 +150,40 @@ For more details see our [Documentation](https://botorch.org/docs/introduction) 
   ```python
   import torch
   from botorch.models import SingleTaskGP
+  from botorch.models.transforms import Normalize, Standardize
   from botorch.fit import fit_gpytorch_mll
   from gpytorch.mlls import ExactMarginalLogLikelihood
 
   # Double precision is highly recommended for GPs.
   # See https://github.com/pytorch/botorch/discussions/1444
-  train_X = torch.rand(10, 2, dtype=torch.double)
+  train_X = torch.rand(10, 2, dtype=torch.double) * 2
   Y = 1 - (train_X - 0.5).norm(dim=-1, keepdim=True)  # explicit output dimension
   Y += 0.1 * torch.rand_like(Y)
-  train_Y = (Y - Y.mean()) / Y.std()
 
-  gp = SingleTaskGP(train_X, train_Y)
+  gp = SingleTaskGP(
+      train_X=train_X,
+      train_Y=Y,
+      input_transform=Normalize(d=2),
+      outcome_transform=Standardize(m=1),
+  )
   mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
   fit_gpytorch_mll(mll)
   ```
 
 2. Construct an acquisition function
   ```python
-  from botorch.acquisition import UpperConfidenceBound
+  from botorch.acquisition import LogExpectedImprovement
 
-  UCB = UpperConfidenceBound(gp, beta=0.1)
+  logNEI = LogExpectedImprovement(model=gp, best_f=Y.max())
   ```
 
 3. Optimize the acquisition function
   ```python
   from botorch.optim import optimize_acqf
 
-  bounds = torch.stack([torch.zeros(2), torch.ones(2)])
+  bounds = torch.stack([torch.zeros(2), torch.ones(2)]).to(torch.double)
   candidate, acq_value = optimize_acqf(
-      UCB, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
+      logNEI, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
   )
   ```
 

@@ -337,7 +337,6 @@ class FantasizeMixin(ABC):
     # 'Self', but at this point the verbose 'T...' syntax is needed.
     def fantasize(
         self: TFantasizeMixin,
-        # TODO: see if any of these can be imported only if TYPE_CHECKING
         X: Tensor,
         sampler: MCSampler,
         observation_noise: Optional[Tensor] = None,

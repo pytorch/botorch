@@ -114,6 +114,9 @@ Kernels
 .. automodule:: botorch.models.kernels.exponential_decay
 .. autoclass:: ExponentialDecayKernel
 
+.. automodule:: botorch.models.kernels.infinite_width_bnn
+.. autoclass:: InfiniteWidthBNNKernel
+
 .. automodule:: botorch.models.kernels.linear_truncated_fidelity
 .. autoclass:: LinearTruncatedFidelityKernel
 

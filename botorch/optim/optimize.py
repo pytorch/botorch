@@ -137,25 +137,6 @@ class OptimizeAcqfInputs:
         return gen_batch_initial_conditions
 
 
-def _raise_deprecation_warning_if_kwargs(fn_name: str, kwargs: Dict[str, Any]) -> None:
-    """
-    Raise a warning if kwargs are provided.
-
-    Some functions used to support **kwargs. The applicable parameters have now been
-    refactored to be named arguments, so no warning will be raised for users passing
-    the expected arguments. However, if a user had been passing an inapplicable
-    keyword argument, this will now raise a warning whereas in the past it did
-    nothing.
-    """
-    if len(kwargs) > 0:
-        warnings.warn(
-            f"`{fn_name}` does not support arguments {list(kwargs.keys())}. In "
-            "the future, this will become an error.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-
-
 def _optimize_acqf_all_features_fixed(
     *,
     bounds: Tensor,
@@ -866,7 +847,6 @@ def optimize_acqf_mixed(
     batch_initial_conditions: Optional[Tensor] = None,
     ic_generator: Optional[TGenInitialConditions] = None,
     ic_gen_kwargs: Optional[Dict] = None,
-    **kwargs: Any,
 ) -> Tuple[Tensor, Tensor]:
     r"""Optimize over a list of fixed_features and returns the best solution.
 
@@ -920,8 +900,6 @@ def optimize_acqf_mixed(
             for nonlinear inequality constraints.
         ic_gen_kwargs: Additional keyword arguments passed to function specified by
             `ic_generator`
-        kwargs: kwargs do nothing. This is provided so that the same arguments can
-            be passed to different acquisition functions without raising an error.
 
     Returns:
         A two-element tuple containing
@@ -939,7 +917,6 @@ def optimize_acqf_mixed(
                 "are currently not supported when `q > 1`. This is needed to "
                 "compute the joint acquisition value."
             )
-    _raise_deprecation_warning_if_kwargs("optimize_acqf_mixed", kwargs)
 
     ic_gen_kwargs = ic_gen_kwargs or {}
 
@@ -1016,7 +993,6 @@ def optimize_acqf_discrete(
     choices: Tensor,
     max_batch_size: int = 2048,
     unique: bool = True,
-    **kwargs: Any,
 ) -> Tuple[Tensor, Tensor]:
     r"""Optimize over a discrete set of points using batch evaluation.
 
@@ -1034,8 +1010,6 @@ def optimize_acqf_discrete(
             a large training set.
         unique: If True return unique choices, o/w choices may be repeated
             (only relevant if `q > 1`).
-        kwargs: kwargs do nothing. This is provided so that the same arguments can
-            be passed to different acquisition functions without raising an error.
 
     Returns:
         A two-element tuple containing
@@ -1050,7 +1024,6 @@ def optimize_acqf_discrete(
         )
     if choices.numel() == 0:
         raise InputDataError("`choices` must be non-emtpy.")
-    _raise_deprecation_warning_if_kwargs("optimize_acqf_discrete", kwargs)
     choices_batched = choices.unsqueeze(-2)
     if q > 1:
         candidate_list, acq_value_list = [], []
@@ -1168,7 +1141,6 @@ def optimize_acqf_discrete_local_search(
     batch_initial_conditions: Optional[Tensor] = None,
     max_batch_size: int = 2048,
     unique: bool = True,
-    **kwargs: Any,
 ) -> Tuple[Tensor, Tensor]:
     r"""Optimize acquisition function over a lattice.
 
@@ -1201,8 +1173,6 @@ def optimize_acqf_discrete_local_search(
             a large training set.
         unique: If True return unique choices, o/w choices may be repeated
             (only relevant if `q > 1`).
-        kwargs: kwargs do nothing. This is provided so that the same arguments can
-            be passed to different acquisition functions without raising an error.
 
     Returns:
         A two-element tuple containing
@@ -1210,7 +1180,6 @@ def optimize_acqf_discrete_local_search(
         - a `q x d`-dim tensor of generated candidates.
         - an associated acquisition value.
     """
-    _raise_deprecation_warning_if_kwargs("optimize_acqf_discrete_local_search", kwargs)
     candidate_list = []
     base_X_pending = acq_function.X_pending if q > 1 else None
     base_X_avoid = X_avoid

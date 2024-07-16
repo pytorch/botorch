@@ -179,6 +179,31 @@ class TestGPRegressionBase(BotorchTestCase):
                 pvar_exp = get_pvar_expected(posterior, model, X, m)
                 self.assertAllClose(pvar, pvar_exp, rtol=1e-4, atol=1e-5)
 
+            # test batch evaluation with broadcasting
+            for input_batch_shape in ([], [3], [1]):
+                X = torch.rand(*input_batch_shape, 3, 1, **tkwargs)
+
+                if input_batch_shape == [3] and len(batch_shape) > 0:
+                    msg = (
+                        "Shape mismatch: objects cannot be broadcast to a"
+                        " single shape"
+                        if m == 1
+                        else "The trailing batch dimensions of X must match"
+                        " the trailing batch dimensions of the training inputs."
+                    )
+                    with self.assertRaisesRegex(RuntimeError, msg):
+                        model.posterior(X, observation_noise=True)
+                    continue
+                else:
+                    posterior = model.posterior(X, observation_noise=True)
+                if input_batch_shape == [1] and len(batch_shape) > 0:
+                    new_dims = []
+                else:
+                    new_dims = input_batch_shape
+                expected_shape = batch_shape + torch.Size(new_dims + [3, m])
+                self.assertIsInstance(posterior, GPyTorchPosterior)
+                self.assertEqual(posterior.mean.shape, expected_shape)
+
     def test_custom_init(self):
         extra_model_kwargs = self._get_extra_model_kwargs()
         for batch_shape, m, dtype in itertools.product(

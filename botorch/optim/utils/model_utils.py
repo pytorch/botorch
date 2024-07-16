@@ -163,10 +163,16 @@ def sample_all_priors(model: GPyTorchModel, max_retries: int = 100) -> None:
             try:
                 # Set sample shape, so that the prior samples have the same shape
                 # as `closure(module)` without having to be repeated.
-                closure_shape = closure(module).shape
                 prior_shape = prior._extended_shape()
-                sample_shape = closure_shape[: -len(prior_shape)]
-                setting_closure(module, prior.sample(sample_shape=sample_shape))
+                if prior_shape.numel() == 1:
+                    # For a univariate prior we can sample the size of the closure.
+                    # Otherwise we will sample exactly the same value for all
+                    # lengthscales where we commonly specify a univariate prior.
+                    setting_closure(module, prior.sample(closure(module).shape))
+                else:
+                    closure_shape = closure(module).shape
+                    sample_shape = closure_shape[: -len(prior_shape)]
+                    setting_closure(module, prior.sample(sample_shape=sample_shape))
                 break
             except NotImplementedError:
                 warn(

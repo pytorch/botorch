@@ -19,8 +19,8 @@ const bash = (...args) => `~~~bash\n${String.raw(...args)}\n~~~`;
 
 class HomeSplash extends React.Component {
   render() {
-    const {siteConfig, language = ''} = this.props;
-    const {baseUrl, docsUrl} = siteConfig;
+    const { siteConfig, language = '' } = this.props;
+    const { baseUrl, docsUrl } = siteConfig;
     const docsPart = `${docsUrl ? `${docsUrl}/` : ''}`;
     const langPart = `${language ? `${language}/` : ''}`;
     const docUrl = doc => `${baseUrl}${docsPart}${langPart}${doc}`;
@@ -79,8 +79,8 @@ class HomeSplash extends React.Component {
 
 class Index extends React.Component {
   render() {
-    const {config: siteConfig, language = ''} = this.props;
-    const {baseUrl} = siteConfig;
+    const { config: siteConfig, language = '' } = this.props;
+    const { baseUrl } = siteConfig;
 
     const Block = props => (
       <Container
@@ -114,34 +114,38 @@ class Index extends React.Component {
     const modelFitCodeExample = `${pre}python
 import torch
 from botorch.models import SingleTaskGP
+from botorch.models.transforms import Normalize, Standardize
 from botorch.fit import fit_gpytorch_mll
-from botorch.utils import standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
-train_X = torch.rand(10, 2)
+train_X = torch.rand(10, 2, dtype=torch.double) * 2
 Y = 1 - torch.linalg.norm(train_X - 0.5, dim=-1, keepdim=True)
 Y = Y + 0.1 * torch.randn_like(Y)  # add some noise
-train_Y = standardize(Y)
 
-gp = SingleTaskGP(train_X, train_Y)
+gp = SingleTaskGP(
+    train_X=train_X,
+    train_Y=Y,
+    input_transform=Normalize(d=2),
+    outcome_transform=Standardize(m=1),
+)
 mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
 fit_gpytorch_mll(mll)
     `;
     // Example for defining an acquisition function
     const constrAcqFuncExample = `${pre}python
-from botorch.acquisition import UpperConfidenceBound
+from botorch.acquisition import LogExpectedImprovement
 
-UCB = UpperConfidenceBound(gp, beta=0.1)
+logNEI = LogExpectedImprovement(model=gp, best_f=Y.max())
     `;
     // Example for optimizing candidates
     const optAcqFuncExample = `${pre}python
 from botorch.optim import optimize_acqf
 
-bounds = torch.stack([torch.zeros(2), torch.ones(2)])
+bounds = torch.stack([torch.zeros(2), torch.ones(2)]).to(torch.double)
 candidate, acq_value = optimize_acqf(
-    UCB, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
+    logNEI, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
 )
-candidate  # tensor([0.4887, 0.5063])
+candidate  # tensor([[0.2981, 0.2401]], dtype=torch.float64)
     `;
     const papertitle = `BoTorch: A Framework for Efficient Monte-Carlo Bayesian Optimization`
     const paper_bibtex = `${pre}plaintext
@@ -158,7 +162,7 @@ candidate  # tensor([0.4887, 0.5063])
       <div
         className="productShowcaseSection"
         id="quickstart"
-        style={{textAlign: 'center'}}>
+        style={{ textAlign: 'center' }}>
         <h2>Get Started</h2>
         <Container>
           <ol>
@@ -187,7 +191,7 @@ candidate  # tensor([0.4887, 0.5063])
     );
 
     const Features = () => (
-      <div className="productShowcaseSection" style={{textAlign: 'center'}}>
+      <div className="productShowcaseSection" style={{ textAlign: 'center' }}>
         <h2>Key Features</h2>
         <Block layout="threeColumn">
           {[
@@ -221,7 +225,7 @@ candidate  # tensor([0.4887, 0.5063])
       <div
         className="productShowcaseSection"
         id="reference"
-        style={{textAlign: 'center'}}>
+        style={{ textAlign: 'center' }}>
         <h2>References</h2>
         <Container>
           <a href={`https://arxiv.org/abs/1910.06403`}>{papertitle}</a>

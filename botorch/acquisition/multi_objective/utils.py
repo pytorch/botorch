@@ -120,9 +120,11 @@ def prune_inferior_points_multi_objective(
             "Batched inputs `X` are currently unsupported by "
             "prune_inferior_points_multi_objective"
         )
-    max_points = math.ceil(max_frac * X.size(-2))
-    if max_points < 1 or max_points > X.size(-2):
+    if X.size(-2) == 0:
+        raise ValueError("X must have at least one point.")
+    if max_frac <= 0 or max_frac > 1.0:
         raise ValueError(f"max_frac must take values in (0, 1], is {max_frac}")
+    max_points = math.ceil(max_frac * X.size(-2))
     with torch.no_grad():
         posterior = model.posterior(X=X)
     sampler = get_sampler(posterior, sample_shape=torch.Size([num_samples]))
