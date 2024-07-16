@@ -1098,9 +1098,9 @@ def _get_noiseless_fantasy_model(
     # are used across all batches (by default, a GP with batched training data
     # uses independent hyperparameters for each batch).
 
-    # Could pass in the outcome_transform and input_transform here,
-    # however that would make them be applied in SingleTaskGP.__init__ which is
-    # unnecessary. So we will instead set them afterwards.
+    # Don't apply `outcome_transform` and `input_transform` here,
+    # since the data being passed has already been transformed.
+    # So we will instead set them afterwards.
     fantasy_model = SingleTaskGP(
         train_X=model.train_inputs[0],
         train_Y=model.train_targets.unsqueeze(-1),
