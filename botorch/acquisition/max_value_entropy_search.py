@@ -123,19 +123,20 @@ class MaxValueBase(AcquisitionFunction, ABC):
         Returns:
             A `batch_shape`-dim Tensor of MVE values at the given design points `X`.
         """
-        # Compute the posterior, posterior mean, variance and std
+        # Compute the posterior, posterior mean, variance and std.
         posterior = self.model.posterior(
             X.unsqueeze(-3),
             observation_noise=False,
             posterior_transform=self.posterior_transform,
         )
-        # batch_shape x num_fantasies x (m) x 1
+        # batch_shape x num_fantasies x (m)
         mean = self.weight * posterior.mean.squeeze(-1).squeeze(-1)
         variance = posterior.variance.clamp_min(CLAMP_LB).view_as(mean)
         ig = self._compute_information_gain(
             X=X, mean_M=mean, variance_M=variance, covar_mM=variance.unsqueeze(-1)
         )
-        return ig.mean(dim=0)  # average over fantasies
+        # Average over fantasies, ig is of shape `num_fantasies x batch_shape x (m)`.
+        return ig.mean(dim=0)
 
     def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
         r"""Set pending design points.
