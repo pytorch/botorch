@@ -109,10 +109,6 @@ class qMultiObjectiveMaxValueEntropy(
             model_list_to_batched(model) if isinstance(model, ModelListGP) else model
         )
         self._init_model = batched_mo_model
-        self.mo_model = batched_mo_model
-        self.model = batched_multi_output_to_single_output(
-            batch_mo_model=batched_mo_model
-        )
         self.fantasies_sampler = SobolQMCNormalSampler(
             sample_shape=torch.Size([num_fantasies])
         )
@@ -121,12 +117,8 @@ class qMultiObjectiveMaxValueEntropy(
         self.maximize = True
         self.weight = 1.0
         self.sample_pareto_frontiers = sample_pareto_frontiers
-
-        # this avoids unnecessary model conversion if X_pending is None
-        if X_pending is None:
-            self._sample_max_values()
-        else:
-            self.set_X_pending(X_pending)
+        # Set X_pending, register converted model and sample max values.
+        self.set_X_pending(X_pending)
         # This avoids attribute errors in qMaxValueEntropy code.
         self.posterior_transform = None
 
