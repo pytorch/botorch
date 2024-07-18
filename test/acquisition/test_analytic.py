@@ -35,7 +35,7 @@ from botorch.acquisition.objective import (
 )
 from botorch.exceptions import UnsupportedError
 from botorch.exceptions.warnings import NumericsWarning
-from botorch.models import SingleTaskGP
+from botorch.models import ModelListGP, SingleTaskGP
 from botorch.models.transforms import ChainedOutcomeTransform, Normalize, Standardize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling.pathwise.utils import get_train_inputs
@@ -43,8 +43,8 @@ from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.kernels import RBFKernel, ScaleKernel
 from gpytorch.likelihoods.gaussian_likelihood import (
-    GaussianLikelihood,
     FixedNoiseGaussianLikelihood,
+    GaussianLikelihood,
 )
 from gpytorch.module import Module
 from gpytorch.priors.torch_priors import GammaPrior
@@ -1044,9 +1044,9 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
         tkwargs = {"dtype": torch.double, "device": self.device}
         # Multi-output model.
         model = SingleTaskGP(
-            train_X = torch.rand(5, 2, **tkwargs),
-            train_Y = torch.rand(5, 2, **tkwargs),
-            train_Yvar = torch.rand(5, 2, **tkwargs),
+            train_X=torch.rand(5, 2, **tkwargs),
+            train_Y=torch.rand(5, 2, **tkwargs),
+            train_Yvar=torch.rand(5, 2, **tkwargs),
         )
         with self.assertRaisesRegex(UnsupportedError, "Model has 2 outputs"):
             _check_noisy_ei_model(model=model)
