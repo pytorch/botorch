@@ -134,10 +134,6 @@
             <span class="n">model_list_to_batched</span><span class="p">(</span><span class="n">model</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ModelListGP</span><span class="p">)</span> <span class="k">else</span> <span class="n">model</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_init_model</span> <span class="o">=</span> <span class="n">batched_mo_model</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mo_model</span> <span class="o">=</span> <span class="n">batched_mo_model</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">batched_multi_output_to_single_output</span><span class="p">(</span>
-            <span class="n">batch_mo_model</span><span class="o">=</span><span class="n">batched_mo_model</span>
-        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fantasies_sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span>
             <span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_fantasies</span><span class="p">])</span>
         <span class="p">)</span>
@@ -146,12 +142,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">weight</span> <span class="o">=</span> <span class="mf">1.0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sample_pareto_frontiers</span> <span class="o">=</span> <span class="n">sample_pareto_frontiers</span>
-
-        <span class="c1"># this avoids unnecessary model conversion if X_pending is None</span>
-        <span class="k">if</span> <span class="n">X_pending</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_sample_max_values</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span><span class="n">X_pending</span><span class="p">)</span>
+        <span class="c1"># Set X_pending, register converted model and sample max values.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span><span class="n">X_pending</span><span class="p">)</span>
         <span class="c1"># This avoids attribute errors in qMaxValueEntropy code.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span> <span class="o">=</span> <span class="kc">None</span>
 
