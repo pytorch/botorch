@@ -11,6 +11,7 @@ from warnings import catch_warnings, simplefilter
 import torch
 from botorch.acquisition import qAnalyticProbabilityOfImprovement
 from botorch.acquisition.analytic import (
+    _check_noisy_ei_model,
     _compute_log_prob_feas,
     _ei_helper,
     _log_ei_helper,
@@ -41,7 +42,10 @@ from botorch.sampling.pathwise.utils import get_train_inputs
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.kernels import RBFKernel, ScaleKernel
-from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
+from gpytorch.likelihoods.gaussian_likelihood import (
+    GaussianLikelihood,
+    FixedNoiseGaussianLikelihood,
+)
 from gpytorch.module import Module
 from gpytorch.priors.torch_priors import GammaPrior
 
@@ -845,7 +849,7 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
         low_x=0.0,
         hi_x=1.0,
         covar_module=None,
-    ):
+    ) -> SingleTaskGP:
         state_dict = {
             "mean_module.raw_constant": torch.tensor([-0.0066]),
             "covar_module.raw_outputscale": torch.tensor(1.0143),
@@ -881,7 +885,7 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
         model.eval()
         return model
 
-    def test_noisy_expected_improvement(self):
+    def test_noisy_expected_improvement(self) -> None:
         model = self._get_model(dtype=torch.float64)
         X_observed = model.train_inputs[0]
         nfan = 5
@@ -1036,9 +1040,27 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
             acqf = constructor(model, X_observed, num_fantasies=5)
             self.assertTrue(acqf.best_f.requires_grad)
 
+    def test_check_noisy_ei_model(self) -> None:
+        tkwargs = {"dtype": torch.double, "device": self.device}
+        # Multi-output model.
+        model = SingleTaskGP(
+            train_X = torch.rand(5, 2, **tkwargs),
+            train_Y = torch.rand(5, 2, **tkwargs),
+            train_Yvar = torch.rand(5, 2, **tkwargs),
+        )
+        with self.assertRaisesRegex(UnsupportedError, "Model has 2 outputs"):
+            _check_noisy_ei_model(model=model)
+        # Not SingleTaskGP.
+        with self.assertRaisesRegex(UnsupportedError, "Model is not"):
+            _check_noisy_ei_model(model=ModelListGP(model))
+        # Not fixed noise.
+        model.likelihood = GaussianLikelihood()
+        with self.assertRaisesRegex(UnsupportedError, "Model likelihood is not"):
+            _check_noisy_ei_model(model=model)
+
 
 class TestScalarizedPosteriorMean(BotorchTestCase):
-    def test_scalarized_posterior_mean(self):
+    def test_scalarized_posterior_mean(self) -> None:
         for dtype in (torch.float, torch.double):
             mean = torch.tensor([[0.25], [0.5]], device=self.device, dtype=dtype)
             mm = MockModel(MockPosterior(mean=mean))
@@ -1050,7 +1072,7 @@ class TestScalarizedPosteriorMean(BotorchTestCase):
                 torch.allclose(pm, (mean.squeeze(-1) * module.weights).sum(dim=-1))
             )
 
-    def test_scalarized_posterior_mean_batch(self):
+    def test_scalarized_posterior_mean_batch(self) -> None:
         for dtype in (torch.float, torch.double):
             mean = torch.tensor(
                 [[-0.5, 1.0], [0.0, 1.0], [0.5, 1.0]], device=self.device, dtype=dtype
