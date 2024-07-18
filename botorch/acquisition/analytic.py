@@ -14,10 +14,8 @@ from __future__ import annotations
 import math
 
 from abc import ABC
-
 from contextlib import nullcontext
 from copy import deepcopy
-
 from typing import Dict, Optional, Tuple, Union
 
 import torch
@@ -40,7 +38,6 @@ from botorch.utils.probability.utils import (
 from botorch.utils.safe_math import log1mexp, logmeanexp
 from botorch.utils.transforms import convert_to_target_pre_hook, t_batch_mode_transform
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
-
 from torch import Tensor
 from torch.nn.functional import pad
 
@@ -618,7 +615,7 @@ class LogNoisyExpectedImprovement(AnalyticAcquisitionFunction):
         r"""Single-outcome Noisy Log Expected Improvement (via fantasies).
 
         Args:
-            model: A fitted single-outcome model. Only SingleTaskGP models with
+            model: A fitted single-outcome model. Only `SingleTaskGP` models with
                 known observation noise are currently supported.
             X_observed: A `n x d` Tensor of observed points that are likely to
                 be the best observed points so far.
@@ -627,8 +624,8 @@ class LogNoisyExpectedImprovement(AnalyticAcquisitionFunction):
                 complexity and performance).
             maximize: If True, consider the problem a maximization problem.
         """
-        _check_noisyei_model(model)
-        # sample fantasies
+        _check_noisy_ei_model(model=model)
+        # Sample fantasies.
         from botorch.sampling.normal import SobolQMCNormalSampler
 
         # Drop gradients from model.posterior if X_observed does not require gradients
@@ -702,7 +699,7 @@ class NoisyExpectedImprovement(ExpectedImprovement):
         r"""Single-outcome Noisy Expected Improvement (via fantasies).
 
         Args:
-            model: A fitted single-outcome model. Only SingleTaskGP models with
+            model: A fitted single-outcome model. Only `SingleTaskGP` models with
                 known observation noise are currently supported.
             X_observed: A `n x d` Tensor of observed points that are likely to
                 be the best observed points so far.
@@ -711,9 +708,9 @@ class NoisyExpectedImprovement(ExpectedImprovement):
                 complexity and performance).
             maximize: If True, consider the problem a maximization problem.
         """
-        _check_noisyei_model(model)
+        _check_noisy_ei_model(model=model)
         legacy_ei_numerics_warning(legacy_name=type(self).__name__)
-        # sample fantasies
+        # Sample fantasies.
         from botorch.sampling.normal import SobolQMCNormalSampler
 
         # Drop gradients from model.posterior if X_observed does not require gradients
@@ -1060,16 +1057,16 @@ def _log_abs_u_Phi_div_phi(u: Tensor) -> Tensor:
     return torch.log(torch.special.erfcx(a * u) * u.abs()) + b
 
 
-def _check_noisyei_model(model: GPyTorchModel) -> None:
+def _check_noisy_ei_model(model: GPyTorchModel) -> None:
     message = (
-        "Only single-output SingleTaskGP models with known observation noise "
+        "Only single-output `SingleTaskGP` models with known observation noise "
         "are currently supported for fantasy-based NEI & LogNEI."
     )
     if not isinstance(model, SingleTaskGP):
-        raise UnsupportedError(f"{message} Model is not a SingleTaskGP.")
+        raise UnsupportedError(f"{message} Model is not a `SingleTaskGP`.")
     if not isinstance(model.likelihood, FixedNoiseGaussianLikelihood):
         raise UnsupportedError(
-            f"{message} Model likelihood is not a FixedNoiseGaussianLikelihood."
+            f"{message} Model likelihood is not a `FixedNoiseGaussianLikelihood`."
         )
     if model.num_outputs != 1:
         raise UnsupportedError(f"{message} Model has {model.num_outputs} outputs.")
