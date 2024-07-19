@@ -19,8 +19,8 @@ particular fidelity parameter that directly encodes the fidelity of the
 observation. `GenericDeterministicModel` supports arbitrary deterministic
 functions, while `AffineFidelityCostModel` is a particular cost model for
 multi-fidelity optimization. Other use cases of deterministic models include
-representing approximate GP sample paths, e.g. random Fourier features obtained
-with `get_gp_samples`, which allows them to be substituted in acquisition
+representing approximate GP sample paths, e.g. Matheron paths obtained
+with `get_matheron_path_model`, which allows them to be substituted in acquisition
 functions or in other places where a `Model` is expected.
 """
 

@@ -27,7 +27,7 @@ from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.fully_bayesian import MCMC_DIM
 from botorch.models.model import Model
 from botorch.sampling.get_sampler import get_sampler
-from botorch.utils.gp_sampling import get_gp_samples
+from botorch.sampling.pathwise.posterior_samplers import get_matheron_path_model
 from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
     BoxDecomposition,
 )
@@ -320,7 +320,6 @@ def sample_optimal_points(
     optimizer: Callable[
         [GenericDeterministicModel, Tensor, int, bool, Any], Tuple[Tensor, Tensor]
     ] = random_search_optimizer,
-    num_rff_features: int = 512,
     maximize: bool = True,
     optimizer_kwargs: Optional[Dict[str, Any]] = None,
 ) -> Tuple[Tensor, Tensor]:
@@ -344,7 +343,6 @@ def sample_optimal_points(
         num_samples: The number of GP samples.
         num_points: The number of optimal points to be outputted.
         optimizer: A callable that solves the deterministic optimization problem.
-        num_rff_features: The number of random Fourier features.
         maximize: If true, we consider a maximization problem.
         optimizer_kwargs: The additional arguments for the optimizer.
 
@@ -356,7 +354,7 @@ def sample_optimal_points(
         - A `num_samples x num_points x M`-dim Tensor containing the collection of
             optimal objectives.
     """
-    tkwargs = {"dtype": bounds.dtype, "device": bounds.device}
+    tkwargs: Dict[str, Any] = {"dtype": bounds.dtype, "device": bounds.device}
     M = model.num_outputs
     d = bounds.shape[-1]
     if M == 1:
@@ -369,9 +367,7 @@ def sample_optimal_points(
     pareto_sets = torch.zeros((num_samples, num_points, d), **tkwargs)
     pareto_fronts = torch.zeros((num_samples, num_points, M), **tkwargs)
     for i in range(num_samples):
-        sample_i = get_gp_samples(
-            model=model, num_outputs=M, n_samples=1, num_rff_features=num_rff_features
-        )
+        sample_i = get_matheron_path_model(model=model)
         ps_i, pf_i = optimizer(
             model=sample_i,
             bounds=bounds,

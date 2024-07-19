@@ -190,7 +190,10 @@ class TestGPDraw(BotorchTestCase):
             tkwargs = {"device": self.device, "dtype": dtype}
             model, _, _ = _get_model(**tkwargs)
             mean = model.mean_module.raw_constant.detach().clone()
-            gp = GPDraw(model)
+            with self.assertWarnsRegex(
+                DeprecationWarning, "is deprecated and will be removed"
+            ):
+                gp = GPDraw(model)
             # test initialization
             self.assertIsNone(gp.Xs)
             self.assertIsNone(gp.Ys)
@@ -547,16 +550,19 @@ class TestRandomFourierFeatures(BotorchTestCase):
                 )
                 with torch.random.fork_rng():
                     torch.manual_seed(0)
-                    gp_samples = get_gp_samples(
-                        model=(
-                            batched_to_model_list(model)
-                            if ((not use_batch_model) and (m > 1))
-                            else model
-                        ),
-                        num_outputs=m,
-                        n_samples=n_samples,
-                        num_rff_features=512,
-                    )
+                    with self.assertWarnsRegex(
+                        DeprecationWarning, "is deprecated and will be removed"
+                    ):
+                        gp_samples = get_gp_samples(
+                            model=(
+                                batched_to_model_list(model)
+                                if ((not use_batch_model) and (m > 1))
+                                else model
+                            ),
+                            num_outputs=m,
+                            n_samples=n_samples,
+                            num_rff_features=512,
+                        )
                 samples = gp_samples.posterior(X).mean
                 self.assertEqual(samples.shape[0], n_samples)
                 if batched_inputs:
