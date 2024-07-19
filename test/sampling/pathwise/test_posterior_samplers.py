@@ -7,12 +7,15 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from typing import Any, Dict
 
 import torch
 from botorch.models import ModelListGP, SingleTaskGP, SingleTaskVariationalGP
+from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.sampling.pathwise import draw_matheron_paths, MatheronPath, PathList
+from botorch.sampling.pathwise.posterior_samplers import get_matheron_path_model
 from botorch.sampling.pathwise.utils import get_train_inputs
 from botorch.utils.test_helpers import get_sample_moments, standardize_moments
 from botorch.utils.testing import BotorchTestCase
@@ -24,7 +27,7 @@ from torch.nn.functional import pad
 class TestPosteriorSamplers(BotorchTestCase):
     def setUp(self, suppress_input_warnings: bool = True) -> None:
         super().setUp(suppress_input_warnings=suppress_input_warnings)
-        tkwargs = {"device": self.device, "dtype": torch.float64}
+        tkwargs: Dict[str, Any] = {"device": self.device, "dtype": torch.float64}
         torch.manual_seed(0)
 
         base = MaternKernel(nu=2.5, ard_num_dims=2, batch_shape=Size([]))
@@ -66,6 +69,8 @@ class TestPosteriorSamplers(BotorchTestCase):
             input_transform=input_transform,
             outcome_transform=outcome_transform,
         ).to(**tkwargs)
+
+        self.tkwargs = tkwargs
 
     def test_draw_matheron_paths(self):
         for seed, model in enumerate(
@@ -122,3 +127,53 @@ class TestPosteriorSamplers(BotorchTestCase):
         tol = atol * (num_features**-0.5 + sample_shape.numel() ** -0.5)
         for exact, estimate in zip(exact_moments, sample_moments):
             self.assertTrue(exact.allclose(estimate, atol=tol, rtol=0))
+
+    def test_get_matheron_path_model(self) -> None:
+        model_list = ModelListGP(self.inferred_noise_gp, self.observed_noise_gp)
+        moo_model = SingleTaskGP(
+            train_X=torch.rand(5, 2, **self.tkwargs),
+            train_Y=torch.rand(5, 2, **self.tkwargs),
+        )
+
+        test_X = torch.rand(5, 2, **self.tkwargs)
+        batch_test_X = torch.rand(3, 5, 2, **self.tkwargs)
+        sample_shape = Size([2])
+        sample_shape_X = torch.rand(3, 2, 5, 2, **self.tkwargs)
+        for model in (self.inferred_noise_gp, moo_model, model_list):
+            path_model = get_matheron_path_model(model=model)
+            self.assertFalse(path_model._is_ensemble)
+            self.assertIsInstance(path_model, GenericDeterministicModel)
+            for X in (test_X, batch_test_X):
+                self.assertEqual(
+                    model.posterior(X).mean.shape, path_model.posterior(X).mean.shape
+                )
+            path_model = get_matheron_path_model(model=model, sample_shape=sample_shape)
+            self.assertTrue(path_model._is_ensemble)
+            self.assertEqual(
+                path_model.posterior(sample_shape_X).mean.shape,
+                sample_shape_X.shape[:-1] + Size([model.num_outputs]),
+            )
+
+    def test_get_matheron_path_model_batched(self) -> None:
+        model = SingleTaskGP(
+            train_X=torch.rand(4, 5, 2, **self.tkwargs),
+            train_Y=torch.rand(4, 5, 2, **self.tkwargs),
+        )
+        model._is_ensemble = True
+        path_model = get_matheron_path_model(model=model)
+        self.assertTrue(path_model._is_ensemble)
+        test_X = torch.rand(5, 2, **self.tkwargs)
+        # This mimics the behavior of the acquisition functions unsqueezing the
+        # model batch dimension for ensemble models.
+        batch_test_X = torch.rand(3, 1, 5, 2, **self.tkwargs)
+        # Explicitly matching X for completeness.
+        complete_test_X = torch.rand(3, 4, 5, 2, **self.tkwargs)
+        for X in (test_X, batch_test_X, complete_test_X):
+            self.assertEqual(
+                model.posterior(X).mean.shape, path_model.posterior(X).mean.shape
+            )
+
+        # Test with sample_shape.
+        path_model = get_matheron_path_model(model=model, sample_shape=Size([2, 6]))
+        test_X = torch.rand(3, 2, 6, 4, 5, 2, **self.tkwargs)
+        self.assertEqual(path_model.posterior(test_X).mean.shape, test_X.shape)

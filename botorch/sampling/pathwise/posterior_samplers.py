@@ -19,7 +19,10 @@ from __future__ import annotations
 
 from typing import Optional, Union
 
+import torch
 from botorch.models.approximate_gp import ApproximateGPyTorchModel
+from botorch.models.deterministic import GenericDeterministicModel
+from botorch.models.model import ModelList
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.sampling.pathwise.paths import PathDict, PathList, SamplePath
 from botorch.sampling.pathwise.prior_samplers import (
@@ -36,8 +39,9 @@ from botorch.sampling.pathwise.utils import (
 )
 from botorch.utils.context_managers import delattr_ctx
 from botorch.utils.dispatcher import Dispatcher
+from botorch.utils.transforms import is_ensemble
 from gpytorch.models import ApproximateGP, ExactGP, GP
-from torch import Size
+from torch import Size, Tensor
 
 DrawMatheronPaths = Dispatcher("draw_matheron_paths")
 
@@ -83,13 +87,66 @@ class MatheronPath(PathDict):
         )
 
 
+def get_matheron_path_model(
+    model: GP, sample_shape: Optional[Size] = None
+) -> GenericDeterministicModel:
+    r"""Generates a deterministic model using a single Matheron path drawn
+    from the model's posterior.
+
+    The deterministic model evalutes the output of `draw_matheron_paths`,
+    and reshapes it to mimic the output behavior of the model's posterior.
+
+    Args:
+        model: The model whose posterior is to be sampled.
+        sample_shape: The shape of the sample paths to be drawn, if an ensemble
+            of sample paths is desired. If this is specified, the resulting
+            deterministic model will behave as if the `sample_shape` is prepended
+            to the `batch_shape` of the model. The inputs used to evaluate the model
+            must be adjusted to match.
+
+    Returns: A deterministic model that evaluates the Matheron path.
+    """
+    sample_shape = sample_shape or Size()
+    path = draw_matheron_paths(model, sample_shape=sample_shape)
+    num_outputs = model.num_outputs
+
+    def f(X: Tensor) -> Tensor:
+        r"""Reshapes the path evaluations to bring the output dimension to the end.
+
+        Args:
+            X: The input tensor of shape `batch_shape x q x d`.
+                If the model is batched, `batch_shape` must be broadcastable to
+                the model batch shape.
+
+        Returns:
+            The output tensor of shape `batch_shape x q x m`.
+        """
+        if num_outputs == 1:
+            # For single-output, we lack the output dimension. Add one.
+            res = path(X).unsqueeze(-1)
+        elif isinstance(model, ModelList):
+            # For model list, path evaluates to a list of tensors. Stack them.
+            res = torch.stack(path(X), dim=-1)
+        else:
+            # For multi-output, path expects inputs broadcastable to
+            # `model._aug_batch_shape x q x d` and returns outputs of shape
+            # `model._aug_batch_shape x q`. Augmented batch shape includes the
+            # `m` dimension, so we will unsqueeze that and transpose after.
+            res = path(X.unsqueeze(-3)).transpose(-1, -2)
+        return res
+
+    path_model = GenericDeterministicModel(f=f, num_outputs=num_outputs)
+    path_model._is_ensemble = is_ensemble(model) or len(sample_shape) > 0
+    return path_model
+
+
 def draw_matheron_paths(
     model: GP,
     sample_shape: Size,
     prior_sampler: TPathwisePriorSampler = draw_kernel_feature_paths,
     update_strategy: TPathwiseUpdate = gaussian_update,
 ) -> MatheronPath:
-    r"""Generates function draws from (an approximate) Gaussian process prior.
+    r"""Generates function draws from (an approximate) Gaussian process posterior.
 
     When evaluted, sample paths produced by this method return Tensors with dimensions
     `sample_dims x batch_dims x [joint_dim]`, where `joint_dim` denotes the penultimate
