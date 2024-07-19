@@ -24,7 +24,7 @@ from botorch.exceptions.errors import UnsupportedError
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.transforms.outcome import Standardize
-from botorch.utils.gp_sampling import get_gp_samples
+from botorch.sampling.pathwise import get_matheron_path_model
 from botorch.utils.multi_objective import is_non_dominated
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from torch import Tensor
@@ -306,11 +306,7 @@ class TestThompsonSampling(BotorchTestCase):
                 **tkwargs,
             )
 
-            model_sample = get_gp_samples(
-                model=model,
-                num_outputs=num_objectives,
-                n_samples=1,
-            )
+            model_sample = get_matheron_path_model(model=model)
 
             input_dim = X.shape[-1]
             # fake bounds

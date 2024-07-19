@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import warnings
 from copy import deepcopy
 from math import pi
 from typing import List, Optional
@@ -41,6 +42,14 @@ class GPDraw(Module):
         Args:
             model: The Model defining the GP prior.
         """
+        warnings.warn(
+            "`GPDraw` is deprecated and will be removed in v0.13 release. "
+            "For drawing GP sample paths, we recommend using pathwise "
+            "sampling code found in `botorch/sampling/pathwise`. We recommend "
+            "`get_matheron_path_model` for most use cases.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super().__init__()
         self._model = deepcopy(model)
         self._num_outputs = self._model.num_outputs
@@ -429,6 +438,14 @@ def get_gp_samples(
         A `GenericDeterministicModel` that evaluates `n_samples` sampled functions.
         If `n_samples > 1`, this will be a batched model.
     """
+    warnings.warn(
+        "`get_gp_samples` is deprecated and will be removed in v0.13 release. "
+        "For drawing GP sample paths, we recommend using pathwise "
+        "sampling code found in `botorch/sampling/pathwise`. We recommend "
+        "`get_matheron_path_model` for most use cases.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     # Get transforms from the model.
     intf = getattr(model, "input_transform", None)
     octf = getattr(model, "outcome_transform", None)
