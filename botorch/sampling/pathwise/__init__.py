@@ -18,6 +18,7 @@ from botorch.sampling.pathwise.paths import (
 )
 from botorch.sampling.pathwise.posterior_samplers import (
     draw_matheron_paths,
+    get_matheron_path_model,
     MatheronPath,
 )
 from botorch.sampling.pathwise.prior_samplers import draw_kernel_feature_paths
@@ -28,6 +29,7 @@ __all__ = [
     "draw_matheron_paths",
     "draw_kernel_feature_paths",
     "gen_kernel_features",
+    "get_matheron_path_model",
     "gaussian_update",
     "GeneralizedLinearPath",
     "KernelEvaluationMap",
