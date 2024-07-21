@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Any, Callable, List, Optional, Union
+from typing import Callable, List, Optional, Union
 
 import torch
 from torch import Tensor
