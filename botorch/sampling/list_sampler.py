@@ -19,9 +19,9 @@ from torch.nn import ModuleList
 
 
 class ListSampler(MCSampler):
+    """A list of samplers for sampling from a `PosteriorList`."""
     def __init__(self, *samplers: MCSampler) -> None:
-        r"""A list of samplers for sampling from a `PosteriorList`.
-
+        r"""
         Args:
             samplers: A variable number of samplers. This should include
                 a sampler for each posterior.

@@ -71,8 +71,6 @@ FloatOrTensor = TypeVar("FloatOrTensor", float, Tensor)
 class LogImprovementMCAcquisitionFunction(SampleReducingMCAcquisitionFunction):
     r"""
     Abstract base class for Monte-Carlo-based batch LogEI acquisition functions.
-
-    :meta private:
     """
 
     _log: bool = True

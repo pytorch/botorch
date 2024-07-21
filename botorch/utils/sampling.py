@@ -454,11 +454,7 @@ def find_interior_point(
 
 
 class PolytopeSampler(ABC):
-    r"""
-    Base class for samplers that sample points from a polytope.
-
-    :meta private:
-    """
+    """Base class for samplers that sample points from a polytope."""
 
     def __init__(
         self,

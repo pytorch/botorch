@@ -25,8 +25,6 @@ class BotorchContainer(ABC):
 
     Notice: Once version 3.10 becomes standard, this class should
     be reworked to take advantage of dataclasses' `kw_only` flag.
-
-    :meta private:
     """
 
     event_shape: Size

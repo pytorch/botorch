@@ -18,11 +18,7 @@ from torch import Tensor
 
 
 class Posterior(ABC):
-    r"""
-    Abstract base class for botorch posteriors.
-
-    :meta private:
-    """
+    """Abstract base class for botorch posteriors."""
 
     def rsample_from_base_samples(
         self,

@@ -22,11 +22,7 @@ from torch import Tensor
 
 
 class EnsembleModel(Model, ABC):
-    r"""
-    Abstract base class for ensemble models.
-
-    :meta private:
-    """
+    """Abstract base class for ensemble models."""
 
     @abstractmethod
     def forward(self, X: Tensor) -> Tensor:
