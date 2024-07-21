@@ -3,18 +3,24 @@ id: multi_objective
 title: Multi-Objective Bayesian Optimization
 ---
 
-BoTorch provides first-class support for Multi-Objective (MO) Bayesian Optimization (BO) including implementations of [`qNoisyExpectedHypervolumeImprovement`](../api/acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement)  (qNEHVI)[^qNEHVI], [`qExpectedHypervolumeImprovement`](../api/acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement) (qEHVI), qParEGO[^qEHVI], qNParEGO[^qNEHVI], and analytic [`ExpectedHypervolumeImprovement`](../api/acquisition.html#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement) (EHVI) with gradients via auto-differentiation acquisition functions[^qEHVI].
+BoTorch provides first-class support for Multi-Objective (MO) Bayesian Optimization (BO) including implementations of
+[`qLogNoisyExpectedHypervolumeImprovement`](../api/acquisition.html#botorch.acquisition.multi_objective.logei.qLogNoisyExpectedHypervolumeImprovement)  (qLogNEHVI)[^qNEHVI][^LogEI],
+[`qLogExpectedHypervolumeImprovement`](../api/acquisition.html#botorch.acquisition.multi_objective.logei.qLogExpectedHypervolumeImprovement) (qLogEHVI),
+[`qLogNParEGO`](../api/acquisition.html#botorch.acquisition.multi_objective.parego.qLogNParEGO)[^qNEHVI],
+and analytic
+[`ExpectedHypervolumeImprovement`](../api/acquisition.html#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement) (EHVI) with gradients via auto-differentiation acquisition functions[^qEHVI].
 
 The goal in MOBO is learn the *Pareto front*: the set of optimal trade-offs, where an improvement in one objective means deteriorating another objective. Botorch provides implementations for a number of acquisition functions specifically for the multi-objective scenario, as well as generic interfaces for implemented new multi-objective acquisition functions.
 
 ## Multi-Objective Acquisition Functions
 MOBO leverages many advantages of BoTorch to make provide practical algorithms for computationally intensive and analytically intractable problems. For example, analytic EHVI has no known analytical gradient for when there are more than two objectives, but BoTorch computes analytic gradients for free via auto-differentiation, regardless of the number of objectives [^qEHVI].
 
-For analytic and MC-based MOBO acquisition functions like qNEHVI, qEHVI, and qParEGO, BoTorch leverages GPU acceleration and quasi-second order methods for acquisition optimization for efficient computation and optimization in many practical scenarios [^qNEHVI][^qEHVI]. The MC-based acquisition functions support using the sample average approximation for rapid convergence [^BoTorch].
+For analytic and MC-based MOBO acquisition functions such as qNEHVI, qEHVI, and `qLogNParEGO`, BoTorch leverages GPU acceleration and quasi-second order methods for acquisition optimization for efficient computation and optimization in many practical scenarios [^qNEHVI][^qEHVI]. The MC-based acquisition functions support using the sample average approximation for rapid convergence [^BoTorch].
 
 All analytic MO acquisition functions derive from [`MultiObjectiveAnalyticAcquisitionFunction`](../api/acquisition.html#botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction) and all MC-based acquisition functions derive from [`MultiObjectiveMCAcquisitionFunction`](../api/acquisition.html#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction). These abstract classes easily integrate with BoTorch's standard optimization machinery.
 
-Additionally, qParEGO and qNParEGO are trivially implemented using an augmented Chebyshev scalarization as the objective with the [`qExpectedImprovement`](../api/acquisition.html#qexpectedimprovement) acquisition function or the [`qNoisyExpectedImprovement`](../api/acquisition.html#qnoisyexpectedimprovement) acquisition function, respectively. Botorch provides a [`get_chebyshev_scalarization`](../api/utils.html#botorch.utils.multi_objective.scalarization.get_chebyshev_scalarizationconvenience) convenience function for generating these scalarizations. In the batch setting, qParEGO and qNParEGO both use a new random scalarization for each candidate [^qEHVI]. Candidates are selected in a sequential greedy fashion, each with a different scalarization, via the [`optimize_acqf_list`](../api/optim.html#botorch.optim.optimize.optimize_acqf_list) function.
+Additionally, although an implementation of
+ qParEGO and qNParEGO are trivially implemented using an augmented Chebyshev scalarization as the objective with the [`qExpectedImprovement`](../api/acquisition.html#qexpectedimprovement) acquisition function or the [`qNoisyExpectedImprovement`](../api/acquisition.html#qnoisyexpectedimprovement) acquisition function, respectively. Botorch provides a [`get_chebyshev_scalarization`](../api/utils.html#botorch.utils.multi_objective.scalarization.get_chebyshev_scalarizationconvenience) convenience function for generating these scalarizations. In the batch setting, qParEGO and qNParEGO both use a new random scalarization for each candidate [^qEHVI]. Candidates are selected in a sequential greedy fashion, each with a different scalarization, via the [`optimize_acqf_list`](../api/optim.html#botorch.optim.optimize.optimize_acqf_list) function.
 
 For a more in-depth example using these acquisition functions, check out the [Multi-Objective Bayesian Optimization tutorial notebook](../tutorials/multi_objective_bo).
 
@@ -25,6 +31,14 @@ BoTorch provides several utility functions for evaluating performance in MOBO in
 [^qNEHVI]: S. Daulton, M. Balandat, and E. Bakshy. Parallel Bayesian Optimization of Multiple Noisy Objectives with Expected Hypervolume Improvement. Advances in Neural
 Information Processing Systems 34, 2021.
 [paper](https://arxiv.org/abs/2105.08195)
+
+[^LogEI]: S. Ament, S. Daulton, D. Eriksson, M. Balandat, and E. Bakshy.
+Unexpected Improvements to Expected Improvement for Bayesian Optimization. Advances
+in Neural Information Processing Systems 36, 2023.
+[paper](https://arxiv.org/abs/2310.20708) "Log" variances of acquisition
+functions, such as [`qLogNoisyExpectedHypervolumeImprovement`](../api/acquisition.html#botorch.acquisition.multi_objective.logei.qLogNoisyExpectedHypervolumeImprovement),
+offer improved numerics compared to older counterparts such as
+[`qNoisyExpectedHypervolumeImprovement`](../api/acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement)
 
 [^qEHVI]: S. Daulton, M. Balandat, and E. Bakshy. Differentiable Expected Hypervolume
 Improvement for Parallel Multi-Objective Bayesian Optimization. Advances in Neural
