@@ -31,11 +31,7 @@ from torch.nn import Module
 
 
 class CostAwareUtility(Module, ABC):
-    r"""
-    Abstract base class for cost-aware utilities.
-
-    :meta private:
-    """
+    """Abstract base class for cost-aware utilities."""
 
     @abstractmethod
     def forward(
@@ -55,7 +51,6 @@ class CostAwareUtility(Module, ABC):
         Returns:
             A `num_fantasies x batch_shape`-dim Tensor of cost-transformed utilities.
         """
-        pass  # pragma: no cover
 
 
 class GenericCostAwareUtility(CostAwareUtility):

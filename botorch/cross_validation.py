@@ -114,7 +114,10 @@ def batch_cross_validation(
     observation_noise: bool = False,
     model_init_kwargs: Optional[Dict[str, Any]] = None,
 ) -> CVResults:
-    r"""Perform cross validation by using gpytorch batch mode.
+    r"""Perform cross validation by using GPyTorch batch mode.
+
+    WARNING: This function is currently very memory inefficient; use it only
+        for problems of small size.
 
     Args:
         model_cls: A GPyTorchModel class. This class must initialize the likelihood
@@ -138,6 +141,7 @@ def batch_cross_validation(
         >>> import torch
         >>> from botorch.cross_validation import (
         ...     batch_cross_validation, gen_loo_cv_folds
+        ... )
         >>>
         >>> from botorch.models import SingleTaskGP
         >>> from botorch.models.transforms.input import Normalize
@@ -148,7 +152,7 @@ def batch_cross_validation(
         >>> train_Y = torch.rand_like(train_X)
         >>> cv_folds = gen_loo_cv_folds(train_X, train_Y)
         >>> input_transform = Normalize(d=train_X.shape[-1])
-        >>> output_transform = Standardize(
+        >>> outcome_transform = Standardize(
         ...     m=train_Y.shape[-1], batch_shape=cv_folds.train_Y.shape[:-2]
         ... )
         >>>
@@ -158,12 +162,9 @@ def batch_cross_validation(
         ...    cv_folds=cv_folds,
         ...    model_init_kwargs={
         ...        "input_transform": input_transform,
-        ...        "output_transform": output_transform,
+        ...        "outcome_transform": outcome_transform,
         ...    },
         ... )
-
-    WARNING: This function is currently very memory inefficient, use it only
-        for problems of small size.
     """
     model_init_kws = model_init_kwargs if model_init_kwargs is not None else {}
     if cv_folds.train_Yvar is not None:

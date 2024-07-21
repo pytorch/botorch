@@ -28,8 +28,6 @@ class AcquisitionFunction(Module, ABC):
     Please note that if your acquisition requires a backwards call,
     you will need to wrap the backwards call inside of an enable_grad
     context to be able to optimize the acquisition. See #1164.
-
-    :meta private:
     """
 
     _log: bool = False  # whether the acquisition utilities are in log-space
@@ -79,8 +77,6 @@ class AcquisitionFunction(Module, ABC):
 class OneShotAcquisitionFunction(AcquisitionFunction, ABC):
     r"""
     Abstract base class for acquisition functions using one-shot optimization
-
-    :meta private:
     """
 
     @abstractmethod
@@ -115,8 +111,6 @@ class MCSamplerMixin(ABC):
 
     Attributes:
         _default_sample_shape: The `sample_shape` for the default sampler.
-
-    :meta private:
     """
 
     _default_sample_shape = torch.Size([512])
@@ -169,8 +163,6 @@ class MultiModelAcquisitionFunction(AcquisitionFunction, ABC):
     This is currently only a placeholder to help with some development
     in Ax. We plan to add some acquisition functions utilizing multiple
     models in the future.
-
-    :meta private:
     """
 
     def __init__(self, model_dict: ModelDict) -> None:

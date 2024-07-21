@@ -150,7 +150,7 @@ class FeasibilityWeightedMCMultiOutputObjective(MCMultiOutputObjective):
         constraint_idcs: List[int],
         objective: Optional[MCMultiOutputObjective] = None,
     ) -> None:
-        r"""Construct a feasibility weighted objective.
+        r"""Construct a feasibility-weighted objective.
 
         This applies feasibility weighting before calculating the objective value.
         Defaults to identity if no constraints or objective is present.

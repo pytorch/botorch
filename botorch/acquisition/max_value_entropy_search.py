@@ -65,8 +65,6 @@ class MaxValueBase(AcquisitionFunction, ABC):
 
     Subclasses need to implement `_sample_max_values` and _compute_information_gain`
     methods.
-
-    :meta private:
     """
 
     def __init__(
