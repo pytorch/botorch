@@ -31,7 +31,7 @@ from torch.nn import Module
 
 
 class CostAwareUtility(Module, ABC):
-    """Abstract base class for cost-aware utilities. """
+    """Abstract base class for cost-aware utilities."""
 
     @abstractmethod
     def forward(
