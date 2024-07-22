@@ -2,19 +2,19 @@
 
 The release log for BoTorch.
 
-## [0.11.2] -- Jul 22, 2024
+## [0.11.3] -- Jul 22, 2024
 
 #### Compatibility
 * Pin NumPy to <2.0 (#2382).
-* Require GPyTorch 1.12 (#2408).
+* Require GPyTorch 1.12 and LinearOperator 0.5.2 (#2408, #2441).
 
 #### New features
 * Support evaluating posterior predictive in `MultiTaskGP` (#2375).
-* Infinite width BNN kernel (#2366) & the curresponding tutorial (#2381).
+* Infinite width BNN kernel (#2366) and the corresponding tutorial (#2381).
 * An improved elliptical slice sampling implementation (#2426).
 * Add a helper for producing a `DeterministicModel` using a Matheron path (#2435).
 
-#### Deprecations
+#### Deprecations and Deletions
 * Stop allowing some arguments to be ignored in acqf input constructors (#2356).
 * Reap deprecated `**kwargs` argument from `optimize_acqf` variants (#2390).
 * Delete `DeterministicPosterior` and `DeterministicSampler` (#2391, #2409, #2410).
@@ -32,6 +32,11 @@ The release log for BoTorch.
 * Various documentation improvements (#2395, #2425, #2436, #2437, #2438).
 * Clean up `**kwargs` arguments in `qLogNEI` (#2406).
 * Add a `NumericsWarning` for Legacy EI implementations (#2429).
+
+
+## [0.11.2] -- Jul 22, 2024
+
+See 0.11.3 release. This release failed due to mismatching GPyTorch and LinearOperator versions.
 
 
 ## [0.11.1] -- Jun 11, 2024
