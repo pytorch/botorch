@@ -8,7 +8,8 @@ BoTorch provides first-class support for Multi-Objective (MO) Bayesian Optimizat
 [`qLogExpectedHypervolumeImprovement`](../api/acquisition.html#botorch.acquisition.multi_objective.logei.qLogExpectedHypervolumeImprovement) (qLogEHVI),
 [`qLogNParEGO`](../api/acquisition.html#botorch.acquisition.multi_objective.parego.qLogNParEGO)[^qNEHVI],
 and analytic
-[`ExpectedHypervolumeImprovement`](../api/acquisition.html#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement) (EHVI) with gradients via auto-differentiation acquisition functions[^qEHVI].
+[`ExpectedHypervolumeImprovement`](../api/acquisition.html#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement)
+(EHVI) with gradients via auto-differentiation acquisition functions[^qEHVI].
 
 The goal in MOBO is learn the *Pareto front*: the set of optimal trade-offs,
 where an improvement in one objective means deteriorating another objective.
@@ -56,7 +57,7 @@ and efficient box decomposition algorithms for efficiently partitioning the the
 space dominated
 [`DominatedPartitioning`](../api/utils.html#botorch.utils.multi_objective.box_decompositions.dominated.DominatedPartitioning)
 or non-dominated
-[`NonDominatedPartitioning`](../api/utils.html#botorch.utils.multi_objective.box_decompositions.non_dominated.NonDominatedPartitioning)
+[`NonDominatedPartitioning`](../api/utils.html#botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning)
 by the Pareto frontier into axis-aligned hyperrectangular boxes. For exact box
 decompositions, BoTorch uses a two-step approach similar to that in [^Yang2019],
 where (1) Algorithm 1 from [Lacour17]_ is used to find the local lower bounds
@@ -73,7 +74,7 @@ augmented Chebyshev scalarization as the objective with an EI-type
 single-objective acquisition function such as
 [`qLogNoisyExpectedImprovement`](../api/acquisition.html#botorch.acquisition.logei.qLogNoisyExpectedImprovement).
 The
-[`get_chebyshev_scalarization`](../api/utils.html#botorch.utils.multi_objective.scalarization.get_chebyshev_scalarizationconvenience)
+[`get_chebyshev_scalarization`](../api/utils.html#botorch.utils.multi_objective.scalarization.get_chebyshev_scalarization)
 convenience function generates these scalarizations.
 
 [^qNEHVI]: S. Daulton, M. Balandat, and E. Bakshy. Parallel Bayesian
@@ -87,7 +88,7 @@ in Neural Information Processing Systems 36, 2023.
 [paper](https://arxiv.org/abs/2310.20708) "Log" variances of acquisition
 functions, such as [`qLogNoisyExpectedHypervolumeImprovement`](../api/acquisition.html#botorch.acquisition.multi_objective.logei.qLogNoisyExpectedHypervolumeImprovement),
 offer improved numerics compared to older counterparts such as
-[`qNoisyExpectedHypervolumeImprovement`](../api/acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement)
+[`qNoisyExpectedHypervolumeImprovement`](../api/acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement).
 
 [^qEHVI]: S. Daulton, M. Balandat, and E. Bakshy. Differentiable Expected Hypervolume
 Improvement for Parallel Multi-Objective Bayesian Optimization. Advances in Neural
