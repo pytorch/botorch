@@ -14,10 +14,8 @@ from __future__ import annotations
 import math
 
 from abc import ABC
-
 from contextlib import nullcontext
 from copy import deepcopy
-
 from typing import Dict, Optional, Tuple, Union
 
 import torch
@@ -613,7 +611,8 @@ class LogNoisyExpectedImprovement(AnalyticAcquisitionFunction):
         r"""Single-outcome Noisy Log Expected Improvement (via fantasies).
 
         Args:
-            model: A fitted single-outcome model.
+            model: A fitted single-outcome model. Only `SingleTaskGP` models with
+                known observation noise are currently supported.
             X_observed: A `n x d` Tensor of observed points that are likely to
                 be the best observed points so far.
             num_fantasies: The number of fantasies to generate. The higher this
@@ -621,7 +620,8 @@ class LogNoisyExpectedImprovement(AnalyticAcquisitionFunction):
                 complexity and performance).
             maximize: If True, consider the problem a maximization problem.
         """
-        # sample fantasies
+        _check_noisy_ei_model(model=model)
+        # Sample fantasies.
         from botorch.sampling.normal import SobolQMCNormalSampler
 
         # Drop gradients from model.posterior if X_observed does not require gradients
@@ -695,7 +695,8 @@ class NoisyExpectedImprovement(ExpectedImprovement):
         r"""Single-outcome Noisy Expected Improvement (via fantasies).
 
         Args:
-            model: A fitted single-outcome model.
+            model: A fitted single-outcome model. Only `SingleTaskGP` models with
+                known observation noise are currently supported.
             X_observed: A `n x d` Tensor of observed points that are likely to
                 be the best observed points so far.
             num_fantasies: The number of fantasies to generate. The higher this
@@ -703,8 +704,9 @@ class NoisyExpectedImprovement(ExpectedImprovement):
                 complexity and performance).
             maximize: If True, consider the problem a maximization problem.
         """
+        _check_noisy_ei_model(model=model)
         legacy_ei_numerics_warning(legacy_name=type(self).__name__)
-        # sample fantasies
+        # Sample fantasies.
         from botorch.sampling.normal import SobolQMCNormalSampler
 
         # Drop gradients from model.posterior if X_observed does not require gradients
@@ -1051,6 +1053,21 @@ def _log_abs_u_Phi_div_phi(u: Tensor) -> Tensor:
     return torch.log(torch.special.erfcx(a * u) * u.abs()) + b
 
 
+def _check_noisy_ei_model(model: GPyTorchModel) -> None:
+    message = (
+        "Only single-output `SingleTaskGP` models with known observation noise "
+        "are currently supported for fantasy-based NEI & LogNEI."
+    )
+    if not isinstance(model, SingleTaskGP):
+        raise UnsupportedError(f"{message} Model is not a `SingleTaskGP`.")
+    if not isinstance(model.likelihood, FixedNoiseGaussianLikelihood):
+        raise UnsupportedError(
+            f"{message} Model likelihood is not a `FixedNoiseGaussianLikelihood`."
+        )
+    if model.num_outputs != 1:
+        raise UnsupportedError(f"{message} Model has {model.num_outputs} outputs.")
+
+
 def _get_noiseless_fantasy_model(
     model: SingleTaskGP, batch_X_observed: Tensor, Y_fantasized: Tensor
 ) -> SingleTaskGP:
@@ -1069,31 +1086,49 @@ def _get_noiseless_fantasy_model(
     Returns:
         The fantasy model.
     """
-    if not isinstance(model, SingleTaskGP) or not isinstance(
-        model.likelihood, FixedNoiseGaussianLikelihood
-    ):
-        raise UnsupportedError(
-            "Only SingleTaskGP models with known observation noise "
-            "are currently supported for fantasy-based NEI & LogNEI."
-        )
     # initialize a copy of SingleTaskGP on the original training inputs
     # this makes SingleTaskGP a non-batch GP, so that the same hyperparameters
     # are used across all batches (by default, a GP with batched training data
     # uses independent hyperparameters for each batch).
+
+    # Don't apply `outcome_transform` and `input_transform` here,
+    # since the data being passed has already been transformed.
+    # So we will instead set them afterwards.
     fantasy_model = SingleTaskGP(
         train_X=model.train_inputs[0],
         train_Y=model.train_targets.unsqueeze(-1),
         train_Yvar=model.likelihood.noise_covar.noise.unsqueeze(-1),
+        covar_module=deepcopy(model.covar_module),
+        mean_module=deepcopy(model.mean_module),
     )
+
+    Yvar = torch.full_like(Y_fantasized, 1e-7)
+
+    # Set the outcome and input transforms of the fantasy model.
+    # The transforms should already be in eval mode but just set them to be sure
+    outcome_transform = getattr(model, "outcome_transform", None)
+    if outcome_transform is not None:
+        outcome_transform = deepcopy(outcome_transform).eval()
+        fantasy_model.outcome_transform = outcome_transform
+        # Need to transform the outcome just as in the SingleTaskGP constructor.
+        # Need to unsqueeze for BoTorch and then squeeze again for GPyTorch.
+        # Not transforming Yvar because 1e-7 is already close to 0 and it is a
+        # relative, not absolute, value.
+        Y_fantasized, _ = outcome_transform(
+            Y_fantasized.unsqueeze(-1), Yvar.unsqueeze(-1)
+        )
+        Y_fantasized = Y_fantasized.squeeze(-1)
+    input_transform = getattr(model, "input_transform", None)
+    if input_transform is not None:
+        fantasy_model.input_transform = deepcopy(input_transform).eval()
+
     # update training inputs/targets to be batch mode fantasies
     fantasy_model.set_train_data(
         inputs=batch_X_observed, targets=Y_fantasized, strict=False
     )
     # use noiseless fantasies
-    fantasy_model.likelihood.noise_covar.noise = torch.full_like(Y_fantasized, 1e-7)
-    # load hyperparameters from original model
-    state_dict = deepcopy(model.state_dict())
-    fantasy_model.load_state_dict(state_dict)
+    fantasy_model.likelihood.noise_covar.noise = Yvar
+
     return fantasy_model
 
 

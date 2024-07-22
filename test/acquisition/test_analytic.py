@@ -4,12 +4,14 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import itertools
 import math
 from warnings import catch_warnings, simplefilter
 
 import torch
 from botorch.acquisition import qAnalyticProbabilityOfImprovement
 from botorch.acquisition.analytic import (
+    _check_noisy_ei_model,
     _compute_log_prob_feas,
     _ei_helper,
     _log_ei_helper,
@@ -33,11 +35,19 @@ from botorch.acquisition.objective import (
 )
 from botorch.exceptions import UnsupportedError
 from botorch.exceptions.warnings import NumericsWarning
-from botorch.models import SingleTaskGP
+from botorch.models import ModelListGP, SingleTaskGP
+from botorch.models.transforms import ChainedOutcomeTransform, Normalize, Standardize
 from botorch.posteriors import GPyTorchPosterior
+from botorch.sampling.pathwise.utils import get_train_inputs
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
+from gpytorch.kernels import RBFKernel, ScaleKernel
+from gpytorch.likelihoods.gaussian_likelihood import (
+    FixedNoiseGaussianLikelihood,
+    GaussianLikelihood,
+)
+from gpytorch.module import Module
+from gpytorch.priors.torch_priors import GammaPrior
 
 
 NEI_NOISE = [
@@ -831,7 +841,15 @@ class TestConstrainedExpectedImprovement(BotorchTestCase):
 
 
 class TestNoisyExpectedImprovement(BotorchTestCase):
-    def _get_model(self, dtype=torch.float):
+    def _get_model(
+        self,
+        dtype=torch.float,
+        outcome_transform=None,
+        input_transform=None,
+        low_x=0.0,
+        hi_x=1.0,
+        covar_module=None,
+    ) -> SingleTaskGP:
         state_dict = {
             "mean_module.raw_constant": torch.tensor([-0.0066]),
             "covar_module.raw_outputscale": torch.tensor(1.0143),
@@ -843,20 +861,31 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
             "covar_module.outputscale_prior.concentration": torch.tensor(2.0),
             "covar_module.outputscale_prior.rate": torch.tensor(0.1500),
         }
-        train_x = torch.linspace(0, 1, 10, device=self.device, dtype=dtype).unsqueeze(
-            -1
-        )
+        train_x = torch.linspace(
+            0.0, 1.0, 10, device=self.device, dtype=dtype
+        ).unsqueeze(-1)
+        # Taking the sin of the *transformed* input to make the test equivalent
+        # to when there are no input transforms
         train_y = torch.sin(train_x * (2 * math.pi))
+        # Now transform the input to be passed into SingleTaskGP constructor
+        train_x = train_x * (hi_x - low_x) + low_x
         noise = torch.tensor(NEI_NOISE, device=self.device, dtype=dtype)
         train_y += noise
         train_yvar = torch.full_like(train_y, 0.25**2)
-        model = SingleTaskGP(train_X=train_x, train_Y=train_y, train_Yvar=train_yvar)
-        model.load_state_dict(state_dict)
+        model = SingleTaskGP(
+            train_X=train_x,
+            train_Y=train_y,
+            train_Yvar=train_yvar,
+            outcome_transform=outcome_transform,
+            input_transform=input_transform,
+            covar_module=covar_module,
+        )
+        model.load_state_dict(state_dict, strict=False)
         model.to(train_x)
         model.eval()
         return model
 
-    def test_noisy_expected_improvement(self):
+    def test_noisy_expected_improvement(self) -> None:
         model = self._get_model(dtype=torch.float64)
         X_observed = model.train_inputs[0]
         nfan = 5
@@ -865,14 +894,75 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
         ):
             NoisyExpectedImprovement(model, X_observed, num_fantasies=nfan)
 
-        for dtype in (torch.float, torch.double):
+        # Same as the default Matern kernel
+        # botorch.models.utils.gpytorch_modules.get_matern_kernel_with_gamma_prior,
+        # except RBFKernel is used instead of MaternKernel.
+        # For some reason, RBF gives numerical problems with torch.float but
+        # Matern does not. Therefore, we'll skip the test for RBF when dtype is
+        # torch.float.
+        covar_module_2 = ScaleKernel(
+            base_kernel=RBFKernel(
+                ard_num_dims=1,
+                batch_shape=torch.Size(),
+                lengthscale_prior=GammaPrior(3.0, 6.0),
+            ),
+            batch_shape=torch.Size(),
+            outputscale_prior=GammaPrior(2.0, 0.15),
+        )
+        for dtype, use_octf, use_intf, bounds, covar_module in itertools.product(
+            (torch.float, torch.double),
+            (False, True),
+            (False, True),
+            (torch.tensor([[-3.4], [0.8]]), torch.tensor([[0.0], [1.0]])),
+            (None, covar_module_2),
+        ):
             with catch_warnings():
                 simplefilter("ignore", category=NumericsWarning)
-                self._test_noisy_expected_imrpovement(dtype)
+                self._test_noisy_expected_improvement(
+                    dtype=dtype,
+                    use_octf=use_octf,
+                    use_intf=use_intf,
+                    bounds=bounds,
+                    covar_module=covar_module,
+                )
 
-    def _test_noisy_expected_imrpovement(self, dtype: torch.dtype) -> None:
-        model = self._get_model(dtype=dtype)
-        X_observed = model.train_inputs[0]
+    def _test_noisy_expected_improvement(
+        self,
+        dtype: torch.dtype,
+        use_octf: bool,
+        use_intf: bool,
+        bounds: torch.Tensor,
+        covar_module: Module,
+    ) -> None:
+        if covar_module is not None and dtype == torch.float:
+            # Skip this test because RBF runs into numerical problems with float
+            # precision
+            return
+        octf = (
+            ChainedOutcomeTransform(standardize=Standardize(m=1)) if use_octf else None
+        )
+        intf = (
+            Normalize(
+                d=1,
+                bounds=bounds.to(device=self.device, dtype=dtype),
+                transform_on_train=True,
+            )
+            if use_intf
+            else None
+        )
+        low_x = bounds[0].item() if use_intf else 0.0
+        hi_x = bounds[1].item() if use_intf else 1.0
+        model = self._get_model(
+            dtype=dtype,
+            outcome_transform=octf,
+            input_transform=intf,
+            low_x=low_x,
+            hi_x=hi_x,
+            covar_module=covar_module,
+        )
+        # Make sure to get the non-transformed training inputs.
+        X_observed = get_train_inputs(model, transformed=False)[0]
+
         nfan = 5
         nEI = NoisyExpectedImprovement(model, X_observed, num_fantasies=nfan)
         LogNEI = LogNoisyExpectedImprovement(model, X_observed, num_fantasies=nfan)
@@ -881,6 +971,10 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
         self.assertTrue(hasattr(LogNEI, "best_f"))
         self.assertIsInstance(LogNEI.model, SingleTaskGP)
         self.assertIsInstance(LogNEI.model.likelihood, FixedNoiseGaussianLikelihood)
+        # Make sure _get_noiseless_fantasy_model gives them
+        # the same state_dict
+        self.assertEqual(LogNEI.model.state_dict(), model.state_dict())
+
         LogNEI.model = nEI.model  # let the two share their values and fantasies
         LogNEI.best_f = nEI.best_f
 
@@ -892,9 +986,10 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
         X_test_log = X_test.clone()
         X_test.requires_grad = True
         X_test_log.requires_grad = True
-        val = nEI(X_test)
+
+        val = nEI(X_test * (hi_x - low_x) + low_x)
         # testing logNEI yields the same result (also checks dtype)
-        log_val = LogNEI(X_test_log)
+        log_val = LogNEI(X_test_log * (hi_x - low_x) + low_x)
         exp_log_val = log_val.exp()
         # notably, val[1] is usually zero in this test, which is precisely what
         # gives rise to problems during optimization, and what logNEI avoids
@@ -916,7 +1011,7 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
         # testing gradient through exp of log computation
         exp_log_val.sum().backward()
         # testing that first gradient element coincides. The second is in the
-        # regime where the naive implementation looses accuracy.
+        # regime where the naive implementation loses accuracy.
         atol = 2e-5 if dtype == torch.float32 else 1e-12
         rtol = atol
         self.assertAllClose(X_test.grad[0], X_test_log.grad[0], atol=atol, rtol=rtol)
@@ -945,9 +1040,27 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
             acqf = constructor(model, X_observed, num_fantasies=5)
             self.assertTrue(acqf.best_f.requires_grad)
 
+    def test_check_noisy_ei_model(self) -> None:
+        tkwargs = {"dtype": torch.double, "device": self.device}
+        # Multi-output model.
+        model = SingleTaskGP(
+            train_X=torch.rand(5, 2, **tkwargs),
+            train_Y=torch.rand(5, 2, **tkwargs),
+            train_Yvar=torch.rand(5, 2, **tkwargs),
+        )
+        with self.assertRaisesRegex(UnsupportedError, "Model has 2 outputs"):
+            _check_noisy_ei_model(model=model)
+        # Not SingleTaskGP.
+        with self.assertRaisesRegex(UnsupportedError, "Model is not"):
+            _check_noisy_ei_model(model=ModelListGP(model))
+        # Not fixed noise.
+        model.likelihood = GaussianLikelihood()
+        with self.assertRaisesRegex(UnsupportedError, "Model likelihood is not"):
+            _check_noisy_ei_model(model=model)
+
 
 class TestScalarizedPosteriorMean(BotorchTestCase):
-    def test_scalarized_posterior_mean(self):
+    def test_scalarized_posterior_mean(self) -> None:
         for dtype in (torch.float, torch.double):
             mean = torch.tensor([[0.25], [0.5]], device=self.device, dtype=dtype)
             mm = MockModel(MockPosterior(mean=mean))
@@ -959,7 +1072,7 @@ class TestScalarizedPosteriorMean(BotorchTestCase):
                 torch.allclose(pm, (mean.squeeze(-1) * module.weights).sum(dim=-1))
             )
 
-    def test_scalarized_posterior_mean_batch(self):
+    def test_scalarized_posterior_mean_batch(self) -> None:
         for dtype in (torch.float, torch.double):
             mean = torch.tensor(
                 [[-0.5, 1.0], [0.0, 1.0], [0.5, 1.0]], device=self.device, dtype=dtype
