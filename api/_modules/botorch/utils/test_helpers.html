@@ -126,8 +126,14 @@
     <span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">Y1</span><span class="p">,</span> <span class="n">Y2</span><span class="p">])</span>
 
     <span class="n">Yvar1</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">yvar</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">Y1</span><span class="p">,</span> <span class="n">yvar</span><span class="p">)</span>
-    <span class="n">Yvar2</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">yvar</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">Y2</span><span class="p">,</span> <span class="n">yvar</span><span class="p">)</span>
+    <span class="n">Yvar2</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">yvar</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">Y2</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">yvar</span><span class="p">)</span>
     <span class="n">train_Yvar</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">yvar</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">Yvar1</span><span class="p">,</span> <span class="n">Yvar2</span><span class="p">])</span>
+    <span class="n">Y3</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="n">X</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn_like</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.2</span>
+    <span class="n">Yvar3</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">yvar</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">Y3</span><span class="p">,</span> <span class="n">yvar</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">task_values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">Y3</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">train_Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">train_Yvar</span><span class="p">,</span> <span class="n">Yvar3</span><span class="p">])</span>
     <span class="n">feature_slice</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="n">skip_task_features_in_datasets</span> <span class="k">else</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
     <span class="n">datasets</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">SupervisedDataset</span><span class="p">(</span>
@@ -138,13 +144,23 @@
             <span class="n">outcome_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"y"</span><span class="p">],</span>
         <span class="p">),</span>
         <span class="n">SupervisedDataset</span><span class="p">(</span>
-            <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">[</span><span class="mi">10</span><span class="p">:,</span> <span class="n">feature_slice</span><span class="p">],</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">[</span><span class="mi">10</span><span class="p">:</span><span class="mi">20</span><span class="p">,</span> <span class="n">feature_slice</span><span class="p">],</span>
             <span class="n">Y</span><span class="o">=</span><span class="n">Y2</span><span class="p">,</span>
             <span class="n">Yvar</span><span class="o">=</span><span class="n">Yvar2</span><span class="p">,</span>
             <span class="n">feature_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"task"</span><span class="p">,</span> <span class="s2">"X"</span><span class="p">][</span><span class="n">feature_slice</span><span class="p">],</span>
             <span class="n">outcome_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"y1"</span><span class="p">],</span>
         <span class="p">),</span>
     <span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">task_values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">datasets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">SupervisedDataset</span><span class="p">(</span>
+                <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">[</span><span class="mi">20</span><span class="p">:,</span> <span class="n">feature_slice</span><span class="p">],</span>
+                <span class="n">Y</span><span class="o">=</span><span class="n">Y3</span><span class="p">,</span>
+                <span class="n">Yvar</span><span class="o">=</span><span class="n">Yvar3</span><span class="p">,</span>
+                <span class="n">feature_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"task"</span><span class="p">,</span> <span class="s2">"X"</span><span class="p">][</span><span class="n">feature_slice</span><span class="p">],</span>
+                <span class="n">outcome_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"y2"</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
     <span class="n">dataset</span> <span class="o">=</span> <span class="n">MultiTaskDataset</span><span class="p">(</span>
         <span class="n">datasets</span><span class="o">=</span><span class="n">datasets</span><span class="p">,</span>
         <span class="n">target_outcome_name</span><span class="o">=</span><span class="s2">"y"</span><span class="p">,</span>
@@ -174,16 +190,27 @@
 
 
 
+<div class="viewcode-block" id="DummyNonScalarizingPosteriorTransform">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.test_helpers.DummyNonScalarizingPosteriorTransform">[docs]</a>
 <span class="k">class</span> <span class="nc">DummyNonScalarizingPosteriorTransform</span><span class="p">(</span><span class="n">PosteriorTransform</span><span class="p">):</span>
     <span class="n">scalarize</span> <span class="o">=</span> <span class="kc">False</span>
 
+<div class="viewcode-block" id="DummyNonScalarizingPosteriorTransform.evaluate">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.test_helpers.DummyNonScalarizingPosteriorTransform.evaluate">[docs]</a>
     <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">):</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
 
+
+<div class="viewcode-block" id="DummyNonScalarizingPosteriorTransform.forward">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.test_helpers.DummyNonScalarizingPosteriorTransform.forward">[docs]</a>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">):</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+</div>
 
 
+
+<div class="viewcode-block" id="SimpleGPyTorchModel">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.test_helpers.SimpleGPyTorchModel">[docs]</a>
 <span class="k">class</span> <span class="nc">SimpleGPyTorchModel</span><span class="p">(</span><span class="n">GPyTorchModel</span><span class="p">,</span> <span class="n">ExactGP</span><span class="p">,</span> <span class="n">FantasizeMixin</span><span class="p">):</span>
     <span class="n">last_fantasize_flag</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
@@ -216,6 +243,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transformed_call_args</span> <span class="o">=</span> <span class="p">[]</span>
 
+<div class="viewcode-block" id="SimpleGPyTorchModel.forward">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.test_helpers.SimpleGPyTorchModel.forward">[docs]</a>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">last_fantasize_flag</span> <span class="o">=</span> <span class="n">fantasize</span><span class="o">.</span><span class="n">on</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
@@ -223,12 +252,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">transformed_call_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">mean_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">covar_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean_x</span><span class="p">,</span> <span class="n">covar_x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean_x</span><span class="p">,</span> <span class="n">covar_x</span><span class="p">)</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>
 </div>
-<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div aria-label="Main" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
 <h3>Navigation</h3>

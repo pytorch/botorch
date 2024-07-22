@@ -148,7 +148,10 @@
     <span class="n">observation_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">model_init_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CVResults</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""Perform cross validation by using gpytorch batch mode.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Perform cross validation by using GPyTorch batch mode.</span>
+
+<span class="sd">    WARNING: This function is currently very memory inefficient; use it only</span>
+<span class="sd">        for problems of small size.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        model_cls: A GPyTorchModel class. This class must initialize the likelihood</span>
@@ -172,6 +175,7 @@
 <span class="sd">        &gt;&gt;&gt; import torch</span>
 <span class="sd">        &gt;&gt;&gt; from botorch.cross_validation import (</span>
 <span class="sd">        ...     batch_cross_validation, gen_loo_cv_folds</span>
+<span class="sd">        ... )</span>
 <span class="sd">        &gt;&gt;&gt;</span>
 <span class="sd">        &gt;&gt;&gt; from botorch.models import SingleTaskGP</span>
 <span class="sd">        &gt;&gt;&gt; from botorch.models.transforms.input import Normalize</span>
@@ -182,7 +186,7 @@
 <span class="sd">        &gt;&gt;&gt; train_Y = torch.rand_like(train_X)</span>
 <span class="sd">        &gt;&gt;&gt; cv_folds = gen_loo_cv_folds(train_X, train_Y)</span>
 <span class="sd">        &gt;&gt;&gt; input_transform = Normalize(d=train_X.shape[-1])</span>
-<span class="sd">        &gt;&gt;&gt; output_transform = Standardize(</span>
+<span class="sd">        &gt;&gt;&gt; outcome_transform = Standardize(</span>
 <span class="sd">        ...     m=train_Y.shape[-1], batch_shape=cv_folds.train_Y.shape[:-2]</span>
 <span class="sd">        ... )</span>
 <span class="sd">        &gt;&gt;&gt;</span>
@@ -192,12 +196,9 @@
 <span class="sd">        ...    cv_folds=cv_folds,</span>
 <span class="sd">        ...    model_init_kwargs={</span>
 <span class="sd">        ...        "input_transform": input_transform,</span>
-<span class="sd">        ...        "output_transform": output_transform,</span>
+<span class="sd">        ...        "outcome_transform": outcome_transform,</span>
 <span class="sd">        ...    },</span>
 <span class="sd">        ... )</span>
-
-<span class="sd">    WARNING: This function is currently very memory inefficient, use it only</span>
-<span class="sd">        for problems of small size.</span>
 <span class="sd">    """</span>
     <span class="n">model_init_kws</span> <span class="o">=</span> <span class="n">model_init_kwargs</span> <span class="k">if</span> <span class="n">model_init_kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="n">cv_folds</span><span class="o">.</span><span class="n">train_Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -230,7 +231,7 @@
 </div>
 </div>
 </div>
-<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div aria-label="Main" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="../../index.html">BoTorch</a></h1>
 <h3>Navigation</h3>

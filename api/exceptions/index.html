@@ -119,7 +119,7 @@ timed out.</p></li>
 <dt class="sig sig-object py" id="botorch.exceptions.warnings.OptimizationWarning">
 <em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.exceptions.warnings.</span></span><span class="sig-name descname"><span class="pre">OptimizationWarning</span></span><a class="reference internal" href="_modules/botorch/exceptions/warnings.html#OptimizationWarning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.exceptions.warnings.OptimizationWarning" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.exceptions.warnings.BotorchWarning" title="botorch.exceptions.warnings.BotorchWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">BotorchWarning</span></code></a></p>
-<p>Optimization-releated warnings.</p>
+<p>Optimization-related warnings.</p>
 </dd></dl>
 <dl class="py exception">
 <dt class="sig sig-object py" id="botorch.exceptions.warnings.SamplingWarning">
@@ -139,12 +139,36 @@ timed out.</p></li>
 <dd><p>Bases: <a class="reference internal" href="#botorch.exceptions.warnings.BotorchWarning" title="botorch.exceptions.warnings.BotorchWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">BotorchWarning</span></code></a></p>
 <p>Warning raised when a potential issue is detected with user provided inputs.</p>
 </dd></dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="botorch.exceptions.warnings.NumericsWarning">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.exceptions.warnings.</span></span><span class="sig-name descname"><span class="pre">NumericsWarning</span></span><a class="reference internal" href="_modules/botorch/exceptions/warnings.html#NumericsWarning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.exceptions.warnings.NumericsWarning" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.exceptions.warnings.BotorchWarning" title="botorch.exceptions.warnings.BotorchWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">BotorchWarning</span></code></a></p>
+<p>Warning raised when numerical issues are detected.</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.exceptions.warnings.legacy_ei_numerics_warning">
+<span class="sig-prename descclassname"><span class="pre">botorch.exceptions.warnings.</span></span><span class="sig-name descname"><span class="pre">legacy_ei_numerics_warning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">legacy_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/exceptions/warnings.html#legacy_ei_numerics_warning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.exceptions.warnings.legacy_ei_numerics_warning" title="Link to this definition">¶</a></dt>
+<dd><p>Raises a warning for legacy EI acquisition functions that are known to have
+numerical issues and should be replaced with the LogEI version for virtually all
+use-cases except for explicit benchmarking of the numerical issues of legacy EI.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>legacy_name</strong> (<em>str</em>) – The name of the legacy EI acquisition function.</p></li>
+<li><p><strong>logei_name</strong> – The name of the associated LogEI acquisition function.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
 </section>
 </section>
 </div>
 </div>
 </div>
-<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div aria-label="Main" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="index.html">BoTorch</a></h1>
 <h3>Navigation</h3>

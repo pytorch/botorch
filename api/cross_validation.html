@@ -79,7 +79,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>GPyTorchModel</em>)</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.gpytorch.GPyTorchModel" title="botorch.models.gpytorch.GPyTorchModel"><em>GPyTorchModel</em></a>)</p></li>
 <li><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><em>GPyTorchPosterior</em></a>)</p></li>
 <li><p><strong>observed_Y</strong> (<em>Tensor</em>)</p></li>
 <li><p><strong>observed_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>)</p></li>
@@ -88,7 +88,7 @@
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.cross_validation.CVResults.model">
-<span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">GPyTorchModel</span></em><a class="headerlink" href="#botorch.cross_validation.CVResults.model" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="models.html#botorch.models.gpytorch.GPyTorchModel" title="botorch.models.gpytorch.GPyTorchModel"><span class="pre">GPyTorchModel</span></a></em><a class="headerlink" href="#botorch.cross_validation.CVResults.model" title="Link to this definition">¶</a></dt>
 <dd><p>Alias for field number 0</p>
 </dd></dl>
 <dl class="py attribute">
@@ -154,11 +154,15 @@ measurement noise.</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.cross_validation.batch_cross_validation">
 <span class="sig-prename descclassname"><span class="pre">botorch.cross_validation.</span></span><span class="sig-name descname"><span class="pre">batch_cross_validation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mll_cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cv_folds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_init_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/cross_validation.html#batch_cross_validation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.cross_validation.batch_cross_validation" title="Link to this definition">¶</a></dt>
-<dd><p>Perform cross validation by using gpytorch batch mode.</p>
+<dd><p>Perform cross validation by using GPyTorch batch mode.</p>
+<dl class="simple">
+<dt>WARNING: This function is currently very memory inefficient; use it only</dt><dd><p>for problems of small size.</p>
+</dd>
+</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model_cls</strong> (<em>Type</em><em>[</em><em>GPyTorchModel</em><em>]</em>) – A GPyTorchModel class. This class must initialize the likelihood
+<li><p><strong>model_cls</strong> (<em>Type</em><em>[</em><a class="reference internal" href="models.html#botorch.models.gpytorch.GPyTorchModel" title="botorch.models.gpytorch.GPyTorchModel"><em>GPyTorchModel</em></a><em>]</em>) – A GPyTorchModel class. This class must initialize the likelihood
 internally. Note: Multi-task GPs are not currently supported.</p></li>
 <li><p><strong>mll_cls</strong> (<em>Type</em><em>[</em><em>MarginalLogLikelihood</em><em>]</em>) – A MarginalLogLikelihood class.</p></li>
 <li><p><strong>cv_folds</strong> (<a class="reference internal" href="#botorch.cross_validation.CVFolds" title="botorch.cross_validation.CVFolds"><em>CVFolds</em></a>) – A CVFolds tuple.</p></li>
@@ -187,6 +191,7 @@ measurement noise.</p></li>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">torch</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">botorch.cross_validation</span> <span class="kn">import</span> <span class="p">(</span>
 <span class="gp">... </span>    <span class="n">batch_cross_validation</span><span class="p">,</span> <span class="n">gen_loo_cv_folds</span>
+<span class="gp">... </span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">Normalize</span>
@@ -198,7 +203,7 @@ measurement noise.</p></li>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand_like</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">cv_folds</span> <span class="o">=</span> <span class="n">gen_loo_cv_folds</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">input_transform</span> <span class="o">=</span> <span class="n">Normalize</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">output_transform</span> <span class="o">=</span> <span class="n">Standardize</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">Standardize</span><span class="p">(</span>
 <span class="gp">... </span>    <span class="n">m</span><span class="o">=</span><span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">batch_shape</span><span class="o">=</span><span class="n">cv_folds</span><span class="o">.</span><span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt;</span>
@@ -208,21 +213,17 @@ measurement noise.</p></li>
 <span class="gp">... </span>   <span class="n">cv_folds</span><span class="o">=</span><span class="n">cv_folds</span><span class="p">,</span>
 <span class="gp">... </span>   <span class="n">model_init_kwargs</span><span class="o">=</span><span class="p">{</span>
 <span class="gp">... </span>       <span class="s2">"input_transform"</span><span class="p">:</span> <span class="n">input_transform</span><span class="p">,</span>
-<span class="gp">... </span>       <span class="s2">"output_transform"</span><span class="p">:</span> <span class="n">output_transform</span><span class="p">,</span>
+<span class="gp">... </span>       <span class="s2">"outcome_transform"</span><span class="p">:</span> <span class="n">outcome_transform</span><span class="p">,</span>
 <span class="gp">... </span>   <span class="p">},</span>
 <span class="gp">... </span><span class="p">)</span>
 </pre></div>
 </div>
-<dl class="simple">
-<dt>WARNING: This function is currently very memory inefficient, use it only</dt><dd><p>for problems of small size.</p>
-</dd>
-</dl>
 </dd></dl>
 </section>
 </div>
 </div>
 </div>
-<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div aria-label="Main" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="index.html">BoTorch</a></h1>
 <h3>Navigation</h3>

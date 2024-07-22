@@ -44,7 +44,7 @@
 
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.cached_cholesky</span> <span class="kn">import</span> <span class="n">CachedCholeskyMCSamplerMixin</span>
@@ -91,11 +91,11 @@
 <span class="n">FloatOrTensor</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"FloatOrTensor"</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span>
 
 
+<div class="viewcode-block" id="LogImprovementMCAcquisitionFunction">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.logei.LogImprovementMCAcquisitionFunction">[docs]</a>
 <span class="k">class</span> <span class="nc">LogImprovementMCAcquisitionFunction</span><span class="p">(</span><span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Abstract base class for Monte-Carlo-based batch LogEI acquisition functions.</span>
-
-<span class="sd">    :meta private:</span>
 <span class="sd">    """</span>
 
     <span class="n">_log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
@@ -157,7 +157,8 @@
             <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
             <span class="n">fat</span><span class="o">=</span><span class="n">fat</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">tau_max</span> <span class="o">=</span> <span class="n">tau_max</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tau_max</span> <span class="o">=</span> <span class="n">tau_max</span></div>
+
 
 
 <div class="viewcode-block" id="qLogExpectedImprovement">
@@ -303,7 +304,7 @@
         <span class="n">cache_root</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">tau_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">TAU_MAX</span><span class="p">,</span>
         <span class="n">tau_relu</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">TAU_RELU</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">marginalize_dim</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""q-Noisy Expected Improvement.</span>
 
@@ -342,7 +343,7 @@
 <span class="sd">                approximations to max.</span>
 <span class="sd">            tau_relu: Temperature parameter controlling the sharpness of the smooth</span>
 <span class="sd">                approximations to ReLU.</span>
-<span class="sd">            kwargs: Here for qNEI for compatibility.</span>
+<span class="sd">            marginalize_dim: The dimension to marginalize over.</span>
 
 <span class="sd">        TODO: similar to qNEHVI, when we are using sequential greedy candidate</span>
 <span class="sd">        selection, we could incorporate pending points X_baseline and compute</span>
@@ -371,7 +372,7 @@
             <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
             <span class="n">prune_baseline</span><span class="o">=</span><span class="n">prune_baseline</span><span class="p">,</span>
             <span class="n">cache_root</span><span class="o">=</span><span class="n">cache_root</span><span class="p">,</span>
-            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="n">marginalize_dim</span><span class="o">=</span><span class="n">marginalize_dim</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_sample_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -400,7 +401,7 @@
         <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">prune_baseline</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">cache_root</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">marginalize_dim</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">CachedCholeskyMCSamplerMixin</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">cache_root</span><span class="o">=</span><span class="n">cache_root</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span>
@@ -411,7 +412,7 @@
                 <span class="n">X</span><span class="o">=</span><span class="n">X_baseline</span><span class="p">,</span>
                 <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
                 <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
-                <span class="n">marginalize_dim</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"marginalize_dim"</span><span class="p">),</span>
+                <span class="n">marginalize_dim</span><span class="o">=</span><span class="n">marginalize_dim</span><span class="p">,</span>
                 <span class="n">constraints</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"X_baseline"</span><span class="p">,</span> <span class="n">X_baseline</span><span class="p">)</span>
@@ -583,7 +584,7 @@
 </div>
 </div>
 </div>
-<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div aria-label="Main" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
 <h3>Navigation</h3>

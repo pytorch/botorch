@@ -346,6 +346,8 @@
 
 
 
+<div class="viewcode-block" id="qLogNoisyExpectedHypervolumeImprovement">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.logei.qLogNoisyExpectedHypervolumeImprovement">[docs]</a>
 <span class="k">class</span> <span class="nc">qLogNoisyExpectedHypervolumeImprovement</span><span class="p">(</span>
     <span class="n">NoisyExpectedHypervolumeMixin</span><span class="p">,</span>
     <span class="n">qLogExpectedHypervolumeImprovement</span><span class="p">,</span>
@@ -468,6 +470,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">tau_max</span> <span class="o">=</span> <span class="n">tau_max</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fat</span> <span class="o">=</span> <span class="n">fat</span>
 
+<div class="viewcode-block" id="qLogNoisyExpectedHypervolumeImprovement.forward">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.logei.qLogNoisyExpectedHypervolumeImprovement.forward">[docs]</a>
     <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -497,12 +501,14 @@
         <span class="n">nehvi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_log_qehvi</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">incremental_nehvi</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">nehvi</span>
-        <span class="k">return</span> <span class="n">logplusexp</span><span class="p">(</span><span class="n">nehvi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prev_nehvi</span><span class="o">.</span><span class="n">log</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">logplusexp</span><span class="p">(</span><span class="n">nehvi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prev_nehvi</span><span class="o">.</span><span class="n">log</span><span class="p">())</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>
 </div>
-<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div aria-label="Main" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="../../../../index.html">BoTorch</a></h1>
 <h3>Navigation</h3>

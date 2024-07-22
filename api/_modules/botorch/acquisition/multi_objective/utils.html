@@ -50,7 +50,7 @@
 <span class="kn">from</span> <span class="nn">botorch.models.fully_bayesian</span> <span class="kn">import</span> <span class="n">MCMC_DIM</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.get_sampler</span> <span class="kn">import</span> <span class="n">get_sampler</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.gp_sampling</span> <span class="kn">import</span> <span class="n">get_gp_samples</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.pathwise.posterior_samplers</span> <span class="kn">import</span> <span class="n">get_matheron_path_model</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.box_decomposition</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">BoxDecomposition</span><span class="p">,</span>
 <span class="p">)</span>
@@ -148,9 +148,11 @@
             <span class="s2">"Batched inputs `X` are currently unsupported by "</span>
             <span class="s2">"prune_inferior_points_multi_objective"</span>
         <span class="p">)</span>
-    <span class="n">max_points</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">max_frac</span> <span class="o">*</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">max_points</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">max_points</span> <span class="o">&gt;</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"X must have at least one point."</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">max_frac</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">max_frac</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"max_frac must take values in (0, 1], is </span><span class="si">{</span><span class="n">max_frac</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">max_points</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">max_frac</span> <span class="o">*</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">))</span>
     <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
     <span class="n">sampler</span> <span class="o">=</span> <span class="n">get_sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_samples</span><span class="p">]))</span>
@@ -355,7 +357,6 @@
     <span class="n">optimizer</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span>
         <span class="p">[</span><span class="n">GenericDeterministicModel</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span>
     <span class="p">]</span> <span class="o">=</span> <span class="n">random_search_optimizer</span><span class="p">,</span>
-    <span class="n">num_rff_features</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
     <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">optimizer_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
@@ -379,7 +380,6 @@
 <span class="sd">        num_samples: The number of GP samples.</span>
 <span class="sd">        num_points: The number of optimal points to be outputted.</span>
 <span class="sd">        optimizer: A callable that solves the deterministic optimization problem.</span>
-<span class="sd">        num_rff_features: The number of random Fourier features.</span>
 <span class="sd">        maximize: If true, we consider a maximization problem.</span>
 <span class="sd">        optimizer_kwargs: The additional arguments for the optimizer.</span>
 
@@ -391,7 +391,7 @@
 <span class="sd">        - A `num_samples x num_points x M`-dim Tensor containing the collection of</span>
 <span class="sd">            optimal objectives.</span>
 <span class="sd">    """</span>
-    <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dtype"</span><span class="p">:</span> <span class="n">bounds</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">:</span> <span class="n">bounds</span><span class="o">.</span><span class="n">device</span><span class="p">}</span>
+    <span class="n">tkwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dtype"</span><span class="p">:</span> <span class="n">bounds</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">:</span> <span class="n">bounds</span><span class="o">.</span><span class="n">device</span><span class="p">}</span>
     <span class="n">M</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">num_outputs</span>
     <span class="n">d</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">M</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -404,9 +404,7 @@
     <span class="n">pareto_sets</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_samples</span><span class="p">,</span> <span class="n">num_points</span><span class="p">,</span> <span class="n">d</span><span class="p">),</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
     <span class="n">pareto_fronts</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_samples</span><span class="p">,</span> <span class="n">num_points</span><span class="p">,</span> <span class="n">M</span><span class="p">),</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_samples</span><span class="p">):</span>
-        <span class="n">sample_i</span> <span class="o">=</span> <span class="n">get_gp_samples</span><span class="p">(</span>
-            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">num_outputs</span><span class="o">=</span><span class="n">M</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_rff_features</span><span class="o">=</span><span class="n">num_rff_features</span>
-        <span class="p">)</span>
+        <span class="n">sample_i</span> <span class="o">=</span> <span class="n">get_matheron_path_model</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
         <span class="n">ps_i</span><span class="p">,</span> <span class="n">pf_i</span> <span class="o">=</span> <span class="n">optimizer</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">sample_i</span><span class="p">,</span>
             <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
@@ -423,7 +421,7 @@
 </div>
 </div>
 </div>
-<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div aria-label="Main" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="../../../../index.html">BoTorch</a></h1>
 <h3>Navigation</h3>

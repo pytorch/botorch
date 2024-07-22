@@ -127,6 +127,8 @@
 
 
 
+<div class="viewcode-block" id="PyroModel">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.PyroModel">[docs]</a>
 <span class="k">class</span> <span class="nc">PyroModel</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Base class for a Pyro model; used to assist in learning hyperparameters.</span>
@@ -140,10 +142,10 @@
 <span class="sd">    The utility of `PyroModel` is in enabling fast fitting with NUTS, since we</span>
 <span class="sd">    would otherwise need to use GPyTorch, which is computationally infeasible</span>
 <span class="sd">    in combination with Pyro.</span>
-
-<span class="sd">    :meta private:</span>
 <span class="sd">    """</span>
 
+<div class="viewcode-block" id="PyroModel.set_inputs">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.PyroModel.set_inputs">[docs]</a>
     <span class="k">def</span> <span class="nf">set_inputs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -156,26 +158,37 @@
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">train_X</span> <span class="o">=</span> <span class="n">train_X</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">train_Y</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">train_Yvar</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">train_Yvar</span></div>
 
+
+<div class="viewcode-block" id="PyroModel.sample">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.PyroModel.sample">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample from the model."""</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
 
+
+<div class="viewcode-block" id="PyroModel.postprocess_mcmc_samples">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.PyroModel.postprocess_mcmc_samples">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">postprocess_mcmc_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">mcmc_samples</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Post-process the final MCMC samples."""</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
 
+
+<div class="viewcode-block" id="PyroModel.load_mcmc_samples">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.PyroModel.load_mcmc_samples">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">load_mcmc_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">mcmc_samples</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Mean</span><span class="p">,</span> <span class="n">Kernel</span><span class="p">,</span> <span class="n">Likelihood</span><span class="p">]:</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+</div>
+
 
 
 <div class="viewcode-block" id="SaasPyroModel">
@@ -660,7 +673,7 @@
 </div>
 </div>
 </div>
-<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div aria-label="Main" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
 <h3>Navigation</h3>

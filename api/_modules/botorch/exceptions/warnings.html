@@ -30,6 +30,7 @@
 <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">Botorch Warnings.</span>
 <span class="sd">"""</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 
 
 <div class="viewcode-block" id="BotorchWarning">
@@ -71,7 +72,7 @@
 <div class="viewcode-block" id="OptimizationWarning">
 <a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.warnings.OptimizationWarning">[docs]</a>
 <span class="k">class</span> <span class="nc">OptimizationWarning</span><span class="p">(</span><span class="n">BotorchWarning</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""Optimization-releated warnings."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Optimization-related warnings."""</span>
 
     <span class="k">pass</span></div>
 
@@ -104,6 +105,53 @@
 
 
 
+<div class="viewcode-block" id="NumericsWarning">
+<a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.warnings.NumericsWarning">[docs]</a>
+<span class="k">class</span> <span class="nc">NumericsWarning</span><span class="p">(</span><span class="n">BotorchWarning</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Warning raised when numerical issues are detected."""</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="legacy_ei_numerics_warning">
+<a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.warnings.legacy_ei_numerics_warning">[docs]</a>
+<span class="k">def</span> <span class="nf">legacy_ei_numerics_warning</span><span class="p">(</span><span class="n">legacy_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raises a warning for legacy EI acquisition functions that are known to have</span>
+<span class="sd">    numerical issues and should be replaced with the LogEI version for virtually all</span>
+<span class="sd">    use-cases except for explicit benchmarking of the numerical issues of legacy EI.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        legacy_name: The name of the legacy EI acquisition function.</span>
+<span class="sd">        logei_name: The name of the associated LogEI acquisition function.</span>
+<span class="sd">    """</span>
+    <span class="n">legacy_to_logei</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"ExpectedImprovement"</span><span class="p">:</span> <span class="s2">"LogExpectedImprovement"</span><span class="p">,</span>
+        <span class="s2">"ConstrainedExpectedImprovement"</span><span class="p">:</span> <span class="s2">"LogConstrainedExpectedImprovement"</span><span class="p">,</span>
+        <span class="s2">"NoisyExpectedImprovement"</span><span class="p">:</span> <span class="s2">"LogNoisyExpectedImprovement"</span><span class="p">,</span>
+        <span class="s2">"qExpectedImprovement"</span><span class="p">:</span> <span class="s2">"qLogExpectedImprovement"</span><span class="p">,</span>
+        <span class="s2">"qNoisyExpectedImprovement"</span><span class="p">:</span> <span class="s2">"qLogNoisyExpectedImprovement"</span><span class="p">,</span>
+        <span class="s2">"qExpectedHypervolumeImprovement"</span><span class="p">:</span> <span class="s2">"qLogExpectedHypervolumeImprovement"</span><span class="p">,</span>
+        <span class="s2">"qNoisyExpectedHypervolumeImprovement"</span><span class="p">:</span> <span class="p">(</span>
+            <span class="s2">"qLogNoisyExpectedHypervolumeImprovement"</span>
+        <span class="p">),</span>
+    <span class="p">}</span>
+    <span class="c1"># Only raise the warning if the legacy name is in the mapping. It can fail to be in</span>
+    <span class="c1"># the mapping if the legacy acquisition function derives from a legacy EI class,</span>
+    <span class="c1"># e.g. MOMF, which derives from qEHVI, but there is not corresponding LogMOMF yet.</span>
+    <span class="k">if</span> <span class="n">legacy_name</span> <span class="ow">in</span> <span class="n">legacy_to_logei</span><span class="p">:</span>
+        <span class="n">logei_name</span> <span class="o">=</span> <span class="n">legacy_to_logei</span><span class="p">[</span><span class="n">legacy_name</span><span class="p">]</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">legacy_name</span><span class="si">}</span><span class="s2"> has known numerical issues that lead to suboptimal "</span>
+            <span class="s2">"optimization performance. It is strongly recommended to simply replace"</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="se">\n\n\t</span><span class="s2"> </span><span class="si">{</span><span class="n">legacy_name</span><span class="si">}</span><span class="s2"> </span><span class="se">\t</span><span class="s2"> --&gt; </span><span class="se">\t</span><span class="s2"> </span><span class="si">{</span><span class="n">logei_name</span><span class="si">}</span><span class="s2"> </span><span class="se">\n\n</span><span class="s2">"</span>
+            <span class="s2">"instead, which fixes the issues and has the same "</span>
+            <span class="s2">"API. See https://arxiv.org/abs/2310.20708 for details."</span>
+        <span class="p">)</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">NumericsWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></div>
+
+
+
 <span class="k">def</span> <span class="nf">_get_single_precision_warning</span><span class="p">(</span><span class="n">dtype_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
         <span class="sa">f</span><span class="s2">"The model inputs are of type </span><span class="si">{</span><span class="n">dtype_str</span><span class="si">}</span><span class="s2">. It is strongly recommended "</span>
@@ -116,7 +164,7 @@
 </div>
 </div>
 </div>
-<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div aria-label="Main" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
 <h3>Navigation</h3>
