@@ -49,11 +49,7 @@ _log_sqrt_pi_div_2 = math.log(math.pi / 2) / 2
 
 
 class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
-    r"""
-    Base class for analytic acquisition functions.
-
-    :meta private:
-    """
+    """Base class for analytic acquisition functions."""
 
     def __init__(
         self,

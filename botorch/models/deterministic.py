@@ -36,11 +36,7 @@ from torch import Tensor
 
 
 class DeterministicModel(EnsembleModel):
-    r"""
-    Abstract base class for deterministic models.
-
-    :meta private:
-    """
+    """Abstract base class for deterministic models."""
 
     @abstractmethod
     def forward(self, X: Tensor) -> Tensor:

@@ -58,8 +58,6 @@ from torch import Tensor
 class MCAcquisitionFunction(AcquisitionFunction, MCSamplerMixin, ABC):
     r"""
     Abstract base class for Monte-Carlo based batch acquisition functions.
-
-    :meta private:
     """
 
     def __init__(

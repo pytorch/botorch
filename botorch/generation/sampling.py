@@ -38,11 +38,7 @@ from torch.nn import Module
 
 
 class SamplingStrategy(Module, ABC):
-    r"""
-    Abstract base class for sampling-based generation strategies.
-
-    :meta private:
-    """
+    """Abstract base class for sampling-based generation strategies."""
 
     @abstractmethod
     def forward(self, X: Tensor, num_samples: int = 1) -> Tensor:

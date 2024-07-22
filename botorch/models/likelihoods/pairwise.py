@@ -28,8 +28,6 @@ from torch.distributions import Bernoulli
 class PairwiseLikelihood(Likelihood, ABC):
     """
     Pairwise likelihood base class for pairwise preference GP (e.g., PairwiseGP).
-
-    :meta private:
     """
 
     def __init__(self, max_plate_nesting: int = 1):

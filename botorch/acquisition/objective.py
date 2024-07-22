@@ -32,11 +32,7 @@ DEFAULT_NUM_PREF_SAMPLES = 16
 
 
 class PosteriorTransform(Module, ABC):
-    r"""
-    Abstract base class for objectives that transform the posterior.
-
-    :meta private:
-    """
+    """Abstract base class for objectives that transform the posterior."""
 
     @abstractmethod
     def evaluate(self, Y: Tensor) -> Tensor:
@@ -240,8 +236,6 @@ class MCAcquisitionObjective(Module, ABC):
         _verify_output_shape: If True and `X` is given, check that the q-batch
             shape of the objectives agrees with that of X.
         _is_mo: A boolean denoting whether the objectives are multi-output.
-
-    :meta private:
     """
 
     _verify_output_shape: bool = True

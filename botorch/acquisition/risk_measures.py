@@ -44,8 +44,6 @@ class RiskMeasureMCObjective(MCAcquisitionObjective, ABC):
     is to calculate the risk measures w.r.t. the lower tail of the distribution.
     This can be changed by passing a preprocessing function with
     `weights=torch.tensor([-1.0])`.
-
-    :meta private:
     """
 
     def __init__(

@@ -108,8 +108,6 @@ class PyroModel:
     The utility of `PyroModel` is in enabling fast fitting with NUTS, since we
     would otherwise need to use GPyTorch, which is computationally infeasible
     in combination with Pyro.
-
-    :meta private:
     """
 
     def set_inputs(

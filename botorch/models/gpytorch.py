@@ -60,8 +60,6 @@ class GPyTorchModel(Model, ABC):
 
     The easiest way to use this is to subclass a model from a GPyTorch model
     class (e.g. an `ExactGP`) and this `GPyTorchModel`. See e.g. `SingleTaskGP`.
-
-    :meta private:
     """
 
     likelihood: Likelihood
@@ -269,8 +267,6 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
 
     This model should be used when the same training data is used for all outputs.
     Outputs are modeled independently by using a different batch for each output.
-
-    :meta private:
     """
 
     _num_outputs: int
@@ -603,8 +599,6 @@ class ModelListGPyTorchModel(ModelList, GPyTorchModel, ABC):
     This is meant to be used with a gpytorch ModelList wrapper for independent
     evaluation of submodels. Those submodels can themselves be multi-output
     models, in which case the task covariances will be ignored.
-
-    :meta private:
     """
 
     @property
@@ -740,8 +734,6 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
 
     This class provides the `posterior` method to models that implement a
     "long-format" multi-task GP in the style of `MultiTaskGP`.
-
-    :meta private:
     """
 
     def _map_tasks(self, task_values: Tensor) -> Tensor:
