@@ -35,15 +35,17 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
+<div class="viewcode-block" id="StoppingCriterion">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.stopping.StoppingCriterion">[docs]</a>
 <span class="k">class</span> <span class="nc">StoppingCriterion</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Base class for evaluating optimization convergence.</span>
 
 <span class="sd">    Stopping criteria are implemented as a objects rather than a function, so that they</span>
 <span class="sd">    can keep track of past function values between optimization steps.</span>
-
-<span class="sd">    :meta private:</span>
 <span class="sd">    """</span>
 
+<div class="viewcode-block" id="StoppingCriterion.evaluate">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.stopping.StoppingCriterion.evaluate">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fvals</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the stopping criterion.</span>
@@ -57,10 +59,12 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            Stopping indicator (if True, stop the optimziation).</span>
 <span class="sd">        """</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+
 
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fvals</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">fvals</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">fvals</span><span class="p">)</span></div>
+
 
 
 <div class="viewcode-block" id="ExpMAStoppingCriterion">

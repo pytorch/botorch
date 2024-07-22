@@ -190,16 +190,27 @@
 
 
 
+<div class="viewcode-block" id="DummyNonScalarizingPosteriorTransform">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.test_helpers.DummyNonScalarizingPosteriorTransform">[docs]</a>
 <span class="k">class</span> <span class="nc">DummyNonScalarizingPosteriorTransform</span><span class="p">(</span><span class="n">PosteriorTransform</span><span class="p">):</span>
     <span class="n">scalarize</span> <span class="o">=</span> <span class="kc">False</span>
 
+<div class="viewcode-block" id="DummyNonScalarizingPosteriorTransform.evaluate">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.test_helpers.DummyNonScalarizingPosteriorTransform.evaluate">[docs]</a>
     <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">):</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
 
+
+<div class="viewcode-block" id="DummyNonScalarizingPosteriorTransform.forward">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.test_helpers.DummyNonScalarizingPosteriorTransform.forward">[docs]</a>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">):</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+</div>
 
 
+
+<div class="viewcode-block" id="SimpleGPyTorchModel">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.test_helpers.SimpleGPyTorchModel">[docs]</a>
 <span class="k">class</span> <span class="nc">SimpleGPyTorchModel</span><span class="p">(</span><span class="n">GPyTorchModel</span><span class="p">,</span> <span class="n">ExactGP</span><span class="p">,</span> <span class="n">FantasizeMixin</span><span class="p">):</span>
     <span class="n">last_fantasize_flag</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
@@ -232,6 +243,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transformed_call_args</span> <span class="o">=</span> <span class="p">[]</span>
 
+<div class="viewcode-block" id="SimpleGPyTorchModel.forward">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.test_helpers.SimpleGPyTorchModel.forward">[docs]</a>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">last_fantasize_flag</span> <span class="o">=</span> <span class="n">fantasize</span><span class="o">.</span><span class="n">on</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
@@ -239,7 +252,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">transformed_call_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">mean_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">covar_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean_x</span><span class="p">,</span> <span class="n">covar_x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean_x</span><span class="p">,</span> <span class="n">covar_x</span><span class="p">)</span></div>
+</div>
+
 </pre></div>
 </div>
 </div>

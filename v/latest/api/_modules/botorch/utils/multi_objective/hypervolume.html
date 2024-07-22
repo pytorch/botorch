@@ -566,6 +566,8 @@
 
 
 
+<div class="viewcode-block" id="NoisyExpectedHypervolumeMixin">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.NoisyExpectedHypervolumeMixin">[docs]</a>
 <span class="k">class</span> <span class="nc">NoisyExpectedHypervolumeMixin</span><span class="p">(</span><span class="n">CachedCholeskyMCSamplerMixin</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -837,6 +839,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"cell_lower_bounds"</span><span class="p">,</span> <span class="n">cell_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"cell_upper_bounds"</span><span class="p">,</span> <span class="n">cell_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 
+<div class="viewcode-block" id="NoisyExpectedHypervolumeMixin.set_X_pending">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.NoisyExpectedHypervolumeMixin.set_X_pending">[docs]</a>
     <span class="k">def</span> <span class="nf">set_X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Informs the acquisition function about pending design points.</span>
 
@@ -881,7 +885,8 @@
                     <span class="k">else</span><span class="p">:</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">X_pending</span> <span class="o">=</span> <span class="n">X_pending</span><span class="p">[</span><span class="o">-</span><span class="n">num_new_points</span><span class="p">:]</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">X_pending</span> <span class="o">=</span> <span class="n">X_pending</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">X_pending</span> <span class="o">=</span> <span class="n">X_pending</span></div>
+
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">_hypervolumes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -894,7 +899,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">partitioning</span><span class="o">.</span><span class="n">compute_hypervolume</span><span class="p">()</span>
             <span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span><span class="p">)</span>  <span class="c1"># for m &gt; 2, the partitioning is on the CPU</span>
             <span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_batch_sample_shape</span><span class="p">)</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
+
 </pre></div>
 </div>
 </div>

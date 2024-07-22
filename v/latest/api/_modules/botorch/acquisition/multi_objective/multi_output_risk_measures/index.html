@@ -68,6 +68,8 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
+<div class="viewcode-block" id="MultiOutputRiskMeasureMCObjective">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective">[docs]</a>
 <span class="k">class</span> <span class="nc">MultiOutputRiskMeasureMCObjective</span><span class="p">(</span>
     <span class="n">RiskMeasureMCObjective</span><span class="p">,</span> <span class="n">MCMultiOutputObjective</span><span class="p">,</span> <span class="n">ABC</span>
 <span class="p">):</span>
@@ -78,8 +80,6 @@
 <span class="sd">    If the q-batch includes samples corresponding to multiple inputs, it is assumed</span>
 <span class="sd">    that first `n_w` samples correspond to first input, second `n_w` samples</span>
 <span class="sd">    correspond to second input, etc.</span>
-
-<span class="sd">    :meta private:</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -116,6 +116,8 @@
         <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocessing_function</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">samples</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_w</span><span class="p">,</span> <span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 
+<div class="viewcode-block" id="MultiOutputRiskMeasureMCObjective.forward">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective.forward">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Calculate the risk measure corresponding to the given samples.</span>
@@ -129,7 +131,9 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            A `sample_shape x batch_shape x q x m'`-dim tensor of risk measure samples.</span>
 <span class="sd">        """</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+</div>
+
 
 
 <div class="viewcode-block" id="MultiOutputExpectation">

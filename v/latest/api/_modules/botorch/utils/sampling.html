@@ -500,12 +500,10 @@
 
 
 
+<div class="viewcode-block" id="PolytopeSampler">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.PolytopeSampler">[docs]</a>
 <span class="k">class</span> <span class="nc">PolytopeSampler</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">    Base class for samplers that sample points from a polytope.</span>
-
-<span class="sd">    :meta private:</span>
-<span class="sd">    """</span>
+<span class="w">    </span><span class="sd">"""Base class for samplers that sample points from a polytope."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -577,6 +575,8 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">x0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_interior_point</span><span class="p">()</span>
 
+<div class="viewcode-block" id="PolytopeSampler.feasible">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.PolytopeSampler.feasible">[docs]</a>
     <span class="k">def</span> <span class="nf">feasible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Check whether a point is contained in the polytope.</span>
 
@@ -591,8 +591,11 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">equality_constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">eq</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">C</span> <span class="o">@</span> <span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
             <span class="k">return</span> <span class="n">ineq</span> <span class="o">&amp;</span> <span class="n">eq</span>
-        <span class="k">return</span> <span class="n">ineq</span>
+        <span class="k">return</span> <span class="n">ineq</span></div>
 
+
+<div class="viewcode-block" id="PolytopeSampler.find_interior_point">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.PolytopeSampler.find_interior_point">[docs]</a>
     <span class="k">def</span> <span class="nf">find_interior_point</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Find an interior point of the polytope.</span>
 
@@ -611,10 +614,13 @@
         <span class="n">x0</span> <span class="o">=</span> <span class="n">find_interior_point</span><span class="p">(</span>
             <span class="n">A</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">b</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">A_eq</span><span class="o">=</span><span class="n">A_eq</span><span class="p">,</span> <span class="n">b_eq</span><span class="o">=</span><span class="n">b_eq</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
+
 
     <span class="c1"># -------- Abstract methods to be implemented by subclasses -------- #</span>
 
+<div class="viewcode-block" id="PolytopeSampler.draw">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.PolytopeSampler.draw">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Draw samples from the polytope.</span>
@@ -625,7 +631,9 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            A `n x d` Tensor of samples from the polytope.</span>
 <span class="sd">        """</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+</div>
+
 
 
 <div class="viewcode-block" id="HitAndRunPolytopeSampler">

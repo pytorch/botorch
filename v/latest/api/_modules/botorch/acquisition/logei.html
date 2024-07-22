@@ -91,11 +91,11 @@
 <span class="n">FloatOrTensor</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"FloatOrTensor"</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span>
 
 
+<div class="viewcode-block" id="LogImprovementMCAcquisitionFunction">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.logei.LogImprovementMCAcquisitionFunction">[docs]</a>
 <span class="k">class</span> <span class="nc">LogImprovementMCAcquisitionFunction</span><span class="p">(</span><span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Abstract base class for Monte-Carlo-based batch LogEI acquisition functions.</span>
-
-<span class="sd">    :meta private:</span>
 <span class="sd">    """</span>
 
     <span class="n">_log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
@@ -157,7 +157,8 @@
             <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
             <span class="n">fat</span><span class="o">=</span><span class="n">fat</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">tau_max</span> <span class="o">=</span> <span class="n">tau_max</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tau_max</span> <span class="o">=</span> <span class="n">tau_max</span></div>
+
 
 
 <div class="viewcode-block" id="qLogExpectedImprovement">

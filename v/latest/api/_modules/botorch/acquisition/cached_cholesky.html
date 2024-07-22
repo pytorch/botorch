@@ -86,14 +86,14 @@
     <span class="k">return</span> <span class="n">msg</span>
 
 
+<div class="viewcode-block" id="CachedCholeskyMCSamplerMixin">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cached_cholesky.CachedCholeskyMCSamplerMixin">[docs]</a>
 <span class="k">class</span> <span class="nc">CachedCholeskyMCSamplerMixin</span><span class="p">(</span><span class="n">MCSamplerMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Abstract Mixin class for acquisition functions using a cached Cholesky.</span>
 
 <span class="sd">    Specifically, this is for acquisition functions that require sampling from</span>
 <span class="sd">    the posterior P(f(X_baseline, X) | D). The Cholesky of the posterior</span>
 <span class="sd">    covariance over f(X_baseline) is cached.</span>
-
-<span class="sd">    :meta private:</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -211,7 +211,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">_update_base_samples</span><span class="p">(</span>
                 <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span> <span class="n">base_sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_sampler</span>
             <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">q_in</span> <span class="o">=</span> <span class="n">q_in</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">q_in</span> <span class="o">=</span> <span class="n">q_in</span></div>
+
 </pre></div>
 </div>
 </div>
