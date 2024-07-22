@@ -2,6 +2,38 @@
 
 The release log for BoTorch.
 
+## [0.11.2] -- Jul 22, 2024
+
+#### Compatibility
+* Pin NumPy to <2.0 (#2382).
+* Require GPyTorch 1.12 (#2408).
+
+#### New features
+* Support evaluating posterior predictive in `MultiTaskGP` (#2375).
+* Infinite width BNN kernel (#2366) & the curresponding tutorial (#2381).
+* An improved elliptical slice sampling implementation (#2426).
+* Add a helper for producing a `DeterministicModel` using a Matheron path (#2435).
+
+#### Deprecations
+* Stop allowing some arguments to be ignored in acqf input constructors (#2356).
+* Reap deprecated `**kwargs` argument from `optimize_acqf` variants (#2390).
+* Delete `DeterministicPosterior` and `DeterministicSampler` (#2391, #2409, #2410).
+* Removed deprecated `CachedCholeskyMCAcquisitionFunction` (#2399).
+* Deprecate model conversion code (#2431).
+* Deprecate `gp_sampling` module in favor of pathwise sampling (#2432).
+
+#### Bug Fixes
+* Fix observation noise shape for batched models (#2377).
+* Fix `sample_all_priors` to not sample one value for all lengthscales (#2404).
+* Make `(Log)NoisyExpectedImprovement` create a correct fantasy model with
+  non-default `SingleTaskGP` (#2414).
+
+#### Other Changes
+* Various documentation improvements (#2395, #2425, #2436, #2437, #2438).
+* Clean up `**kwargs` arguments in `qLogNEI` (#2406).
+* Add a `NumericsWarning` for Legacy EI implementations (#2429).
+
+
 ## [0.11.1] -- Jun 11, 2024
 
 #### New Features
