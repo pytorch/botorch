@@ -902,7 +902,8 @@ to the model. (required for noiseless fantasies).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.gpytorch.GPyTorchModel" title="botorch.models.gpytorch.GPyTorchModel"><em>GPyTorchModel</em></a>) – A fitted single-outcome model.</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.gpytorch.GPyTorchModel" title="botorch.models.gpytorch.GPyTorchModel"><em>GPyTorchModel</em></a>) – A fitted single-outcome model. Only <cite>SingleTaskGP</cite> models with
+known observation noise are currently supported.</p></li>
 <li><p><strong>X_observed</strong> (<em>Tensor</em>) – A <cite>n x d</cite> Tensor of observed points that are likely to
 be the best observed points so far.</p></li>
 <li><p><strong>num_fantasies</strong> (<em>int</em>) – The number of fantasies to generate. The higher this
@@ -958,7 +959,8 @@ improved numerics. See <a class="reference external" href="https://arxiv.org/abs
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.gpytorch.GPyTorchModel" title="botorch.models.gpytorch.GPyTorchModel"><em>GPyTorchModel</em></a>) – A fitted single-outcome model.</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.gpytorch.GPyTorchModel" title="botorch.models.gpytorch.GPyTorchModel"><em>GPyTorchModel</em></a>) – A fitted single-outcome model. Only <cite>SingleTaskGP</cite> models with
+known observation noise are currently supported.</p></li>
 <li><p><strong>X_observed</strong> (<em>Tensor</em>) – A <cite>n x d</cite> Tensor of observed points that are likely to
 be the best observed points so far.</p></li>
 <li><p><strong>num_fantasies</strong> (<em>int</em>) – The number of fantasies to generate. The higher this
