@@ -68,12 +68,15 @@ class GPyTorchModel(Model, ABC):
     def _validate_tensor_args(
         X: Tensor, Y: Tensor, Yvar: Optional[Tensor] = None, strict: bool = True
     ) -> None:
-        r"""Checks that `Y` and `Yvar` have an explicit output dimension if strict.
-        Checks that the dtypes of the inputs match, and warns if using float.
+        r"""Check the input tensors to verify that they are compatible with
+        BoTorch conventions. This checks that
 
-        This also checks that `Yvar` has the same trailing dimensions as `Y`. Note
-        we only infer that an explicit output dimension exists when `X` and `Y` have
-        the same `batch_shape`.
+        - `Y` and `Yvar` have an explicit output dimension if strict.
+        - The dtypes of the inputs match and warns if using float.
+        - `Yvar` has the same trailing dimensions as `Y`.
+          Note: We only infer that an explicit output dimension exists when
+          `X` and `Y` have the same `batch_shape`.
+        - The input tensors do not require gradients.
 
         Args:
             X: A `batch_shape x n x d`-dim Tensor, where `d` is the dimension of
@@ -130,6 +133,17 @@ class GPyTorchModel(Model, ABC):
                 _get_single_precision_warning(str(X.dtype)),
                 InputDataWarning,
                 stacklevel=3,  # Warn at model constructor call.
+            )
+        if (
+            X.requires_grad
+            or Y.requires_grad
+            or (Yvar is not None and Yvar.requires_grad)
+        ):
+            raise InputDataError(
+                "The BoTorch model inputs should not require gradients. This leads to "
+                f"errors during model fitting. Got {X.requires_grad=}, "
+                f"{Y.requires_grad=}"
+                + ("." if Yvar is None else f", and {Yvar.requires_grad=}.")
             )
 
     @property

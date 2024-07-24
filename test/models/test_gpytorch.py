@@ -255,6 +255,20 @@ class TestGPyTorchModel(BotorchTestCase):
                     ):
                         GPyTorchModel._validate_tensor_args(X, Y, Yvar, strict=strict)
 
+    def test_validate_tensor_args_with_grad(self) -> None:
+        with self.assertRaisesRegex(
+            InputDataError, "inputs should not require gradients"
+        ):
+            GPyTorchModel._validate_tensor_args(
+                X=torch.randn(1, 1, requires_grad=True), Y=torch.randn(1, 1)
+            )
+        with self.assertRaisesRegex(InputDataError, "Yvar.requires_grad=False"):
+            GPyTorchModel._validate_tensor_args(
+                X=torch.randn(1, 1, requires_grad=True),
+                Y=torch.randn(1, 1),
+                Yvar=torch.randn(1, 1),
+            )
+
     def test_condition_on_observations_tensor_validation(self) -> None:
         model = SimpleGPyTorchModel(torch.rand(5, 1), torch.randn(5, 1))
         model.posterior(torch.rand(2, 1))  # evaluate the model to form caches.
