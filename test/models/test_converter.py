@@ -7,7 +7,6 @@
 
 import torch
 from botorch.exceptions import UnsupportedError
-from botorch.exceptions.warnings import BotorchWarning
 from botorch.models import (
     HeteroskedasticSingleTaskGP,
     ModelListGP,
@@ -246,8 +245,8 @@ class TestConverters(BotorchTestCase):
                 model_list_to_batched(list_gp)
 
     def test_model_list_to_batched_with_different_prior(self) -> None:
-        # The goal is to test priors that don't have their parameters
-        # recorded in the state dict.
+        # The goal is to test priors that didn't have their parameters
+        # recorded in the state dict prior to GPyTorch #2551.
         train_X = torch.rand(10, 2, device=self.device, dtype=torch.double)
         gp1 = SingleTaskGP(
             train_X=train_X,
@@ -263,7 +262,9 @@ class TestConverters(BotorchTestCase):
                 ard_num_dims=2, lengthscale_prior=LogNormalPrior(2.0, 4.0)
             ),
         )
-        with self.assertWarnsRegex(BotorchWarning, "Model converter cannot verify"):
+        with self.assertRaisesRegex(
+            UnsupportedError, "All scalars must have the same value."
+        ):
             model_list_to_batched(ModelListGP(gp1, gp2))
 
     def test_roundtrip(self):
