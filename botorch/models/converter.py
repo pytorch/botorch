@@ -68,7 +68,7 @@ def _check_compatibility(models: ModuleList) -> None:
                 "Sub-modules must be of the same type across models."
             )
         if "prior" in modn and len(mod.state_dict()) == 0:
-            warnings.warn(
+            warnings.warn(  # pragma no cover -- not tested after GPyTorch 2551.
                 "Model converter cannot verify compatibility of GPyTorch priors "
                 "that do not register their parameters as buffers. If the prior "
                 "is different than the default prior set by the model constructor "
