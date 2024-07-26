@@ -33,7 +33,7 @@ References:
 
 import math
 from abc import abstractmethod
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 import pyro
 import torch
@@ -44,6 +44,9 @@ from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.models.utils import validate_input_scaling
 from botorch.models.utils.gpytorch_modules import MIN_INFERRED_NOISE_LEVEL
 from botorch.posteriors.fully_bayesian import GaussianMixturePosterior, MCMC_DIM
+from botorch.sampling import NormalQMCEngine
+from botorch.utils.containers import BotorchContainer
+from botorch.utils.datasets import SupervisedDataset
 from gpytorch.constraints import GreaterThan
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
@@ -165,13 +168,16 @@ class SaasPyroModel(PyroModel):
         self.ard_num_dims = self.train_X.shape[-1]
 
     def sample(self) -> None:
-        r"""Sample from the SAAS model.
+        r"""Sample from the SAAS model. 
 
         This samples the mean, noise variance, outputscale, and lengthscales according
         to the SAAS prior.
         """
         tkwargs = {"dtype": self.train_X.dtype, "device": self.train_X.device}
-        outputscale = self.sample_outputscale(concentration=2.0, rate=0.15, **tkwargs)
+        if self.fix_outputscale:
+            outputscale = self.get_fixed_outputscale(**tkwargs)
+        else:
+            outputscale = self.sample_outputscale(**tkwargs)
         mean = self.sample_mean(**tkwargs)
         noise = self.sample_noise(**tkwargs)
         lengthscale = self.sample_lengthscale(dim=self.ard_num_dims, **tkwargs)
@@ -196,6 +202,15 @@ class SaasPyroModel(PyroModel):
                 torch.tensor(concentration, **tkwargs),
                 torch.tensor(rate, **tkwargs),
             ),
+        )
+
+    def get_fixed_outputscale(
+        self, **tkwargs: Any
+    ) -> Tensor:
+        r"""Sample the outputscale."""
+        return pyro.deterministic(
+            "outputscale",
+            torch.tensor([1], **tkwargs),
         )
 
     def sample_mean(self, **tkwargs: Any) -> Tensor:
@@ -299,7 +314,246 @@ class SaasPyroModel(PyroModel):
         )
         covar_module.outputscale = reshape_and_detach(
             target=covar_module.outputscale,
-            new_value=mcmc_samples["outputscale"],
+            new_value=mcmc_samples.get("outputscale", torch.ones(num_mcmc_samples, **tkwargs)),
+        )
+        mean_module.constant.data = reshape_and_detach(
+            target=mean_module.constant.data,
+            new_value=mcmc_samples["mean"],
+        )
+        return mean_module, covar_module, likelihood
+
+    def sobol_sample_all_priors(
+        self, num_samples: int, share_draws: bool = True
+    ) -> Dict[str, Tensor]:
+        """Samples all priors."""
+        outputscale = torch.zeros(0)
+        mean = torch.zeros(0)
+        noise = torch.zeros(0, 1)
+        lengthscale = torch.zeros(0, self.ard_num_dims)
+        for _ in range(num_samples):
+            outputscale = torch.cat(
+                (outputscale, self.sample_outputscale().unsqueeze(0))
+            )
+            mean = torch.cat((mean, self.sample_mean().unsqueeze(0)))
+            noise = torch.cat((noise, self.sample_noise().reshape(1, 1)))
+            lengthscale = torch.cat(
+                (lengthscale, self.sample_lengthscale(self.ard_num_dims).unsqueeze(0))
+            )
+
+        if share_draws:
+            all_lengthscales = lengthscale[..., 0]
+            repeat_sobol = torch.stack(
+                [
+                    torch.randperm(all_lengthscales.shape[0])
+                    for _ in range(lengthscale.shape[-1])
+                ]
+            )
+            lengthscale = all_lengthscales[repeat_sobol.T]
+
+        return {
+            "outputscale": outputscale,
+            "mean": mean,
+            "noise": noise,
+            "lengthscale": lengthscale,
+        }
+
+
+class ScaledDimPyroModel(PyroModel):
+
+    def __init__(self) -> None:
+        self._set_default_hyperparameters()
+
+    def set_lengthscale(self, loc: float = 0.0, scale: float = 1):
+        self._ls_loc = loc
+        self.ls_scale = scale
+        
+    def set_outputscale(self, loc: float = 0.0, scale: float = 0.0):
+        self.ops_loc = loc
+        self.ops_scale = scale
+
+    def set_mean(self, loc: float = 0.0, scale: float = 0.25):
+        self.mean_loc = loc
+        self.mean_scale = scale
+
+    def set_noise(self, loc: float = -4.0, scale: float = 1.0):
+        self.noise_loc = loc
+        self.noise_scale = scale
+
+    def _set_default_hyperparameters(self):
+        self.set_lengthscale()
+        self.set_outputscale()
+        self.set_mean()
+        self.set_noise()
+
+    @property
+    def ls_loc(self) -> float:
+        return self._ls_loc + math.log(self.ard_num_dims) * 0.5
+
+    def set_inputs(
+        self, train_X: Tensor, train_Y: Tensor, train_Yvar: Optional[Tensor] = None
+    ):
+        super().set_inputs(train_X, train_Y, train_Yvar)
+        self.ard_num_dims = self.train_X.shape[-1]
+
+    def sample_mean(self, **tkwargs: Any) -> Tensor:
+        r"""Sample the mean constant."""
+        return pyro.sample(
+            "mean",
+            pyro.distributions.Normal(
+                torch.tensor(self.mean_loc, **tkwargs),
+                torch.tensor(self.mean_scale, **tkwargs),
+            ),
+        )
+
+    def sample_noise(self, **tkwargs: Any) -> Tensor:
+        r"""Sample the noise variance."""
+        if self.noise_scale == 0.0:
+            return torch.exp(torch.Tensor([self.noise_loc])).to(**tkwargs)
+
+        if self.train_Yvar is None:
+            return MIN_INFERRED_NOISE_LEVEL + pyro.sample(
+                "noise",
+                pyro.distributions.LogNormal(
+                    torch.tensor(self.noise_loc, **tkwargs),
+                    torch.tensor(self.noise_scale, **tkwargs),
+                ),
+            )
+        else:
+            return self.train_Yvar
+
+    def sample_lengthscale(self, **tkwargs: Any) -> Tensor:
+        r"""Sample the lengthscale."""
+        lengthscale = pyro.sample(
+            "lengthscale",
+            pyro.distributions.LogNormal(
+                torch.ones(self.ard_num_dims).to(**tkwargs) * self.ls_loc, self.ls_scale
+            ),
+        )
+        return lengthscale
+
+    def sample_outputscale(self, **tkwargs: Any) -> Tensor:
+        r"""Sample the outputscale."""
+        if self.ops_scale == 0.0:
+            return torch.exp(torch.Tensor([self.ops_loc])).to(**tkwargs)
+
+        return pyro.sample(
+            "outputscale",
+            pyro.distributions.LogNormal(
+                torch.tensor(self.ops_loc, **tkwargs),
+                torch.tensor(self.ops_scale, **tkwargs),
+            ),
+        )
+
+    def postprocess_mcmc_samples(
+        self, mcmc_samples: Dict[str, Tensor]
+    ) -> Dict[str, Tensor]:
+        r"""Post-process the MCMC samples.
+
+        This computes the true lengthscales and removes the inverse lengthscales and
+        tausq (global shrinkage).
+        """
+        return mcmc_samples
+
+    def sample(self, from_prior: bool = False) -> None:
+        r"""Sample from the SAAS model.
+
+        This samples the mean, noise variance, outputscale, and lengthscales according
+        to the SAAS prior.
+        """
+        tkwargs = {"dtype": self.train_X.dtype, "device": self.train_X.device}
+        mean = self.sample_mean(**tkwargs)
+        noise = self.sample_noise(**tkwargs)
+        lengthscale = self.sample_lengthscale(**tkwargs)
+       
+        outputscale = self.sample_outputscale(**tkwargs)
+        K = outputscale * matern52_kernel(X=self.train_X, lengthscale=lengthscale)
+        K = K + noise * torch.eye(self.train_X.shape[0], **tkwargs)
+        pyro.sample(
+            "Y",
+            pyro.distributions.MultivariateNormal(
+                loc=mean.view(-1).expand(self.train_X.shape[0]),
+                covariance_matrix=K,
+            ),
+            obs=self.train_Y.squeeze(-1),
+        )
+
+    def sobol_sample_all_priors(self, num_samples: int = 1):
+        tkwargs = {"dtype": self.train_X.dtype, "device": self.train_X.device}
+        # TODO sobol engine
+        # draw samples from each and exponentiate
+
+        dim_engine = NormalQMCEngine(self.ard_num_dims)
+        param_engine = NormalQMCEngine(1)
+
+        lengthscale = (
+            dim_engine.draw(num_samples).to(**tkwargs) * self.ls_scale + self.ls_loc
+        ).exp()
+        outputscale = (
+            param_engine.draw(num_samples).to(**tkwargs) * self.ops_scale + self.ops_loc
+        ).exp()
+        mean = (
+            param_engine.draw(num_samples).to(**tkwargs) * self.mean_scale
+            + self.mean_loc
+        )
+        noise = (
+            param_engine.draw(num_samples).to(**tkwargs) * self.noise_scale
+            + self.noise_loc
+        ).exp()
+        return {
+            "mean": mean,
+            "noise": noise,
+            "lengthscale": lengthscale,
+            "outputscale": outputscale,
+        }
+
+    def load_mcmc_samples(
+        self, mcmc_samples: Dict[str, Tensor]
+    ) -> Tuple[Mean, Kernel, Likelihood]:
+        r"""Load the MCMC samples into the mean_module, covar_module, and likelihood."""
+        tkwargs = {"device": self.train_X.device, "dtype": self.train_X.dtype}
+        num_mcmc_samples = len(mcmc_samples["lengthscale"])
+        batch_shape = torch.Size([num_mcmc_samples])
+
+        mean_module = ConstantMean(batch_shape=batch_shape).to(**tkwargs)
+        covar_module = ScaleKernel(
+            base_kernel=MaternKernel(
+                ard_num_dims=self.ard_num_dims,
+                batch_shape=batch_shape,
+            ),
+            batch_shape=batch_shape,
+        ).to(**tkwargs)
+        if self.train_Yvar is not None:
+            likelihood = FixedNoiseGaussianLikelihood(
+                # Reshape to shape `num_mcmc_samples x N`
+                noise=self.train_Yvar.squeeze(-1).expand(
+                    num_mcmc_samples, len(self.train_Yvar)
+                ),
+                batch_shape=batch_shape,
+            ).to(**tkwargs)
+        else:
+            likelihood = GaussianLikelihood(
+                batch_shape=batch_shape,
+                noise_constraint=GreaterThan(MIN_INFERRED_NOISE_LEVEL),
+            ).to(**tkwargs)
+            likelihood.noise_covar.noise = reshape_and_detach(
+                target=likelihood.noise_covar.noise,
+                new_value=mcmc_samples.get(
+                    "noise",
+                    torch.exp(torch.Tensor([self.noise_loc]))
+                    * torch.ones(num_mcmc_samples, **tkwargs),
+                ).clamp_min(MIN_INFERRED_NOISE_LEVEL),
+            )
+        covar_module.base_kernel.lengthscale = reshape_and_detach(
+            target=covar_module.base_kernel.lengthscale,
+            new_value=mcmc_samples["lengthscale"],
+        )
+        covar_module.outputscale = reshape_and_detach(
+            target=covar_module.outputscale,
+            new_value=mcmc_samples.get(
+                "outputscale",
+                torch.exp(torch.Tensor([self.ops_loc]))
+                * torch.ones(num_mcmc_samples, **tkwargs),
+            ),
         )
         mean_module.constant.data = reshape_and_detach(
             target=mean_module.constant.data,
@@ -337,6 +591,7 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
         pyro_model: Optional[PyroModel] = None,
+        fix_outputscale: bool = False,
     ) -> None:
         r"""Initialize the fully Bayesian single-task GP model.
 
@@ -389,6 +644,7 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
         self.likelihood = None
         if pyro_model is None:
             pyro_model = SaasPyroModel()
+        pyro_model.fix_outputscale = fix_outputscale
         pyro_model.set_inputs(
             train_X=transformed_X, train_Y=train_Y, train_Yvar=train_Yvar
         )
@@ -574,3 +830,50 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
             X = X.repeat(*(Y.shape[:-2] + (1, 1)))
 
         return super().condition_on_observations(X, Y, **kwargs)
+
+    @classmethod
+    def construct_inputs(
+        cls, training_data: SupervisedDataset, *, pyro_model: Optional[PyroModel] = None
+    ) -> Dict[str, Union[BotorchContainer, Tensor]]:
+        r"""Construct `SingleTaskGP` keyword arguments from a `SupervisedDataset`.
+
+        Args:
+            training_data: A `SupervisedDataset`, with attributes `train_X`,
+                `train_Y`, and, optionally, `train_Yvar`.
+            task_feature: Deprecated and allowed only for backward
+                compatibility; ignored.
+
+        Returns:
+            A dict of keyword arguments that can be used to initialize a `SingleTaskGP`,
+            with keys `train_X`, `train_Y`, and, optionally, `train_Yvar`.
+        """
+        input_dict = super().construct_inputs(training_data=training_data)
+        input_dict["pyro_model"] = pyro_model
+        return input_dict
+
+
+class ScaledDimFullyBayesianSingleTaskGP(SaasFullyBayesianSingleTaskGP):
+    r"""A fully Bayesian single-task GP model used for initializing."""
+
+    def __init__(
+        self,
+        train_X: Tensor,
+        train_Y: Tensor,
+        train_Yvar: Optional[Tensor] = None,
+        outcome_transform: Optional[OutcomeTransform] = None,
+        input_transform: Optional[InputTransform] = None,
+        pyro_model: Optional[PyroModel] = None,
+        fix_outputscale: bool = False,
+        
+    ) -> None:
+        if pyro_model is None:
+            pyro_model = ScaledDimPyroModel()
+        super().__init__(
+            train_X=train_X,
+            train_Y=train_Y,
+            train_Yvar=train_Yvar,
+            outcome_transform=outcome_transform,
+            input_transform=input_transform,
+            pyro_model=pyro_model,
+            fix_outputscale=fix_outputscale,
+        )
