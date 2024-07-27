@@ -91,7 +91,7 @@
                 <span class="s2">"Sub-modules must be of the same type across models."</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="s2">"prior"</span> <span class="ow">in</span> <span class="n">modn</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">mod</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>  <span class="c1"># pragma no cover -- not tested after GPyTorch 2551.</span>
                 <span class="s2">"Model converter cannot verify compatibility of GPyTorch priors "</span>
                 <span class="s2">"that do not register their parameters as buffers. If the prior "</span>
                 <span class="s2">"is different than the default prior set by the model constructor "</span>
