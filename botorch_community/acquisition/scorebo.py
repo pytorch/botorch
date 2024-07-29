@@ -26,14 +26,14 @@ from typing import Optional
 import torch
 from botorch import settings
 from botorch.acquisition.acquisition import MCSamplerMixin
+from botorch.acquisition.bayesian_active_learning import (
+    FullyBayesianAcquisitionFunction,
+)
 from botorch.models.fully_bayesian import MCMC_DIM, SaasFullyBayesianSingleTaskGP
 from botorch.models.gp_regression import MIN_INFERRED_NOISE_LEVEL
 from botorch.models.utils import fantasize as fantasize_flag
 from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
-from botorch_community.acquisition.bayesian_active_learning import (
-    DISTANCE_METRICS,
-    FullyBayesianAcquisitionFunction,
-)
+from botorch_community.acquisition.bayesian_active_learning import DISTANCE_METRICS
 from torch import Tensor
 
 # The lower bound on the CDF value of the max-values

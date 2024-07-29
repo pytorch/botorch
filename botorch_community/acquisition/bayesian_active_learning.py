@@ -36,9 +36,10 @@ from __future__ import annotations
 from typing import Optional
 
 import torch
-from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
+from botorch.acquisition.bayesian_active_learning import (
+    FullyBayesianAcquisitionFunction,
+)
 from botorch.models.fully_bayesian import MCMC_DIM, SaasFullyBayesianSingleTaskGP
-from botorch.models.model import Model
 from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
 
 from botorch_community.utils.stat_dist import mvn_hellinger_distance, mvn_kl_divergence
@@ -50,24 +51,6 @@ DISTANCE_METRICS = {
     "hellinger": mvn_hellinger_distance,
     "kl_divergence": mvn_kl_divergence,
 }
-
-
-class FullyBayesianAcquisitionFunction(AcquisitionFunction):
-    def __init__(self, model: Model):
-        """Base class for acquisition functions which require a Fully Bayesian
-        model treatment.
-
-        Args:
-            model: A fully bayesian single-outcome model.
-        """
-        if model._is_fully_bayesian:
-            super().__init__(model)
-
-        else:
-            raise ValueError(
-                "Fully Bayesian acquisition functions require "
-                "a fully bayesian model (SaasFullyBayesianSingleTaskGP) to run."
-            )
 
 
 class qBayesianVarianceReduction(FullyBayesianAcquisitionFunction):
@@ -126,42 +109,6 @@ class qBayesianQueryByComittee(FullyBayesianAcquisitionFunction):
 
         res = torch.logdet(covar_of_mean).exp()
         return torch.nan_to_num(res, 0)
-
-
-class qBayesianActiveLearningByDisagreement(
-    FullyBayesianAcquisitionFunction, MCSamplerMixin
-):
-    def __init__(
-        self,
-        model: SaasFullyBayesianSingleTaskGP,
-        X_pending: Optional[Tensor] = None,
-    ) -> None:
-        """Batch implementation [kirsch2019batchbald]_ of BALD [houlsby2011bald]_,
-        which maximizes the mutual information between the next observation and the
-        hyperparameters of the model. Computed by informational lower bound.
-
-        Args:
-            model: A fully bayesian single-outcome model.
-            X_pending: A `batch_shape, m x d`-dim Tensor of `m` design points.
-        """
-        super().__init__(model)
-        self.set_X_pending(X_pending)
-
-    @concatenate_pending_points
-    @t_batch_mode_transform()
-    def forward(self, X: Tensor) -> Tensor:
-        return self._compute_lower_bound_information_gain(X)
-
-    def _compute_lower_bound_information_gain(self, X: Tensor) -> Tensor:
-        posterior = self.model.posterior(X, observation_noise=True)
-        marg_covar = posterior.mixture_covariance_matrix
-        cond_variances = posterior.variance
-
-        prev_entropy = torch.logdet(marg_covar).unsqueeze(-1)
-        # squeeze excess dim and mean over q-batch
-        post_ub_entropy = torch.log(cond_variances).squeeze(-1).mean(-1)
-
-        return prev_entropy - post_ub_entropy
 
 
 class qStatisticalDistanceActiveLearning(FullyBayesianAcquisitionFunction):

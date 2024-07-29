@@ -39,6 +39,9 @@ from botorch.acquisition.analytic import (
     ProbabilityOfImprovement,
     UpperConfidenceBound,
 )
+from botorch.acquisition.bayesian_active_learning import (
+    qBayesianActiveLearningByDisagreement,
+)
 from botorch.acquisition.cost_aware import InverseCostWeightedUtility
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
 from botorch.acquisition.joint_entropy_search import qJointEntropySearch
@@ -1667,5 +1670,17 @@ def construct_inputs_qJES(
         "X_pending": X_pending,
         "estimation_type": estimation_type,
         "num_samples": num_samples,
+    }
+    return inputs
+
+
+@acqf_input_constructor(qBayesianActiveLearningByDisagreement)
+def construct_inputs_BALD(
+    model: Model,
+    X_pending: Optional[Tensor] = None,
+):
+    inputs = {
+        "model": model,
+        "X_pending": X_pending,
     }
     return inputs

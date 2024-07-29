@@ -25,6 +25,9 @@ from botorch.acquisition.analytic import (
     qAnalyticProbabilityOfImprovement,
     UpperConfidenceBound,
 )
+from botorch.acquisition.bayesian_active_learning import (
+    qBayesianActiveLearningByDisagreement,
+)
 from botorch.acquisition.cost_aware import (
     GenericCostAwareUtility,
     InverseCostWeightedUtility,
@@ -98,6 +101,7 @@ __all__ = [
     "ProbabilityOfImprovement",
     "ProximalAcquisitionFunction",
     "UpperConfidenceBound",
+    "qBayesianActiveLearningByDisagreement",
     "qAnalyticProbabilityOfImprovement",
     "qExpectedImprovement",
     "qExpectedUtilityOfBestOption",

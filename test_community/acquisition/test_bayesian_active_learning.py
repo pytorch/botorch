@@ -7,13 +7,14 @@
 from itertools import product
 
 import torch
+from botorch.acquisition.bayesian_active_learning import (
+    FullyBayesianAcquisitionFunction,
+)
 from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.transforms.outcome import Standardize
 from botorch.utils.testing import BotorchTestCase
 from botorch_community.acquisition.bayesian_active_learning import (
-    FullyBayesianAcquisitionFunction,
-    qBayesianActiveLearningByDisagreement,
     qBayesianQueryByComittee,
     qBayesianVarianceReduction,
     qStatisticalDistanceActiveLearning,
@@ -138,67 +139,6 @@ class TestQStatisticalDistanceActiveLearning(BotorchTestCase):
         non_fully_bayesian_model = SingleTaskGP(train_X, train_Y)
         with self.assertRaises(ValueError):
             acq = qStatisticalDistanceActiveLearning(
-                model=non_fully_bayesian_model,
-            )
-
-
-class TestQBayesianActiveLearningByDisagreement(BotorchTestCase):
-    def test_q_bayesian_active_learning_by_disagreement(self):
-        torch.manual_seed(1)
-        tkwargs = {"device": self.device}
-        num_objectives = 1
-        num_models = 3
-        for (
-            dtype,
-            standardize_model,
-            infer_noise,
-        ) in product(
-            (torch.float, torch.double),
-            (False, True),  # standardize_model
-            (True,),  # infer_noise - only one option avail in PyroModels
-        ):
-            tkwargs["dtype"] = dtype
-            input_dim = 2
-            train_X = torch.rand(4, input_dim, **tkwargs)
-            train_Y = torch.rand(4, num_objectives, **tkwargs)
-
-            model = get_model(
-                train_X,
-                train_Y,
-                num_models,
-                standardize_model,
-                infer_noise,
-                **tkwargs,
-            )
-
-            # test acquisition
-            X_pending_list = [None, torch.rand(2, input_dim, **tkwargs)]
-            for i in range(len(X_pending_list)):
-                X_pending = X_pending_list[i]
-
-                acq = qBayesianActiveLearningByDisagreement(
-                    model=model,
-                    X_pending=X_pending,
-                )
-
-                test_Xs = [
-                    torch.rand(4, 1, input_dim, **tkwargs),
-                    torch.rand(4, 3, input_dim, **tkwargs),
-                    torch.rand(4, 5, 1, input_dim, **tkwargs),
-                    torch.rand(4, 5, 3, input_dim, **tkwargs),
-                ]
-
-                for j in range(len(test_Xs)):
-                    acq_X = acq.forward(test_Xs[j])
-                    acq_X = acq(test_Xs[j])
-                    # assess shape
-                    self.assertTrue(acq_X.shape == test_Xs[j].shape[:-2])
-
-        # Support with non-fully bayesian models is not possible. Thus, we
-        # throw an error.
-        non_fully_bayesian_model = SingleTaskGP(train_X, train_Y)
-        with self.assertRaises(ValueError):
-            acq = qBayesianActiveLearningByDisagreement(
                 model=non_fully_bayesian_model,
             )
 
