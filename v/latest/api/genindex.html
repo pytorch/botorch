@@ -489,6 +489,13 @@
 </li>
 </ul></li>
 <li>
+    botorch.acquisition.thompson_sampling
+
+      <ul>
+<li><a href="acquisition.html#module-botorch.acquisition.thompson_sampling">module</a>
+</li>
+</ul></li>
+<li>
     botorch.acquisition.utils
 
       <ul>
@@ -2439,6 +2446,8 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.risk_measures.WorstCase.forward">(botorch.acquisition.risk_measures.WorstCase method)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.thompson_sampling.PathwiseThompsonSampling.forward">(botorch.acquisition.thompson_sampling.PathwiseThompsonSampling method)</a>
+</li>
 <li><a href="generation.html#botorch.generation.sampling.BoltzmannSampling.forward">(botorch.generation.sampling.BoltzmannSampling method)</a>
 </li>
 <li><a href="generation.html#botorch.generation.sampling.ConstrainedMaxPosteriorSampling.forward">(botorch.generation.sampling.ConstrainedMaxPosteriorSampling method)</a>
@@ -2668,6 +2677,8 @@
 <li><a href="utils.html#botorch.utils.probability.utils.get_constants_like">(in module botorch.utils.probability.utils)</a>
 </li>
 </ul></li>
+<li><a href="models.html#botorch.models.utils.gpytorch_modules.get_covar_module_with_dim_scaled_prior">get_covar_module_with_dim_scaled_prior() (in module botorch.models.utils.gpytorch_modules)</a>
+</li>
 <li><a href="optim.html#botorch.optim.utils.model_utils.get_data_loader">get_data_loader() (in module botorch.optim.utils.model_utils)</a>
 </li>
 <li><a href="utils.html#botorch.utils.datasets.MultiTaskDataset.get_dataset_without_task_feature">get_dataset_without_task_feature() (botorch.utils.datasets.MultiTaskDataset method)</a>
@@ -2693,6 +2704,8 @@
 <li><a href="utils.html#botorch.utils.feasible_volume.get_feasible_samples">get_feasible_samples() (in module botorch.utils.feasible_volume)</a>
 </li>
 <li><a href="models.html#botorch.models.utils.gpytorch_modules.get_gaussian_likelihood_with_gamma_prior">get_gaussian_likelihood_with_gamma_prior() (in module botorch.models.utils.gpytorch_modules)</a>
+</li>
+<li><a href="models.html#botorch.models.utils.gpytorch_modules.get_gaussian_likelihood_with_lognormal_prior">get_gaussian_likelihood_with_lognormal_prior() (in module botorch.models.utils.gpytorch_modules)</a>
 </li>
 <li><a href="utils.html#botorch.utils.gp_sampling.get_gp_samples">get_gp_samples() (in module botorch.utils.gp_sampling)</a>
 </li>
@@ -3282,6 +3295,8 @@
 <li><a href="acquisition.html#module-botorch.acquisition.proximal">botorch.acquisition.proximal</a>
 </li>
 <li><a href="acquisition.html#module-botorch.acquisition.risk_measures">botorch.acquisition.risk_measures</a>
+</li>
+<li><a href="acquisition.html#module-botorch.acquisition.thompson_sampling">botorch.acquisition.thompson_sampling</a>
 </li>
 <li><a href="acquisition.html#module-botorch.acquisition.utils">botorch.acquisition.utils</a>
 </li>
@@ -3904,6 +3919,8 @@
 </li>
 <li><a href="sampling.html#botorch.sampling.pathwise.paths.PathList">PathList (class in botorch.sampling.pathwise.paths)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.thompson_sampling.PathwiseThompsonSampling">PathwiseThompsonSampling (class in botorch.acquisition.thompson_sampling)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.penalized.PenalizedAcquisitionFunction">PenalizedAcquisitionFunction (class in botorch.acquisition.penalized)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.penalized.PenalizedMCObjective">PenalizedMCObjective (class in botorch.acquisition.penalized)</a>
@@ -3940,6 +3957,8 @@
 </li>
 <li><a href="posteriors.html#botorch.posteriors.posterior.Posterior">Posterior (class in botorch.posteriors.posterior)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel.posterior">posterior() (botorch.models.approximate_gp.ApproximateGPyTorchModel method)</a>
 <ul>
 <li><a href="models.html#botorch.models.ensemble.EnsembleModel.posterior">(botorch.models.ensemble.EnsembleModel method)</a>
@@ -3971,8 +3990,6 @@
 <li><a href="utils.html#botorch.utils.testing.MockModel.posterior">(botorch.utils.testing.MockModel method)</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="posteriors.html#botorch.posteriors.posterior_list.PosteriorList">PosteriorList (class in botorch.posteriors.posterior_list)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.analytic.PosteriorMean">PosteriorMean (class in botorch.acquisition.analytic)</a>
@@ -4124,6 +4141,8 @@
 </li>
 <li><a href="optim.html#botorch.optim.optimize.OptimizeAcqfInputs.raw_samples">raw_samples (botorch.optim.optimize.OptimizeAcqfInputs attribute)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.thompson_sampling.PathwiseThompsonSampling.redraw">redraw() (botorch.acquisition.thompson_sampling.PathwiseThompsonSampling method)</a>
+</li>
 <li><a href="utils.html#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.ref_point">ref_point (botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition property)</a>
 <ul>
 <li><a href="utils.html#botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.ref_point">(botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList property)</a>
@@ -4159,10 +4178,10 @@
 </li>
 <li><a href="models.html#botorch.models.transforms.input.ReversibleInputTransform">ReversibleInputTransform (class in botorch.models.transforms.input)</a>
 </li>
-<li><a href="acquisition.html#botorch.acquisition.risk_measures.RiskMeasureMCObjective">RiskMeasureMCObjective (class in botorch.acquisition.risk_measures)</a>
-</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="acquisition.html#botorch.acquisition.risk_measures.RiskMeasureMCObjective">RiskMeasureMCObjective (class in botorch.acquisition.risk_measures)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Rosenbrock">Rosenbrock (class in botorch.test_functions.synthetic)</a>
 </li>
 <li><a href="models.html#botorch.models.transforms.input.Round">Round (class in botorch.models.transforms.input)</a>
@@ -4824,7 +4843,15 @@
 <div aria-label="Main" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="index.html">BoTorch</a></h1>
-<h3>Navigation</h3>
+<search id="searchbox" role="search" style="display: none">
+<div class="searchformwrapper">
+<form action="search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" placeholder="Search" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="acquisition.html">botorch.acquisition</a></li>
@@ -4848,16 +4875,6 @@
 </ul></li>
 </ul>
 </div>
-<search id="searchbox" role="search" style="display: none">
-<h3 id="searchlabel">Quick search</h3>
-<div class="searchformwrapper">
-<form action="search.html" class="search" method="get">
-<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
-<input type="submit" value="Go"/>
-</form>
-</div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

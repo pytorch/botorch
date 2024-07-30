@@ -5521,6 +5521,60 @@ posterior samples. The q-batches should be ordered so that each
 </dd></dl>
 </dd></dl>
 </section>
+<section id="module-botorch.acquisition.thompson_sampling">
+<span id="thompson-sampling"></span><h3>Thompson Sampling<a class="headerlink" href="#module-botorch.acquisition.thompson_sampling" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.thompson_sampling.PathwiseThompsonSampling">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.thompson_sampling.</span></span><span class="sig-name descname"><span class="pre">PathwiseThompsonSampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/thompson_sampling.html#PathwiseThompsonSampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.thompson_sampling.PathwiseThompsonSampling" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a></p>
+<p>Single-outcome Thompson Sampling packaged as an (analytic)
+acquisition function. Querying the acquisition function gives the summed
+values of one or more draws from a pathwise drawn posterior sample, and thus
+it maximization yields one (or multiple) Thompson sample(s).</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">TS</span> <span class="o">=</span> <span class="n">PathwiseThompsonSampling</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Single-outcome TS.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted GP model.</p></li>
+<li><p><strong>posterior_transform</strong> (<a class="reference internal" href="#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>) – A PosteriorTransform. If using a multi-output model,
+a PosteriorTransform that transforms the multi-output posterior into a
+single-output posterior is required.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.thompson_sampling.PathwiseThompsonSampling.redraw">
+<span class="sig-name descname"><span class="pre">redraw</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/thompson_sampling.html#PathwiseThompsonSampling.redraw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.thompson_sampling.PathwiseThompsonSampling.redraw" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.thompson_sampling.PathwiseThompsonSampling.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/thompson_sampling.html#PathwiseThompsonSampling.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.thompson_sampling.PathwiseThompsonSampling.forward" title="Link to this definition">¶</a></dt>
+<dd><p>Evaluate the pathwise posterior sample draws on the candidate set X.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(b1 x … bk) x 1 x d</cite>-dim batched tensor of <cite>d</cite>-dim design points.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>(b1 x … bk) x [num_models for fully bayesian]</cite>-dim tensor of
+evaluations on the posterior sample draws.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</section>
 <section id="module-botorch.acquisition.multi_objective.multi_output_risk_measures">
 <span id="multi-output-risk-measures"></span><h3>Multi-Output Risk Measures<a class="headerlink" href="#module-botorch.acquisition.multi_objective.multi_output_risk_measures" title="Link to this heading">¶</a></h3>
 <p>Multi-output extensions of the risk measures, implemented as Monte-Carlo
@@ -7974,7 +8028,15 @@ observations.</p></li>
 <div aria-label="Main" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="index.html">BoTorch</a></h1>
-<h3>Navigation</h3>
+<search id="searchbox" role="search" style="display: none">
+<div class="searchformwrapper">
+<form action="search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" placeholder="Search" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">botorch.acquisition</a></li>
@@ -8000,16 +8062,6 @@ observations.</p></li>
 </ul></li>
 </ul>
 </div>
-<search id="searchbox" role="search" style="display: none">
-<h3 id="searchlabel">Quick search</h3>
-<div class="searchformwrapper">
-<form action="search.html" class="search" method="get">
-<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
-<input type="submit" value="Go"/>
-</form>
-</div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>
