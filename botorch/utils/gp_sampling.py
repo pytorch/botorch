@@ -143,10 +143,9 @@ class RandomFourierFeatures(Module):
         """
         if not isinstance(kernel, ScaleKernel):
             base_kernel = kernel
-            outputscale = torch.tensor(
-                1.0,
-                dtype=base_kernel.lengthscale.dtype,
-                device=base_kernel.lengthscale.device,
+            outputscale = torch.ones(kernel.batch_shape).to(
+                dtype=kernel.lengthscale.dtype,
+                device=kernel.lengthscale.device,
             )
         else:
             base_kernel = kernel.base_kernel

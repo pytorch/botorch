@@ -20,6 +20,7 @@ Contributor: andreaponti5
 
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import Optional
 
 import torch
@@ -231,9 +232,9 @@ class SingleTaskAugmentedGP(SingleTaskGP):
             train_X,
             train_Y,
             train_Yvar,
-            likelihood=likelihood,
-            covar_module=covar_module,
-            mean_module=mean_module,
+            likelihood=deepcopy(likelihood),
+            covar_module=deepcopy(covar_module),
+            mean_module=deepcopy(mean_module),
             outcome_transform=outcome_transform,
             input_transform=input_transform,
         )

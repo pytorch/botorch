@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import itertools
 import re
 import warnings
 from copy import deepcopy
@@ -16,6 +17,10 @@ from unittest.mock import MagicMock, patch
 import torch
 from botorch import settings
 from botorch.models import SingleTaskGP
+from botorch.models.utils.gpytorch_modules import (
+    get_covar_module_with_dim_scaled_prior,
+    get_matern_kernel_with_gamma_prior,
+)
 from botorch.optim.utils import (
     get_data_loader,
     get_name_filter,
@@ -158,10 +163,18 @@ class TestGetNameFilter(BotorchTestCase):
 
 class TestSampleAllPriors(BotorchTestCase):
     def test_sample_all_priors(self):
-        for dtype in (torch.float, torch.double):
+        for dtype, covar_module in itertools.product(
+            (torch.float, torch.double),
+            (
+                get_covar_module_with_dim_scaled_prior(ard_num_dims=5),
+                get_matern_kernel_with_gamma_prior(ard_num_dims=5),
+            ),
+        ):
             train_X = torch.rand(3, 5, device=self.device, dtype=dtype)
             train_Y = torch.rand(3, 1, device=self.device, dtype=dtype)
-            model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
+            model = SingleTaskGP(
+                train_X=train_X, train_Y=train_Y, covar_module=covar_module
+            )
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
             mll.to(device=self.device, dtype=dtype)
             original_state_dict = dict(deepcopy(mll.model.state_dict()))
@@ -173,7 +186,10 @@ class TestSampleAllPriors(BotorchTestCase):
                 != original_state_dict["likelihood.noise_covar.raw_noise"]
             )
             # check that lengthscales are all different
-            ls = model.covar_module.base_kernel.raw_lengthscale.view(-1).tolist()
+            if isinstance(model.covar_module, ScaleKernel):
+                ls = model.covar_module.base_kernel.raw_lengthscale.view(-1).tolist()
+            else:
+                ls = model.covar_module.raw_lengthscale.view(-1).tolist()
             self.assertTrue(all(ls[0] != ls[i]) for i in range(1, len(ls)))
 
             # change one of the priors to a dummy prior that does not support sampling

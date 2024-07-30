@@ -964,6 +964,7 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
         X_observed = get_train_inputs(model, transformed=False)[0]
 
         nfan = 5
+        torch.manual_seed(1)
         nEI = NoisyExpectedImprovement(model, X_observed, num_fantasies=nfan)
         LogNEI = LogNoisyExpectedImprovement(model, X_observed, num_fantasies=nfan)
         # before assigning, check that the attributes exist

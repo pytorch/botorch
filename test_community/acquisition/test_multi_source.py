@@ -6,8 +6,11 @@
 
 import torch
 from botorch.exceptions import UnsupportedError
+from botorch.models.utils.gpytorch_modules import (
+    get_gaussian_likelihood_with_gamma_prior,
+    get_matern_kernel_with_gamma_prior,
+)
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
-
 from botorch_community.acquisition.augmented_multisource import (
     AugmentedUpperConfidenceBound,
 )
@@ -21,11 +24,17 @@ class TestAugmentedUpperConfidenceBound(BotorchTestCase):
         rep_shape = batch_shape + torch.Size([1, 1])
         train_X = train_X.repeat(rep_shape)
         train_Y = train_Y.repeat(rep_shape)
+        covar_module = get_matern_kernel_with_gamma_prior(
+            ard_num_dims=train_X.shape[-1] - 1,
+        )
         model_kwargs = {
             "train_X": train_X,
             "train_Y": train_Y,
+            "covar_module": covar_module,
+            "likelihood": get_gaussian_likelihood_with_gamma_prior(),
         }
         model = SingleTaskAugmentedGP(**model_kwargs)
+
         return model
 
     def test_upper_confidence_bound(self):
