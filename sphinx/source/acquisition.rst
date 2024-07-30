@@ -21,6 +21,12 @@ Analytic Acquisition Function API
 .. autoclass:: AnalyticAcquisitionFunction
     :members:
 
+Bayesian Active Learning API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. currentmodule:: botorch.acquisition.bayesian_active_learning
+    :members:
+    :exclude-members: FullyBayesianAcquisitionFunction
+
 Cached Cholesky Acquisition Function API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.cached_cholesky

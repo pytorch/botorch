@@ -4,7 +4,6 @@
 # LICENSE file in the root directory of this source tree.
 
 from botorch_community.acquisition.bayesian_active_learning import (
-    qBayesianActiveLearningByDisagreement,
     qBayesianQueryByComittee,
     qBayesianVarianceReduction,
     qStatisticalDistanceActiveLearning,
@@ -17,7 +16,6 @@ from botorch_community.acquisition.input_constructors import (  # noqa F401
 from botorch_community.acquisition.scorebo import qSelfCorrectingBayesianOptimization
 
 __all__ = [
-    "qBayesianActiveLearningByDisagreement",
     "qBayesianQueryByComittee",
     "qBayesianVarianceReduction",
     "qSelfCorrectingBayesianOptimization",
