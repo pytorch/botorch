@@ -25,7 +25,7 @@ from botorch.sampling.list_sampler import ListSampler
 from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.testing import _get_random_data, BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from gpytorch.kernels import MaternKernel, ScaleKernel
+from gpytorch.kernels import RBFKernel
 from gpytorch.likelihoods import LikelihoodList
 from gpytorch.likelihoods.gaussian_likelihood import (
     FixedNoiseGaussianLikelihood,
@@ -34,7 +34,7 @@ from gpytorch.likelihoods.gaussian_likelihood import (
 from gpytorch.means import ConstantMean
 from gpytorch.mlls import SumMarginalLogLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
-from gpytorch.priors import GammaPrior
+from gpytorch.priors import LogNormalPrior
 from torch import Tensor
 
 
@@ -104,10 +104,8 @@ class TestModelListGP(BotorchTestCase):
         self.assertEqual(model.num_outputs, 2)
         for m in model.models:
             self.assertIsInstance(m.mean_module, ConstantMean)
-            self.assertIsInstance(m.covar_module, ScaleKernel)
-            matern_kernel = m.covar_module.base_kernel
-            self.assertIsInstance(matern_kernel, MaternKernel)
-            self.assertIsInstance(matern_kernel.lengthscale_prior, GammaPrior)
+            self.assertIsInstance(m.covar_module, RBFKernel)
+            self.assertIsInstance(m.covar_module.lengthscale_prior, LogNormalPrior)
             if outcome_transform != "None":
                 self.assertIsInstance(
                     m.outcome_transform, (Log, Standardize, ChainedOutcomeTransform)

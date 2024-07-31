@@ -21,9 +21,10 @@ from botorch.models.converter import (
 )
 from botorch.models.transforms.input import AppendFeatures, Normalize
 from botorch.models.transforms.outcome import Standardize
+from botorch.models.utils.gpytorch_modules import get_matern_kernel_with_gamma_prior
 from botorch.utils.test_helpers import SimpleGPyTorchModel
 from botorch.utils.testing import BotorchTestCase
-from gpytorch.kernels import RBFKernel
+from gpytorch.kernels import MaternKernel, RBFKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 from gpytorch.priors import LogNormalPrior
@@ -133,14 +134,19 @@ class TestConverters(BotorchTestCase):
             with self.assertRaises(UnsupportedError):
                 model_list_to_batched(ModelListGP(gp1, gp2))
             # check scalar agreement
-            gp2 = SingleTaskGP(train_X, train_Y2)
-            gp2.likelihood.noise_covar.noise_prior.rate.fill_(1.0)
+            # modified to check the scalar agreement in a parameter that is accessible
+            # since the error is going to slip through for the non-parametrizable
+            # priors regardless (like the LogNormal)
+            with self.assertRaises(UnsupportedError):
+                model_list_to_batched(ModelListGP(gp1, gp2))
+
+            gp2.likelihood.noise_covar.raw_noise_constraint.lower_bound.fill_(1e-3)
             with self.assertRaises(UnsupportedError):
                 model_list_to_batched(ModelListGP(gp1, gp2))
             # check tensor shape agreement
             gp2 = SingleTaskGP(train_X, train_Y2)
-            gp2.covar_module.raw_outputscale = torch.nn.Parameter(
-                torch.tensor([0.0], device=self.device, dtype=dtype)
+            gp2.likelihood.noise_covar.raw_noise = torch.nn.Parameter(
+                torch.tensor([[0.42]], device=self.device, dtype=dtype)
             )
             with self.assertRaises(UnsupportedError):
                 model_list_to_batched(ModelListGP(gp1, gp2))
@@ -155,14 +161,15 @@ class TestConverters(BotorchTestCase):
             with self.assertRaises(NotImplementedError):
                 model_list_to_batched(ModelListGP(gp2))
             # test non-default kernel
-            gp1 = SingleTaskGP(train_X, train_Y1, covar_module=RBFKernel())
-            gp2 = SingleTaskGP(train_X, train_Y2, covar_module=RBFKernel())
+            gp1 = SingleTaskGP(train_X, train_Y1, covar_module=MaternKernel())
+            gp2 = SingleTaskGP(train_X, train_Y2, covar_module=MaternKernel())
             list_gp = ModelListGP(gp1, gp2)
             batch_gp = model_list_to_batched(list_gp)
-            self.assertEqual(type(batch_gp.covar_module), RBFKernel)
+            self.assertEqual(type(batch_gp.covar_module), MaternKernel)
             # test error when component GPs have different kernel types
-            gp1 = SingleTaskGP(train_X, train_Y1, covar_module=RBFKernel())
-            gp2 = SingleTaskGP(train_X, train_Y2)
+            # added types for both default and non-default kernels for clarity
+            gp1 = SingleTaskGP(train_X, train_Y1, covar_module=MaternKernel())
+            gp2 = SingleTaskGP(train_X, train_Y2, covar_module=RBFKernel())
             list_gp = ModelListGP(gp1, gp2)
             with self.assertRaises(UnsupportedError):
                 model_list_to_batched(list_gp)
@@ -243,6 +250,23 @@ class TestConverters(BotorchTestCase):
             list_gp = ModelListGP(gp1_, gp2_)
             with self.assertRaises(UnsupportedError):
                 model_list_to_batched(list_gp)
+
+    def test_model_list_to_batched_with_legacy_prior(self) -> None:
+        train_X = torch.rand(10, 2, device=self.device, dtype=torch.double)
+        # and test the old prior for completeness & test coverage
+        gp1_gamma = SingleTaskGP(
+            train_X,
+            train_X.sum(dim=-1, keepdim=True),
+            covar_module=get_matern_kernel_with_gamma_prior(train_X.shape[-1]),
+        )
+        gp2_gamma = SingleTaskGP(
+            train_X,
+            train_X.sum(dim=-1, keepdim=True),
+            covar_module=get_matern_kernel_with_gamma_prior(train_X.shape[-1]),
+        )
+        gp1_gamma.covar_module.base_kernel.lengthscale_prior.rate.fill_(1.0)
+        with self.assertRaises(UnsupportedError):
+            model_list_to_batched(ModelListGP(gp1_gamma, gp2_gamma))
 
     def test_model_list_to_batched_with_different_prior(self) -> None:
         # The goal is to test priors that didn't have their parameters

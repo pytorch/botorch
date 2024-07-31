@@ -23,7 +23,7 @@ from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.sampling import manual_seed
 from botorch.utils.test_helpers import get_pvar_expected
 from botorch.utils.testing import _get_random_data, BotorchTestCase
-from gpytorch.kernels import MaternKernel, RBFKernel, ScaleKernel
+from gpytorch.kernels import RBFKernel
 from gpytorch.likelihoods import (
     _GaussianLikelihoodBase,
     FixedNoiseGaussianLikelihood,
@@ -33,7 +33,7 @@ from gpytorch.likelihoods import (
 from gpytorch.means import ConstantMean, ZeroMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.mlls.noise_model_added_loss_term import NoiseModelAddedLossTerm
-from gpytorch.priors import GammaPrior
+from gpytorch.priors import LogNormalPrior
 
 
 class TestGPRegressionBase(BotorchTestCase):
@@ -96,10 +96,10 @@ class TestGPRegressionBase(BotorchTestCase):
 
             # test init
             self.assertIsInstance(model.mean_module, ConstantMean)
-            self.assertIsInstance(model.covar_module, ScaleKernel)
-            matern_kernel = model.covar_module.base_kernel
-            self.assertIsInstance(matern_kernel, MaternKernel)
-            self.assertIsInstance(matern_kernel.lengthscale_prior, GammaPrior)
+            self.assertIsInstance(model.covar_module, RBFKernel)
+            rbf_kernel = model.covar_module
+            self.assertIsInstance(rbf_kernel, RBFKernel)
+            self.assertIsInstance(rbf_kernel.lengthscale_prior, LogNormalPrior)
             if use_octf:
                 self.assertIsInstance(model.outcome_transform, Standardize)
             if use_intf:

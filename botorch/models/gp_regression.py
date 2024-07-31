@@ -40,8 +40,8 @@ from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import Log, OutcomeTransform
 from botorch.models.utils import validate_input_scaling
 from botorch.models.utils.gpytorch_modules import (
-    get_gaussian_likelihood_with_gamma_prior,
-    get_matern_kernel_with_gamma_prior,
+    get_covar_module_with_dim_scaled_prior,
+    get_gaussian_likelihood_with_lognormal_prior,
     MIN_INFERRED_NOISE_LEVEL,
 )
 from botorch.utils.containers import BotorchContainer
@@ -67,9 +67,13 @@ from torch import Tensor
 class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
     r"""A single-task exact GP model, supporting both known and inferred noise levels.
 
-    A single-task exact GP using relatively strong priors on the Kernel
-    hyperparameters, which work best when covariates are normalized to the unit
-    cube and outcomes are standardized (zero mean, unit variance).
+    A single-task exact GP which, by default, utilizes hyperparameter priors
+    from [Hvarfner2024vanilla]_. These priors designed to perform well independently of
+    the dimensionality of the problem. Moreover, they suggest a moderately low level of
+    noise. Importantly, The model works best when covariates are normalized to the unit
+    cube and outcomes are standardized (zero mean, unit variance). For a detailed
+    discussion on the hyperparameter priors, see
+    https://github.com/pytorch/botorch/discussions/2451.
 
     This model works in batch mode (each batch having its own hyperparameters).
     When the training observations include multiple outputs, this model will use
@@ -174,7 +178,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         )
         if likelihood is None:
             if train_Yvar is None:
-                likelihood = get_gaussian_likelihood_with_gamma_prior(
+                likelihood = get_gaussian_likelihood_with_lognormal_prior(
                     batch_shape=self._aug_batch_shape
                 )
             else:
@@ -190,14 +194,13 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
             mean_module = ConstantMean(batch_shape=self._aug_batch_shape)
         self.mean_module = mean_module
         if covar_module is None:
-            covar_module = get_matern_kernel_with_gamma_prior(
+            covar_module = get_covar_module_with_dim_scaled_prior(
                 ard_num_dims=transformed_X.shape[-1],
                 batch_shape=self._aug_batch_shape,
             )
             self._subset_batch_dict = {
                 "mean_module.raw_constant": -1,
-                "covar_module.raw_outputscale": -1,
-                "covar_module.base_kernel.raw_lengthscale": -3,
+                "covar_module.raw_lengthscale": -3,
             }
             if train_Yvar is None:
                 self._subset_batch_dict["likelihood.noise_covar.raw_noise"] = -2

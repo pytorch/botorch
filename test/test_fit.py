@@ -27,7 +27,7 @@ from botorch.optim.utils import get_data_loader
 from botorch.settings import debug
 from botorch.utils.context_managers import module_rollback_ctx, TensorCheckpoint
 from botorch.utils.testing import BotorchTestCase
-from gpytorch.kernels import MaternKernel
+from gpytorch.kernels import RBFKernel
 from gpytorch.mlls import ExactMarginalLogLikelihood, VariationalELBO
 from linear_operator.utils.errors import NotPSDError
 
@@ -136,8 +136,7 @@ class TestFitFallback(BotorchTestCase):
                     input_transform=Normalize(d=1),
                     outcome_transform=Standardize(m=output_dim),
                 )
-                self.assertIsInstance(model.covar_module.base_kernel, MaternKernel)
-                model.covar_module.base_kernel.nu = 2.5
+                self.assertIsInstance(model.covar_module, RBFKernel)
 
                 mll = ExactMarginalLogLikelihood(model.likelihood, model)
                 for dtype in (torch.float32, torch.float64):

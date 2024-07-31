@@ -172,7 +172,7 @@ class TestDeterministicModels(BotorchTestCase):
         post = model.posterior(test_X)
         original_output = post.mean + post.variance.sqrt() * w
         fss_output = fss_model(test_X)
-        self.assertTrue(torch.equal(original_output, fss_output))
+        self.assertAllClose(original_output, fss_output)
 
         self.assertTrue(hasattr(fss_model, "num_outputs"))
 

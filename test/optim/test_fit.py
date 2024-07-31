@@ -29,9 +29,9 @@ class TestFitGPyTorchMLLScipy(BotorchTestCase):
         self.mlls = {}
         with torch.random.fork_rng():
             torch.manual_seed(0)
-            train_X = torch.linspace(0, 1, 10).unsqueeze(-1)
-            train_Y = torch.sin((2 * math.pi) * train_X)
-            train_Y = train_Y + 0.1 * torch.randn_like(train_Y)
+            train_X = torch.linspace(0, 1, 30).unsqueeze(-1)
+            train_Y = torch.sin((6 * math.pi) * train_X)
+            train_Y = train_Y + 0.01 * torch.randn_like(train_Y)
 
         model = SingleTaskGP(
             train_X=train_X,
