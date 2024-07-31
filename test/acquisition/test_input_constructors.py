@@ -29,6 +29,9 @@ from botorch.acquisition.analytic import (
     ProbabilityOfImprovement,
     UpperConfidenceBound,
 )
+from botorch.acquisition.bayesian_active_learning import (
+    qBayesianActiveLearningByDisagreement,
+)
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
 from botorch.acquisition.input_constructors import (
     _field_is_shared,
@@ -94,7 +97,7 @@ from botorch.acquisition.utils import (
     project_to_target_fidelity,
 )
 from botorch.exceptions.errors import UnsupportedError
-from botorch.models import MultiTaskGP, SingleTaskGP
+from botorch.models import MultiTaskGP, SaasFullyBayesianSingleTaskGP, SingleTaskGP
 from botorch.models.deterministic import FixedSingleSampleModel
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
@@ -1360,6 +1363,35 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
         self.assertEqual(len(kwargs["optimal_outputs"].shape), 2)
         qJointEntropySearch(**kwargs)
 
+    def test_construct_inputs_bald(self) -> None:
+        func = get_acqf_input_constructor(qBayesianActiveLearningByDisagreement)
+        num_samples = 3
+        model = SaasFullyBayesianSingleTaskGP(
+            self.blockX_blockY[0].X, self.blockX_blockY[0].Y
+        )
+
+        model.load_mcmc_samples(
+            {
+                "lengthscale": torch.rand(
+                    num_samples,
+                    1,
+                    self.blockX_blockY[0].X.shape[-1],
+                    dtype=torch.double,
+                ),
+                "outputscale": torch.rand(num_samples, dtype=torch.double),
+                "mean": torch.randn(num_samples, dtype=torch.double),
+                "noise": torch.rand(num_samples, 1, dtype=torch.double),
+            }
+        )
+
+        kwargs = func(
+            model=model,
+            training_data=self.blockX_blockY,
+            bounds=self.bounds,
+        )
+
+        qBayesianActiveLearningByDisagreement(**kwargs)
+
 
 class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
     """End-to-end tests, ensuring that the input constructors are functional."""
@@ -1455,6 +1487,14 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
                 "model": SingleTaskGP(self.blockX_blockY[0].X, self.blockX_blockY[0].Y),
                 "training_data": self.blockX_blockY,
                 "objective": LinearMCObjective(torch.rand(2)),
+            },
+        )
+        self.cases["BayesianActiveLearning"] = (
+            [qBayesianActiveLearningByDisagreement],
+            {
+                "model": SaasFullyBayesianSingleTaskGP(
+                    self.blockX_blockY[0].X, self.blockX_blockY[0].Y
+                ),
             },
         )
 
