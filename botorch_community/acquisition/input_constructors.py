@@ -20,7 +20,6 @@ from botorch.acquisition.input_constructors import acqf_input_constructor
 from botorch.acquisition.utils import get_optimal_samples
 from botorch.models.model import Model
 from botorch_community.acquisition.bayesian_active_learning import (
-    qBayesianActiveLearningByDisagreement,
     qBayesianQueryByComittee,
     qBayesianVarianceReduction,
     qStatisticalDistanceActiveLearning,
@@ -34,18 +33,6 @@ from torch import Tensor
     qBayesianVarianceReduction,
 )
 def construct_inputs_BAL(
-    model: Model,
-    X_pending: Optional[Tensor] = None,
-):
-    inputs = {
-        "model": model,
-        "X_pending": X_pending,
-    }
-    return inputs
-
-
-@acqf_input_constructor(qBayesianActiveLearningByDisagreement)
-def construct_inputs_BALD(
     model: Model,
     X_pending: Optional[Tensor] = None,
 ):

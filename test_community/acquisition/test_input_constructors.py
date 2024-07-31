@@ -9,15 +9,52 @@ from __future__ import annotations
 import torch
 from botorch.acquisition.input_constructors import get_acqf_input_constructor
 from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
+from botorch.utils.datasets import SupervisedDataset
+from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from botorch_community.acquisition.bayesian_active_learning import (
-    qBayesianActiveLearningByDisagreement,
     qBayesianQueryByComittee,
     qBayesianVarianceReduction,
     qStatisticalDistanceActiveLearning,
 )
 from botorch_community.acquisition.scorebo import qSelfCorrectingBayesianOptimization
 
-from test.acquisition.test_input_constructors import InputConstructorBaseTestCase
+
+class InputConstructorBaseTestCase(BotorchTestCase):
+    def setUp(self, suppress_input_warnings: bool = True) -> None:
+        super().setUp(suppress_input_warnings=suppress_input_warnings)
+        self.mock_model = MockModel(
+            posterior=MockPosterior(mean=None, variance=None, base_shape=(1,))
+        )
+
+        X1 = torch.rand(3, 2)
+        X2 = torch.rand(3, 2)
+        Y1 = torch.rand(3, 1)
+        Y2 = torch.rand(3, 1)
+        feature_names = ["X1", "X2"]
+        outcome_names = ["Y"]
+
+        self.blockX_blockY = {
+            0: SupervisedDataset(
+                X1, Y1, feature_names=feature_names, outcome_names=outcome_names
+            )
+        }
+        self.blockX_multiY = {
+            0: SupervisedDataset(
+                X1, Y1, feature_names=feature_names, outcome_names=outcome_names
+            ),
+            1: SupervisedDataset(
+                X1, Y2, feature_names=feature_names, outcome_names=outcome_names
+            ),
+        }
+        self.multiX_multiY = {
+            0: SupervisedDataset(
+                X1, Y1, feature_names=feature_names, outcome_names=outcome_names
+            ),
+            1: SupervisedDataset(
+                X2, Y2, feature_names=feature_names, outcome_names=outcome_names
+            ),
+        }
+        self.bounds = 2 * [(0.0, 1.0)]
 
 
 class TestFullyBayesianAcquisitionFunctionInputConstructors(
@@ -93,35 +130,6 @@ class TestFullyBayesianAcquisitionFunctionInputConstructors(
 
         self.assertEqual(kwargs["distance_metric"], "kl_divergence")
         qStatisticalDistanceActiveLearning(**kwargs)
-
-    def test_construct_inputs_bald(self) -> None:
-        func = get_acqf_input_constructor(qBayesianActiveLearningByDisagreement)
-        num_samples = 3
-        model = SaasFullyBayesianSingleTaskGP(
-            self.blockX_blockY[0].X, self.blockX_blockY[0].Y
-        )
-
-        model.load_mcmc_samples(
-            {
-                "lengthscale": torch.rand(
-                    num_samples,
-                    1,
-                    self.blockX_blockY[0].X.shape[-1],
-                    dtype=torch.double,
-                ),
-                "outputscale": torch.rand(num_samples, dtype=torch.double),
-                "mean": torch.randn(num_samples, dtype=torch.double),
-                "noise": torch.rand(num_samples, 1, dtype=torch.double),
-            }
-        )
-
-        kwargs = func(
-            model=model,
-            training_data=self.blockX_blockY,
-            bounds=self.bounds,
-        )
-
-        qBayesianActiveLearningByDisagreement(**kwargs)
 
     def test_construct_inputs_bqbc(self) -> None:
         func = get_acqf_input_constructor(qBayesianQueryByComittee)
