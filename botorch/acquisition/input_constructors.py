@@ -1678,9 +1678,13 @@ def construct_inputs_qJES(
 def construct_inputs_BALD(
     model: Model,
     X_pending: Optional[Tensor] = None,
+    sampler: Optional[MCSampler] = None,
+    posterior_transform: Optional[PosteriorTransform] = None,
 ):
     inputs = {
         "model": model,
         "X_pending": X_pending,
+        "sampler": sampler,
+        "posterior_transform": posterior_transform,
     }
     return inputs
