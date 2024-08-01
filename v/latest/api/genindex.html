@@ -272,6 +272,13 @@
 </li>
 </ul></li>
 <li>
+    botorch.acquisition.bayesian_active_learning
+
+      <ul>
+<li><a href="acquisition.html#module-botorch.acquisition.bayesian_active_learning">module</a>
+</li>
+</ul></li>
+<li>
     botorch.acquisition.cached_cholesky
 
       <ul>
@@ -782,6 +789,8 @@
 <li><a href="models.html#module-botorch.models.transforms.input">module</a>
 </li>
 </ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.models.transforms.outcome
 
@@ -789,8 +798,6 @@
 <li><a href="models.html#module-botorch.models.transforms.outcome">module</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.models.transforms.utils
 
@@ -1589,10 +1596,10 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.base.ConstrainedBaseTestProblem">ConstrainedBaseTestProblem (class in botorch.test_functions.base)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.ConstrainedBraninCurrin">ConstrainedBraninCurrin (class in botorch.test_functions.multi_objective)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="acquisition.html#botorch.acquisition.analytic.ConstrainedExpectedImprovement">ConstrainedExpectedImprovement (class in botorch.acquisition.analytic)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.ConstrainedGramacy">ConstrainedGramacy (class in botorch.test_functions.synthetic)</a>
@@ -1633,6 +1640,8 @@
 </li>
 </ul></li>
 <li><a href="acquisition.html#botorch.acquisition.input_constructors.construct_inputs_analytic_eubo">construct_inputs_analytic_eubo() (in module botorch.acquisition.input_constructors)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.input_constructors.construct_inputs_BALD">construct_inputs_BALD() (in module botorch.acquisition.input_constructors)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.input_constructors.construct_inputs_best_f">construct_inputs_best_f() (in module botorch.acquisition.input_constructors)</a>
 </li>
@@ -2316,6 +2325,8 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.analytic.UpperConfidenceBound.forward">(botorch.acquisition.analytic.UpperConfidenceBound method)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.bayesian_active_learning.qBayesianActiveLearningByDisagreement.forward">(botorch.acquisition.bayesian_active_learning.qBayesianActiveLearningByDisagreement method)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.cost_aware.CostAwareUtility.forward">(botorch.acquisition.cost_aware.CostAwareUtility method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.cost_aware.GenericCostAwareUtility.forward">(botorch.acquisition.cost_aware.GenericCostAwareUtility method)</a>
@@ -2570,6 +2581,8 @@
 <li><a href="utils.html#botorch.utils.datasets.MultiTaskDataset.from_joint_dataset">from_joint_dataset() (botorch.utils.datasets.MultiTaskDataset class method)</a>
 </li>
 <li><a href="optim.html#botorch.optim.optimize.OptimizeAcqfInputs.full_tree">full_tree (botorch.optim.optimize.OptimizeAcqfInputs property)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.bayesian_active_learning.FullyBayesianAcquisitionFunction">FullyBayesianAcquisitionFunction (class in botorch.acquisition.bayesian_active_learning)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.fully_bayesian.FullyBayesianPosterior">FullyBayesianPosterior (class in botorch.posteriors.fully_bayesian)</a>
 </li>
@@ -3233,6 +3246,8 @@
 <li><a href="acquisition.html#module-botorch.acquisition.active_learning">botorch.acquisition.active_learning</a>
 </li>
 <li><a href="acquisition.html#module-botorch.acquisition.analytic">botorch.acquisition.analytic</a>
+</li>
+<li><a href="acquisition.html#module-botorch.acquisition.bayesian_active_learning">botorch.acquisition.bayesian_active_learning</a>
 </li>
 <li><a href="acquisition.html#module-botorch.acquisition.cached_cholesky">botorch.acquisition.cached_cholesky</a>
 </li>
@@ -4051,6 +4066,8 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.analytic.qAnalyticProbabilityOfImprovement">qAnalyticProbabilityOfImprovement (class in botorch.acquisition.analytic)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.bayesian_active_learning.qBayesianActiveLearningByDisagreement">qBayesianActiveLearningByDisagreement (class in botorch.acquisition.bayesian_active_learning)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement">qExpectedHypervolumeImprovement (class in botorch.acquisition.multi_objective.monte_carlo)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.monte_carlo.qExpectedImprovement">qExpectedImprovement (class in botorch.acquisition.monte_carlo)</a>
@@ -4081,10 +4098,10 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.max_value_entropy_search.qMaxValueEntropy">qMaxValueEntropy (class in botorch.acquisition.max_value_entropy_search)</a>
 </li>
-<li><a href="acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qMultiFidelityHypervolumeKnowledgeGradient">qMultiFidelityHypervolumeKnowledgeGradient (class in botorch.acquisition.multi_objective.hypervolume_knowledge_gradient)</a>
-</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qMultiFidelityHypervolumeKnowledgeGradient">qMultiFidelityHypervolumeKnowledgeGradient (class in botorch.acquisition.multi_objective.hypervolume_knowledge_gradient)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient">qMultiFidelityKnowledgeGradient (class in botorch.acquisition.knowledge_gradient)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.max_value_entropy_search.qMultiFidelityLowerBoundMaxValueEntropy">qMultiFidelityLowerBoundMaxValueEntropy (class in botorch.acquisition.max_value_entropy_search)</a>

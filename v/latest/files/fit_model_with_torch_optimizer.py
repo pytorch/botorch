@@ -13,6 +13,7 @@
 
 
 import math
+
 import torch
 
 # use a GPU if available
@@ -83,7 +84,7 @@ mll = mll.to(train_X)
 
 from torch.optim import SGD
 
-optimizer = SGD([{"params": model.parameters()}], lr=0.1)
+optimizer = SGD([{"params": model.parameters()}], lr=0.025)
 
 
 # #### Fit model hyperparameters and noise level
@@ -109,7 +110,7 @@ for epoch in range(NUM_EPOCHS):
     if (epoch + 1) % 10 == 0:
         print(
             f"Epoch {epoch+1:>3}/{NUM_EPOCHS} - Loss: {loss.item():>4.3f} "
-            f"lengthscale: {model.covar_module.base_kernel.lengthscale.item():>4.3f} "
+            f"lengthscale: {model.covar_module.lengthscale.item():>4.3f} "
             f"noise: {model.likelihood.noise.item():>4.3f}"
         )
     optimizer.step()
@@ -124,7 +125,7 @@ for epoch in range(NUM_EPOCHS):
 
 
 # set model (and likelihood)
-model.eval();
+model.eval()
 
 
 # In[9]:

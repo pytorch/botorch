@@ -4249,28 +4249,90 @@ of link function at X that active learning hopes to maximize</p>
 </dd></dl>
 </dd></dl>
 </section>
+<section id="module-botorch.acquisition.bayesian_active_learning">
+<span id="bayesian-active-learning-acquisition-functions"></span><h3>Bayesian Active Learning Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.bayesian_active_learning" title="Link to this heading">¶</a></h3>
+<p>Acquisition functions for Bayesian active learning. This includes:
+BALD <a class="reference internal" href="#houlsby2011bald" id="id53"><span>[Houlsby2011bald]</span></a> and its batch version <a class="reference internal" href="#kirsch2019batchbald" id="id54"><span>[kirsch2019batchbald]</span></a>.</p>
+<p>References</p>
+<div class="citation-list" role="list">
+<div class="citation" id="kirsch2019batchbald" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>kirsch2019batchbald<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a href="#id54" role="doc-backlink">1</a>,<a href="#id55" role="doc-backlink">2</a>)</span>
+<p>Andreas Kirsch, Joost van Amersfoort, Yarin Gal.
+BatchBALD: Efficient and Diverse Batch Acquisition for Deep Bayesian
+Active Learning.
+In Proceedings of the Annual Conference on Neural Information
+Processing Systems (NeurIPS), 2019.</p>
+</div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.bayesian_active_learning.FullyBayesianAcquisitionFunction">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.bayesian_active_learning.</span></span><span class="sig-name descname"><span class="pre">FullyBayesianAcquisitionFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/bayesian_active_learning.html#FullyBayesianAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.bayesian_active_learning.FullyBayesianAcquisitionFunction" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a></p>
+<p>Base class for acquisition functions which require a Fully Bayesian
+model treatment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fully bayesian single-outcome model.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.bayesian_active_learning.qBayesianActiveLearningByDisagreement">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.bayesian_active_learning.</span></span><span class="sig-name descname"><span class="pre">qBayesianActiveLearningByDisagreement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/bayesian_active_learning.html#qBayesianActiveLearningByDisagreement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.bayesian_active_learning.qBayesianActiveLearningByDisagreement" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.bayesian_active_learning.FullyBayesianAcquisitionFunction" title="botorch.acquisition.bayesian_active_learning.FullyBayesianAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">FullyBayesianAcquisitionFunction</span></code></a>, <a class="reference internal" href="#botorch.acquisition.acquisition.MCSamplerMixin" title="botorch.acquisition.acquisition.MCSamplerMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCSamplerMixin</span></code></a></p>
+<p>Batch implementation <a class="reference internal" href="#kirsch2019batchbald" id="id55"><span>[kirsch2019batchbald]</span></a> of BALD <a class="reference internal" href="#houlsby2011bald" id="id56"><span>[Houlsby2011bald]</span></a>,
+which maximizes the mutual information between the next observation and the
+hyperparameters of the model. Computed by informational lower bound.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP" title="botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP"><em>SaasFullyBayesianSingleTaskGP</em></a>) – A fully bayesian single-outcome model.</p></li>
+<li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape, m x d</cite>-dim Tensor of <cite>m</cite> design points.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.bayesian_active_learning.qBayesianActiveLearningByDisagreement.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/bayesian_active_learning.html#qBayesianActiveLearningByDisagreement.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.bayesian_active_learning.qBayesianActiveLearningByDisagreement.forward" title="Link to this definition">¶</a></dt>
+<dd><p>Evaluate qBayesianActiveLearningByDisagreement on the candidate set <cite>X</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – <cite>batch_shape x q x D</cite>-dim Tensor of input points.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape x num_models</cite>-dim Tensor of BALD values.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</section>
 <section id="module-botorch.acquisition.preference">
 <span id="preference-acquisition-functions"></span><h3>Preference Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.preference" title="Link to this heading">¶</a></h3>
 <p>Preference acquisition functions. This includes:
-Analytical EUBO acquisition function as introduced in <a class="reference internal" href="#lin2022preference" id="id53"><span>[Lin2022preference]</span></a>
-and its MC-based generalization qEUBO as proposed in <a class="reference internal" href="#astudillo2023qeubo" id="id54"><span>[Astudillo2023qeubo]</span></a>.</p>
+Analytical EUBO acquisition function as introduced in <a class="reference internal" href="#lin2022preference" id="id57"><span>[Lin2022preference]</span></a>
+and its MC-based generalization qEUBO as proposed in <a class="reference internal" href="#astudillo2023qeubo" id="id58"><span>[Astudillo2023qeubo]</span></a>.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="astudillo2023qeubo" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Astudillo2023qeubo<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id54" role="doc-backlink">1</a>,<a href="#id57" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id58" role="doc-backlink">1</a>,<a href="#id61" role="doc-backlink">2</a>)</span>
 <p>Astudillo, R., Lin, Z.J., Bakshy, E. and Frazier, P.I. qEUBO: A Decision-Theoretic
 Acquisition Function for Preferential Bayesian Optimization. International
 Conference on Artificial Intelligence and Statistics (AISTATS), 2023.</p>
 </div>
 <div class="citation" id="lin2022preference" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Lin2022preference<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id53" role="doc-backlink">1</a>,<a href="#id55" role="doc-backlink">2</a>,<a href="#id56" role="doc-backlink">3</a>)</span>
+<span class="backrefs">(<a href="#id57" role="doc-backlink">1</a>,<a href="#id59" role="doc-backlink">2</a>,<a href="#id60" role="doc-backlink">3</a>)</span>
 <p>Lin, Z.J., Astudillo, R., Frazier, P.I. and Bakshy, E. Preference Exploration
 for Efficient Bayesian Optimization with Multiple Outcomes. International
 Conference on Artificial Intelligence and Statistics (AISTATS), 2022.</p>
 </div>
 <div class="citation" id="houlsby2011bald" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id58" role="doc-backlink">Houlsby2011bald</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span>Houlsby2011bald<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a href="#id53" role="doc-backlink">1</a>,<a href="#id56" role="doc-backlink">2</a>,<a href="#id62" role="doc-backlink">3</a>)</span>
 <p>Houlsby, N., Huszár, F., Ghahramani, Z. and Lengyel, M.
 Bayesian Active Learning for Gaussian Process Classification.
 NIPS Workshop on Bayesian optimization, experimental design and bandits:
@@ -4284,7 +4346,7 @@ Theory and applications, 2011.</p>
 <p>Analytic Preferential Expected Utility of Best Options, i.e., Analytical EUBO</p>
 <p>Analytic implementation of Expected Utility of the Best Option under the
 Laplace model (assumes a PairwiseGP is used as the preference model) as
-proposed in <a class="reference internal" href="#lin2022preference" id="id55"><span>[Lin2022preference]</span></a>.</p>
+proposed in <a class="reference internal" href="#lin2022preference" id="id59"><span>[Lin2022preference]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -4294,7 +4356,7 @@ scalar-valued utility.</p></li>
 outcomes (i.e., Y). The outcome model f defines the search space of
 Y = f(X). If model is None, we are directly calculating EUBO on
 the parameter space. When used with <cite>OneSamplePosteriorDrawModel</cite>,
-we are obtaining EUBO-zeta as described in <a class="reference internal" href="#lin2022preference" id="id56"><span>[Lin2022preference]</span></a>.</p></li>
+we are obtaining EUBO-zeta as described in <a class="reference internal" href="#lin2022preference" id="id60"><span>[Lin2022preference]</span></a>.</p></li>
 <li><p><strong>previous_winner</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – Tensor representing the previous winner in the Y space.</p></li>
 </ul>
 </dd>
@@ -4328,7 +4390,7 @@ is not <cite>None</cite>, and <cite>q = 1</cite> otherwise.</p>
 (3) averaging over the samples</p>
 <p><cite>qEUBO(X) = E[max Y], Y ~ f(X), where X = (x_1,…,x_q)</cite></p>
 <p>MC-based Expected Utility of Best Option (qEUBO) as proposed
-in <a class="reference internal" href="#astudillo2023qeubo" id="id57"><span>[Astudillo2023qeubo]</span></a>.</p>
+in <a class="reference internal" href="#astudillo2023qeubo" id="id61"><span>[Astudillo2023qeubo]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -4380,7 +4442,7 @@ of model and input <cite>X</cite>.</p>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.monte_carlo.MCAcquisitionFunction" title="botorch.acquisition.monte_carlo.MCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCAcquisitionFunction</span></code></a></p>
 <p>MC Bayesian Active Learning by Disagreement</p>
 <p>Monte Carlo implementation of Bayesian Active Learning by Disagreement (BALD)
-proposed in <a class="reference internal" href="#houlsby2011bald" id="id58"><span>[Houlsby2011bald]</span></a>.</p>
+proposed in <a class="reference internal" href="#houlsby2011bald" id="id62"><span>[Houlsby2011bald]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -5266,17 +5328,17 @@ outcomes should be evaluated for each design in the batch.</p></li>
 <section id="module-botorch.acquisition.risk_measures">
 <span id="risk-measures"></span><h3>Risk Measures<a class="headerlink" href="#module-botorch.acquisition.risk_measures" title="Link to this heading">¶</a></h3>
 <p>Risk Measures implemented as Monte-Carlo objectives, based on Bayesian
-optimization of risk measures as introduced in <a class="reference internal" href="#cakmak2020risk" id="id59"><span>[Cakmak2020risk]</span></a>. For a
+optimization of risk measures as introduced in <a class="reference internal" href="#cakmak2020risk" id="id63"><span>[Cakmak2020risk]</span></a>. For a
 broader discussion of Monte-Carlo methods for VaR and CVaR risk measures,
-see also <a class="reference internal" href="#hong2014review" id="id60"><span>[Hong2014review]</span></a>.</p>
+see also <a class="reference internal" href="#hong2014review" id="id64"><span>[Hong2014review]</span></a>.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="cakmak2020risk" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id59" role="doc-backlink">Cakmak2020risk</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id63" role="doc-backlink">Cakmak2020risk</a><span class="fn-bracket">]</span></span>
 <p>S. Cakmak, R. Astudillo, P. Frazier, and E. Zhou. Bayesian Optimization of
 Risk Measures. Advances in Neural Information Processing Systems 33, 2020.</p>
 </div>
 <div class="citation" id="hong2014review" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id60" role="doc-backlink">Hong2014review</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id64" role="doc-backlink">Hong2014review</a><span class="fn-bracket">]</span></span>
 <p>L. J. Hong, Z. Hu, and G. Liu. Monte carlo methods for value-at-risk and
 conditional value-at-risk: a review. ACM Transactions on Modeling and
 Computer Simulation, 2014.</p>
@@ -5585,19 +5647,19 @@ joint distribution of the outputs, and provides more accurate risk estimates.</p
 <div class="citation-list" role="list">
 <div class="citation" id="prekopa2012mvar" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Prekopa2012MVaR<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id61" role="doc-backlink">1</a>,<a href="#id65" role="doc-backlink">2</a>,<a href="#id66" role="doc-backlink">3</a>,<a href="#id67" role="doc-backlink">4</a>)</span>
+<span class="backrefs">(<a href="#id65" role="doc-backlink">1</a>,<a href="#id69" role="doc-backlink">2</a>,<a href="#id70" role="doc-backlink">3</a>,<a href="#id71" role="doc-backlink">4</a>)</span>
 <p>A. Prekopa. Multivariate value at risk and related topics.
 Annals of Operations Research, 2012.</p>
 </div>
 <div class="citation" id="cousin2013mvar" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Cousin2013MVaR<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id62" role="doc-backlink">1</a>,<a href="#id64" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id66" role="doc-backlink">1</a>,<a href="#id68" role="doc-backlink">2</a>)</span>
 <p>A. Cousin and E. Di Bernardino. On multivariate extensions of Value-at-Risk.
 Journal of Multivariate Analysis, 2013.</p>
 </div>
 <div class="citation" id="daulton2022mars" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Daulton2022MARS<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id63" role="doc-backlink">1</a>,<a href="#id68" role="doc-backlink">2</a>,<a href="#id69" role="doc-backlink">3</a>)</span>
+<span class="backrefs">(<a href="#id67" role="doc-backlink">1</a>,<a href="#id72" role="doc-backlink">2</a>,<a href="#id73" role="doc-backlink">3</a>)</span>
 <p>S. Daulton, S, Cakmak, M. Balandat, M. Osborne, E. Zhou, and E. Bakshy.
 Robust multi-objective Bayesian optimization under input noise.
 Proceedings of the 39th International Conference on Machine Learning, 2022.</p>
@@ -5844,14 +5906,14 @@ posterior samples. The q-batches should be ordered so that each
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.multi_output_risk_measures.</span></span><span class="sig-name descname"><span class="pre">MVaR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expectation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preprocessing_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pad_to_n_w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_dominated</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_counting</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MVaR"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective" title="botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiOutputRiskMeasureMCObjective</span></code></a></p>
-<p>The multivariate Value-at-Risk as introduced in <a class="reference internal" href="#prekopa2012mvar" id="id61"><span>[Prekopa2012MVaR]</span></a>.</p>
+<p>The multivariate Value-at-Risk as introduced in <a class="reference internal" href="#prekopa2012mvar" id="id65"><span>[Prekopa2012MVaR]</span></a>.</p>
 <p>MVaR is defined as the non-dominated set of points in the extended domain
 of the random variable that have multivariate CDF greater than or equal to
 <cite>alpha</cite>. Note that MVaR is set valued and the size of the set depends on the
-particular realizations of the random variable. <a class="reference internal" href="#cousin2013mvar" id="id62"><span>[Cousin2013MVaR]</span></a> instead
+particular realizations of the random variable. <a class="reference internal" href="#cousin2013mvar" id="id66"><span>[Cousin2013MVaR]</span></a> instead
 propose to use the expectation of the set-valued MVaR as the multivariate
 VaR. We support this alternative with an <cite>expectation</cite> flag.</p>
-<p>This supports approximate gradients as discussed in <a class="reference internal" href="#daulton2022mars" id="id63"><span>[Daulton2022MARS]</span></a>.</p>
+<p>This supports approximate gradients as discussed in <a class="reference internal" href="#daulton2022mars" id="id67"><span>[Daulton2022MARS]</span></a>.</p>
 <p>The multivariate Value-at-Risk.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -5860,7 +5922,7 @@ VaR. We support this alternative with an <cite>expectation</cite> flag.</p>
 <li><p><strong>alpha</strong> (<em>float</em>) – The risk level of MVaR, float in <cite>(0.0, 1.0]</cite>. Each MVaR value
 dominates <cite>alpha</cite> fraction of all observations.</p></li>
 <li><p><strong>expectation</strong> (<em>bool</em>) – If True, returns the expectation of the MVaR set as is
-done in <a class="reference internal" href="#cousin2013mvar" id="id64"><span>[Cousin2013MVaR]</span></a>. Otherwise, it returns the union of all
+done in <a class="reference internal" href="#cousin2013mvar" id="id68"><span>[Cousin2013MVaR]</span></a>. Otherwise, it returns the union of all
 values in the MVaR set. Default: False.</p></li>
 <li><p><strong>preprocessing_function</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A preprocessing function to apply to the
 samples before computing the risk measure. This can be used to
@@ -5875,7 +5937,7 @@ in general be much larger than the alternative. See <cite>forward</cite> for
 more details on the return shape.
 NOTE: this is only relevant if <cite>expectation=False</cite>.</p></li>
 <li><p><strong>filter_dominated</strong> (<em>bool</em>) – If True, returns the non-dominated subset of
-alpha level points (this is MVaR as defined by <a class="reference internal" href="#prekopa2012mvar" id="id65"><span>[Prekopa2012MVaR]</span></a>).
+alpha level points (this is MVaR as defined by <a class="reference internal" href="#prekopa2012mvar" id="id69"><span>[Prekopa2012MVaR]</span></a>).
 Disabling this will make it faster, and may be preferable if
 the dominated points will be filtered out later, e.g., while
 calculating the hypervolume. Disabling this is not recommended
@@ -5889,7 +5951,7 @@ implementation, which is beneficial when <cite>n_w</cite> is quite large.</p></l
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_via_counting">
 <span class="sig-name descname"><span class="pre">get_mvar_set_via_counting</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MVaR.get_mvar_set_via_counting"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_via_counting" title="Link to this definition">¶</a></dt>
-<dd><p>Find MVaR set based on the definition in <a class="reference internal" href="#prekopa2012mvar" id="id66"><span>[Prekopa2012MVaR]</span></a>.</p>
+<dd><p>Find MVaR set based on the definition in <a class="reference internal" href="#prekopa2012mvar" id="id70"><span>[Prekopa2012MVaR]</span></a>.</p>
 <p>This first calculates the CDF for each point on the extended domain of the
 random variable (the grid defined by the given samples), then takes the
 values with CDF equal to (rounded if necessary) <cite>alpha</cite>. The non-dominated
@@ -5914,7 +5976,7 @@ are not in-sample points.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_vectorized">
 <span class="sig-name descname"><span class="pre">get_mvar_set_vectorized</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MVaR.get_mvar_set_vectorized"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_vectorized" title="Link to this definition">¶</a></dt>
-<dd><p>Find MVaR set based on the definition in <a class="reference internal" href="#prekopa2012mvar" id="id67"><span>[Prekopa2012MVaR]</span></a>.</p>
+<dd><p>Find MVaR set based on the definition in <a class="reference internal" href="#prekopa2012mvar" id="id71"><span>[Prekopa2012MVaR]</span></a>.</p>
 <p>This first calculates the CDF for each point on the extended domain of the
 random variable (the grid defined by the given samples), then takes the
 values with CDF equal to (rounded if necessary) <cite>alpha</cite>. The non-dominated
@@ -5942,7 +6004,7 @@ are not in-sample points.</p>
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.make_differentiable">
 <span class="sig-name descname"><span class="pre">make_differentiable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prepared_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mvars</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MVaR.make_differentiable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.make_differentiable" title="Link to this definition">¶</a></dt>
 <dd><p>An experimental approach for obtaining the gradient of the MVaR via
-component-wise mapping to original samples. See <a class="reference internal" href="#daulton2022mars" id="id68"><span>[Daulton2022MARS]</span></a>.</p>
+component-wise mapping to original samples. See <a class="reference internal" href="#daulton2022mars" id="id72"><span>[Daulton2022MARS]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -5995,7 +6057,7 @@ a deterministic return shape.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.multi_output_risk_measures.</span></span><span class="sig-name descname"><span class="pre">MARS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chebyshev_weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline_Y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preprocessing_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MARS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MARS" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.risk_measures.VaR" title="botorch.acquisition.risk_measures.VaR"><code class="xref py py-class docutils literal notranslate"><span class="pre">VaR</span></code></a>, <a class="reference internal" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective" title="botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiOutputRiskMeasureMCObjective</span></code></a></p>
 <p>MVaR Approximation based on Random Scalarizations as introduced
-in <a class="reference internal" href="#daulton2022mars" id="id69"><span>[Daulton2022MARS]</span></a>.</p>
+in <a class="reference internal" href="#daulton2022mars" id="id73"><span>[Daulton2022MARS]</span></a>.</p>
 <p>This approximates MVaR via VaR of Chebyshev scalarizations, where each
 scalarization corresponds to a point in the MVaR set. As implemented,
 this uses one set of scalarization weights to approximate a single MVaR value.
@@ -6996,6 +7058,18 @@ optimization.</p></li>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.acquisition.input_constructors.construct_inputs_BALD">
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.input_constructors.</span></span><span class="sig-name descname"><span class="pre">construct_inputs_BALD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/input_constructors.html#construct_inputs_BALD"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.input_constructors.construct_inputs_BALD" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>)</p></li>
+<li><p><strong>X_pending</strong> (<em>Tensor</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 </section>
 <section id="module-botorch.acquisition.penalized">
 <span id="penalized-acquisition-function-wrapper"></span><h3>Penalized Acquisition Function Wrapper<a class="headerlink" href="#module-botorch.acquisition.penalized" title="Link to this heading">¶</a></h3>
@@ -7383,7 +7457,7 @@ construct a PenalizedMCObjective.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="hvarfner2022" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Hvarfner2022<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id70" role="doc-backlink">1</a>,<a href="#id71" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id74" role="doc-backlink">1</a>,<a href="#id75" role="doc-backlink">2</a>)</span>
 <p>C. Hvarfner, D. Stoll, A. Souza, M. Lindauer, F. Hutter, L. Nardi. PiBO:
 Augmenting Acquisition Functions with User Beliefs for Bayesian Optimization.
 ICLR 2022.</p>
@@ -7396,7 +7470,7 @@ ICLR 2022.</p>
 <p>Class for weighting acquisition functions by a prior distribution.</p>
 <p>Supports MC and batch acquisition functions via
 SampleReducingAcquisitionFunction.</p>
-<p>See <a class="reference internal" href="#hvarfner2022" id="id70"><span>[Hvarfner2022]</span></a> for details.</p>
+<p>See <a class="reference internal" href="#hvarfner2022" id="id74"><span>[Hvarfner2022]</span></a> for details.</p>
 <p>Initialize the prior-guided acquisition function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -7411,7 +7485,7 @@ of probabilities.</p></li>
 log-transformed value and the prior module emits a log probability.</p></li>
 <li><p><strong>prior_exponent</strong> (<em>float</em>) – The exponent applied to the prior. This can be used
 for example  to decay the effect the prior over time as in
-<a class="reference internal" href="#hvarfner2022" id="id71"><span>[Hvarfner2022]</span></a>.</p></li>
+<a class="reference internal" href="#hvarfner2022" id="id75"><span>[Hvarfner2022]</span></a>.</p></li>
 <li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – <cite>n x d</cite> Tensor with <cite>n</cite> <cite>d</cite>-dim design points that have
 been submitted for evaluation but have not yet been evaluated.</p></li>
 </ul>

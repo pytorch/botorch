@@ -148,7 +148,7 @@ axs[1].set_ylim(-7, 8)
 
 plot_posterior(axs[2], model_matern)
 axs[2].set_title("GP (Matern Kernel)\nLength Scale: %.2f" % 
-                model_matern.covar_module.base_kernel.lengthscale.item(), 
+                model_matern.covar_module.lengthscale.item(), 
                 fontsize=20)
 axs[2].set_ylim(-7, 8)
 

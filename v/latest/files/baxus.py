@@ -327,7 +327,7 @@ def create_candidate(
 
     # Scale the TR to be proportional to the lengthscales
     x_center = X[Y.argmax(), :].clone()
-    weights = model.covar_module.base_kernel.lengthscale.detach().view(-1)
+    weights = model.covar_module.lengthscale.detach().view(-1)
     weights = weights / weights.mean()
     weights = weights / torch.prod(weights.pow(1.0 / len(weights)))
     tr_lb = torch.clamp(x_center - weights * state.length, -1.0, 1.0)

@@ -172,13 +172,13 @@
 import os
 
 import matplotlib.pyplot as plt
-import torch
 import numpy as np
-from botorch.utils.sampling import draw_sobol_samples
-from botorch.models.transforms.outcome import Standardize
-from botorch.models.gp_regression import SingleTaskGP
-from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
+import torch
 from botorch.fit import fit_gpytorch_mll
+from botorch.models.gp_regression import SingleTaskGP
+from botorch.models.transforms.outcome import Standardize
+from botorch.utils.sampling import draw_sobol_samples
+from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
 SMOKE_TEST = os.environ.get("SMOKE_TEST")
 tkwargs = {"dtype": torch.double, "device": "cpu"}
@@ -245,12 +245,10 @@ plt.show()
 
 from botorch.acquisition.utils import get_optimal_samples
 
-num_samples = 32
+num_samples = 12
 
 optimal_inputs, optimal_outputs = get_optimal_samples(
-    model,
-    bounds=bounds,
-    num_optima=num_samples
+    model, bounds=bounds, num_optima=num_samples
 )
 
 
@@ -261,17 +259,15 @@ optimal_inputs, optimal_outputs = get_optimal_samples(
 # In[ ]:
 
 
-from botorch.acquisition.predictive_entropy_search import qPredictiveEntropySearch
-from botorch.acquisition.max_value_entropy_search import (
-    qLowerBoundMaxValueEntropy,
-)
 from botorch.acquisition.joint_entropy_search import qJointEntropySearch
+from botorch.acquisition.max_value_entropy_search import qLowerBoundMaxValueEntropy
+from botorch.acquisition.predictive_entropy_search import qPredictiveEntropySearch
 
 pes = qPredictiveEntropySearch(model=model, optimal_inputs=optimal_inputs)
 
 # Here we use the lower bound estimates for the MES and JES
 # Note that the single-objective MES interface is slightly different,
-# as it utilizes the Gumbel max-value approximation internally and 
+# as it utilizes the Gumbel max-value approximation internally and
 # therefore does not take the max values as input.
 mes_lb = qLowerBoundMaxValueEntropy(
     model=model,
@@ -304,14 +300,18 @@ if scale_acqvals:
     pes_X = pes_X / pes_X.max()
     mes_lb_X = mes_lb_X / mes_lb_X.max()
     jes_lb_X = jes_lb_X / jes_lb_X.max()
-    
+
 plt.plot(X, pes_X, color="mediumseagreen", linewidth=3, label="PES")
 plt.plot(X, mes_lb_X, color="crimson", linewidth=3, label="MES-LB")
 plt.plot(X, jes_lb_X, color="dodgerblue", linewidth=3, label="JES-LB")
 
-plt.vlines(X[pes_X.argmax()], 0, 1, color="mediumseagreen", linewidth=1.5, linestyle='--')
-plt.vlines(X[mes_lb_X.argmax()], 0, 1, color="crimson", linewidth=1.5, linestyle=':')
-plt.vlines(X[jes_lb_X.argmax()], 0, 1, color="dodgerblue", linewidth=1.5, linestyle='--')
+plt.vlines(
+    X[pes_X.argmax()], 0, 1, color="mediumseagreen", linewidth=1.5, linestyle="--"
+)
+plt.vlines(X[mes_lb_X.argmax()], 0, 1, color="crimson", linewidth=1.5, linestyle=":")
+plt.vlines(
+    X[jes_lb_X.argmax()], 0, 1, color="dodgerblue", linewidth=1.5, linestyle="--"
+)
 plt.legend(fontsize=15)
 plt.xlabel("$x$", fontsize=15)
 plt.ylabel(r"$\alpha(x)$", fontsize=15)
@@ -331,8 +331,8 @@ candidate, acq_value = optimize_acqf(
     acq_function=pes,
     bounds=bounds,
     q=1,
-    num_restarts=10,
-    raw_samples=512,
+    num_restarts=4,
+    raw_samples=256,
     options={"with_grad": False},
 )
 print("PES: candidate={}, acq_value={}".format(candidate, acq_value))
@@ -341,8 +341,8 @@ candidate, acq_value = optimize_acqf(
     acq_function=mes_lb,
     bounds=bounds,
     q=1,
-    num_restarts=10,
-    raw_samples=512,
+    num_restarts=4,
+    raw_samples=256,
 )
 print("MES-LB: candidate={}, acq_value={}".format(candidate, acq_value))
 
@@ -350,8 +350,8 @@ candidate, acq_value = optimize_acqf(
     acq_function=jes_lb,
     bounds=bounds,
     q=1,
-    num_restarts=10,
-    raw_samples=512,
+    num_restarts=4,
+    raw_samples=256,
 )
 print("JES-LB: candidate={}, acq_value={}".format(candidate, acq_value))
 
@@ -363,18 +363,19 @@ print("JES-LB: candidate={}, acq_value={}".format(candidate, acq_value))
 # In[ ]:
 
 
-from botorch.test_functions.multi_objective import ZDT1
 from botorch.acquisition.multi_objective.utils import (
-    sample_optimal_points,
+    compute_sample_box_decomposition,
     random_search_optimizer,
-    compute_sample_box_decomposition
+    sample_optimal_points,
 )
+from botorch.test_functions.multi_objective import ZDT1
+
 d = 4
 M = 2
-n = 16
+n = 8
 
 if SMOKE_TEST:
-    q = 3
+    q = 2
 else:
     q = 4
 
@@ -396,12 +397,12 @@ model = fit_model(train_X=train_X, train_Y=train_Y, num_outputs=M)
 # In[ ]:
 
 
-num_pareto_samples = 10
-num_pareto_points = 10
+num_pareto_samples = 8
+num_pareto_points = 8
 
 # We set the parameters for the random search
 optimizer_kwargs = {
-    "pop_size": 2000,
+    "pop_size": 500,
     "max_tries": 10,
 }
 
@@ -420,14 +421,14 @@ ps, pf = sample_optimal_points(
 # In[ ]:
 
 
-from botorch.acquisition.multi_objective.predictive_entropy_search import (
-    qMultiObjectivePredictiveEntropySearch,
+from botorch.acquisition.multi_objective.joint_entropy_search import (
+    qLowerBoundMultiObjectiveJointEntropySearch,
 )
 from botorch.acquisition.multi_objective.max_value_entropy_search import (
     qLowerBoundMultiObjectiveMaxValueEntropySearch,
 )
-from botorch.acquisition.multi_objective.joint_entropy_search import (
-    qLowerBoundMultiObjectiveJointEntropySearch,
+from botorch.acquisition.multi_objective.predictive_entropy_search import (
+    qMultiObjectivePredictiveEntropySearch,
 )
 
 pes = qMultiObjectivePredictiveEntropySearch(model=model, pareto_sets=ps)
@@ -456,7 +457,7 @@ jes_lb = qLowerBoundMultiObjectiveJointEntropySearch(
 # In[ ]:
 
 
-get_ipython().run_cell_magic('time', '', '# Use finite difference for PES. This may take some time\ncandidates, acq_values = optimize_acqf(\n    acq_function=pes,\n    bounds=bounds,\n    q=q,\n    num_restarts=5,\n    raw_samples=512,\n    options={"with_grad": False},\n)\nprint("PES: \\ncandidates={}".format(candidates))\n\n# Sequentially greedy optimization\ncandidates, acq_values = optimize_acqf(\n    acq_function=mes_lb,\n    bounds=bounds,\n    q=q,\n    num_restarts=5,\n    raw_samples=512,\n    sequential=True,\n)\nprint("MES-LB: \\ncandidates={}".format(candidates))\n')
+get_ipython().run_cell_magic('time', '', '# Use finite difference for PES. This may take some time\ncandidates, acq_values = optimize_acqf(\n    acq_function=pes,\n    bounds=bounds,\n    q=q,\n    num_restarts=4,\n    raw_samples=512,\n    options={"with_grad": False},\n)\nprint("PES: \\ncandidates={}".format(candidates))\n\n# Sequentially greedy optimization\ncandidates, acq_values = optimize_acqf(\n    acq_function=mes_lb,\n    bounds=bounds,\n    q=q,\n    num_restarts=4,\n    raw_samples=512,\n    sequential=True,\n)\nprint("MES-LB: \\ncandidates={}".format(candidates))\n')
 
 
 # In[ ]:
@@ -467,7 +468,7 @@ candidates, acq_values = optimize_acqf(
     acq_function=jes_lb,
     bounds=bounds,
     q=q,
-    num_restarts=5,
+    num_restarts=4,
     raw_samples=512,
     sequential=True,
 )

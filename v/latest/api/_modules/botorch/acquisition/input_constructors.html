@@ -62,6 +62,9 @@
     <span class="n">ProbabilityOfImprovement</span><span class="p">,</span>
     <span class="n">UpperConfidenceBound</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.bayesian_active_learning</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">qBayesianActiveLearningByDisagreement</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.cost_aware</span> <span class="kn">import</span> <span class="n">InverseCostWeightedUtility</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.fixed_feature</span> <span class="kn">import</span> <span class="n">FixedFeatureAcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.joint_entropy_search</span> <span class="kn">import</span> <span class="n">qJointEntropySearch</span>
@@ -1779,6 +1782,21 @@
         <span class="s2">"X_pending"</span><span class="p">:</span> <span class="n">X_pending</span><span class="p">,</span>
         <span class="s2">"estimation_type"</span><span class="p">:</span> <span class="n">estimation_type</span><span class="p">,</span>
         <span class="s2">"num_samples"</span><span class="p">:</span> <span class="n">num_samples</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">inputs</span></div>
+
+
+
+<div class="viewcode-block" id="construct_inputs_BALD">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_BALD">[docs]</a>
+<span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qBayesianActiveLearningByDisagreement</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">construct_inputs_BALD</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">inputs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"model"</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span>
+        <span class="s2">"X_pending"</span><span class="p">:</span> <span class="n">X_pending</span><span class="p">,</span>
     <span class="p">}</span>
     <span class="k">return</span> <span class="n">inputs</span></div>
 

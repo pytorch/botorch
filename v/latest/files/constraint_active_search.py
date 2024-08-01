@@ -161,7 +161,7 @@ class ExpectedCoverageImprovement(MCAcquisitionFunction):
         return radius * r * z
 
     def _get_base_point_mask(self, X):
-        distance_matrix = self.model.models[0].covar_module.base_kernel.covar_dist(
+        distance_matrix = self.model.models[0].covar_module.covar_dist(
             X, self.base_points
         )
         return smooth_mask(distance_matrix, self.punchout_radius)

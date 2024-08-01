@@ -264,7 +264,7 @@ $$</p>
         <span class="k">return</span> <span class="n">radius</span> <span class="o">*</span> <span class="n">r</span> <span class="o">*</span> <span class="n">z</span>
 
     <span class="k">def</span> <span class="nf">_get_base_point_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
-        <span class="n">distance_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">covar_module</span><span class="o">.</span><span class="n">base_kernel</span><span class="o">.</span><span class="n">covar_dist</span><span class="p">(</span>
+        <span class="n">distance_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">covar_module</span><span class="o">.</span><span class="n">covar_dist</span><span class="p">(</span>
             <span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_points</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">smooth_mask</span><span class="p">(</span><span class="n">distance_matrix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">punchout_radius</span><span class="p">)</span>
