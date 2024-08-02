@@ -4279,23 +4279,31 @@ model treatment.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.bayesian_active_learning.qBayesianActiveLearningByDisagreement">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.bayesian_active_learning.</span></span><span class="sig-name descname"><span class="pre">qBayesianActiveLearningByDisagreement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/bayesian_active_learning.html#qBayesianActiveLearningByDisagreement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.bayesian_active_learning.qBayesianActiveLearningByDisagreement" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.bayesian_active_learning.</span></span><span class="sig-name descname"><span class="pre">qBayesianActiveLearningByDisagreement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/bayesian_active_learning.html#qBayesianActiveLearningByDisagreement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.bayesian_active_learning.qBayesianActiveLearningByDisagreement" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.bayesian_active_learning.FullyBayesianAcquisitionFunction" title="botorch.acquisition.bayesian_active_learning.FullyBayesianAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">FullyBayesianAcquisitionFunction</span></code></a>, <a class="reference internal" href="#botorch.acquisition.acquisition.MCSamplerMixin" title="botorch.acquisition.acquisition.MCSamplerMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCSamplerMixin</span></code></a></p>
 <p>Batch implementation <a class="reference internal" href="#kirsch2019batchbald" id="id55"><span>[kirsch2019batchbald]</span></a> of BALD <a class="reference internal" href="#houlsby2011bald" id="id56"><span>[Houlsby2011bald]</span></a>,
 which maximizes the mutual information between the next observation and the
-hyperparameters of the model. Computed by informational lower bound.</p>
+hyperparameters of the model. Computed by Monte Carlo integration.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP" title="botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP"><em>SaasFullyBayesianSingleTaskGP</em></a>) – A fully bayesian single-outcome model.</p></li>
-<li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape, m x d</cite>-dim Tensor of <cite>m</cite> design points.</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP" title="botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP"><em>SaasFullyBayesianSingleTaskGP</em></a>) – A fully bayesian model (SaasFullyBayesianSingleTaskGP).</p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="sampling.html#botorch.sampling.base.MCSampler" title="botorch.sampling.base.MCSampler"><em>MCSampler</em></a><em>]</em>) – The sampler used for drawing samples to approximate the entropy
+of the Gaussian Mixture posterior.</p></li>
+<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em>]</em>) – A PosteriorTransform. If using a multi-output model,
+a PosteriorTransform that transforms the multi-output posterior into a
+single-output posterior is required.</p></li>
+<li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape x m x d</cite>-dim Tensor of <cite>m</cite> design points</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.bayesian_active_learning.qBayesianActiveLearningByDisagreement.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/bayesian_active_learning.html#qBayesianActiveLearningByDisagreement.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.bayesian_active_learning.qBayesianActiveLearningByDisagreement.forward" title="Link to this definition">¶</a></dt>
-<dd><p>Evaluate qBayesianActiveLearningByDisagreement on the candidate set <cite>X</cite>.</p>
+<dd><p>Evaluate qBayesianActiveLearningByDisagreement on the candidate set <cite>X</cite>.
+A monte carlo-estimated information gain is computed over a Gaussian Mixture
+marginal posterior, and the Gaussian conditional posterior to obtain the
+qBayesianActiveLearningByDisagreement on the candidate set <cite>X</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – <cite>batch_shape x q x D</cite>-dim Tensor of input points.</p>
@@ -7060,12 +7068,14 @@ optimization.</p></li>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.acquisition.input_constructors.construct_inputs_BALD">
-<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.input_constructors.</span></span><span class="sig-name descname"><span class="pre">construct_inputs_BALD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/input_constructors.html#construct_inputs_BALD"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.input_constructors.construct_inputs_BALD" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.input_constructors.</span></span><span class="sig-name descname"><span class="pre">construct_inputs_BALD</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/input_constructors.html#construct_inputs_BALD"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.input_constructors.construct_inputs_BALD" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>)</p></li>
 <li><p><strong>X_pending</strong> (<em>Tensor</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>sampler</strong> (<a class="reference internal" href="sampling.html#botorch.sampling.base.MCSampler" title="botorch.sampling.base.MCSampler"><em>MCSampler</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>posterior_transform</strong> (<a class="reference internal" href="#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
