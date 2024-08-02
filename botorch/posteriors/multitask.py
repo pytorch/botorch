@@ -226,10 +226,23 @@ class MultitaskGPPosterior(GPyTorchPosterior):
             train_diff.reshape(*train_diff.shape[:-2], -1) - updated_obs_samples
         )
         train_covar_plus_noise = self.train_train_covar + self.train_noise
-        obs_solve = train_covar_plus_noise.solve(obs_minus_samples.unsqueeze(-1))
+
+        # permute dimensions to move largest batch dimension to the end (more efficient 
+        # than unsqueezing)
+        largest_batch_dim = torch.argmax(torch.tensor(obs_minus_samples.shape))
+        perm = list(range(obs_minus_samples.ndim))
+        perm[-1], perm[largest_batch_dim] = perm[largest_batch_dim], perm[-1]
+        
+        # solve
+        obs_minus_samples_p = obs_minus_samples.permute(*perm)
+        obs_solve_p = train_covar_plus_noise.solve(obs_minus_samples_p)
 
         # and multiply the test-observed matrix against the result of the solve
-        updated_samples = self.test_train_covar.matmul(obs_solve).squeeze(-1)
+        updated_samples_p = self.test_train_covar.matmul(obs_solve_p)
+
+        # Undo permutation
+        inverse_perm = torch.argsort(torch.tensor(perm))
+        updated_samples = updated_samples_p.permute(*inverse_perm)
 
         # finally, we add the conditioned samples to the prior samples
         final_samples = test_samples + updated_samples
