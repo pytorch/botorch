@@ -36,9 +36,10 @@ class MultitaskGPPosterior(GPyTorchPosterior):
             distribution: Posterior multivariate normal distribution.
             joint_covariance_matrix: Joint test train covariance matrix over the entire
                 tensor.
-            train_train_covar: Covariance matrix of train points in the data space.
-            test_obs_covar: Covariance matrix of test x train points in the data space.
+            test_train_covar: Covariance matrix of test x train points in the data space.
             train_diff: Difference between train mean and train responses.
+            test_mean: Test mean response.
+            train_train_covar: Covariance matrix of train points in the data space.
             train_noise: Training noise covariance.
             test_noise: Only used if posterior should contain observation noise.
                 Testing noise covariance.
@@ -229,20 +230,24 @@ class MultitaskGPPosterior(GPyTorchPosterior):
 
         # permute dimensions to move largest batch dimension to the end (more efficient 
         # than unsqueezing)
-        largest_batch_dim = torch.argmax(torch.tensor(obs_minus_samples.shape))
+        largest_batch_dim = torch.argmax(torch.tensor(obs_minus_samples.shape[:-1])).item()
+        # largest_batch_dim = torch.argmax(torch.tensor(sample_shape))
         perm = list(range(obs_minus_samples.ndim))
-        perm[-1], perm[largest_batch_dim] = perm[largest_batch_dim], perm[-1]
-        
+        perm.remove(largest_batch_dim)
+        perm.append(largest_batch_dim)
+        # perm[-1], perm[largest_batch_dim] = perm[largest_batch_dim], perm[-1]
+        inverse_perm = torch.argsort(torch.tensor(perm))
+
         # solve
         obs_minus_samples_p = obs_minus_samples.permute(*perm)
         obs_solve_p = train_covar_plus_noise.solve(obs_minus_samples_p)
 
-        # and multiply the test-observed matrix against the result of the solve
-        updated_samples_p = self.test_train_covar.matmul(obs_solve_p)
-
         # Undo permutation
-        inverse_perm = torch.argsort(torch.tensor(perm))
-        updated_samples = updated_samples_p.permute(*inverse_perm)
+        obs_solve = obs_solve_p.permute(*inverse_perm).unsqueeze(-1)
+
+        # and multiply the test-observed matrix against the result of the solve
+        # TODO: this might be made more efficient with obs_solve_p (permuted)
+        updated_samples = self.test_train_covar.matmul(obs_solve).squeeze(-1)
 
         # finally, we add the conditioned samples to the prior samples
         final_samples = test_samples + updated_samples
