@@ -7,18 +7,19 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Iterable, Iterator
 
 from functools import lru_cache
 from math import pi
 from numbers import Number
-from typing import Any, Callable, Iterable, Iterator, Optional, Tuple, Union
+from typing import Any, Callable, Optional, Union
 
 import torch
 from botorch.utils.safe_math import logdiffexp
 from numpy.polynomial.legendre import leggauss as numpy_leggauss
 from torch import BoolTensor, LongTensor, Tensor
 
-CaseNd = Tuple[Callable[[], BoolTensor], Callable[[BoolTensor], Tensor]]
+CaseNd = tuple[Callable[[], BoolTensor], Callable[[BoolTensor], Tensor]]
 
 _log_2 = math.log(2)
 _sqrt_pi = math.sqrt(pi)
@@ -27,7 +28,7 @@ _inv_sqrt_2pi = 1 / math.sqrt(2 * pi)
 _inv_sqrt_2 = 1 / math.sqrt(2)
 _neg_inv_sqrt_2 = -_inv_sqrt_2
 _log_sqrt_2pi = math.log(2 * pi) / 2
-STANDARDIZED_RANGE: Tuple[float, float] = (-1e6, 1e6)
+STANDARDIZED_RANGE: tuple[float, float] = (-1e6, 1e6)
 _log_two_inv_sqrt_2pi = _log_2 - _log_sqrt_2pi  # = log(2 / sqrt(2 * pi))
 
 
@@ -82,7 +83,7 @@ def get_constants(
     values: Union[Number, Iterator[Number]],
     device: Optional[torch.device] = None,
     dtype: Optional[torch.dtype] = None,
-) -> Union[Tensor, Tuple[Tensor, ...]]:
+) -> Union[Tensor, tuple[Tensor, ...]]:
     r"""Returns scalar-valued Tensors containing each of the given constants.
     Used to expedite tensor operations involving scalar arithmetic. Note that
     the returned Tensors should not be modified in-place."""
@@ -124,7 +125,7 @@ def build_positional_indices(
 
 
 @lru_cache(maxsize=None)
-def leggauss(deg: int, **tkwargs: Any) -> Tuple[Tensor, Tensor]:
+def leggauss(deg: int, **tkwargs: Any) -> tuple[Tensor, Tensor]:
     x, w = numpy_leggauss(deg)
     return torch.as_tensor(x, **tkwargs), torch.as_tensor(w, **tkwargs)
 

@@ -8,8 +8,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from functools import partial
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple
+from typing import Any, Callable, Optional
 
 import torch
 from botorch.optim.utils import (
@@ -29,7 +31,7 @@ class ForwardBackwardClosure:
     def __init__(
         self,
         forward: Callable[[], Tensor],
-        parameters: Dict[str, Tensor],
+        parameters: dict[str, Tensor],
         backward: Callable[[Tensor], None] = Tensor.backward,
         reducer: Optional[Callable[[Tensor], Tensor]] = torch.sum,
         callback: Optional[Callable[[Tensor, Sequence[Optional[Tensor]]], None]] = None,
@@ -59,7 +61,7 @@ class ForwardBackwardClosure:
         self.callback = callback
         self.context_manager = context_manager
 
-    def __call__(self, **kwargs: Any) -> Tuple[Tensor, Tuple[Optional[Tensor], ...]]:
+    def __call__(self, **kwargs: Any) -> tuple[Tensor, tuple[Optional[Tensor], ...]]:
         with self.context_manager():
             values = self.forward(**kwargs)
             value = values if self.reducer is None else self.reducer(values)
@@ -78,8 +80,8 @@ class NdarrayOptimizationClosure:
 
     def __init__(
         self,
-        closure: Callable[[], Tuple[Tensor, Sequence[Optional[Tensor]]]],
-        parameters: Dict[str, Tensor],
+        closure: Callable[[], tuple[Tensor, Sequence[Optional[Tensor]]]],
+        parameters: dict[str, Tensor],
         as_array: Callable[[Tensor], ndarray] = None,  # pyre-ignore [9]
         as_tensor: Callable[[ndarray], Tensor] = torch.as_tensor,
         get_state: Callable[[], ndarray] = None,  # pyre-ignore [9]
@@ -142,7 +144,7 @@ class NdarrayOptimizationClosure:
 
     def __call__(
         self, state: Optional[ndarray] = None, **kwargs: Any
-    ) -> Tuple[ndarray, ndarray]:
+    ) -> tuple[ndarray, ndarray]:
         if state is not None:
             self.state = state
 

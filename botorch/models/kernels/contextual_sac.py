@@ -4,7 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import torch
 from gpytorch.kernels.kernel import Kernel
@@ -42,7 +42,7 @@ class SACKernel(Kernel):
 
     def __init__(
         self,
-        decomposition: Dict[str, List[int]],
+        decomposition: dict[str, list[int]],
         batch_shape: torch.Size,
         device: Optional[torch.device] = None,
     ) -> None:

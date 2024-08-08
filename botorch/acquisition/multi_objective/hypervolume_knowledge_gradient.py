@@ -17,7 +17,7 @@ References:
 """
 
 from copy import deepcopy
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type
+from typing import Any, Callable, Optional
 
 import torch
 from botorch import settings
@@ -78,7 +78,7 @@ class qHypervolumeKnowledgeGradient(
         sampler: Optional[ListSampler] = None,
         objective: Optional[MCMultiOutputObjective] = None,
         inner_sampler: Optional[MCSampler] = None,
-        X_evaluation_mask: Optional[List[Tensor]] = None,
+        X_evaluation_mask: Optional[list[Tensor]] = None,
         X_pending: Optional[Tensor] = None,
         X_pending_evaluation_mask: Optional[Tensor] = None,
         current_value: Optional[Tensor] = None,
@@ -306,7 +306,7 @@ class qMultiFidelityHypervolumeKnowledgeGradient(qHypervolumeKnowledgeGradient):
         self,
         model: Model,
         ref_point: Tensor,
-        target_fidelities: Dict[int, float],
+        target_fidelities: dict[int, float],
         num_fantasies: int = 8,
         num_pareto: int = 10,
         sampler: Optional[MCSampler] = None,
@@ -318,8 +318,8 @@ class qMultiFidelityHypervolumeKnowledgeGradient(qHypervolumeKnowledgeGradient):
         current_value: Optional[Tensor] = None,
         cost_aware_utility: Optional[CostAwareUtility] = None,
         project: Callable[[Tensor], Tensor] = lambda X: X,
-        valfunc_cls: Optional[Type[AcquisitionFunction]] = None,
-        valfunc_argfac: Optional[Callable[[Model], Dict[str, Any]]] = None,
+        valfunc_cls: Optional[type[AcquisitionFunction]] = None,
+        valfunc_argfac: Optional[Callable[[Model], dict[str, Any]]] = None,
         use_posterior_mean: bool = True,
         **kwargs: Any,
     ) -> None:
@@ -490,8 +490,8 @@ def _get_hv_value_function(
     objective: Optional[MCMultiOutputObjective] = None,
     sampler: Optional[MCSampler] = None,
     project: Optional[Callable[[Tensor], Tensor]] = None,
-    valfunc_cls: Optional[Type[AcquisitionFunction]] = None,
-    valfunc_argfac: Optional[Callable[[Model], Dict[str, Any]]] = None,
+    valfunc_cls: Optional[type[AcquisitionFunction]] = None,
+    valfunc_argfac: Optional[Callable[[Model], dict[str, Any]]] = None,
     use_posterior_mean: bool = False,
 ) -> AcquisitionFunction:
     r"""Construct value function (i.e. inner acquisition function).
@@ -528,7 +528,7 @@ def _get_hv_value_function(
 
 def _split_hvkg_fantasy_points(
     X: Tensor, n_f: int, num_pareto: int
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Split a one-shot HV-KGoptimization input into actual and fantasy points
 
     Args:

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import warnings
 from functools import wraps
-from typing import Any, Callable, List, Optional, TYPE_CHECKING
+from typing import Any, Callable, Optional, TYPE_CHECKING
 
 import torch
 from botorch.utils.safe_math import logmeanexp
@@ -119,7 +119,7 @@ def unnormalize(X: Tensor, bounds: Tensor) -> Tensor:
     return X * (bounds[1] - bounds[0]) + bounds[0]
 
 
-def normalize_indices(indices: Optional[List[int]], d: int) -> Optional[List[int]]:
+def normalize_indices(indices: Optional[list[int]], d: int) -> Optional[list[int]]:
     r"""Normalize a list of indices to ensure that they are positive.
 
     Args:

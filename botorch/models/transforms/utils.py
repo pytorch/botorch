@@ -7,13 +7,12 @@
 from __future__ import annotations
 
 from functools import wraps
-from typing import Tuple
 
 import torch
 from torch import Tensor
 
 
-def lognorm_to_norm(mu: Tensor, Cov: Tensor) -> Tuple[Tensor, Tensor]:
+def lognorm_to_norm(mu: Tensor, Cov: Tensor) -> tuple[Tensor, Tensor]:
     """Compute mean and covariance of a MVN from those of the associated log-MVN
 
     If `Y` is log-normal with mean mu_ln and covariance Cov_ln, then
@@ -38,7 +37,7 @@ def lognorm_to_norm(mu: Tensor, Cov: Tensor) -> Tuple[Tensor, Tensor]:
     return mu_n, Cov_n
 
 
-def norm_to_lognorm(mu: Tensor, Cov: Tensor) -> Tuple[Tensor, Tensor]:
+def norm_to_lognorm(mu: Tensor, Cov: Tensor) -> tuple[Tensor, Tensor]:
     """Compute mean and covariance of a log-MVN from its MVN sufficient statistics
 
     If `X ~ N(mu, Cov)` and `Y = exp(X)`, then `Y` is log-normal with

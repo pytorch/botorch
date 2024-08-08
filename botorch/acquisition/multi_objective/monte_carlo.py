@@ -27,7 +27,7 @@ References
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Callable, List, Optional, Union
+from typing import Callable, Optional, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
@@ -73,7 +73,7 @@ class MultiObjectiveMCAcquisitionFunction(AcquisitionFunction, MCSamplerMixin, A
         model: Model,
         sampler: Optional[MCSampler] = None,
         objective: Optional[MCMultiOutputObjective] = None,
-        constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
         eta: Optional[Union[Tensor, float]] = 1e-3,
         X_pending: Optional[Tensor] = None,
     ) -> None:
@@ -149,11 +149,11 @@ class qExpectedHypervolumeImprovement(
     def __init__(
         self,
         model: Model,
-        ref_point: Union[List[float], Tensor],
+        ref_point: Union[list[float], Tensor],
         partitioning: NondominatedPartitioning,
         sampler: Optional[MCSampler] = None,
         objective: Optional[MCMultiOutputObjective] = None,
-        constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
         X_pending: Optional[Tensor] = None,
         eta: Optional[Union[Tensor, float]] = 1e-3,
         fat: bool = False,
@@ -328,11 +328,11 @@ class qNoisyExpectedHypervolumeImprovement(
     def __init__(
         self,
         model: Model,
-        ref_point: Union[List[float], Tensor],
+        ref_point: Union[list[float], Tensor],
         X_baseline: Tensor,
         sampler: Optional[MCSampler] = None,
         objective: Optional[MCMultiOutputObjective] = None,
-        constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
         X_pending: Optional[Tensor] = None,
         eta: Optional[Union[Tensor, float]] = 1e-3,
         fat: bool = False,

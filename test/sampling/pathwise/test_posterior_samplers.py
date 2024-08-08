@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Any, Dict
+from typing import Any
 
 import torch
 from botorch.exceptions.errors import UnsupportedError
@@ -28,7 +28,7 @@ from torch.nn.functional import pad
 class TestPosteriorSamplers(BotorchTestCase):
     def setUp(self, suppress_input_warnings: bool = True) -> None:
         super().setUp(suppress_input_warnings=suppress_input_warnings)
-        tkwargs: Dict[str, Any] = {"device": self.device, "dtype": torch.float64}
+        tkwargs: dict[str, Any] = {"device": self.device, "dtype": torch.float64}
         torch.manual_seed(0)
 
         base = MaternKernel(nu=2.5, ard_num_dims=2, batch_shape=Size([]))

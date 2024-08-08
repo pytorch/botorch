@@ -8,7 +8,8 @@ r"""Multi-task Gaussian Process Regression models with fully Bayesian inference.
 """
 
 
-from typing import Any, Dict, List, Mapping, NoReturn, Optional, Tuple
+from collections.abc import Mapping
+from typing import Any, NoReturn, Optional
 
 import pyro
 import torch
@@ -127,8 +128,8 @@ class MultitaskSaasPyroModel(SaasPyroModel):
         )
 
     def load_mcmc_samples(
-        self, mcmc_samples: Dict[str, Tensor]
-    ) -> Tuple[Mean, Kernel, Likelihood, Kernel, Parameter]:
+        self, mcmc_samples: dict[str, Tensor]
+    ) -> tuple[Mean, Kernel, Likelihood, Kernel, Parameter]:
         r"""Load the MCMC samples into the mean_module, covar_module, and likelihood."""
         tkwargs = {"device": self.train_X.device, "dtype": self.train_X.dtype}
         num_mcmc_samples = len(mcmc_samples["mean"])
@@ -196,9 +197,9 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
         train_Y: Tensor,
         task_feature: int,
         train_Yvar: Optional[Tensor] = None,
-        output_tasks: Optional[List[int]] = None,
+        output_tasks: Optional[list[int]] = None,
         rank: Optional[int] = None,
-        all_tasks: Optional[List[int]] = None,
+        all_tasks: Optional[list[int]] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
         pyro_model: Optional[MultitaskSaasPyroModel] = None,
@@ -324,7 +325,7 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
                 "`fit_fully_bayesian_model_nuts` to fit the model."
             )
 
-    def load_mcmc_samples(self, mcmc_samples: Dict[str, Tensor]) -> None:
+    def load_mcmc_samples(self, mcmc_samples: dict[str, Tensor]) -> None:
         r"""Load the MCMC hyperparameter samples into the model.
 
         This method will be called by `fit_fully_bayesian_model_nuts` when the model
@@ -341,7 +342,7 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[List[int]] = None,
+        output_indices: Optional[list[int]] = None,
         observation_noise: bool = False,
         posterior_transform: Optional[PosteriorTransform] = None,
         **kwargs: Any,

@@ -6,11 +6,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from copy import deepcopy
 
 from itertools import count
 
-from typing import Any, Dict, Optional, Sequence, Tuple
+from typing import Any, Optional
 
 import torch
 from botorch.utils.probability.mvnxpb import MVNXPB
@@ -28,7 +30,7 @@ from torch.special import ndtri
 class TestUnifiedSkewNormal(BotorchTestCase):
     def setUp(
         self,
-        ndims: Sequence[Tuple[int, int]] = ((1, 1), (2, 3), (3, 2), (3, 3)),
+        ndims: Sequence[tuple[int, int]] = ((1, 1), (2, 3), (3, 2), (3, 3)),
         lower_quantile_max: float = 0.9,  # if these get too far into the tail, naive
         upper_quantile_min: float = 0.1,  # MC methods will not produce any samples.
         num_log_probs: int = 4,
@@ -87,7 +89,7 @@ class TestUnifiedSkewNormal(BotorchTestCase):
                 )
 
     @property
-    def tkwargs(self) -> Dict[str, Any]:
+    def tkwargs(self) -> dict[str, Any]:
         return {"dtype": self.dtype, "device": self.device}
 
     def gen_covariances(

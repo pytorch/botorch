@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Optional, Tuple
+from typing import Optional
 
 import torch
 from gpytorch.constraints import Positive
@@ -37,7 +37,7 @@ class InfiniteWidthBNNKernel(Kernel):
         self,
         depth: int = 3,
         batch_shape: Optional[torch.Size] = None,
-        active_dims: Optional[Tuple[int, ...]] = None,
+        active_dims: Optional[tuple[int, ...]] = None,
         acos_eps: float = 1e-7,
         device: Optional[torch.device] = None,
     ) -> None:

@@ -48,7 +48,7 @@ from __future__ import annotations
 
 import math
 from abc import ABC
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Union
 
 import torch
 from botorch.exceptions.errors import InputDataError
@@ -61,14 +61,14 @@ class SyntheticTestFunction(BaseTestProblem, ABC):
     r"""Base class for synthetic test functions."""
 
     _optimal_value: Optional[float] = None
-    _optimizers: Optional[List[Tuple[float, ...]]] = None
+    _optimizers: Optional[list[tuple[float, ...]]] = None
     num_objectives: int = 1
 
     def __init__(
         self,
-        noise_std: Union[None, float, List[float]] = None,
+        noise_std: Union[None, float, list[float]] = None,
         negate: bool = False,
-        bounds: Optional[List[Tuple[float, float]]] = None,
+        bounds: Optional[list[tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
@@ -85,7 +85,7 @@ class SyntheticTestFunction(BaseTestProblem, ABC):
             if bounds is not None:
                 # Ensure at least one optimizer lies within the custom bounds
                 def in_bounds(
-                    optimizer: Tuple[float, ...], bounds: List[Tuple[float, float]]
+                    optimizer: tuple[float, ...], bounds: list[tuple[float, float]]
                 ) -> bool:
                     for i, xopt in enumerate(optimizer):
                         lower, upper = bounds[i]
@@ -138,7 +138,7 @@ class Ackley(SyntheticTestFunction):
         dim: int = 2,
         noise_std: Optional[float] = None,
         negate: bool = False,
-        bounds: Optional[List[Tuple[float, float]]] = None,
+        bounds: Optional[list[tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
@@ -265,7 +265,7 @@ class DixonPrice(SyntheticTestFunction):
         dim=2,
         noise_std: Optional[float] = None,
         negate: bool = False,
-        bounds: Optional[List[Tuple[float, float]]] = None,
+        bounds: Optional[list[tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
@@ -334,7 +334,7 @@ class Griewank(SyntheticTestFunction):
         dim=2,
         noise_std: Optional[float] = None,
         negate: bool = False,
-        bounds: Optional[List[Tuple[float, float]]] = None,
+        bounds: Optional[list[tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
@@ -376,7 +376,7 @@ class Hartmann(SyntheticTestFunction):
         dim=6,
         noise_std: Optional[float] = None,
         negate: bool = False,
-        bounds: Optional[List[Tuple[float, float]]] = None,
+        bounds: Optional[list[tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
@@ -510,7 +510,7 @@ class Levy(SyntheticTestFunction):
         dim=2,
         noise_std: Optional[float] = None,
         negate: bool = False,
-        bounds: Optional[List[Tuple[float, float]]] = None,
+        bounds: Optional[list[tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
@@ -552,7 +552,7 @@ class Michalewicz(SyntheticTestFunction):
         dim=2,
         noise_std: Optional[float] = None,
         negate: bool = False,
-        bounds: Optional[List[Tuple[float, float]]] = None,
+        bounds: Optional[list[tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
@@ -612,7 +612,7 @@ class Powell(SyntheticTestFunction):
         dim=4,
         noise_std: Optional[float] = None,
         negate: bool = False,
-        bounds: Optional[List[Tuple[float, float]]] = None,
+        bounds: Optional[list[tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
@@ -648,7 +648,7 @@ class Rastrigin(SyntheticTestFunction):
         dim=2,
         noise_std: Optional[float] = None,
         negate: bool = False,
-        bounds: Optional[List[Tuple[float, float]]] = None,
+        bounds: Optional[list[tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
@@ -687,7 +687,7 @@ class Rosenbrock(SyntheticTestFunction):
         dim=2,
         noise_std: Optional[float] = None,
         negate: bool = False,
-        bounds: Optional[List[Tuple[float, float]]] = None,
+        bounds: Optional[list[tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
@@ -729,7 +729,7 @@ class Shekel(SyntheticTestFunction):
         m: int = 10,
         noise_std: Optional[float] = None,
         negate: bool = False,
-        bounds: Optional[List[Tuple[float, float]]] = None,
+        bounds: Optional[list[tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
@@ -795,7 +795,7 @@ class StyblinskiTang(SyntheticTestFunction):
         dim=2,
         noise_std: Optional[float] = None,
         negate: bool = False,
-        bounds: Optional[List[Tuple[float, float]]] = None,
+        bounds: Optional[list[tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
@@ -839,10 +839,10 @@ class ConstrainedSyntheticTestFunction(
 
     def __init__(
         self,
-        noise_std: Union[None, float, List[float]] = None,
-        constraint_noise_std: Union[None, float, List[float]] = None,
+        noise_std: Union[None, float, list[float]] = None,
+        constraint_noise_std: Union[None, float, list[float]] = None,
         negate: bool = False,
-        bounds: Optional[List[Tuple[float, float]]] = None,
+        bounds: Optional[list[tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
@@ -864,7 +864,7 @@ class ConstrainedSyntheticTestFunction(
 
     def _validate_constraint_noise(
         self, constraint_noise_std
-    ) -> Union[None, float, List[float]]:
+    ) -> Union[None, float, list[float]]:
         """
         Validates that constraint_noise_std has length equal to
         the number of constraints, if given as a list
@@ -932,9 +932,9 @@ class ConstrainedHartmann(Hartmann, ConstrainedSyntheticTestFunction):
         self,
         dim: int = 6,
         noise_std: Union[None, float] = None,
-        constraint_noise_std: Union[None, float, List[float]] = None,
+        constraint_noise_std: Union[None, float, list[float]] = None,
         negate: bool = False,
-        bounds: Optional[List[Tuple[float, float]]] = None,
+        bounds: Optional[list[tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
@@ -970,9 +970,9 @@ class ConstrainedHartmannSmooth(Hartmann, ConstrainedSyntheticTestFunction):
         self,
         dim: int = 6,
         noise_std: Union[None, float] = None,
-        constraint_noise_std: Union[None, float, List[float]] = None,
+        constraint_noise_std: Union[None, float, list[float]] = None,
         negate: bool = False,
-        bounds: Optional[List[Tuple[float, float]]] = None,
+        bounds: Optional[list[tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:

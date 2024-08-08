@@ -6,11 +6,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from copy import deepcopy
 
 from functools import partial
 from itertools import count
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Optional, Union
 from unittest.mock import patch
 
 import torch
@@ -22,7 +24,7 @@ from torch import Tensor
 
 
 def run_gaussian_estimator(
-    estimator: Callable[[Tensor], Tuple[Tensor, Union[Tensor, float, int]]],
+    estimator: Callable[[Tensor], tuple[Tensor, Union[Tensor, float, int]]],
     sqrt_cov: Tensor,
     num_samples: int,
     batch_limit: Optional[int] = None,
@@ -62,7 +64,7 @@ class TestMVNXPB(BotorchTestCase):
         self,
         ndims: Sequence[int] = (4, 8),
         batch_shape: Sequence[int] = (4,),
-        bound_range: Tuple[float, float] = (-5.0, 5.0),
+        bound_range: tuple[float, float] = (-5.0, 5.0),
         mc_num_samples: int = 100000,
         mc_batch_limit: int = 10000,
         mc_atol_multiplier: float = 4.0,
@@ -116,8 +118,8 @@ class TestMVNXPB(BotorchTestCase):
         self,
         ndim: int,
         batch_shape: Sequence[int] = (),
-        bound_range: Optional[Tuple[float, float]] = None,
-    ) -> Tuple[Tensor, Tensor]:
+        bound_range: Optional[tuple[float, float]] = None,
+    ) -> tuple[Tensor, Tensor]:
         shape = tuple(batch_shape) + (ndim,)
         lower = torch.rand(shape, **self.tkwargs)
         upper = lower + (1 - lower) * torch.rand_like(lower)
@@ -128,7 +130,7 @@ class TestMVNXPB(BotorchTestCase):
         return torch.stack([lower, upper], dim=-1)
 
     @property
-    def tkwargs(self) -> Dict[str, Any]:
+    def tkwargs(self) -> dict[str, Any]:
         return {"dtype": self.dtype, "device": self.device}
 
     def assertEqualMXNBPB(self, A: MVNXPB, B: MVNXPB):

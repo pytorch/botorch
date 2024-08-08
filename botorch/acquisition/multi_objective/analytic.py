@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from itertools import product
-from typing import List, Optional
+from typing import Optional
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -79,7 +79,7 @@ class ExpectedHypervolumeImprovement(MultiObjectiveAnalyticAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        ref_point: List[float],
+        ref_point: list[float],
         partitioning: NondominatedPartitioning,
         posterior_transform: Optional[PosteriorTransform] = None,
     ) -> None:

@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 from inspect import getsource, getsourcefile
-from typing import Any, Callable, Optional, Tuple, Type
+from typing import Any, Callable, Optional
 
 from multipledispatch.dispatcher import (
     Dispatcher as MDDispatcher,
@@ -16,7 +16,7 @@ from multipledispatch.dispatcher import (
 )
 
 
-def type_bypassing_encoder(arg: Any) -> Type:
+def type_bypassing_encoder(arg: Any) -> type:
     # Allow type variables to be passed as pre-encoded arguments
     return arg if isinstance(arg, type) else type(arg)
 
@@ -32,7 +32,7 @@ class Dispatcher(MDDispatcher):
         self,
         name: str,
         doc: Optional[str] = None,
-        encoder: Callable[Any, Type] = type,
+        encoder: Callable[Any, type] = type,
     ) -> None:
         """
         Args:
@@ -48,7 +48,7 @@ class Dispatcher(MDDispatcher):
     def __getitem__(
         self,
         args: Optional[Any] = None,
-        types: Optional[Tuple[Type]] = None,
+        types: Optional[tuple[type]] = None,
     ) -> Callable:
         r"""Method lookup.
 
@@ -106,7 +106,7 @@ class Dispatcher(MDDispatcher):
                 "found, but none completed successfully"
             )
 
-    def dispatch(self, *types: Type) -> Callable:
+    def dispatch(self, *types: type) -> Callable:
         r"""Method lookup strategy. Checks for an exact match before traversing
         the set of registered methods according to the current ordering.
 
@@ -124,7 +124,7 @@ class Dispatcher(MDDispatcher):
         except StopIteration:
             return None
 
-    def encode_args(self, args: Any) -> Tuple[Type]:
+    def encode_args(self, args: Any) -> tuple[type]:
         r"""Converts arguments into a tuple of types used during method lookup."""
         return tuple(map(self.encoder, args if isinstance(args, tuple) else (args,)))
 
@@ -148,5 +148,5 @@ class Dispatcher(MDDispatcher):
         print(self._source(*args))
 
     @property
-    def encoder(self) -> Callable[Any, Type]:
+    def encoder(self) -> Callable[Any, type]:
         return self._encoder

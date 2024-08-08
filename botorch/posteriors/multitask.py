@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
@@ -75,7 +75,7 @@ class MultitaskGPPosterior(GPyTorchPosterior):
         return batch_shape + torch.Size((sampling_shape,))
 
     @property
-    def batch_range(self) -> Tuple[int, int]:
+    def batch_range(self) -> tuple[int, int]:
         r"""The t-batch range.
 
         This is used in samplers to identify the t-batch component of the
@@ -87,7 +87,7 @@ class MultitaskGPPosterior(GPyTorchPosterior):
 
     def _prepare_base_samples(
         self, sample_shape: torch.Size, base_samples: Tensor = None
-    ) -> Tuple[Tensor, Tensor]:
+    ) -> tuple[Tensor, Tensor]:
         covariance_matrix = self.joint_covariance_matrix
         joint_size = covariance_matrix.shape[-1]
         batch_shape = covariance_matrix.batch_shape

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import math
 
-from typing import Callable, Tuple, Union
+from typing import Callable, Union
 
 import torch
 from botorch.exceptions import UnsupportedError
@@ -122,7 +122,7 @@ def logdiffexp(log_a: Tensor, log_b: Tensor) -> Tensor:
 
 
 def logsumexp(
-    x: Tensor, dim: Union[int, Tuple[int, ...]], keepdim: bool = False
+    x: Tensor, dim: Union[int, tuple[int, ...]], keepdim: bool = False
 ) -> Tensor:
     """Version of logsumexp that has a well-behaved backward pass when
     x contains infinities.
@@ -149,7 +149,7 @@ def logsumexp(
 def _inf_max_helper(
     max_fun: Callable[[Tensor], Tensor],
     x: Tensor,
-    dim: Union[int, Tuple[int, ...]],
+    dim: Union[int, tuple[int, ...]],
     keepdim: bool,
 ) -> Tensor:
     """Helper function that generalizes the treatment of infinities for approximations
@@ -187,7 +187,7 @@ def _inf_max_helper(
     return res if keepdim else res.sum(dim=dim)
 
 
-def _any(x: Tensor, dim: Union[int, Tuple[int, ...]], keepdim: bool = False) -> Tensor:
+def _any(x: Tensor, dim: Union[int, tuple[int, ...]], keepdim: bool = False) -> Tensor:
     """Extension of torch.any, which supports reducing over tuples of dimensions.
 
     Args:
@@ -198,7 +198,7 @@ def _any(x: Tensor, dim: Union[int, Tuple[int, ...]], keepdim: bool = False) -> 
     Returns:
         The Tensor corresponding to `any` over the specified dimensions.
     """
-    if isinstance(dim, Tuple):
+    if isinstance(dim, tuple):
         for d in dim:
             x = x.any(dim=d, keepdim=True)
     else:
@@ -207,7 +207,7 @@ def _any(x: Tensor, dim: Union[int, Tuple[int, ...]], keepdim: bool = False) -> 
 
 
 def logmeanexp(
-    X: Tensor, dim: Union[int, Tuple[int, ...]], keepdim: bool = False
+    X: Tensor, dim: Union[int, tuple[int, ...]], keepdim: bool = False
 ) -> Tensor:
     """Computes `log(mean(exp(X), dim=dim, keepdim=keepdim))`.
 
@@ -249,7 +249,7 @@ def log_softplus(x: Tensor, tau: Union[float, Tensor] = TAU) -> Tensor:
 
 def smooth_amax(
     X: Tensor,
-    dim: Union[int, Tuple[int, ...]] = -1,
+    dim: Union[int, tuple[int, ...]] = -1,
     keepdim: bool = False,
     tau: Union[float, Tensor] = 1.0,
 ) -> Tensor:
@@ -275,7 +275,7 @@ def smooth_amax(
 
 def smooth_amin(
     X: Tensor,
-    dim: Union[int, Tuple[int, ...]] = -1,
+    dim: Union[int, tuple[int, ...]] = -1,
     keepdim: bool = False,
     tau: Union[float, Tensor] = 1.0,
 ) -> Tensor:
@@ -322,7 +322,7 @@ def fatplus(x: Tensor, tau: Union[float, Tensor] = TAU) -> Tensor:
 
 def fatmax(
     x: Tensor,
-    dim: Union[int, Tuple[int, ...]],
+    dim: Union[int, tuple[int, ...]],
     keepdim: bool = False,
     tau: Union[float, Tensor] = TAU,
     alpha: float = ALPHA,
@@ -345,7 +345,7 @@ def fatmax(
     """
 
     def max_fun(
-        x: Tensor, dim: Union[int, Tuple[int, ...]], keepdim: bool = False
+        x: Tensor, dim: Union[int, tuple[int, ...]], keepdim: bool = False
     ) -> Tensor:
         return tau * _pareto(-x / tau, alpha=alpha).sum(dim=dim, keepdim=keepdim).log()
 
@@ -354,7 +354,7 @@ def fatmax(
 
 def fatmin(
     x: Tensor,
-    dim: Union[int, Tuple[int, ...]],
+    dim: Union[int, tuple[int, ...]],
     keepdim: bool = False,
     tau: Union[float, Tensor] = TAU,
     alpha: float = ALPHA,

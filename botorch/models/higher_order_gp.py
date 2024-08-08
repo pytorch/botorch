@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import warnings
 from contextlib import ExitStack
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
@@ -92,7 +92,7 @@ class FlattenedStandardize(Standardize):
 
     def forward(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> Tuple[Tensor, Optional[Tensor]]:
+    ) -> tuple[Tensor, Optional[Tensor]]:
         Y = self._squeeze_to_single_output(Y)
         if Yvar is not None:
             Yvar = self._squeeze_to_single_output(Yvar)
@@ -108,7 +108,7 @@ class FlattenedStandardize(Standardize):
 
     def untransform(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> Tuple[Tensor, Optional[Tensor]]:
+    ) -> tuple[Tensor, Optional[Tensor]]:
         Y = self._squeeze_to_single_output(Y)
         if Yvar is not None:
             Yvar = self._squeeze_to_single_output(Yvar)
@@ -179,8 +179,8 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         train_X: Tensor,
         train_Y: Tensor,
         likelihood: Optional[Likelihood] = None,
-        covar_modules: Optional[List[Kernel]] = None,
-        num_latent_dims: Optional[List[int]] = None,
+        covar_modules: Optional[list[Kernel]] = None,
+        num_latent_dims: Optional[list[int]] = None,
         learn_latent_pars: bool = True,
         latent_init: str = "default",
         outcome_transform: Optional[OutcomeTransform] = None,
@@ -280,7 +280,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
     def _initialize_latents(
         self,
         latent_init: str,
-        num_latent_dims: List[int],
+        num_latent_dims: list[int],
         learn_latent_pars: bool,
         device: torch.device,
         dtype: torch.dtype,
@@ -435,7 +435,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[List[int]] = None,
+        output_indices: Optional[list[int]] = None,
         observation_noise: Union[bool, Tensor] = False,
         posterior_transform: Optional[PosteriorTransform] = None,
     ) -> GPyTorchPosterior:

@@ -6,8 +6,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from inspect import getmembers
-from typing import Optional, Sequence, Union
+from typing import Optional, Union
 
 import torch
 from botorch.utils.probability.linalg import augment_cholesky, block_matrix_concat

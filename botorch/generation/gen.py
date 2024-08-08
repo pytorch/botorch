@@ -13,7 +13,7 @@ from __future__ import annotations
 import time
 import warnings
 from functools import partial
-from typing import Any, Callable, Dict, List, NoReturn, Optional, Tuple, Type, Union
+from typing import Any, Callable, NoReturn, Optional, Union
 
 import numpy as np
 import torch
@@ -40,7 +40,7 @@ from torch.optim import Optimizer
 
 logger = _get_logger()
 
-TGenCandidates = Callable[[Tensor, AcquisitionFunction, Any], Tuple[Tensor, Tensor]]
+TGenCandidates = Callable[[Tensor, AcquisitionFunction, Any], tuple[Tensor, Tensor]]
 
 
 def gen_candidates_scipy(
@@ -48,13 +48,13 @@ def gen_candidates_scipy(
     acquisition_function: AcquisitionFunction,
     lower_bounds: Optional[Union[float, Tensor]] = None,
     upper_bounds: Optional[Union[float, Tensor]] = None,
-    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    nonlinear_inequality_constraints: Optional[List[Tuple[Callable, bool]]] = None,
-    options: Optional[Dict[str, Any]] = None,
-    fixed_features: Optional[Dict[int, Optional[float]]] = None,
+    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
+    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
+    nonlinear_inequality_constraints: Optional[list[tuple[Callable, bool]]] = None,
+    options: Optional[dict[str, Any]] = None,
+    fixed_features: Optional[dict[int, Optional[float]]] = None,
     timeout_sec: Optional[float] = None,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Generate a set of candidates using `scipy.optimize.minimize`.
 
     Optimizes an acquisition function starting from a set of initial candidates
@@ -303,12 +303,12 @@ def gen_candidates_torch(
     acquisition_function: AcquisitionFunction,
     lower_bounds: Optional[Union[float, Tensor]] = None,
     upper_bounds: Optional[Union[float, Tensor]] = None,
-    optimizer: Type[Optimizer] = torch.optim.Adam,
-    options: Optional[Dict[str, Union[float, str]]] = None,
+    optimizer: type[Optimizer] = torch.optim.Adam,
+    options: Optional[dict[str, Union[float, str]]] = None,
     callback: Optional[Callable[[int, Tensor, Tensor], NoReturn]] = None,
-    fixed_features: Optional[Dict[int, Optional[float]]] = None,
+    fixed_features: Optional[dict[int, Optional[float]]] = None,
     timeout_sec: Optional[float] = None,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Generate a set of candidates using a `torch.optim` optimizer.
 
     Optimizes an acquisition function starting from a set of initial candidates
@@ -455,7 +455,7 @@ def get_best_candidates(batch_candidates: Tensor, batch_values: Tensor) -> Tenso
     return batch_candidates[best]
 
 
-def _process_scipy_result(res: OptimizeResult, options: Dict[str, Any]) -> None:
+def _process_scipy_result(res: OptimizeResult, options: dict[str, Any]) -> None:
     r"""Process scipy optimization result to produce relevant logs and warnings."""
     if "success" not in res.keys() or "status" not in res.keys():
         with warnings.catch_warnings():

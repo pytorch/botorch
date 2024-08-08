@@ -6,7 +6,7 @@
 
 
 import itertools
-from typing import List, Optional
+from typing import Optional
 
 import torch
 from botorch import fit_fully_bayesian_model_nuts
@@ -73,7 +73,7 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
     def _get_data_and_model(
         self,
         task_rank: Optional[int] = None,
-        output_tasks: Optional[List[int]] = None,
+        output_tasks: Optional[list[int]] = None,
         infer_noise: bool = False,
         **tkwargs
     ):

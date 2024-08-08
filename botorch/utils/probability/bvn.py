@@ -19,7 +19,7 @@ Methods for computing bivariate normal probabilities and statistics.
 from __future__ import annotations
 
 from math import pi as _pi
-from typing import Optional, Tuple
+from typing import Optional
 
 import torch
 from botorch.exceptions import UnsupportedError
@@ -243,7 +243,7 @@ def bvnmom(
     xu: Tensor,
     yu: Tensor,
     p: Optional[Tensor] = None,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Computes the expected values of truncated, bivariate normal random variables.
 
     Let `x` and `y` be a pair of standard bivariate normal random variables having

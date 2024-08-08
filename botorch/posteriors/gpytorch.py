@@ -11,7 +11,7 @@ Posterior module to be used with GPyTorch models.
 from __future__ import annotations
 
 from contextlib import ExitStack
-from typing import Optional, Tuple, TYPE_CHECKING, Union
+from typing import Optional, TYPE_CHECKING, Union
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
@@ -58,7 +58,7 @@ class GPyTorchPosterior(TorchPosterior):
         return self.distribution.batch_shape + self.distribution.base_sample_shape
 
     @property
-    def batch_range(self) -> Tuple[int, int]:
+    def batch_range(self) -> tuple[int, int]:
         r"""The t-batch range.
 
         This is used in samplers to identify the t-batch component of the
@@ -193,7 +193,7 @@ def scalarize_posterior_gpytorch(
     posterior: GPyTorchPosterior,
     weights: Tensor,
     offset: float = 0.0,
-) -> Tuple[Tensor, Union[Tensor, LinearOperator]]:
+) -> tuple[Tensor, Union[Tensor, LinearOperator]]:
     r"""Helper function for `scalarize_posterior`, producing a mean and
     variance.
 

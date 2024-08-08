@@ -32,7 +32,7 @@ from __future__ import annotations
 import copy
 import warnings
 
-from typing import Optional, Type, TypeVar, Union
+from typing import Optional, TypeVar, Union
 
 import torch
 from botorch.models.gpytorch import GPyTorchModel
@@ -183,7 +183,7 @@ class _SingleTaskVariationalGP(ApproximateGP):
         covar_module: Optional[Kernel] = None,
         mean_module: Optional[Mean] = None,
         variational_distribution: Optional[_VariationalDistribution] = None,
-        variational_strategy: Type[_VariationalStrategy] = VariationalStrategy,
+        variational_strategy: type[_VariationalStrategy] = VariationalStrategy,
         inducing_points: Optional[Union[Tensor, int]] = None,
         inducing_point_allocator: Optional[InducingPointAllocator] = None,
     ) -> None:
@@ -328,7 +328,7 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
         covar_module: Optional[Kernel] = None,
         mean_module: Optional[Mean] = None,
         variational_distribution: Optional[_VariationalDistribution] = None,
-        variational_strategy: Type[_VariationalStrategy] = VariationalStrategy,
+        variational_strategy: type[_VariationalStrategy] = VariationalStrategy,
         inducing_points: Optional[Union[Tensor, int]] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,

@@ -6,7 +6,6 @@
 
 import time
 from functools import partial
-from typing import Dict
 from unittest.mock import MagicMock, patch
 
 import torch
@@ -43,7 +42,7 @@ class ToyModule(Module):
         return (self.x - self.b).square().sum()
 
     @property
-    def free_parameters(self) -> Dict[str, Tensor]:
+    def free_parameters(self) -> dict[str, Tensor]:
         return {n: p for n, p in self.named_parameters() if p.requires_grad}
 
 

@@ -5,7 +5,6 @@
 # LICENSE file in the root directory of this source tree.
 
 from itertools import product
-from typing import Dict
 from warnings import catch_warnings, simplefilter
 
 import torch
@@ -36,7 +35,7 @@ class TestObjectiveAndConstraintIntegration(BotorchTestCase):
         self.d = 2
         self.tkwargs = {"device": self.device, "dtype": torch.double}
 
-    def _get_acqf_inputs(self, train_batch_shape: torch.Size, m: int) -> Dict:
+    def _get_acqf_inputs(self, train_batch_shape: torch.Size, m: int) -> dict:
 
         train_x = torch.rand((*train_batch_shape, 5, self.d), **self.tkwargs)
         y = torch.rand((*train_batch_shape, 5, m), **self.tkwargs)

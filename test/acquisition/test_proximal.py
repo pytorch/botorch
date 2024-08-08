@@ -4,7 +4,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import List
 
 import torch
 from botorch.acquisition import LinearMCObjective, ScalarizedPosteriorTransform
@@ -27,7 +26,7 @@ class DummyModel(GPyTorchModel):
     def __init__(self):  # noqa: D107
         super(GPyTorchModel, self).__init__()
 
-    def subset_output(self, idcs: List[int]) -> Model:
+    def subset_output(self, idcs: list[int]) -> Model:
         pass
 
 

@@ -14,7 +14,7 @@ References
 """
 
 import warnings
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 import torch
 from botorch.models.multitask import MultiTaskGP
@@ -48,9 +48,9 @@ class LCEMGP(MultiTaskGP):
         likelihood: Optional[Likelihood] = None,
         context_cat_feature: Optional[Tensor] = None,
         context_emb_feature: Optional[Tensor] = None,
-        embs_dim_list: Optional[List[int]] = None,
-        output_tasks: Optional[List[int]] = None,
-        all_tasks: Optional[List[int]] = None,
+        embs_dim_list: Optional[list[int]] = None,
+        output_tasks: Optional[list[int]] = None,
+        all_tasks: Optional[list[int]] = None,
         input_transform: Optional[InputTransform] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
     ) -> None:
@@ -211,12 +211,12 @@ class LCEMGP(MultiTaskGP):
         cls,
         training_data: Union[SupervisedDataset, MultiTaskDataset],
         task_feature: int,
-        output_tasks: Optional[List[int]] = None,
+        output_tasks: Optional[list[int]] = None,
         context_cat_feature: Optional[Tensor] = None,
         context_emb_feature: Optional[Tensor] = None,
-        embs_dim_list: Optional[List[int]] = None,
+        embs_dim_list: Optional[list[int]] = None,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         r"""Construct `Model` keyword arguments from a dataset and other args.
 
         Args:
@@ -265,8 +265,8 @@ class FixedNoiseLCEMGP(LCEMGP):
         task_feature: int,
         context_cat_feature: Optional[Tensor] = None,
         context_emb_feature: Optional[Tensor] = None,
-        embs_dim_list: Optional[List[int]] = None,
-        output_tasks: Optional[List[int]] = None,
+        embs_dim_list: Optional[list[int]] = None,
+        output_tasks: Optional[list[int]] = None,
     ) -> None:
         r"""
         Args:

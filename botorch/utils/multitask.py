@@ -10,15 +10,13 @@ Helpers for multitask modeling.
 
 from __future__ import annotations
 
-from typing import List
-
 import torch
 from gpytorch.distributions import MultitaskMultivariateNormal
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from linear_operator import to_linear_operator
 
 
-def separate_mtmvn(mvn: MultitaskMultivariateNormal) -> List[MultivariateNormal]:
+def separate_mtmvn(mvn: MultitaskMultivariateNormal) -> list[MultivariateNormal]:
     """
     Separate a MTMVN into a list of MVNs, where covariance across data within each task
     are preserved, while covariance across task are dropped.

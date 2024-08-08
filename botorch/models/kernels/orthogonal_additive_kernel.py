@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
-from typing import List, Optional, Tuple
+from typing import Optional
 
 import numpy
 import torch
@@ -237,7 +237,7 @@ def leggauss(
     b: float = 1.0,
     dtype: Optional[torch.dtype] = None,
     device: Optional[torch.device] = None,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     """Computes Gauss-Legendre quadrature nodes and weights. Wraps
     `numpy.polynomial.legendre.leggauss` and returns Torch Tensors.
 
@@ -272,7 +272,7 @@ def _check_hypercube(x: Tensor, name: str) -> None:
         raise ValueError(name + " is not in hypercube [0, 1]^d.")
 
 
-def _reverse_triu_indices(d: int) -> List[int]:
+def _reverse_triu_indices(d: int) -> list[int]:
     """Computes a list of indices which, upon indexing a `d * (d - 1) / 2 + 1`-dim
     Tensor whose last element is zero, will lead to a vectorized representation of
     an upper-triangular matrix, whose diagonal is set to zero and whose super-diagonal

@@ -5,7 +5,6 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
-from typing import List
 
 import torch
 from botorch.exceptions.errors import InputDataError, UnsupportedError
@@ -87,7 +86,7 @@ class TestBraninCurrin(
     MultiObjectiveTestProblemTestCaseMixin,
 ):
     @property
-    def functions(self) -> List[BaseTestProblem]:
+    def functions(self) -> list[BaseTestProblem]:
         return [BraninCurrin()]
 
     def test_init(self):
@@ -118,7 +117,7 @@ class TestDH(
         ]
 
     @property
-    def functions(self) -> List[BaseTestProblem]:
+    def functions(self) -> list[BaseTestProblem]:
         return [DH1(dim=2), DH2(dim=3), DH3(dim=4), DH4(dim=5)]
 
     def test_init(self):
@@ -151,7 +150,7 @@ class TestDTLZ(
     MultiObjectiveTestProblemTestCaseMixin,
 ):
     @property
-    def functions(self) -> List[BaseTestProblem]:
+    def functions(self) -> list[BaseTestProblem]:
         return [
             DTLZ1(dim=5, num_objectives=2),
             DTLZ2(dim=5, num_objectives=2),
@@ -220,7 +219,7 @@ class TestGMM(
     MultiObjectiveTestProblemTestCaseMixin,
 ):
     @property
-    def functions(self) -> List[BaseTestProblem]:
+    def functions(self) -> list[BaseTestProblem]:
         return [
             GMM(num_objectives=4),
             GMM(num_objectives=4, noise_std=[0.0, 0.1, 0.2, 0.3]),
@@ -276,7 +275,7 @@ class TestMW7(
     ConstrainedTestProblemTestCaseMixin,
 ):
     @property
-    def functions(self) -> List[BaseTestProblem]:
+    def functions(self) -> list[BaseTestProblem]:
         return [
             MW7(dim=3),
             MW7(dim=3, noise_std=[0.1, 0.2]),
@@ -297,7 +296,7 @@ class TestZDT(
     MultiObjectiveTestProblemTestCaseMixin,
 ):
     @property
-    def functions(self) -> List[BaseTestProblem]:
+    def functions(self) -> list[BaseTestProblem]:
         return [
             ZDT1(dim=3, num_objectives=2),
             ZDT2(dim=3, num_objectives=2),
@@ -375,7 +374,7 @@ class TestCarSideImpact(
     MultiObjectiveTestProblemTestCaseMixin,
 ):
     @property
-    def functions(self) -> List[BaseTestProblem]:
+    def functions(self) -> list[BaseTestProblem]:
         return [CarSideImpact(), CarSideImpact(noise_std=[0.1, 0.2, 0.3, 0.4])]
 
 
@@ -385,7 +384,7 @@ class TestPenicillin(
     MultiObjectiveTestProblemTestCaseMixin,
 ):
     @property
-    def functions(self) -> List[BaseTestProblem]:
+    def functions(self) -> list[BaseTestProblem]:
         return [Penicillin(), Penicillin(noise_std=[0.1, 0.2, 0.3])]
 
 
@@ -395,7 +394,7 @@ class TestToyRobust(
     MultiObjectiveTestProblemTestCaseMixin,
 ):
     @property
-    def functions(self) -> List[BaseTestProblem]:
+    def functions(self) -> list[BaseTestProblem]:
         return [ToyRobust(), ToyRobust(noise_std=[0.1, 0.2])]
 
 
@@ -405,7 +404,7 @@ class TestVehicleSafety(
     MultiObjectiveTestProblemTestCaseMixin,
 ):
     @property
-    def functions(self) -> List[BaseTestProblem]:
+    def functions(self) -> list[BaseTestProblem]:
         return [VehicleSafety(), VehicleSafety(noise_std=[0.1, 0.2, 0.3])]
 
 
@@ -419,7 +418,7 @@ class TestBNH(
     ConstrainedTestProblemTestCaseMixin,
 ):
     @property
-    def functions(self) -> List[BaseTestProblem]:
+    def functions(self) -> list[BaseTestProblem]:
         return [BNH(), BNH(noise_std=[0.1, 0.2])]
 
 
@@ -430,7 +429,7 @@ class TestSRN(
     ConstrainedTestProblemTestCaseMixin,
 ):
     @property
-    def functions(self) -> List[BaseTestProblem]:
+    def functions(self) -> list[BaseTestProblem]:
         return [SRN(), SRN(noise_std=[0.1, 0.2])]
 
 
@@ -441,7 +440,7 @@ class TestCONSTR(
     ConstrainedTestProblemTestCaseMixin,
 ):
     @property
-    def functions(self) -> List[BaseTestProblem]:
+    def functions(self) -> list[BaseTestProblem]:
         return [CONSTR(), CONSTR(noise_std=[0.1, 0.2])]
 
 
@@ -452,7 +451,7 @@ class TestConstrainedBraninCurrin(
     ConstrainedTestProblemTestCaseMixin,
 ):
     @property
-    def functions(self) -> List[BaseTestProblem]:
+    def functions(self) -> list[BaseTestProblem]:
         return [
             ConstrainedBraninCurrin(),
             ConstrainedBraninCurrin(noise_std=[0.1, 0.2]),
@@ -467,7 +466,7 @@ class TestC2DTLZ2(
     ConstrainedTestProblemTestCaseMixin,
 ):
     @property
-    def functions(self) -> List[BaseTestProblem]:
+    def functions(self) -> list[BaseTestProblem]:
         return [
             C2DTLZ2(dim=3, num_objectives=2),
             C2DTLZ2(dim=3, num_objectives=2, noise_std=0.1),
@@ -487,7 +486,7 @@ class TestDiscBrake(
     ConstrainedTestProblemTestCaseMixin,
 ):
     @property
-    def functions(self) -> List[BaseTestProblem]:
+    def functions(self) -> list[BaseTestProblem]:
         return [DiscBrake(), DiscBrake(noise_std=[0.1, 0.2])]
 
 
@@ -498,7 +497,7 @@ class TestWeldedBeam(
     ConstrainedTestProblemTestCaseMixin,
 ):
     @property
-    def functions(self) -> List[BaseTestProblem]:
+    def functions(self) -> list[BaseTestProblem]:
         return [WeldedBeam(), WeldedBeam(noise_std=[0.1, 0.2])]
 
 
@@ -509,5 +508,5 @@ class TestOSY(
     ConstrainedTestProblemTestCaseMixin,
 ):
     @property
-    def functions(self) -> List[BaseTestProblem]:
+    def functions(self) -> list[BaseTestProblem]:
         return [OSY(), OSY(noise_std=[0.1, 0.2])]

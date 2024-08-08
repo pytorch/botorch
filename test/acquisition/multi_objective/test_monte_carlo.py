@@ -8,7 +8,7 @@ import warnings
 from copy import deepcopy
 from itertools import product
 from math import pi
-from typing import Any, Dict, Optional, Type
+from typing import Any, Optional
 from unittest import mock
 from warnings import catch_warnings, simplefilter
 
@@ -159,9 +159,9 @@ class TestMultiObjectiveMCAcquisitionFunction(BotorchTestCase):
 
     def _test_q_expected_hypervolume_improvement(
         self,
-        acqf_class: Type[AcquisitionFunction],
+        acqf_class: type[AcquisitionFunction],
         dtype: torch.dtype,
-        acqf_kwargs: Optional[Dict[str, Any]] = None,
+        acqf_kwargs: Optional[dict[str, Any]] = None,
     ):
         if acqf_kwargs is None:
             acqf_kwargs = {}
@@ -607,9 +607,9 @@ class TestMultiObjectiveMCAcquisitionFunction(BotorchTestCase):
 
     def _test_constrained_q_expected_hypervolume_improvement(
         self,
-        acqf_class: Type[AcquisitionFunction],
+        acqf_class: type[AcquisitionFunction],
         dtype: torch.dtype,
-        acqf_kwargs: Optional[Dict[str, Any]] = None,
+        acqf_kwargs: Optional[dict[str, Any]] = None,
     ):
         if acqf_kwargs is None:
             acqf_kwargs = {}
@@ -758,7 +758,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     )
 
     def _test_q_noisy_expected_hypervolume_improvement_m1(
-        self, acqf_class: Type[AcquisitionFunction], dtype: torch.dtype
+        self, acqf_class: type[AcquisitionFunction], dtype: torch.dtype
     ):
         # special case test for m = 1.
         (
@@ -785,7 +785,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             )
 
     def _test_q_noisy_expected_hypervolume_improvement(
-        self, acqf_class: Type[AcquisitionFunction], dtype: torch.dtype, m: int
+        self, acqf_class: type[AcquisitionFunction], dtype: torch.dtype, m: int
     ) -> None:
         self._test_qnehvi_base(acqf_class, dtype, m)
         # test with and without cached box decomposition (CBD)
@@ -811,7 +811,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
         return ref_point, X, X_baseline, mm, sampler, samples, baseline_samples, tkwargs
 
     def _test_qnehvi_base(
-        self, acqf_class: Type[AcquisitionFunction], dtype: torch.dtype, m: int
+        self, acqf_class: type[AcquisitionFunction], dtype: torch.dtype, m: int
     ) -> None:
         (
             ref_point,
@@ -996,7 +996,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             self.assertEqual(list(b.shape), [1, 1, m])
 
     def _test_qnehvi_with_CBD(
-        self, acqf_class: Type[AcquisitionFunction], dtype: torch.dtype, m: int
+        self, acqf_class: type[AcquisitionFunction], dtype: torch.dtype, m: int
     ) -> None:
         (
             ref_point,
@@ -1223,7 +1223,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
         self.assertTrue(torch.equal(acqf_pareto_Y[-2:], expected_new_Y2))
 
     def _test_qnehvi_without_CBD(
-        self, acqf_class: Type[AcquisitionFunction], dtype: torch.dtype, m: int
+        self, acqf_class: type[AcquisitionFunction], dtype: torch.dtype, m: int
     ) -> None:
         tkwargs = {"device": self.device}
         tkwargs["dtype"] = dtype
@@ -1355,7 +1355,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 )
 
     def _test_constrained_q_noisy_expected_hypervolume_improvement(
-        self, acqf_class: Type[AcquisitionFunction], dtype: torch.dtype, fat: bool
+        self, acqf_class: type[AcquisitionFunction], dtype: torch.dtype, fat: bool
     ):
         # TODO: improve tests with constraints
         tkwargs = {"device": self.device, "dtype": dtype}
@@ -1601,7 +1601,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     simplefilter("ignore", category=NumericsWarning)
                     self._test_prune_baseline(acqf_class)
 
-    def _test_prune_baseline(self, acqf_class: Type[AcquisitionFunction]):
+    def _test_prune_baseline(self, acqf_class: type[AcquisitionFunction]):
         # test prune_baseline
         no = "botorch.utils.testing.MockModel.num_outputs"
         prune = (
@@ -1644,7 +1644,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     simplefilter("ignore", category=NumericsWarning)
                     self._test_cache_root(acqf_class)
 
-    def _test_cache_root(self, acqf_class: Type[AcquisitionFunction]):
+    def _test_cache_root(self, acqf_class: type[AcquisitionFunction]):
         sample_cached_path = (
             "botorch.acquisition.cached_cholesky.sample_cached_cholesky"
         )
@@ -1798,7 +1798,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     self._test_with_set_valued_objectives(acqf_class)
 
     def _test_with_set_valued_objectives(
-        self, acqf_class: Type[AcquisitionFunction]
+        self, acqf_class: type[AcquisitionFunction]
     ) -> None:
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
@@ -1859,7 +1859,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     simplefilter("ignore", category=NumericsWarning)
                     self._test_deterministic(acqf_class)
 
-    def _test_deterministic(self, acqf_class: Type[AcquisitionFunction]):
+    def _test_deterministic(self, acqf_class: type[AcquisitionFunction]):
         for dtype, prune in ((torch.float, False), (torch.double, True)):
             tkwargs = {"device": self.device, "dtype": dtype}
             model = GenericDeterministicModel(f=lambda x: x, num_outputs=2)
@@ -1889,7 +1889,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     simplefilter("ignore", category=NumericsWarning)
                     self._test_with_multitask(acqf_class)
 
-    def _test_with_multitask(self, acqf_class: Type[AcquisitionFunction]):
+    def _test_with_multitask(self, acqf_class: type[AcquisitionFunction]):
         # Verify that _set_sampler works with MTGP, KroneckerMTGP and HOGP.
         torch.manual_seed(1234)
         tkwargs = {"device": self.device, "dtype": torch.double}

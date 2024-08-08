@@ -31,7 +31,7 @@ model like `MultiTaskGP`.
 from __future__ import annotations
 
 import warnings
-from typing import Dict, NoReturn, Optional, Union
+from typing import NoReturn, Optional, Union
 
 import torch
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
@@ -215,7 +215,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
     @classmethod
     def construct_inputs(
         cls, training_data: SupervisedDataset, *, task_feature: Optional[int] = None
-    ) -> Dict[str, Union[BotorchContainer, Tensor]]:
+    ) -> dict[str, Union[BotorchContainer, Tensor]]:
         r"""Construct `SingleTaskGP` keyword arguments from a `SupervisedDataset`.
 
         Args:

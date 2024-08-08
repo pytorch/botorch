@@ -5,10 +5,11 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
+from collections.abc import Iterable
 from contextlib import ExitStack, nullcontext
 from copy import deepcopy
 from itertools import filterfalse, product
-from typing import Callable, Iterable, Optional
+from typing import Callable, Optional
 from unittest.mock import MagicMock, patch
 from warnings import catch_warnings, warn, WarningMessage
 
