@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Callable, Dict, Optional, Tuple, Union
+from typing import Callable, Optional, Union
 
 import torch
 from botorch.acquisition import AcquisitionFunction
@@ -53,13 +53,13 @@ def optimize_acqf_homotopy(
     homotopy: Homotopy,
     num_restarts: int,
     raw_samples: Optional[int] = None,
-    fixed_features: Optional[Dict[int, float]] = None,
-    options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
-    final_options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
+    fixed_features: Optional[dict[int, float]] = None,
+    options: Optional[dict[str, Union[bool, float, int, str]]] = None,
+    final_options: Optional[dict[str, Union[bool, float, int, str]]] = None,
     batch_initial_conditions: Optional[Tensor] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
     prune_tolerance: float = 1e-4,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Generate a set of candidates via multi-start optimization.
 
     Args:

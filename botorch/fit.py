@@ -9,10 +9,11 @@ r"""Model fitting routines."""
 from __future__ import annotations
 
 import logging
+from collections.abc import Sequence
 from copy import deepcopy
 from functools import partial
 from itertools import filterfalse
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Optional, Union
 from warnings import catch_warnings, simplefilter, warn_explicit, WarningMessage
 
 from botorch.exceptions.errors import ModelFittingError, UnsupportedError
@@ -73,10 +74,10 @@ FitGPyTorchMLL = Dispatcher("fit_gpytorch_mll", encoder=type_bypassing_encoder)
 
 def fit_gpytorch_mll(
     mll: MarginalLogLikelihood,
-    closure: Optional[Callable[[], Tuple[Tensor, Sequence[Optional[Tensor]]]]] = None,
+    closure: Optional[Callable[[], tuple[Tensor, Sequence[Optional[Tensor]]]]] = None,
     optimizer: Optional[Callable] = None,
-    closure_kwargs: Optional[Dict[str, Any]] = None,
-    optimizer_kwargs: Optional[Dict[str, Any]] = None,
+    closure_kwargs: Optional[dict[str, Any]] = None,
+    optimizer_kwargs: Optional[dict[str, Any]] = None,
     **kwargs: Any,
 ) -> MarginalLogLikelihood:
     r"""Clearing house for fitting models passed as GPyTorch MarginalLogLikelihoods.
@@ -115,17 +116,17 @@ def fit_gpytorch_mll(
 @FitGPyTorchMLL.register(MarginalLogLikelihood, object, object)
 def _fit_fallback(
     mll: MarginalLogLikelihood,
-    _: Type[object],
-    __: Type[object],
+    _: type[object],
+    __: type[object],
     *,
-    closure: Optional[Callable[[], Tuple[Tensor, Sequence[Optional[Tensor]]]]] = None,
+    closure: Optional[Callable[[], tuple[Tensor, Sequence[Optional[Tensor]]]]] = None,
     optimizer: Callable = fit_gpytorch_mll_scipy,
-    closure_kwargs: Optional[Dict[str, Any]] = None,
-    optimizer_kwargs: Optional[Dict[str, Any]] = None,
+    closure_kwargs: Optional[dict[str, Any]] = None,
+    optimizer_kwargs: Optional[dict[str, Any]] = None,
     max_attempts: int = 5,
     pick_best_of_all_attempts: bool = False,
     warning_handler: Callable[[WarningMessage], bool] = DEFAULT_WARNING_HANDLER,
-    caught_exception_types: Tuple[Type[BaseException], ...] = (NotPSDError,),
+    caught_exception_types: tuple[type[BaseException], ...] = (NotPSDError,),
     **ignore: Any,
 ) -> MarginalLogLikelihood:
     r"""Generic fallback method for fitting Gaussian processes.
@@ -166,9 +167,9 @@ def _fit_fallback(
     """
     # Setup
     optimizer_kwargs = {} if optimizer_kwargs is None else optimizer_kwargs
-    params_nograd: Dict[str, Parameter] = None  # pyre-ignore [9]
-    ckpt_nograd: Dict[str, TensorCheckpoint] = None  # pyre-ignore [9]
-    ckpt: Dict[str, TensorCheckpoint] = None  # pyre-ignore [9]
+    params_nograd: dict[str, Parameter] = None  # pyre-ignore [9]
+    ckpt_nograd: dict[str, TensorCheckpoint] = None  # pyre-ignore [9]
+    ckpt: dict[str, TensorCheckpoint] = None  # pyre-ignore [9]
 
     # Build closure
     mll.train()
@@ -261,8 +262,8 @@ def _fit_fallback(
 @FitGPyTorchMLL.register(SumMarginalLogLikelihood, object, ModelListGP)
 def _fit_list(
     mll: SumMarginalLogLikelihood,
-    _: Type[Likelihood],
-    __: Type[ModelListGP],
+    _: type[Likelihood],
+    __: type[ModelListGP],
     **kwargs: Any,
 ) -> SumMarginalLogLikelihood:
     r"""Fitting routine for lists of independent Gaussian processes.
@@ -285,10 +286,10 @@ def _fit_list(
 @FitGPyTorchMLL.register(_ApproximateMarginalLogLikelihood, object, object)
 def _fit_fallback_approximate(
     mll: _ApproximateMarginalLogLikelihood,
-    _: Type[Likelihood],
-    __: Type[ApproximateGPyTorchModel],
+    _: type[Likelihood],
+    __: type[ApproximateGPyTorchModel],
     *,
-    closure: Optional[Callable[[], Tuple[Tensor, Sequence[Optional[Tensor]]]]] = None,
+    closure: Optional[Callable[[], tuple[Tensor, Sequence[Optional[Tensor]]]]] = None,
     data_loader: Optional[DataLoader] = None,
     optimizer: Optional[Callable] = None,
     full_batch_limit: int = 1024,

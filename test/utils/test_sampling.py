@@ -9,7 +9,7 @@ from __future__ import annotations
 import itertools
 import warnings
 from abc import ABC
-from typing import Any, Dict, Type
+from typing import Any
 from unittest import mock
 
 import numpy as np
@@ -352,10 +352,10 @@ class TestSampleUtils(BotorchTestCase):
 
 
 class PolytopeSamplerTestBase(ABC):
-    sampler_class: Type[PolytopeSampler]
-    sampler_kwargs: Dict[str, Any] = {}
-    constructor_seed_kwarg: Dict[str, int] = {}
-    draw_seed_kwarg: Dict[str, int] = {}
+    sampler_class: type[PolytopeSampler]
+    sampler_kwargs: dict[str, Any] = {}
+    constructor_seed_kwarg: dict[str, int] = {}
+    draw_seed_kwarg: dict[str, int] = {}
 
     def test_sample_polytope(self):
         for dtype in (torch.float, torch.double):

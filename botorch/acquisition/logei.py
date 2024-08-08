@@ -21,7 +21,7 @@ from copy import deepcopy
 
 from functools import partial
 
-from typing import Callable, List, Optional, Tuple, TypeVar, Union
+from typing import Callable, Optional, TypeVar, Union
 
 import torch
 from botorch.acquisition.cached_cholesky import CachedCholeskyMCSamplerMixin
@@ -82,7 +82,7 @@ class LogImprovementMCAcquisitionFunction(SampleReducingMCAcquisitionFunction):
         objective: Optional[MCAcquisitionObjective] = None,
         posterior_transform: Optional[PosteriorTransform] = None,
         X_pending: Optional[Tensor] = None,
-        constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
         eta: Union[Tensor, float] = 1e-3,
         fat: bool = True,
         tau_max: float = TAU_MAX,
@@ -166,7 +166,7 @@ class qLogExpectedImprovement(LogImprovementMCAcquisitionFunction):
         objective: Optional[MCAcquisitionObjective] = None,
         posterior_transform: Optional[PosteriorTransform] = None,
         X_pending: Optional[Tensor] = None,
-        constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
         eta: Union[Tensor, float] = 1e-3,
         fat: bool = True,
         tau_max: float = TAU_MAX,
@@ -266,7 +266,7 @@ class qLogNoisyExpectedImprovement(
         objective: Optional[MCAcquisitionObjective] = None,
         posterior_transform: Optional[PosteriorTransform] = None,
         X_pending: Optional[Tensor] = None,
-        constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
         eta: Union[Tensor, float] = 1e-3,
         fat: bool = True,
         prune_baseline: bool = False,
@@ -445,7 +445,7 @@ class qLogNoisyExpectedImprovement(
         )
         return val.view(view_shape).to(obj)  # obj.shape[:-1], i.e. without `q`-dim`
 
-    def _get_samples_and_objectives(self, X: Tensor) -> Tuple[Tensor, Tensor]:
+    def _get_samples_and_objectives(self, X: Tensor) -> tuple[Tensor, Tensor]:
         r"""Compute samples at new points, using the cached root decomposition.
 
         Args:

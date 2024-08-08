@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from math import pi
 
-from typing import Callable, Optional, Tuple, Union
+from typing import Callable, Optional, Union
 
 import torch
 from botorch.acquisition.max_value_entropy_search import qMaxValueEntropy
@@ -322,7 +322,7 @@ class qLowerBoundMultiObjectiveMaxValueEntropySearch(
 
     def _compute_monte_carlo_variables(
         self, posterior: GPyTorchPosterior
-    ) -> Tuple[Tensor, Tensor]:
+    ) -> tuple[Tensor, Tensor]:
         r"""Compute the samples and log-probability associated with a posterior
         distribution.
 

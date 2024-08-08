@@ -30,7 +30,7 @@ References
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
@@ -147,9 +147,9 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         covar_module: Optional[Module] = None,
         likelihood: Optional[Likelihood] = None,
         task_covar_prior: Optional[Prior] = None,
-        output_tasks: Optional[List[int]] = None,
+        output_tasks: Optional[list[int]] = None,
         rank: Optional[int] = None,
-        all_tasks: Optional[List[int]] = None,
+        all_tasks: Optional[list[int]] = None,
         input_transform: Optional[InputTransform] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
     ) -> None:
@@ -271,7 +271,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
             self.outcome_transform = outcome_transform
         self.to(train_X)
 
-    def _split_inputs(self, x: Tensor) -> Tuple[Tensor, Tensor]:
+    def _split_inputs(self, x: Tensor) -> tuple[Tensor, Tensor]:
         r"""Extracts base features and task indices from input data.
 
         Args:
@@ -316,8 +316,8 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         cls,
         train_X: Tensor,
         task_feature: int,
-        output_tasks: Optional[List[int]] = None,
-    ) -> Tuple[List[int], int, int]:
+        output_tasks: Optional[list[int]] = None,
+    ) -> tuple[list[int], int, int]:
         if train_X.ndim != 2:
             # Currently, batch mode MTGPs are blocked upstream in GPyTorch
             raise ValueError(f"Unsupported shape {train_X.shape} for train_X.")
@@ -336,11 +336,11 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         cls,
         training_data: Union[SupervisedDataset, MultiTaskDataset],
         task_feature: int,
-        output_tasks: Optional[List[int]] = None,
+        output_tasks: Optional[list[int]] = None,
         task_covar_prior: Optional[Prior] = None,
         prior_config: Optional[dict] = None,
         rank: Optional[int] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         r"""Construct `Model` keyword arguments from a dataset and other args.
 
         Args:
@@ -569,7 +569,7 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel, FantasizeMixin):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[List[int]] = None,
+        output_indices: Optional[list[int]] = None,
         observation_noise: Union[bool, Tensor] = False,
         posterior_transform: Optional[PosteriorTransform] = None,
     ) -> MultitaskGPPosterior:

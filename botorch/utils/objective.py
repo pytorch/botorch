@@ -10,7 +10,7 @@ Helpers for handling objectives.
 
 from __future__ import annotations
 
-from typing import Callable, List, Optional, Union
+from typing import Callable, Optional, Union
 
 import torch
 from botorch.utils.safe_math import log_fatmoid, logexpit
@@ -65,7 +65,7 @@ def get_objective_weights_transform(
 
 def apply_constraints_nonnegative_soft(
     obj: Tensor,
-    constraints: List[Callable[[Tensor], Tensor]],
+    constraints: list[Callable[[Tensor], Tensor]],
     samples: Tensor,
     eta: Union[Tensor, float],
 ) -> Tensor:
@@ -99,7 +99,7 @@ def apply_constraints_nonnegative_soft(
 
 
 def compute_feasibility_indicator(
-    constraints: Optional[List[Callable[[Tensor], Tensor]]],
+    constraints: Optional[list[Callable[[Tensor], Tensor]]],
     samples: Tensor,
     marginalize_dim: Optional[int] = None,
 ) -> Tensor:
@@ -132,7 +132,7 @@ def compute_feasibility_indicator(
 
 
 def compute_smoothed_feasibility_indicator(
-    constraints: List[Callable[[Tensor], Tensor]],
+    constraints: list[Callable[[Tensor], Tensor]],
     samples: Tensor,
     eta: Union[Tensor, float],
     log: bool = False,
@@ -182,7 +182,7 @@ def compute_smoothed_feasibility_indicator(
 
 def apply_constraints(
     obj: Tensor,
-    constraints: List[Callable[[Tensor], Tensor]],
+    constraints: list[Callable[[Tensor], Tensor]],
     samples: Tensor,
     infeasible_cost: float,
     eta: Union[Tensor, float] = 1e-3,

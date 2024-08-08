@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Callable, List, Optional, Union
+from typing import Callable, Optional, Union
 
 import torch
 from torch import Tensor
@@ -17,7 +17,7 @@ from torch.nn import Parameter
 class FixedHomotopySchedule:
     """Homotopy schedule with a fixed list of values."""
 
-    def __init__(self, values: List[float]) -> None:
+    def __init__(self, values: list[float]) -> None:
         r"""Initialize FixedHomotopySchedule.
 
         Args:
@@ -103,8 +103,8 @@ class Homotopy:
 
     def __init__(
         self,
-        homotopy_parameters: List[HomotopyParameter],
-        callbacks: Optional[List[Callable]] = None,
+        homotopy_parameters: list[HomotopyParameter],
+        callbacks: Optional[list[Callable]] = None,
     ) -> None:
         r"""Initialize the homotopy.
 

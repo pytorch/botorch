@@ -6,9 +6,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from dataclasses import dataclass, InitVar
 from itertools import chain
-from typing import Any, Optional, Sequence
+from typing import Any, Optional
 
 import torch
 from botorch.utils.probability.utils import swap_along_dim_

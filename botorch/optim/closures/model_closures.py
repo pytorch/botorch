@@ -8,9 +8,11 @@ r"""Utilities for building model-based closures."""
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from itertools import chain, repeat
 from types import NoneType
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple
+from typing import Any, Callable, Optional
 
 from botorch.optim.closures.core import ForwardBackwardClosure
 from botorch.utils.dispatcher import Dispatcher, type_bypassing_encoder
@@ -62,13 +64,13 @@ def get_loss_closure(
 
 def get_loss_closure_with_grads(
     mll: MarginalLogLikelihood,
-    parameters: Dict[str, Tensor],
+    parameters: dict[str, Tensor],
     data_loader: Optional[DataLoader] = None,
     backward: Callable[[Tensor], None] = Tensor.backward,
     reducer: Optional[Callable[[Tensor], Tensor]] = Tensor.sum,
     context_manager: Optional[Callable] = None,
     **kwargs: Any,
-) -> Callable[[], Tuple[Tensor, Tuple[Tensor, ...]]]:
+) -> Callable[[], tuple[Tensor, tuple[Tensor, ...]]]:
     r"""Public API for GetLossClosureWithGrads dispatcher.
 
     In most cases, this method simply adds a backward pass to a loss closure obtained by
@@ -107,7 +109,7 @@ def _get_loss_closure_with_grads_fallback(
     _likelihood_type: object,
     _model_type: object,
     data_loader: Optional[DataLoader],
-    parameters: Dict[str, Tensor],
+    parameters: dict[str, Tensor],
     reducer: Callable[[Tensor], Tensor] = Tensor.sum,
     backward: Callable[[Tensor], None] = Tensor.backward,
     context_manager: Callable = None,  # pyre-ignore [9]

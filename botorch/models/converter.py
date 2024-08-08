@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import warnings
 from copy import deepcopy
-from typing import Dict, Optional, Set, Tuple
+from typing import Optional
 
 import torch
 from botorch.exceptions import UnsupportedError
@@ -426,10 +426,10 @@ def batched_multi_output_to_single_output(
 
 
 def _get_adjusted_batch_keys(
-    batch_state_dict: Dict[str, Tensor],
+    batch_state_dict: dict[str, Tensor],
     input_transform: Optional[InputTransform],
     outcome_transform: Optional[OutcomeTransform] = None,
-) -> Tuple[Set[str], Set[str]]:
+) -> tuple[set[str], set[str]]:
     r"""Group the keys based on whether the value requires batch shape changes.
 
     Args:

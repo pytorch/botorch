@@ -8,7 +8,7 @@ r"""Box decomposition container."""
 
 from __future__ import annotations
 
-from typing import List, Union
+from typing import Union
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
@@ -37,7 +37,7 @@ class BoxDecompositionList(Module):
         self.box_decompositions = ModuleList(box_decompositions)
 
     @property
-    def pareto_Y(self) -> List[Tensor]:
+    def pareto_Y(self) -> list[Tensor]:
         r"""This returns the non-dominated set.
 
         Note: Internally, we store the negative pareto set (minimization).
@@ -94,7 +94,7 @@ class BoxDecompositionList(Module):
 
         return torch.stack(bounds_list, dim=-3)
 
-    def update(self, Y: Union[List[Tensor], Tensor]) -> None:
+    def update(self, Y: Union[list[Tensor], Tensor]) -> None:
         r"""Update the partitioning.
 
         Args:
@@ -106,7 +106,7 @@ class BoxDecompositionList(Module):
             torch.is_tensor(Y)
             and Y.ndim != 3
             and Y.shape[0] != len(self.box_decompositions)
-        ) or (isinstance(Y, List) and len(Y) != len(self.box_decompositions)):
+        ) or (isinstance(Y, list) and len(Y) != len(self.box_decompositions)):
             raise BotorchTensorDimensionError(
                 "BoxDecompositionList.update requires either a batched tensor Y, "
                 "with one batch per box decomposition or a list of tensors with "

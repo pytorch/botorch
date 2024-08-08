@@ -16,7 +16,7 @@ import math
 from abc import ABC
 from contextlib import nullcontext
 from copy import deepcopy
-from typing import Dict, Optional, Tuple, Union
+from typing import Optional, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -83,7 +83,7 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
 
     def _mean_and_sigma(
         self, X: Tensor, compute_sigma: bool = True, min_var: float = 1e-12
-    ) -> Tuple[Tensor, Optional[Tensor]]:
+    ) -> tuple[Tensor, Optional[Tensor]]:
         """Computes the first and second moments of the model posterior.
 
         Args:
@@ -449,7 +449,7 @@ class LogConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
         model: Model,
         best_f: Union[float, Tensor],
         objective_index: int,
-        constraints: Dict[int, Tuple[Optional[float], Optional[float]]],
+        constraints: dict[int, tuple[Optional[float], Optional[float]]],
         maximize: bool = True,
     ) -> None:
         r"""Analytic Log Constrained Expected Improvement.
@@ -527,7 +527,7 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
         model: Model,
         best_f: Union[float, Tensor],
         objective_index: int,
-        constraints: Dict[int, Tuple[Optional[float], Optional[float]]],
+        constraints: dict[int, tuple[Optional[float], Optional[float]]],
         maximize: bool = True,
     ) -> None:
         r"""Analytic Constrained Expected Improvement.
@@ -1134,7 +1134,7 @@ def _get_noiseless_fantasy_model(
 
 def _preprocess_constraint_bounds(
     acqf: Union[LogConstrainedExpectedImprovement, ConstrainedExpectedImprovement],
-    constraints: Dict[int, Tuple[Optional[float], Optional[float]]],
+    constraints: dict[int, tuple[Optional[float], Optional[float]]],
 ) -> None:
     r"""Set up constraint bounds.
 

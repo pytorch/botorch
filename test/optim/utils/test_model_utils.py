@@ -11,7 +11,7 @@ import re
 import warnings
 from copy import deepcopy
 from string import ascii_lowercase
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import torch
@@ -264,7 +264,7 @@ class TestSampleAllPriors(BotorchTestCase):
                 sample_all_priors(model)
 
     def test_univariate_prior(self) -> None:
-        tkwargs: Dict[str, Any] = {"device": self.device, "dtype": torch.double}
+        tkwargs: dict[str, Any] = {"device": self.device, "dtype": torch.double}
         for batch in (torch.Size([]), torch.Size([2, 2])):
             model = SingleTaskGP(
                 train_X=torch.rand(*batch, 5, 3, **tkwargs),
@@ -285,7 +285,7 @@ class TestSampleAllPriors(BotorchTestCase):
 
     def test_with_multivariate_prior(self) -> None:
         # This is modified from https://github.com/pytorch/botorch/issues/780.
-        tkwargs: Dict[str, Any] = {"device": self.device, "dtype": torch.double}
+        tkwargs: dict[str, Any] = {"device": self.device, "dtype": torch.double}
         for batch in (torch.Size([]), torch.Size([3])):
             model = SingleTaskGP(
                 train_X=torch.rand(*batch, 2, 2, **tkwargs),

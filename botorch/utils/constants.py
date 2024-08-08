@@ -6,9 +6,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+
 from functools import lru_cache
 from numbers import Number
-from typing import Iterator, Optional, Tuple, Union
+from typing import Optional, Union
 
 import torch
 from torch import Tensor
@@ -19,7 +21,7 @@ def get_constants(
     values: Union[Number, Iterator[Number]],
     device: Optional[torch.device] = None,
     dtype: Optional[torch.dtype] = None,
-) -> Union[Tensor, Tuple[Tensor, ...]]:
+) -> Union[Tensor, tuple[Tensor, ...]]:
     r"""Returns scalar-valued Tensors containing each of the given constants.
     Used to expedite tensor operations involving scalar arithmetic. Note that
     the returned Tensors should not be modified in-place."""

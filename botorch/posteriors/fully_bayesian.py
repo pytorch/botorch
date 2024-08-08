@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional
 from warnings import warn
 
 import torch
@@ -147,7 +147,7 @@ class GaussianMixturePosterior(GPyTorchPosterior):
         return _quantile(posterior=self, value=value)
 
     @property
-    def batch_range(self) -> Tuple[int, int]:
+    def batch_range(self) -> tuple[int, int]:
         r"""The t-batch range.
 
         This is used in samplers to identify the t-batch component of the

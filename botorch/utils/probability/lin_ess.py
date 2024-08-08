@@ -35,7 +35,7 @@ The implementation here differentiates itself from the original implementations 
 from __future__ import annotations
 
 import math
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Union
 
 import torch
 from botorch.utils.sampling import PolytopeSampler
@@ -55,10 +55,10 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
 
     def __init__(
         self,
-        inequality_constraints: Optional[Tuple[Tensor, Tensor]] = None,
+        inequality_constraints: Optional[tuple[Tensor, Tensor]] = None,
         bounds: Optional[Tensor] = None,
         interior_point: Optional[Tensor] = None,
-        fixed_indices: Optional[Union[List[int], Tensor]] = None,
+        fixed_indices: Optional[Union[list[int], Tensor]] = None,
         mean: Optional[Tensor] = None,
         covariance_matrix: Optional[Union[Tensor, LinearOperator]] = None,
         covariance_root: Optional[Union[Tensor, LinearOperator]] = None,
@@ -184,11 +184,11 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         A: Tensor,
         b: Tensor,
         interior_point: Optional[Tensor],
-        fixed_indices: Union[List[int], Tensor],
+        fixed_indices: Union[list[int], Tensor],
         mean: Optional[Tensor],
         covariance_matrix: Optional[Tensor],
         covariance_root: Optional[Tensor],
-    ) -> Tuple[Optional[Tensor], Optional[Tensor]]:
+    ) -> tuple[Optional[Tensor], Optional[Tensor]]:
         """Modifies the constraint system (A, b) due to fixed indices and assigns
         the modified constraints system to `self._Az`, `self._bz`. NOTE: Needs to be
         called prior to `self._standardization_initialization` in the constructor.
@@ -339,7 +339,7 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         """
         return self._z * torch.cos(theta) + nu * torch.sin(theta)
 
-    def _trim_intervals(self, left: Tensor, right: Tensor) -> Tuple[Tensor, Tensor]:
+    def _trim_intervals(self, left: Tensor, right: Tensor) -> tuple[Tensor, Tensor]:
         """Trim the intervals by a small positive constant. This encourages the Markov
         chain to stay in the interior of the domain.
         """
@@ -348,7 +348,7 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
 
         return left + eps, right - eps
 
-    def _find_active_intersection_angles(self, nu: Tensor) -> Tuple[Tensor, Tensor]:
+    def _find_active_intersection_angles(self, nu: Tensor) -> tuple[Tensor, Tensor]:
         """Construct the active intersection angles.
 
         Args:
@@ -375,7 +375,7 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
 
         return cummax, srted
 
-    def _find_intersection_angles(self, nu: Tensor) -> Tuple[Tensor, Tensor]:
+    def _find_intersection_angles(self, nu: Tensor) -> tuple[Tensor, Tensor]:
         """Compute all 2 * m intersections of the ellipse and the domain, where
         `m = n_ineq_con` is the number of inequality constraints defining the domain.
         If the i-th linear inequality constraint has no intersection with the ellipse,
@@ -493,8 +493,8 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
 
 
 def get_index_tensors(
-    fixed_indices: Union[List[int], Tensor], d: int
-) -> Tuple[Tensor, Tensor]:
+    fixed_indices: Union[list[int], Tensor], d: int
+) -> tuple[Tensor, Tensor]:
     """Converts `fixed_indices` to a `d`-dim integral Tensor that is True at indices
     that are contained in `fixed_indices` and False otherwise.
 

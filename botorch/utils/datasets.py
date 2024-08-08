@@ -9,7 +9,7 @@ r"""Representations for different kinds of datasets."""
 from __future__ import annotations
 
 import warnings
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 import torch
 from botorch.exceptions.errors import InputDataError, UnsupportedError
@@ -50,8 +50,8 @@ class SupervisedDataset:
         X: Union[BotorchContainer, Tensor],
         Y: Union[BotorchContainer, Tensor],
         *,
-        feature_names: List[str],
-        outcome_names: List[str],
+        feature_names: list[str],
+        outcome_names: list[str],
         Yvar: Union[BotorchContainer, Tensor, None] = None,
         validate_init: bool = True,
     ) -> None:
@@ -162,8 +162,8 @@ class FixedNoiseDataset(SupervisedDataset):
         X: Union[BotorchContainer, Tensor],
         Y: Union[BotorchContainer, Tensor],
         Yvar: Union[BotorchContainer, Tensor],
-        feature_names: List[str],
-        outcome_names: List[str],
+        feature_names: list[str],
+        outcome_names: list[str],
         validate_init: bool = True,
     ) -> None:
         r"""Initialize a `FixedNoiseDataset` -- deprecated!"""
@@ -218,8 +218,8 @@ class RankingDataset(SupervisedDataset):
         self,
         X: SliceContainer,
         Y: Union[BotorchContainer, Tensor],
-        feature_names: List[str],
-        outcome_names: List[str],
+        feature_names: list[str],
+        outcome_names: list[str],
         validate_init: bool = True,
     ) -> None:
         r"""Construct a `RankingDataset`.
@@ -287,7 +287,7 @@ class MultiTaskDataset(SupervisedDataset):
 
     def __init__(
         self,
-        datasets: List[SupervisedDataset],
+        datasets: list[SupervisedDataset],
         target_outcome_name: str,
         task_feature_index: Optional[int] = None,
     ):
@@ -303,7 +303,7 @@ class MultiTaskDataset(SupervisedDataset):
                 If given, we sanity-check that the names of the task features
                 match between all datasets.
         """
-        self.datasets: Dict[str, SupervisedDataset] = {
+        self.datasets: dict[str, SupervisedDataset] = {
             ds.outcome_names[0]: ds for ds in datasets
         }
         self.target_outcome_name = target_outcome_name
@@ -323,7 +323,7 @@ class MultiTaskDataset(SupervisedDataset):
         dataset: SupervisedDataset,
         task_feature_index: int,
         target_task_value: int,
-        outcome_names_per_task: Optional[Dict[int, str]] = None,
+        outcome_names_per_task: Optional[dict[int, str]] = None,
     ) -> MultiTaskDataset:
         r"""Construct a `MultiTaskDataset` from a joint dataset that includes the
         data for all tasks with the task feature index.
@@ -382,7 +382,7 @@ class MultiTaskDataset(SupervisedDataset):
             task_feature_index=task_feature_index,
         )
 
-    def _validate_datasets(self, datasets: List[SupervisedDataset]) -> None:
+    def _validate_datasets(self, datasets: list[SupervisedDataset]) -> None:
         """Validates that:
         * Each dataset models only one outcome;
         * Each outcome is modeled by only one dataset;
@@ -501,9 +501,9 @@ class ContextualDataset(SupervisedDataset):
 
     def __init__(
         self,
-        datasets: List[SupervisedDataset],
-        parameter_decomposition: Dict[str, List[str]],
-        metric_decomposition: Optional[Dict[str, List[str]]] = None,
+        datasets: list[SupervisedDataset],
+        parameter_decomposition: dict[str, list[str]],
+        metric_decomposition: Optional[dict[str, list[str]]] = None,
     ):
         """Construct a `ContextualDataset`.
 
@@ -516,7 +516,7 @@ class ContextualDataset(SupervisedDataset):
                 Values are the lists of metric names belonging to the context:
                 {'context1': ['m1_c1'], 'context2': ['m1_c2'],}.
         """
-        self.datasets: Dict[str, SupervisedDataset] = {
+        self.datasets: dict[str, SupervisedDataset] = {
             ds.outcome_names[0]: ds for ds in datasets
         }
         self.feature_names = datasets[0].feature_names
@@ -561,7 +561,7 @@ class ContextualDataset(SupervisedDataset):
         else:
             return torch.cat(Yvars, dim=-1)
 
-    def _extract_context_buckets(self) -> List[str]:
+    def _extract_context_buckets(self) -> list[str]:
         """Determines the context buckets from the data, and sets the
         context_buckets attribute.
 

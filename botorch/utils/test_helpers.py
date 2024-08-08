@@ -12,7 +12,7 @@ should be defined here to avoid relative imports.
 from __future__ import annotations
 
 import math
-from typing import List, Optional, Tuple
+from typing import Optional
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
@@ -36,7 +36,7 @@ from torch import Size, Tensor
 from torch.nn.functional import pad
 
 
-def get_sample_moments(samples: Tensor, sample_shape: Size) -> Tuple[Tensor, Tensor]:
+def get_sample_moments(samples: Tensor, sample_shape: Size) -> tuple[Tensor, Tensor]:
     """Computes the mean and covariance of a set of samples.
 
     Args:
@@ -55,7 +55,7 @@ def standardize_moments(
     transform: Standardize,
     loc: Tensor,
     covariance_matrix: Tensor,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     """Standardizes the loc and covariance_matrix using the mean and standard
     deviations from a Standardize transform.
     """
@@ -68,10 +68,10 @@ def standardize_moments(
 
 def gen_multi_task_dataset(
     yvar: Optional[float] = None,
-    task_values: Optional[List[int]] = None,
+    task_values: Optional[list[int]] = None,
     skip_task_features_in_datasets: bool = False,
     **tkwargs,
-) -> Tuple[MultiTaskDataset, Tuple[Tensor, Tensor, Optional[Tensor]]]:
+) -> tuple[MultiTaskDataset, tuple[Tensor, Tensor, Optional[Tensor]]]:
     """Constructs a multi-task dataset with two tasks, each with 10 data points.
 
     Args:

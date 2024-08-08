@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import torch
 from botorch.acquisition.logei import qLogNoisyExpectedImprovement
@@ -29,7 +29,7 @@ class TestqLogNParEGO(BotorchTestCase):
     ) -> None:
         if with_constraints:
             assert with_objective, "Objective must be specified if constraints are."
-        tkwargs: Dict[str, Any] = {"device": self.device, "dtype": torch.double}
+        tkwargs: dict[str, Any] = {"device": self.device, "dtype": torch.double}
         num_objectives = 2
         num_constraints = 1 if with_constraints else 0
         num_outputs = num_objectives + num_constraints
@@ -103,7 +103,7 @@ class TestqLogNParEGO(BotorchTestCase):
         )
 
     def test_parego_with_ensemble_model(self) -> None:
-        tkwargs: Dict[str, Any] = {"device": self.device, "dtype": torch.double}
+        tkwargs: dict[str, Any] = {"device": self.device, "dtype": torch.double}
         models = []
         for _ in range(2):
             model = SaasFullyBayesianSingleTaskGP(

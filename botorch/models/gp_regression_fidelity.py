@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import warnings
 
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 import torch
 from botorch.exceptions.errors import UnsupportedError
@@ -69,7 +69,7 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
         train_Y: Tensor,
         train_Yvar: Optional[Tensor] = None,
         iteration_fidelity: Optional[int] = None,
-        data_fidelities: Optional[Union[List[int], Tuple[int]]] = None,
+        data_fidelities: Optional[Union[list[int], tuple[int]]] = None,
         data_fidelity: Optional[int] = None,
         linear_truncated: bool = True,
         nu: float = 2.5,
@@ -166,8 +166,8 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
     def construct_inputs(
         cls,
         training_data: SupervisedDataset,
-        fidelity_features: List[int],
-    ) -> Dict[str, Any]:
+        fidelity_features: list[int],
+    ) -> dict[str, Any]:
         r"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`.
 
         Args:
@@ -186,7 +186,7 @@ class FixedNoiseMultiFidelityGP(SingleTaskMultiFidelityGP):
         train_Y: Tensor,
         train_Yvar: Tensor,
         iteration_fidelity: Optional[int] = None,
-        data_fidelities: Optional[Union[List[int], Tuple[int]]] = None,
+        data_fidelities: Optional[Union[list[int], tuple[int]]] = None,
         data_fidelity: Optional[int] = None,
         linear_truncated: bool = True,
         nu: float = 2.5,
@@ -219,10 +219,10 @@ def _setup_multifidelity_covar_module(
     dim: int,
     aug_batch_shape: torch.Size,
     iteration_fidelity: Optional[int],
-    data_fidelities: Optional[List[int]],
+    data_fidelities: Optional[list[int]],
     linear_truncated: bool,
     nu: float,
-) -> Tuple[ScaleKernel, Dict]:
+) -> tuple[ScaleKernel, dict]:
     """Helper function to get the covariance module and associated subset_batch_dict
     for the multifidelity setting.
 

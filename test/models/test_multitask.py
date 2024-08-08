@@ -7,7 +7,7 @@
 import itertools
 import math
 import warnings
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import torch
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
@@ -49,8 +49,8 @@ from gpytorch.settings import max_cholesky_size, max_root_decomposition_size
 def _gen_model_and_data(
     fixed_noise: bool,
     task_feature: int = 0,
-    output_tasks: Optional[List[int]] = None,
-    task_values: Optional[List[int]] = None,
+    output_tasks: Optional[list[int]] = None,
+    task_values: Optional[list[int]] = None,
     skip_task_features_in_datasets: bool = False,
     input_transform: Optional[InputTransform] = None,
     outcome_transform: Optional[OutcomeTransform] = None,
@@ -140,7 +140,7 @@ class TestMultiTaskGP(BotorchTestCase):
             (False, True),
             strict=True,
         ):
-            tkwargs: Dict[str, Any] = {"device": self.device, "dtype": dtype}
+            tkwargs: dict[str, Any] = {"device": self.device, "dtype": dtype}
             octf = Standardize(m=1) if use_octf else None
 
             intf = (
@@ -328,7 +328,7 @@ class TestMultiTaskGP(BotorchTestCase):
 
     def test_MultiTaskGP_single_output(self) -> None:
         for dtype in (torch.float, torch.double):
-            tkwargs: Dict[str, Any] = {"device": self.device, "dtype": dtype}
+            tkwargs: dict[str, Any] = {"device": self.device, "dtype": dtype}
             model = _gen_model_single_output(**tkwargs)
             self.assertIsInstance(model, MultiTaskGP)
             self.assertEqual(model.num_outputs, 1)
@@ -442,7 +442,7 @@ class TestMultiTaskGP(BotorchTestCase):
         for dtype, fixed_noise, skip_task_features_in_datasets in zip(
             (torch.float, torch.double), (True, False), (True, False), strict=True
         ):
-            tkwargs: Dict[str, Any] = {"device": self.device, "dtype": dtype}
+            tkwargs: dict[str, Any] = {"device": self.device, "dtype": dtype}
             task_feature = 0
             model, datasets, (train_X, train_Y, train_Yvar) = _gen_model_and_data(
                 fixed_noise=fixed_noise,
@@ -511,7 +511,7 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             (False, True),
             (False, True),
         ):
-            tkwargs: Dict[str, Any] = {"device": self.device, "dtype": dtype}
+            tkwargs: dict[str, Any] = {"device": self.device, "dtype": dtype}
 
             octf = Standardize(m=2) if use_octf else None
 

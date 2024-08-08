@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import math
 from functools import reduce
-from typing import Callable, Type
+from typing import Callable
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -1043,7 +1043,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
     def test_construct_inputs_qLogNEHVI(self) -> None:
         self._test_construct_inputs_qNEHVI(qLogNoisyExpectedHypervolumeImprovement)
 
-    def _test_construct_inputs_qNEHVI(self, acqf_class: Type[AcquisitionFunction]):
+    def _test_construct_inputs_qNEHVI(self, acqf_class: type[AcquisitionFunction]):
         c = get_acqf_input_constructor(acqf_class)
         objective_thresholds = torch.rand(2)
 

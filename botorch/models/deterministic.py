@@ -27,7 +27,7 @@ functions or in other places where a `Model` is expected.
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Callable, List, Optional, Union
+from typing import Callable, Optional, Union
 
 import torch
 from botorch.models.ensemble import EnsembleModel
@@ -76,7 +76,7 @@ class GenericDeterministicModel(DeterministicModel):
         self._f = f
         self._num_outputs = num_outputs
 
-    def subset_output(self, idcs: List[int]) -> GenericDeterministicModel:
+    def subset_output(self, idcs: list[int]) -> GenericDeterministicModel:
         r"""Subset the model along the output dimension.
 
         Args:
@@ -131,7 +131,7 @@ class AffineDeterministicModel(DeterministicModel):
         self.register_buffer("b", b.expand(a.size(-1)))
         self._num_outputs = a.size(-1)
 
-    def subset_output(self, idcs: List[int]) -> AffineDeterministicModel:
+    def subset_output(self, idcs: list[int]) -> AffineDeterministicModel:
         r"""Subset the model along the output dimension.
 
         Args:

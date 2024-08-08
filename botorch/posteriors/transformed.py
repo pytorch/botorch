@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional
 
 import torch
 from botorch.posteriors.posterior import Posterior
@@ -49,7 +49,7 @@ class TransformedPosterior(Posterior):
         return self._posterior.base_sample_shape
 
     @property
-    def batch_range(self) -> Tuple[int, int]:
+    def batch_range(self) -> tuple[int, int]:
         r"""The t-batch range.
 
         This is used in samplers to identify the t-batch component of the

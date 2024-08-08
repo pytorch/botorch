@@ -11,7 +11,7 @@ Utilities for acquisition functions.
 from __future__ import annotations
 
 import math
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Optional
 
 import torch
 from botorch.acquisition.objective import (
@@ -90,7 +90,7 @@ def repeat_to_match_aug_dim(target_tensor: Tensor, reference_tensor: Tensor) -> 
 def compute_best_feasible_objective(
     samples: Tensor,
     obj: Tensor,
-    constraints: Optional[List[Callable[[Tensor], Tensor]]],
+    constraints: Optional[list[Callable[[Tensor], Tensor]]],
     model: Optional[Model] = None,
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
@@ -247,7 +247,7 @@ def prune_inferior_points(
     X: Tensor,
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
-    constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+    constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
     num_samples: int = 2048,
     max_frac: float = 1.0,
     sampler: Optional[MCSampler] = None,
@@ -351,7 +351,7 @@ def prune_inferior_points(
 
 def project_to_target_fidelity(
     X: Tensor,
-    target_fidelities: Optional[Dict[int, float]] = None,
+    target_fidelities: Optional[dict[int, float]] = None,
     d: Optional[int] = None,
 ) -> Tensor:
     r"""Project `X` onto the target set of fidelities.
@@ -413,7 +413,7 @@ def project_to_target_fidelity(
 
 
 def expand_trace_observations(
-    X: Tensor, fidelity_dims: Optional[List[int]] = None, num_trace_obs: int = 0
+    X: Tensor, fidelity_dims: Optional[list[int]] = None, num_trace_obs: int = 0
 ) -> Tensor:
     r"""Expand `X` with trace observations.
 
@@ -491,7 +491,7 @@ def get_optimal_samples(
     raw_samples: int = 1024,
     num_restarts: int = 20,
     maximize: bool = True,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     """Draws sample paths from the posterior and maximizes the samples using GD.
 
     Args:

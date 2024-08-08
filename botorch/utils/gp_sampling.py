@@ -9,7 +9,7 @@ from __future__ import annotations
 import warnings
 from copy import deepcopy
 from math import pi
-from typing import List, Optional
+from typing import Optional
 
 import torch
 from botorch.models.converter import batched_to_model_list
@@ -292,8 +292,8 @@ class RandomFourierFeatures(Module):
 
 
 def get_deterministic_model_multi_samples(
-    weights: List[Tensor],
-    bases: List[RandomFourierFeatures],
+    weights: list[Tensor],
+    bases: list[RandomFourierFeatures],
 ) -> GenericDeterministicModel:
     """
     Get a batched deterministic model that batch evaluates `n_samples` function
@@ -334,7 +334,7 @@ def get_eval_gp_sample_callable(w: Tensor, basis: RandomFourierFeatures) -> Tens
 
 
 def get_deterministic_model(
-    weights: List[Tensor], bases: List[RandomFourierFeatures]
+    weights: list[Tensor], bases: list[RandomFourierFeatures]
 ) -> GenericDeterministicModel:
     """Get a deterministic model using the provided weights and bases for each output.
 
@@ -357,8 +357,8 @@ def get_deterministic_model(
 
 
 def get_deterministic_model_list(
-    weights: List[Tensor],
-    bases: List[RandomFourierFeatures],
+    weights: list[Tensor],
+    bases: list[RandomFourierFeatures],
 ) -> ModelList:
     """Get a deterministic model list using the provided weights and bases
     for each output.

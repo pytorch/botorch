@@ -6,7 +6,9 @@
 
 from __future__ import annotations
 
-from typing import Optional, Sequence
+from collections.abc import Sequence
+
+from typing import Optional
 
 import torch
 from botorch.utils.probability.lin_ess import LinearEllipticalSliceSampler

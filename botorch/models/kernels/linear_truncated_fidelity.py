@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import torch
 from botorch.exceptions import UnsupportedError
@@ -54,7 +54,7 @@ class LinearTruncatedFidelityKernel(Kernel):
 
     def __init__(  # noqa C901
         self,
-        fidelity_dims: List[int],
+        fidelity_dims: list[int],
         dimension: Optional[int] = None,
         power_prior: Optional[Prior] = None,
         power_constraint: Optional[Interval] = None,

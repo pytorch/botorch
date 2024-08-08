@@ -10,7 +10,8 @@ import math
 import warnings
 from abc import abstractproperty
 from collections import OrderedDict
-from typing import Any, List, Optional, Sequence, Tuple
+from collections.abc import Sequence
+from typing import Any, Optional
 from unittest import mock, TestCase
 
 import torch
@@ -285,7 +286,7 @@ class MockPosterior(Posterior):
         return torch.Size()
 
     @property
-    def batch_range(self) -> Tuple[int, int]:
+    def batch_range(self) -> tuple[int, int]:
         return self._batch_range
 
     @property
@@ -337,7 +338,7 @@ class MockModel(Model, FantasizeMixin):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[List[int]] = None,
+        output_indices: Optional[list[int]] = None,
         posterior_transform: Optional[PosteriorTransform] = None,
         observation_noise: bool = False,
     ) -> MockPosterior:
@@ -381,7 +382,7 @@ class MockAcquisitionFunction:
 
 def _get_random_data(
     batch_shape: torch.Size, m: int, d: int = 1, n: int = 10, **tkwargs
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Generate random data for testing purposes.
 
     Args:
@@ -473,7 +474,7 @@ def _get_max_violation_of_bounds(samples: torch.Tensor, bounds: torch.Tensor) ->
 
 def _get_max_violation_of_constraints(
     samples: torch.Tensor,
-    constraints: Optional[List[Tuple[Tensor, Tensor, float]]],
+    constraints: Optional[list[tuple[Tensor, Tensor, float]]],
     equality: bool,
 ) -> float:
     r"""

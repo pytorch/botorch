@@ -5,8 +5,6 @@
 # LICENSE file in the root directory of this source tree.
 
 
-from typing import Dict, Tuple
-
 import torch
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.contextual import LCEAGP, SACGP
@@ -28,7 +26,7 @@ from torch import Tensor
 def _gen_datasets(
     infer_noise: bool = False,
     **tkwargs,
-) -> Tuple[Dict[int, SupervisedDataset], Tuple[Tensor, Tensor, Tensor]]:
+) -> tuple[dict[int, SupervisedDataset], tuple[Tensor, Tensor, Tensor]]:
     train_X = torch.tensor(
         [[0.0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0], [2.0, 2.0, 2.0, 2.0]], **tkwargs
     )

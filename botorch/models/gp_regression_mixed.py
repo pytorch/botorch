@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Optional
 
 import torch
 from botorch.models.gp_regression import SingleTaskGP
@@ -61,10 +61,10 @@ class MixedSingleTaskGP(SingleTaskGP):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        cat_dims: List[int],
+        cat_dims: list[int],
         train_Yvar: Optional[Tensor] = None,
         cont_kernel_factory: Optional[
-            Callable[[torch.Size, int, List[int]], Kernel]
+            Callable[[torch.Size, int, list[int]], Kernel]
         ] = None,
         likelihood: Optional[Likelihood] = None,
         outcome_transform: Optional[OutcomeTransform] = None,  # TODO
@@ -109,7 +109,7 @@ class MixedSingleTaskGP(SingleTaskGP):
             def cont_kernel_factory(
                 batch_shape: torch.Size,
                 ard_num_dims: int,
-                active_dims: List[int],
+                active_dims: list[int],
             ) -> MaternKernel:
                 return MaternKernel(
                     nu=2.5,
@@ -185,9 +185,9 @@ class MixedSingleTaskGP(SingleTaskGP):
     def construct_inputs(
         cls,
         training_data: SupervisedDataset,
-        categorical_features: List[int],
+        categorical_features: list[int],
         likelihood: Optional[Likelihood] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         r"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`.
 
         Args:

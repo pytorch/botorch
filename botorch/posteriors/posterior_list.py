@@ -11,7 +11,7 @@ Abstract base module for all botorch posteriors.
 from __future__ import annotations
 
 from functools import cached_property
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import torch
 from botorch.posteriors.fully_bayesian import GaussianMixturePosterior, MCMC_DIM
@@ -67,7 +67,7 @@ class PosteriorList(Posterior):
         X = X.unsqueeze(MCMC_DIM)
         return X.expand(*X.shape[:MCMC_DIM], mcmc_samples, *X.shape[MCMC_DIM + 1 :])
 
-    def _reshape_and_cat(self, tensors: List[Tensor]):
+    def _reshape_and_cat(self, tensors: list[Tensor]):
         r"""Reshape, if needed, and concatenate (across dim=-1) a list of tensors."""
         if self._is_gaussian_mixture:
             mcmc_samples = self._get_mcmc_batch_dimension()

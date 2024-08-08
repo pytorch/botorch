@@ -6,7 +6,6 @@
 
 import itertools
 import warnings
-from typing import Tuple
 
 import torch
 from botorch.exceptions.errors import UnsupportedError
@@ -30,7 +29,7 @@ from torch import Tensor
 
 def _get_random_data_with_fidelity(
     batch_shape: torch.Size, m: int, n_fidelity: int, d: int = 1, n: int = 10, **tkwargs
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Construct test data.
     For this test, by convention the trailing dimensions are the fidelity dimensions
     """

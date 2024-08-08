@@ -11,7 +11,7 @@ Abstract base module for all botorch posteriors.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod, abstractproperty
-from typing import Optional, Tuple
+from typing import Optional
 
 import torch
 from torch import Tensor
@@ -130,7 +130,7 @@ class Posterior(ABC):
         )
 
     @property
-    def batch_range(self) -> Tuple[int, int]:
+    def batch_range(self) -> tuple[int, int]:
         r"""The t-batch range.
 
         This is used in samplers to identify the t-batch component of the

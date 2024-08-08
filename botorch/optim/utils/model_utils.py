@@ -8,8 +8,10 @@ r"""Utilities for fitting and manipulating models."""
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+
 from re import Pattern
-from typing import Any, Callable, Dict, Iterator, NamedTuple, Optional, Tuple, Union
+from typing import Any, Callable, NamedTuple, Optional, Union
 from warnings import warn
 
 import torch
@@ -39,7 +41,7 @@ def get_parameters(
     module: Module,
     requires_grad: Optional[bool] = None,
     name_filter: Optional[Callable[[str], bool]] = None,
-) -> Dict[str, Tensor]:
+) -> dict[str, Tensor]:
     r"""Helper method for obtaining a module's parameters and their respective ranges.
 
     Args:
@@ -68,8 +70,8 @@ def get_parameters_and_bounds(
     module: Module,
     requires_grad: Optional[bool] = None,
     name_filter: Optional[Callable[[str], bool]] = None,
-    default_bounds: Tuple[float, float] = (-float("inf"), float("inf")),
-) -> Tuple[Dict[str, Tensor], Dict[str, Tuple[Optional[float], Optional[float]]]]:
+    default_bounds: tuple[float, float] = (-float("inf"), float("inf")),
+) -> tuple[dict[str, Tensor], dict[str, tuple[Optional[float], Optional[float]]]]:
     r"""Helper method for obtaining a module's parameters and their respective ranges.
 
     Args:
@@ -109,7 +111,7 @@ def get_parameters_and_bounds(
 
 def get_name_filter(
     patterns: Iterator[Union[Pattern, str]]
-) -> Callable[[Union[str, Tuple[str, Any, ...]]], bool]:
+) -> Callable[[Union[str, tuple[str, Any, ...]]], bool]:
     r"""Returns a binary function that filters strings (or iterables whose first
     element is a string) according to a bank of excluded patterns. Typically, used
     in conjunction with generators such as `module.named_parameters()`.
@@ -134,7 +136,7 @@ def get_name_filter(
                 f"but found {type(pattern)}."
             )
 
-    def name_filter(item: Union[str, Tuple[str, Any, ...]]) -> bool:
+    def name_filter(item: Union[str, tuple[str, Any, ...]]) -> bool:
         name = item if isinstance(item, str) else next(iter(item))
         if name in names:
             return False

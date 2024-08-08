@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import time
 import warnings
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import Any, Callable, Optional, Union
 
 import numpy as np
 from botorch.exceptions.errors import OptimizationTimeoutError
@@ -18,16 +19,16 @@ from scipy import optimize
 def minimize_with_timeout(
     fun: Callable[[np.ndarray, ...], float],
     x0: np.ndarray,
-    args: Tuple[Any, ...] = (),
+    args: tuple[Any, ...] = (),
     method: Optional[str] = None,
     jac: Optional[Union[str, Callable, bool]] = None,
     hess: Optional[Union[str, Callable, optimize.HessianUpdateStrategy]] = None,
     hessp: Optional[Callable] = None,
-    bounds: Optional[Union[Sequence[Tuple[float, float]], optimize.Bounds]] = None,
+    bounds: Optional[Union[Sequence[tuple[float, float]], optimize.Bounds]] = None,
     constraints=(),  # Typing this properly is a s**t job
     tol: Optional[float] = None,
     callback: Optional[Callable] = None,
-    options: Optional[Dict[str, Any]] = None,
+    options: Optional[dict[str, Any]] = None,
     timeout_sec: Optional[float] = None,
 ) -> optimize.OptimizeResult:
     r"""Wrapper around scipy.optimize.minimize to support timeout.

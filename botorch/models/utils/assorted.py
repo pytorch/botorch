@@ -9,8 +9,9 @@ r"""Assorted helper methods and objects for working with BoTorch models."""
 from __future__ import annotations
 
 import warnings
+from collections.abc import Iterator
 from contextlib import contextmanager, ExitStack
-from typing import Iterator, List, Optional, Tuple
+from typing import Optional
 
 import torch
 from botorch import settings
@@ -21,7 +22,7 @@ from gpytorch.module import Module
 from torch import Tensor
 
 
-def _make_X_full(X: Tensor, output_indices: List[int], tf: int) -> Tensor:
+def _make_X_full(X: Tensor, output_indices: list[int], tf: int) -> Tensor:
     r"""Helper to construct input tensor with task indices.
 
     Args:
@@ -49,7 +50,7 @@ def multioutput_to_batch_mode_transform(
     train_Y: Tensor,
     num_outputs: int,
     train_Yvar: Optional[Tensor] = None,
-) -> Tuple[Tensor, Tensor, Optional[Tensor]]:
+) -> tuple[Tensor, Tensor, Optional[Tensor]]:
     r"""Transforms training inputs for a multi-output model.
 
     Used for multi-output models that internally are represented by a
@@ -84,7 +85,7 @@ def multioutput_to_batch_mode_transform(
     return train_X, train_Y, train_Yvar
 
 
-def add_output_dim(X: Tensor, original_batch_shape: torch.Size) -> Tuple[Tensor, int]:
+def add_output_dim(X: Tensor, original_batch_shape: torch.Size) -> tuple[Tensor, int]:
     r"""Insert the output dimension at the correct location.
 
     The trailing batch dimensions of X must match the original batch dimensions
@@ -137,7 +138,7 @@ def check_min_max_scaling(
     strict: bool = False,
     atol: float = 1e-2,
     raise_on_fail: bool = False,
-    ignore_dims: Optional[List[int]] = None,
+    ignore_dims: Optional[list[int]] = None,
 ) -> None:
     r"""Check that tensor is normalized to the unit cube.
 
@@ -220,7 +221,7 @@ def validate_input_scaling(
     train_Y: Tensor,
     train_Yvar: Optional[Tensor] = None,
     raise_on_fail: bool = False,
-    ignore_X_dims: Optional[List[int]] = None,
+    ignore_X_dims: Optional[list[int]] = None,
 ) -> None:
     r"""Helper function to validate input data to models.
 
@@ -260,7 +261,7 @@ def validate_input_scaling(
     check_standardization(Y=train_Y, raise_on_fail=raise_on_fail)
 
 
-def mod_batch_shape(module: Module, names: List[str], b: int) -> None:
+def mod_batch_shape(module: Module, names: list[str], b: int) -> None:
     r"""Recursive helper to modify gpytorch modules' batch shape attribute.
 
     Modifies the module in-place.
@@ -300,7 +301,7 @@ def detect_duplicates(
     X: Tensor,
     rtol: float = 0,
     atol: float = 1e-8,
-) -> Iterator[Tuple[int, int]]:
+) -> Iterator[tuple[int, int]]:
     """Returns an iterator over index pairs `(duplicate index, original index)` for all
     duplicate entries of `X`. Supporting 2-d Tensor only.
 
@@ -332,7 +333,7 @@ def detect_duplicates(
 
 def consolidate_duplicates(
     X: Tensor, Y: Tensor, rtol: float = 0.0, atol: float = 1e-8
-) -> Tuple[Tensor, Tensor, Tensor]:
+) -> tuple[Tensor, Tensor, Tensor]:
     """Drop duplicated Xs and update the indices tensor Y accordingly.
     Supporting 2d Tensor only as in batch mode block design is not guaranteed.
 

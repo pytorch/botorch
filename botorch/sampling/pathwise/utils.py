@@ -7,7 +7,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Iterable, List, Optional, overload, Tuple, Union
+from collections.abc import Iterable
+from typing import Any, Callable, Optional, overload, Union
 
 import torch
 from botorch.models.approximate_gp import SingleTaskVariationalGP
@@ -207,12 +208,12 @@ def get_output_transform(model: GPyTorchModel) -> Optional[OutcomeUntransformer]
 
 
 @overload
-def get_train_inputs(model: Model, transformed: bool = False) -> Tuple[Tensor, ...]:
+def get_train_inputs(model: Model, transformed: bool = False) -> tuple[Tensor, ...]:
     pass  # pragma: no cover
 
 
 @overload
-def get_train_inputs(model: ModelList, transformed: bool = False) -> List[...]:
+def get_train_inputs(model: ModelList, transformed: bool = False) -> list[...]:
     pass  # pragma: no cover
 
 
@@ -221,7 +222,7 @@ def get_train_inputs(model: Model, transformed: bool = False):
 
 
 @GetTrainInputs.register(Model)
-def _get_train_inputs_Model(model: Model, transformed: bool = False) -> Tuple[Tensor]:
+def _get_train_inputs_Model(model: Model, transformed: bool = False) -> tuple[Tensor]:
     if not transformed:
         original_train_input = getattr(model, "_original_train_inputs", None)
         if torch.is_tensor(original_train_input):
@@ -240,7 +241,7 @@ def _get_train_inputs_Model(model: Model, transformed: bool = False) -> Tuple[Te
 @GetTrainInputs.register(SingleTaskVariationalGP)
 def _get_train_inputs_SingleTaskVariationalGP(
     model: SingleTaskVariationalGP, transformed: bool = False
-) -> Tuple[Tensor]:
+) -> tuple[Tensor]:
     (X,) = model.model.train_inputs
     if model.training != transformed:
         return (X,)
@@ -255,7 +256,7 @@ def _get_train_inputs_SingleTaskVariationalGP(
 @GetTrainInputs.register(ModelList)
 def _get_train_inputs_ModelList(
     model: ModelList, transformed: bool = False
-) -> List[...]:
+) -> list[...]:
     return [get_train_inputs(m, transformed=transformed) for m in model.models]
 
 
@@ -265,7 +266,7 @@ def get_train_targets(model: Model, transformed: bool = False) -> Tensor:
 
 
 @overload
-def get_train_targets(model: ModelList, transformed: bool = False) -> List[...]:
+def get_train_targets(model: ModelList, transformed: bool = False) -> list[...]:
     pass  # pragma: no cover
 
 
@@ -306,5 +307,5 @@ def _get_train_targets_SingleTaskVariationalGP(
 @GetTrainTargets.register(ModelList)
 def _get_train_targets_ModelList(
     model: ModelList, transformed: bool = False
-) -> List[...]:
+) -> list[...]:
     return [get_train_targets(m, transformed=transformed) for m in model.models]
