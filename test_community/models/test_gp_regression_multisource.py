@@ -124,12 +124,14 @@ class TestAugmentedSingleTaskGP(BotorchTestCase):
             true_y,
             covar_module=get_matern_kernel_with_gamma_prior(x.shape[-1]),
             likelihood=get_gaussian_likelihood_with_gamma_prior(),
+            outcome_transform=None,
         )
         model1 = SingleTaskGP(
             x,
             y,
             covar_module=get_matern_kernel_with_gamma_prior(x.shape[-1]),
             likelihood=get_gaussian_likelihood_with_gamma_prior(),
+            outcome_transform=None,
         )
 
         res = _get_reliable_observations(model0, model1, x)

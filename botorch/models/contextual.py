@@ -102,7 +102,12 @@ class LCEAGP(SingleTaskGP):
                 dimension is set to 1 for each categorical variable.
             context_weight_dict: Known population weights of each context.
         """
-        super().__init__(train_X=train_X, train_Y=train_Y, train_Yvar=train_Yvar)
+        super().__init__(
+            train_X=train_X,
+            train_Y=train_Y,
+            train_Yvar=train_Yvar,
+            outcome_transform=None,
+        )
         self.covar_module = LCEAKernel(
             decomposition=decomposition,
             batch_shape=self._aug_batch_shape,

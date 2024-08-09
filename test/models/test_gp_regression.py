@@ -17,6 +17,7 @@ from botorch.models.gp_regression import (
 )
 from botorch.models.transforms import Normalize, Standardize
 from botorch.models.transforms.input import InputStandardize
+from botorch.models.transforms.outcome import Log
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
 from botorch.utils.datasets import SupervisedDataset
@@ -204,6 +205,37 @@ class TestGPRegressionBase(BotorchTestCase):
                 self.assertIsInstance(posterior, GPyTorchPosterior)
                 self.assertEqual(posterior.mean.shape, expected_shape)
 
+    def test_default_transforms(self):
+        for batch_shape, m, dtype, octf in itertools.product(
+            (torch.Size(), torch.Size([2])),
+            (1, 2),
+            (torch.float, torch.double),
+            ("Default", "None", "Log"),  # Outcome transform
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            train_X, train_Y = _get_random_data(batch_shape=batch_shape, m=m, **tkwargs)
+
+            model_kwargs = {}
+            if octf == "None":
+                model_kwargs["outcome_transform"] = None
+            elif octf == "Log":
+                model_kwargs["outcome_transform"] = Log()
+                train_Y = train_Y.abs() + 1
+
+            model = SingleTaskGP(train_X=train_X, train_Y=train_Y, **model_kwargs)
+
+            # Check outcome transform
+            if octf == "Default":
+                self.assertIsInstance(model.outcome_transform, Standardize)
+                self.assertEqual(model.outcome_transform._batch_shape, batch_shape)
+                self.assertEqual(model.outcome_transform._m, m)
+            elif octf == "None":
+                self.assertFalse(hasattr(model, "outcome_transform"))
+            else:
+                self.assertIsInstance(model.outcome_transform, Log)
+            # Make sure there is no input transform
+            self.assertFalse(hasattr(model, "input_transform"))
+
     def test_custom_init(self):
         extra_model_kwargs = self._get_extra_model_kwargs()
         for batch_shape, m, dtype in itertools.product(
@@ -295,6 +327,8 @@ class TestGPRegressionBase(BotorchTestCase):
                         ][0]
                     if model_kwargs["outcome_transform"] is not None:
                         model_kwargs_non_batch["outcome_transform"] = Standardize(m=m)
+                    else:
+                        model_kwargs_non_batch["outcome_transform"] = None
                     model_non_batch = type(model)(**model_kwargs_non_batch)
                     model_non_batch.load_state_dict(state_dict_non_batch)
                     model_non_batch.eval()

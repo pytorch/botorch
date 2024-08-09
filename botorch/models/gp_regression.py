@@ -37,7 +37,7 @@ import torch
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.model import FantasizeMixin
 from botorch.models.transforms.input import InputTransform
-from botorch.models.transforms.outcome import Log, OutcomeTransform
+from botorch.models.transforms.outcome import Log, OutcomeTransform, Standardize
 from botorch.models.utils import validate_input_scaling
 from botorch.models.utils.gpytorch_modules import (
     get_covar_module_with_dim_scaled_prior,
@@ -46,6 +46,7 @@ from botorch.models.utils.gpytorch_modules import (
 )
 from botorch.utils.containers import BotorchContainer
 from botorch.utils.datasets import SupervisedDataset
+from botorch.utils.types import _DefaultType, DEFAULT
 from gpytorch.constraints.constraints import GreaterThan
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.likelihoods.gaussian_likelihood import (
@@ -134,7 +135,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         likelihood: Optional[Likelihood] = None,
         covar_module: Optional[Module] = None,
         mean_module: Optional[Mean] = None,
-        outcome_transform: Optional[OutcomeTransform] = None,
+        outcome_transform: Optional[Union[OutcomeTransform, _DefaultType]] = DEFAULT,
         input_transform: Optional[InputTransform] = None,
     ) -> None:
         r"""
@@ -154,16 +155,24 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
             outcome_transform: An outcome transform that is applied to the
                 training data during instantiation and to the posterior during
                 inference (that is, the `Posterior` obtained by calling
-                `.posterior` on the model will be on the original scale).
+                `.posterior` on the model will be on the original scale). We use a
+                `Standardize` transform if no `outcome_transform` is specified.
+                Pass down `None` to use no outcome transform.
             input_transform: An input transform that is applied in the model's
                 forward pass.
         """
+        self._validate_tensor_args(X=train_X, Y=train_Y, Yvar=train_Yvar)
+        if outcome_transform == DEFAULT:
+            outcome_transform = Standardize(
+                m=train_Y.shape[-1], batch_shape=train_X.shape[:-2]
+            )
         with torch.no_grad():
             transformed_X = self.transform_inputs(
                 X=train_X, input_transform=input_transform
             )
         if outcome_transform is not None:
             train_Y, train_Yvar = outcome_transform(train_Y, train_Yvar)
+        # Validate again after applying the transforms
         self._validate_tensor_args(X=transformed_X, Y=train_Y, Yvar=train_Yvar)
         ignore_X_dims = getattr(self, "_ignore_X_dims_scaling_check", None)
         validate_input_scaling(
@@ -352,6 +361,7 @@ class HeteroskedasticSingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             train_X=train_X,
             train_Y=train_Y,
             likelihood=likelihood,
+            outcome_transform=None,
             input_transform=input_transform,
         )
         self.register_added_loss_term("noise_added_loss")

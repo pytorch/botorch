@@ -1091,15 +1091,17 @@ def _get_noiseless_fantasy_model(
     # are used across all batches (by default, a GP with batched training data
     # uses independent hyperparameters for each batch).
 
-    # Don't apply `outcome_transform` and `input_transform` here,
-    # since the data being passed has already been transformed.
-    # So we will instead set them afterwards.
+    # We don't want to use the true `outcome_transform` and `input_transform` here
+    # since the data being passed has already been transformed. We thus pass `None`
+    # and will instead set them afterwards.
     fantasy_model = SingleTaskGP(
         train_X=model.train_inputs[0],
         train_Y=model.train_targets.unsqueeze(-1),
         train_Yvar=model.likelihood.noise_covar.noise.unsqueeze(-1),
         covar_module=deepcopy(model.covar_module),
         mean_module=deepcopy(model.mean_module),
+        outcome_transform=None,
+        input_transform=None,
     )
 
     Yvar = torch.full_like(Y_fantasized, 1e-7)

@@ -17,6 +17,7 @@ from typing import Optional
 import torch
 from botorch.exceptions import UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning
+from botorch.models import SingleTaskGP
 from botorch.models.gp_regression import HeteroskedasticSingleTaskGP
 from botorch.models.gp_regression_fidelity import SingleTaskMultiFidelityGP
 from botorch.models.gp_regression_mixed import MixedSingleTaskGP
@@ -99,7 +100,8 @@ def _check_compatibility(models: ModuleList) -> None:
     # TODO: Add support for outcome transforms.
     if any(getattr(m, "outcome_transform", None) is not None for m in models):
         raise UnsupportedError(
-            "Conversion of models with outcome transforms is currently unsupported."
+            "Conversion of models with outcome transforms is unsupported. "
+            "To fix this error, explicitly pass `outcome_transform=None`.",
         )
 
     # check that each model is single-output
@@ -179,6 +181,11 @@ def model_list_to_batched(model_list: ModelListGP) -> BatchedMultiOutputGPyTorch
         batch_length = len(models)
         covar_module = _batched_kernel(models[0].covar_module, batch_length)
         kwargs["covar_module"] = covar_module
+    # SingleTaskGP uses a default outcome transforms while this converter doesn't
+    # support outcome transforms. We need to explicitly pass down `None` to make
+    # sure no outcome transform is being used.
+    if isinstance(models[0], SingleTaskGP):
+        kwargs["outcome_transform"] = None
 
     # construct the batched GP model
     input_transform = getattr(models[0], "input_transform", None)
@@ -418,6 +425,12 @@ def batched_multi_output_to_single_output(
         kwargs["train_Yvar"] = noise_covar.noise.clone().unsqueeze(-1)
     if isinstance(batch_mo_model, SingleTaskMultiFidelityGP):
         kwargs.update(batch_mo_model._init_args)
+    # SingleTaskGP uses a default outcome transforms while this converter doesn't
+    # support outcome transforms. We need to explicitly pass down `None` to make
+    # sure no outcome transform is being used.
+    if isinstance(batch_mo_model, SingleTaskGP):
+        kwargs["outcome_transform"] = None
+
     single_outcome_model = batch_mo_model.__class__(
         input_transform=input_transform, **kwargs
     )
