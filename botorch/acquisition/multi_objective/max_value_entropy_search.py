@@ -64,7 +64,7 @@ class qMultiObjectiveMaxValueEntropy(
         _default_sample_shape: The `sample_shape` for the default sampler.
 
     Example:
-        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> model = SingleTaskGP(train_X, train_Y, outcome_transform=None)
         >>> MESMO = qMultiObjectiveMaxValueEntropy(model, sample_pfs)
         >>> mesmo = MESMO(test_X)
     """

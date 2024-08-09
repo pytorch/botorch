@@ -174,15 +174,11 @@ class TestGetXBaseline(BotorchTestCase):
 
             # set train inputs
             model.train_inputs = (X_train,)
-            X = get_X_baseline(
-                acq_function=acqf,
-            )
+            X = get_X_baseline(acq_function=acqf)
             self.assertTrue(torch.equal(X, X_train))
             # test that we fail back to train_inputs if X_baseline is an empty tensor
             acqf.register_buffer("X_baseline", X_train[:0])
-            X = get_X_baseline(
-                acq_function=acqf,
-            )
+            X = get_X_baseline(acq_function=acqf)
             self.assertTrue(torch.equal(X, X_train))
 
             # test acquisition function without X_baseline or model
@@ -206,9 +202,7 @@ class TestGetXBaseline(BotorchTestCase):
                 sampler=IIDNormalSampler(sample_shape=torch.Size([2])),
                 cache_root=False,
             )
-            X = get_X_baseline(
-                acq_function=acqf,
-            )
+            X = get_X_baseline(acq_function=acqf)
             self.assertTrue(torch.equal(X, acqf.X_baseline))
             # test qEHVI without train_inputs
             acqf = qExpectedHypervolumeImprovement(
@@ -232,21 +226,17 @@ class TestGetXBaseline(BotorchTestCase):
                     Y=Y_train,
                 ),
             )
-            X = get_X_baseline(
-                acq_function=acqf,
-            )
+            X = get_X_baseline(acq_function=acqf)
             self.assertTrue(torch.equal(X, X_train))
 
             # test MESMO for which we need to use
             # `acqf.mo_model`
-            batched_mo_model = SingleTaskGP(X_train, Y_train)
+            batched_mo_model = SingleTaskGP(X_train, Y_train, outcome_transform=None)
             acqf = qMultiObjectiveMaxValueEntropy(
                 batched_mo_model,
                 sample_pareto_frontiers=lambda model: torch.rand(10, 2, **tkwargs),
             )
-            X = get_X_baseline(
-                acq_function=acqf,
-            )
+            X = get_X_baseline(acq_function=acqf)
             self.assertTrue(torch.equal(X, X_train))
             # test that if there is an input transform that is applied
             # to the train_inputs when the model is in eval mode, we
@@ -257,7 +247,5 @@ class TestGetXBaseline(BotorchTestCase):
             model.eval()
             self.assertFalse(torch.equal(model.train_inputs[0], X_train))
             acqf = qExpectedImprovement(model, best_f=0.0)
-            X = get_X_baseline(
-                acq_function=acqf,
-            )
+            X = get_X_baseline(acq_function=acqf)
             self.assertTrue(torch.equal(X, X_train))

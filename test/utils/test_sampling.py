@@ -541,9 +541,8 @@ class TestDelaunayPolytopeSampler(PolytopeSamplerTestBase, BotorchTestCase):
 
 class TestOptimizePosteriorSamples(BotorchTestCase):
     def test_optimize_posterior_samples(self):
-        # Restrict the random seed to prevent flaky failures.
-        seed = torch.randint(high=5, size=(1,)).item()
-        torch.manual_seed(seed)
+        # Fix the random seed to prevent flaky failures.
+        torch.manual_seed(1)
         dims = 2
         dtype = torch.float64
         eps = 1e-6

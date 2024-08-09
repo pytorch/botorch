@@ -362,6 +362,7 @@ class TestModelListGP(BotorchTestCase):
         model_s1 = SingleTaskGP(
             train_X=train_x_raw,
             train_Y=train_y,
+            outcome_transform=None,
         )
         model_list_gp = ModelListGP(model_s1, model2, deepcopy(model_s1))
         model_list_gp.posterior(train_x_raw)
