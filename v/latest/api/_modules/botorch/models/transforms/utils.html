@@ -30,7 +30,6 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
@@ -38,7 +37,7 @@
 
 <div class="viewcode-block" id="lognorm_to_norm">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.utils.lognorm_to_norm">[docs]</a>
-<span class="k">def</span> <span class="nf">lognorm_to_norm</span><span class="p">(</span><span class="n">mu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="k">def</span> <span class="nf">lognorm_to_norm</span><span class="p">(</span><span class="n">mu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Compute mean and covariance of a MVN from those of the associated log-MVN</span>
 
 <span class="sd">    If `Y` is log-normal with mean mu_ln and covariance Cov_ln, then</span>
@@ -66,7 +65,7 @@
 
 <div class="viewcode-block" id="norm_to_lognorm">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.utils.norm_to_lognorm">[docs]</a>
-<span class="k">def</span> <span class="nf">norm_to_lognorm</span><span class="p">(</span><span class="n">mu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="k">def</span> <span class="nf">norm_to_lognorm</span><span class="p">(</span><span class="n">mu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Compute mean and covariance of a log-MVN from its MVN sufficient statistics</span>
 
 <span class="sd">    If `X ~ N(mu, Cov)` and `Y = exp(X)`, then `Y` is log-normal with</span>

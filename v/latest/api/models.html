@@ -98,7 +98,7 @@ any <cite>model.forward</cite> or <cite>model.likelihood</cite> calls.</p>
 <li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>b x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of the
 feature space, <cite>q</cite> is the number of points considered jointly,
 and <cite>b</cite> is the batch dimension.</p></li>
-<li><p><strong>output_indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of indices, corresponding to the outputs over
+<li><p><strong>output_indices</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of indices, corresponding to the outputs over
 which to compute the posterior (if the model is multi-output).
 Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
@@ -142,7 +142,7 @@ shape <cite>broadcast(test_batch_shape, model.batch_shape) x q x m</cite>.</p>
 <dd><p>Subset the model along the output dimension.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>idcs</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the model to.</p>
+<dd class="field-odd"><p><strong>idcs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the model to.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A <cite>Model</cite> object of the same type and with the same parameters as
@@ -198,7 +198,7 @@ observations passed in via kwargs).</p>
 with keys <cite>train_X</cite>, <cite>train_Y</cite>, and, optionally, <cite>train_Yvar</cite>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em>[str, <a class="reference internal" href="utils.html#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><em>BotorchContainer</em></a> | <em>Tensor</em>]</p>
+<dd class="field-odd"><p>dict[str, <a class="reference internal" href="utils.html#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><em>BotorchContainer</em></a> | <em>Tensor</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -248,7 +248,7 @@ If <cite>False</cite>, model is put in <cite>eval</cite> mode.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.models.model.Model.dtypes_of_buffers">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dtypes_of_buffers</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Set</span><span class="p"><span class="pre">[</span></span><span class="pre">dtype</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.models.model.Model.dtypes_of_buffers" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dtypes_of_buffers</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">dtype</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.models.model.Model.dtypes_of_buffers" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
@@ -401,7 +401,7 @@ any <cite>model.forward</cite> or <cite>model.likelihood</cite> calls.</p>
 <li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>b x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of the
 feature space, <cite>q</cite> is the number of points considered jointly,
 and <cite>b</cite> is the batch dimension.</p></li>
-<li><p><strong>output_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of indices, corresponding to the outputs over
+<li><p><strong>output_indices</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of indices, corresponding to the outputs over
 which to compute the posterior (if the model is multi-output).
 Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
@@ -448,7 +448,7 @@ in the ModelList.</p>
 <dd><p>Subset the model along the output dimension.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>idcs</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the model to. Relative to the
+<dd class="field-odd"><p><strong>idcs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the model to. Relative to the
 overall number of outputs of the model.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -479,7 +479,7 @@ the model `m1</cite> subset to its second output.</p>
 <dd class="field-even"><p>A list of tensors of transformed inputs.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>List</em>[<em>Tensor</em>]</p>
+<dd class="field-odd"><p>list[<em>Tensor</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -691,7 +691,7 @@ training observations.</p></li>
 </p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[<em>Size</em>, <em>Size</em>]</p>
+<dd class="field-odd"><p>tuple[<em>Size</em>, <em>Size</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -715,7 +715,7 @@ shape <cite>broadcast(test_batch_shape, model.batch_shape) x q x m</cite>.</p>
 <li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension
 of the feature space and <cite>q</cite> is the number of points considered
 jointly.</p></li>
-<li><p><strong>output_indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of indices, corresponding to the outputs over
+<li><p><strong>output_indices</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of indices, corresponding to the outputs over
 which to compute the posterior (if the model is multi-output).
 Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
@@ -785,7 +785,7 @@ observations passed in via kwargs).</p>
 <dd><p>Subset the model along the output dimension.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>idcs</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the model to.</p>
+<dd class="field-odd"><p><strong>idcs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the model to.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The current model, subset to the specified output indices.</p>
@@ -839,7 +839,7 @@ ignored.</p>
 <li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>b x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of the
 feature space, <cite>q</cite> is the number of points considered jointly,
 and <cite>b</cite> is the batch dimension.</p></li>
-<li><p><strong>output_indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of indices, corresponding to the outputs over
+<li><p><strong>output_indices</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of indices, corresponding to the outputs over
 which to compute the posterior (if the model is multi-output).
 Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
@@ -942,7 +942,7 @@ produces the outputs for the given task indices. If omitted, the
 model produces outputs for tasks in in <cite>self._output_tasks</cite> (specified
 as <cite>output_tasks</cite> while constructing the model), which can overwritten
 using <cite>output_indices</cite>.</p></li>
-<li><p><strong>output_indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of task values over which to compute the posterior.
+<li><p><strong>output_indices</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of task values over which to compute the posterior.
 Only used if <cite>X</cite> does not include the task feature. If omitted,
 defaults to <cite>self._output_tasks</cite>.</p></li>
 <li><p><strong>observation_noise</strong> (<em>Union</em><em>[</em><em>bool</em><em>, </em><em>Tensor</em><em>]</em>) – If True, add observation noise from the respective
@@ -969,7 +969,7 @@ either the <cite>output_indices</cite> or <cite>self._output_tasks</cite>.</p>
 <dd><p>Returns a new model that only outputs a subset of the outputs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>idcs</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – A list of output indices, corresponding to the outputs to keep.</p>
+<dd class="field-odd"><p><strong>idcs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – A list of output indices, corresponding to the outputs to keep.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A new model that only outputs the requested outputs.</p>
@@ -1051,7 +1051,7 @@ outcome dimension <cite>m</cite> must be explicit, even if <cite>m=1</cite>).</p
 <dd><p>Subset the model along the output dimension.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>idcs</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the model to.</p>
+<dd class="field-odd"><p><strong>idcs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the model to.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The current model, subset to the specified output indices.</p>
@@ -1105,7 +1105,7 @@ different offset values for for the <cite>m</cite> different outputs).</p></li>
 <dd><p>Subset the model along the output dimension.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>idcs</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the model to.</p>
+<dd class="field-odd"><p><strong>idcs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the model to.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The current model, subset to the specified output indices.</p>
@@ -1246,7 +1246,7 @@ via the BoTorch Model and Posterior APIs.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x q x d</cite>-dim input tensor <cite>X</cite>.</p></li>
-<li><p><strong>output_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of indices, corresponding to the outputs over
+<li><p><strong>output_indices</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of indices, corresponding to the outputs over
 which to compute the posterior. If omitted, computes the posterior
 over all model outputs.</p></li>
 <li><p><strong>posterior_transform</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
@@ -1299,7 +1299,7 @@ multi-fidelity Bayesian Optimization.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>fidelity_weights</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – A dictionary mapping a subset of columns of <cite>X</cite>
+<li><p><strong>fidelity_weights</strong> (<em>Optional</em><em>[</em><em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – A dictionary mapping a subset of columns of <cite>X</cite>
 (the fidelity parameters) to its associated weight in the
 affine cost expression. If omitted, assumes that the last
 column of <cite>X</cite> is the fidelity parameter with a weight of 1.0.</p></li>
@@ -1482,7 +1482,7 @@ compatibility; ignored.</p></li>
 with keys <cite>train_X</cite>, <cite>train_Y</cite>, and, optionally, <cite>train_Yvar</cite>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em>[str, <a class="reference internal" href="utils.html#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><em>BotorchContainer</em></a> | <em>Tensor</em>]</p>
+<dd class="field-odd"><p>dict[str, <a class="reference internal" href="utils.html#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><em>BotorchContainer</em></a> | <em>Tensor</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1695,7 +1695,7 @@ or two).</p></li>
 measurement noise.</p></li>
 <li><p><strong>iteration_fidelity</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The column index for the training iteration fidelity
 parameter (optional).</p></li>
-<li><p><strong>data_fidelities</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>int</em><em>]</em><em>]</em><em>]</em>) – The column indices for the downsampling fidelity parameter.
+<li><p><strong>data_fidelities</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>, </em><em>tuple</em><em>[</em><em>int</em><em>]</em><em>]</em><em>]</em>) – The column indices for the downsampling fidelity parameter.
 If a list/tuple of indices is provided, a kernel will be constructed for
 each index (optional).</p></li>
 <li><p><strong>data_fidelity</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The column index for the downsampling fidelity parameter
@@ -1723,11 +1723,11 @@ forward pass.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a>) – Dictionary of <cite>SupervisedDataset</cite>.</p></li>
-<li><p><strong>fidelity_features</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – Index of fidelity parameter as input columns.</p></li>
+<li><p><strong>fidelity_features</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – Index of fidelity parameter as input columns.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-even"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1745,7 +1745,7 @@ Will be removed in a future release (~v0.11).</p>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>)</p></li>
 <li><p><strong>train_Yvar</strong> (<em>Tensor</em>)</p></li>
 <li><p><strong>iteration_fidelity</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>)</p></li>
-<li><p><strong>data_fidelities</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>int</em><em>]</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>data_fidelities</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>, </em><em>tuple</em><em>[</em><em>int</em><em>]</em><em>]</em><em>]</em>)</p></li>
 <li><p><strong>data_fidelity</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>)</p></li>
 <li><p><strong>linear_truncated</strong> (<em>bool</em>)</p></li>
 <li><p><strong>nu</strong> (<em>float</em>)</p></li>
@@ -1798,11 +1798,11 @@ discrete optimization variables. We recommend using <cite>optimize_acqf_mixed.</
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_X</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x d</cite> tensor of training features.</p></li>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
-<li><p><strong>cat_dims</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – A list of indices corresponding to the columns of
+<li><p><strong>cat_dims</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – A list of indices corresponding to the columns of
 the input <cite>X</cite> that should be considered categorical features.</p></li>
 <li><p><strong>train_Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – An optional <cite>batch_shape x n x m</cite> tensor of observed
 measurement noise.</p></li>
-<li><p><strong>cont_kernel_factory</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>torch.Size</em><em>, </em><em>int</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em><em>, </em><em>Kernel</em><em>]</em><em>]</em>) – A method that accepts  <cite>batch_shape</cite>, <cite>ard_num_dims</cite>,
+<li><p><strong>cont_kernel_factory</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>torch.Size</em><em>, </em><em>int</em><em>, </em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em><em>, </em><em>Kernel</em><em>]</em><em>]</em>) – A method that accepts  <cite>batch_shape</cite>, <cite>ard_num_dims</cite>,
 and <cite>active_dims</cite> arguments and returns an instantiated GPyTorch
 <cite>Kernel</cite> object to be used as the base kernel for the continuous
 dimensions. If omitted, this model uses a Matern-2.5 kernel as
@@ -1830,12 +1830,12 @@ and pass in the already transformed input.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a>) – A <cite>SupervisedDataset</cite> containing the training data.</p></li>
-<li><p><strong>categorical_features</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – Column indices of categorical features.</p></li>
+<li><p><strong>categorical_features</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – Column indices of categorical features.</p></li>
 <li><p><strong>likelihood</strong> (<em>Likelihood</em><em> | </em><em>None</em>) – Optional likelihood used to constuct the model.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-even"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1881,7 +1881,7 @@ individually for each model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>List</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>m</cite>-list of <cite>batch_shape x n’ x d</cite>-dim Tensors, where <cite>d</cite> is the
+<li><p><strong>X</strong> (<em>list</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>m</cite>-list of <cite>batch_shape x n’ x d</cite>-dim Tensors, where <cite>d</cite> is the
 dimension of the feature space, <cite>n’</cite> is the number of points
 per batch, and <cite>batch_shape</cite> is the batch shape (must be compatible
 with the batch shape of the model).</p></li>
@@ -1997,13 +1997,13 @@ the non-task features. Defaults to <cite>MaternKernel</cite>.</p></li>
 <li><p><strong>likelihood</strong> (<em>Optional</em><em>[</em><em>Likelihood</em><em>]</em>) – A likelihood. The default is selected based on <cite>train_Yvar</cite>.
 If <cite>train_Yvar</cite> is None, a standard <cite>GaussianLikelihood</cite> with inferred
 noise level is used. Otherwise, a FixedNoiseGaussianLikelihood is used.</p></li>
-<li><p><strong>output_tasks</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of task indices for which to compute model
+<li><p><strong>output_tasks</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of task indices for which to compute model
 outputs for. If omitted, return outputs for all task indices.</p></li>
 <li><p><strong>rank</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The rank to be used for the index kernel. If omitted, use a
 full rank (i.e. number of tasks) kernel.</p></li>
 <li><p><strong>task_covar_prior</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>) – A Prior on the task covariance matrix. Must operate
 on p.s.d. matrices. A common prior for this is the <cite>LKJ</cite> prior.</p></li>
-<li><p><strong>all_tasks</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – By default, multi-task GPs infer the list of all tasks from
+<li><p><strong>all_tasks</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – By default, multi-task GPs infer the list of all tasks from
 the task features in <cite>train_X</cite>. This is an experimental feature that
 enables creation of multi-task GPs with tasks that don’t appear in the
 training data. Note that when a task is not observed, the corresponding
@@ -2057,11 +2057,11 @@ registered hooks while the latter silently ignores them.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_X</strong> (<em>Tensor</em>)</p></li>
 <li><p><strong>task_feature</strong> (<em>int</em>)</p></li>
-<li><p><strong>output_tasks</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>output_tasks</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tuple</em>[<em>List</em>[int], int, int]</p>
+<dd class="field-even"><p>tuple[list[int], int, int]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2074,7 +2074,7 @@ registered hooks while the latter silently ignores them.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><a class="reference internal" href="utils.html#botorch.utils.datasets.MultiTaskDataset" title="botorch.utils.datasets.MultiTaskDataset"><em>MultiTaskDataset</em></a>) – A <cite>SupervisedDataset</cite> or a <cite>MultiTaskDataset</cite>.</p></li>
 <li><p><strong>task_feature</strong> (<em>int</em>) – Column index of embedded task indicator features.</p></li>
-<li><p><strong>output_tasks</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of task indices for which to compute model
+<li><p><strong>output_tasks</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of task indices for which to compute model
 outputs for. If omitted, return outputs for all task indices.</p></li>
 <li><p><strong>task_covar_prior</strong> (<em>Prior</em><em> | </em><em>None</em>) – A GPyTorch <cite>Prior</cite> object to use as prior on
 the cross-task covariance matrix,</p></li>
@@ -2085,7 +2085,7 @@ contain <cite>use_LKJ_prior</cite> indicator and should contain float value <cit
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-even"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2194,7 +2194,7 @@ observation noise (must be of shape <cite>(batch_shape) x q</cite>). It is
 assumed to be in the outcome-transformed space if an outcome
 transform is used.</p></li>
 <li><p><strong>posterior_transform</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
-<li><p><strong>output_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>output_indices</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2357,8 +2357,8 @@ manually enabled by the user during model fitting.</p>
 <li><p><strong>train_X</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of training inputs.</p></li>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x output_shape</cite>-dim tensor of training targets.</p></li>
 <li><p><strong>likelihood</strong> (<em>Optional</em><em>[</em><em>Likelihood</em><em>]</em>) – Gaussian likelihood for the model.</p></li>
-<li><p><strong>covar_modules</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Kernel</em><em>]</em><em>]</em>) – List of kernels for each output structure.</p></li>
-<li><p><strong>num_latent_dims</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Sizes for the latent dimensions.</p></li>
+<li><p><strong>covar_modules</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>Kernel</em><em>]</em><em>]</em>) – List of kernels for each output structure.</p></li>
+<li><p><strong>num_latent_dims</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Sizes for the latent dimensions.</p></li>
 <li><p><strong>learn_latent_pars</strong> (<em>bool</em>) – If true, learn the latent parameters.</p></li>
 <li><p><strong>latent_init</strong> (<em>str</em>) – [default or gp] how to initialize the latent parameters.</p></li>
 <li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em>]</em>)</p></li>
@@ -2460,7 +2460,7 @@ observations passed in via kwargs).</p>
 <li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension
 of the feature space and <cite>q</cite> is the number of points considered
 jointly.</p></li>
-<li><p><strong>output_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of indices, corresponding to the outputs over
+<li><p><strong>output_indices</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of indices, corresponding to the outputs over
 which to compute the posterior (if the model is multi-output).
 Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
@@ -2614,7 +2614,7 @@ shape <cite>broadcast(test_batch_shape, model.batch_shape) x q x m</cite>.</p>
 <cite>PairwiseGP</cite>, including <cite>datapoints</cite> and <cite>comparisons</cite>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em>[str, <em>Tensor</em>]</p>
+<dd class="field-odd"><p>dict[str, <em>Tensor</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2652,7 +2652,7 @@ re-setting the data.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>state_dict</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – The state dict.</p></li>
+<li><p><strong>state_dict</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – The state dict.</p></li>
 <li><p><strong>strict</strong> (<em>bool</em>) – Boolean specifying whether or not given and instance-bound
 state_dicts should have identical keys. Only implemented for
 <cite>strict=False</cite> since buffers will filters out when calling
@@ -2703,7 +2703,7 @@ should be the same as self.datapoints during training</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension
 of the feature space and <cite>q</cite> is the number of points considered jointly.</p></li>
-<li><p><strong>output_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – As defined in parent Model class, not used for this model.</p></li>
+<li><p><strong>output_indices</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – As defined in parent Model class, not used for this model.</p></li>
 <li><p><strong>observation_noise</strong> (<em>bool</em>) – Ignored (since noise is not identifiable from scale
 in probit models).</p></li>
 <li><p><strong>posterior_transform</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
@@ -2798,7 +2798,7 @@ so that it’s still compatible with fit_gpytorch_*.</p>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – (n x 1) Y training data.</p></li>
 <li><p><strong>train_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – (n x 1) Noise variances of each training Y. If None,
 we use an inferred noise likelihood.</p></li>
-<li><p><strong>decomposition</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Keys are context names. Values are the indexes of
+<li><p><strong>decomposition</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Keys are context names. Values are the indexes of
 parameters belong to the context. The parameter indexes are in
 the same order across contexts.</p></li>
 </ul>
@@ -2812,12 +2812,12 @@ the same order across contexts.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a>) – A <cite>SupervisedDataset</cite> containing the training data.</p></li>
-<li><p><strong>decomposition</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Dictionary of context names and their indexes of the
+<li><p><strong>decomposition</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Dictionary of context names and their indexes of the
 corresponding active context parameters.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-even"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2836,20 +2836,20 @@ data sets should have dim = 2.</p>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – (n x 1) Y training data.</p></li>
 <li><p><strong>train_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – (n x 1) Noise variance of Y. If None,
 we use an inferred noise likelihood.</p></li>
-<li><p><strong>decomposition</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Keys are context names. Values are the indexes of
+<li><p><strong>decomposition</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Keys are context names. Values are the indexes of
 parameters belong to the context.</p></li>
 <li><p><strong>train_embedding</strong> (<em>bool</em>) – Whether to train the embedding layer or not. If False,
 the model will use pre-trained embeddings in embs_feature_dict.</p></li>
-<li><p><strong>cat_feature_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Keys are context names and values are list of categorical
+<li><p><strong>cat_feature_dict</strong> (<em>dict</em><em> | </em><em>None</em>) – Keys are context names and values are list of categorical
 features i.e. {“context_name” : [cat_0, …, cat_k]}, where k is the
 number of categorical variables. If None, we use context names in the
 decomposition as the only categorical feature, i.e., k = 1.</p></li>
-<li><p><strong>embs_feature_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Pre-trained continuous embedding features of each
+<li><p><strong>embs_feature_dict</strong> (<em>dict</em><em> | </em><em>None</em>) – Pre-trained continuous embedding features of each
 context.</p></li>
-<li><p><strong>embs_dim_list</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Embedding dimension for each categorical variable. The length
+<li><p><strong>embs_dim_list</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Embedding dimension for each categorical variable. The length
 equals the number of categorical features k. If None, the embedding
 dimension is set to 1 for each categorical variable.</p></li>
-<li><p><strong>context_weight_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Known population weights of each context.</p></li>
+<li><p><strong>context_weight_dict</strong> (<em>dict</em><em> | </em><em>None</em>) – Known population weights of each context.</p></li>
 </ul>
 </dd>
 </dl>
@@ -2861,23 +2861,23 @@ dimension is set to 1 for each categorical variable.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a>) – A <cite>SupervisedDataset</cite> containing the training data.</p></li>
-<li><p><strong>decomposition</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – Dictionary of context names and the names of the
+<li><p><strong>decomposition</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>list</em><em>[</em><em>str</em><em>]</em><em>]</em>) – Dictionary of context names and the names of the
 corresponding active context parameters.</p></li>
 <li><p><strong>train_embedding</strong> (<em>bool</em>) – Whether to train the embedding layer or not.</p></li>
-<li><p><strong>cat_feature_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Keys are context names and values are list of categorical
+<li><p><strong>cat_feature_dict</strong> (<em>dict</em><em> | </em><em>None</em>) – Keys are context names and values are list of categorical
 features i.e. {“context_name” : [cat_0, …, cat_k]}, where k is the
 number of categorical variables. If None, we use context names in the
 decomposition as the only categorical feature, i.e., k = 1.</p></li>
-<li><p><strong>embs_feature_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Pre-trained continuous embedding features of each
+<li><p><strong>embs_feature_dict</strong> (<em>dict</em><em> | </em><em>None</em>) – Pre-trained continuous embedding features of each
 context.</p></li>
-<li><p><strong>embs_dim_list</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Embedding dimension for each categorical variable. The length
+<li><p><strong>embs_dim_list</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Embedding dimension for each categorical variable. The length
 equals the number of categorical features k. If None, the embedding
 dimension is set to 1 for each categorical variable.</p></li>
-<li><p><strong>context_weight_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Known population weights of each context.</p></li>
+<li><p><strong>context_weight_dict</strong> (<em>dict</em><em> | </em><em>None</em>) – Known population weights of each context.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-even"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2922,12 +2922,12 @@ number of categorical variables. If None, task indices will
 be used and k = 1.</p></li>
 <li><p><strong>context_emb_feature</strong> (<em>Tensor</em><em> | </em><em>None</em>) – (n_contexts x m) pre-given continuous
 embedding features. Rows are ordered by context indices.</p></li>
-<li><p><strong>embs_dim_list</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Embedding dimension for each categorical variable.
+<li><p><strong>embs_dim_list</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Embedding dimension for each categorical variable.
 The length equals k. If None, the embedding dimension is set to 1
 for each categorical variable.</p></li>
-<li><p><strong>output_tasks</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of task indices for which to compute model
+<li><p><strong>output_tasks</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of task indices for which to compute model
 outputs for. If omitted, return outputs for all task indices.</p></li>
-<li><p><strong>all_tasks</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – By default, multi-task GPs infer the list of all tasks from
+<li><p><strong>all_tasks</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – By default, multi-task GPs infer the list of all tasks from
 the task features in <cite>train_X</cite>. This is an experimental feature that
 enables creation of multi-task GPs with tasks that don’t appear in the
 training data. Note that when a task is not observed, the corresponding
@@ -2968,7 +2968,7 @@ task / context indices.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><a class="reference internal" href="utils.html#botorch.utils.datasets.MultiTaskDataset" title="botorch.utils.datasets.MultiTaskDataset"><em>MultiTaskDataset</em></a>) – A <cite>SupervisedDataset</cite> or a <cite>MultiTaskDataset</cite>.</p></li>
 <li><p><strong>task_feature</strong> (<em>int</em>) – Column index of embedded task indicator features.</p></li>
-<li><p><strong>output_tasks</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of task indices for which to compute model
+<li><p><strong>output_tasks</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of task indices for which to compute model
 outputs for. If omitted, return outputs for all task indices.</p></li>
 <li><p><strong>context_cat_feature</strong> (<em>Tensor</em><em> | </em><em>None</em>) – (n_contexts x k) one-hot encoded context
 features. Rows are ordered by context indices, where k is the
@@ -2976,13 +2976,13 @@ number of categorical variables. If None, task indices will
 be used and k = 1.</p></li>
 <li><p><strong>context_emb_feature</strong> (<em>Tensor</em><em> | </em><em>None</em>) – (n_contexts x m) pre-given continuous
 embedding features. Rows are ordered by context indices.</p></li>
-<li><p><strong>embs_dim_list</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Embedding dimension for each categorical variable.
+<li><p><strong>embs_dim_list</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Embedding dimension for each categorical variable.
 The length equals k. If None, the embedding dimension is set to 1
 for each categorical variable.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-even"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3008,10 +3008,10 @@ number of categorical variables. If None, task indices will
 be used and k = 1.</p></li>
 <li><p><strong>context_emb_feature</strong> (<em>Tensor</em><em> | </em><em>None</em>) – (n_contexts x m) pre-given continuous
 embedding features. Rows are ordered by context indices.</p></li>
-<li><p><strong>embs_dim_list</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Embedding dimension for each categorical variable.
+<li><p><strong>embs_dim_list</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Embedding dimension for each categorical variable.
 The length equals to k. If None, the embedding dimension is set to
 1 for each categorical variable.</p></li>
-<li><p><strong>output_tasks</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of task indices for which to compute model
+<li><p><strong>output_tasks</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of task indices for which to compute model
 outputs for. If omitted, return outputs for all task indices.</p></li>
 </ul>
 </dd>
@@ -3202,7 +3202,7 @@ either a <cite>GaussianLikelihood</cite> (if <cite>num_outputs=1</cite>) or a
 (default: CholeskyVariationalDistribution), the properties of the
 variational distribution will encourage scalability or ease of
 optimization.</p></li>
-<li><p><strong>variational_strategy</strong> (<em>Type</em><em>[</em><em>_VariationalStrategy</em><em>]</em>) – Type of variational strategy to use (default:
+<li><p><strong>variational_strategy</strong> (<em>type</em><em>[</em><em>_VariationalStrategy</em><em>]</em>) – Type of variational strategy to use (default:
 VariationalStrategy). The default setting uses “whitening” of the
 variational distribution to make training easier.</p></li>
 <li><p><strong>inducing_points</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>int</em><em>]</em><em>]</em>) – The number or specific locations of the inducing points.</p></li>
@@ -3366,10 +3366,10 @@ in combination with Pyro.</p>
 <dd><p>Post-process the final MCMC samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p>
+<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Tensor</em>]</p>
+<dd class="field-even"><p>dict[str, <em>Tensor</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3378,10 +3378,10 @@ in combination with Pyro.</p>
 <em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load_mcmc_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mcmc_samples</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian.html#PyroModel.load_mcmc_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian.PyroModel.load_mcmc_samples" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p>
+<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tuple</em>[<em>Mean</em>, <em>Kernel</em>, <em>Likelihood</em>]</p>
+<dd class="field-even"><p>tuple[<em>Mean</em>, <em>Kernel</em>, <em>Likelihood</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3496,10 +3496,10 @@ to the SAAS prior.</p>
 tausq (global shrinkage).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p>
+<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Tensor</em>]</p>
+<dd class="field-even"><p>dict[str, <em>Tensor</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3509,10 +3509,10 @@ tausq (global shrinkage).</p>
 <dd><p>Load the MCMC samples into the mean_module, covar_module, and likelihood.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p>
+<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tuple</em>[<em>Mean</em>, <em>Kernel</em>, <em>Likelihood</em>]</p>
+<dd class="field-even"><p>tuple[<em>Mean</em>, <em>Kernel</em>, <em>Likelihood</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3590,7 +3590,7 @@ over input data at this point.</p>
 has been fitted in order to create a batched SingleTaskGP model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p>
+<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -3644,7 +3644,7 @@ rest of this method will not run.</p>
 <li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension
 of the feature space and <cite>q</cite> is the number of points considered
 jointly.</p></li>
-<li><p><strong>output_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of indices, corresponding to the outputs over
+<li><p><strong>output_indices</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of indices, corresponding to the outputs over
 which to compute the posterior (if the model is multi-output).
 Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
@@ -3773,10 +3773,10 @@ to the SAAS prior.</p>
 <dd><p>Load the MCMC samples into the mean_module, covar_module, and likelihood.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p>
+<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tuple</em>[<em>Mean</em>, <em>Kernel</em>, <em>Likelihood</em>, <em>Kernel</em>, <em>Parameter</em>]</p>
+<dd class="field-even"><p>tuple[<em>Mean</em>, <em>Kernel</em>, <em>Likelihood</em>, <em>Kernel</em>, <em>Parameter</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3816,11 +3816,11 @@ isn’t compatible with <cite>fit_gpytorch_mll</cite>.</p>
 <li><p><strong>train_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – Observed noise variance (n x 1). If None, we infer the noise.
 Note that the inferred noise is common across all tasks.</p></li>
 <li><p><strong>task_feature</strong> (<em>int</em>) – The index of the task feature (<cite>-d &lt;= task_feature &lt;= d</cite>).</p></li>
-<li><p><strong>output_tasks</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of task indices for which to compute model
+<li><p><strong>output_tasks</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of task indices for which to compute model
 outputs for. If omitted, return outputs for all task indices.</p></li>
 <li><p><strong>rank</strong> (<em>int</em><em> | </em><em>None</em>) – The num of learned task embeddings to be used in the task kernel.
 If omitted, use a full rank (i.e. number of tasks) kernel.</p></li>
-<li><p><strong>all_tasks</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – NOT SUPPORTED!</p></li>
+<li><p><strong>all_tasks</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – NOT SUPPORTED!</p></li>
 <li><p><strong>outcome_transform</strong> (<a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em> | </em><em>None</em>) – An outcome transform that is applied to the
 training data during instantiation and to the posterior during
 inference (that is, the <cite>Posterior</cite> obtained by calling
@@ -3908,7 +3908,7 @@ the observation noise in the training data is used as observation noise.</p></li
 has been fitted in order to create a batched MultiTaskGP model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p>
+<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -3930,7 +3930,7 @@ has been fitted in order to create a batched MultiTaskGP model.</p>
 <dt class="field-even">Parameters<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
 <li><p><strong>X</strong> (<em>Tensor</em>)</p></li>
-<li><p><strong>output_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>output_indices</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>observation_noise</strong> (<em>bool</em>)</p></li>
 <li><p><strong>posterior_transform</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
@@ -4164,7 +4164,7 @@ and a polynomial kernel. Here <cite>f_1</cite> is the first fidelity dimension a
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>fidelity_dims</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – A list containing either one or two indices specifying
+<li><p><strong>fidelity_dims</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – A list containing either one or two indices specifying
 the fidelity parameters of the input.</p></li>
 <li><p><strong>dimension</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The dimension of <cite>x</cite>. Unused if <cite>active_dims</cite> is specified.</p></li>
 <li><p><strong>power_prior</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>) – Prior for the power parameter of the polynomial kernel.
@@ -4209,22 +4209,22 @@ embeddings.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>decomposition</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Keys index context names. Values are the indexes of
+<li><p><strong>decomposition</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Keys index context names. Values are the indexes of
 parameters belong to the context.</p></li>
 <li><p><strong>batch_shape</strong> (<em>Size</em>) – Batch shape as usual for gpytorch kernels. Model does not
 support batch training. When batch_shape is non-empty, it is used for
 loading hyper-parameter values generated from MCMC sampling.</p></li>
 <li><p><strong>train_embedding</strong> (<em>bool</em>) – A boolean indictor of whether to learn context embeddings.</p></li>
-<li><p><strong>cat_feature_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Keys are context names and values are list of categorical
+<li><p><strong>cat_feature_dict</strong> (<em>dict</em><em> | </em><em>None</em>) – Keys are context names and values are list of categorical
 features i.e. {“context_name” : [cat_0, …, cat_k]}. k equals the
 number of categorical variables. If None, uses context names in the
 decomposition as the only categorical feature, i.e., k = 1.</p></li>
-<li><p><strong>embs_feature_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Pre-trained continuous embedding features of each
+<li><p><strong>embs_feature_dict</strong> (<em>dict</em><em> | </em><em>None</em>) – Pre-trained continuous embedding features of each
 context.</p></li>
-<li><p><strong>embs_dim_list</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Embedding dimension for each categorical variable. The length
+<li><p><strong>embs_dim_list</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Embedding dimension for each categorical variable. The length
 equals to num of categorical features k. If None, the embedding
 dimension is set to 1 for each categorical variable.</p></li>
-<li><p><strong>context_weight_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Known population weights of each context.</p></li>
+<li><p><strong>context_weight_dict</strong> (<em>dict</em><em> | </em><em>None</em>) – Known population weights of each context.</p></li>
 <li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
@@ -4254,7 +4254,7 @@ with same lengthscales but different outputscales.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>decomposition</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Keys are context names. Values are the indexes of parameters
+<li><p><strong>decomposition</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Keys are context names. Values are the indexes of parameters
 belong to the context. The parameter indexes are in the same order
 across contexts.</p></li>
 <li><p><strong>batch_shape</strong> (<em>Size</em>) – Batch shape as usual for gpytorch kernels.</p></li>
@@ -4669,7 +4669,7 @@ associated with the training targets (if applicable).</p></li>
 in the <cite>subset_model</cite> functionality.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>idcs</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the transform to.</p>
+<dd class="field-odd"><p><strong>idcs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the transform to.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The current outcome transform, subset to the specified output indices.</p>
@@ -4766,7 +4766,7 @@ associated with the training targets (if applicable).</p></li>
 <dd><p>Subset the transform along the output dimension.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>idcs</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the transform to.</p>
+<dd class="field-odd"><p><strong>idcs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the transform to.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The current outcome transform, subset to the specified output indices.</p>
@@ -4831,7 +4831,7 @@ state.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>m</strong> (<em>int</em>) – The output dimension.</p></li>
-<li><p><strong>outputs</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Which of the outputs to standardize. If omitted, all
+<li><p><strong>outputs</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Which of the outputs to standardize. If omitted, all
 outputs will be standardized.</p></li>
 <li><p><strong>batch_shape</strong> (<em>torch.Size</em>) – The batch_shape of the training targets.</p></li>
 <li><p><strong>min_stddv</strong> – The minimum standard deviation for which to perform
@@ -4873,7 +4873,7 @@ associated with the training targets (if applicable).</p></li>
 <dd><p>Subset the transform along the output dimension.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>idcs</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the transform to.</p>
+<dd class="field-odd"><p><strong>idcs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the transform to.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The current outcome transform, subset to the specified output indices.</p>
@@ -4937,7 +4937,7 @@ log-transformed outcomes and un-transform the model posterior of that GP.</p>
 <p>Log-transform outcomes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>outputs</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Which of the outputs to log-transform. If omitted, all
+<dd class="field-odd"><p><strong>outputs</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Which of the outputs to log-transform. If omitted, all
 outputs will be standardized.</p>
 </dd>
 </dl>
@@ -4947,7 +4947,7 @@ outputs will be standardized.</p>
 <dd><p>Subset the transform along the output dimension.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>idcs</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the transform to.</p>
+<dd class="field-odd"><p><strong>idcs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the transform to.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The current outcome transform, subset to the specified output indices.</p>
@@ -5035,7 +5035,7 @@ power-transformed outcomes and un-transform the model posterior of that GP.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>outputs</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Which of the outputs to power-transform. If omitted, all
+<li><p><strong>outputs</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Which of the outputs to power-transform. If omitted, all
 outputs will be standardized.</p></li>
 <li><p><strong>power</strong> (<em>float</em>)</p></li>
 </ul>
@@ -5047,7 +5047,7 @@ outputs will be standardized.</p></li>
 <dd><p>Subset the transform along the output dimension.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>idcs</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the transform to.</p>
+<dd class="field-odd"><p><strong>idcs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the transform to.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The current outcome transform, subset to the specified output indices.</p>
@@ -5133,7 +5133,7 @@ constraints as it magnifies values near zero and flattens extreme values.</p>
 <p>Bilog-transform outcomes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>outputs</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Which of the outputs to Bilog-transform. If omitted, all
+<dd class="field-odd"><p><strong>outputs</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Which of the outputs to Bilog-transform. If omitted, all
 outputs will be transformed.</p>
 </dd>
 </dl>
@@ -5143,7 +5143,7 @@ outputs will be transformed.</p>
 <dd><p>Subset the transform along the output dimension.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>idcs</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the transform to.</p>
+<dd class="field-odd"><p><strong>idcs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the transform to.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The current outcome transform, subset to the specified output indices.</p>
@@ -5529,7 +5529,7 @@ same transformations as the cached training inputs.</p>
 broadcastable with <cite>(batch_shape x n x d)</cite>-dim input tensors.</p></li>
 <li><p><strong>offset</strong> (<em>Tensor</em>) – Tensor of offset coefficients, shape must to be
 broadcastable with <cite>(batch_shape x n x d)</cite>-dim input tensors.</p></li>
-<li><p><strong>indices</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – The indices of the inputs to transform. If omitted,
+<li><p><strong>indices</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – The indices of the inputs to transform. If omitted,
 take all dimensions of the inputs into account. Either a list of ints
 or a Tensor of type <cite>torch.long</cite>.</p></li>
 <li><p><strong>batch_shape</strong> (<em>torch.Size</em>) – The batch shape of the inputs (assuming input tensors
@@ -5591,7 +5591,7 @@ current module state.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>d</strong> (<em>int</em>) – The dimension of the input space.</p></li>
-<li><p><strong>indices</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – The indices of the inputs to normalize. If omitted,
+<li><p><strong>indices</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – The indices of the inputs to normalize. If omitted,
 take all dimensions of the inputs into account.</p></li>
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – If provided, use these bounds to normalize the inputs. If
 omitted, learn the bounds in train mode.</p></li>
@@ -5656,7 +5656,7 @@ to False if bounds are provided, otherwise defaults to True.</p></li>
 <dd><p>Get the arguments necessary to construct an exact copy of the transform.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-odd"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -5674,7 +5674,7 @@ simply applies the standardization using the current module state.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>d</strong> (<em>int</em>) – The dimension of the input space.</p></li>
-<li><p><strong>indices</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – The indices of the inputs to standardize. If omitted,
+<li><p><strong>indices</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – The indices of the inputs to standardize. If omitted,
 take all dimensions of the inputs into account.</p></li>
 <li><p><strong>batch_shape</strong> (<em>torch.Size</em>) – The batch shape of the inputs (asssuming input tensors
 of shape <cite>batch_shape x n x d</cite>). If provided, perform individual
@@ -5754,8 +5754,8 @@ tangent function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>integer_indices</strong> (<em>Union</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>, </em><em>LongTensor</em><em>, </em><em>None</em><em>]</em>) – The indices of the integer inputs.</p></li>
-<li><p><strong>categorical_features</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – A dictionary mapping the starting index of each
+<li><p><strong>integer_indices</strong> (<em>Union</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>, </em><em>LongTensor</em><em>, </em><em>None</em><em>]</em>) – The indices of the integer inputs.</p></li>
+<li><p><strong>categorical_features</strong> (<em>Optional</em><em>[</em><em>dict</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – A dictionary mapping the starting index of each
 categorical feature to its cardinality. This assumes that categoricals
 are one-hot encoded.</p></li>
 <li><p><strong>transform_on_train</strong> (<em>bool</em>) – A boolean indicating whether to apply the
@@ -5808,7 +5808,7 @@ rounding should be used. Default: False.</p></li>
 <dd><p>Get the arguments necessary to construct an exact copy of the transform.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-odd"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -5822,7 +5822,7 @@ rounding should be used. Default: False.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>indices</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – The indices of the inputs to log transform.</p></li>
+<li><p><strong>indices</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – The indices of the inputs to log transform.</p></li>
 <li><p><strong>transform_on_train</strong> (<em>bool</em>) – A boolean indicating whether to apply the
 transforms in train() mode. Default: True.</p></li>
 <li><p><strong>transform_on_eval</strong> (<em>bool</em>) – A boolean indicating whether to apply the
@@ -5852,7 +5852,7 @@ functions for each output.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>indices</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – The indices of the inputs to warp.</p></li>
+<li><p><strong>indices</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – The indices of the inputs to warp.</p></li>
 <li><p><strong>transform_on_train</strong> (<em>bool</em>) – A boolean indicating whether to apply the
 transforms in train() mode. Default: True.</p></li>
 <li><p><strong>transform_on_eval</strong> (<em>bool</em>) – A boolean indicating whether to apply the
@@ -5932,10 +5932,10 @@ appended to the inputs. Default: None.</p></li>
 <li><p><strong>f</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – A callable mapping a <cite>batch_shape x q x d</cite>-dim input tensor <cite>X</cite>
 to a <cite>batch_shape x q x n_f x d_f</cite>-dimensional output tensor.
 Default: None.</p></li>
-<li><p><strong>indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – List of indices denoting the indices of the features to be
+<li><p><strong>indices</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – List of indices denoting the indices of the features to be
 passed into f. Per default all features are passed to <cite>f</cite>.
 Default: None.</p></li>
-<li><p><strong>fkwargs</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Dictionary of keyword arguments passed to the callable <cite>f</cite>.
+<li><p><strong>fkwargs</strong> (<em>Optional</em><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Dictionary of keyword arguments passed to the callable <cite>f</cite>.
 Default: None.</p></li>
 <li><p><strong>skip_expand</strong> (<em>bool</em>) – A boolean indicating whether to expand the input tensor
 before appending features. This is intended for use with an
@@ -6068,7 +6068,7 @@ shape <cite>batch x d</cite>. This is useful for heteroscedastic perturbations.<
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>2 x d</cite>-dim tensor of lower and upper bounds for each
 column of the input. If given, the perturbed inputs will be
 clamped to these bounds.</p></li>
-<li><p><strong>indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of indices specifying a subset of inputs on which to apply
+<li><p><strong>indices</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of indices specifying a subset of inputs on which to apply
 the transform. Note that <cite>len(indices)</cite> should be equal to the second
 dimension of <cite>perturbation_set</cite> and <cite>bounds</cite>. The dimensionality of
 the input <cite>X.shape[-1]</cite> can be larger if we only transform a subset.</p></li>
@@ -6132,7 +6132,7 @@ because <cite>n_p</cite> is inaccessible otherwise if <cite>perturbation_set</ci
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The dimension of the one-hot-encoded input.</p></li>
-<li><p><strong>categorical_features</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – A dictionary mapping the starting index of each
+<li><p><strong>categorical_features</strong> (<em>Optional</em><em>[</em><em>dict</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – A dictionary mapping the starting index of each
 categorical feature to its cardinality. This assumes that categoricals
 are one-hot encoded.</p></li>
 <li><p><strong>transform_on_train</strong> (<em>bool</em>) – A boolean indicating whether to apply the
@@ -6221,8 +6221,8 @@ the rounding function.</p>
 <li><p><strong>one_hot_bounds</strong> (<em>Tensor</em>) – The raw search space bounds where categoricals are
 encoded in one-hot representation and the integer parameters
 are not normalized.</p></li>
-<li><p><strong>integer_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – The indices of the integer parameters.</p></li>
-<li><p><strong>categorical_features</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>int</em><em>] </em><em>| </em><em>None</em>) – A dictionary mapping indices to cardinalities
+<li><p><strong>integer_indices</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – The indices of the integer parameters.</p></li>
+<li><p><strong>categorical_features</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>int</em><em>] </em><em>| </em><em>None</em>) – A dictionary mapping indices to cardinalities
 for the categorical features.</p></li>
 <li><p><strong>initialization</strong> (<em>bool</em>) – A boolean indicating whether this exact rounding
 function is for initialization. For initialization, the bounds
@@ -6752,7 +6752,7 @@ measurement noise.</p></li>
 </p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>, <em>Tensor</em> | None]</p>
+<dd class="field-odd"><p>tuple[<em>Tensor</em>, <em>Tensor</em>, <em>Tensor</em> | None]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6783,7 +6783,7 @@ features.</p></li>
 </p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[<em>Tensor</em>, int]</p>
+<dd class="field-odd"><p>tuple[<em>Tensor</em>, int]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6814,7 +6814,7 @@ of a model.</p></li>
 just to be contained within the unit cube).</p></li>
 <li><p><strong>atol</strong> (<em>float</em>) – The tolerance for the boundary check. Only used if <cite>strict=True</cite>.</p></li>
 <li><p><strong>raise_on_fail</strong> (<em>bool</em>) – If True, raise an exception instead of a warning.</p></li>
-<li><p><strong>ignore_dims</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Subset of dimensions where the min-max scaling check is omitted.</p></li>
+<li><p><strong>ignore_dims</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Subset of dimensions where the min-max scaling check is omitted.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -6858,7 +6858,7 @@ tensor of observed measurement noise.</p></li>
 <li><p><strong>raise_on_fail</strong> (<em>bool</em>) – If True, raise an error instead of emitting a warning
 (only for normalization/standardization checks, an error is always
 raised if NaN values are present).</p></li>
-<li><p><strong>ignore_X_dims</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – For this subset of dimensions from <cite>{1, …, d}</cite>, ignore the
+<li><p><strong>ignore_X_dims</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – For this subset of dimensions from <cite>{1, …, d}</cite>, ignore the
 min-max scaling check.</p></li>
 </ul>
 </dd>
@@ -6884,7 +6884,7 @@ No checks (other than the NaN check) are performed for observed variances
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>module</strong> (<em>Module</em>) – The module to be modified.</p></li>
-<li><p><strong>names</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – The list of names to access the attribute. If the full name of
+<li><p><strong>names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – The list of names to access the attribute. If the full name of
 the module is <cite>“module.sub_module.leaf_module”</cite>, this will be
 <cite>[“sub_module”, “leaf_module”]</cite>.</p></li>
 <li><p><strong>b</strong> (<em>int</em>) – The new size of the last element of the module’s <cite>batch_shape</cite>
@@ -6915,7 +6915,7 @@ duplicate entries of <cite>X</cite>. Supporting 2-d Tensor only.</p>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Iterator</em>[<em>Tuple</em>[int, int]]</p>
+<dd class="field-even"><p><em>Iterator</em>[tuple[int, int]]</p>
 </dd>
 </dl>
 </dd></dl>

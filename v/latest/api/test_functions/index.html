@@ -34,7 +34,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
@@ -91,7 +91,7 @@ constraints of the form <cite>c_i(x) &gt;= 0</cite> for <cite>i=1, …, n_c</cit
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
@@ -104,7 +104,7 @@ objective in a multiobjective problem.</p></li>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.test_functions.base.ConstrainedBaseTestProblem.constraint_noise_std">
-<span class="sig-name descname"><span class="pre">constraint_noise_std</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.test_functions.base.ConstrainedBaseTestProblem.constraint_noise_std" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">constraint_noise_std</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.test_functions.base.ConstrainedBaseTestProblem.constraint_noise_std" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.test_functions.base.ConstrainedBaseTestProblem.evaluate_slack">
@@ -191,7 +191,7 @@ between a provided point and the closest point on the true pareto front.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -274,11 +274,11 @@ Technometrics, 2016.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -312,7 +312,7 @@ objective in a multiobjective problem.</p></li>
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -337,11 +337,11 @@ objective in a multiobjective problem.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -379,11 +379,11 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -412,11 +412,11 @@ objective in a multiobjective problem.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -452,11 +452,11 @@ objective in a multiobjective problem.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -485,11 +485,11 @@ objective in a multiobjective problem.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -521,7 +521,7 @@ objective in a multiobjective problem.</p></li>
 <li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -552,11 +552,11 @@ objective in a multiobjective problem.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -596,7 +596,7 @@ The global minimum is at <cite>z = (0, …, 0)</cite> with <cite>G(z) = 0</cite>
 <li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -635,7 +635,7 @@ The global minimum is at <cite>z = (0, …, 0)</cite> with <cite>G(z) = 0</cite>
 <li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -676,11 +676,11 @@ z_4 = ( 8.05502, -9.66459)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -724,7 +724,7 @@ objective in a multiobjective problem.</p></li>
 <li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -757,7 +757,7 @@ objective in a multiobjective problem.</p></li>
 <li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -800,7 +800,7 @@ objective in a multiobjective problem.</p></li>
 <li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -828,7 +828,7 @@ objective in a multiobjective problem.</p></li>
 <li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -863,7 +863,7 @@ objective in a multiobjective problem.</p></li>
 <li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -898,7 +898,7 @@ objective in a multiobjective problem.</p></li>
 <li><p><strong>m</strong> (<em>int</em>) – Defaults to 10.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -927,11 +927,11 @@ objective in a multiobjective problem.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -969,7 +969,7 @@ objective in a multiobjective problem.</p></li>
 <li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -994,11 +994,11 @@ objective in a multiobjective problem.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1028,14 +1028,14 @@ objective in a multiobjective problem.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
-<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
 If a list is provided, specifies separate noise standard
 deviations for each constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1052,14 +1052,14 @@ and x1^2 + x2^2 - 1.5 &lt;= 0.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
-<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
 If a list is provided, specifies separate noise standard
 deviations for each constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1123,11 +1123,11 @@ uses <cite>||x||_2 &lt;= 1</cite> as the constraint. This problem comes from <a 
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
 If a list is provided, specifies separate noise standard
 deviations for each constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1169,11 +1169,11 @@ uses <cite>||x||_2^2 &lt;= 1</cite> as the constraint to obtain smoother constra
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
 If a list is provided, specifies separate noise standard
 deviations for each constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1213,14 +1213,14 @@ constraints from <a class="reference internal" href="#coellocoello2002constraint
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
-<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
 If a list is provided, specifies separate noise standard
 deviations for each constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1279,14 +1279,14 @@ black-box constraints from <a class="reference internal" href="#coellocoello2002
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
-<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
 If a list is provided, specifies separate noise standard
 deviations for each constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1343,14 +1343,14 @@ four black-box constraints from <a class="reference internal" href="#hedar2006de
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
-<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
 If a list is provided, specifies separate noise standard
 deviations for each constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1407,14 +1407,14 @@ constraints from <a class="reference internal" href="#lemonge2010constrained" id
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
-<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
 If a list is provided, specifies separate noise standard
 deviations for each constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1485,11 +1485,11 @@ and <cite>B_min = 0.397887</cite></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1697,7 +1697,7 @@ evolutionary algorithms: Empirical results. Evolutionary Computation, vol.
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
 </dd>
@@ -1745,7 +1745,7 @@ on DH. The reference points were set using <cite>infer_reference_point</cite>.</
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -1775,7 +1775,7 @@ S(x_0) = alpha / (0.2 + x_0) + beta * x_0^2</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -1812,7 +1812,7 @@ S(x_0) = alpha / (0.2 + x_0) + beta * x_0^2</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -1844,7 +1844,7 @@ The specific values on the Pareto fronts can be found by varying <cite>x_0</cite
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -1880,7 +1880,7 @@ near <cite>x_0 + x_1 = 0.35</cite> and the global one near <cite>x_0 + x_1 = 0.8
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -1897,7 +1897,7 @@ near <cite>x_0 + x_1 = 0.35</cite> and the global one near <cite>x_0 + x_1 = 0.8
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -1924,7 +1924,7 @@ The goal is to minimize both objectives. The reference point comes from <a class
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -1976,7 +1976,7 @@ both objectives.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2029,7 +2029,7 @@ the one global Pareto-optimal front.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2061,7 +2061,7 @@ resulting in dense solutions near the f_M-f_1 plane.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2085,7 +2085,7 @@ g(x) = sum_{i=m}^{d-1} (x_i - 0.5)^2</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2125,7 +2125,7 @@ M - sum_{i=0}^{M-2} f_i(x)/(1+g(x)) * (1 + sin(3 * pi * f_i(x)))</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2149,7 +2149,7 @@ core/util/objectives.py.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – The number of objectives.</p></li>
 </ul>
@@ -2189,7 +2189,7 @@ on the Pareto frontier over a large discrete set of random designs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -2346,7 +2346,7 @@ random designs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -2417,7 +2417,7 @@ pareto front from <a class="reference internal" href="#tanabe2020" id="id18"><sp
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -2457,7 +2457,7 @@ objective.</p></li>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Number of objectives. Must not be larger than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2481,7 +2481,7 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Number of objectives. Must not be larger than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2531,7 +2531,7 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Number of objectives. Must not be larger than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2581,7 +2581,7 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Number of objectives. Must not be larger than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2627,7 +2627,7 @@ based on the approximate Pareto frontier from <a class="reference internal" href
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -2667,7 +2667,7 @@ minimization problem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -2732,7 +2732,7 @@ minimization problem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -2795,8 +2795,8 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise of the objectives.</p></li>
-<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise of the
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise of the objectives.</p></li>
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise of the
 constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
@@ -2845,7 +2845,7 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2891,7 +2891,7 @@ random designs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -2958,8 +2958,8 @@ frontier. It supports arbitrary input dimension &gt; 1. See <a class="reference 
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function. Must be at least 2.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise of the objectives.</p></li>
-<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise of the
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise of the objectives.</p></li>
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise of the
 constraints.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
@@ -3029,7 +3029,7 @@ Note that this implementation assumes minimization, so please choose negate=True
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -3094,7 +3094,7 @@ minimization problem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -3162,7 +3162,7 @@ Note that this implementation assumes minimization, so please choose negate=True
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -3261,7 +3261,7 @@ Both functions assume minimization. See <a class="reference internal" href="#irs
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -3315,7 +3315,7 @@ is the fidelity parameter <cite>s</cite>. See <a class="reference internal" href
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -3381,7 +3381,7 @@ as attributes dgsm_gradient, dgsm_gradient_bas, and dgsm_gradient_square.</p>
 <dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – Set of points at which to compute derivative measures.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tuple</em>[<em>List</em>[float], <em>List</em>[float], <em>List</em>[float]]</p>
+<dd class="field-even"><p>tuple[list[float], list[float], list[float]]</p>
 </dd>
 </dl>
 <p>Returns: The average gradient, absolute gradient, and square gradients.</p>
@@ -3425,7 +3425,7 @@ V= Prod_{i=1}^{d} (1+V_i) - 1</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – Dimensionality of the problem. If 6, 8, or 15, will use standard a.</p></li>
-<li><p><strong>a</strong> (<em>List</em>) – a parameter, unless dim is 6, 8, or 15.</p></li>
+<li><p><strong>a</strong> (<em>list</em>) – a parameter, unless dim is 6, 8, or 15.</p></li>
 <li><p><strong>noise_std</strong> (<em>float</em><em> | </em><em>None</em>) – Standard deviation of observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – Return negatie of function.</p></li>
 </ul>
@@ -3494,7 +3494,7 @@ V= Prod_{i=1}^{d} (1+V_i) - 1</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>Tensor</em>) – The input to be rounded.</p></li>
 <li><p><strong>increment</strong> (<em>float</em>) – The increment to round to.</p></li>
-<li><p><strong>bounds</strong> (<em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – An optional tuple of two floats representing the lower and upper
+<li><p><strong>bounds</strong> (<em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – An optional tuple of two floats representing the lower and upper
 bounds on <cite>X</cite>. If provided, this will round to the nearest multiple
 of <cite>increment</cite> that lies within the bounds.</p></li>
 </ul>

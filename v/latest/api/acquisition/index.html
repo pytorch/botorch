@@ -448,7 +448,7 @@ been submitted for evaluation but have not yet been evaluated.</p>
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>)</p></li>
 <li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="sampling.html#botorch.sampling.base.MCSampler" title="botorch.sampling.base.MCSampler"><em>MCSampler</em></a><em>]</em>)</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em>]</em>)</p></li>
-<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>)</p></li>
 <li><p><strong>eta</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em>)</p></li>
 <li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>)</p></li>
 </ul>
@@ -466,7 +466,7 @@ a sampler compatible with intended use case must be provided.
 See <cite>ForkedRNGSampler</cite> and <cite>StochasticSampler</cite> as examples.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em>]</em>) – The MCMultiOutputObjective under which the samples are
 evaluated. Defaults to <cite>IdentityMCMultiOutputObjective()</cite>.</p></li>
-<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
+<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
 <cite>sample_shape x batch-shape x q x m</cite> to a Tensor of dimension
 <cite>sample_shape x batch-shape x q</cite>, where negative values imply
 feasibility.</p></li>
@@ -793,7 +793,7 @@ upper bounds for the i-th constraint, respectively.</p>
 <li><p><strong>best_f</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em>) – Either a scalar or a <cite>b</cite>-dim Tensor (batch mode) representing
 the best feasible function value observed so far (assumed noiseless).</p></li>
 <li><p><strong>objective_index</strong> (<em>int</em>) – The index of the objective.</p></li>
-<li><p><strong>constraints</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em>) – A dictionary of the form <cite>{i: [lower, upper]}</cite>, where
+<li><p><strong>constraints</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em>) – A dictionary of the form <cite>{i: [lower, upper]}</cite>, where
 <cite>i</cite> is the output index, and <cite>lower</cite> and <cite>upper</cite> are lower and upper
 bounds on that output (resp. interpreted as -Inf / Inf if None)</p></li>
 <li><p><strong>maximize</strong> (<em>bool</em>) – If True, consider the problem a maximization problem.</p></li>
@@ -851,7 +851,7 @@ improved numerics. See <a class="reference external" href="https://arxiv.org/abs
 <li><p><strong>best_f</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em>) – Either a scalar or a <cite>b</cite>-dim Tensor (batch mode) representing
 the best feasible function value observed so far (assumed noiseless).</p></li>
 <li><p><strong>objective_index</strong> (<em>int</em>) – The index of the objective.</p></li>
-<li><p><strong>constraints</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em>) – A dictionary of the form <cite>{i: [lower, upper]}</cite>, where
+<li><p><strong>constraints</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em>) – A dictionary of the form <cite>{i: [lower, upper]}</cite>, where
 <cite>i</cite> is the output index, and <cite>lower</cite> and <cite>upper</cite> are lower and upper
 bounds on that output (resp. interpreted as -Inf / Inf if None)</p></li>
 <li><p><strong>maximize</strong> (<em>bool</em>) – If True, consider the problem a maximization problem.</p></li>
@@ -1271,7 +1271,7 @@ specifies the sample dimensions to reduce over, and returns a
 Tensor of acquisition utility values, a keyword-argument <cite>dim</cite> that
 specifies the q dimension to reduce over (i.e. -1), and returns a
 <cite>sample_shape x batch_shape</cite>-dim Tensor of acquisition values.</p></li>
-<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of constraint callables which map a Tensor of posterior
+<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of constraint callables which map a Tensor of posterior
 samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
 <cite>sample_shape x batch-shape x q</cite>-dim Tensor. The associated constraints
 are considered satisfied if the output is less than zero.
@@ -1351,7 +1351,7 @@ favor of passing the <cite>constraints</cite> directly to this constructor.</p><
 submitted for function evaluation but have not yet been evaluated.
 Concatenated into X upon forward call. Copied and set to have no
 gradient.</p></li>
-<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of constraint callables which map a Tensor of posterior
+<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of constraint callables which map a Tensor of posterior
 samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
 <cite>sample_shape x batch-shape x q</cite>-dim Tensor. The associated constraints
 are considered satisfied if the output is less than zero.</p></li>
@@ -1410,7 +1410,7 @@ customize pruning parameters, instead manually call
 before instantiating the acquisition function.</p></li>
 <li><p><strong>cache_root</strong> (<em>bool</em>) – A boolean indicating whether to cache the root
 decomposition over <cite>X_baseline</cite> and use low-rank updates.</p></li>
-<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of constraint callables which map a Tensor of posterior
+<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of constraint callables which map a Tensor of posterior
 samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
 <cite>sample_shape x batch-shape x q</cite>-dim Tensor. The associated constraints
 are considered satisfied if the output is less than zero.</p></li>
@@ -1484,7 +1484,7 @@ forward call.  Copied and set to have no gradient.</p></li>
 of the step function. Smaller values yield more accurate
 approximations of the function, but result in gradients
 estimates with higher variance.</p></li>
-<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of constraint callables which map posterior samples to
+<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of constraint callables which map posterior samples to
 a scalar. The associated constraint is considered satisfied if this
 scalar is less than zero.</p></li>
 <li><p><strong>eta</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – Temperature parameter(s) governing the smoothness of the sigmoid
@@ -1613,7 +1613,7 @@ evaluated. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
 <li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape, m x d</cite>-dim Tensor of <cite>m</cite> design points
 that have points that have been submitted for function evaluation
 but have not yet been evaluated.</p></li>
-<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of constraint callables which map a Tensor of posterior
+<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of constraint callables which map a Tensor of posterior
 samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
 <cite>sample_shape x batch-shape x q</cite>-dim Tensor. The associated constraints
 are satisfied if <cite>constraint(samples) &lt; 0</cite>.</p></li>
@@ -1666,7 +1666,7 @@ Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
 submitted for function evaluation but have not yet been evaluated.
 Concatenated into <cite>X</cite> upon forward call. Copied and set to have no
 gradient.</p></li>
-<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of constraint callables which map a Tensor of posterior
+<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of constraint callables which map a Tensor of posterior
 samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
 <cite>sample_shape x batch-shape x q</cite>-dim Tensor. The associated constraints
 are satisfied if <cite>constraint(samples) &lt; 0</cite>.</p></li>
@@ -1720,7 +1720,7 @@ evaluated. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
 that have points that have been submitted for function evaluation
 but have not yet been evaluated. Concatenated into <cite>X</cite> upon
 forward call. Copied and set to have no gradient.</p></li>
-<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of constraint callables which map a Tensor of posterior
+<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of constraint callables which map a Tensor of posterior
 samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
 <cite>sample_shape x batch-shape x q</cite>-dim Tensor. The associated constraints
 are satisfied if <cite>constraint(samples) &lt; 0</cite>.</p></li>
@@ -1833,7 +1833,7 @@ greater efficiency.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted model.</p></li>
-<li><p><strong>ref_point</strong> (<em>List</em><em>[</em><em>float</em><em>]</em>) – A list with <cite>m</cite> elements representing the reference point
+<li><p><strong>ref_point</strong> (<em>list</em><em>[</em><em>float</em><em>]</em>) – A list with <cite>m</cite> elements representing the reference point
 (in the outcome space) w.r.t. to which compute the hypervolume.
 This is a reference point for the outcome values (i.e., after
 applying <cite>posterior_transform</cite> if provided).</p></li>
@@ -1970,7 +1970,7 @@ designs that need to be optimized.</p></li>
 objective is MC-evaluated (using inner_sampler).</p></li>
 <li><p><strong>inner_sampler</strong> (<a class="reference internal" href="sampling.html#botorch.sampling.base.MCSampler" title="botorch.sampling.base.MCSampler"><em>MCSampler</em></a><em> | </em><em>None</em>) – The sampler used for inner sampling. Ignored if the
 objective is <cite>None</cite>.</p></li>
-<li><p><strong>X_evaluation_mask</strong> (<em>List</em><em>[</em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A <cite>q x m</cite>-dim tensor of booleans indicating which
+<li><p><strong>X_evaluation_mask</strong> (<em>list</em><em>[</em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A <cite>q x m</cite>-dim tensor of booleans indicating which
 objective(s) each of the <cite>q</cite> points should be evaluated on.</p></li>
 <li><p><strong>X_pending</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>n’ x d</cite>-dim Tensor of <cite>m</cite> design points that have
 points that have been submitted for function evaluation
@@ -2118,12 +2118,12 @@ evaluating the <cite>X</cite> on the objectives indicated by <cite>evaluation_ma
 points to a tensor with shape <cite>batch_shape x q_term x d</cite> projected
 to the desired target set (e.g. the target fidelities in case of
 multi-fidelity optimization). For the basic case, <cite>q_term = q</cite>.</p></li>
-<li><p><strong>valfunc_cls</strong> (<em>Type</em><em>[</em><a class="reference internal" href="#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>AcquisitionFunction</em></a><em>] </em><em>| </em><em>None</em>) – An acquisition function class to be used as the terminal
+<li><p><strong>valfunc_cls</strong> (<em>type</em><em>[</em><a class="reference internal" href="#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>AcquisitionFunction</em></a><em>] </em><em>| </em><em>None</em>) – An acquisition function class to be used as the terminal
 value function.</p></li>
-<li><p><strong>valfunc_argfac</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a><em>]</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>] </em><em>| </em><em>None</em>) – An argument factory, i.e. callable that maps a <cite>Model</cite>
+<li><p><strong>valfunc_argfac</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a><em>]</em><em>, </em><em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>] </em><em>| </em><em>None</em>) – An argument factory, i.e. callable that maps a <cite>Model</cite>
 to a dictionary of kwargs for the terminal value function (e.g.
 <cite>best_f</cite> for <cite>ExpectedImprovement</cite>).</p></li>
-<li><p><strong>target_fidelities</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>target_fidelities</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em>)</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
@@ -2479,7 +2479,7 @@ in Neural Information Processing Systems 34, 2021.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted model.</p></li>
-<li><p><strong>ref_point</strong> (<em>Union</em><em>[</em><em>List</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – A list or tensor with <cite>m</cite> elements representing the reference
+<li><p><strong>ref_point</strong> (<em>Union</em><em>[</em><em>list</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – A list or tensor with <cite>m</cite> elements representing the reference
 point (in the outcome space) w.r.t. to which compute the hypervolume.
 This is a reference point for the objective values (i.e. after
 applying`objective` to the samples).</p></li>
@@ -2491,7 +2491,7 @@ include feasible points.</p></li>
 a sampler is generated using <cite>get_sampler</cite>.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em>]</em>) – The MCMultiOutputObjective under which the samples are evaluated.
 Defaults to <cite>IdentityMCMultiOutputObjective()</cite>.</p></li>
-<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
+<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
 <cite>sample_shape x batch-shape x q x m</cite> to a Tensor of dimension
 <cite>sample_shape x batch-shape x q</cite>, where negative values imply
 feasibility. The acquisition function will compute expected feasible
@@ -2546,7 +2546,7 @@ evaluations.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted model.</p></li>
-<li><p><strong>ref_point</strong> (<em>Union</em><em>[</em><em>List</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – A list or tensor with <cite>m</cite> elements representing the reference
+<li><p><strong>ref_point</strong> (<em>Union</em><em>[</em><em>list</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – A list or tensor with <cite>m</cite> elements representing the reference
 point (in the outcome space) w.r.t. to which compute the hypervolume.
 This is a reference point for the objective values (i.e. after
 applying <cite>objective</cite> to the samples).</p></li>
@@ -2559,7 +2559,7 @@ Note: a pareto front is created for each mc sample, which can be
 computationally intensive for <cite>m</cite> &gt; 2.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em>]</em>) – The MCMultiOutputObjective under which the samples are
 evaluated. Defaults to <cite>IdentityMCMultiOutputObjective()</cite>.</p></li>
-<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
+<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
 <cite>sample_shape x batch-shape x q x m</cite> to a Tensor of dimension
 <cite>sample_shape x batch-shape x q</cite>, where negative values imply
 feasibility. The acquisition function will compute expected feasible
@@ -2642,7 +2642,7 @@ comments in <cite>forward</cite>.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted model.</p></li>
-<li><p><strong>ref_point</strong> (<em>Union</em><em>[</em><em>List</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – A list or tensor with <cite>m</cite> elements representing the reference
+<li><p><strong>ref_point</strong> (<em>Union</em><em>[</em><em>list</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – A list or tensor with <cite>m</cite> elements representing the reference
 point (in the outcome space) w.r.t. to which compute the hypervolume.
 This is a reference point for the objective values (i.e. after
 applying`objective` to the samples).</p></li>
@@ -2654,7 +2654,7 @@ include feasible points.</p></li>
 a sampler is generated using <cite>get_sampler</cite>.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em>]</em>) – The MCMultiOutputObjective under which the samples are evaluated.
 Defaults to <cite>IdentityMultiOutputObjective()</cite>.</p></li>
-<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
+<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
 <cite>sample_shape x batch-shape x q x m</cite> to a Tensor of dimension
 <cite>sample_shape x batch-shape x q</cite>, where negative values imply
 feasibility. The acquisition function will compute expected feasible
@@ -2715,7 +2715,7 @@ evaluations.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted model.</p></li>
-<li><p><strong>ref_point</strong> (<em>Union</em><em>[</em><em>List</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – A list or tensor with <cite>m</cite> elements representing the reference
+<li><p><strong>ref_point</strong> (<em>Union</em><em>[</em><em>list</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – A list or tensor with <cite>m</cite> elements representing the reference
 point (in the outcome space) w.r.t. to which compute the hypervolume.
 This is a reference point for the objective values (i.e. after
 applying <cite>objective</cite> to the samples).</p></li>
@@ -2728,7 +2728,7 @@ Note: a pareto front is created for each mc sample, which can be
 computationally intensive for <cite>m</cite> &gt; 2.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em>]</em>) – The MCMultiOutputObjective under which the samples are
 evaluated. Defaults to <cite>IdentityMultiOutputObjective()</cite>.</p></li>
-<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
+<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
 <cite>sample_shape x batch-shape x q x m</cite> to a Tensor of dimension
 <cite>sample_shape x batch-shape x q</cite>, where negative values imply
 feasibility. The acquisition function will compute expected feasible
@@ -2826,7 +2826,7 @@ but the ref_point is 3D because of fidelity objective.</p>
 data. <cite>train_X</cite> should have fidelity parameter <cite>s</cite> as the last dimension
 of the input and <cite>train_Y</cite> contains a trust objective as its last
 dimension.</p></li>
-<li><p><strong>ref_point</strong> (<em>Union</em><em>[</em><em>List</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – A list or tensor with <cite>m+1</cite> elements representing the reference
+<li><p><strong>ref_point</strong> (<em>Union</em><em>[</em><em>list</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – A list or tensor with <cite>m+1</cite> elements representing the reference
 point (in the outcome space) w.r.t. to which compute the hypervolume.
 The ‘+1’ takes care of the trust objective appended to <cite>train_Y</cite>.
 This is a reference point for the objective values (i.e. after
@@ -2839,7 +2839,7 @@ include feasible points.</p></li>
 a sampler is generated using <cite>get_sampler</cite>.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em>]</em>) – The MCMultiOutputObjective under which the samples are evaluated.
 Defaults to <cite>IdentityMCMultiOutputObjective()</cite>.</p></li>
-<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
+<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
 <cite>sample_shape x batch-shape x q x m</cite> to a Tensor of dimension
 <cite>sample_shape x batch-shape x q</cite>, where negative values imply
 feasibility. The acquisition function will compute expected feasible
@@ -3090,7 +3090,7 @@ before instantiating the acquisition function.</p>
 <li><p><strong>scalarization_weights</strong> (<em>Tensor</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>sampler</strong> (<a class="reference internal" href="sampling.html#botorch.sampling.base.MCSampler" title="botorch.sampling.base.MCSampler"><em>MCSampler</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>objective</strong> (<a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>constraints</strong> (<em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>X_pending</strong> (<em>Tensor</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>eta</strong> (<em>Tensor</em><em> | </em><em>float</em>)</p></li>
 <li><p><strong>fat</strong> (<em>bool</em>)</p></li>
@@ -3321,9 +3321,9 @@ multi-fidelity optimization). For the basic case, <cite>q_term = q</cite>.</p></
 a <cite>batch_shape x (q + q_e)’ x d</cite>-dim output tensor, where the
 <cite>q_e</cite> additional points in each q-batch correspond to
 additional (“trace”) observations.</p></li>
-<li><p><strong>valfunc_cls</strong> (<em>Optional</em><em>[</em><em>Type</em><em>[</em><a class="reference internal" href="#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>AcquisitionFunction</em></a><em>]</em><em>]</em>) – An acquisition function class to be used as the terminal
+<li><p><strong>valfunc_cls</strong> (<em>Optional</em><em>[</em><em>type</em><em>[</em><a class="reference internal" href="#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>AcquisitionFunction</em></a><em>]</em><em>]</em>) – An acquisition function class to be used as the terminal
 value function.</p></li>
-<li><p><strong>valfunc_argfac</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a><em>]</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em><em>]</em>) – An argument factory, i.e. callable that maps a <cite>Model</cite>
+<li><p><strong>valfunc_argfac</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a><em>]</em><em>, </em><em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em><em>]</em>) – An argument factory, i.e. callable that maps a <cite>Model</cite>
 to a dictionary of kwargs for the terminal value function (e.g.
 <cite>best_f</cite> for <cite>ExpectedImprovement</cite>).</p></li>
 </ul>
@@ -3439,18 +3439,18 @@ of lookahead steps!</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted model.</p></li>
-<li><p><strong>batch_sizes</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – A list <cite>[q_1, …, q_k]</cite> containing the batch sizes for the
+<li><p><strong>batch_sizes</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – A list <cite>[q_1, …, q_k]</cite> containing the batch sizes for the
 <cite>k</cite> look-ahead steps.</p></li>
-<li><p><strong>num_fantasies</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list <cite>[f_1, …, f_k]</cite> containing the number of fantasy
+<li><p><strong>num_fantasies</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list <cite>[f_1, …, f_k]</cite> containing the number of fantasy
 points to use for the <cite>k</cite> look-ahead steps.</p></li>
-<li><p><strong>samplers</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><a class="reference internal" href="sampling.html#botorch.sampling.base.MCSampler" title="botorch.sampling.base.MCSampler"><em>MCSampler</em></a><em>]</em><em>]</em>) – A list of MCSampler objects to be used for sampling fantasies in
+<li><p><strong>samplers</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><a class="reference internal" href="sampling.html#botorch.sampling.base.MCSampler" title="botorch.sampling.base.MCSampler"><em>MCSampler</em></a><em>]</em><em>]</em>) – A list of MCSampler objects to be used for sampling fantasies in
 each stage.</p></li>
-<li><p><strong>valfunc_cls</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Optional</em><em>[</em><em>Type</em><em>[</em><a class="reference internal" href="#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>AcquisitionFunction</em></a><em>]</em><em>]</em><em>]</em><em>]</em>) – A list of <cite>k + 1</cite> acquisition function classes to be used as
+<li><p><strong>valfunc_cls</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>Optional</em><em>[</em><em>type</em><em>[</em><a class="reference internal" href="#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>AcquisitionFunction</em></a><em>]</em><em>]</em><em>]</em><em>]</em>) – A list of <cite>k + 1</cite> acquisition function classes to be used as
 the (stage + terminal) value functions. Each element (except for the
 last one) can be <cite>None</cite>, in which case a zero stage value is assumed for
 the respective stage. If <cite>None</cite>, this defaults to
 <cite>[None, …, None, PosteriorMean]</cite></p></li>
-<li><p><strong>valfunc_argfacs</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Optional</em><em>[</em><em>TAcqfArgConstructor</em><em>]</em><em>]</em><em>]</em>) – A list of <cite>k + 1</cite> “argument factories”, i.e. callables that
+<li><p><strong>valfunc_argfacs</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>Optional</em><em>[</em><em>TAcqfArgConstructor</em><em>]</em><em>]</em><em>]</em>) – A list of <cite>k + 1</cite> “argument factories”, i.e. callables that
 map a <cite>Model</cite> and input tensor <cite>X</cite> to a dictionary of kwargs for the
 respective stage value function constructor (e.g. <cite>best_f</cite> for
 <cite>ExpectedImprovement</cite>). If None, only the standard (<cite>model</cite>, <cite>sampler</cite>
@@ -3464,7 +3464,7 @@ transforms the posterior before evaluation. If <cite>objective is None</cite>,
 then the output of the transformed posterior is used. If <cite>objective</cite> is
 given, the <cite>inner_sampler</cite> is used to draw samples from the transformed
 posterior, which are then evaluated under the <cite>objective</cite>.</p></li>
-<li><p><strong>inner_mc_samples</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list <cite>[n_0, …, n_k]</cite> containing the number of MC
+<li><p><strong>inner_mc_samples</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list <cite>[n_0, …, n_k]</cite> containing the number of MC
 samples to be used for evaluating the stage value function. Ignored if
 the objective is <cite>None</cite>.</p></li>
 <li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have points that
@@ -3527,7 +3527,7 @@ parameterizing the fantasy solutions): <cite>q_0 + f_1 q_1 + f_2 f_1 q_2 + …</
 <cite>size[i] = f_i * … f_1 * q_i</cite>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[<em>Size</em>, <em>List</em>[<em>Size</em>], <em>List</em>[int]]</p>
+<dd class="field-odd"><p>tuple[<em>Size</em>, list[<em>Size</em>], list[int]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3547,7 +3547,7 @@ is the number of candidates jointly considered in look-ahead step
 <cite>f_i x …. x f_1 x batch_shape x q_i x d</cite>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>List</em>[<em>Tensor</em>]</p>
+<dd class="field-odd"><p>list[<em>Tensor</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3630,7 +3630,7 @@ the observed value.</p>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-even"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -4869,7 +4869,7 @@ functions once we have data on how well SampleReducingMCAcquisitionFunction work
 <cite>sample_shape x batch-shape x q x m</cite>-dim Tensor <cite>samples</cite> and
 an optional <cite>batch-shape x q x d</cite>-dim Tensor <cite>X</cite> to a
 <cite>sample_shape x batch-shape x q</cite>-dim Tensor of objective values.</p></li>
-<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
+<li><p><strong>constraints</strong> (<em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
 <cite>sample_shape x batch-shape x q x m</cite> to a Tensor of dimension
 <cite>sample_shape x batch-shape x q</cite>, where negative values imply
 feasibility.</p></li>
@@ -5042,7 +5042,7 @@ an optional <cite>batch-shape x q x d</cite>-dim Tensor <cite>X</cite> to a
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>outcomes</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of the <cite>m’</cite> indices that the weights should be
+<li><p><strong>outcomes</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of the <cite>m’</cite> indices that the weights should be
 applied to.</p></li>
 <li><p><strong>num_outcomes</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The total number of outcomes <cite>m</cite></p></li>
 </ul>
@@ -5095,7 +5095,7 @@ dimension).</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>weights</strong> (<em>Tensor</em>) – <cite>m’</cite>-dim tensor of outcome weights.</p></li>
-<li><p><strong>outcomes</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of the <cite>m’</cite> indices that the weights should be
+<li><p><strong>outcomes</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of the <cite>m’</cite> indices that the weights should be
 applied to.</p></li>
 <li><p><strong>num_outcomes</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – the total number of outcomes <cite>m</cite></p></li>
 </ul>
@@ -5145,7 +5145,7 @@ this can be used as a single-output <cite>MCAcquisitionObjective</cite> as well.
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted Model.</p></li>
 <li><p><strong>X_baseline</strong> (<em>Tensor</em>) – An <cite>n x d</cite>-dim tensor of points already observed.</p></li>
-<li><p><strong>constraint_idcs</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – The outcome indices of the constraints. Constraints are
+<li><p><strong>constraint_idcs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – The outcome indices of the constraints. Constraints are
 handled by weighting the samples according to a sigmoid approximation
 of feasibility. A positive constraint outcome implies feasibility.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em>]</em>) – An optional objective to apply after feasibility-weighting
@@ -5977,7 +5977,7 @@ depends on the corresponding batch inputs. Note that MVaR values in general
 are not in-sample points.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>List</em>[<em>Tensor</em>]</p>
+<dd class="field-odd"><p>list[<em>Tensor</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6004,7 +6004,7 @@ depends on the corresponding batch inputs. Note that MVaR values in general
 are not in-sample points.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>List</em>[<em>Tensor</em>]</p>
+<dd class="field-odd"><p>list[<em>Tensor</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6077,14 +6077,14 @@ the output of this risk measure may not be on the same scale as its inputs.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>alpha</strong> (<em>float</em>) – The risk level, float in <cite>(0.0, 1.0]</cite>.</p></li>
 <li><p><strong>n_w</strong> (<em>int</em>) – The size of the perturbation set to calculate the risk measure over.</p></li>
-<li><p><strong>chebyshev_weights</strong> (<em>Tensor</em><em> | </em><em>List</em><em>[</em><em>float</em><em>]</em>) – The weights to use in the Chebyshev scalarization.
+<li><p><strong>chebyshev_weights</strong> (<em>Tensor</em><em> | </em><em>list</em><em>[</em><em>float</em><em>]</em>) – The weights to use in the Chebyshev scalarization.
 The Chebyshev scalarization is applied before computing VaR.
 The weights must be non-negative. See <cite>preprocessing_function</cite> to
 support minimization objectives.</p></li>
 <li><p><strong>baseline_Y</strong> (<em>Tensor</em><em> | </em><em>None</em>) – An <cite>n’ x d</cite>-dim tensor of baseline outcomes to use in
 determining the normalization bounds for Chebyshev scalarization.
 It is recommended to set this via <cite>set_baseline_Y</cite> helper.</p></li>
-<li><p><strong>ref_point</strong> (<em>Tensor</em><em> | </em><em>List</em><em>[</em><em>float</em><em>] </em><em>| </em><em>None</em>) – An optional MVaR reference point to use in determining
+<li><p><strong>ref_point</strong> (<em>Tensor</em><em> | </em><em>list</em><em>[</em><em>float</em><em>] </em><em>| </em><em>None</em>) – An optional MVaR reference point to use in determining
 the normalization bounds for Chebyshev scalarization.</p></li>
 <li><p><strong>preprocessing_function</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A preprocessing function to apply to the
 samples before computing the risk measure. This can be used to
@@ -6189,7 +6189,7 @@ otherwise.</p>
 <li><p><strong>acq_function</strong> (<a class="reference internal" href="#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>AcquisitionFunction</em></a>) – The base acquisition function, operating on input
 tensors <cite>X_full</cite> of feature dimension <cite>d</cite>.</p></li>
 <li><p><strong>d</strong> (<em>int</em>) – The feature dimension expected by <cite>acq_function</cite>.</p></li>
-<li><p><strong>columns</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – <cite>d_f &lt; d</cite> indices of columns in <cite>X_full</cite> that are to be
+<li><p><strong>columns</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – <cite>d_f &lt; d</cite> indices of columns in <cite>X_full</cite> that are to be
 fixed to the provided values.</p></li>
 <li><p><strong>values</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – The values to which to fix the columns in <cite>columns</cite>. Either
 a full <cite>batch_shape x q x d_f</cite> tensor of values (if values are
@@ -6234,14 +6234,14 @@ constructors programmatically from a consistent input format.</p>
 <dd><p>Get acquisition function input constructor from registry.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>acqf_cls</strong> (<em>Type</em><em>[</em><a class="reference internal" href="#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>AcquisitionFunction</em></a><em>]</em>) – The AcquisitionFunction class (not instance) for which
+<dd class="field-odd"><p><strong>acqf_cls</strong> (<em>type</em><em>[</em><a class="reference internal" href="#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>AcquisitionFunction</em></a><em>]</em>) – The AcquisitionFunction class (not instance) for which
 to retrieve the input constructor.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The input constructor associated with <cite>acqf_cls</cite>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Callable</em>[[…], <em>Dict</em>[str, <em>Any</em>]]</p>
+<dd class="field-odd"><p><em>Callable</em>[[…], dict[str, <em>Any</em>]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6269,7 +6269,7 @@ in the signature of <cite>f</cite>. Any other keyword arguments will raise an er
 <dd><p>Decorator for registering acquisition function input constructors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>acqf_cls</strong> (<em>Type</em><em>[</em><a class="reference internal" href="#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>AcquisitionFunction</em></a><em>]</em>) – The AcquisitionFunction classes (not instances) for which
+<dd class="field-odd"><p><strong>acqf_cls</strong> (<em>type</em><em>[</em><a class="reference internal" href="#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>AcquisitionFunction</em></a><em>]</em>) – The AcquisitionFunction classes (not instances) for which
 to register the input constructor.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -6293,7 +6293,7 @@ acquisition function.</p></li>
 <dd class="field-even"><p>A dict mapping kwarg names of the constructor to values.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em>[str, <a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a> | <a class="reference internal" href="#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a> | None]</p>
+<dd class="field-odd"><p>dict[str, <a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a> | <a class="reference internal" href="#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a> | None]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6305,7 +6305,7 @@ acquisition function.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – The model to be used in the acquisition function.</p></li>
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – Dataset(s) used to train the model.
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – Dataset(s) used to train the model.
 Used to determine default value for <cite>best_f</cite>.</p></li>
 <li><p><strong>best_f</strong> (<em>Tensor</em><em> | </em><em>float</em><em> | </em><em>None</em>) – Threshold above (or below) which improvement is defined.</p></li>
 <li><p><strong>posterior_transform</strong> (<a class="reference internal" href="#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>) – The posterior transform to be used in the
@@ -6317,7 +6317,7 @@ acquisition function.</p></li>
 <dd class="field-even"><p>A dict mapping kwarg names of the constructor to values.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-odd"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6340,7 +6340,7 @@ representing the trade-off parameter between mean and covariance</p></li>
 <dd class="field-even"><p>A dict mapping kwarg names of the constructor to values.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-odd"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6352,7 +6352,7 @@ representing the trade-off parameter between mean and covariance</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – The model to be used in the acquisition function.</p></li>
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – Dataset(s) used to train the model.</p></li>
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – Dataset(s) used to train the model.</p></li>
 <li><p><strong>num_fantasies</strong> (<em>int</em>) – The number of fantasies to generate. The higher this
 number the more accurate the model (at the expense of model
 complexity and performance).</p></li>
@@ -6363,7 +6363,7 @@ complexity and performance).</p></li>
 <dd class="field-even"><p>A dict mapping kwarg names of the constructor to values.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-odd"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6383,7 +6383,7 @@ that have points that have been submitted for function evaluation
 but have not yet been evaluated.</p></li>
 <li><p><strong>sampler</strong> (<a class="reference internal" href="sampling.html#botorch.sampling.base.MCSampler" title="botorch.sampling.base.MCSampler"><em>MCSampler</em></a><em> | </em><em>None</em>) – The sampler used to draw base samples. If omitted, uses
 the acquisition functions’s default sampler.</p></li>
-<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of constraint callables which map a Tensor of posterior
+<li><p><strong>constraints</strong> (<em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of constraint callables which map a Tensor of posterior
 samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
 <cite>sample_shape x batch-shape x q</cite>-dim Tensor. The associated constraints
 are considered satisfied if the output is less than zero.</p></li>
@@ -6397,7 +6397,7 @@ training_data have the same input features and take the first <cite>X</cite>.</p
 <dd class="field-even"><p>A dict mapping kwarg names of the constructor to values.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-odd"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6409,7 +6409,7 @@ training_data have the same input features and take the first <cite>X</cite>.</p
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – The model to be used in the acquisition function.</p></li>
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – Dataset(s) used to train the model.</p></li>
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – Dataset(s) used to train the model.</p></li>
 <li><p><strong>objective</strong> (<a class="reference internal" href="#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><em>MCAcquisitionObjective</em></a><em> | </em><em>None</em>) – The objective to be used in the acquisition function.</p></li>
 <li><p><strong>posterior_transform</strong> (<a class="reference internal" href="#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>) – The posterior transform to be used in the
 acquisition function.</p></li>
@@ -6419,7 +6419,7 @@ Concatenated into X upon forward call.</p></li>
 <li><p><strong>sampler</strong> (<a class="reference internal" href="sampling.html#botorch.sampling.base.MCSampler" title="botorch.sampling.base.MCSampler"><em>MCSampler</em></a><em> | </em><em>None</em>) – The sampler used to draw base samples. If omitted, uses
 the acquisition functions’s default sampler.</p></li>
 <li><p><strong>best_f</strong> (<em>Tensor</em><em> | </em><em>float</em><em> | </em><em>None</em>) – Threshold above (or below) which improvement is defined.</p></li>
-<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of constraint callables which map a Tensor of posterior
+<li><p><strong>constraints</strong> (<em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of constraint callables which map a Tensor of posterior
 samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
 <cite>sample_shape x batch-shape x q</cite>-dim Tensor. The associated constraints
 are considered satisfied if the output is less than zero.</p></li>
@@ -6432,7 +6432,7 @@ parameter, see the docs of <cite>compute_smoothed_feasibility_indicator</cite>.<
 <dd class="field-even"><p>A dict mapping kwarg names of the constructor to values.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-odd"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6444,7 +6444,7 @@ parameter, see the docs of <cite>compute_smoothed_feasibility_indicator</cite>.<
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – The model to be used in the acquisition function.</p></li>
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – Dataset(s) used to train the model.</p></li>
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – Dataset(s) used to train the model.</p></li>
 <li><p><strong>objective</strong> (<a class="reference internal" href="#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><em>MCAcquisitionObjective</em></a><em> | </em><em>None</em>) – The objective to be used in the acquisition function.</p></li>
 <li><p><strong>posterior_transform</strong> (<a class="reference internal" href="#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>) – The posterior transform to be used in the
 acquisition function.</p></li>
@@ -6454,7 +6454,7 @@ Concatenated into X upon forward call.</p></li>
 <li><p><strong>sampler</strong> (<a class="reference internal" href="sampling.html#botorch.sampling.base.MCSampler" title="botorch.sampling.base.MCSampler"><em>MCSampler</em></a><em> | </em><em>None</em>) – The sampler used to draw base samples. If omitted, uses
 the acquisition functions’s default sampler.</p></li>
 <li><p><strong>best_f</strong> (<em>Tensor</em><em> | </em><em>float</em><em> | </em><em>None</em>) – Threshold above (or below) which improvement is defined.</p></li>
-<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of constraint callables which map a Tensor of posterior
+<li><p><strong>constraints</strong> (<em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of constraint callables which map a Tensor of posterior
 samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
 <cite>sample_shape x batch-shape x q</cite>-dim Tensor. The associated constraints
 are considered satisfied if the output is less than zero.</p></li>
@@ -6473,7 +6473,7 @@ approximations to ReLU.</p></li>
 <dd class="field-even"><p>A dict mapping kwarg names of the constructor to values.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-odd"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6485,7 +6485,7 @@ approximations to ReLU.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – The model to be used in the acquisition function.</p></li>
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – Dataset(s) used to train the model.</p></li>
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – Dataset(s) used to train the model.</p></li>
 <li><p><strong>objective</strong> (<a class="reference internal" href="#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><em>MCAcquisitionObjective</em></a><em> | </em><em>None</em>) – The objective to be used in the acquisition function.</p></li>
 <li><p><strong>posterior_transform</strong> (<a class="reference internal" href="#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>) – The posterior transform to be used in the
 acquisition function.</p></li>
@@ -6501,7 +6501,7 @@ training_data have the same input features and take the first <cite>X</cite>.</p
 <li><p><strong>prune_baseline</strong> (<em>bool</em><em> | </em><em>None</em>) – If True, remove points in <cite>X_baseline</cite> that are
 highly unlikely to be the best point. This can significantly
 improve performance and is generally recommended.</p></li>
-<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of constraint callables which map a Tensor of posterior
+<li><p><strong>constraints</strong> (<em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of constraint callables which map a Tensor of posterior
 samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
 <cite>sample_shape x batch-shape x q</cite>-dim Tensor. The associated constraints
 are considered satisfied if the output is less than zero.</p></li>
@@ -6515,7 +6515,7 @@ parameter, see the docs of <cite>compute_smoothed_feasibility_indicator</cite>.<
 <dd class="field-even"><p>A dict mapping kwarg names of the constructor to values.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-odd"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6527,7 +6527,7 @@ parameter, see the docs of <cite>compute_smoothed_feasibility_indicator</cite>.<
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – The model to be used in the acquisition function.</p></li>
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – Dataset(s) used to train the model.</p></li>
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – Dataset(s) used to train the model.</p></li>
 <li><p><strong>objective</strong> (<a class="reference internal" href="#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><em>MCAcquisitionObjective</em></a><em> | </em><em>None</em>) – The objective to be used in the acquisition function.</p></li>
 <li><p><strong>posterior_transform</strong> (<a class="reference internal" href="#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>) – The posterior transform to be used in the
 acquisition function.</p></li>
@@ -6543,7 +6543,7 @@ training_data have the same input features and take the first <cite>X</cite>.</p
 <li><p><strong>prune_baseline</strong> (<em>bool</em><em> | </em><em>None</em>) – If True, remove points in <cite>X_baseline</cite> that are
 highly unlikely to be the best point. This can significantly
 improve performance and is generally recommended.</p></li>
-<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of constraint callables which map a Tensor of posterior
+<li><p><strong>constraints</strong> (<em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of constraint callables which map a Tensor of posterior
 samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
 <cite>sample_shape x batch-shape x q</cite>-dim Tensor. The associated constraints
 are considered satisfied if the output is less than zero.</p></li>
@@ -6572,7 +6572,7 @@ approximations to ReLU.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – The model to be used in the acquisition function.</p></li>
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – Dataset(s) used to train the model.</p></li>
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – Dataset(s) used to train the model.</p></li>
 <li><p><strong>objective</strong> (<a class="reference internal" href="#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><em>MCAcquisitionObjective</em></a><em> | </em><em>None</em>) – The objective to be used in the acquisition function.</p></li>
 <li><p><strong>posterior_transform</strong> (<a class="reference internal" href="#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>) – The posterior transform to be used in the
 acquisition function.</p></li>
@@ -6588,7 +6588,7 @@ estimates with higher variance.</p></li>
 <li><p><strong>best_f</strong> (<em>Tensor</em><em> | </em><em>float</em><em> | </em><em>None</em>) – The best objective value observed so far (assumed noiseless). Can
 be a <cite>batch_shape</cite>-shaped tensor, which in case of a batched model
 specifies potentially different values for each element of the batch.</p></li>
-<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of constraint callables which map a Tensor of posterior
+<li><p><strong>constraints</strong> (<em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of constraint callables which map a Tensor of posterior
 samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
 <cite>sample_shape x batch-shape x q</cite>-dim Tensor. The associated constraints
 are considered satisfied if the output is less than zero.</p></li>
@@ -6601,7 +6601,7 @@ parameter, see the docs of <cite>compute_smoothed_feasibility_indicator</cite>.<
 <dd class="field-even"><p>A dict mapping kwarg names of the constructor to values.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-odd"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6628,7 +6628,7 @@ the acquisition functions’s default sampler.</p></li>
 <dd class="field-even"><p>A dict mapping kwarg names of the constructor to values.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-odd"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6640,16 +6640,16 @@ the acquisition functions’s default sampler.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>)</p></li>
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>)</p></li>
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>)</p></li>
 <li><p><strong>objective_thresholds</strong> (<em>Tensor</em>)</p></li>
 <li><p><strong>posterior_transform</strong> (<a class="reference internal" href="#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>constraints</strong> (<em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>alpha</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>Y_pmean</strong> (<em>Tensor</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-even"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6662,10 +6662,10 @@ the acquisition functions’s default sampler.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>)</p></li>
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>)</p></li>
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>)</p></li>
 <li><p><strong>objective_thresholds</strong> (<em>Tensor</em>)</p></li>
 <li><p><strong>objective</strong> (<a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>constraints</strong> (<em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>alpha</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>sampler</strong> (<a class="reference internal" href="sampling.html#botorch.sampling.base.MCSampler" title="botorch.sampling.base.MCSampler"><em>MCSampler</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>X_pending</strong> (<em>Tensor</em><em> | </em><em>None</em>)</p></li>
@@ -6675,7 +6675,7 @@ the acquisition functions’s default sampler.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-even"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6687,11 +6687,11 @@ the acquisition functions’s default sampler.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>)</p></li>
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>)</p></li>
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>)</p></li>
 <li><p><strong>objective_thresholds</strong> (<em>Tensor</em>)</p></li>
 <li><p><strong>objective</strong> (<a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>X_baseline</strong> (<em>Tensor</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>constraints</strong> (<em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>alpha</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>sampler</strong> (<a class="reference internal" href="sampling.html#botorch.sampling.base.MCSampler" title="botorch.sampling.base.MCSampler"><em>MCSampler</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>X_pending</strong> (<em>Tensor</em><em> | </em><em>None</em>)</p></li>
@@ -6707,7 +6707,7 @@ the acquisition functions’s default sampler.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-even"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6719,11 +6719,11 @@ the acquisition functions’s default sampler.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>)</p></li>
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>)</p></li>
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>)</p></li>
 <li><p><strong>objective_thresholds</strong> (<em>Tensor</em>)</p></li>
 <li><p><strong>objective</strong> (<a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>X_baseline</strong> (<em>Tensor</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>constraints</strong> (<em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>alpha</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>sampler</strong> (<a class="reference internal" href="sampling.html#botorch.sampling.base.MCSampler" title="botorch.sampling.base.MCSampler"><em>MCSampler</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>X_pending</strong> (<em>Tensor</em><em> | </em><em>None</em>)</p></li>
@@ -6741,7 +6741,7 @@ the acquisition functions’s default sampler.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-even"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6753,7 +6753,7 @@ the acquisition functions’s default sampler.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – The model to be used in the acquisition function.</p></li>
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – Dataset(s) used to train the model.</p></li>
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – Dataset(s) used to train the model.</p></li>
 <li><p><strong>scalarization_weights</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>m</cite>-dim Tensor of weights to be used in the
 Chebyshev scalarization. If omitted, samples from the unit simplex.</p></li>
 <li><p><strong>objective</strong> (<a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em> | </em><em>None</em>) – The MultiOutputMCAcquisitionObjective under which the samples are
@@ -6771,7 +6771,7 @@ training_data have the same input features and take the first <cite>X</cite>.</p
 <li><p><strong>prune_baseline</strong> (<em>bool</em><em> | </em><em>None</em>) – If True, remove points in <cite>X_baseline</cite> that are
 highly unlikely to be the best point. This can significantly
 improve performance and is generally recommended.</p></li>
-<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of constraint callables which map a Tensor of posterior
+<li><p><strong>constraints</strong> (<em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of constraint callables which map a Tensor of posterior
 samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
 <cite>sample_shape x batch-shape x q</cite>-dim Tensor. The associated constraints
 are considered satisfied if the output is less than zero.</p></li>
@@ -6800,15 +6800,15 @@ approximations to ReLU.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>)</p></li>
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>)</p></li>
-<li><p><strong>bounds</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>)</p></li>
+<li><p><strong>bounds</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>)</p></li>
 <li><p><strong>posterior_transform</strong> (<a class="reference internal" href="#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>candidate_size</strong> (<em>int</em>)</p></li>
 <li><p><strong>maximize</strong> (<em>bool</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-even"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6819,14 +6819,14 @@ approximations to ReLU.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>target_fidelities</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>)</p></li>
-<li><p><strong>fidelity_weights</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>target_fidelities</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>fidelity_weights</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>cost_intercept</strong> (<em>float</em>)</p></li>
 <li><p><strong>num_trace_observations</strong> (<em>int</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-even"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6838,16 +6838,16 @@ approximations to ReLU.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>)</p></li>
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>)</p></li>
-<li><p><strong>bounds</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>)</p></li>
+<li><p><strong>bounds</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>)</p></li>
 <li><p><strong>objective</strong> (<a class="reference internal" href="#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><em>MCAcquisitionObjective</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>posterior_transform</strong> (<a class="reference internal" href="#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>num_fantasies</strong> (<em>int</em>)</p></li>
-<li><p><strong>optimize_objective_kwargs</strong> (<em>None</em><em> | </em><a class="reference internal" href="#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><em>MCAcquisitionObjective</em></a><em> | </em><a class="reference internal" href="#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>bool</em><em> | </em><em>int</em><em> | </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>Tensor</em>)</p></li>
+<li><p><strong>optimize_objective_kwargs</strong> (<em>None</em><em> | </em><a class="reference internal" href="#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><em>MCAcquisitionObjective</em></a><em> | </em><a class="reference internal" href="#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>bool</em><em> | </em><em>int</em><em> | </em><em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>Tensor</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-even"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6859,19 +6859,19 @@ approximations to ReLU.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>)</p></li>
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>)</p></li>
-<li><p><strong>bounds</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>)</p></li>
-<li><p><strong>target_fidelities</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>)</p></li>
+<li><p><strong>bounds</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>target_fidelities</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>)</p></li>
 <li><p><strong>objective</strong> (<a class="reference internal" href="#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><em>MCAcquisitionObjective</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>posterior_transform</strong> (<a class="reference internal" href="#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>fidelity_weights</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>fidelity_weights</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>cost_intercept</strong> (<em>float</em>)</p></li>
 <li><p><strong>num_trace_observations</strong> (<em>int</em>)</p></li>
 <li><p><strong>num_fantasies</strong> (<em>int</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-even"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6883,11 +6883,11 @@ approximations to ReLU.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>)</p></li>
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>)</p></li>
-<li><p><strong>bounds</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>)</p></li>
-<li><p><strong>target_fidelities</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>)</p></li>
+<li><p><strong>bounds</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>target_fidelities</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>)</p></li>
 <li><p><strong>num_fantasies</strong> (<em>int</em>)</p></li>
-<li><p><strong>fidelity_weights</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>fidelity_weights</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>cost_intercept</strong> (<em>float</em>)</p></li>
 <li><p><strong>num_trace_observations</strong> (<em>int</em>)</p></li>
 <li><p><strong>candidate_size</strong> (<em>int</em>)</p></li>
@@ -6895,7 +6895,7 @@ approximations to ReLU.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-even"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6931,7 +6931,7 @@ loop.</p></li>
 <dd class="field-even"><p>A dict mapping kwarg names of the constructor to values.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-odd"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6965,7 +6965,7 @@ BOPE; if None, we are doing PBO and model is the preference model.</p></li>
 <dd class="field-even"><p>A dict mapping kwarg names of the constructor to values.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>]</p>
+<dd class="field-odd"><p>dict[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -6975,7 +6975,7 @@ BOPE; if None, we are doing PBO and model is the preference model.</p></li>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>)</p></li>
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>)</p></li>
 <li><p><strong>posterior_transform</strong> (<a class="reference internal" href="#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
@@ -6991,14 +6991,14 @@ BOPE; if None, we are doing PBO and model is the preference model.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – Has fields Y, which is evaluated by <cite>objective</cite>, and X,
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – Has fields Y, which is evaluated by <cite>objective</cite>, and X,
 which is used as <cite>X_baseline</cite>. <cite>Y</cite> is of shape
 <cite>batch_shape x q x m</cite>.</p></li>
 <li><p><strong>objective</strong> (<a class="reference internal" href="#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><em>MCAcquisitionObjective</em></a><em> | </em><em>None</em>) – The objective under which to evaluate the training data. If
 omitted, uses <cite>IdentityMCObjective</cite>.</p></li>
 <li><p><strong>posterior_transform</strong> (<a class="reference internal" href="#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>) – An optional PosteriorTransform to apply to <cite>Y</cite>
 before computing the objective.</p></li>
-<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – For assessing feasibility.</p></li>
+<li><p><strong>constraints</strong> (<em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – For assessing feasibility.</p></li>
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a><em> | </em><em>None</em>) – Used by <cite>compute_best_feasible_objective</cite> when there are no
 feasible observations.</p></li>
 </ul>
@@ -7024,15 +7024,15 @@ feasible observations.</p></li>
 <li><p><strong>objective</strong> (<a class="reference internal" href="#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><em>MCAcquisitionObjective</em></a><em> | </em><em>None</em>) – The objective to optimize.</p></li>
 <li><p><strong>posterior_transform</strong> (<a class="reference internal" href="#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>) – The posterior transform to be used in the
 acquisition function.</p></li>
-<li><p><strong>linear_constraints</strong> (<em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A tuple of (A, b). Given <cite>k</cite> linear constraints on a
+<li><p><strong>linear_constraints</strong> (<em>tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A tuple of (A, b). Given <cite>k</cite> linear constraints on a
 <cite>d</cite>-dimensional space, <cite>A</cite> is <cite>k x d</cite> and <cite>b</cite> is <cite>k x 1</cite> such that
 <cite>A x &lt;= b</cite>. (Not used by single task models).</p></li>
-<li><p><strong>fixed_features</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – A dictionary of feature assignments <cite>{feature_index: value}</cite> to
+<li><p><strong>fixed_features</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – A dictionary of feature assignments <cite>{feature_index: value}</cite> to
 hold fixed during generation.</p></li>
 <li><p><strong>qmc</strong> (<em>bool</em>) – Toggle for enabling (qmc=1) or disabling (qmc=0) use of Quasi Monte Carlo.</p></li>
 <li><p><strong>mc_samples</strong> (<em>int</em>) – Integer number of samples used to estimate Monte Carlo objectives.</p></li>
 <li><p><strong>seed_inner</strong> (<em>int</em><em> | </em><em>None</em>) – Integer seed used to initialize the sampler passed to MCObjective.</p></li>
-<li><p><strong>optimizer_options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Table used to lookup keyword arguments for the optimizer.</p></li>
+<li><p><strong>optimizer_options</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Table used to lookup keyword arguments for the optimizer.</p></li>
 <li><p><strong>post_processing_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A function that post-processes an optimization
 result appropriately (i.e. according to <cite>round-trip</cite> transformations).</p></li>
 <li><p><strong>batch_initial_conditions</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A Tensor of initial values for the optimizer.</p></li>
@@ -7044,7 +7044,7 @@ optimization.</p></li>
 <dd class="field-even"><p>A tuple containing the best input locations and corresponding objective values.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>]</p>
+<dd class="field-odd"><p>tuple[<em>Tensor</em>, <em>Tensor</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -7055,7 +7055,7 @@ optimization.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>)</p></li>
-<li><p><strong>bounds</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>bounds</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>)</p></li>
 <li><p><strong>num_optima</strong> (<em>int</em>)</p></li>
 <li><p><strong>maximize</strong> (<em>bool</em>)</p></li>
 <li><p><strong>condition_noiseless</strong> (<em>bool</em>)</p></li>
@@ -7186,7 +7186,7 @@ to construct a PenalizedAcquisitionFunction.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>init_point</strong> (<em>Tensor</em>) – The “1 x dim” reference point against which we want
 to regularize.</p></li>
-<li><p><strong>groups</strong> (<em>List</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Groups of indices used in group lasso.</p></li>
+<li><p><strong>groups</strong> (<em>list</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Groups of indices used in group lasso.</p></li>
 </ul>
 </dd>
 </dl>
@@ -7336,7 +7336,7 @@ been submitted for evaluation but have not yet been evaluated.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>Tensor</em>) – A bxd tensor representing the points to evaluate the regularization at.</p></li>
-<li><p><strong>groups</strong> (<em>List</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – List of indices of different groups.</p></li>
+<li><p><strong>groups</strong> (<em>list</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – List of indices of different groups.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -7597,7 +7597,7 @@ already been observed.</p></li>
 <li><p><strong>posterior_transform</strong> (<a class="reference internal" href="#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>) – A PosteriorTransform (optional).</p></li>
 <li><p><strong>X_pending</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>m2 x d</cite>-dim Tensor of <cite>m2</cite> design points whose evaluation
 is pending.</p></li>
-<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of callables, each mapping a Tensor of dimension
+<li><p><strong>constraints</strong> (<em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of callables, each mapping a Tensor of dimension
 <cite>sample_shape x batch-shape x q x m</cite> to a Tensor of dimension
 <cite>sample_shape x batch-shape x q</cite>, where negative values imply
 feasibility. Used for all acquisition functions except qSR and qUCB.</p></li>
@@ -7616,7 +7616,7 @@ function to optimize is fixed and not stochastic).</p></li>
 <li><p><strong>marginalize_dim</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>cache_root</strong> (<em>bool</em>)</p></li>
 <li><p><strong>beta</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>ref_point</strong> (<em>Tensor</em><em> | </em><em>List</em><em>[</em><em>float</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>ref_point</strong> (<em>Tensor</em><em> | </em><em>list</em><em>[</em><em>float</em><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>Y</strong> (<em>Tensor</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>alpha</strong> (<em>float</em>)</p></li>
 </ul>
@@ -7702,7 +7702,7 @@ The shape will be <cite>(augmented_sample * sample_size) x batch_shape x q x m</
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>samples</strong> (<em>Tensor</em>) – <cite>(sample_shape) x batch_shape x q x m</cite>-dim posterior samples.</p></li>
 <li><p><strong>obj</strong> (<em>Tensor</em>) – A <cite>(sample_shape) x batch_shape x q</cite>-dim Tensor of MC objective values.</p></li>
-<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of constraint callables which map posterior samples to
+<li><p><strong>constraints</strong> (<em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of constraint callables which map posterior samples to
 a scalar. The associated constraint is considered satisfied if this
 scalar is less than zero.</p></li>
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a><em> | </em><em>None</em>) – A Model, only required when there are no feasible observations.</p></li>
@@ -7771,7 +7771,7 @@ number of samples <cite>num_samples</cite> should be to obtain accurate estimate
 supported.</p></li>
 <li><p><strong>objective</strong> (<a class="reference internal" href="#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><em>MCAcquisitionObjective</em></a><em> | </em><em>None</em>) – The objective under which to evaluate the posterior.</p></li>
 <li><p><strong>posterior_transform</strong> (<a class="reference internal" href="#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>) – A PosteriorTransform (optional).</p></li>
-<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of constraint callables which map a Tensor of posterior
+<li><p><strong>constraints</strong> (<em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of constraint callables which map a Tensor of posterior
 samples of dimension <cite>sample_shape x batch-shape x q x m</cite>-dim to a
 <cite>sample_shape x batch-shape x q</cite>-dim Tensor. The associated constraints
 are satisfied if <cite>constraint(samples) &lt; 0</cite>.</p></li>
@@ -7817,7 +7817,7 @@ them and set them to their target values.</p>
 number of fidelity dimensions. If the argument <cite>d</cite> is not provided,
 <cite>X</cite> must include the fidelity dimensions and have a trailing`X` must
 include the fidelity dimensions and have a trailing</p></li>
-<li><p><strong>target_fidelities</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – A dictionary mapping a subset of columns of <cite>X</cite> (the
+<li><p><strong>target_fidelities</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – A dictionary mapping a subset of columns of <cite>X</cite> (the
 fidelity parameters) to their respective target fidelity value. If
 omitted, assumes that the last column of X is the fidelity parameter
 with a target value of 1.0.</p></li>
@@ -7856,7 +7856,7 @@ out all possible combinations).</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x q x d</cite>-dim Tensor of with <cite>q</cite> <cite>d</cite>-dim design points
 (incl. the fidelity parameters) for each t-batch.</p></li>
-<li><p><strong>fidelity_dims</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – The indices of the fidelity parameters. If omitted,
+<li><p><strong>fidelity_dims</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – The indices of the fidelity parameters. If omitted,
 assumes that the last column of X contains the fidelity parameters.</p></li>
 <li><p><strong>num_trace_obs</strong> (<em>int</em>) – The number of trace observations to use.</p></li>
 </ul>
@@ -7963,7 +7963,7 @@ accurate estimates.</p>
 supported.</p></li>
 <li><p><strong>ref_point</strong> (<em>Tensor</em>) – The reference point.</p></li>
 <li><p><strong>objective</strong> (<a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em> | </em><em>None</em>) – The objective under which to evaluate the posterior.</p></li>
-<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of callables, each mapping a Tensor of dimension
+<li><p><strong>constraints</strong> (<em>list</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of callables, each mapping a Tensor of dimension
 <cite>sample_shape x batch-shape x q x m</cite> to a Tensor of dimension
 <cite>sample_shape x batch-shape x q</cite>, where negative values imply
 feasibility.</p></li>
@@ -8051,7 +8051,7 @@ to partition all the Pareto samples.</p>
 </p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>]</p>
+<dd class="field-odd"><p>tuple[<em>Tensor</em>, <em>Tensor</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -8077,9 +8077,9 @@ observations.</p></li>
 <li><p><strong>bounds</strong> (<em>Tensor</em>) – A <cite>2 x d</cite>-dim Tensor containing the input bounds.</p></li>
 <li><p><strong>num_samples</strong> (<em>int</em>) – The number of GP samples.</p></li>
 <li><p><strong>num_points</strong> (<em>int</em>) – The number of optimal points to be outputted.</p></li>
-<li><p><strong>optimizer</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="models.html#botorch.models.deterministic.GenericDeterministicModel" title="botorch.models.deterministic.GenericDeterministicModel"><em>GenericDeterministicModel</em></a><em>, </em><em>Tensor</em><em>, </em><em>int</em><em>, </em><em>bool</em><em>, </em><em>Any</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – A callable that solves the deterministic optimization problem.</p></li>
+<li><p><strong>optimizer</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="models.html#botorch.models.deterministic.GenericDeterministicModel" title="botorch.models.deterministic.GenericDeterministicModel"><em>GenericDeterministicModel</em></a><em>, </em><em>Tensor</em><em>, </em><em>int</em><em>, </em><em>bool</em><em>, </em><em>Any</em><em>]</em><em>, </em><em>tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – A callable that solves the deterministic optimization problem.</p></li>
 <li><p><strong>maximize</strong> (<em>bool</em>) – If true, we consider a maximization problem.</p></li>
-<li><p><strong>optimizer_kwargs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – The additional arguments for the optimizer.</p></li>
+<li><p><strong>optimizer_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – The additional arguments for the optimizer.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -8099,7 +8099,7 @@ observations.</p></li>
 </p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>]</p>
+<dd class="field-odd"><p>tuple[<em>Tensor</em>, <em>Tensor</em>]</p>
 </dd>
 </dl>
 </dd></dl>

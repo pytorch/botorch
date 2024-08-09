@@ -29,7 +29,7 @@
 
 <span class="sa">r</span><span class="sd">"""Utilities for box decomposition algorithms."""</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
@@ -127,7 +127,7 @@
 <a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.utils.compute_local_upper_bounds">[docs]</a>
 <span class="k">def</span> <span class="nf">compute_local_upper_bounds</span><span class="p">(</span>
     <span class="n">U</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Z</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">Tensor</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Compute local upper bounds.</span>
 
 <span class="sd">    Note: this assumes minimization.</span>
@@ -228,7 +228,7 @@
 <a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.utils.update_local_upper_bounds_incremental">[docs]</a>
 <span class="k">def</span> <span class="nf">update_local_upper_bounds_incremental</span><span class="p">(</span>
     <span class="n">new_pareto_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Z</span><span class="p">:</span> <span class="n">Tensor</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Update the current local upper with the new pareto points.</span>
 
 <span class="sd">    This assumes minimization.</span>

@@ -32,7 +32,7 @@
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">pi</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.models.converter</span> <span class="kn">import</span> <span class="n">batched_to_model_list</span>
@@ -329,8 +329,8 @@
 <div class="viewcode-block" id="get_deterministic_model_multi_samples">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.gp_sampling.get_deterministic_model_multi_samples">[docs]</a>
 <span class="k">def</span> <span class="nf">get_deterministic_model_multi_samples</span><span class="p">(</span>
-    <span class="n">weights</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
-    <span class="n">bases</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">RandomFourierFeatures</span><span class="p">],</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">bases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">RandomFourierFeatures</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GenericDeterministicModel</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Get a batched deterministic model that batch evaluates `n_samples` function</span>
@@ -377,7 +377,7 @@
 <div class="viewcode-block" id="get_deterministic_model">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.gp_sampling.get_deterministic_model">[docs]</a>
 <span class="k">def</span> <span class="nf">get_deterministic_model</span><span class="p">(</span>
-    <span class="n">weights</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">bases</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">RandomFourierFeatures</span><span class="p">]</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">bases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">RandomFourierFeatures</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GenericDeterministicModel</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Get a deterministic model using the provided weights and bases for each output.</span>
 
@@ -403,8 +403,8 @@
 <div class="viewcode-block" id="get_deterministic_model_list">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.gp_sampling.get_deterministic_model_list">[docs]</a>
 <span class="k">def</span> <span class="nf">get_deterministic_model_list</span><span class="p">(</span>
-    <span class="n">weights</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
-    <span class="n">bases</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">RandomFourierFeatures</span><span class="p">],</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">bases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">RandomFourierFeatures</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelList</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Get a deterministic model list using the provided weights and bases</span>
 <span class="sd">    for each output.</span>

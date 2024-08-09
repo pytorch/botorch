@@ -45,7 +45,7 @@ with each tuple encoding an inequality constraint of the form
 <li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>.</p></li>
-<li><p><strong>nonlinear_inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Callable</em><em>, </em><em>bool</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples representing the nonlinear
+<li><p><strong>nonlinear_inequality_constraints</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>Callable</em><em>, </em><em>bool</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples representing the nonlinear
 inequality constraints. The first element in the tuple is a callable
 representing a constraint of the form <cite>callable(x) &gt;= 0</cite>. In case of an
 intra-point constraint, <cite>callable()`takes in an one-dimensional tensor of
@@ -57,13 +57,13 @@ inter-point). For more information on intra-point vs inter-point
 constraints, see the docstring of the <cite>inequality_constraints</cite> argument to
 <cite>optimize_acqf()</cite>. The constraints will later be passed to the scipy
 solver.</p></li>
-<li><p><strong>options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Options used to control the optimization including “method”
+<li><p><strong>options</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Options used to control the optimization including “method”
 and “maxiter”. Select method for <cite>scipy.minimize</cite> using the
 “method” key. By default uses L-BFGS-B for box-constrained problems
 and SLSQP if inequality or equality constraints are present. If
 <cite>with_grad=False</cite>, then we use a two-point finite difference estimate
 of the gradient.</p></li>
-<li><p><strong>fixed_features</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em> | </em><em>None</em><em>] </em><em>| </em><em>None</em>) – This is a dictionary of feature indices to values, where
+<li><p><strong>fixed_features</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em> | </em><em>None</em><em>] </em><em>| </em><em>None</em>) – This is a dictionary of feature indices to values, where
 all generated candidates will have features fixed to these values.
 If the dictionary value is None, then that feature will just be
 fixed to the clamped value and not optimized. Assumes values to be
@@ -71,8 +71,8 @@ compatible with lower_bounds and upper_bounds!</p></li>
 <li><p><strong>timeout_sec</strong> (<em>float</em><em> | </em><em>None</em>) – Timeout (in seconds) for <cite>scipy.optimize.minimize</cite> routine -
 if provided, optimization will stop after this many seconds and return
 the best solution found so far.</p></li>
-<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
-<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>inequality_constraints</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>equality_constraints</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -84,7 +84,7 @@ the best solution found so far.</p></li>
 </p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>]</p>
+<dd class="field-odd"><p>tuple[<em>Tensor</em>, <em>Tensor</em>]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -117,12 +117,12 @@ using an optimizer from <cite>torch.optim</cite>.</p>
 <li><p><strong>upper_bounds</strong> (<em>Tensor</em><em> | </em><em>float</em><em> | </em><em>None</em>) – Maximum values for each column of initial_conditions.</p></li>
 <li><p><strong>optimizer</strong> (<em>Optimizer</em>) – The pytorch optimizer to use to perform
 candidate search.</p></li>
-<li><p><strong>options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em> | </em><em>str</em><em>] </em><em>| </em><em>None</em>) – Options used to control the optimization. Includes
+<li><p><strong>options</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em> | </em><em>str</em><em>] </em><em>| </em><em>None</em>) – Options used to control the optimization. Includes
 maxiter: Maximum number of iterations</p></li>
 <li><p><strong>callback</strong> (<em>Callable</em><em>[</em><em>[</em><em>int</em><em>, </em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><em>NoReturn</em><em>] </em><em>| </em><em>None</em>) – A callback function accepting the current iteration, loss,
 and gradients as arguments. This function is executed after computing
 the loss and gradients, but before calling the optimizer.</p></li>
-<li><p><strong>fixed_features</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em> | </em><em>None</em><em>] </em><em>| </em><em>None</em>) – This is a dictionary of feature indices to values, where
+<li><p><strong>fixed_features</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em> | </em><em>None</em><em>] </em><em>| </em><em>None</em>) – This is a dictionary of feature indices to values, where
 all generated candidates will have features fixed to these values.
 If the dictionary value is None, then that feature will just be
 fixed to the clamped value and not optimized. Assumes values to be
@@ -141,7 +141,7 @@ the best solution found so far.</p></li>
 </p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>]</p>
+<dd class="field-odd"><p>tuple[<em>Tensor</em>, <em>Tensor</em>]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>

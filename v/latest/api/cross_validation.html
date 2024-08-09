@@ -162,12 +162,12 @@ measurement noise.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model_cls</strong> (<em>Type</em><em>[</em><a class="reference internal" href="models.html#botorch.models.gpytorch.GPyTorchModel" title="botorch.models.gpytorch.GPyTorchModel"><em>GPyTorchModel</em></a><em>]</em>) – A GPyTorchModel class. This class must initialize the likelihood
+<li><p><strong>model_cls</strong> (<em>type</em><em>[</em><a class="reference internal" href="models.html#botorch.models.gpytorch.GPyTorchModel" title="botorch.models.gpytorch.GPyTorchModel"><em>GPyTorchModel</em></a><em>]</em>) – A GPyTorchModel class. This class must initialize the likelihood
 internally. Note: Multi-task GPs are not currently supported.</p></li>
-<li><p><strong>mll_cls</strong> (<em>Type</em><em>[</em><em>MarginalLogLikelihood</em><em>]</em>) – A MarginalLogLikelihood class.</p></li>
+<li><p><strong>mll_cls</strong> (<em>type</em><em>[</em><em>MarginalLogLikelihood</em><em>]</em>) – A MarginalLogLikelihood class.</p></li>
 <li><p><strong>cv_folds</strong> (<a class="reference internal" href="#botorch.cross_validation.CVFolds" title="botorch.cross_validation.CVFolds"><em>CVFolds</em></a>) – A CVFolds tuple.</p></li>
-<li><p><strong>fit_args</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Arguments passed along to fit_gpytorch_mll.</p></li>
-<li><p><strong>model_init_kwargs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Keyword arguments passed to the model constructor.</p></li>
+<li><p><strong>fit_args</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Arguments passed along to fit_gpytorch_mll.</p></li>
+<li><p><strong>model_init_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Keyword arguments passed to the model constructor.</p></li>
 <li><p><strong>observation_noise</strong> (<em>bool</em>)</p></li>
 </ul>
 </dd>
