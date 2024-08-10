@@ -2324,7 +2324,7 @@ observation noise as in Appendix C in <a class="reference internal" href="#taken
 <dd><p>The <cite>sample_shape</cite> for the default sampler.</p>
 </dd></dl>
 <p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">outcome_transform</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">MESMO</span> <span class="o">=</span> <span class="n">qMultiObjectiveMaxValueEntropy</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">sample_pfs</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">mesmo</span> <span class="o">=</span> <span class="n">MESMO</span><span class="p">(</span><span class="n">test_X</span><span class="p">)</span>
 </pre></div>

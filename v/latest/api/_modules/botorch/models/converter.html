@@ -40,6 +40,7 @@
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">BotorchWarning</span>
+<span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">HeteroskedasticSingleTaskGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gp_regression_fidelity</span> <span class="kn">import</span> <span class="n">SingleTaskMultiFidelityGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gp_regression_mixed</span> <span class="kn">import</span> <span class="n">MixedSingleTaskGP</span>
@@ -122,7 +123,8 @@
     <span class="c1"># TODO: Add support for outcome transforms.</span>
     <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">models</span><span class="p">):</span>
         <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
-            <span class="s2">"Conversion of models with outcome transforms is currently unsupported."</span>
+            <span class="s2">"Conversion of models with outcome transforms is unsupported. "</span>
+            <span class="s2">"To fix this error, explicitly pass `outcome_transform=None`."</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="c1"># check that each model is single-output</span>
@@ -204,6 +206,11 @@
         <span class="n">batch_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>
         <span class="n">covar_module</span> <span class="o">=</span> <span class="n">_batched_kernel</span><span class="p">(</span><span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">covar_module</span><span class="p">,</span> <span class="n">batch_length</span><span class="p">)</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">"covar_module"</span><span class="p">]</span> <span class="o">=</span> <span class="n">covar_module</span>
+    <span class="c1"># SingleTaskGP uses a default outcome transforms while this converter doesn't</span>
+    <span class="c1"># support outcome transforms. We need to explicitly pass down `None` to make</span>
+    <span class="c1"># sure no outcome transform is being used.</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">SingleTaskGP</span><span class="p">):</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"outcome_transform"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="c1"># construct the batched GP model</span>
     <span class="n">input_transform</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">"input_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -455,6 +462,12 @@
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">"train_Yvar"</span><span class="p">]</span> <span class="o">=</span> <span class="n">noise_covar</span><span class="o">.</span><span class="n">noise</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">batch_mo_model</span><span class="p">,</span> <span class="n">SingleTaskMultiFidelityGP</span><span class="p">):</span>
         <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">batch_mo_model</span><span class="o">.</span><span class="n">_init_args</span><span class="p">)</span>
+    <span class="c1"># SingleTaskGP uses a default outcome transforms while this converter doesn't</span>
+    <span class="c1"># support outcome transforms. We need to explicitly pass down `None` to make</span>
+    <span class="c1"># sure no outcome transform is being used.</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">batch_mo_model</span><span class="p">,</span> <span class="n">SingleTaskGP</span><span class="p">):</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"outcome_transform"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
     <span class="n">single_outcome_model</span> <span class="o">=</span> <span class="n">batch_mo_model</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
         <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">)</span>

@@ -89,7 +89,7 @@
 <span class="sd">        _default_sample_shape: The `sample_shape` for the default sampler.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(train_X, train_Y)</span>
+<span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(train_X, train_Y, outcome_transform=None)</span>
 <span class="sd">        &gt;&gt;&gt; MESMO = qMultiObjectiveMaxValueEntropy(model, sample_pfs)</span>
 <span class="sd">        &gt;&gt;&gt; mesmo = MESMO(test_X)</span>
 <span class="sd">    """</span>
