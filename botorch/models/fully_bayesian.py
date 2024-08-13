@@ -178,14 +178,15 @@ class SaasPyroModel(PyroModel):
         lengthscale = self.sample_lengthscale(dim=self.ard_num_dims, **tkwargs)
         K = matern52_kernel(X=self.train_X, lengthscale=lengthscale)
         K = outputscale * K + noise * torch.eye(self.train_X.shape[0], **tkwargs)
-        pyro.sample(
-            "Y",
-            pyro.distributions.MultivariateNormal(
-                loc=mean.view(-1).expand(self.train_X.shape[0]),
-                covariance_matrix=K,
-            ),
-            obs=self.train_Y.squeeze(-1),
-        )
+        if self.train_Y.shape[-2] > 0:
+            pyro.sample(
+                "Y",
+                pyro.distributions.MultivariateNormal(
+                    loc=mean.view(-1).expand(self.train_X.shape[0]),
+                    covariance_matrix=K,
+                ),
+                obs=self.train_Y.squeeze(-1),
+            )
 
     def sample_outputscale(
         self, concentration: float = 2.0, rate: float = 0.15, **tkwargs: Any
