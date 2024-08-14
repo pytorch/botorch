@@ -841,7 +841,13 @@ def normalize_sparse_linear_constraints(
     new_constraints = []
     for index, coefficient, rhs in constraints:
         if index.ndim != 1:
-            raise ValueError("`indices` must be a one-dimensional tensor.")
+            raise ValueError(
+                "`indices` must be a one-dimensional tensor. This method does not "
+                "support the kind of 'inter-point constraints' that are supported by "
+                "`optimize_acqf()`. To achieve this behavior, you need define the "
+                "problem on the joint space over `q` points and impose use constraints,"
+                "see https://github.com/pytorch/botorch/issues/2468#issuecomment-2287706461"  # noqa: E501
+            )
         lower, upper = bounds[:, index]
         s = upper - lower
         new_constraints.append(
