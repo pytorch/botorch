@@ -176,9 +176,11 @@ class SaasPyroModel(PyroModel):
         mean = self.sample_mean(**tkwargs)
         noise = self.sample_noise(**tkwargs)
         lengthscale = self.sample_lengthscale(dim=self.ard_num_dims, **tkwargs)
-        K = matern52_kernel(X=self.train_X, lengthscale=lengthscale)
-        K = outputscale * K + noise * torch.eye(self.train_X.shape[0], **tkwargs)
         if self.train_Y.shape[-2] > 0:
+            # Do not attempt to sample Y if the data is empty.
+            # This leads to errors with empty data.
+            K = matern52_kernel(X=self.train_X, lengthscale=lengthscale)
+            K = outputscale * K + noise * torch.eye(self.train_X.shape[0], **tkwargs)
             pyro.sample(
                 "Y",
                 pyro.distributions.MultivariateNormal(
