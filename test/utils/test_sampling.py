@@ -206,6 +206,13 @@ class TestSampleUtils(BotorchTestCase):
             )
             expected_rhs = 0.5
             self.assertAlmostEqual(new_constraints[0][-1], expected_rhs)
+            with self.assertRaisesRegex(
+                ValueError, "`indices` must be a one-dimensional tensor."
+            ):
+                normalize_sparse_linear_constraints(
+                    bounds,
+                    [(torch.tensor([[1, 2], [3, 4]]), torch.tensor([1.0, 1.0]), 1.0)],
+                )
 
     def test_normalize_sparse_linear_constraints_wrong_dtype(self):
         for dtype in (torch.float, torch.double):

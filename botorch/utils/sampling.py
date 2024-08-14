@@ -831,15 +831,17 @@ def normalize_sparse_linear_constraints(
     r"""Normalize sparse linear constraints to the unit cube.
 
     Args:
-        bounds (Tensor): A `2 x d`-dim tensor containing the box bounds.
-        constraints (List[Tuple[Tensor, Tensor, float]]): A list of
-            tuples (indices, coefficients, rhs), with each tuple encoding
-            an inequality constraint of the form
+        bounds: A `2 x d`-dim tensor containing the box bounds.
+        constraints: A list of tuples (`indices`, `coefficients`, `rhs`), with
+            `indices` and `coefficients` one-dimensional tensors and `rhs` a
+            scalar, where each tuple encodes an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs` or
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
     """
     new_constraints = []
     for index, coefficient, rhs in constraints:
+        if index.ndim != 1:
+            raise ValueError("`indices` must be a one-dimensional tensor.")
         lower, upper = bounds[:, index]
         s = upper - lower
         new_constraints.append(
@@ -894,14 +896,21 @@ def get_polytope_samples(
     from the `Ax >= b` format expecxted here to the `Ax <= b` format expected by
     `PolytopeSampler` by multiplying both `A` and `b` by -1.)
 
+    NOTE: This method does not support the kind of "inter-point constraints" that
+    are supported by `optimize_acqf()`. To achieve this behavior, you need define the
+    problem on the joint space over `q` points and impose use constraints, see:
+    https://github.com/pytorch/botorch/issues/2468#issuecomment-2287706461
+
     Args:
         n: The number of samples.
         bounds: A `2 x d`-dim tensor containing the box bounds.
-        inequality constraints: A list of tuples (indices, coefficients, rhs),
-            with each tuple encoding an inequality constraint of the form
+        inequality_constraints: A list of tuples (`indices`, `coefficients`, `rhs`),
+            with `indices` and `coefficients` one-dimensional tensors and `rhs` a
+            scalar, where each tuple encodes an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`.
-        equality constraints: A list of tuples (indices, coefficients, rhs),
-            with each tuple encoding an inequality constraint of the form
+        equality_constraints: A list of tuples (`indices`, `coefficients`, `rhs`),
+            with `indices` and `coefficients` one-dimensional tensors and `rhs` a
+            scalar, where each tuple encodes an equality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
         seed: The random seed.
         n_burnin: The number of burn-in samples for the Markov chain sampler.
@@ -950,8 +959,9 @@ def sparse_to_dense_constraints(
 
     Args:
         d: The input dimension.
-        inequality constraints: A list of tuples (indices, coefficients, rhs),
-            with each tuple encoding an (in)equality constraint of the form
+        constraints: A list of tuples (`indices`, `coefficients`, `rhs`),
+            with `indices` and `coefficients` one-dimensional tensors and `rhs` a
+            scalar, where each tuple encodes an (in)equality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs` or
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
 
