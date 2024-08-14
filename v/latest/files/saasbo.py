@@ -18,7 +18,7 @@
 # cubically with the number of datapoints. Depending on the problem, using more than a few hundred
 # evaluations may not be feasible as SAASBO is designed for problems with a limited evaluation budget.
 # 
-# In general, we recommend using [Ax](https://ax.dev) for a simple BO setup like this one. See [here](https://ax.dev/tutorials/saasbo.html) for a SAASBO tutorial in Ax, which uses the Noisy Expected Improvement acquisition function. To customize the acquisition function used with SAASBO in Ax, see the [custom acquisition tutorial](./custom_acquisition), where adding `\"surrogate\": Surrogate(SaasFullyBayesianSingleTaskGP),` to the `model_kwargs` of `BOTORCH_MODULAR` step is sufficient to enable the SAAS model.
+# In general, we recommend using [Ax](https://ax.dev) for a simple BO setup like this one. See [here](https://ax.dev/tutorials/saasbo.html) for a SAASBO tutorial in Ax, which uses the Log Noisy Expected Improvement acquisition function. Therefore, this tutorial shows a minimal illustrative example of how to use SAASBO with only BoTorch. To customize the acquisition function used with SAASBO in Ax, see the [custom acquisition tutorial](./custom_acquisition), where adding `\"surrogate\": Surrogate(SaasFullyBayesianSingleTaskGP),` to the `model_kwargs` of `BOTORCH_MODULAR` step is sufficient to enable the SAAS model.
 # 
 # [1]: [D. Eriksson, M. Jankowiak. High-Dimensional Bayesian Optimization with Sparse Axis-Aligned Subspaces. Proceedings of the Thirty-Seventh Conference on Uncertainty in Artificial Intelligence, 2021.](https://proceedings.mlr.press/v161/eriksson21a.html)
 
@@ -31,7 +31,7 @@ import torch
 from torch.quasirandom import SobolEngine
 
 from botorch import fit_fully_bayesian_model_nuts
-from botorch.acquisition import qExpectedImprovement
+from botorch.acquisition.logei import qLogExpectedImprovement
 from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 from botorch.models.transforms import Standardize
 from botorch.optim import optimize_acqf
@@ -44,7 +44,7 @@ SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 
 tkwargs = {
-    "device": torch.device("cuda:1" if torch.cuda.is_available() else "cpu"),
+    "device": torch.device("cuda" if torch.cuda.is_available() else "cpu"),
     "dtype": torch.double,
 }
 
@@ -92,8 +92,8 @@ test_Y = torch.sin(test_X[:, :1])
 
 
 gp = SaasFullyBayesianSingleTaskGP(
-    train_X=train_X, 
-    train_Y=train_Y, 
+    train_X=train_X,
+    train_Y=train_Y,
     outcome_transform=Standardize(m=1)
 )
 fit_fully_bayesian_model_nuts(
@@ -166,7 +166,7 @@ def branin_emb(x):
 # In[10]:
 
 
-DIM = 30 if not SMOKE_TEST else 10
+DIM = 30 if not SMOKE_TEST else 2
 
 # Evaluation budget
 N_INIT = 10
@@ -204,7 +204,7 @@ for i in range(N_ITERATIONS):
         disable_progbar=True,
     )
 
-    EI = qExpectedImprovement(model=gp, best_f=train_Y.max())
+    EI = qLogExpectedImprovement(model=gp, best_f=train_Y.max())
     candidates, acq_values = optimize_acqf(
         EI,
         bounds=torch.cat((torch.zeros(1, DIM), torch.ones(1, DIM))).to(**tkwargs),
@@ -334,7 +334,7 @@ for i in median_lengthscales.argsort()[:10]:
     print(f"Parameter {i:2}) Median lengthscale = {median_lengthscales[i].item():.2e}")
 
 
-# In[ ]:
+# In[17]:
 
 
 
