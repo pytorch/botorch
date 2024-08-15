@@ -904,15 +904,23 @@
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Normalize sparse linear constraints to the unit cube.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        bounds (Tensor): A `2 x d`-dim tensor containing the box bounds.</span>
-<span class="sd">        constraints (List[Tuple[Tensor, Tensor, float]]): A list of</span>
-<span class="sd">            tuples (indices, coefficients, rhs), with each tuple encoding</span>
-<span class="sd">            an inequality constraint of the form</span>
+<span class="sd">        bounds: A `2 x d`-dim tensor containing the box bounds.</span>
+<span class="sd">        constraints: A list of tuples (`indices`, `coefficients`, `rhs`), with</span>
+<span class="sd">            `indices` and `coefficients` one-dimensional tensors and `rhs` a</span>
+<span class="sd">            scalar, where each tuple encodes an inequality constraint of the form</span>
 <span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs` or</span>
 <span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.</span>
 <span class="sd">    """</span>
     <span class="n">new_constraints</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">coefficient</span><span class="p">,</span> <span class="n">rhs</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">index</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"`indices` must be a one-dimensional tensor. This method does not "</span>
+                <span class="s2">"support the kind of 'inter-point constraints' that are supported by "</span>
+                <span class="s2">"`optimize_acqf()`. To achieve this behavior, you need define the "</span>
+                <span class="s2">"problem on the joint space over `q` points and impose use constraints,"</span>
+                <span class="s2">"see https://github.com/pytorch/botorch/issues/2468#issuecomment-2287706461"</span>  <span class="c1"># noqa: E501</span>
+            <span class="p">)</span>
         <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[:,</span> <span class="n">index</span><span class="p">]</span>
         <span class="n">s</span> <span class="o">=</span> <span class="n">upper</span> <span class="o">-</span> <span class="n">lower</span>
         <span class="n">new_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -973,14 +981,21 @@
 <span class="sd">    from the `Ax &gt;= b` format expecxted here to the `Ax &lt;= b` format expected by</span>
 <span class="sd">    `PolytopeSampler` by multiplying both `A` and `b` by -1.)</span>
 
+<span class="sd">    NOTE: This method does not support the kind of "inter-point constraints" that</span>
+<span class="sd">    are supported by `optimize_acqf()`. To achieve this behavior, you need define the</span>
+<span class="sd">    problem on the joint space over `q` points and impose use constraints, see:</span>
+<span class="sd">    https://github.com/pytorch/botorch/issues/2468#issuecomment-2287706461</span>
+
 <span class="sd">    Args:</span>
 <span class="sd">        n: The number of samples.</span>
 <span class="sd">        bounds: A `2 x d`-dim tensor containing the box bounds.</span>
-<span class="sd">        inequality constraints: A list of tuples (indices, coefficients, rhs),</span>
-<span class="sd">            with each tuple encoding an inequality constraint of the form</span>
+<span class="sd">        inequality_constraints: A list of tuples (`indices`, `coefficients`, `rhs`),</span>
+<span class="sd">            with `indices` and `coefficients` one-dimensional tensors and `rhs` a</span>
+<span class="sd">            scalar, where each tuple encodes an inequality constraint of the form</span>
 <span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs`.</span>
-<span class="sd">        equality constraints: A list of tuples (indices, coefficients, rhs),</span>
-<span class="sd">            with each tuple encoding an inequality constraint of the form</span>
+<span class="sd">        equality_constraints: A list of tuples (`indices`, `coefficients`, `rhs`),</span>
+<span class="sd">            with `indices` and `coefficients` one-dimensional tensors and `rhs` a</span>
+<span class="sd">            scalar, where each tuple encodes an equality constraint of the form</span>
 <span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.</span>
 <span class="sd">        seed: The random seed.</span>
 <span class="sd">        n_burnin: The number of burn-in samples for the Markov chain sampler.</span>
@@ -1032,8 +1047,9 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        d: The input dimension.</span>
-<span class="sd">        inequality constraints: A list of tuples (indices, coefficients, rhs),</span>
-<span class="sd">            with each tuple encoding an (in)equality constraint of the form</span>
+<span class="sd">        constraints: A list of tuples (`indices`, `coefficients`, `rhs`),</span>
+<span class="sd">            with `indices` and `coefficients` one-dimensional tensors and `rhs` a</span>
+<span class="sd">            scalar, where each tuple encodes an (in)equality constraint of the form</span>
 <span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs` or</span>
 <span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.</span>
 

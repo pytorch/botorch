@@ -1447,9 +1447,9 @@ An alternative is the <cite>HitAndRunPolytopeSampler</cite>.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>bounds</strong> (<em>Tensor</em>) – A <cite>2 x d</cite>-dim tensor containing the box bounds.</p></li>
-<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em>) – A list of
-tuples (indices, coefficients, rhs), with each tuple encoding
-an inequality constraint of the form
+<li><p><strong>constraints</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em>) – A list of tuples (<cite>indices</cite>, <cite>coefficients</cite>, <cite>rhs</cite>), with
+<cite>indices</cite> and <cite>coefficients</cite> one-dimensional tensors and <cite>rhs</cite> a
+scalar, where each tuple encodes an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite> or
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>.</p></li>
 </ul>
@@ -1495,23 +1495,27 @@ format that <cite>get_polytope_samples</cite> expects to the dense constraint fo
 <cite>sparse_to_dense_constraints</cite> method (but remember to adjust the constraint
 from the <cite>Ax &gt;= b</cite> format expecxted here to the <cite>Ax &lt;= b</cite> format expected by
 <cite>PolytopeSampler</cite> by multiplying both <cite>A</cite> and <cite>b</cite> by -1.)</p>
+<p>NOTE: This method does not support the kind of “inter-point constraints” that
+are supported by <cite>optimize_acqf()</cite>. To achieve this behavior, you need define the
+problem on the joint space over <cite>q</cite> points and impose use constraints, see:
+<a class="reference external" href="https://github.com/pytorch/botorch/issues/2468#issuecomment-2287706461">https://github.com/pytorch/botorch/issues/2468#issuecomment-2287706461</a></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>n</strong> (<em>int</em>) – The number of samples.</p></li>
 <li><p><strong>bounds</strong> (<em>Tensor</em>) – A <cite>2 x d</cite>-dim tensor containing the box bounds.</p></li>
-<li><p><strong>constraints</strong> (<em>equality</em>) – A list of tuples (indices, coefficients, rhs),
-with each tuple encoding an inequality constraint of the form
+<li><p><strong>inequality_constraints</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples (<cite>indices</cite>, <cite>coefficients</cite>, <cite>rhs</cite>),
+with <cite>indices</cite> and <cite>coefficients</cite> one-dimensional tensors and <cite>rhs</cite> a
+scalar, where each tuple encodes an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite>.</p></li>
-<li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
-with each tuple encoding an inequality constraint of the form
+<li><p><strong>equality_constraints</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples (<cite>indices</cite>, <cite>coefficients</cite>, <cite>rhs</cite>),
+with <cite>indices</cite> and <cite>coefficients</cite> one-dimensional tensors and <cite>rhs</cite> a
+scalar, where each tuple encodes an equality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>.</p></li>
 <li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – The random seed.</p></li>
 <li><p><strong>n_burnin</strong> (<em>int</em>) – The number of burn-in samples for the Markov chain sampler.</p></li>
 <li><p><strong>n_thinning</strong> (<em>int</em>) – The amount of thinnning. This function will return every
 <cite>n_thinning</cite>-th sample from the chain (after burn-in).</p></li>
-<li><p><strong>inequality_constraints</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
-<li><p><strong>equality_constraints</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1532,8 +1536,9 @@ to constraints of the form Ax &gt;= b or Ax = b.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>d</strong> (<em>int</em>) – The input dimension.</p></li>
-<li><p><strong>constraints</strong> (<em>inequality</em>) – A list of tuples (indices, coefficients, rhs),
-with each tuple encoding an (in)equality constraint of the form
+<li><p><strong>constraints</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em>) – A list of tuples (<cite>indices</cite>, <cite>coefficients</cite>, <cite>rhs</cite>),
+with <cite>indices</cite> and <cite>coefficients</cite> one-dimensional tensors and <cite>rhs</cite> a
+scalar, where each tuple encodes an (in)equality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite> or
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>.</p></li>
 </ul>
