@@ -76,9 +76,9 @@ def branin_emb(x):
 
 
 fun = branin_emb
-dim = 500
+dim = 500 if not SMOKE_TEST else 50
 
-n_init = 10
+n_init = 10 if not SMOKE_TEST else 4
 max_cholesky_size = float("inf")  # Always use Cholesky
 
 
@@ -292,7 +292,7 @@ print(state)
 # In[9]:
 
 
-def get_initial_points(dim, n_pts, seed=0):
+def get_initial_points(dim: int, n_pts: int, seed=0):
     sobol = SobolEngine(dimension=dim, scramble=True, seed=seed)
     X_init = (
         2 * sobol.draw(n=n_pts).to(dtype=dtype, device=device) - 1
@@ -377,9 +377,13 @@ def create_candidate(
 # In[11]:
 
 
-evaluation_budget = 100
+EVALUATION_BUDGET = 100 if not SMOKE_TEST else 10
+NUM_RESTARTS = 10 if not SMOKE_TEST else 2
+RAW_SAMPLES = 512 if not SMOKE_TEST else 4
+N_CANDIDATES = min(5000, max(2000, 200 * dim)) if not SMOKE_TEST else 4
 
-state = BaxusState(dim=dim, eval_budget=evaluation_budget - n_init)
+
+state = BaxusState(dim=dim, eval_budget=EVALUATION_BUDGET - n_init)
 S = embedding_matrix(input_dim=state.dim, target_dim=state.d_init)
 
 X_baxus_target = get_initial_points(state.d_init, n_init)
@@ -388,13 +392,10 @@ Y_baxus = torch.tensor(
     [branin_emb(x) for x in X_baxus_input], dtype=dtype, device=device
 ).unsqueeze(-1)
 
-NUM_RESTARTS = 10 if not SMOKE_TEST else 2
-RAW_SAMPLES = 512 if not SMOKE_TEST else 4
-N_CANDIDATES = min(5000, max(2000, 200 * dim)) if not SMOKE_TEST else 4
 
 # Disable input scaling checks as we normalize to [-1, 1]
 with botorch.settings.validate_input_scaling(False):
-    for _ in range(evaluation_budget - n_init):  # Run until evaluation budget depleted
+    for _ in range(EVALUATION_BUDGET - n_init):  # Run until evaluation budget depleted
         # Fit a GP model
         train_Y = (Y_baxus - Y_baxus.mean()) / Y_baxus.std()
         likelihood = GaussianLikelihood(noise_constraint=Interval(1e-8, 1e-3))
@@ -465,8 +466,8 @@ with botorch.settings.validate_input_scaling(False):
             state.success_counter = 0
 
 
-# ## GP-EI
-# As a baseline, we compare BAxUS to Expected Improvement (EI)
+# ## GP-LogEI
+# As a baseline, we compare BAxUS to Log Expected Improvement (LogEI)
 
 # In[12]:
 
@@ -475,6 +476,13 @@ X_ei = get_initial_points(dim, n_init)
 Y_ei = torch.tensor(
     [branin_emb(x) for x in X_ei], dtype=dtype, device=device
 ).unsqueeze(-1)
+bounds = torch.stack(
+    [
+        -torch.ones(dim, dtype=dtype, device=device),
+        torch.ones(dim, dtype=dtype, device=device),
+    ]
+)
+
 
 # Disable input scaling checks as we normalize to [-1, 1]
 with botorch.settings.validate_input_scaling(False):
@@ -497,12 +505,7 @@ with botorch.settings.validate_input_scaling(False):
         ei = LogExpectedImprovement(model, train_Y.max())
         candidate, acq_value = optimize_acqf(
             ei,
-            bounds=torch.stack(
-                [
-                    -torch.ones(dim, dtype=dtype, device=device),
-                    torch.ones(dim, dtype=dtype, device=device),
-                ]
-            ),
+            bounds=bounds,
             q=1,
             num_restarts=NUM_RESTARTS,
             raw_samples=RAW_SAMPLES,
