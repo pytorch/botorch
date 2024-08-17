@@ -197,7 +197,7 @@ class qLossFunctionTopK(nn.Module):
         Args:
             dist_weight: The weight of the distance between actions in the
                 loss function.
-            dist_threshold: The threshold for the distance between actions. 
+            dist_threshold: The threshold for the distance between actions.
         """
 
         super().__init__()

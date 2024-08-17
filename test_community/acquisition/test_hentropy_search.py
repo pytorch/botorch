@@ -24,7 +24,10 @@ class TestQHEntropySearch(BotorchTestCase):
             mean = torch.zeros(1, 1, device=self.device, dtype=dtype)
             mm = MockModel(MockPosterior(mean=mean))
             # test error when neither specifying neither sampler nor num_fantasies
-            with self.assertRaisesRegex(ValueError, "Neither sampler nor num_fantasies is defined."):
+            with self.assertRaisesRegex(
+                ValueError,
+                "Neither sampler nor num_fantasies is defined."
+            ):
                 qHEntropySearch(
                     model=mm,
                     loss_function_class=qLossFunctionMinMax,
