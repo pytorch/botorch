@@ -23,6 +23,8 @@ specific loss function and action set).
     Optimization with Decision-theoretic Entropies. Appears in Proceedings
     of the 36th Conference on Neural Information Processing Systems
     (NeurIPS 2022)
+
+Contributor: sangttruong, martinakaduc
 """
 
 from __future__ import annotations
