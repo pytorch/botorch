@@ -24,7 +24,7 @@ class TestQHEntropySearch(BotorchTestCase):
             mean = torch.zeros(1, 1, device=self.device, dtype=dtype)
             mm = MockModel(MockPosterior(mean=mean))
             # test error when neither specifying neither sampler nor num_fantasies
-            with self.assertRaises(ValueError):
+            with self.assertRaisesRegex(ValueError, "Neither sampler nor num_fantasies is defined."):
                 qHEntropySearch(
                     model=mm,
                     loss_function_class=qLossFunctionMinMax,
@@ -108,7 +108,7 @@ class TestQHEntropySearch(BotorchTestCase):
             train_Y = torch.rand(num_data, 1, device=self.device, dtype=dtype)
             model = SingleTaskGP(train_X, train_Y)
 
-            # default evaluation testsÎ
+            # default evaluation tests
             hes = qHEntropySearch(
                 model=model,
                 loss_function_class=qLossFunctionMinMax,
@@ -165,7 +165,7 @@ class TestQHEntropySearch(BotorchTestCase):
             train_Y = torch.rand(num_data, 1, device=self.device, dtype=dtype)
             model = SingleTaskGP(train_X, train_Y)
 
-            # default evaluation testsÎ
+            # default evaluation tests
             hes = qHEntropySearch(
                 model=model,
                 loss_function_class=qLossFunctionTopK,

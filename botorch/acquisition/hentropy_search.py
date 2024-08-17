@@ -131,9 +131,9 @@ class qHEntropySearch(MCAcquisitionFunction, OneShotAcquisitionFunction):
         r"""Evaluate qHEntropySearch objective (q-HES) on the candidate set `X`.
 
         Args:
-            X: Design tensor of shape `(batch) x q x num_dim_design`.
+            X: Design tensor of shape `(batch) x q x design_dim`.
             A: Action tensor of shape `(batch) x n_fantasy_at_design_pts
-                x num_actions x num_dim_action`.
+                x num_actions x action_dim`.
 
         Returns:
             A Tensor of shape `(batch)`.
@@ -195,7 +195,9 @@ class qLossFunctionTopK(nn.Module):
         relative to the values of the objective function.
 
         Args:
-            loss_function_hyperparameters: hyperparameters for the loss function class.
+            dist_weight: The weight of the distance between actions in the
+                loss function.
+            dist_threshold: The threshold for the distance between actions. 
         """
 
         super().__init__()
@@ -206,7 +208,7 @@ class qLossFunctionTopK(nn.Module):
         r"""Evaluate batch loss function on a tensor of actions.
 
         Args:
-            A: Actor tensor with shape `n_fantasy_at_design_pts x batch_size
+            A: Action tensor with shape `n_fantasy_at_design_pts x batch_size
                 x num_actions x action_dim`.
             Y: Fantasized sample with shape `n_fantasy_at_action_pts x
                 n_fantasy_at_design_pts x batch_size x num_actions`.
@@ -259,7 +261,7 @@ class qLossFunctionMinMax(nn.Module):
         r"""Evaluate batch loss function on a tensor of actions.
 
         Args:
-            A: Actor tensor with shape `n_fantasy_at_design_pts x batch_size
+            A: Action tensor with shape `n_fantasy_at_design_pts x batch_size
                 x num_actions x action_dim`.
             Y: Fantasized sample with shape `n_fantasy_at_action_pts x
                 n_fantasy_at_design_pts x batch_size x num_actions`.
