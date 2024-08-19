@@ -8,7 +8,7 @@ import torch
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.kernels.orthogonal_additive_kernel import OrthogonalAdditiveKernel
 from botorch.utils.testing import BotorchTestCase
-from gpytorch.kernels import MaternKernel
+from gpytorch.kernels import MaternKernel, RBFKernel
 from gpytorch.lazy import LazyEvaluatedKernelTensor
 from torch import nn, Tensor
 
@@ -20,6 +20,13 @@ class TestOrthogonalAdditiveKernel(BotorchTestCase):
         batch_shapes = [(), (2,), (7, 2)]
         for dtype in dtypes:
             tkwargs = {"dtype": dtype, "device": self.device}
+
+            # test with default args and batch_shape = None in second_order
+            oak = OrthogonalAdditiveKernel(
+                RBFKernel(), dim=d, batch_shape=None, second_order=True
+            )
+            self.assertEqual(oak.batch_shape, torch.Size([]))
+
             for batch_shape in batch_shapes:
                 X = torch.rand(*batch_shape, n, d, **tkwargs)
                 base_kernel = MaternKernel().to(device=self.device)

@@ -90,8 +90,8 @@ class OrthogonalAdditiveKernel(Kernel):
             )
             # zero tensor for construction of upper-triangular coefficient matrix
             self._quad_zero = torch.zeros(
-                tuple(1 for _ in range(len(batch_shape) + 1)), **tkwargs
-            ).expand(*batch_shape, 1)
+                tuple(1 for _ in range(len(self.batch_shape) + 1)), **tkwargs
+            ).expand(*self.batch_shape, 1)
         self.coeff_constraint = coeff_constraint
         self.dim = dim
 
