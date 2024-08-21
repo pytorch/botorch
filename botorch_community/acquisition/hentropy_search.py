@@ -92,8 +92,7 @@ class qHEntropySearch(MCAcquisitionFunction, OneShotAcquisitionFunction):
         elif n_fantasy_at_design_pts is not None:
             if design_sampler.sample_shape != torch.Size([n_fantasy_at_design_pts]):
                 raise ValueError(
-                    "The design_sampler shape must match n_fantasy_at_design_pts="
-                    f"{n_fantasy_at_design_pts}."
+                    f"The design_sampler shape must match {n_fantasy_at_design_pts=}."
                 )
         else:
             n_fantasy_at_design_pts = design_sampler.sample_shape[0]
@@ -113,8 +112,7 @@ class qHEntropySearch(MCAcquisitionFunction, OneShotAcquisitionFunction):
         elif n_fantasy_at_action_pts is not None:
             if action_sampler.sample_shape != torch.Size([n_fantasy_at_action_pts]):
                 raise ValueError(
-                    "The sampler shape must match n_fantasy_at_action_pts="
-                    f"{n_fantasy_at_action_pts}."
+                    f"The sampler shape must match {n_fantasy_at_action_pts=}."
                 )
         else:
             n_fantasy_at_action_pts = action_sampler.sample_shape[0]
