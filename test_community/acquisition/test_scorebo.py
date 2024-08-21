@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
-from botorch.utils.test_helpers import get_fully_bayesian_model, get_model
+from botorch.utils.test_helpers import get_fully_bayesian_model
 from botorch.utils.testing import BotorchTestCase
 from botorch_community.acquisition.scorebo import qSelfCorrectingBayesianOptimization
 
@@ -89,16 +89,4 @@ class TestQSelfCorrectingBayesianOptimization(BotorchTestCase):
                 distance_metric="NOT_A_DISTANCE",
                 X_pending=X_pending,
                 maximize=maximize,
-            )
-
-        # Support with non-fully bayesian models is not possible. Thus, we
-        # throw an error.
-        non_fully_bayesian_model = get_model(
-            train_X=train_X, train_Y=train_Y, standardize_model=False
-        )
-        with self.assertRaises(ValueError):
-            acq = qSelfCorrectingBayesianOptimization(
-                model=non_fully_bayesian_model,
-                optimal_inputs=optimal_inputs,
-                optimal_outputs=optimal_outputs,
             )

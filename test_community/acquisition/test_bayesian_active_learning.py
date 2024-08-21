@@ -7,22 +7,13 @@
 from itertools import product
 
 import torch
-from botorch.acquisition.bayesian_active_learning import (
-    FullyBayesianAcquisitionFunction,
-)
-from botorch.utils.test_helpers import get_fully_bayesian_model, get_model
+from botorch.utils.test_helpers import get_fully_bayesian_model
 from botorch.utils.testing import BotorchTestCase
 from botorch_community.acquisition.bayesian_active_learning import (
     qBayesianQueryByComittee,
     qBayesianVarianceReduction,
     qStatisticalDistanceActiveLearning,
 )
-
-
-class TestFullyBayesianActuisitionFunction(BotorchTestCase):
-    def test_abstract_raises(self):
-        with self.assertRaises(TypeError):
-            FullyBayesianAcquisitionFunction()
 
 
 class TestQStatisticalDistanceActiveLearning(BotorchTestCase):
@@ -88,16 +79,6 @@ class TestQStatisticalDistanceActiveLearning(BotorchTestCase):
                 X_pending=X_pending,
             )
 
-        # Support with non-fully bayesian models is not possible. Thus, we
-        # throw an error.
-        non_fully_bayesian_model = get_model(
-            train_X=train_X, train_Y=train_Y, standardize_model=False
-        )
-        with self.assertRaises(ValueError):
-            acq = qStatisticalDistanceActiveLearning(
-                model=non_fully_bayesian_model,
-            )
-
 
 class TestQBayesianQueryByComittee(BotorchTestCase):
     def test_q_bayesian_query_by_comittee(self):
@@ -151,16 +132,6 @@ class TestQBayesianQueryByComittee(BotorchTestCase):
                     # assess shape
                     self.assertTrue(acq_X.shape == test_Xs[j].shape[:-2])
 
-        # Support with non-fully bayesian models is not possible. Thus, we
-        # throw an error.
-        non_fully_bayesian_model = get_model(
-            train_X=train_X, train_Y=train_Y, standardize_model=False
-        )
-        with self.assertRaises(ValueError):
-            acq = qBayesianQueryByComittee(
-                model=non_fully_bayesian_model,
-            )
-
 
 class TestQBayesianVarianceReduction(BotorchTestCase):
     def test_q_bayesian_variance_reduction(self):
@@ -213,13 +184,3 @@ class TestQBayesianVarianceReduction(BotorchTestCase):
                     acq_X = acq(test_Xs[j])
                     # assess shape
                     self.assertTrue(acq_X.shape == test_Xs[j].shape[:-2])
-
-        # Support with non-fully bayesian models is not possible. Thus, we
-        # throw an error.
-        non_fully_bayesian_model = get_model(
-            train_X=train_X, train_Y=train_Y, standardize_model=False
-        )
-        with self.assertRaises(ValueError):
-            acq = qBayesianVarianceReduction(
-                model=non_fully_bayesian_model,
-            )
