@@ -123,6 +123,25 @@ def get_fully_bayesian_model(
     return model
 
 
+def get_fully_bayesian_model_list(
+    train_X: Tensor,
+    train_Y: Tensor,
+    num_models: int,
+    standardize_model: bool,
+    infer_noise: bool,
+    **tkwargs: Any,
+) -> ModelListGP:
+    model = ModelListGP(
+        *[
+            get_fully_bayesian_model(
+                train_X, train_Y, num_models, standardize_model, infer_noise, **tkwargs
+            )
+            for _ in range(2)
+        ]
+    )
+    return model
+
+
 def get_sample_moments(samples: Tensor, sample_shape: Size) -> tuple[Tensor, Tensor]:
     """Computes the mean and covariance of a set of samples.
 
