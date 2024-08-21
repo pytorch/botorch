@@ -9,25 +9,9 @@ from itertools import product
 import torch
 from botorch.acquisition.thompson_sampling import PathwiseThompsonSampling
 from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
-
-from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.model import Model
-from botorch.models.transforms.outcome import Standardize
+from botorch.utils.test_helpers import get_model
 from botorch.utils.testing import BotorchTestCase
-
-
-def get_model(train_X, train_Y, standardize_model):
-    if standardize_model:
-        outcome_transform = Standardize(m=1)
-
-    else:
-        outcome_transform = None
-    model = SingleTaskGP(
-        train_X=train_X,
-        train_Y=train_Y,
-        outcome_transform=outcome_transform,
-    )
-    return model
 
 
 def _get_mcmc_samples(num_samples: int, dim: int, infer_noise: bool, **tkwargs):
