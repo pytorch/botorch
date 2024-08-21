@@ -6,14 +6,14 @@
 
 
 import torch
-from botorch.acquisition.hentropy_search import (
+from botorch.models import SingleTaskGP
+from botorch.sampling.normal import SobolQMCNormalSampler
+from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
+from botorch_community.acquisition.hentropy_search import (
     qHEntropySearch,
     qLossFunctionMinMax,
     qLossFunctionTopK,
 )
-from botorch.models import SingleTaskGP
-from botorch.sampling.normal import SobolQMCNormalSampler
-from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 
 NO = "botorch.utils.testing.MockModel.num_outputs"
 
@@ -25,8 +25,7 @@ class TestQHEntropySearch(BotorchTestCase):
             mm = MockModel(MockPosterior(mean=mean))
             # test error when neither specifying neither sampler nor num_fantasies
             with self.assertRaisesRegex(
-                ValueError,
-                "Neither sampler nor num_fantasies is defined."
+                ValueError, "Neither sampler nor num_fantasies is defined."
             ):
                 qHEntropySearch(
                     model=mm,
