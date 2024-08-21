@@ -17,41 +17,9 @@ from botorch.acquisition.multi_objective.utils import compute_sample_box_decompo
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
-from botorch.models.transforms.outcome import Standardize
 from botorch.sampling.normal import SobolQMCNormalSampler
+from botorch.utils.test_helpers import get_model
 from botorch.utils.testing import BotorchTestCase
-
-
-def get_model(train_X, train_Y, use_model_list, standardize_model):
-    num_objectives = train_Y.shape[-1]
-
-    if standardize_model:
-        if use_model_list:
-            outcome_transform = Standardize(m=1)
-        else:
-            outcome_transform = Standardize(m=num_objectives)
-    else:
-        outcome_transform = None
-
-    if use_model_list:
-        model = ModelListGP(
-            *[
-                SingleTaskGP(
-                    train_X=train_X,
-                    train_Y=train_Y[:, i : i + 1],
-                    outcome_transform=outcome_transform,
-                )
-                for i in range(num_objectives)
-            ]
-        )
-    else:
-        model = SingleTaskGP(
-            train_X=train_X,
-            train_Y=train_Y,
-            outcome_transform=outcome_transform,
-        )
-
-    return model
 
 
 def dummy_sample_pareto_frontiers(model):
@@ -206,8 +174,12 @@ class TestQLowerBoundMultiObjectiveMaxValueEntropySearch(BotorchTestCase):
             input_dim = 2
             train_X = torch.rand(4, input_dim, **tkwargs)
             train_Y = torch.rand(4, num_objectives, **tkwargs)
-            model = get_model(train_X, train_Y, use_model_list, standardize_model)
-
+            model = get_model(
+                train_X=train_X,
+                train_Y=train_Y,
+                use_model_list=use_model_list,
+                standardize_model=standardize_model,
+            )
             pareto_fronts = dummy_sample_pareto_frontiers(model)
             hypercell_bounds = compute_sample_box_decomposition(pareto_fronts)
 
