@@ -25,7 +25,7 @@ class TestQHEntropySearch(BotorchTestCase):
             mm = MockModel(MockPosterior(mean=mean))
             # test error when neither specifying neither sampler nor num_fantasies
             with self.assertRaisesRegex(
-                ValueError, "Neither sampler nor num_fantasies is defined."
+                ValueError, "Must specify `num_points` if no `sampler` is provided."
             ):
                 qHEntropySearch(
                     model=mm,

@@ -29,7 +29,7 @@ Contributor: sangttruong, martinakaduc
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -40,6 +40,24 @@ from botorch.sampling.base import MCSampler
 from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils.transforms import t_batch_mode_transform
 from torch import Tensor
+
+
+def get_sampler_and_num_points(
+    sampler: Optional[MCSampler],
+    num_points: Optional[int],
+) -> Tuple[MCSampler, int]:
+    r"""Make sure the sampler and num_points are consistent, if specified.
+    If the sampler is not specified, construct one.
+    """
+    if sampler is None:
+        if num_points is None:
+            raise ValueError("Must specify `num_points` if no `sampler` is provided.")
+        sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_points]))
+    elif num_points is not None and sampler.sample_shape[0] != num_points:
+        raise ValueError(f"The sample shape of the sampler must match {num_points=}.")
+    else:
+        num_points = sampler.sample_shape[0]
+    return sampler, num_points
 
 
 class qHEntropySearch(MCAcquisitionFunction, OneShotAcquisitionFunction):
@@ -77,50 +95,12 @@ class qHEntropySearch(MCAcquisitionFunction, OneShotAcquisitionFunction):
 
         super(MCAcquisitionFunction, self).__init__(model=model)
 
-        if design_sampler is None:
-            if n_fantasy_at_design_pts is None:
-                raise ValueError(
-                    "Must specify `n_fantasy_at_design_pts` if no `design_sampler` "
-                    "is provided."
-                )
-            # base samples should be fixed for joint optimization over X, A
-            design_sampler = SobolQMCNormalSampler(
-                sample_shape=n_fantasy_at_design_pts,
-                resample=False,
-                collapse_batch_dims=True,
-            )
-        elif n_fantasy_at_design_pts is not None:
-            if design_sampler.sample_shape != torch.Size([n_fantasy_at_design_pts]):
-                raise ValueError(
-                    f"The design_sampler shape must match {n_fantasy_at_design_pts=}."
-                )
-        else:
-            n_fantasy_at_design_pts = design_sampler.sample_shape[0]
-
-        if action_sampler is None:
-            if n_fantasy_at_action_pts is None:
-                raise ValueError(
-                    "Must specify `n_fantasy_at_action_pts` if no `action_sampler` "
-                    "is provided."
-                )
-            # base samples should be fixed for joint optimization over X, A
-            action_sampler = SobolQMCNormalSampler(
-                sample_shape=n_fantasy_at_action_pts,
-                resample=False,
-                collapse_batch_dims=True,
-            )
-        elif n_fantasy_at_action_pts is not None:
-            if action_sampler.sample_shape != torch.Size([n_fantasy_at_action_pts]):
-                raise ValueError(
-                    f"The sampler shape must match {n_fantasy_at_action_pts=}."
-                )
-        else:
-            n_fantasy_at_action_pts = action_sampler.sample_shape[0]
-
-        self.design_sampler = design_sampler
-        self.action_sampler = action_sampler
-        self.n_fantasy_at_design_pts = n_fantasy_at_design_pts
-        self.n_fantasy_at_action_pts = n_fantasy_at_action_pts
+        self.design_sampler, self.n_fantasy_at_design_pts = get_sampler_and_num_points(
+            sampler=design_sampler, num_points=n_fantasy_at_design_pts
+        )
+        self.action_sampler, self.n_fantasy_at_action_pts = get_sampler_and_num_points(
+            sampler=action_sampler, num_points=n_fantasy_at_action_pts
+        )
         self.loss_function_hyperparameters = loss_function_hyperparameters
         self.loss_function = loss_function_class(
             **self.loss_function_hyperparameters,
@@ -140,9 +120,7 @@ class qHEntropySearch(MCAcquisitionFunction, OneShotAcquisitionFunction):
         """
 
         # construct the fantasy model of shape `n_fantasy_at_design_pts x b`
-        fantasy_model = self.model.fantasize(
-            X=X, sampler=self.design_sampler, observation_noise=True
-        )
+        fantasy_model = self.model.fantasize(X=X, sampler=self.design_sampler)
 
         # Permute shape of A to work with self.model.posterior correctly
         A = A.permute(1, 0, 2, 3)
@@ -270,7 +248,7 @@ class qLossFunctionMinMax(nn.Module):
             A Tensor of shape `n_fantasy_at_action_pts x batch`.
         """
 
-        if A.shape[-2] != 2:
+        if A.shape[-2] != 2:  # pragma: no cover
             raise RuntimeError("qLossFunctionMinMax only supports 2 actions.")
 
         q_hes = (Y[..., 1:].sum(dim=-1) - Y[..., 0]).mean(dim=0)
