@@ -12,13 +12,16 @@ should be defined here to avoid relative imports.
 from __future__ import annotations
 
 import math
-from typing import Optional
+from typing import Any, Optional, Union
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions.errors import UnsupportedError
+from botorch.models import SingleTaskGP
+from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import FantasizeMixin, Model
+from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.transforms.outcome import Standardize
 from botorch.models.utils import add_output_dim
 from botorch.models.utils.assorted import fantasize
@@ -34,6 +37,90 @@ from gpytorch.means import ConstantMean
 from gpytorch.models.exact_gp import ExactGP
 from torch import Size, Tensor
 from torch.nn.functional import pad
+
+
+def _get_mcmc_samples(num_samples: int, dim: int, infer_noise: bool, **tkwargs):
+
+    mcmc_samples = {
+        "lengthscale": 1 + torch.rand(num_samples, 1, dim, **tkwargs),
+        "outputscale": 1 + torch.rand(num_samples, **tkwargs),
+        "mean": torch.randn(num_samples, **tkwargs),
+    }
+    if infer_noise:
+        mcmc_samples["noise"] = torch.rand(num_samples, 1, **tkwargs)
+    mcmc_samples["lengthscale"] = mcmc_samples["lengthscale"]
+
+    return mcmc_samples
+
+
+def get_model(
+    train_X: Tensor,
+    train_Y: Tensor,
+    standardize_model: bool = False,
+    use_model_list: bool = False,
+) -> Union[SingleTaskGP, ModelListGP]:
+    num_objectives = train_Y.shape[-1]
+
+    if standardize_model:
+        if use_model_list:
+            outcome_transform = Standardize(m=1)
+        else:
+            outcome_transform = Standardize(m=num_objectives)
+    else:
+        outcome_transform = None
+
+    if use_model_list:
+        model = ModelListGP(
+            *[
+                SingleTaskGP(
+                    train_X=train_X,
+                    train_Y=train_Y[:, i : i + 1],
+                    outcome_transform=outcome_transform,
+                )
+                for i in range(num_objectives)
+            ]
+        )
+    else:
+        model = SingleTaskGP(
+            train_X=train_X,
+            train_Y=train_Y,
+            outcome_transform=outcome_transform,
+        )
+
+    return model
+
+
+def get_fully_bayesian_model(
+    train_X: Tensor,
+    train_Y: Tensor,
+    num_models: int,
+    standardize_model: bool,
+    infer_noise: bool,
+    **tkwargs: Any,
+) -> SaasFullyBayesianSingleTaskGP:
+    num_objectives = train_Y.shape[-1]
+
+    if standardize_model:
+        outcome_transform = Standardize(m=num_objectives)
+    else:
+        outcome_transform = None
+    mcmc_samples = _get_mcmc_samples(
+        num_samples=num_models,
+        dim=train_X.shape[-1],
+        infer_noise=infer_noise,
+        **tkwargs,
+    )
+    train_Yvar = None if infer_noise else torch.full_like(train_Y, 0.01)
+
+    model = SaasFullyBayesianSingleTaskGP(
+        train_X=train_X,
+        train_Y=train_Y,
+        train_Yvar=train_Yvar,
+        outcome_transform=outcome_transform,
+    )
+    model.load_mcmc_samples(mcmc_samples)
+
+    return model
 
 
 def get_sample_moments(samples: Tensor, sample_shape: Size) -> tuple[Tensor, Tensor]:

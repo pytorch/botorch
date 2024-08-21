@@ -10,77 +10,9 @@ from botorch.acquisition.bayesian_active_learning import (
     FullyBayesianAcquisitionFunction,
     qBayesianActiveLearningByDisagreement,
 )
-from botorch.models import SingleTaskGP
-from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
-from botorch.models.transforms.outcome import Standardize
 from botorch.sampling.normal import IIDNormalSampler
+from botorch.utils.test_helpers import get_fully_bayesian_model, get_model
 from botorch.utils.testing import BotorchTestCase
-
-
-def get_model(
-    train_X,
-    train_Y,
-    standardize_model,
-    **tkwargs,
-):
-    num_objectives = train_Y.shape[-1]
-
-    if standardize_model:
-        outcome_transform = Standardize(m=num_objectives)
-    else:
-        outcome_transform = None
-
-    model = SingleTaskGP(
-        train_X=train_X,
-        train_Y=train_Y,
-        outcome_transform=outcome_transform,
-    )
-
-    return model
-
-
-def _get_mcmc_samples(num_samples: int, dim: int, infer_noise: bool, **tkwargs):
-
-    mcmc_samples = {
-        "lengthscale": torch.rand(num_samples, 1, dim, **tkwargs),
-        "outputscale": torch.rand(num_samples, **tkwargs),
-        "mean": torch.randn(num_samples, **tkwargs),
-    }
-    if infer_noise:
-        mcmc_samples["noise"] = torch.rand(num_samples, 1, **tkwargs)
-    return mcmc_samples
-
-
-def get_fully_bayesian_model(
-    train_X,
-    train_Y,
-    num_models,
-    standardize_model,
-    infer_noise,
-    **tkwargs,
-):
-    num_objectives = train_Y.shape[-1]
-
-    if standardize_model:
-        outcome_transform = Standardize(m=num_objectives)
-    else:
-        outcome_transform = None
-
-    mcmc_samples = _get_mcmc_samples(
-        num_samples=num_models,
-        dim=train_X.shape[-1],
-        infer_noise=infer_noise,
-        **tkwargs,
-    )
-
-    model = SaasFullyBayesianSingleTaskGP(
-        train_X=train_X,
-        train_Y=train_Y,
-        outcome_transform=outcome_transform,
-    )
-    model.load_mcmc_samples(mcmc_samples)
-
-    return model
 
 
 class TestFullyBayesianActuisitionFunction(BotorchTestCase):
