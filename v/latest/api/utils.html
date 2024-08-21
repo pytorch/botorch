@@ -2220,6 +2220,42 @@ exists in <a class="reference internal" href="#botorch.utils.testing.MockModel.s
 <p>Dummy classes and other helpers that are used in multiple test files
 should be defined here to avoid relative imports.</p>
 <dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.test_helpers.get_model">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.test_helpers.</span></span><span class="sig-name descname"><span class="pre">get_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_model_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/test_helpers.html#get_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.test_helpers.get_model" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_X</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>train_Y</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>standardize_model</strong> (<em>bool</em>)</p></li>
+<li><p><strong>use_model_list</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="models.html#botorch.models.gp_regression.SingleTaskGP" title="botorch.models.gp_regression.SingleTaskGP"><em>SingleTaskGP</em></a> | <a class="reference internal" href="models.html#botorch.models.model_list_gp_regression.ModelListGP" title="botorch.models.model_list_gp_regression.ModelListGP"><em>ModelListGP</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.test_helpers.get_fully_bayesian_model">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.test_helpers.</span></span><span class="sig-name descname"><span class="pre">get_fully_bayesian_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_models</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">infer_noise</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">tkwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/test_helpers.html#get_fully_bayesian_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.test_helpers.get_fully_bayesian_model" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_X</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>train_Y</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>num_models</strong> (<em>int</em>)</p></li>
+<li><p><strong>standardize_model</strong> (<em>bool</em>)</p></li>
+<li><p><strong>infer_noise</strong> (<em>bool</em>)</p></li>
+<li><p><strong>tkwargs</strong> (<em>Any</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP" title="botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP"><em>SaasFullyBayesianSingleTaskGP</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.test_helpers.get_sample_moments">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.test_helpers.</span></span><span class="sig-name descname"><span class="pre">get_sample_moments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/test_helpers.html#get_sample_moments"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.test_helpers.get_sample_moments" title="Link to this definition">¶</a></dt>
 <dd><p>Computes the mean and covariance of a set of samples.</p>

@@ -35,13 +35,16 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">PosteriorTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span> <span class="nn">botorch.models.fully_bayesian</span> <span class="kn">import</span> <span class="n">SaasFullyBayesianSingleTaskGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">FantasizeMixin</span><span class="p">,</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">botorch.models.model_list_gp_regression</span> <span class="kn">import</span> <span class="n">ModelListGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">Standardize</span>
 <span class="kn">from</span> <span class="nn">botorch.models.utils</span> <span class="kn">import</span> <span class="n">add_output_dim</span>
 <span class="kn">from</span> <span class="nn">botorch.models.utils.assorted</span> <span class="kn">import</span> <span class="n">fantasize</span>
@@ -57,6 +60,96 @@
 <span class="kn">from</span> <span class="nn">gpytorch.models.exact_gp</span> <span class="kn">import</span> <span class="n">ExactGP</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Size</span><span class="p">,</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn.functional</span> <span class="kn">import</span> <span class="n">pad</span>
+
+
+<span class="k">def</span> <span class="nf">_get_mcmc_samples</span><span class="p">(</span><span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">infer_noise</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">):</span>
+
+    <span class="n">mcmc_samples</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"lengthscale"</span><span class="p">:</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">num_samples</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+        <span class="s2">"outputscale"</span><span class="p">:</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">num_samples</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+        <span class="s2">"mean"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">num_samples</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="n">infer_noise</span><span class="p">:</span>
+        <span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"noise"</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">num_samples</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+    <span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"lengthscale"</span><span class="p">]</span> <span class="o">=</span> <span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"lengthscale"</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">mcmc_samples</span>
+
+
+<div class="viewcode-block" id="get_model">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.test_helpers.get_model">[docs]</a>
+<span class="k">def</span> <span class="nf">get_model</span><span class="p">(</span>
+    <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">standardize_model</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">use_model_list</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">SingleTaskGP</span><span class="p">,</span> <span class="n">ModelListGP</span><span class="p">]:</span>
+    <span class="n">num_objectives</span> <span class="o">=</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">standardize_model</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">use_model_list</span><span class="p">:</span>
+            <span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">Standardize</span><span class="p">(</span><span class="n">m</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">Standardize</span><span class="p">(</span><span class="n">m</span><span class="o">=</span><span class="n">num_objectives</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">outcome_transform</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">use_model_list</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">ModelListGP</span><span class="p">(</span>
+            <span class="o">*</span><span class="p">[</span>
+                <span class="n">SingleTaskGP</span><span class="p">(</span>
+                    <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
+                    <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">[:,</span> <span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span>
+                    <span class="n">outcome_transform</span><span class="o">=</span><span class="n">outcome_transform</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_objectives</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span>
+            <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
+            <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span>
+            <span class="n">outcome_transform</span><span class="o">=</span><span class="n">outcome_transform</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">model</span></div>
+
+
+
+<div class="viewcode-block" id="get_fully_bayesian_model">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.test_helpers.get_fully_bayesian_model">[docs]</a>
+<span class="k">def</span> <span class="nf">get_fully_bayesian_model</span><span class="p">(</span>
+    <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">num_models</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">standardize_model</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">infer_noise</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">tkwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SaasFullyBayesianSingleTaskGP</span><span class="p">:</span>
+    <span class="n">num_objectives</span> <span class="o">=</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">standardize_model</span><span class="p">:</span>
+        <span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">Standardize</span><span class="p">(</span><span class="n">m</span><span class="o">=</span><span class="n">num_objectives</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">outcome_transform</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">mcmc_samples</span> <span class="o">=</span> <span class="n">_get_mcmc_samples</span><span class="p">(</span>
+        <span class="n">num_samples</span><span class="o">=</span><span class="n">num_models</span><span class="p">,</span>
+        <span class="n">dim</span><span class="o">=</span><span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+        <span class="n">infer_noise</span><span class="o">=</span><span class="n">infer_noise</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">tkwargs</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">train_Yvar</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">infer_noise</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">train_Y</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">)</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">SaasFullyBayesianSingleTaskGP</span><span class="p">(</span>
+        <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
+        <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span>
+        <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">,</span>
+        <span class="n">outcome_transform</span><span class="o">=</span><span class="n">outcome_transform</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">load_mcmc_samples</span><span class="p">(</span><span class="n">mcmc_samples</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">model</span></div>
+
 
 
 <div class="viewcode-block" id="get_sample_moments">
