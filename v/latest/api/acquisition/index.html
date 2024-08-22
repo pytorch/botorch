@@ -4265,6 +4265,19 @@ In Proceedings of the Annual Conference on Neural Information
 Processing Systems (NeurIPS), 2019.</p>
 </div>
 </div>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.acquisition.bayesian_active_learning.check_negative_info_gain">
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.bayesian_active_learning.</span></span><span class="sig-name descname"><span class="pre">check_negative_info_gain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">info_gain</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/bayesian_active_learning.html#check_negative_info_gain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.bayesian_active_learning.check_negative_info_gain" title="Link to this definition">¶</a></dt>
+<dd><p>Check if the (expected) information gain is negative, raise a warning if so.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>info_gain</strong> (<em>Tensor</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.bayesian_active_learning.FullyBayesianAcquisitionFunction">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.bayesian_active_learning.</span></span><span class="sig-name descname"><span class="pre">FullyBayesianAcquisitionFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/bayesian_active_learning.html#FullyBayesianAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.bayesian_active_learning.FullyBayesianAcquisitionFunction" title="Link to this definition">¶</a></dt>
@@ -4287,7 +4300,7 @@ hyperparameters of the model. Computed by Monte Carlo integration.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP" title="botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP"><em>SaasFullyBayesianSingleTaskGP</em></a>) – A fully bayesian model (SaasFullyBayesianSingleTaskGP).</p></li>
+<li><p><strong>model</strong> (<em>Union</em><em>[</em><a class="reference internal" href="models.html#botorch.models.model_list_gp_regression.ModelListGP" title="botorch.models.model_list_gp_regression.ModelListGP"><em>ModelListGP</em></a><em>, </em><a class="reference internal" href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP" title="botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP"><em>SaasFullyBayesianSingleTaskGP</em></a><em>]</em>) – A fully bayesian model (SaasFullyBayesianSingleTaskGP).</p></li>
 <li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="sampling.html#botorch.sampling.base.MCSampler" title="botorch.sampling.base.MCSampler"><em>MCSampler</em></a><em>]</em>) – The sampler used for drawing samples to approximate the entropy
 of the Gaussian Mixture posterior.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em>]</em>) – A PosteriorTransform. If using a multi-output model,

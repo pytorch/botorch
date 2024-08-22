@@ -152,6 +152,28 @@
 
 
 
+<div class="viewcode-block" id="get_fully_bayesian_model_list">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.test_helpers.get_fully_bayesian_model_list">[docs]</a>
+<span class="k">def</span> <span class="nf">get_fully_bayesian_model_list</span><span class="p">(</span>
+    <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">num_models</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">standardize_model</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">infer_noise</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">tkwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelListGP</span><span class="p">:</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">ModelListGP</span><span class="p">(</span>
+        <span class="o">*</span><span class="p">[</span>
+            <span class="n">get_fully_bayesian_model</span><span class="p">(</span>
+                <span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">num_models</span><span class="p">,</span> <span class="n">standardize_model</span><span class="p">,</span> <span class="n">infer_noise</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">model</span></div>
+
+
+
 <div class="viewcode-block" id="get_sample_moments">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.test_helpers.get_sample_moments">[docs]</a>
 <span class="k">def</span> <span class="nf">get_sample_moments</span><span class="p">(</span><span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Size</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
