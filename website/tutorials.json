@@ -57,6 +57,10 @@
     {
       "id": "ibnn_bo",
       "title": "Bayesian optimization with infinite-width neural networks"
+    },
+    {
+      "id": "custom_model",
+      "title": "Writing a custom model with the Model and Posterior Interfaces"
     }
   ],
   "Multi-Objective Bayesian Optimization": [
