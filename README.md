@@ -8,7 +8,7 @@
 [![Lint](https://github.com/pytorch/botorch/workflows/Lint/badge.svg)](https://github.com/pytorch/botorch/actions?query=workflow%3ALint)
 [![Test](https://github.com/pytorch/botorch/workflows/Test/badge.svg)](https://github.com/pytorch/botorch/actions?query=workflow%3ATest)
 [![Docs](https://github.com/pytorch/botorch/workflows/Docs/badge.svg)](https://github.com/pytorch/botorch/actions?query=workflow%3ADocs)
-[![Nightly](https://github.com/pytorch/botorch/workflows/Nightly%20Cron/badge.svg)](https://github.com/pytorch/botorch/actions?query=workflow%3ANightly)
+[![Nightly](https://github.com/pytorch/botorch/actions/workflows/nightly.yml/badge.svg)](https://github.com/pytorch/botorch/actions?query=workflow%3ANightly)
 [![Codecov](https://img.shields.io/codecov/c/github/pytorch/botorch.svg)](https://codecov.io/github/pytorch/botorch)
 
 [![Conda](https://img.shields.io/conda/v/pytorch/botorch.svg)](https://anaconda.org/pytorch/botorch)
