@@ -14,7 +14,7 @@ from typing import Callable, Optional, Union
 
 import torch
 from botorch.acquisition.logei import TAU_MAX, TAU_RELU
-from botorch.acquisition.multi_objective import MultiObjectiveMCAcquisitionFunction
+from botorch.acquisition.multi_objective.base import MultiObjectiveMCAcquisitionFunction
 from botorch.acquisition.multi_objective.objective import MCMultiOutputObjective
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
@@ -60,7 +60,7 @@ class qLogExpectedHypervolumeImprovement(
         objective: Optional[MCMultiOutputObjective] = None,
         constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
         X_pending: Optional[Tensor] = None,
-        eta: Optional[Union[Tensor, float]] = 1e-2,
+        eta: Union[Tensor, float] = 1e-2,
         fat: bool = True,
         tau_relu: float = TAU_RELU,
         tau_max: float = TAU_MAX,
@@ -333,7 +333,7 @@ class qLogNoisyExpectedHypervolumeImprovement(
         objective: Optional[MCMultiOutputObjective] = None,
         constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
         X_pending: Optional[Tensor] = None,
-        eta: Optional[Union[Tensor, float]] = 1e-3,
+        eta: Union[Tensor, float] = 1e-3,
         prune_baseline: bool = False,
         alpha: float = 0.0,
         cache_pending: bool = True,

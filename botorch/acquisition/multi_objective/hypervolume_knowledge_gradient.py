@@ -29,8 +29,8 @@ from botorch.acquisition.acquisition import (
 from botorch.acquisition.cost_aware import CostAwareUtility
 from botorch.acquisition.decoupled import DecoupledAcquisitionFunction
 from botorch.acquisition.knowledge_gradient import ProjectedAcquisitionFunction
+from botorch.acquisition.multi_objective.base import MultiObjectiveMCAcquisitionFunction
 from botorch.acquisition.multi_objective.monte_carlo import (
-    MultiObjectiveMCAcquisitionFunction,
     qExpectedHypervolumeImprovement,
 )
 from botorch.acquisition.multi_objective.objective import MCMultiOutputObjective

@@ -16,12 +16,12 @@ import torch
 from botorch import settings
 from botorch.acquisition import AcquisitionFunction
 from botorch.acquisition.cached_cholesky import _get_cache_root_not_supported_message
+from botorch.acquisition.multi_objective.base import MultiObjectiveMCAcquisitionFunction
 from botorch.acquisition.multi_objective.logei import (
     qLogExpectedHypervolumeImprovement,
     qLogNoisyExpectedHypervolumeImprovement,
 )
 from botorch.acquisition.multi_objective.monte_carlo import (
-    MultiObjectiveMCAcquisitionFunction,
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
 )
@@ -31,9 +31,7 @@ from botorch.acquisition.multi_objective.multi_output_risk_measures import (
 from botorch.acquisition.multi_objective.objective import (
     GenericMCMultiOutputObjective,
     IdentityMCMultiOutputObjective,
-    MCMultiOutputObjective,
 )
-from botorch.acquisition.objective import IdentityMCObjective
 from botorch.exceptions.errors import BotorchError, UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning, NumericsWarning
 from botorch.models import (
@@ -75,56 +73,7 @@ def evaluate(acqf: MultiObjectiveMCAcquisitionFunction, X: Tensor) -> Tensor:
     )
 
 
-class DummyMultiObjectiveMCAcquisitionFunction(MultiObjectiveMCAcquisitionFunction):
-    def forward(self, X):
-        pass
-
-
-class DummyMCMultiOutputObjective(MCMultiOutputObjective):
-    def forward(self, samples, X=None):
-        if X is not None:
-            return samples[..., : X.shape[-2], :]
-        else:
-            return samples
-
-
 class TestMultiObjectiveMCAcquisitionFunction(BotorchTestCase):
-    def test_abstract_raises(self):
-        with self.assertRaises(TypeError):
-            MultiObjectiveMCAcquisitionFunction()
-
-    def test_init(self):
-        mm = MockModel(MockPosterior(mean=torch.rand(2, 1), samples=torch.rand(2, 1)))
-        # test default init
-        acqf = DummyMultiObjectiveMCAcquisitionFunction(model=mm)
-        self.assertIsInstance(acqf.objective, IdentityMCMultiOutputObjective)
-        self.assertIsNone(acqf.sampler)
-        # Initialize the sampler.
-        acqf.get_posterior_samples(mm.posterior(torch.ones(1, 1)))
-        self.assertEqual(acqf.sampler.sample_shape, torch.Size([128]))
-        self.assertIsNone(acqf.X_pending)
-        # test custom init
-        sampler = SobolQMCNormalSampler(sample_shape=torch.Size([64]))
-        objective = DummyMCMultiOutputObjective()
-        X_pending = torch.rand(2, 1)
-        acqf = DummyMultiObjectiveMCAcquisitionFunction(
-            model=mm, sampler=sampler, objective=objective, X_pending=X_pending
-        )
-        self.assertEqual(acqf.objective, objective)
-        self.assertEqual(acqf.sampler, sampler)
-        self.assertTrue(torch.equal(acqf.X_pending, X_pending))
-        # test unsupported objective
-        with self.assertRaises(UnsupportedError):
-            DummyMultiObjectiveMCAcquisitionFunction(
-                model=mm, objective=IdentityMCObjective()
-            )
-        # test constraints with input perturbation.
-        mm.input_transform = InputPerturbation(perturbation_set=torch.rand(2, 1))
-        with self.assertRaises(UnsupportedError):
-            DummyMultiObjectiveMCAcquisitionFunction(
-                model=mm, constraints=[lambda Z: -100.0 * torch.ones_like(Z[..., -1])]
-            )
-
     def test_q_expected_hypervolume_improvement(self):
         for dtype in (torch.float, torch.double):
             with self.subTest(dtype=dtype):
@@ -159,13 +108,13 @@ class TestMultiObjectiveMCAcquisitionFunction(BotorchTestCase):
 
     def _test_q_expected_hypervolume_improvement(
         self,
-        acqf_class: type[AcquisitionFunction],
+        acqf_class: type[MultiObjectiveMCAcquisitionFunction],
         dtype: torch.dtype,
         acqf_kwargs: Optional[dict[str, Any]] = None,
     ):
         if acqf_kwargs is None:
             acqf_kwargs = {}
-        tkwargs = {"device": self.device, "dtype": dtype}
+        tkwargs: dict[str, Any] = {"device": self.device, "dtype": dtype}
         ref_point = [0.0, 0.0]
         t_ref_point = torch.tensor(ref_point, **tkwargs)
         pareto_Y = torch.tensor(
