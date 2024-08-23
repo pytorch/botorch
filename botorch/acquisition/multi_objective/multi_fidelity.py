@@ -46,7 +46,7 @@ class MOMF(qExpectedHypervolumeImprovement):
         sampler: Optional[MCSampler] = None,
         objective: Optional[MCMultiOutputObjective] = None,
         constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-        eta: Optional[Union[Tensor, float]] = 1e-3,
+        eta: Union[Tensor, float] = 1e-3,
         X_pending: Optional[Tensor] = None,
         cost_call: Optional[Callable[[Tensor], Tensor]] = None,
     ) -> None:

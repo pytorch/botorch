@@ -26,19 +26,13 @@ References
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 from typing import Callable, Optional, Union
 
 import torch
-from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
-from botorch.acquisition.multi_objective.objective import (
-    IdentityMCMultiOutputObjective,
-    MCMultiOutputObjective,
-)
-from botorch.exceptions.errors import UnsupportedError
+from botorch.acquisition.multi_objective.base import MultiObjectiveMCAcquisitionFunction
+from botorch.acquisition.multi_objective.objective import MCMultiOutputObjective
 from botorch.exceptions.warnings import legacy_ei_numerics_warning
 from botorch.models.model import Model
-from botorch.models.transforms.input import InputPerturbation
 from botorch.sampling.base import MCSampler
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
@@ -57,92 +51,6 @@ from botorch.utils.transforms import (
 from torch import Tensor
 
 
-class MultiObjectiveMCAcquisitionFunction(AcquisitionFunction, MCSamplerMixin, ABC):
-    r"""Abstract base class for Multi-Objective batch acquisition functions.
-
-    NOTE: This does not inherit from `MCAcquisitionFunction` to avoid circular imports.
-
-    Args:
-        _default_sample_shape: The `sample_shape` for the default sampler.
-    """
-
-    _default_sample_shape = torch.Size([128])
-
-    def __init__(
-        self,
-        model: Model,
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCMultiOutputObjective] = None,
-        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-        eta: Optional[Union[Tensor, float]] = 1e-3,
-        X_pending: Optional[Tensor] = None,
-    ) -> None:
-        r"""Constructor for the MCAcquisitionFunction base class.
-
-        Args:
-            model: A fitted model.
-            sampler: The sampler used to draw base samples. If not given,
-                a sampler is generated using `get_sampler`.
-                NOTE: For posteriors that do not support base samples,
-                a sampler compatible with intended use case must be provided.
-                See `ForkedRNGSampler` and `StochasticSampler` as examples.
-            objective: The MCMultiOutputObjective under which the samples are
-                evaluated. Defaults to `IdentityMCMultiOutputObjective()`.
-            constraints: A list of callables, each mapping a Tensor of dimension
-                `sample_shape x batch-shape x q x m` to a Tensor of dimension
-                `sample_shape x batch-shape x q`, where negative values imply
-                feasibility.
-            eta: The temperature parameter for the sigmoid function used for the
-                differentiable approximation of the constraints. In case of a float the
-                same eta is used for every constraint in constraints. In case of a
-                tensor the length of the tensor must match the number of provided
-                constraints. The i-th constraint is then estimated with the i-th
-                eta value.
-            X_pending:  A `m x d`-dim Tensor of `m` design points that have
-                points that have been submitted for function evaluation
-                but have not yet been evaluated.
-        """
-        super().__init__(model=model)
-        MCSamplerMixin.__init__(self, sampler=sampler)
-        if objective is None:
-            objective = IdentityMCMultiOutputObjective()
-        elif not isinstance(objective, MCMultiOutputObjective):
-            raise UnsupportedError(
-                "Only objectives of type MCMultiOutputObjective are supported for "
-                "Multi-Objective MC acquisition functions."
-            )
-        if (
-            hasattr(model, "input_transform")
-            and isinstance(model.input_transform, InputPerturbation)
-            and constraints is not None
-        ):
-            raise UnsupportedError(
-                "Constraints are not supported with input perturbations, due to"
-                "sample q-batch shape being different than that of the inputs."
-                "Use a composite objective that applies feasibility weighting to"
-                "samples before calculating the risk measure."
-            )
-        self.add_module("objective", objective)
-        self.constraints = constraints
-        if constraints:
-            if type(eta) is not Tensor:
-                eta = torch.full((len(constraints),), eta)
-            self.register_buffer("eta", eta)
-        self.X_pending = None
-        if X_pending is not None:
-            self.set_X_pending(X_pending)
-
-    @abstractmethod
-    def forward(self, X: Tensor) -> Tensor:
-        r"""Takes in a `batch_shape x q x d` X Tensor of t-batches with `q` `d`-dim
-        design points each, and returns a Tensor with shape `batch_shape'`, where
-        `batch_shape'` is the broadcasted batch shape of model and input `X`. Should
-        utilize the result of `set_X_pending` as needed to account for pending function
-        evaluations.
-        """
-        pass  # pragma: no cover
-
-
 class qExpectedHypervolumeImprovement(
     MultiObjectiveMCAcquisitionFunction, SubsetIndexCachingMixin
 ):
@@ -155,7 +63,7 @@ class qExpectedHypervolumeImprovement(
         objective: Optional[MCMultiOutputObjective] = None,
         constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
         X_pending: Optional[Tensor] = None,
-        eta: Optional[Union[Tensor, float]] = 1e-3,
+        eta: Union[Tensor, float] = 1e-3,
         fat: bool = False,
     ) -> None:
         r"""q-Expected Hypervolume Improvement supporting m>=2 outcomes.
@@ -334,7 +242,7 @@ class qNoisyExpectedHypervolumeImprovement(
         objective: Optional[MCMultiOutputObjective] = None,
         constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
         X_pending: Optional[Tensor] = None,
-        eta: Optional[Union[Tensor, float]] = 1e-3,
+        eta: Union[Tensor, float] = 1e-3,
         fat: bool = False,
         prune_baseline: bool = False,
         alpha: float = 0.0,

@@ -20,16 +20,13 @@ References
 from __future__ import annotations
 
 from math import pi
-
 from typing import Callable, Optional, Union
 
 import torch
 from botorch.acquisition.max_value_entropy_search import qMaxValueEntropy
+from botorch.acquisition.multi_objective.base import MultiObjectiveMCAcquisitionFunction
 from botorch.acquisition.multi_objective.joint_entropy_search import (
     LowerBoundMultiObjectiveEntropySearch,
-)
-from botorch.acquisition.multi_objective.monte_carlo import (
-    MultiObjectiveMCAcquisitionFunction,
 )
 from botorch.models.converter import (
     batched_multi_output_to_single_output,
