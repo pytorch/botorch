@@ -7,9 +7,7 @@ from typing import Callable, Optional, Union
 
 import torch
 from botorch.acquisition.logei import qLogNoisyExpectedImprovement, TAU_MAX, TAU_RELU
-from botorch.acquisition.multi_objective.monte_carlo import (
-    MultiObjectiveMCAcquisitionFunction,
-)
+from botorch.acquisition.multi_objective.base import MultiObjectiveMCAcquisitionFunction
 from botorch.acquisition.multi_objective.objective import MCMultiOutputObjective
 from botorch.acquisition.objective import GenericMCObjective
 from botorch.models.model import Model

@@ -25,7 +25,6 @@ import torch
 from botorch import settings
 from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
 from botorch.exceptions.errors import UnsupportedError
-
 from botorch.models.model import Model
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.utils import fantasize as fantasize_flag
