@@ -74,7 +74,7 @@ const siteConfig = {
     'https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js',
     // Mathjax for rendering math content
     `${baseUrl}js/mathjax.js`,
-    'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_SVG',
+    'https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_SVG',
   ],
 
   // CSS sources to load
