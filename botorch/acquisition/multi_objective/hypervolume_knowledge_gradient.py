@@ -16,6 +16,7 @@ References:
     Learning, 2023.
 """
 
+import warnings
 from copy import deepcopy
 from typing import Any, Callable, Optional
 
@@ -35,6 +36,7 @@ from botorch.acquisition.multi_objective.monte_carlo import (
 )
 from botorch.acquisition.multi_objective.objective import MCMultiOutputObjective
 from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.warnings import NumericsWarning
 from botorch.models.deterministic import PosteriorMeanModel
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
@@ -500,20 +502,26 @@ def _get_hv_value_function(
     if use_posterior_mean:
         model = PosteriorMeanModel(model=model)
         sampler = StochasticSampler(sample_shape=torch.Size([1]))  # dummy sampler
-    base_value_function = qExpectedHypervolumeImprovement(
-        model=model,
-        ref_point=ref_point,
-        partitioning=FastNondominatedPartitioning(
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            message="qExpectedHypervolumeImprovement has known",
+            action="ignore",
+            category=NumericsWarning,
+        )
+        base_value_function = qExpectedHypervolumeImprovement(
+            model=model,
             ref_point=ref_point,
-            Y=torch.empty(
-                (0, ref_point.shape[0]),
-                dtype=ref_point.dtype,
-                device=ref_point.device,
-            ),
-        ),  # create empty partitioning
-        sampler=sampler,
-        objective=objective,
-    )
+            partitioning=FastNondominatedPartitioning(
+                ref_point=ref_point,
+                Y=torch.empty(
+                    (0, ref_point.shape[0]),
+                    dtype=ref_point.dtype,
+                    device=ref_point.device,
+                ),
+            ),  # create empty partitioning
+            sampler=sampler,
+            objective=objective,
+        )
     # ProjectedAcquisitionFunction requires this
     base_value_function.posterior_transform = None
 
