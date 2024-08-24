@@ -3,7 +3,7 @@
               function gtag(){dataLayer.push(arguments); }
               gtag('js', new Date());
               gtag('config', 'G-CXN3PGE3CC');
-            </script><link rel="stylesheet" href="/v/latest/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/latest/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/latest/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+            </script><link rel="stylesheet" href="/v/latest/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/latest/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/latest/js/mathjax.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_SVG"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
             {"zIndex":100}
@@ -39,6 +39,7 @@
 <span class="sd">    Learning, 2023.</span>
 <span class="sd">"""</span>
 
+<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
 
@@ -52,12 +53,13 @@
 <span class="kn">from</span> <span class="nn">botorch.acquisition.cost_aware</span> <span class="kn">import</span> <span class="n">CostAwareUtility</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.decoupled</span> <span class="kn">import</span> <span class="n">DecoupledAcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.knowledge_gradient</span> <span class="kn">import</span> <span class="n">ProjectedAcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.base</span> <span class="kn">import</span> <span class="n">MultiObjectiveMCAcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.monte_carlo</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">MultiObjectiveMCAcquisitionFunction</span><span class="p">,</span>
     <span class="n">qExpectedHypervolumeImprovement</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.objective</span> <span class="kn">import</span> <span class="n">MCMultiOutputObjective</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">NumericsWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.models.deterministic</span> <span class="kn">import</span> <span class="n">PosteriorMeanModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
@@ -541,20 +543,26 @@
     <span class="k">if</span> <span class="n">use_posterior_mean</span><span class="p">:</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">PosteriorMeanModel</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
         <span class="n">sampler</span> <span class="o">=</span> <span class="n">StochasticSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">]))</span>  <span class="c1"># dummy sampler</span>
-    <span class="n">base_value_function</span> <span class="o">=</span> <span class="n">qExpectedHypervolumeImprovement</span><span class="p">(</span>
-        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-        <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>
-        <span class="n">partitioning</span><span class="o">=</span><span class="n">FastNondominatedPartitioning</span><span class="p">(</span>
+    <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">"qExpectedHypervolumeImprovement has known"</span><span class="p">,</span>
+            <span class="n">action</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span>
+            <span class="n">category</span><span class="o">=</span><span class="n">NumericsWarning</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">base_value_function</span> <span class="o">=</span> <span class="n">qExpectedHypervolumeImprovement</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
             <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>
-            <span class="n">Y</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span>
-                <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ref_point</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
-                <span class="n">dtype</span><span class="o">=</span><span class="n">ref_point</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-                <span class="n">device</span><span class="o">=</span><span class="n">ref_point</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
-            <span class="p">),</span>
-        <span class="p">),</span>  <span class="c1"># create empty partitioning</span>
-        <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
-        <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
-    <span class="p">)</span>
+            <span class="n">partitioning</span><span class="o">=</span><span class="n">FastNondominatedPartitioning</span><span class="p">(</span>
+                <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>
+                <span class="n">Y</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span>
+                    <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ref_point</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                    <span class="n">dtype</span><span class="o">=</span><span class="n">ref_point</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                    <span class="n">device</span><span class="o">=</span><span class="n">ref_point</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">),</span>  <span class="c1"># create empty partitioning</span>
+            <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="c1"># ProjectedAcquisitionFunction requires this</span>
     <span class="n">base_value_function</span><span class="o">.</span><span class="n">posterior_transform</span> <span class="o">=</span> <span class="kc">None</span>
 

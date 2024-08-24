@@ -37,16 +37,9 @@ Monte-Carlo Acquisition Function API
 .. autoclass:: MCAcquisitionFunction
     :members:
 
-Multi-Objective Analytic Acquisition Function API
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. currentmodule:: botorch.acquisition.multi_objective.analytic
-.. autoclass:: MultiObjectiveAnalyticAcquisitionFunction
-    :members:
-
-Multi-Objective Monte-Carlo Acquisition Function API
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. currentmodule:: botorch.acquisition.multi_objective.monte_carlo
-.. autoclass:: MultiObjectiveMCAcquisitionFunction
+Base Classes for Multi-Objective Acquisition Function API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.multi_objective.base
     :members:
 
 
@@ -72,7 +65,6 @@ Multi-Objective Analytic Acquisition Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.multi_objective.analytic
     :members:
-    :exclude-members: MultiObjectiveAnalyticAcquisitionFunction
 
 Multi-Objective Hypervolume Knowledge Gradient Acquisition Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -93,7 +85,6 @@ Multi-Objective Monte-Carlo Acquisition Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.multi_objective.monte_carlo
     :members:
-    :exclude-members: MultiObjectiveMCAcquisitionFunction
 
 .. automodule:: botorch.acquisition.multi_objective.logei
     :members:
