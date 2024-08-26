@@ -26,6 +26,7 @@ TUTORIALS_REQUIRES = [
     "papermill",
     "pykeops",
     "torchvision",
+    "pymoo",
 ]
 
 # Check for python version
