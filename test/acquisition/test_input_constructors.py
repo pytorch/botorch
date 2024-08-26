@@ -19,6 +19,7 @@ from unittest.mock import MagicMock
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.active_learning import qNegIntegratedPosteriorVariance
 from botorch.acquisition.analytic import (
     ExpectedImprovement,
     LogExpectedImprovement,
@@ -1392,6 +1393,25 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
 
         qBayesianActiveLearningByDisagreement(**kwargs)
 
+    def test_construct_inputs_nipv(self) -> None:
+        X = torch.rand(3, 2)
+        Y = torch.rand(3, 1)
+        blockX_blockY = {
+            0: SupervisedDataset(X, Y, feature_names=["X1", "X2"], outcome_names=["Y"])
+        }
+
+        func = get_acqf_input_constructor(qNegIntegratedPosteriorVariance)
+        model = SingleTaskGP(blockX_blockY[0].X, blockX_blockY[0].Y)
+        kwargs = func(
+            model=model,
+            bounds=self.bounds,
+            num_mc_points=17,
+            X_pending=torch.rand(3, 2, dtype=torch.double),
+            training_data=blockX_blockY,
+        )
+        nipv = qNegIntegratedPosteriorVariance(**kwargs)
+        self.assertEqual(nipv.mc_points.shape, torch.Size([17, 2]))
+
 
 class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
     """End-to-end tests, ensuring that the input constructors are functional."""
@@ -1495,6 +1515,14 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
                 "model": SaasFullyBayesianSingleTaskGP(
                     self.blockX_blockY[0].X, self.blockX_blockY[0].Y
                 ),
+            },
+        )
+        self.cases["ActiveLearning"] = (
+            [qNegIntegratedPosteriorVariance],
+            {
+                "model": SingleTaskGP(self.blockX_blockY[0].X, self.blockX_blockY[0].Y),
+                "training_data": self.blockX_blockY,
+                "bounds": self.bounds,
             },
         )
 
