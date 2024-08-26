@@ -17,6 +17,7 @@ from typing import Any, Callable, Optional, TypeVar, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.active_learning import qNegIntegratedPosteriorVariance
 from botorch.acquisition.analytic import (
     ExpectedImprovement,
     LogExpectedImprovement,
@@ -100,6 +101,7 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     FastNondominatedPartitioning,
     NondominatedPartitioning,
 )
+from botorch.utils.sampling import draw_sobol_samples
 from torch import Tensor
 
 
@@ -1673,6 +1675,26 @@ def construct_inputs_BALD(
         "model": model,
         "X_pending": X_pending,
         "sampler": sampler,
+        "posterior_transform": posterior_transform,
+    }
+    return inputs
+
+
+@acqf_input_constructor(qNegIntegratedPosteriorVariance)
+def construct_inputs_NIPV(
+    model: Model,
+    bounds: list[tuple[float, float]],
+    num_mc_points: int = 128,
+    X_pending: Optional[Tensor] = None,
+    posterior_transform: Optional[PosteriorTransform] = None,
+) -> dict[str, Any]:
+    """Construct inputs for qNegIntegratedPosteriorVariance."""
+    bounds = torch.as_tensor(bounds).to(model.train_targets).T
+    mc_points = draw_sobol_samples(bounds=bounds, n=num_mc_points, q=1).squeeze(-2)
+    inputs = {
+        "model": model,
+        "mc_points": mc_points,
+        "X_pending": X_pending,
         "posterior_transform": posterior_transform,
     }
     return inputs
