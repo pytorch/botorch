@@ -46,7 +46,7 @@ class AugmentedBranin(SyntheticTestFunction):
     def evaluate_true(self, X: Tensor) -> Tensor:
         t1 = (
             X[..., 1]
-            - (5.1 / (4 * math.pi**2) - 0.1 * (1 - X[:, 2])) * X[:, 0].pow(2)
+            - (5.1 / (4 * math.pi**2) - 0.1 * (1 - X[..., 2])) * X[..., 0].pow(2)
             + 5 / math.pi * X[..., 0]
             - 6
         )

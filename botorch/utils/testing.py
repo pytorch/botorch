@@ -11,6 +11,7 @@ import warnings
 from abc import abstractproperty
 from collections import OrderedDict
 from collections.abc import Sequence
+from itertools import product
 from typing import Any, Optional
 from unittest import mock, TestCase
 
@@ -102,15 +103,22 @@ class BotorchTestCase(TestCase):
 
 
 class BaseTestProblemTestCaseMixIn:
-    def test_forward(self):
-        for dtype in (torch.float, torch.double):
-            for batch_shape in (torch.Size(), torch.Size([2]), torch.Size([2, 3])):
-                for f in self.functions:
-                    f.to(device=self.device, dtype=dtype)
-                    X = torch.rand(*batch_shape, f.dim, device=self.device, dtype=dtype)
-                    X = f.bounds[0] + X * (f.bounds[1] - f.bounds[0])
-                    res = f(X)
-                    f(X, noise=False)
+    def test_forward_and_evaluate_true(self):
+        dtypes = (torch.float, torch.double)
+        batch_shapes = (torch.Size(), torch.Size([2]), torch.Size([2, 3]))
+        for dtype, batch_shape, f in product(dtypes, batch_shapes, self.functions):
+            f.to(device=self.device, dtype=dtype)
+            X = torch.rand(*batch_shape, f.dim, device=self.device, dtype=dtype)
+            X = f.bounds[0] + X * (f.bounds[1] - f.bounds[0])
+            res_forward = f(X)
+            res_evaluate_true = f.evaluate_true(X)
+            for method, res in {
+                "forward": res_forward,
+                "evaluate_true": res_evaluate_true,
+            }.items():
+                with self.subTest(
+                    f"{dtype}_{batch_shape}_{f.__class__.__name__}_{method}"
+                ):
                     self.assertEqual(res.dtype, dtype)
                     self.assertEqual(res.device.type, self.device.type)
                     tail_shape = torch.Size(
@@ -340,7 +348,7 @@ class MockModel(Model, FantasizeMixin):
         X: Tensor,
         output_indices: Optional[list[int]] = None,
         posterior_transform: Optional[PosteriorTransform] = None,
-        observation_noise: bool = False,
+        observation_noise: bool | torch.Tensor = False,
     ) -> MockPosterior:
         if posterior_transform is not None:
             return posterior_transform(self._posterior)
@@ -357,7 +365,7 @@ class MockModel(Model, FantasizeMixin):
         extended_shape = self._posterior._extended_shape()
         return extended_shape[:-2]
 
-    def state_dict(self) -> None:
+    def state_dict(self, *args, **kwargs) -> None:
         pass
 
     def load_state_dict(

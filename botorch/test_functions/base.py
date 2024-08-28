@@ -55,26 +55,33 @@ class BaseTestProblem(Module, ABC):
         r"""Evaluate the function on a set of points.
 
         Args:
-            X: A `batch_shape x d`-dim tensor of point(s) at which to evaluate the
-                function.
+            X: A `(batch_shape) x d`-dim tensor of point(s) at which to evaluate
+                the function.
             noise: If `True`, add observation noise as specified by `noise_std`.
 
         Returns:
             A `batch_shape`-dim tensor ouf function evaluations.
         """
-        batch = X.ndimension() > 1
-        X = X if batch else X.unsqueeze(0)
         f = self.evaluate_true(X=X)
         if noise and self.noise_std is not None:
             _noise = torch.tensor(self.noise_std, device=X.device, dtype=X.dtype)
             f += _noise * torch.randn_like(f)
         if self.negate:
             f = -f
-        return f if batch else f.squeeze(0)
+        return f
 
     @abstractmethod
     def evaluate_true(self, X: Tensor) -> Tensor:
-        r"""Evaluate the function (w/o observation noise) on a set of points."""
+        r"""
+        Evaluate the function (w/o observation noise) on a set of points.
+
+        Args:
+            X: A `(batch_shape) x d`-dim tensor of point(s) at which to
+                evaluate.
+
+        Returns:
+            A `batch_shape`-dim tensor.
+        """
         pass  # pragma: no cover
 
 
