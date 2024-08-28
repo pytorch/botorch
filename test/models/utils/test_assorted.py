@@ -158,14 +158,14 @@ class TestInputDataChecks(BotorchTestCase):
         check_standardization(Y=y, raise_on_fail=True)
 
         # check nonzero mean for case where >= 2 observations per batch
-        msg_more_than_1_obs = r"Data is not standardized \(std ="
+        msg_more_than_1_obs = r"Data \(outcome observations\) not standardized \(std ="
         with self.assertWarnsRegex(InputDataWarning, msg_more_than_1_obs):
             check_standardization(Y=Yst + 1)
         with self.assertRaisesRegex(InputDataError, msg_more_than_1_obs):
             check_standardization(Y=Yst + 1, raise_on_fail=True)
 
         # check nonzero mean for case where < 2 observations per batch
-        msg_one_obs = r"Data is not standardized \(mean ="
+        msg_one_obs = r"Data \(outcome observations\) not standardized \(mean ="
         y = torch.ones((3, 1, 2), dtype=torch.float32)
         with self.assertWarnsRegex(InputDataWarning, msg_one_obs):
             check_standardization(Y=y)
