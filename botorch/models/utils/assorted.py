@@ -167,7 +167,7 @@ def check_min_max_scaling(
             msg = "contained"
         if msg is not None:
             msg = (
-                f"Input data is not {msg} to the unit cube. "
+                f"Data (input features) not {msg} to the unit cube. "
                 "Please consider min-max scaling the input data."
             )
             if raise_on_fail:
@@ -197,7 +197,7 @@ def check_standardization(
         if Y.shape[-2] <= 1:
             if mean_not_zero:
                 msg = (
-                    f"Data is not standardized (mean = {Ymean}). "
+                    f"Data (outcome observations) not standardized (mean = {Ymean}). "
                     "Please consider scaling the input to zero mean and unit variance."
                 )
                 if raise_on_fail:
@@ -208,7 +208,8 @@ def check_standardization(
             std_not_one = torch.abs(Ystd - 1).max() > atol_std
             if mean_not_zero or std_not_one:
                 msg = (
-                    f"Data is not standardized (std = {Ystd}, mean = {Ymean}). "
+                    "Data (outcome observations) not standardized "
+                    f"(std = {Ystd}, mean = {Ymean})."
                     "Please consider scaling the input to zero mean and unit variance."
                 )
                 if raise_on_fail:
