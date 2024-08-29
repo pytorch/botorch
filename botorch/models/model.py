@@ -16,7 +16,8 @@ import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Mapping
-from typing import Any, Callable, Optional, TYPE_CHECKING, TypeVar, Union
+from typing import Any, Callable, Optional, TYPE_CHECKING, Union
+from typing_extensions import Self
 
 import numpy as np
 import torch
@@ -40,8 +41,6 @@ from torch.nn import Module, ModuleDict, ModuleList
 
 if TYPE_CHECKING:
     from botorch.acquisition.objective import PosteriorTransform  # pragma: no cover
-
-TFantasizeMixin = TypeVar("TFantasizeMixin", bound="FantasizeMixin")
 
 
 class Model(Module, ABC):
@@ -289,11 +288,7 @@ class FantasizeMixin(ABC):
     """
 
     @abstractmethod
-    def condition_on_observations(
-        self: TFantasizeMixin,
-        X: Tensor,
-        Y: Tensor,
-    ) -> TFantasizeMixin:
+    def condition_on_observations(self, X: Tensor, Y: Tensor) -> Self:
         """
         Classes that inherit from `FantasizeMixin` must implement
         a `condition_on_observations` method.
@@ -326,12 +321,12 @@ class FantasizeMixin(ABC):
     # this as
     # 'Self', but at this point the verbose 'T...' syntax is needed.
     def fantasize(
-        self: TFantasizeMixin,
+        self,
         X: Tensor,
         sampler: MCSampler,
         observation_noise: Optional[Tensor] = None,
         **kwargs: Any,
-    ) -> TFantasizeMixin:
+    ) -> Self:
         r"""Construct a fantasy model.
 
         Constructs a fantasy model in the following fashion:
