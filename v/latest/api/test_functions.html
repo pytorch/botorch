@@ -52,8 +52,8 @@ objective in a multiobjective problem.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
-function.</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to evaluate
+the function.</p></li>
 <li><p><strong>noise</strong> (<em>bool</em>) – If <cite>True</cite>, add observation noise as specified by <cite>noise_std</cite>.</p></li>
 </ul>
 </dd>
@@ -71,10 +71,14 @@ function.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -322,10 +326,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -355,10 +363,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -397,10 +409,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -430,10 +446,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -470,10 +490,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -503,10 +527,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -531,10 +559,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -570,10 +602,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -606,10 +642,14 @@ The global minimum is at <cite>z = (0, …, 0)</cite> with <cite>G(z) = 0</cite>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -649,10 +689,14 @@ The global minimum is at <cite>z = (0, …, 0)</cite> with <cite>G(z) = 0</cite>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -694,10 +738,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -734,10 +782,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -771,10 +823,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -810,10 +866,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -838,10 +898,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -873,10 +937,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -912,10 +980,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -945,10 +1017,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -979,10 +1055,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1012,10 +1092,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1238,10 +1322,14 @@ deviations for each constraint.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1304,10 +1392,14 @@ deviations for each constraint.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1368,10 +1460,14 @@ deviations for each constraint.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1432,10 +1528,14 @@ deviations for each constraint.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1503,10 +1603,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1545,10 +1649,14 @@ dimension is the fidelity parameter.</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1583,10 +1691,14 @@ where the last two dimensions are the fidelity parameters:</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1716,10 +1828,14 @@ evolutionary algorithms: Empirical results. Evolutionary Computation, vol.
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1794,10 +1910,14 @@ S(x_0) = alpha / (0.2 + x_0) + beta * x_0^2</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1855,10 +1975,14 @@ The specific values on the Pareto fronts can be found by varying <cite>x_0</cite
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1935,10 +2059,14 @@ The goal is to minimize both objectives. The reference point comes from <a class
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1987,10 +2115,14 @@ both objectives.</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2040,10 +2172,14 @@ the one global Pareto-optimal front.</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2096,10 +2232,14 @@ g(x) = sum_{i=m}^{d-1} (x_i - 0.5)^2</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2134,6 +2274,15 @@ M - sum_{i=0}^{M-2} f_i(x)/(1+g(x)) * (1 + sin(3 * pi * f_i(x)))</p>
 <dt class="sig sig-object py" id="botorch.test_functions.multi_objective.DTLZ7.evaluate_true">
 <span class="sig-name descname"><span class="pre">evaluate_true</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#DTLZ7.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.DTLZ7.evaluate_true" title="Link to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+</dl>
 </dd></dl>
 </dd></dl>
 <dl class="py class">
@@ -2321,10 +2470,14 @@ rate, substrate feed concentration, and H+ concentration.</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2395,10 +2548,14 @@ objective.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2438,10 +2595,14 @@ objective.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2492,10 +2653,14 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2542,10 +2707,14 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2592,10 +2761,14 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2648,10 +2821,14 @@ objective.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2692,10 +2869,14 @@ objective.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2757,10 +2938,14 @@ objective.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2916,10 +3101,14 @@ objective.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2988,10 +3177,14 @@ constraints.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3054,10 +3247,14 @@ objective.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3119,10 +3316,14 @@ objective.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3187,10 +3388,14 @@ objective.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3282,10 +3487,14 @@ objective.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3336,10 +3545,14 @@ objective.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3392,10 +3605,14 @@ as attributes dgsm_gradient, dgsm_gradient_bas, and dgsm_gradient_square.</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3441,10 +3658,14 @@ V= Prod_{i=1}^{d} (1+V_i) - 1</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3474,10 +3695,14 @@ V= Prod_{i=1}^{d} (1+V_i) - 1</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>

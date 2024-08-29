@@ -1879,8 +1879,8 @@ Relative difference: 0.8348668001940709 (up to 1e-05 allowed)</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.testing.</span></span><span class="sig-name descname"><span class="pre">BaseTestProblemTestCaseMixIn</span></span><a class="reference internal" href="_modules/botorch/utils/testing.html#BaseTestProblemTestCaseMixIn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.BaseTestProblemTestCaseMixIn" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="py method">
-<dt class="sig sig-object py" id="botorch.utils.testing.BaseTestProblemTestCaseMixIn.test_forward">
-<span class="sig-name descname"><span class="pre">test_forward</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#BaseTestProblemTestCaseMixIn.test_forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.BaseTestProblemTestCaseMixIn.test_forward" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.utils.testing.BaseTestProblemTestCaseMixIn.test_forward_and_evaluate_true">
+<span class="sig-name descname"><span class="pre">test_forward_and_evaluate_true</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#BaseTestProblemTestCaseMixIn.test_forward_and_evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.BaseTestProblemTestCaseMixIn.test_forward_and_evaluate_true" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.utils.testing.BaseTestProblemTestCaseMixIn.functions">
@@ -2058,7 +2058,7 @@ which to compute the posterior (if the model is multi-output).
 Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
 computes the posterior over all model outputs.</p></li>
-<li><p><strong>observation_noise</strong> (<em>bool</em>) – For models with an inferred noise level, if True,
+<li><p><strong>observation_noise</strong> (<em>bool</em><em> | </em><em>Tensor</em>) – For models with an inferred noise level, if True,
 include observation noise. For models with an observed noise level,
 this must be a <cite>model_batch_shape x 1 x m</cite>-dim tensor or
 a <cite>model_batch_shape x n’ x m</cite>-dim tensor containing the average
@@ -2093,7 +2093,7 @@ shape <cite>broadcast(test_batch_shape, model.batch_shape) x q x m</cite>.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.utils.testing.MockModel.state_dict">
-<span class="sig-name descname"><span class="pre">state_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockModel.state_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MockModel.state_dict" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">state_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockModel.state_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MockModel.state_dict" title="Link to this definition">¶</a></dt>
 <dd><p>Return a dictionary containing references to the whole state of the module.</p>
 <p>Both parameters and persistent buffers (e.g. running averages) are
 included. Keys are corresponding parameter and buffer names.

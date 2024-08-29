@@ -201,7 +201,7 @@
             <span class="n">msg</span> <span class="o">=</span> <span class="s2">"contained"</span>
         <span class="k">if</span> <span class="n">msg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Input data is not </span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s2"> to the unit cube. "</span>
+                <span class="sa">f</span><span class="s2">"Data (input features) not </span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s2"> to the unit cube. "</span>
                 <span class="s2">"Please consider min-max scaling the input data."</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">raise_on_fail</span><span class="p">:</span>
@@ -234,7 +234,7 @@
         <span class="k">if</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">mean_not_zero</span><span class="p">:</span>
                 <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Data is not standardized (mean = </span><span class="si">{</span><span class="n">Ymean</span><span class="si">}</span><span class="s2">). "</span>
+                    <span class="sa">f</span><span class="s2">"Data (outcome observations) not standardized (mean = </span><span class="si">{</span><span class="n">Ymean</span><span class="si">}</span><span class="s2">). "</span>
                     <span class="s2">"Please consider scaling the input to zero mean and unit variance."</span>
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">raise_on_fail</span><span class="p">:</span>
@@ -245,7 +245,8 @@
             <span class="n">std_not_one</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">Ystd</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">atol_std</span>
             <span class="k">if</span> <span class="n">mean_not_zero</span> <span class="ow">or</span> <span class="n">std_not_one</span><span class="p">:</span>
                 <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Data is not standardized (std = </span><span class="si">{</span><span class="n">Ystd</span><span class="si">}</span><span class="s2">, mean = </span><span class="si">{</span><span class="n">Ymean</span><span class="si">}</span><span class="s2">). "</span>
+                    <span class="s2">"Data (outcome observations) not standardized "</span>
+                    <span class="sa">f</span><span class="s2">"(std = </span><span class="si">{</span><span class="n">Ystd</span><span class="si">}</span><span class="s2">, mean = </span><span class="si">{</span><span class="n">Ymean</span><span class="si">}</span><span class="s2">)."</span>
                     <span class="s2">"Please consider scaling the input to zero mean and unit variance."</span>
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">raise_on_fail</span><span class="p">:</span>
