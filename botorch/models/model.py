@@ -317,9 +317,6 @@ class FantasizeMixin(ABC):
         a `transform_inputs` method.
         """
 
-    # When Python 3.11 arrives we can start annotating return types like
-    # this as
-    # 'Self', but at this point the verbose 'T...' syntax is needed.
     def fantasize(
         self,
         X: Tensor,
