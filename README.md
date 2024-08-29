@@ -174,7 +174,7 @@ For more details see our [Documentation](https://botorch.org/docs/introduction) 
   ```python
   from botorch.acquisition import LogExpectedImprovement
 
-  logNEI = LogExpectedImprovement(model=gp, best_f=Y.max())
+  logEI = LogExpectedImprovement(model=gp, best_f=Y.max())
   ```
 
 3. Optimize the acquisition function
@@ -183,7 +183,7 @@ For more details see our [Documentation](https://botorch.org/docs/introduction) 
 
   bounds = torch.stack([torch.zeros(2), torch.ones(2)]).to(torch.double)
   candidate, acq_value = optimize_acqf(
-      logNEI, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
+      logEI, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
   )
   ```
 
