@@ -135,7 +135,7 @@ fit_gpytorch_mll(mll)
     const constrAcqFuncExample = `${pre}python
 from botorch.acquisition import LogExpectedImprovement
 
-logNEI = LogExpectedImprovement(model=gp, best_f=Y.max())
+logEI = LogExpectedImprovement(model=gp, best_f=Y.max())
     `;
     // Example for optimizing candidates
     const optAcqFuncExample = `${pre}python
@@ -143,7 +143,7 @@ from botorch.optim import optimize_acqf
 
 bounds = torch.stack([torch.zeros(2), torch.ones(2)]).to(torch.double)
 candidate, acq_value = optimize_acqf(
-    logNEI, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
+    logEI, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
 )
 candidate  # tensor([[0.2981, 0.2401]], dtype=torch.float64)
     `;
