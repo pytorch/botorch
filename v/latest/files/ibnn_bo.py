@@ -18,7 +18,7 @@
 # [2] [J. Lee, Y. Bahri, R. Novak, S. Schoenholz, J. Pennington, and J. Dickstein. Deep Neural Networks as Gaussian Processes. International Conference on Learning Representations 2018.](https://arxiv.org/abs/1711.00165)  
 # [3] [Y.L. Li, T.G.J. Rudner, A.G. Wilson. A Study of Bayesian Neural Network Surrogates for Bayesian Optimization. International Conference on Learning Representations 2024.](https://arxiv.org/abs/2305.20028)
 
-# In[1]:
+# In[13]:
 
 
 import os
@@ -32,7 +32,7 @@ from gpytorch.kernels import MaternKernel, RBFKernel, ScaleKernel
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
 from botorch import manual_seed
-from botorch.acquisition import ExpectedImprovement
+from botorch.acquisition import LogExpectedImprovement
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.kernels import InfiniteWidthBNNKernel
@@ -55,7 +55,7 @@ SMOKE_TEST = os.environ.get("SMOKE_TEST")
 # 
 # We start by visualizing the posteriors of an I-BNN. Here, we define a toy function and draw five initial function evaluations.
 
-# In[2]:
+# In[14]:
 
 
 torch.manual_seed(1111)
@@ -78,7 +78,7 @@ plt.show()
 
 # **Initializing the Model**: We now define two versions of the I-BNN, constructed using a GP with an `InfiniteWidthBNNKernel`. One version has fixed user-specified values for $\sigma^2_w$ and $\sigma^2_b$, and the other uses the marginal log likelihood to optimize these hyperparameters.
 
-# In[3]:
+# In[15]:
 
 
 # Function queries are not noisy
@@ -106,7 +106,7 @@ model_matern.eval();
 
 # **Visualizating the Posterior**: 
 
-# In[4]:
+# In[16]:
 
 
 def plot_posterior(ax, model, n_draws=5):
@@ -128,27 +128,27 @@ def plot_posterior(ax, model, n_draws=5):
                 ax.plot(test_x.cpu(), pred_f.sample().cpu(), color="green", linewidth=0.5)
 
 
-# In[5]:
+# In[17]:
 
 
 fig, axs = plt.subplots(1, 3, figsize=(18, 5))
 
 plot_posterior(axs[0], model)
-axs[0].set_title("I-BNN (Fixed Hypers)\nWeight Var: %.2f, Bias Var: %.2f" % 
-                (model.covar_module.weight_var.item(), model.covar_module.bias_var.item()), 
+axs[0].set_title("I-BNN (Fixed Hypers)\nWeight Var: %.2f, Bias Var: %.2f" %
+                (model.covar_module.weight_var.item(), model.covar_module.bias_var.item()),
                 fontsize=20)
 axs[0].set_ylim(-7, 8)
 axs[0].legend()
 
 plot_posterior(axs[1], model_optimize)
-axs[1].set_title("I-BNN (Optimized Hypers)\nWeight Var: %.2f, Bias Var: %.2f" % 
+axs[1].set_title("I-BNN (Optimized Hypers)\nWeight Var: %.2f, Bias Var: %.2f" %
                 (model_optimize.covar_module.weight_var.item(), model_optimize.covar_module.bias_var.item()),
                 fontsize=20)
 axs[1].set_ylim(-7, 8)
 
 plot_posterior(axs[2], model_matern)
-axs[2].set_title("GP (Matern Kernel)\nLength Scale: %.2f" % 
-                model_matern.covar_module.lengthscale.item(), 
+axs[2].set_title("GP (Matern Kernel)\nLength Scale: %.2f" %
+                model_matern.covar_module.lengthscale.item(),
                 fontsize=20)
 axs[2].set_ylim(-7, 8)
 
@@ -161,7 +161,7 @@ plt.show()
 # 
 # The I-BNN has three hyperparameters: the number of hidden layers, the variance of the weights, and the variance of the bias terms. Here, we visualize how modifying these hyperparameters impacts the posterior.
 
-# In[6]:
+# In[18]:
 
 
 fig, axs = plt.subplots(1, 4, figsize=(20, 4))
@@ -179,7 +179,7 @@ for i, ax in enumerate(axs):
         ax.legend()
 
 
-# In[7]:
+# In[19]:
 
 
 fig, axs = plt.subplots(1, 4, figsize=(20, 4))
@@ -197,7 +197,7 @@ for i, ax in enumerate(axs):
         ax.legend()
 
 
-# In[8]:
+# In[20]:
 
 
 fig, axs = plt.subplots(1, 4, figsize=(20, 4))
@@ -222,7 +222,7 @@ for i, ax in enumerate(axs):
 # **Define High-dimensional Function and BO Setup**: We will optimize the output of a multilayer perceptron (MLP) with 2 hidden layers, 50 nodes per layer, and ReLU nonlinearities. 
 # 
 
-# In[9]:
+# In[21]:
 
 
 class MLP(nn.Module):
@@ -263,8 +263,10 @@ bounds = torch.stack([torch.zeros(INPUT_DIMS), torch.ones(INPUT_DIMS)]).to(**tkw
 
 # **Define BO functions**: We use Sobol sampling to initialize the BO problem, and we use the Expected Improvement acquisition function.
 
-# In[10]:
+# In[22]:
 
+
+from botorch.acquisition.analytic import ExpectedImprovement, LogExpectedImprovement
 
 def generate_initial_data(f, bounds, n, input_dims):
     train_x = draw_sobol_samples(bounds=bounds, n=n, q=1).to(**tkwargs)
@@ -273,12 +275,12 @@ def generate_initial_data(f, bounds, n, input_dims):
     return train_x, train_y
 
 
-def gp_bo_loop(f, bounds, init_x, init_y, kernel, n_iterations, optimize_hypers=False):
+def gp_bo_loop(f, bounds, init_x, init_y, kernel, n_iterations, acqf_class, optimize_hypers=False):
     train_x = init_x.clone()
     train_y = init_y.clone()
 
     for iteration in range(n_iterations):
-        
+
         # fit model to data
         model = SingleTaskGP(train_x, train_y, outcome_transform=Standardize(m=1), covar_module=kernel)
         if optimize_hypers:
@@ -288,7 +290,7 @@ def gp_bo_loop(f, bounds, init_x, init_y, kernel, n_iterations, optimize_hypers=
 
         # optimize acquisition function
         candidate_x, acq_value = optimize_acqf(
-            acq_function=ExpectedImprovement(model, train_y.max()),
+            acq_function=acqf_class(model, train_y.max()),
             bounds=bounds,
             q=1,
             num_restarts=10,
@@ -301,14 +303,14 @@ def gp_bo_loop(f, bounds, init_x, init_y, kernel, n_iterations, optimize_hypers=
         train_y = torch.cat([train_y, f(candidate_x)])
 
     return train_x, train_y
-    
 
 
 # **Compare I-BNN with GP with Matern kernel and RBF kernel**: On this high-dimensional problem, the I-BNN significantly outperforms the standard Matern and RBF kernels and is able to find better rewards.
 
-# In[11]:
+# In[23]:
 
 
+from functools import partial
 # define kernels
 ibnn_kernel = InfiniteWidthBNNKernel(2, device=device)
 ibnn_kernel.weight_var = 10.0
@@ -322,33 +324,44 @@ rbf_kernel = ScaleKernel(RBFKernel(), device=device)
 train_x, train_y = generate_initial_data(f, bounds, n=N_INIT, input_dims=INPUT_DIMS)
 
 # run BO loop
-ibnn_x, ibnn_y = gp_bo_loop(f, bounds, train_x, train_y, ibnn_kernel, n_iterations=N_ITERATIONS, optimize_hypers=False)
-matern_x, matern_y = gp_bo_loop(f, bounds, train_x, train_y, matern_kernel, n_iterations=N_ITERATIONS, optimize_hypers=True)
-rbf_x, rbf_y = gp_bo_loop(f, bounds, train_x, train_y, rbf_kernel, n_iterations=N_ITERATIONS, optimize_hypers=True)
+acqf_classes = {"LogEI": LogExpectedImprovement}
+results = {}
+for acq_name, acqf_class in acqf_classes.items():
+    run_bo_with_acqf = partial(gp_bo_loop, f=f, bounds=bounds, init_x=train_x, init_y=train_y, acqf_class=acqf_class, n_iterations=N_ITERATIONS)
+    ibnn_x, ibnn_y = run_bo_with_acqf(kernel=ibnn_kernel, optimize_hypers=False)
+    matern_x, matern_y = run_bo_with_acqf(kernel=matern_kernel, optimize_hypers=True)
+    rbf_x, rbf_y = run_bo_with_acqf(kernel=rbf_kernel, optimize_hypers=True)
+    results[acq_name] = {
+        "BNN": (ibnn_x, ibnn_y),
+        "Matern": (matern_x, matern_y),
+        "RBF": (rbf_x, rbf_y),
+    }
 
 
-# In[12]:
+# In[24]:
 
 
-def plot_cum_max(y, label):
+import matplotlib
+def plot_cum_max(y, **kwargs):
     cum_max = (torch.cummax(y, dim=0)[0]).cpu()
-    plt.plot(range(len(cum_max)), cum_max, label=label)
+    plt.plot(range(len(cum_max)), cum_max, **kwargs)
 
 plt.figure(figsize=(8, 6))
 
-plot_cum_max(ibnn_y[N_INIT-1:], "I-BNN")
-plot_cum_max(matern_y[N_INIT-1:], "Matern")
-plot_cum_max(rbf_y[N_INIT-1:], "RBF")
+colors = matplotlib.cm.get_cmap("tab10").colors
+linestyles = {"LogEI": "-"}
+for acq_name, res in results.items():
+    ls = linestyles[acq_name]
+    ibnn_y = res["BNN"][-1]
+    matern_y = res["Matern"][-1]
+    rbf_y = res["RBF"][-1]
+    plot_cum_max(ibnn_y[N_INIT-1:], label=f"I-BNN ({acq_name})", color=colors[0], ls=ls)
+    plot_cum_max(matern_y[N_INIT-1:], label=f"Matern ({acq_name})", color=colors[1], ls=ls)
+    plot_cum_max(rbf_y[N_INIT-1:], label=f"RBF ({acq_name})", color=colors[2], ls=ls)
 
 plt.xlabel("BO Iterations")
 plt.ylabel("Max Value")
 plt.title(f"{INPUT_DIMS}-d Problem")
 plt.legend()
 plt.show()
-
-
-# In[13]:
-
-
-
 

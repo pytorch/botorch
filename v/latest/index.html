@@ -48,13 +48,13 @@ fit_gpytorch_mll(mll)
 </code></pre>
 </span></div></li><li><h4>Construct an acquisition function:</h4><div><span><pre><code class="hljs css language-python"><span class="hljs-keyword">from</span> botorch.acquisition <span class="hljs-keyword">import</span> LogExpectedImprovement
 
-logNEI = LogExpectedImprovement(model=gp, best_f=Y.max())
+logEI = LogExpectedImprovement(model=gp, best_f=Y.max())
 </code></pre>
 </span></div></li><li><h4>Optimize the acquisition function:</h4><div><span><pre><code class="hljs css language-python"><span class="hljs-keyword">from</span> botorch.optim <span class="hljs-keyword">import</span> optimize_acqf
 
 bounds = torch.stack([torch.zeros(<span class="hljs-number">2</span>), torch.ones(<span class="hljs-number">2</span>)]).to(torch.double)
 candidate, acq_value = optimize_acqf(
-    logNEI, bounds=bounds, q=<span class="hljs-number">1</span>, num_restarts=<span class="hljs-number">5</span>, raw_samples=<span class="hljs-number">20</span>,
+    logEI, bounds=bounds, q=<span class="hljs-number">1</span>, num_restarts=<span class="hljs-number">5</span>, raw_samples=<span class="hljs-number">20</span>,
 )
 candidate  <span class="hljs-comment"># tensor([[0.2981, 0.2401]], dtype=torch.float64)</span>
 </code></pre>

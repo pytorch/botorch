@@ -147,13 +147,13 @@ plt.tight_layout()
 
 # ### Fit base task models
 
-# First, let's define a helper function to fit a FixedNoiseGP with an fixed observed noise level.
+# First, let's define a helper function to fit a SingleTaskGP with an fixed observed noise level.
 
-# In[6]:
+# In[8]:
 
 
 from gpytorch.mlls import ExactMarginalLogLikelihood
-from botorch.models import FixedNoiseGP
+from botorch.models import SingleTaskGP
 from botorch.fit import fit_gpytorch_mll
 
 
@@ -162,11 +162,7 @@ def get_fitted_model(train_X, train_Y, train_Yvar, state_dict=None):
     Get a single task GP. The model will be fit unless a state_dict with model
         hyperparameters is provided.
     """
-    Y_mean = train_Y.mean(dim=-2, keepdim=True)
-    Y_std = train_Y.std(dim=-2, keepdim=True)
-    model = FixedNoiseGP(train_X, (train_Y - Y_mean) / Y_std, train_Yvar)
-    model.Y_mean = Y_mean
-    model.Y_std = Y_std
+    model = SingleTaskGP(train_X=train_X, train_Y=train_Y, train_Yvar=train_Yvar)
     if state_dict is None:
         mll = ExactMarginalLogLikelihood(model.likelihood, model).to(train_X)
         fit_gpytorch_mll(mll)
@@ -175,9 +171,9 @@ def get_fitted_model(train_X, train_Y, train_Yvar, state_dict=None):
     return model
 
 
-# #### Now let's fit a FixedNoiseGP for each base task
+# #### Now let's fit a SingleTaskGP for each base task
 
-# In[7]:
+# In[9]:
 
 
 # Fit base model
@@ -211,7 +207,7 @@ for task in range(NUM_BASE_TASKS):
 # The weights are then computed as:
 # $$w_i = \frac{1}{S}\sum_{s=1}^S\mathbb 1\big(i = \text{argmin}_{i'}l_{i', s}\big)$$
 
-# In[8]:
+# In[10]:
 
 
 def roll_col(X, shift):
@@ -221,7 +217,7 @@ def roll_col(X, shift):
     return torch.cat((X[..., -shift:], X[..., :-shift]), dim=-1)
 
 
-# In[9]:
+# In[11]:
 
 
 def compute_ranking_loss(f_samps, target_y):
@@ -268,7 +264,7 @@ def compute_ranking_loss(f_samps, target_y):
 # 1. Create a batch mode-gp LOOCV GP using the hyperparameters from `target_model`
 # 2. Draw a joint sample across all points from the target task (in-sample and out-of-sample)
 
-# In[10]:
+# In[12]:
 
 
 def get_target_model_loocv_sample_preds(
@@ -309,7 +305,7 @@ def get_target_model_loocv_sample_preds(
         return sampler(posterior).squeeze(-1)
 
 
-# In[11]:
+# In[13]:
 
 
 def compute_rank_weights(train_x, train_y, base_models, target_model, num_samples):
@@ -359,7 +355,7 @@ def compute_rank_weights(train_x, train_y, base_models, target_model, num_sample
     return rank_weights
 
 
-# In[12]:
+# In[14]:
 
 
 from botorch.models.gpytorch import GPyTorchModel
@@ -405,8 +401,8 @@ class RGPE(GP, GPyTorchModel):
             model = self.models[raw_idx]
             posterior = model.posterior(x)
             # unstandardize predictions
-            posterior_mean = posterior.mean.squeeze(-1) * model.Y_std + model.Y_mean
-            posterior_cov = posterior.mvn.lazy_covariance_matrix * model.Y_std.pow(2)
+            posterior_mean = posterior.mean.squeeze(-1)
+            posterior_cov = posterior.mvn.lazy_covariance_matrix
             # apply weight
             weight = non_zero_weights[non_zero_weight_idx]
             weighted_means.append(weight * posterior_mean)
@@ -420,15 +416,15 @@ class RGPE(GP, GPyTorchModel):
 
 # ### Optimize target function using RGPE + qNEI
 
-# In[13]:
+# In[18]:
 
-
-from botorch.acquisition.monte_carlo import qNoisyExpectedImprovement
-from botorch.sampling.normal import SobolQMCNormalSampler
-from botorch.optim.optimize import optimize_acqf
 
 # suppress GPyTorch warnings about adding jitter
 import warnings
+
+from botorch.acquisition.logei import qLogNoisyExpectedImprovement
+from botorch.optim.optimize import optimize_acqf
+from botorch.sampling.normal import SobolQMCNormalSampler
 
 
 warnings.filterwarnings("ignore", "^.*jitter.*", category=RuntimeWarning)
@@ -486,7 +482,7 @@ for trial in range(N_TRIALS):
         # create model and acquisition function
         rgpe_model = RGPE(model_list, rank_weights)
         sampler_qnei = SobolQMCNormalSampler(sample_shape=torch.Size([MC_SAMPLES]))
-        qNEI = qNoisyExpectedImprovement(
+        qNEI = qLogNoisyExpectedImprovement(
             model=rgpe_model,
             X_baseline=train_x,
             sampler=sampler_qnei,
@@ -533,7 +529,7 @@ for trial in range(N_TRIALS):
         vanilla_nei_sampler = SobolQMCNormalSampler(
             sample_shape=torch.Size([MC_SAMPLES])
         )
-        vanilla_qNEI = qNoisyExpectedImprovement(
+        vanilla_qNEI = qLogNoisyExpectedImprovement(
             model=vanilla_nei_model,
             X_baseline=vanilla_nei_train_x,
             sampler=vanilla_nei_sampler,
@@ -571,7 +567,7 @@ for trial in range(N_TRIALS):
 
 # #### Plot best observed value vs iteration
 
-# In[14]:
+# In[19]:
 
 
 import numpy as np
@@ -584,22 +580,22 @@ best_vanilla_nei_all = np.array(best_vanilla_nei_all)
 x = range(RANDOM_INITIALIZATION_SIZE, RANDOM_INITIALIZATION_SIZE + N_BATCH + 1)
 
 fig, ax = plt.subplots(1, 1, figsize=(10, 6))
-# Plot RGPE - NEI
+# Plot RGPE - LogNEI
 ax.errorbar(
     x,
     best_rgpe_all.mean(axis=0),
     yerr=1.96 * best_rgpe_all.std(axis=0) / math.sqrt(N_TRIALS),
-    label="RGPE - NEI",
+    label="RGPE - LogNEI",
     linewidth=3,
     capsize=5,
     capthick=3,
 )
-# Plot FixedNoiseGP - NEI
+# Plot SingleTaskGP - LogNEI
 ax.errorbar(
     x,
     best_vanilla_nei_all.mean(axis=0),
     yerr=1.96 * best_vanilla_nei_all.std(axis=0) / math.sqrt(N_TRIALS),
-    label="FixedNoiseGP - NEI",
+    label="SingleTaskGP - LogNEI",
     linewidth=3,
     capsize=5,
     capthick=3,
@@ -620,4 +616,10 @@ ax.set_ylabel("Best Observed Value", fontsize=12)
 ax.set_title("Best Observed Value by Iteration", fontsize=12)
 ax.legend(loc="lower right", fontsize=10)
 plt.tight_layout()
+
+
+# In[ ]:
+
+
+
 
