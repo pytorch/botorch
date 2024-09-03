@@ -21,6 +21,7 @@ from typing import Optional
 
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.monte_carlo import SampleReducingMCAcquisitionFunction
+from botorch.exceptions.errors import BotorchError
 from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
 from torch import Tensor
 
@@ -60,8 +61,16 @@ class PriorGuidedAcquisitionFunction(AcquisitionFunction):
                 [Hvarfner2022]_.
             X_pending: `n x d` Tensor with `n` `d`-dim design points that have
                 been submitted for evaluation but have not yet been evaluated.
+                Note: X_pending should be provided as an argument to or set on
+                `PriorGuidedAcquisitionFunction`, but not set on the underlying
+                acquisition function.
         """
         super().__init__(model=acq_function.model)
+        if getattr(acq_function, "X_pending", None) is not None:
+            raise BotorchError(
+                "X_pending is set on acq_function, but should be set on "
+                "`PriorGuidedAcquisitionFunction`."
+            )
         self.acq_func = acq_function
         self.prior_module = prior_module
         self._log = log
