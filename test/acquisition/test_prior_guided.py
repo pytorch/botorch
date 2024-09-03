@@ -10,6 +10,7 @@ import torch
 from botorch.acquisition.analytic import ExpectedImprovement
 from botorch.acquisition.monte_carlo import qExpectedImprovement
 from botorch.acquisition.prior_guided import PriorGuidedAcquisitionFunction
+from botorch.exceptions.errors import BotorchError
 from botorch.models import SingleTaskGP
 from botorch.utils.testing import BotorchTestCase
 from botorch.utils.transforms import match_batch_shape
@@ -122,3 +123,18 @@ class TestPriorGuidedAcquisitionFunction(BotorchTestCase):
                 expected_val = ei._sample_reduction(ei._q_reduction(weighted_val))
 
                 self.assertTrue(torch.equal(val, expected_val))
+
+    def test_X_pending_error(self) -> None:
+        X_pending = torch.rand(2, 3, dtype=torch.double, device=self.device)
+        model = SingleTaskGP(train_X=self.train_X, train_Y=self.train_Y)
+        ei = qExpectedImprovement(model=model, best_f=0.0)
+        ei.set_X_pending(X_pending)
+        msg = (
+            "X_pending is set on acq_function, but should be set on "
+            "`PriorGuidedAcquisitionFunction`."
+        )
+        with self.assertRaisesRegex(BotorchError, msg):
+            PriorGuidedAcquisitionFunction(
+                acq_function=ei,
+                prior_module=self.prior,
+            )
