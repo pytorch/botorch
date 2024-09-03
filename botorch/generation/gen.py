@@ -23,7 +23,7 @@ from botorch.generation.utils import (
     _convert_nonlinear_inequality_constraints,
     _remove_fixed_features_from_optimization,
 )
-from botorch.logging import _get_logger
+from botorch.logging import logger
 from botorch.optim.parameter_constraints import (
     _arrayify,
     make_scipy_bounds,
@@ -37,8 +37,6 @@ from botorch.optim.utils.timeout import minimize_with_timeout
 from scipy.optimize import OptimizeResult
 from torch import Tensor
 from torch.optim import Optimizer
-
-logger = _get_logger()
 
 TGenCandidates = Callable[[Tensor, AcquisitionFunction, Any], tuple[Tensor, Tensor]]
 
