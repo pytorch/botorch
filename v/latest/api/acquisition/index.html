@@ -7527,7 +7527,10 @@ log-transformed value and the prior module emits a log probability.</p></li>
 for example  to decay the effect the prior over time as in
 <a class="reference internal" href="#hvarfner2022" id="id75"><span>[Hvarfner2022]</span></a>.</p></li>
 <li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – <cite>n x d</cite> Tensor with <cite>n</cite> <cite>d</cite>-dim design points that have
-been submitted for evaluation but have not yet been evaluated.</p></li>
+been submitted for evaluation but have not yet been evaluated.
+Note: X_pending should be provided as an argument to or set on
+<cite>PriorGuidedAcquisitionFunction</cite>, but not set on the underlying
+acquisition function.</p></li>
 </ul>
 </dd>
 </dl>

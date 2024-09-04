@@ -44,6 +44,7 @@
 
 <span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.monte_carlo</span> <span class="kn">import</span> <span class="n">SampleReducingMCAcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchError</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">concatenate_pending_points</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
@@ -85,8 +86,16 @@
 <span class="sd">                [Hvarfner2022]_.</span>
 <span class="sd">            X_pending: `n x d` Tensor with `n` `d`-dim design points that have</span>
 <span class="sd">                been submitted for evaluation but have not yet been evaluated.</span>
+<span class="sd">                Note: X_pending should be provided as an argument to or set on</span>
+<span class="sd">                `PriorGuidedAcquisitionFunction`, but not set on the underlying</span>
+<span class="sd">                acquisition function.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">acq_function</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">acq_function</span><span class="p">,</span> <span class="s2">"X_pending"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">BotorchError</span><span class="p">(</span>
+                <span class="s2">"X_pending is set on acq_function, but should be set on "</span>
+                <span class="s2">"`PriorGuidedAcquisitionFunction`."</span>
+            <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">acq_func</span> <span class="o">=</span> <span class="n">acq_function</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">prior_module</span> <span class="o">=</span> <span class="n">prior_module</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_log</span> <span class="o">=</span> <span class="n">log</span>
