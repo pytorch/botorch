@@ -62,12 +62,12 @@ class BotorchTestCase(TestCase):
             )
             warnings.filterwarnings(
                 "ignore",
-                message="Data is not standardized.",
+                message=r"Data \(outcome observations\) is not standardized ",
                 category=InputDataWarning,
             )
             warnings.filterwarnings(
                 "ignore",
-                message="Input data is not contained to the unit cube.",
+                message=r"Data \(input features\) is not",
                 category=InputDataWarning,
             )
 
