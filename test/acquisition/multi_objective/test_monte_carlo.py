@@ -1841,7 +1841,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
     def _test_with_multitask(self, acqf_class: type[AcquisitionFunction]):
         # Verify that _set_sampler works with MTGP, KroneckerMTGP and HOGP.
         torch.manual_seed(1234)
-        tkwargs = {"device": self.device, "dtype": torch.double}
+        tkwargs: dict[str, Any] = {"device": self.device, "dtype": torch.double}
         train_x = torch.rand(6, 2, **tkwargs)
         train_y = torch.randn(6, 2, **tkwargs)
         mtgp_task = torch.cat(

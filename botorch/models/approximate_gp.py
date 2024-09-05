@@ -40,8 +40,8 @@ from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.models.utils import validate_input_scaling
 from botorch.models.utils.gpytorch_modules import (
-    get_gaussian_likelihood_with_gamma_prior,
-    get_matern_kernel_with_gamma_prior,
+    get_covar_module_with_dim_scaled_prior,
+    get_gaussian_likelihood_with_lognormal_prior,
 )
 from botorch.models.utils.inducing_point_allocators import (
     GreedyVarianceReduction,
@@ -193,7 +193,7 @@ class _SingleTaskVariationalGP(ApproximateGP):
                 this does not have to be all of the training inputs).
             train_Y: Not used.
             num_outputs: Number of output responses per input.
-            covar_module: Kernel function. If omitted, uses a `MaternKernel`.
+            covar_module: Kernel function. If omitted, uses an `RBFKernel`.
             mean_module: Mean of GP model. If omitted, uses a `ConstantMean`.
             variational_distribution: Type of variational distribution to use
                 (default: CholeskyVariationalDistribution), the properties of the
@@ -217,15 +217,10 @@ class _SingleTaskVariationalGP(ApproximateGP):
         self._aug_batch_shape = aug_batch_shape
 
         if covar_module is None:
-            covar_module = get_matern_kernel_with_gamma_prior(
+            covar_module = get_covar_module_with_dim_scaled_prior(
                 ard_num_dims=train_X.shape[-1],
                 batch_shape=self._aug_batch_shape,
             ).to(train_X)
-            self._subset_batch_dict = {
-                "mean_module.constant": -2,
-                "covar_module.raw_outputscale": -1,
-                "covar_module.base_kernel.raw_lengthscale": -3,
-            }
 
         if inducing_point_allocator is None:
             inducing_point_allocator = GreedyVarianceReduction()
@@ -343,7 +338,7 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
                 either a `GaussianLikelihood` (if `num_outputs=1`) or a
                 `MultitaskGaussianLikelihood`(if `num_outputs>1`).
             num_outputs: Number of output responses per input (default: 1).
-            covar_module: Kernel function. If omitted, uses a `MaternKernel`.
+            covar_module: Kernel function. If omitted, uses an `RBFKernel`.
             mean_module: Mean of GP model. If omitted, uses a `ConstantMean`.
             variational_distribution: Type of variational distribution to use
                 (default: CholeskyVariationalDistribution), the properties of the
@@ -378,7 +373,7 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
 
         if likelihood is None:
             if num_outputs == 1:
-                likelihood = get_gaussian_likelihood_with_gamma_prior(
+                likelihood = get_gaussian_likelihood_with_lognormal_prior(
                     batch_shape=self._aug_batch_shape
                 )
             else:

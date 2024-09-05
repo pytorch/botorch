@@ -18,7 +18,7 @@ References:
 """
 
 from math import log, sqrt
-from typing import Optional, Union
+from typing import Optional, Sequence, Union
 
 import torch
 from gpytorch.constraints.constraints import GreaterThan
@@ -101,7 +101,8 @@ def get_covar_module_with_dim_scaled_prior(
     ard_num_dims: int,
     batch_shape: Optional[torch.Size] = None,
     use_rbf_kernel: bool = True,
-) -> Union[MaternKernel, RBFKernel, ScaleKernel]:
+    active_dims: Optional[Sequence[int]] = None,
+) -> Union[MaternKernel, RBFKernel]:
     """Returns an RBF or Matern kernel with priors
     from  [Hvarfner2024vanilla]_.
 
@@ -109,6 +110,9 @@ def get_covar_module_with_dim_scaled_prior(
         ard_num_dims: Number of feature dimensions for ARD.
         batch_shape: Batch shape for the covariance module.
         use_rbf_kernel: Whether to use an RBF kernel. If False, uses a Matern kernel.
+        active_dims: The set of input dimensions to compute the covariances on.
+            By default, the covariance is computed using the full input tensor.
+            Set this if you'd like to ignore certain dimensions.
 
     Returns:
         A Kernel constructed according to the given arguments. The prior is constrained
@@ -123,5 +127,7 @@ def get_covar_module_with_dim_scaled_prior(
         lengthscale_constraint=GreaterThan(
             2.5e-2, transform=None, initial_value=lengthscale_prior.mode
         ),
+        # pyre-ignore[6] GPyTorch type is unnecessarily restrictive.
+        active_dims=active_dims,
     )
     return base_kernel

@@ -7,8 +7,8 @@
 from typing import Any, Optional
 
 import torch
+from botorch.models.utils.gpytorch_modules import get_covar_module_with_dim_scaled_prior
 from gpytorch.kernels.kernel import Kernel
-from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.priors.torch_priors import GammaPrior
 from linear_operator.operators.sum_linear_operator import SumLinearOperator
@@ -36,7 +36,7 @@ class SACKernel(Kernel):
     where
     * :math: M is the number of partitions of parameter space. Each partition contains
     same number of parameters d. Each kernel `k_i` acts only on d parameters of ith
-    partition i.e. `\mathbf{x}_(i)`. Each kernel `k_i` is a scaled Matern kernel
+    partition i.e. `\mathbf{x}_(i)`. Each kernel `k_i` is a scaled RBF kernel
     with same lengthscales but different outputscales.
     """
 
@@ -72,11 +72,9 @@ class SACKernel(Kernel):
             for context, active_params in self.decomposition.items()
         }
 
-        self.base_kernel = MaternKernel(
-            nu=2.5,
+        self.base_kernel = get_covar_module_with_dim_scaled_prior(
             ard_num_dims=num_param,
             batch_shape=batch_shape,
-            lengthscale_prior=GammaPrior(3.0, 6.0),
         )
 
         self.kernel_dict = {}  # scaled kernel for each parameter space partition
