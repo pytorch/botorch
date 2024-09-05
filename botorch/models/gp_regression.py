@@ -149,7 +149,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
                 is None, and a `FixedNoiseGaussianLikelihood` with the given
                 noise observations if `train_Yvar` is not None.
             covar_module: The module computing the covariance (Kernel) matrix.
-                If omitted, use a `MaternKernel`.
+                If omitted, uses an `RBFKernel`.
             mean_module: The mean function to be used. If omitted, use a
                 `ConstantMean`.
             outcome_transform: An outcome transform that is applied to the
@@ -207,6 +207,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
                 ard_num_dims=transformed_X.shape[-1],
                 batch_shape=self._aug_batch_shape,
             )
+            # Used for subsetting along the output dimension. See Model.subset_output.
             self._subset_batch_dict = {
                 "mean_module.raw_constant": -1,
                 "covar_module.raw_lengthscale": -3,

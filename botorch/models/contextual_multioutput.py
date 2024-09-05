@@ -64,7 +64,7 @@ class LCEMGP(MultiTaskGP):
                 is common across all tasks.
             mean_module: The mean function to be used. Defaults to `ConstantMean`.
             covar_module: The module for computing the covariance matrix between
-                the non-task features. Defaults to `MaternKernel`.
+                the non-task features. Defaults to `RBFKernel`.
             likelihood: A likelihood. The default is selected based on `train_Yvar`.
                 If `train_Yvar` is None, a standard `GaussianLikelihood` with inferred
                 noise level is used. Otherwise, a FixedNoiseGaussianLikelihood is used.

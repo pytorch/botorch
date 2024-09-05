@@ -26,7 +26,6 @@ without having to do too many expensive high-fidelity evaluations.
 from __future__ import annotations
 
 import warnings
-
 from typing import Any, Optional, Union
 
 import torch
@@ -39,9 +38,9 @@ from botorch.models.kernels.linear_truncated_fidelity import (
 )
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
+from botorch.models.utils.gpytorch_modules import get_covar_module_with_dim_scaled_prior
 from botorch.utils.datasets import SupervisedDataset
 from gpytorch.kernels.kernel import ProductKernel
-from gpytorch.kernels.rbf_kernel import RBFKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.likelihoods.likelihood import Likelihood
 from gpytorch.priors.torch_priors import GammaPrior
@@ -153,6 +152,7 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
             outcome_transform=outcome_transform,
             input_transform=input_transform,
         )
+        # Used for subsetting along the output dimension. See Model.subset_output.
         self._subset_batch_dict = {
             "mean_module.raw_constant": -1,
             "covar_module.raw_outputscale": -1,
@@ -273,10 +273,9 @@ def _setup_multifidelity_covar_module(
             non_active_dims.add(iteration_fidelity)
         active_dimsX = sorted(set(range(dim)) - non_active_dims)
         kernels.append(
-            RBFKernel(
+            get_covar_module_with_dim_scaled_prior(
                 ard_num_dims=len(active_dimsX),
                 batch_shape=aug_batch_shape,
-                lengthscale_prior=GammaPrior(3.0, 6.0),
                 active_dims=active_dimsX,
             )
         )

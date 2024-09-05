@@ -20,7 +20,7 @@ from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.test_helpers import get_pvar_expected
 from botorch.utils.testing import _get_random_data, BotorchTestCase
 from gpytorch.kernels.kernel import AdditiveKernel, ProductKernel
-from gpytorch.kernels.matern_kernel import MaternKernel
+from gpytorch.kernels.rbf_kernel import RBFKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.likelihoods import FixedNoiseGaussianLikelihood
 from gpytorch.likelihoods.gaussian_likelihood import GaussianLikelihood
@@ -90,10 +90,10 @@ class TestMixedSingleTaskGP(BotorchTestCase):
                 self.assertIsInstance(prod_kernel.base_kernel, ProductKernel)
                 sum_cont_kernel, sum_cat_kernel = sum_kernel.base_kernel.kernels
                 prod_cont_kernel, prod_cat_kernel = prod_kernel.base_kernel.kernels
-                self.assertIsInstance(sum_cont_kernel, MaternKernel)
+                self.assertIsInstance(sum_cont_kernel, RBFKernel)
                 self.assertIsInstance(sum_cat_kernel, ScaleKernel)
                 self.assertIsInstance(sum_cat_kernel.base_kernel, CategoricalKernel)
-                self.assertIsInstance(prod_cont_kernel, MaternKernel)
+                self.assertIsInstance(prod_cont_kernel, RBFKernel)
                 self.assertIsInstance(prod_cat_kernel, CategoricalKernel)
             else:
                 self.assertIsInstance(model.covar_module, ScaleKernel)

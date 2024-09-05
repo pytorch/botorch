@@ -414,6 +414,7 @@ class TestBatchedMultiOutputGPyTorchModel(BotorchTestCase):
 
 class TestModelListGPyTorchModel(BotorchTestCase):
     def test_model_list_gpytorch_model(self):
+        torch.manual_seed(12345)
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
             train_X1, train_X2 = (
@@ -512,16 +513,15 @@ class TestModelListGPyTorchModel(BotorchTestCase):
                 self.assertEqual(
                     posterior_subset.mean.shape, torch.Size([2, len(output_indices)])
                 )
-                self.assertTrue(
-                    torch.allclose(
-                        posterior_subset.mean, posterior.mean[..., output_indices]
-                    )
+                self.assertAllClose(
+                    posterior_subset.mean,
+                    posterior.mean[..., output_indices],
+                    atol=1e-6,
                 )
-                self.assertTrue(
-                    torch.allclose(
-                        posterior_subset.variance,
-                        posterior.variance[..., output_indices],
-                    )
+                self.assertAllClose(
+                    posterior_subset.variance,
+                    posterior.variance[..., output_indices],
+                    atol=1e-6,
                 )
             # test observation noise
             model = SimpleModelListGPyTorchModel(m1, m2)

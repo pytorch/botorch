@@ -133,7 +133,7 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
 
                 # but that the covariance does have a gradient
                 self.assertIsNotNone(
-                    batched_model.model.covar_module.raw_outputscale.grad
+                    batched_model.model.covar_module.raw_lengthscale.grad
                 )
 
                 # check that we always have three outputs
