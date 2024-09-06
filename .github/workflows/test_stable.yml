@@ -38,10 +38,12 @@ jobs:
         conda install -y -c gpytorch gpytorch
         conda install -y -c conda-forge pyro-ppl>=1.8.4
         pip install .[test]
-    - name: Unit tests
-      shell: bash -l {0}
+    - name: Unit tests and coverage -- BoTorch
       run: |
-        pytest -ra
+        pytest -ra test/ --cov botorch/ --cov-report term-missing --cov-report xml:botorch_cov.xml
+    - name: Unit tests and coverage -- BoTorch Community
+      run: |
+        pytest -ra test_community/ --cov botorch_community/ --cov-report term-missing --cov-report xml:botorch_community_cov.xml
 
   tests-and-coverage-min-req-pip:
     name: Tests and coverage min req. torch, gpytorch & linear_operator versions (pip, Python ${{ matrix.python-version }}, ${{ matrix.os }})
@@ -67,9 +69,12 @@ jobs:
         min_linear_operator_version=$(grep '\blinear_operator[>=]=' ${req_txt} | sed 's/[^0-9.]//g')
         pip install "torch==${min_torch_version}" "gpytorch==${min_gpytorch_version}" "linear_operator==${min_linear_operator_version}"
         pip install .[test]
-    - name: Unit tests and coverage
+    - name: Unit tests and coverage -- BoTorch
       run: |
-        pytest -ra --cov=. --cov-report term-missing
+        pytest -ra test/ --cov botorch/ --cov-report term-missing --cov-report xml:botorch_cov.xml
+    - name: Unit tests and coverage -- BoTorch Community
+      run: |
+        pytest -ra test_community/ --cov botorch_community/ --cov-report term-missing --cov-report xml:botorch_community_cov.xml
 
   run_tutorials_stable_w_latest_ax:
     name: Run tutorials without smoke test on min req. versions of PyTorch & GPyTorch and latest Ax
