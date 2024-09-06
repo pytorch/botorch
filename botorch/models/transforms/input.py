@@ -412,8 +412,8 @@ class AffineInputTransform(ReversibleInputTransform, Module):
         Returns:
             A `batch_shape x n x d`-dim tensor of transformed inputs.
         """
+        self._check_shape(X)
         if self.learn_coefficients and self.training:
-            self._check_shape(X)
             self._update_coefficients(X)
         self._to(X)
         return (X - self.offset) / self.coefficient

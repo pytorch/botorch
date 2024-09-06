@@ -388,8 +388,8 @@ def batched_multi_output_to_single_output(
     Example:
         >>> train_X = torch.rand(5, 2)
         >>> train_Y = torch.rand(5, 2)
-        >>> batch_mo_gp = SingleTaskGP(train_X, train_Y)
-        >>> batch_so_gp = batched_multioutput_to_single_output(batch_gp)
+        >>> batch_mo_gp = SingleTaskGP(train_X, train_Y, outcome_transform=None)
+        >>> batch_so_gp = batched_multi_output_to_single_output(batch_mo_gp)
     """
     warnings.warn(DEPRECATION_MESSAGE, DeprecationWarning, stacklevel=2)
     was_training = batch_mo_model.training
