@@ -49,7 +49,6 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">warnings</span>
-
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -62,9 +61,9 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
+<span class="kn">from</span> <span class="nn">botorch.models.utils.gpytorch_modules</span> <span class="kn">import</span> <span class="n">get_covar_module_with_dim_scaled_prior</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">SupervisedDataset</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.kernel</span> <span class="kn">import</span> <span class="n">ProductKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels.rbf_kernel</span> <span class="kn">import</span> <span class="n">RBFKernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.scale_kernel</span> <span class="kn">import</span> <span class="n">ScaleKernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.likelihoods.likelihood</span> <span class="kn">import</span> <span class="n">Likelihood</span>
 <span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span>
@@ -178,6 +177,7 @@
             <span class="n">outcome_transform</span><span class="o">=</span><span class="n">outcome_transform</span><span class="p">,</span>
             <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="c1"># Used for subsetting along the output dimension. See Model.subset_output.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_subset_batch_dict</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"mean_module.raw_constant"</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
             <span class="s2">"covar_module.raw_outputscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
@@ -305,10 +305,9 @@
             <span class="n">non_active_dims</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">iteration_fidelity</span><span class="p">)</span>
         <span class="n">active_dimsX</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">))</span> <span class="o">-</span> <span class="n">non_active_dims</span><span class="p">)</span>
         <span class="n">kernels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">RBFKernel</span><span class="p">(</span>
+            <span class="n">get_covar_module_with_dim_scaled_prior</span><span class="p">(</span>
                 <span class="n">ard_num_dims</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">active_dimsX</span><span class="p">),</span>
                 <span class="n">batch_shape</span><span class="o">=</span><span class="n">aug_batch_shape</span><span class="p">,</span>
-                <span class="n">lengthscale_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">),</span>
                 <span class="n">active_dims</span><span class="o">=</span><span class="n">active_dimsX</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>

@@ -174,7 +174,7 @@
 <span class="sd">                is None, and a `FixedNoiseGaussianLikelihood` with the given</span>
 <span class="sd">                noise observations if `train_Yvar` is not None.</span>
 <span class="sd">            covar_module: The module computing the covariance (Kernel) matrix.</span>
-<span class="sd">                If omitted, use a `MaternKernel`.</span>
+<span class="sd">                If omitted, uses an `RBFKernel`.</span>
 <span class="sd">            mean_module: The mean function to be used. If omitted, use a</span>
 <span class="sd">                `ConstantMean`.</span>
 <span class="sd">            outcome_transform: An outcome transform that is applied to the</span>
@@ -232,6 +232,7 @@
                 <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">transformed_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
                 <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
             <span class="p">)</span>
+            <span class="c1"># Used for subsetting along the output dimension. See Model.subset_output.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_subset_batch_dict</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">"mean_module.raw_constant"</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
                 <span class="s2">"covar_module.raw_lengthscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span>

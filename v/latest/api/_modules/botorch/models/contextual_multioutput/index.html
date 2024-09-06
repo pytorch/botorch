@@ -89,7 +89,7 @@
 <span class="sd">                is common across all tasks.</span>
 <span class="sd">            mean_module: The mean function to be used. Defaults to `ConstantMean`.</span>
 <span class="sd">            covar_module: The module for computing the covariance matrix between</span>
-<span class="sd">                the non-task features. Defaults to `MaternKernel`.</span>
+<span class="sd">                the non-task features. Defaults to `RBFKernel`.</span>
 <span class="sd">            likelihood: A likelihood. The default is selected based on `train_Yvar`.</span>
 <span class="sd">                If `train_Yvar` is None, a standard `GaussianLikelihood` with inferred</span>
 <span class="sd">                noise level is used. Otherwise, a FixedNoiseGaussianLikelihood is used.</span>

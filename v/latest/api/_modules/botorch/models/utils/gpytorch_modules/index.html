@@ -41,7 +41,7 @@
 <span class="sd">"""</span>
 
 <span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">log</span><span class="p">,</span> <span class="n">sqrt</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">gpytorch.constraints.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span>
@@ -135,7 +135,8 @@
     <span class="n">ard_num_dims</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">batch_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">use_rbf_kernel</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">MaternKernel</span><span class="p">,</span> <span class="n">RBFKernel</span><span class="p">,</span> <span class="n">ScaleKernel</span><span class="p">]:</span>
+    <span class="n">active_dims</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">MaternKernel</span><span class="p">,</span> <span class="n">RBFKernel</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Returns an RBF or Matern kernel with priors</span>
 <span class="sd">    from  [Hvarfner2024vanilla]_.</span>
 
@@ -143,6 +144,9 @@
 <span class="sd">        ard_num_dims: Number of feature dimensions for ARD.</span>
 <span class="sd">        batch_shape: Batch shape for the covariance module.</span>
 <span class="sd">        use_rbf_kernel: Whether to use an RBF kernel. If False, uses a Matern kernel.</span>
+<span class="sd">        active_dims: The set of input dimensions to compute the covariances on.</span>
+<span class="sd">            By default, the covariance is computed using the full input tensor.</span>
+<span class="sd">            Set this if you'd like to ignore certain dimensions.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A Kernel constructed according to the given arguments. The prior is constrained</span>
@@ -157,6 +161,8 @@
         <span class="n">lengthscale_constraint</span><span class="o">=</span><span class="n">GreaterThan</span><span class="p">(</span>
             <span class="mf">2.5e-2</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_value</span><span class="o">=</span><span class="n">lengthscale_prior</span><span class="o">.</span><span class="n">mode</span>
         <span class="p">),</span>
+        <span class="c1"># pyre-ignore[6] GPyTorch type is unnecessarily restrictive.</span>
+        <span class="n">active_dims</span><span class="o">=</span><span class="n">active_dims</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">base_kernel</span></div>
 

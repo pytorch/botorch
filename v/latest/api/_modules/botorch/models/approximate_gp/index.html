@@ -63,8 +63,8 @@
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.utils</span> <span class="kn">import</span> <span class="n">validate_input_scaling</span>
 <span class="kn">from</span> <span class="nn">botorch.models.utils.gpytorch_modules</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">get_gaussian_likelihood_with_gamma_prior</span><span class="p">,</span>
-    <span class="n">get_matern_kernel_with_gamma_prior</span><span class="p">,</span>
+    <span class="n">get_covar_module_with_dim_scaled_prior</span><span class="p">,</span>
+    <span class="n">get_gaussian_likelihood_with_lognormal_prior</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.models.utils.inducing_point_allocators</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">GreedyVarianceReduction</span><span class="p">,</span>
@@ -231,7 +231,7 @@
 <span class="sd">                this does not have to be all of the training inputs).</span>
 <span class="sd">            train_Y: Not used.</span>
 <span class="sd">            num_outputs: Number of output responses per input.</span>
-<span class="sd">            covar_module: Kernel function. If omitted, uses a `MaternKernel`.</span>
+<span class="sd">            covar_module: Kernel function. If omitted, uses an `RBFKernel`.</span>
 <span class="sd">            mean_module: Mean of GP model. If omitted, uses a `ConstantMean`.</span>
 <span class="sd">            variational_distribution: Type of variational distribution to use</span>
 <span class="sd">                (default: CholeskyVariationalDistribution), the properties of the</span>
@@ -255,15 +255,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span> <span class="o">=</span> <span class="n">aug_batch_shape</span>
 
         <span class="k">if</span> <span class="n">covar_module</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">covar_module</span> <span class="o">=</span> <span class="n">get_matern_kernel_with_gamma_prior</span><span class="p">(</span>
+            <span class="n">covar_module</span> <span class="o">=</span> <span class="n">get_covar_module_with_dim_scaled_prior</span><span class="p">(</span>
                 <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
                 <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
             <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_subset_batch_dict</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s2">"mean_module.constant"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
-                <span class="s2">"covar_module.raw_outputscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
-                <span class="s2">"covar_module.base_kernel.raw_lengthscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span>
-            <span class="p">}</span>
 
         <span class="k">if</span> <span class="n">inducing_point_allocator</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">inducing_point_allocator</span> <span class="o">=</span> <span class="n">GreedyVarianceReduction</span><span class="p">()</span>
@@ -383,7 +378,7 @@
 <span class="sd">                either a `GaussianLikelihood` (if `num_outputs=1`) or a</span>
 <span class="sd">                `MultitaskGaussianLikelihood`(if `num_outputs&gt;1`).</span>
 <span class="sd">            num_outputs: Number of output responses per input (default: 1).</span>
-<span class="sd">            covar_module: Kernel function. If omitted, uses a `MaternKernel`.</span>
+<span class="sd">            covar_module: Kernel function. If omitted, uses an `RBFKernel`.</span>
 <span class="sd">            mean_module: Mean of GP model. If omitted, uses a `ConstantMean`.</span>
 <span class="sd">            variational_distribution: Type of variational distribution to use</span>
 <span class="sd">                (default: CholeskyVariationalDistribution), the properties of the</span>
@@ -418,7 +413,7 @@
 
         <span class="k">if</span> <span class="n">likelihood</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">num_outputs</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">likelihood</span> <span class="o">=</span> <span class="n">get_gaussian_likelihood_with_gamma_prior</span><span class="p">(</span>
+                <span class="n">likelihood</span> <span class="o">=</span> <span class="n">get_gaussian_likelihood_with_lognormal_prior</span><span class="p">(</span>
                     <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span>
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>

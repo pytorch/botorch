@@ -63,7 +63,8 @@
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.utils.gpytorch_modules</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">get_matern_kernel_with_gamma_prior</span><span class="p">,</span>
+    <span class="n">get_covar_module_with_dim_scaled_prior</span><span class="p">,</span>
+    <span class="n">get_gaussian_likelihood_with_lognormal_prior</span><span class="p">,</span>
     <span class="n">MIN_INFERRED_NOISE_LEVEL</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.multitask</span> <span class="kn">import</span> <span class="n">MultitaskGPPosterior</span>
@@ -74,12 +75,8 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions.multivariate_normal</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.index_kernel</span> <span class="kn">import</span> <span class="n">IndexKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels.matern_kernel</span> <span class="kn">import</span> <span class="n">MaternKernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.multitask_kernel</span> <span class="kn">import</span> <span class="n">MultitaskKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.gaussian_likelihood</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">FixedNoiseGaussianLikelihood</span><span class="p">,</span>
-    <span class="n">GaussianLikelihood</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.gaussian_likelihood</span> <span class="kn">import</span> <span class="n">FixedNoiseGaussianLikelihood</span>
 <span class="kn">from</span> <span class="nn">gpytorch.likelihoods.likelihood</span> <span class="kn">import</span> <span class="n">Likelihood</span>
 <span class="kn">from</span> <span class="nn">gpytorch.likelihoods.multitask_gaussian_likelihood</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">MultitaskGaussianLikelihood</span><span class="p">,</span>
@@ -195,7 +192,7 @@
 <span class="sd">                Note that the inferred noise is common across all tasks.</span>
 <span class="sd">            mean_module: The mean function to be used. Defaults to `ConstantMean`.</span>
 <span class="sd">            covar_module: The module for computing the covariance matrix between</span>
-<span class="sd">                the non-task features. Defaults to `MaternKernel`.</span>
+<span class="sd">                the non-task features. Defaults to `RBFKernel`.</span>
 <span class="sd">            likelihood: A likelihood. The default is selected based on `train_Yvar`.</span>
 <span class="sd">                If `train_Yvar` is None, a standard `GaussianLikelihood` with inferred</span>
 <span class="sd">                noise level is used. Otherwise, a FixedNoiseGaussianLikelihood is used.</span>
@@ -261,7 +258,7 @@
         <span class="c1"># TODO (T41270962): Support task-specific noise levels in likelihood</span>
         <span class="k">if</span> <span class="n">likelihood</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">train_Yvar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">likelihood</span> <span class="o">=</span> <span class="n">GaussianLikelihood</span><span class="p">(</span><span class="n">noise_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">))</span>
+                <span class="n">likelihood</span> <span class="o">=</span> <span class="n">get_gaussian_likelihood_with_lognormal_prior</span><span class="p">()</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">likelihood</span> <span class="o">=</span> <span class="n">FixedNoiseGaussianLikelihood</span><span class="p">(</span><span class="n">noise</span><span class="o">=</span><span class="n">train_Yvar</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
 
@@ -275,7 +272,7 @@
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span> <span class="o">=</span> <span class="n">mean_module</span> <span class="ow">or</span> <span class="n">ConstantMean</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">covar_module</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span> <span class="o">=</span> <span class="n">get_matern_kernel_with_gamma_prior</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span> <span class="o">=</span> <span class="n">get_covar_module_with_dim_scaled_prior</span><span class="p">(</span>
                 <span class="n">ard_num_dims</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_non_task_features</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -482,7 +479,7 @@
 <span class="sd">                `MultitaskGaussianLikelihood` with a `GammaPrior(1.1, 0.05)`</span>
 <span class="sd">                noise prior.</span>
 <span class="sd">            data_covar_module: The module computing the covariance (Kernel) matrix</span>
-<span class="sd">                in data space. If omitted, use a `MaternKernel`.</span>
+<span class="sd">                in data space. If omitted, uses an `RBFKernel`.</span>
 <span class="sd">            task_covar_prior : A Prior on the task covariance matrix. Must operate</span>
 <span class="sd">                on p.s.d. matrices. A common prior for this is the `LKJ` prior. If</span>
 <span class="sd">                omitted, uses `LKJCovariancePrior` with `eta` parameter as specified</span>
@@ -540,10 +537,8 @@
             <span class="n">base_means</span><span class="o">=</span><span class="n">ConstantMean</span><span class="p">(</span><span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span><span class="p">),</span> <span class="n">num_tasks</span><span class="o">=</span><span class="n">num_tasks</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">data_covar_module</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">data_covar_module</span> <span class="o">=</span> <span class="n">MaternKernel</span><span class="p">(</span>
-                <span class="n">nu</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span>
+            <span class="n">data_covar_module</span> <span class="o">=</span> <span class="n">get_covar_module_with_dim_scaled_prior</span><span class="p">(</span>
                 <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">ard_num_dims</span><span class="p">,</span>
-                <span class="n">lengthscale_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">),</span>
                 <span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>

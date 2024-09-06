@@ -588,7 +588,9 @@
             <span class="n">subset_batch_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subset_batch_dict</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                <span class="s2">"subset_output requires the model to define a `_subset_dict` attribute"</span>
+                <span class="s2">"`subset_output` requires the model to define a `_subset_batch_dict` "</span>
+                <span class="s2">"attribute that lists the indices of the output dimensions in each "</span>
+                <span class="s2">"model parameter that needs to be subset."</span>
             <span class="p">)</span>
 
         <span class="n">m</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">idcs</span><span class="p">)</span>
