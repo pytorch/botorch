@@ -39,9 +39,11 @@ jobs:
         conda install -y -c conda-forge pyro-ppl>=1.8.4
         pip install .[test]
     - name: Unit tests and coverage -- BoTorch
+      shell: bash -l {0}
       run: |
         pytest -ra test/ --cov botorch/ --cov-report term-missing --cov-report xml:botorch_cov.xml
     - name: Unit tests and coverage -- BoTorch Community
+      shell: bash -l {0}
       run: |
         pytest -ra test_community/ --cov botorch_community/ --cov-report term-missing --cov-report xml:botorch_community_cov.xml
 
