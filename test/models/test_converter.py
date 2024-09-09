@@ -278,13 +278,21 @@ class TestConverters(BotorchTestCase):
                 batch_shape=torch.Size([3]),
             )
             gp1_ = SingleTaskGP(
-                train_X, train_Y1, input_transform=input_tf2, outcome_transform=None
+                train_X=train_X.unsqueeze(0),
+                train_Y=train_Y1.unsqueeze(0),
+                input_transform=input_tf2,
+                outcome_transform=None,
             )
             gp2_ = SingleTaskGP(
-                train_X, train_Y2, input_transform=input_tf2, outcome_transform=None
+                train_X=train_X.unsqueeze(0),
+                train_Y=train_Y2.unsqueeze(0),
+                input_transform=input_tf2,
+                outcome_transform=None,
             )
             list_gp = ModelListGP(gp1_, gp2_)
-            with self.assertRaises(UnsupportedError):
+            with self.assertRaisesRegex(
+                UnsupportedError, "Batched input_transforms are not supported."
+            ):
                 model_list_to_batched(list_gp)
 
             # test outcome transform
@@ -457,7 +465,6 @@ class TestConverters(BotorchTestCase):
                 bounds=torch.tensor(
                     [[-1.0, -1.0], [1.0, 1.0]], device=self.device, dtype=dtype
                 ),
-                batch_shape=torch.Size([2]),
             )
             batched_mo_model = SingleTaskGP(
                 train_X, train_Y, input_transform=input_tf, outcome_transform=None

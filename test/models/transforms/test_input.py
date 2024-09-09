@@ -228,7 +228,10 @@ class TestInputTransforms(BotorchTestCase):
             self.assertTrue(nlz.mins.dtype == other_dtype)
             # test incompatible dimensions of specified bounds
             bounds = torch.zeros(2, 3, device=self.device, dtype=dtype)
-            with self.assertRaises(BotorchTensorDimensionError):
+            with self.assertRaisesRegex(
+                BotorchTensorDimensionError,
+                "Dimensions of provided `bounds` are incompatible",
+            ):
                 Normalize(d=2, bounds=bounds)
 
             # test jitter
@@ -266,7 +269,12 @@ class TestInputTransforms(BotorchTestCase):
                 # test errors on wrong shape
                 nlz = Normalize(d=2, batch_shape=batch_shape)
                 X = torch.randn(*batch_shape, 2, 1, device=self.device, dtype=dtype)
-                with self.assertRaises(BotorchTensorDimensionError):
+                expected_msg = "Wrong input dimension. Received 1, expected 2."
+                with self.assertRaisesRegex(BotorchTensorDimensionError, expected_msg):
+                    nlz(X)
+                # Same error in eval mode
+                nlz.eval()
+                with self.assertRaisesRegex(BotorchTensorDimensionError, expected_msg):
                     nlz(X)
 
                 # fixed bounds
@@ -328,9 +336,8 @@ class TestInputTransforms(BotorchTestCase):
                     [X.min(dim=-2, keepdim=True)[0], X.max(dim=-2, keepdim=True)[0]],
                     dim=-2,
                 )[..., indices]
-                self.assertTrue(
-                    torch.allclose(nlz.bounds, expected_bounds, atol=1e-4, rtol=1e-4)
-                )
+                self.assertAllClose(nlz.bounds, expected_bounds, atol=1e-4, rtol=1e-4)
+
                 # test errors on wrong shape
                 nlz = Normalize(d=2, batch_shape=batch_shape)
                 X = torch.randn(*batch_shape, 2, 1, device=self.device, dtype=dtype)

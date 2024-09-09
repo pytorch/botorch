@@ -78,7 +78,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                     proximal_test_X = test_X.clone()
                     if transformed_weighting:
                         if input_transform is not None:
-                            last_X = input_transform(train_X[-1])
+                            last_X = input_transform(train_X[-1].unsqueeze(0))
                             proximal_test_X = input_transform(test_X)
 
                     mv_normal = MultivariateNormal(last_X, torch.diag(proximal_weights))
@@ -105,7 +105,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                     proximal_test_X = test_X.clone()
                     if transformed_weighting:
                         if input_transform is not None:
-                            last_X = input_transform(train_X[-1])
+                            last_X = input_transform(train_X[-1].unsqueeze(0))
                             proximal_test_X = input_transform(test_X)
 
                     mv_normal = MultivariateNormal(last_X, torch.diag(proximal_weights))
@@ -122,7 +122,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                     proximal_test_X = test_X.clone()
                     if transformed_weighting:
                         if input_transform is not None:
-                            last_X = input_transform(train_X[-1])
+                            last_X = input_transform(train_X[-1].unsqueeze(0))
                             proximal_test_X = input_transform(test_X)
 
                     ei = EI(test_X)
@@ -143,7 +143,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                     proximal_test_X = test_X.clone()
                     if transformed_weighting:
                         if input_transform is not None:
-                            last_X = input_transform(train_X[-1])
+                            last_X = input_transform(train_X[-1].unsqueeze(0))
                             proximal_test_X = input_transform(test_X)
 
                     qEI_prox = ProximalAcquisitionFunction(

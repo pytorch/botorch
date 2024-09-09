@@ -327,5 +327,5 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
                     model.likelihood, model.model, num_data=train_X.shape[-2]
                 )
                 fit_gpytorch_mll(mll)
-                post = model.posterior(torch.tensor([train_X.mean()]))
+                post = model.posterior(torch.tensor([[train_X.mean()]]))
                 self.assertAllClose(post.mean[0][0], y.mean(), atol=1e-3, rtol=1e-3)
