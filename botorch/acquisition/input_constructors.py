@@ -1255,8 +1255,12 @@ def construct_inputs_qMFKG(
     cost_intercept: float = 1.0,
     num_trace_observations: int = 0,
     num_fantasies: int = 64,
+    **optimize_objective_kwargs: TOptimizeObjectiveKwargs,
 ) -> dict[str, Any]:
     r"""Construct kwargs for `qMultiFidelityKnowledgeGradient` constructor."""
+
+    X = _get_dataset_field(training_data, "X", first_only=True)
+    _bounds = torch.as_tensor(bounds, dtype=X.dtype, device=X.device)
 
     inputs_mf = construct_inputs_mf_base(
         target_fidelities=target_fidelities,
@@ -1265,16 +1269,24 @@ def construct_inputs_qMFKG(
         num_trace_observations=num_trace_observations,
     )
 
-    inputs_kg = construct_inputs_qKG(
+    _, current_value = optimize_objective(
         model=model,
-        training_data=training_data,
-        bounds=bounds,
+        bounds=_bounds.t(),
+        q=1,
         objective=objective,
         posterior_transform=posterior_transform,
-        num_fantasies=num_fantasies,
+        fixed_features=target_fidelities,
+        **optimize_objective_kwargs,
     )
 
-    return {**inputs_mf, **inputs_kg}
+    return {
+        "model": model,
+        "objective": objective,
+        "posterior_transform": posterior_transform,
+        "num_fantasies": num_fantasies,
+        "current_value": current_value.detach().cpu().max(),
+        **inputs_mf,
+    }
 
 
 @acqf_input_constructor(qMultiFidelityMaxValueEntropy)

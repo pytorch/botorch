@@ -1304,28 +1304,49 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
                 )
 
     def test_construct_inputs_mfkg(self) -> None:
+        current_value = torch.tensor(1.23)
+
         constructor_args = {
-            "model": None,
+            "model": self.mock_model,
             "training_data": self.blockX_blockY,
-            "objective": None,
             "bounds": self.bounds,
-            "num_fantasies": 123,
             "target_fidelities": {0: 0.987},
+            "objective": None,
             "fidelity_weights": {0: 0.654},
             "cost_intercept": 0.321,
+            "num_fantasies": 123,
         }
 
         input_constructor = get_acqf_input_constructor(qMultiFidelityKnowledgeGradient)
         with mock.patch(
-            target="botorch.acquisition.input_constructors.construct_inputs_mf_base",
-            return_value={"foo": 0},
-        ), mock.patch(
-            target="botorch.acquisition.input_constructors.construct_inputs_qKG",
-            return_value={"bar": 1},
-        ):
+            target="botorch.acquisition.input_constructors.optimize_acqf",
+            return_value=(None, current_value),
+        ) as mock_optimize_acqf:
             inputs_mfkg = input_constructor(**constructor_args)
-        inputs_test = {"foo": 0, "bar": 1}
-        self.assertEqual(inputs_mfkg, inputs_test)
+
+            mock_optimize_acqf_kwargs = mock_optimize_acqf.call_args[1]
+
+            self.assertIsInstance(
+                mock_optimize_acqf_kwargs["acq_function"],
+                FixedFeatureAcquisitionFunction,
+            )
+            self.assertLessEqual(
+                {
+                    "model",
+                    "objective",
+                    "current_value",
+                    "project",
+                    "expand",
+                    "cost_aware_utility",
+                    "posterior_transform",
+                    "num_fantasies",
+                },
+                set(inputs_mfkg.keys()),
+            )
+            self.assertEqual(
+                inputs_mfkg["num_fantasies"], constructor_args["num_fantasies"]
+            )
+            self.assertEqual(inputs_mfkg["current_value"], current_value)
 
     def test_construct_inputs_mfmes(self) -> None:
         target_fidelities = {0: 0.987}
@@ -1467,7 +1488,19 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
             },
         )
         self.cases["MF look-ahead"] = (
-            [qMultiFidelityKnowledgeGradient, qMultiFidelityMaxValueEntropy],
+            [qMultiFidelityMaxValueEntropy],
+            {
+                "model": kg_model,
+                "training_data": self.blockX_blockY,
+                "bounds": bounds,
+                "target_fidelities": {0: 0.987},
+                "num_fantasies": 30,
+            },
+        )
+        bounds = torch.ones((2, 2))
+        kg_model = SingleTaskGP(train_X=torch.rand((3, 2)), train_Y=torch.rand((3, 1)))
+        self.cases["MF look-ahead (KG)"] = (
+            [qMultiFidelityKnowledgeGradient],
             {
                 "model": kg_model,
                 "training_data": self.blockX_blockY,
