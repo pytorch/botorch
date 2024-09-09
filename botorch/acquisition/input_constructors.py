@@ -1532,6 +1532,7 @@ def optimize_objective(
     model: Model,
     bounds: Tensor,
     q: int,
+    acq_function: Optional[AcquisitionFunction] = None,
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
     linear_constraints: Optional[tuple[Tensor, Tensor]] = None,
@@ -1574,18 +1575,21 @@ def optimize_objective(
     if optimizer_options is None:
         optimizer_options = {}
 
-    if objective is not None:
-        sampler_cls = SobolQMCNormalSampler if qmc else IIDNormalSampler
-        acq_function = qSimpleRegret(
-            model=model,
-            objective=objective,
-            posterior_transform=posterior_transform,
-            sampler=sampler_cls(sample_shape=torch.Size([mc_samples]), seed=seed_inner),
-        )
-    else:
-        acq_function = PosteriorMean(
-            model=model, posterior_transform=posterior_transform
-        )
+    if acq_function is None:
+        if objective is None:
+            acq_function = PosteriorMean(
+                model=model, posterior_transform=posterior_transform
+            )
+        else:
+            sampler_cls = SobolQMCNormalSampler if qmc else IIDNormalSampler
+            acq_function = qSimpleRegret(
+                model=model,
+                objective=objective,
+                posterior_transform=posterior_transform,
+                sampler=sampler_cls(
+                    sample_shape=torch.Size([mc_samples]), seed=seed_inner
+                ),
+            )
 
     if fixed_features:
         acq_function = FixedFeatureAcquisitionFunction(

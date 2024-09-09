@@ -220,6 +220,16 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase):
         mock_model = self.mock_model
         bounds = torch.rand(2, len(self.bounds))
 
+        with self.subTest("scalarObjective_acqusitionFunction"):
+            optimize_objective(
+                model=mock_model,
+                bounds=bounds,
+                q=1,
+                acq_function=UpperConfidenceBound(model=mock_model, beta=0.1),
+            )
+            kwargs = mock_optimize_acqf.call_args[1]
+            self.assertIsInstance(kwargs["acq_function"], UpperConfidenceBound)
+
         A = torch.rand(1, bounds.shape[-1])
         b = torch.zeros([1, 1])
         idx = A[0].nonzero(as_tuple=False).squeeze()
