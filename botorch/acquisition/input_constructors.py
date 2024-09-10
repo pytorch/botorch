@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Hashable, Iterable, Sequence
-from typing import Any, Callable, Optional, TypeVar, Union
+from typing import Any, Callable, List, Optional, TypeVar, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -50,6 +50,7 @@ from botorch.acquisition.max_value_entropy_search import (
 )
 from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
+    qLowerConfidenceBound,
     qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
     qSimpleRegret,
@@ -767,13 +768,15 @@ def construct_inputs_qPI(
     }
 
 
-@acqf_input_constructor(qUpperConfidenceBound)
+@acqf_input_constructor(qLowerConfidenceBound, qUpperConfidenceBound)
 def construct_inputs_qUCB(
     model: Model,
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
     X_pending: Optional[Tensor] = None,
     sampler: Optional[MCSampler] = None,
+    X_baseline: Optional[Tensor] = None,
+    constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     beta: float = 0.2,
 ) -> dict[str, Any]:
     r"""Construct kwargs for the `qUpperConfidenceBound` constructor.
@@ -788,11 +791,30 @@ def construct_inputs_qUCB(
             Concatenated into X upon forward call.
         sampler: The sampler used to draw base samples. If omitted, uses
             the acquisition functions's default sampler.
+        X_baseline: A `batch_shape x r x d`-dim Tensor of `r` design points
+            that have already been observed. These points are used to
+            compute with infeasible cost when there are constraints.
+        constraints: A list of constraint callables which map a Tensor of posterior
+            samples of dimension `sample_shape x batch-shape x q x m`-dim to a
+            `sample_shape x batch-shape x q`-dim Tensor. The associated constraints
+            are considered satisfied if the output is less than zero.
         beta: Controls tradeoff between mean and standard deviation in UCB.
 
     Returns:
         A dict mapping kwarg names of the constructor to values.
     """
+    if constraints is not None:
+        if X_baseline is None:
+            raise ValueError("Constraints require an X_baseline.")
+        if objective is None:
+            objective = IdentityMCObjective()
+        objective = ConstrainedMCObjective(
+            objective=objective,
+            constraints=constraints,
+            infeasible_cost=get_infeasible_cost(
+                X=X_baseline, model=model, objective=objective
+            ),
+        )
     return {
         "model": model,
         "objective": objective,

@@ -61,6 +61,7 @@ from botorch.acquisition.max_value_entropy_search import (
 )
 from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
+    qLowerConfidenceBound,
     qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
     qSimpleRegret,
@@ -86,6 +87,7 @@ from botorch.acquisition.multi_objective.parego import qLogNParEGO
 from botorch.acquisition.multi_objective.utils import get_default_partitioning_alpha
 from botorch.acquisition.objective import (
     ConstrainedMCObjective,
+    IdentityMCObjective,
     LinearMCObjective,
     ScalarizedPosteriorTransform,
 )
@@ -754,34 +756,86 @@ class TestMCAcquisitionFunctionInputConstructors(InputConstructorBaseTestCase):
         self.assertIs(acqf.model, mock_model)
         self.assertIs(acqf.objective, objective)
 
-    def test_construct_inputs_qUCB(self) -> None:
-        c = get_acqf_input_constructor(qUpperConfidenceBound)
+
+class TestQUpperConfidenceBoundInputConstructor(InputConstructorBaseTestCase):
+    acqf_class = qUpperConfidenceBound
+
+    def setUp(self, suppress_input_warnings: bool = True) -> None:
+        super().setUp(suppress_input_warnings=suppress_input_warnings)
+        self.c = get_acqf_input_constructor(self.acqf_class)
+
+    def test_confidence_bound(self) -> None:
         mock_model = self.mock_model
-        kwargs = c(model=mock_model, training_data=self.blockX_blockY)
+        kwargs = self.c(model=mock_model, training_data=self.blockX_blockY)
         self.assertEqual(kwargs["model"], mock_model)
-        self.assertIsNone(kwargs["objective"])
         self.assertIsNone(kwargs["X_pending"])
         self.assertIsNone(kwargs["sampler"])
         self.assertEqual(kwargs["beta"], 0.2)
-        acqf = qUpperConfidenceBound(**kwargs)
+        acqf = self.acqf_class(**kwargs)
         self.assertIs(acqf.model, mock_model)
 
+    def test_confidence_bound_with_objective(self) -> None:
         X_pending = torch.rand(2, 2)
         objective = LinearMCObjective(torch.rand(2))
-        kwargs = c(
-            model=mock_model,
+        kwargs = self.c(
+            model=self.mock_model,
             training_data=self.blockX_blockY,
             objective=objective,
             X_pending=X_pending,
             beta=0.1,
         )
-        self.assertEqual(kwargs["model"], mock_model)
+        self.assertEqual(kwargs["model"], self.mock_model)
         self.assertTrue(torch.equal(kwargs["objective"].weights, objective.weights))
         self.assertTrue(torch.equal(kwargs["X_pending"], X_pending))
         self.assertIsNone(kwargs["sampler"])
         self.assertEqual(kwargs["beta"], 0.1)
-        acqf = qUpperConfidenceBound(**kwargs)
-        self.assertIs(acqf.model, mock_model)
+        acqf = self.acqf_class(**kwargs)
+        self.assertIs(acqf.model, self.mock_model)
+
+    def test_confidence_bound_with_constraints_error(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Constraints require an X_baseline."):
+            self.c(
+                model=self.mock_model,
+                training_data=self.blockX_blockY,
+                constraints=torch.rand(2, 2),
+            )
+
+    def test_confidence_bound_with_constraints(self) -> None:
+        # these are needed for computing the infeasible cost
+        self.mock_model._posterior._mean = torch.zeros(2, 2)
+        self.mock_model._posterior._variance = torch.ones(2, 2)
+
+        X_baseline = torch.rand(2, 2)
+        outcome_constraints = (torch.tensor([[0.0, 1.0]]), torch.tensor([[0.5]]))
+        constraints = get_outcome_constraint_transforms(
+            outcome_constraints=outcome_constraints
+        )
+        for objective in (LinearMCObjective(torch.rand(2)), None):
+            with self.subTest(objective=objective):
+                kwargs = self.c(
+                    model=self.mock_model,
+                    training_data=self.blockX_blockY,
+                    objective=objective,
+                    constraints=constraints,
+                    X_baseline=X_baseline,
+                )
+                final_objective = kwargs["objective"]
+                self.assertIsInstance(final_objective, ConstrainedMCObjective)
+                if objective is None:
+                    self.assertIsInstance(
+                        final_objective.objective, IdentityMCObjective
+                    )
+                else:
+                    self.assertIs(final_objective.objective, objective)
+                self.assertIs(final_objective.constraints, constraints)
+                # test that we can construct the acquisition function
+                self.acqf_class(**kwargs)
+
+
+class TestQLowerConfidenceBoundInputConstructor(
+    TestQUpperConfidenceBoundInputConstructor
+):
+    acqf_class = qLowerConfidenceBound
 
 
 class TestMultiObjectiveAcquisitionFunctionInputConstructors(
@@ -1452,7 +1506,12 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
         # {key: (list of acquisition functions, arguments they accept)}
         self.cases = {
             "PosteriorMean-type": (
-                [PosteriorMean, UpperConfidenceBound, qUpperConfidenceBound],
+                [
+                    PosteriorMean,
+                    UpperConfidenceBound,
+                    qUpperConfidenceBound,
+                    qLowerConfidenceBound,
+                ],
                 {"model": self.mock_model},
             ),
         }
