@@ -1257,24 +1257,39 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
 
 class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCase):
     def test_construct_inputs_kg(self) -> None:
-        current_value = torch.tensor(1.23)
-        with mock.patch(
-            target="botorch.acquisition.input_constructors.optimize_objective",
-            return_value=(None, current_value),
-        ):
-            from botorch.acquisition import input_constructors
+        func = get_acqf_input_constructor(qKnowledgeGradient)
 
-            func = input_constructors.get_acqf_input_constructor(qKnowledgeGradient)
+        with self.subTest("test_with_current_value"):
+
+            current_value = torch.tensor(1.23)
+
+            with mock.patch(
+                target="botorch.acquisition.input_constructors.optimize_objective",
+                return_value=(None, current_value),
+            ):
+
+                kwargs = func(
+                    model=mock.Mock(),
+                    training_data=self.blockX_blockY,
+                    objective=LinearMCObjective(torch.rand(2)),
+                    bounds=self.bounds,
+                    num_fantasies=33,
+                    with_current_value=True,
+                )
+
+                self.assertEqual(kwargs["num_fantasies"], 33)
+                self.assertEqual(kwargs["current_value"], current_value)
+
+        with self.subTest("test_without_current_value"):
             kwargs = func(
                 model=mock.Mock(),
                 training_data=self.blockX_blockY,
                 objective=LinearMCObjective(torch.rand(2)),
                 bounds=self.bounds,
                 num_fantasies=33,
+                with_current_value=False,
             )
-
-            self.assertEqual(kwargs["num_fantasies"], 33)
-            self.assertEqual(kwargs["current_value"], current_value)
+            self.assertNotIn("current_value", kwargs)
 
     def test_construct_inputs_mes(self) -> None:
         func = get_acqf_input_constructor(qMaxValueEntropy)

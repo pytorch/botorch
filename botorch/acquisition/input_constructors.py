@@ -1240,29 +1240,34 @@ def construct_inputs_qKG(
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
     num_fantasies: int = 64,
+    with_current_value: bool = False,
     **optimize_objective_kwargs: TOptimizeObjectiveKwargs,
 ) -> dict[str, Any]:
     r"""Construct kwargs for `qKnowledgeGradient` constructor."""
 
-    X = _get_dataset_field(training_data, "X", first_only=True)
-    _bounds = torch.as_tensor(bounds, dtype=X.dtype, device=X.device)
-
-    _, current_value = optimize_objective(
-        model=model,
-        bounds=_bounds.t(),
-        q=1,
-        objective=objective,
-        posterior_transform=posterior_transform,
-        **optimize_objective_kwargs,
-    )
-
-    return {
+    inputs_qkg = {
         "model": model,
         "objective": objective,
         "posterior_transform": posterior_transform,
         "num_fantasies": num_fantasies,
-        "current_value": current_value.detach().cpu().max(),
     }
+
+    if with_current_value:
+
+        X = _get_dataset_field(training_data, "X", first_only=True)
+        _bounds = torch.as_tensor(bounds, dtype=X.dtype, device=X.device)
+
+        _, current_value = optimize_objective(
+            model=model,
+            bounds=_bounds.t(),
+            q=1,
+            objective=objective,
+            posterior_transform=posterior_transform,
+            **optimize_objective_kwargs,
+        )
+        inputs_qkg["current_value"] = current_value.detach().cpu().max()
+
+    return inputs_qkg
 
 
 @acqf_input_constructor(qMultiFidelityKnowledgeGradient)
