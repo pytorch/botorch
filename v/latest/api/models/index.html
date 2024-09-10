@@ -6582,8 +6582,8 @@ independent outputs have better support in GPyTorch (see
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">batch_mo_gp</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">batch_so_gp</span> <span class="o">=</span> <span class="n">batched_multioutput_to_single_output</span><span class="p">(</span><span class="n">batch_gp</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">batch_mo_gp</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">outcome_transform</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">batch_so_gp</span> <span class="o">=</span> <span class="n">batched_multi_output_to_single_output</span><span class="p">(</span><span class="n">batch_mo_gp</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>

@@ -425,8 +425,8 @@
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; train_X = torch.rand(5, 2)</span>
 <span class="sd">        &gt;&gt;&gt; train_Y = torch.rand(5, 2)</span>
-<span class="sd">        &gt;&gt;&gt; batch_mo_gp = SingleTaskGP(train_X, train_Y)</span>
-<span class="sd">        &gt;&gt;&gt; batch_so_gp = batched_multioutput_to_single_output(batch_gp)</span>
+<span class="sd">        &gt;&gt;&gt; batch_mo_gp = SingleTaskGP(train_X, train_Y, outcome_transform=None)</span>
+<span class="sd">        &gt;&gt;&gt; batch_so_gp = batched_multi_output_to_single_output(batch_mo_gp)</span>
 <span class="sd">    """</span>
     <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">DEPRECATION_MESSAGE</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
     <span class="n">was_training</span> <span class="o">=</span> <span class="n">batch_mo_model</span><span class="o">.</span><span class="n">training</span>
