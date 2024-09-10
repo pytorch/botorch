@@ -462,9 +462,13 @@ class AffineInputTransform(ReversibleInputTransform, Module):
                 f"Wrong input dimension. Received {X.size(-1)}, "
                 f"expected {self.offset.size(-1)}."
             )
+        if X.ndim < 2:
+            raise BotorchTensorDimensionError(
+                f"`X` must have at least 2 dimensions, but has {X.ndim}."
+            )
 
         n = len(self.batch_shape) + 2
-        if X.ndim < n:
+        if self.training and X.ndim < n:
             raise ValueError(
                 f"`X` must have at least {n} dimensions, {n - 2} batch and 2 innate"
                 f" , but has {X.ndim}."
