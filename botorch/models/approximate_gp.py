@@ -137,7 +137,13 @@ class ApproximateGPyTorchModel(GPyTorchModel):
         return Module.train(self, mode=mode)
 
     def posterior(
-        self, X, output_indices=None, observation_noise=False, *args, **kwargs
+        self,
+        X,
+        output_indices=None,
+        observation_noise=False,
+        posterior_transform=None,
+        *args,
+        **kwargs,
     ) -> GPyTorchPosterior:
         self.eval()  # make sure model is in eval mode
 
@@ -157,6 +163,8 @@ class ApproximateGPyTorchModel(GPyTorchModel):
         posterior = GPyTorchPosterior(distribution=dist)
         if hasattr(self, "outcome_transform"):
             posterior = self.outcome_transform.untransform_posterior(posterior)
+        if posterior_transform is not None:
+            posterior = posterior_transform(posterior)
         return posterior
 
     def forward(self, X) -> MultivariateNormal:
