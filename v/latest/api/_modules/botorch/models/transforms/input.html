@@ -535,9 +535,13 @@
                 <span class="sa">f</span><span class="s2">"Wrong input dimension. Received </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">, "</span>
                 <span class="sa">f</span><span class="s2">"expected </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
             <span class="p">)</span>
+        <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">BotorchTensorDimensionError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"`X` must have at least 2 dimensions, but has </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span>
 
         <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span>
-        <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span> <span class="ow">and</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"`X` must have at least </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> dimensions, </span><span class="si">{</span><span class="n">n</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="si">}</span><span class="s2"> batch and 2 innate"</span>
                 <span class="sa">f</span><span class="s2">" , but has </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2">."</span>
