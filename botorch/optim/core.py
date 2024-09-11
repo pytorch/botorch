@@ -202,7 +202,7 @@ def torch_minimize(
         )
 
         # TODO: Update stopping_criterion API to return a message.
-        if stopping_criterion and stopping_criterion(fval):
+        if stopping_criterion and stopping_criterion(fval.detach()):
             result.status = OptimizationStatus.STOPPED
             result.message = "`torch_minimize` stopped due to `stopping_criterion`."
 
