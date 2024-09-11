@@ -72,6 +72,10 @@ from botorch.acquisition.multi_objective import (
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
 )
+from botorch.acquisition.multi_objective.hypervolume_knowledge_gradient import (
+    qHypervolumeKnowledgeGradient,
+)
+
 from botorch.acquisition.multi_objective.logei import (
     qLogExpectedHypervolumeImprovement,
     qLogNoisyExpectedHypervolumeImprovement,
@@ -222,7 +226,7 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase):
         mock_model = self.mock_model
         bounds = torch.rand(2, len(self.bounds))
 
-        with self.subTest("scalarObjective_acqusitionFunction"):
+        with self.subTest("scalarObjective_acquisitionFunction"):
             optimize_objective(
                 model=mock_model,
                 bounds=bounds,
@@ -1072,8 +1076,9 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             self.assertIs(kwargs["constraints"], constraints)
             self.assertEqual(kwargs["eta"], 1e-2)
 
-        with self.subTest("block designs"), self.assertRaisesRegex(
-            ValueError, "Field `X` must be shared"
+        with (
+            self.subTest("block designs"),
+            self.assertRaisesRegex(ValueError, "Field `X` must be shared"),
         ):
             c(
                 model=mm,
@@ -1291,6 +1296,119 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
             )
             self.assertNotIn("current_value", kwargs)
 
+    def test_construct_inputs_hvkg(self) -> None:
+        model = mock.Mock()
+        current_value = torch.tensor(1.23)
+
+        objective_thresholds = torch.rand(2)
+        objective = IdentityMCMultiOutputObjective()
+
+        get_kwargs = get_acqf_input_constructor(qHypervolumeKnowledgeGradient)
+
+        with (
+            mock.patch(
+                target="botorch.acquisition.input_constructors._get_hv_value_function",
+            ) as mock_get_hv_value_function,
+            mock.patch(
+                target="botorch.acquisition.input_constructors.optimize_acqf",
+                return_value=(None, current_value),
+            ) as mock_optimize_acqf,
+        ):
+
+            kwargs = get_kwargs(
+                model=model,
+                training_data=self.blockX_blockY,
+                objective_thresholds=objective_thresholds,
+                objective=objective,
+                bounds=self.bounds,
+                num_fantasies=33,
+                num_pareto=11,
+            )
+
+            self.assertEqual(
+                mock_get_hv_value_function.call_args.kwargs["model"], model
+            )
+            self.assertEqual(
+                mock_get_hv_value_function.call_args.kwargs["objective"], objective
+            )
+            self.assertTrue(
+                torch.equal(
+                    mock_get_hv_value_function.call_args.kwargs["ref_point"],
+                    objective_thresholds,
+                )
+            )
+
+            # check that `optimize_acqf` is called with the desired value function
+            self.assertEqual(
+                mock_optimize_acqf.call_args.kwargs["acq_function"],
+                mock_get_hv_value_function(),
+            )
+
+        self.assertLessEqual(
+            {
+                "model",
+                "ref_point",
+                "num_fantasies",
+                "num_pareto",
+                "objective",
+                "current_value",
+            },
+            set(kwargs.keys()),
+        )
+        self.assertEqual(kwargs["num_fantasies"], 33)
+        self.assertEqual(kwargs["num_pareto"], 11)
+        self.assertEqual(kwargs["current_value"], current_value)
+        self.assertTrue(torch.equal(kwargs["ref_point"], objective_thresholds))
+
+        with self.subTest("custom objective"):
+            weights = torch.rand(2)
+            objective = WeightedMCMultiOutputObjective(weights=weights)
+            with mock.patch(
+                target="botorch.acquisition.input_constructors.optimize_acqf",
+                return_value=(None, current_value),
+            ) as mock_optimize_acqf:
+                kwargs = get_kwargs(
+                    model=model,
+                    training_data=self.blockX_blockY,
+                    objective_thresholds=objective_thresholds,
+                    objective=objective,
+                    bounds=self.bounds,
+                    num_fantasies=33,
+                    num_pareto=11,
+                )
+            self.assertIsInstance(kwargs["objective"], WeightedMCMultiOutputObjective)
+            self.assertTrue(
+                torch.equal(kwargs["ref_point"], objective_thresholds * weights)
+            )
+
+        with self.subTest("risk measures"):
+            for use_preprocessing in (True, False):
+                objective = MultiOutputExpectation(
+                    n_w=3,
+                    preprocessing_function=(
+                        WeightedMCMultiOutputObjective(torch.tensor([-1.0, -1.0]))
+                        if use_preprocessing
+                        else None
+                    ),
+                )
+                with mock.patch(
+                    target="botorch.acquisition.input_constructors.optimize_acqf",
+                    return_value=(None, current_value),
+                ) as mock_optimize_acqf:
+                    kwargs = get_kwargs(
+                        model=model,
+                        training_data=self.blockX_blockY,
+                        objective_thresholds=objective_thresholds,
+                        objective=objective,
+                        bounds=self.bounds,
+                        num_fantasies=33,
+                        num_pareto=11,
+                    )
+                expected_obj_t = (
+                    -objective_thresholds if use_preprocessing else objective_thresholds
+                )
+                self.assertTrue(torch.equal(kwargs["ref_point"], expected_obj_t))
+
     def test_construct_inputs_mes(self) -> None:
         func = get_acqf_input_constructor(qMaxValueEntropy)
         n, d, m = 5, 2, 1
@@ -1429,12 +1547,17 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
             "cost_intercept": 0.321,
         }
         input_constructor = get_acqf_input_constructor(qMultiFidelityMaxValueEntropy)
-        with mock.patch(
-            target="botorch.acquisition.input_constructors.construct_inputs_mf_base",
-            return_value={"foo": 0},
-        ), mock.patch(
-            target="botorch.acquisition.input_constructors.construct_inputs_qMES",
-            return_value={"bar": 1},
+        with (
+            mock.patch(
+                target=(
+                    "botorch.acquisition.input_constructors.construct_inputs_mf_base"
+                ),
+                return_value={"foo": 0},
+            ),
+            mock.patch(
+                target="botorch.acquisition.input_constructors.construct_inputs_qMES",
+                return_value={"bar": 1},
+            ),
         ):
             inputs_mfmes = input_constructor(**constructor_args)
         inputs_test = {"foo": 0, "bar": 1, "num_fantasies": 64}
@@ -1601,6 +1724,23 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
                 "model": st_moo_model,
                 "objective_thresholds": objective_thresholds,
                 "training_data": self.blockX_blockY,
+            },
+        )
+
+        X = torch.rand(3, 2)
+        Y1 = torch.rand(3, 1)
+        Y2 = torch.rand(3, 1)
+        m1 = SingleTaskGP(X, Y1)
+        m2 = SingleTaskGP(X, Y2)
+        model_list = ModelListGP(m1, m2)
+
+        self.cases["HV Look-ahead"] = (
+            [qHypervolumeKnowledgeGradient],
+            {
+                "model": model_list,
+                "training_data": self.blockX_blockY,
+                "bounds": bounds,
+                "objective_thresholds": objective_thresholds,
             },
         )
         pref_model = self.mock_model
