@@ -389,7 +389,10 @@ class qMultiFidelityHypervolumeKnowledgeGradient(qHypervolumeKnowledgeGradient):
         )
         self.project = project
         if kwargs.get("expand") is not None:
-            raise NotImplementedError("Trace observations are not currently supported.")
+            raise NotImplementedError(
+                "Trace observations are not currently supported "
+                "by `qMultiFidelityHypervolumeKnowledgeGradient`."
+            )
         self.expand = lambda X: X
         self.valfunc_cls = valfunc_cls
         self.valfunc_argfac = valfunc_argfac
