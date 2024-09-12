@@ -20,6 +20,7 @@ from botorch.models.utils.inducing_point_allocators import (
     GreedyImprovementReduction,
     GreedyVarianceReduction,
 )
+from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.posteriors import GPyTorchPosterior, TransformedPosterior
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.likelihoods import GaussianLikelihood, MultitaskGaussianLikelihood
@@ -101,6 +102,16 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
                 self.assertIsInstance(posterior, GPyTorchPosterior)
                 # test batch_shape property
                 self.assertEqual(model.batch_shape, tx.shape[:-2])
+
+        # Test that checks if posterior_transfomr is correctly applied
+        [tx1, ty1, test1] = all_tests["non_batched_mo"]
+        model1 = SingleTaskVariationalGP(tx1, ty1, inducing_points=tx)
+        posterior_transform = ScalarizedPosteriorTransform(
+            weights=torch.tensor([1.0, 1.0])
+        )
+        posterior1 = model1.posterior(test1, posterior_transform=posterior_transform)
+        self.assertIsInstance(posterior1, GPyTorchPosterior)
+        self.assertEqual(posterior1.mean.shape[1], 1)
 
     def test_variational_setUp(self):
         for dtype in [torch.float, torch.double]:

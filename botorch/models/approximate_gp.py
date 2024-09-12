@@ -142,8 +142,6 @@ class ApproximateGPyTorchModel(GPyTorchModel):
         output_indices=None,
         observation_noise=False,
         posterior_transform=None,
-        *args,
-        **kwargs,
     ) -> GPyTorchPosterior:
         self.eval()  # make sure model is in eval mode
 
@@ -158,7 +156,7 @@ class ApproximateGPyTorchModel(GPyTorchModel):
             X = X.unsqueeze(-3).repeat(*[1] * (X_ndim - 2), self.num_outputs, 1, 1)
         dist = self.model(X)
         if observation_noise:
-            dist = self.likelihood(dist, *args, **kwargs)
+            dist = self.likelihood(dist)
 
         posterior = GPyTorchPosterior(distribution=dist)
         if hasattr(self, "outcome_transform"):
