@@ -105,7 +105,7 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
 
         # Test that checks if posterior_transfomr is correctly applied
         [tx1, ty1, test1] = all_tests["non_batched_mo"]
-        model1 = SingleTaskVariationalGP(tx1, ty1, inducing_points=tx)
+        model1 = SingleTaskVariationalGP(tx1, ty1, inducing_points=tx1)
         posterior_transform = ScalarizedPosteriorTransform(
             weights=torch.tensor([1.0, 1.0])
         )
