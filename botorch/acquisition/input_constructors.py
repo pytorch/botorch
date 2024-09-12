@@ -62,6 +62,10 @@ from botorch.acquisition.multi_objective import (
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
 )
+from botorch.acquisition.multi_objective.hypervolume_knowledge_gradient import (
+    _get_hv_value_function,
+    qHypervolumeKnowledgeGradient,
+)
 from botorch.acquisition.multi_objective.logei import (
     qLogExpectedHypervolumeImprovement,
     qLogNoisyExpectedHypervolumeImprovement,
@@ -1268,6 +1272,67 @@ def construct_inputs_qKG(
         inputs_qkg["current_value"] = current_value.detach().cpu().max()
 
     return inputs_qkg
+
+
+def _get_ref_point(
+    objective_thresholds: Tensor,
+    objective: Optional[MCMultiOutputObjective] = None,
+) -> Tensor:
+
+    if objective is None:
+        ref_point = objective_thresholds
+    elif isinstance(objective, RiskMeasureMCObjective):
+        ref_point = objective.preprocessing_function(objective_thresholds)
+    else:
+        ref_point = objective(objective_thresholds)
+
+    return ref_point
+
+
+@acqf_input_constructor(qHypervolumeKnowledgeGradient)
+def construct_inputs_qHVKG(
+    model: Model,
+    training_data: MaybeDict[SupervisedDataset],
+    bounds: list[tuple[float, float]],
+    objective_thresholds: Tensor,
+    objective: Optional[MCMultiOutputObjective] = None,
+    posterior_transform: Optional[PosteriorTransform] = None,
+    num_fantasies: int = 8,
+    num_pareto: int = 10,
+    **optimize_objective_kwargs: TOptimizeObjectiveKwargs,
+) -> dict[str, Any]:
+    r"""Construct kwargs for `qKnowledgeGradient` constructor."""
+
+    X = _get_dataset_field(training_data, "X", first_only=True)
+    _bounds = torch.as_tensor(bounds, dtype=X.dtype, device=X.device)
+
+    ref_point = _get_ref_point(
+        objective_thresholds=objective_thresholds, objective=objective
+    )
+
+    acq_function = _get_hv_value_function(
+        model=model,
+        ref_point=ref_point,
+        use_posterior_mean=True,
+        objective=objective,
+    )
+
+    _, current_value = optimize_objective(
+        model=model,
+        bounds=_bounds.t(),
+        q=num_pareto,
+        acq_function=acq_function,
+        **optimize_objective_kwargs,
+    )
+
+    return {
+        "model": model,
+        "objective": objective,
+        "ref_point": ref_point,
+        "num_fantasies": num_fantasies,
+        "num_pareto": num_pareto,
+        "current_value": current_value.detach().cpu().max(),
+    }
 
 
 @acqf_input_constructor(qMultiFidelityKnowledgeGradient)
