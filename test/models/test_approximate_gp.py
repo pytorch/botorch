@@ -103,7 +103,7 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
                 # test batch_shape property
                 self.assertEqual(model.batch_shape, tx.shape[:-2])
 
-        # Test that checks if posterior_transfomr is correctly applied
+        # Test that checks if posterior_transform is correctly applied
         [tx1, ty1, test1] = all_tests["non_batched_mo"]
         model1 = SingleTaskVariationalGP(tx1, ty1, inducing_points=tx1)
         posterior_transform = ScalarizedPosteriorTransform(
