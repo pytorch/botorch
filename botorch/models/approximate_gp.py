@@ -34,6 +34,7 @@ import warnings
 from typing import Optional, TypeVar, Union
 
 import torch
+from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
