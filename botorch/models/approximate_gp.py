@@ -31,7 +31,6 @@ from __future__ import annotations
 
 import copy
 import warnings
-
 from typing import Optional, TypeVar, Union
 
 import torch
@@ -139,10 +138,14 @@ class ApproximateGPyTorchModel(GPyTorchModel):
     def posterior(
         self,
         X,
-        output_indices=None,
-        observation_noise=False,
-        posterior_transform=None,
+        output_indices: Optional[list[int]] = None,
+        observation_noise: bool = False,
+        posterior_transform: Optional[PosteriorTransform] = None,
     ) -> GPyTorchPosterior:
+        if output_indices is not None:
+            raise NotImplementedError(  # pragma: no cover
+                f"{self.__class__.__name__}.posterior does not support output indices."
+            )
         self.eval()  # make sure model is in eval mode
 
         # input transforms are applied at `posterior` in `eval` mode, and at

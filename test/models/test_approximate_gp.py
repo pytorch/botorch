@@ -8,6 +8,7 @@ import itertools
 import warnings
 
 import torch
+from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.approximate_gp import (
     _SingleTaskVariationalGP,
@@ -20,7 +21,6 @@ from botorch.models.utils.inducing_point_allocators import (
     GreedyImprovementReduction,
     GreedyVarianceReduction,
 )
-from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.posteriors import GPyTorchPosterior, TransformedPosterior
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.likelihoods import GaussianLikelihood, MultitaskGaussianLikelihood
