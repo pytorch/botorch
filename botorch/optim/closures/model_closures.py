@@ -9,7 +9,6 @@ r"""Utilities for building model-based closures."""
 from __future__ import annotations
 
 from collections.abc import Sequence
-
 from itertools import chain, repeat
 from types import NoneType
 from typing import Any, Callable, Optional
@@ -174,9 +173,17 @@ def _get_loss_closure_exact_internal(
     r"""ExactMarginalLogLikelihood loss closure with internally managed data."""
 
     def closure(**kwargs: Any) -> Tensor:
-        model_output = mll.model(*mll.model.train_inputs)
+        model = mll.model
+        # The inputs will get transformed in forward here.
+        model_output = model(*model.train_inputs)
         log_likelihood = mll(
-            model_output, mll.model.train_targets, *mll.model.train_inputs, **kwargs
+            model_output,
+            model.train_targets,
+            # During model training, the model inputs get transformed in the forward
+            # pass. The train_inputs property is not transformed yet, so we need to
+            # transform it before passing it to the likelihood for consistency.
+            *(model.transform_inputs(X=t_in) for t_in in model.train_inputs),
+            **kwargs,
         )
         return -log_likelihood
 
@@ -190,11 +197,19 @@ def _get_loss_closure_sum_internal(
     r"""SumMarginalLogLikelihood loss closure with internally managed data."""
 
     def closure(**kwargs: Any) -> Tensor:
-        model_output = mll.model(*mll.model.train_inputs)
+        model = mll.model
+        # The inputs will get transformed in forward here.
+        model_output = model(*model.train_inputs)
         log_likelihood = mll(
             model_output,
-            mll.model.train_targets,
-            *map(list, mll.model.train_inputs),
+            model.train_targets,
+            # During model training, the model inputs get transformed in the forward
+            # pass. The train_inputs property is not transformed yet, so we need to
+            # transform it before passing it to the likelihood for consistency.
+            *(
+                (model.transform_inputs(X=t_in) for t_in in sub_t_in)
+                for sub_t_in in model.train_inputs
+            ),
             **kwargs,
         )
         return -log_likelihood
