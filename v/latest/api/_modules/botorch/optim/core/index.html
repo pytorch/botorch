@@ -226,11 +226,11 @@
         <span class="k">else</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">limits</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">limits</span> <span class="ow">in</span> <span class="n">bounds</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">parameters</span><span class="p">}</span>
     <span class="p">)</span>
     <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">step_limit</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
-        <span class="n">fval</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">closure</span><span class="p">()</span>
+        <span class="n">fval</span> <span class="o">=</span> <span class="n">closure</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
         <span class="n">runtime</span> <span class="o">=</span> <span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">OptimizationResult</span><span class="p">(</span>
             <span class="n">step</span><span class="o">=</span><span class="n">step</span><span class="p">,</span>
-            <span class="n">fval</span><span class="o">=</span><span class="n">fval</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+            <span class="n">fval</span><span class="o">=</span><span class="n">fval</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
             <span class="n">status</span><span class="o">=</span><span class="n">OptimizationStatus</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">,</span>
             <span class="n">runtime</span><span class="o">=</span><span class="n">runtime</span><span class="p">,</span>
         <span class="p">)</span>

@@ -426,7 +426,10 @@
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">project</span> <span class="o">=</span> <span class="n">project</span>
         <span class="k">if</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"expand"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"Trace observations are not currently supported."</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"Trace observations are not currently supported "</span>
+                <span class="s2">"by `qMultiFidelityHypervolumeKnowledgeGradient`."</span>
+            <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">expand</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">X</span><span class="p">:</span> <span class="n">X</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">valfunc_cls</span> <span class="o">=</span> <span class="n">valfunc_cls</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">valfunc_argfac</span> <span class="o">=</span> <span class="n">valfunc_argfac</span>

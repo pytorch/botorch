@@ -88,6 +88,7 @@
 <span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.hypervolume_knowledge_gradient</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">_get_hv_value_function</span><span class="p">,</span>
     <span class="n">qHypervolumeKnowledgeGradient</span><span class="p">,</span>
+    <span class="n">qMultiFidelityHypervolumeKnowledgeGradient</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.logei</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">qLogExpectedHypervolumeImprovement</span><span class="p">,</span>
@@ -1363,21 +1364,6 @@
 
 
 
-<span class="k">def</span> <span class="nf">_get_ref_point</span><span class="p">(</span>
-    <span class="n">objective_thresholds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCMultiOutputObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-
-    <span class="k">if</span> <span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">ref_point</span> <span class="o">=</span> <span class="n">objective_thresholds</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">RiskMeasureMCObjective</span><span class="p">):</span>
-        <span class="n">ref_point</span> <span class="o">=</span> <span class="n">objective</span><span class="o">.</span><span class="n">preprocessing_function</span><span class="p">(</span><span class="n">objective_thresholds</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">ref_point</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">objective_thresholds</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">ref_point</span>
-
-
 <div class="viewcode-block" id="construct_inputs_qHVKG">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qHVKG">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qHypervolumeKnowledgeGradient</span><span class="p">)</span>
@@ -1471,6 +1457,79 @@
         <span class="s2">"posterior_transform"</span><span class="p">:</span> <span class="n">posterior_transform</span><span class="p">,</span>
         <span class="s2">"num_fantasies"</span><span class="p">:</span> <span class="n">num_fantasies</span><span class="p">,</span>
         <span class="s2">"current_value"</span><span class="p">:</span> <span class="n">current_value</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span>
+        <span class="o">**</span><span class="n">inputs_mf</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="construct_inputs_qMFHVKG">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qMFHVKG">[docs]</a>
+<span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qMultiFidelityHypervolumeKnowledgeGradient</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">construct_inputs_qMFHVKG</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+    <span class="n">target_fidelities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+    <span class="n">objective_thresholds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCMultiOutputObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fidelity_weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">cost_intercept</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">num_trace_observations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">num_fantasies</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
+    <span class="n">num_pareto</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">optimize_objective_kwargs</span><span class="p">:</span> <span class="n">TOptimizeObjectiveKwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Construct kwargs for `qMultiFidelityHypervolumeKnowledgeGradient` constructor.</span>
+<span class="sd">    """</span>
+
+    <span class="n">inputs_mf</span> <span class="o">=</span> <span class="n">construct_inputs_mf_base</span><span class="p">(</span>
+        <span class="n">target_fidelities</span><span class="o">=</span><span class="n">target_fidelities</span><span class="p">,</span>
+        <span class="n">fidelity_weights</span><span class="o">=</span><span class="n">fidelity_weights</span><span class="p">,</span>
+        <span class="n">cost_intercept</span><span class="o">=</span><span class="n">cost_intercept</span><span class="p">,</span>
+        <span class="n">num_trace_observations</span><span class="o">=</span><span class="n">num_trace_observations</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">num_trace_observations</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">"Trace observations are not currently supported "</span>
+            <span class="s2">"by `qMultiFidelityHypervolumeKnowledgeGradient`."</span>
+        <span class="p">)</span>
+
+    <span class="k">del</span> <span class="n">inputs_mf</span><span class="p">[</span><span class="s2">"expand"</span><span class="p">]</span>
+
+    <span class="n">X</span> <span class="o">=</span> <span class="n">_get_dataset_field</span><span class="p">(</span><span class="n">training_data</span><span class="p">,</span> <span class="s2">"X"</span><span class="p">,</span> <span class="n">first_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">_bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="n">ref_point</span> <span class="o">=</span> <span class="n">_get_ref_point</span><span class="p">(</span>
+        <span class="n">objective_thresholds</span><span class="o">=</span><span class="n">objective_thresholds</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">objective</span>
+    <span class="p">)</span>
+
+    <span class="n">acq_function</span> <span class="o">=</span> <span class="n">_get_hv_value_function</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>
+        <span class="n">use_posterior_mean</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">_</span><span class="p">,</span> <span class="n">current_value</span> <span class="o">=</span> <span class="n">optimize_objective</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">_bounds</span><span class="o">.</span><span class="n">t</span><span class="p">(),</span>
+        <span class="n">q</span><span class="o">=</span><span class="n">num_pareto</span><span class="p">,</span>
+        <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
+        <span class="n">fixed_features</span><span class="o">=</span><span class="n">target_fidelities</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">optimize_objective_kwargs</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"model"</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span>
+        <span class="s2">"objective"</span><span class="p">:</span> <span class="n">objective</span><span class="p">,</span>
+        <span class="s2">"ref_point"</span><span class="p">:</span> <span class="n">ref_point</span><span class="p">,</span>
+        <span class="s2">"num_fantasies"</span><span class="p">:</span> <span class="n">num_fantasies</span><span class="p">,</span>
+        <span class="s2">"num_pareto"</span><span class="p">:</span> <span class="n">num_pareto</span><span class="p">,</span>
+        <span class="s2">"current_value"</span><span class="p">:</span> <span class="n">current_value</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span>
+        <span class="s2">"target_fidelities"</span><span class="p">:</span> <span class="n">target_fidelities</span><span class="p">,</span>
         <span class="o">**</span><span class="n">inputs_mf</span><span class="p">,</span>
     <span class="p">}</span></div>
 
@@ -1928,6 +1987,21 @@
     <span class="p">}</span>
     <span class="k">return</span> <span class="n">inputs</span></div>
 
+
+
+<span class="k">def</span> <span class="nf">_get_ref_point</span><span class="p">(</span>
+    <span class="n">objective_thresholds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCMultiOutputObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+
+    <span class="k">if</span> <span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ref_point</span> <span class="o">=</span> <span class="n">objective_thresholds</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">RiskMeasureMCObjective</span><span class="p">):</span>
+        <span class="n">ref_point</span> <span class="o">=</span> <span class="n">objective</span><span class="o">.</span><span class="n">preprocessing_function</span><span class="p">(</span><span class="n">objective_thresholds</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ref_point</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">objective_thresholds</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ref_point</span>
 </pre></div>
 </div>
 </div>
