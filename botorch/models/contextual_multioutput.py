@@ -13,7 +13,6 @@ References
     Advances in Neural Information Processing Systems 33, NeurIPS 2020.
 """
 
-import warnings
 from typing import Any, Optional, Union
 
 import torch
@@ -21,6 +20,7 @@ from botorch.models.multitask import MultiTaskGP
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.utils.datasets import MultiTaskDataset, SupervisedDataset
+from botorch.utils.types import _DefaultType, DEFAULT
 from gpytorch.constraints import Interval
 from gpytorch.kernels.rbf_kernel import RBFKernel
 from gpytorch.likelihoods.likelihood import Likelihood
@@ -51,8 +51,8 @@ class LCEMGP(MultiTaskGP):
         embs_dim_list: Optional[list[int]] = None,
         output_tasks: Optional[list[int]] = None,
         all_tasks: Optional[list[int]] = None,
+        outcome_transform: OutcomeTransform | _DefaultType | None = DEFAULT,
         input_transform: Optional[InputTransform] = None,
-        outcome_transform: Optional[OutcomeTransform] = None,
     ) -> None:
         r"""
         Args:
@@ -85,12 +85,14 @@ class LCEMGP(MultiTaskGP):
                 training data. Note that when a task is not observed, the corresponding
                 task covariance will heavily depend on random initialization and may
                 behave unexpectedly.
-            input_transform: An input transform that is applied in the model's
-                forward pass.
             outcome_transform: An outcome transform that is applied to the
                 training data during instantiation and to the posterior during
                 inference (that is, the `Posterior` obtained by calling
-                `.posterior` on the model will be on the original scale).
+                `.posterior` on the model will be on the original scale). We use a
+                `Standardize` transform if no `outcome_transform` is specified.
+                Pass down `None` to use no outcome transform.
+            input_transform: An input transform that is applied in the model's
+                forward pass.
         """
         super().__init__(
             train_X=train_X,
@@ -102,8 +104,8 @@ class LCEMGP(MultiTaskGP):
             likelihood=likelihood,
             output_tasks=output_tasks,
             all_tasks=all_tasks,
-            input_transform=input_transform,
             outcome_transform=outcome_transform,
+            input_transform=input_transform,
         )
         self.device = train_X.device
         if all_tasks is None:
@@ -247,62 +249,3 @@ class LCEMGP(MultiTaskGP):
         if embs_dim_list is not None:
             base_inputs["embs_dim_list"] = embs_dim_list
         return base_inputs
-
-
-class FixedNoiseLCEMGP(LCEMGP):
-    r"""The Multi-Task GP the latent context embedding multioutput
-    (LCE-M) kernel, with known observation noise.
-
-    DEPRECATED: Please use `LCEMGP` with `train_Yvar` instead.
-    Will be removed in a future release (~v0.11).
-    """
-
-    def __init__(
-        self,
-        train_X: Tensor,
-        train_Y: Tensor,
-        train_Yvar: Tensor,
-        task_feature: int,
-        context_cat_feature: Optional[Tensor] = None,
-        context_emb_feature: Optional[Tensor] = None,
-        embs_dim_list: Optional[list[int]] = None,
-        output_tasks: Optional[list[int]] = None,
-    ) -> None:
-        r"""
-        Args:
-            train_X: (n x d) X training data.
-            train_Y: (n x 1) Y training data.
-            train_Yvar: (n x 1) Observed variances of each training Y.
-            task_feature: Column index of train_X to get context indices.
-            context_cat_feature: (n_contexts x k) one-hot encoded context
-                features. Rows are ordered by context indices, where k is the
-                number of categorical variables. If None, task indices will
-                be used and k = 1.
-            context_emb_feature: (n_contexts x m) pre-given continuous
-                embedding features. Rows are ordered by context indices.
-            embs_dim_list: Embedding dimension for each categorical variable.
-                The length equals to k. If None, the embedding dimension is set to
-                1 for each categorical variable.
-            output_tasks: A list of task indices for which to compute model
-                outputs for. If omitted, return outputs for all task indices.
-
-        """
-        warnings.warn(
-            "`FixedNoiseLCEMGP` has been deprecated and will be removed in a "
-            "future release. Please use the `LCEMGP` model instead. "
-            "When `train_Yvar` is specified, `LCEMGP` behaves the same "
-            "as the `FixedNoiseLCEMGP`.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-
-        super().__init__(
-            train_X=train_X,
-            train_Y=train_Y,
-            task_feature=task_feature,
-            train_Yvar=train_Yvar,
-            context_cat_feature=context_cat_feature,
-            context_emb_feature=context_emb_feature,
-            embs_dim_list=embs_dim_list,
-            output_tasks=output_tasks,
-        )
