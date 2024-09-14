@@ -11,11 +11,7 @@ import warnings
 import torch
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_mll
-from botorch.models.gp_regression import (
-    FixedNoiseGP,
-    HeteroskedasticSingleTaskGP,
-    SingleTaskGP,
-)
+from botorch.models.gp_regression import HeteroskedasticSingleTaskGP, SingleTaskGP
 from botorch.models.transforms import Normalize, Standardize
 from botorch.models.transforms.input import InputStandardize
 from botorch.models.transforms.outcome import Log
@@ -459,8 +455,7 @@ class TestSingleTaskGP(TestGPRegressionBase):
             model.construct_inputs(training_data, task_feature=0)
 
 
-class TestFixedNoiseGP(TestSingleTaskGP):
-    model_class = FixedNoiseGP
+class TestSingleTaskGPFixedNoise(TestSingleTaskGP):
 
     def _get_model_and_data(
         self,
@@ -480,14 +475,7 @@ class TestFixedNoiseGP(TestSingleTaskGP):
             "input_transform": input_transform,
             "outcome_transform": outcome_transform,
         }
-        if self.model_class is FixedNoiseGP:
-            with self.assertWarnsRegex(
-                DeprecationWarning,
-                "`FixedNoiseGP` has been merged into `SingleTaskGP`. ",
-            ):
-                model = FixedNoiseGP(**model_kwargs, **extra_model_kwargs)
-        else:
-            model = self.model_class(**model_kwargs, **extra_model_kwargs)
+        model = SingleTaskGP(**model_kwargs, **extra_model_kwargs)
         return model, model_kwargs
 
     def _get_extra_model_kwargs(self):
@@ -596,11 +584,6 @@ class TestFixedNoiseGP(TestSingleTaskGP):
                     == obs_noise.expand(X_f.shape[:-1] + torch.Size([m]))
                 ).all()
             )
-
-
-class TestFixedNoiseSingleTaskGP(TestFixedNoiseGP):
-    # Repeat the FixedNoiseGP tests using SingleTaskGP.
-    model_class = SingleTaskGP
 
 
 class TestHeteroskedasticSingleTaskGP(TestGPRegressionBase):
