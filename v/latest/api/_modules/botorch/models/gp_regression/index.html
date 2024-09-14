@@ -382,12 +382,17 @@
                 <span class="n">MIN_INFERRED_NOISE_LEVEL</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_value</span><span class="o">=</span><span class="mf">1.0</span>
             <span class="p">),</span>
         <span class="p">)</span>
+        <span class="c1"># Likelihood will always get evaluated with transformed X, so we need to</span>
+        <span class="c1"># transform the training data before constructing the noise model.</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">transformed_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span>
+                <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span>
+            <span class="p">)</span>
         <span class="n">noise_model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span>
-            <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
+            <span class="n">train_X</span><span class="o">=</span><span class="n">transformed_X</span><span class="p">,</span>
             <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">,</span>
             <span class="n">likelihood</span><span class="o">=</span><span class="n">noise_likelihood</span><span class="p">,</span>
             <span class="n">outcome_transform</span><span class="o">=</span><span class="n">Log</span><span class="p">(),</span>
-            <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">likelihood</span> <span class="o">=</span> <span class="n">_GaussianLikelihoodBase</span><span class="p">(</span><span class="n">HeteroskedasticNoise</span><span class="p">(</span><span class="n">noise_model</span><span class="p">))</span>
         <span class="c1"># This is hacky -- this class used to inherit from SingleTaskGP, but it</span>
