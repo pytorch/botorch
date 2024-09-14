@@ -167,7 +167,7 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
 
     This model assumes that the inputs have been normalized to [0, 1]^d and that the
     output has been stratified standardized to have zero mean and unit variance for
-    each task.The SAAS model [Eriksson2021saasbo]_ with a Matern-5/2 is used as data
+    each task. The SAAS model [Eriksson2021saasbo]_ with a Matern-5/2 is used as data
     kernel by default.
 
     You are expected to use `fit_fully_bayesian_model_nuts` to fit this model as it
@@ -243,6 +243,7 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
                 X=train_X, input_transform=input_transform
             )
         if outcome_transform is not None:
+            outcome_transform.train()  # Ensure we learn parameters here on init
             train_Y, train_Yvar = outcome_transform(train_Y, train_Yvar)
         if train_Yvar is not None:  # Clamp after transforming
             train_Yvar = train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL)
@@ -254,6 +255,11 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
             task_feature=task_feature,
             output_tasks=output_tasks,
             rank=rank,
+            # We already transformed the data above, this avoids applying the
+            # default `Standardize` transform twice. As outcome_transform is
+            # set on `self` below, it will be applied to the posterior in the
+            # `posterior` method of `MultiTaskGP`.
+            outcome_transform=None,
         )
         if all_tasks is not None and self._expected_task_values != set(all_tasks):
             raise NotImplementedError(
