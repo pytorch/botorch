@@ -18,6 +18,7 @@ from typing import Any, Callable, NoReturn, Optional, Union
 import numpy as np
 import torch
 from botorch.acquisition import AcquisitionFunction
+from botorch.exceptions.errors import OptimizationGradientError
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.generation.utils import (
     _convert_nonlinear_inequality_constraints,
@@ -215,7 +216,7 @@ def gen_candidates_scipy(
                 )
                 if initial_conditions.dtype != torch.double:
                     msg += " Consider using `dtype=torch.double`."
-                raise RuntimeError(msg)
+                raise OptimizationGradientError(msg, current_x=x)
             fval = loss.item()
             return fval, gradf
 
