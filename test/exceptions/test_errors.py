@@ -54,5 +54,5 @@ class TestBotorchExceptions(BotorchTestCase):
     def test_OptimizationGradientError(self):
         error = OptimizationGradientError("message", current_x=np.array([1.0]))
         self.assertTrue(np.array_equal(error.current_x, np.array([1.0])))
-        with self.assertRaises(OptimizationGradientError):
+        with self.assertRaisesRegex(OptimizationGradientError, "message"):
             raise error
