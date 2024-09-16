@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Union
 
 import torch
 from botorch.models.gp_regression import SingleTaskGP
@@ -16,6 +16,7 @@ from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.models.utils.gpytorch_modules import get_covar_module_with_dim_scaled_prior
 from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.transforms import normalize_indices
+from botorch.utils.types import _DefaultType, DEFAULT
 from gpytorch.constraints import GreaterThan
 from gpytorch.kernels.kernel import Kernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
@@ -65,7 +66,7 @@ class MixedSingleTaskGP(SingleTaskGP):
             Callable[[torch.Size, int, list[int]], Kernel]
         ] = None,
         likelihood: Optional[Likelihood] = None,
-        outcome_transform: Optional[OutcomeTransform] = None,  # TODO
+        outcome_transform: Optional[Union[OutcomeTransform, _DefaultType]] = DEFAULT,
         input_transform: Optional[InputTransform] = None,  # TODO
     ) -> None:
         r"""A single-task exact GP model supporting categorical parameters.
@@ -87,7 +88,9 @@ class MixedSingleTaskGP(SingleTaskGP):
             outcome_transform: An outcome transform that is applied to the
                 training data during instantiation and to the posterior during
                 inference (that is, the `Posterior` obtained by calling
-                `.posterior` on the model will be on the original scale).
+                `.posterior` on the model will be on the original scale). We use a
+                `Standardize` transform if no `outcome_transform` is specified.
+                Pass down `None` to use no outcome transform.
             input_transform: An input transform that is applied in the model's
                 forward pass. Only input transforms are allowed which do not
                 transform the categorical dimensions. If you want to use it

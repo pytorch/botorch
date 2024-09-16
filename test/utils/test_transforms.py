@@ -340,7 +340,7 @@ class TestIsFullyBayesian(BotorchTestCase):
             SingleTaskGP(train_X=X, train_Y=Y),
             MultiTaskGP(train_X=X, train_Y=Y, task_feature=-1),
             HigherOrderGP(train_X=X, train_Y=Y),
-            SingleTaskMultiFidelityGP(train_X=X, train_Y=Y, data_fidelity=3),
+            SingleTaskMultiFidelityGP(train_X=X, train_Y=Y, data_fidelities=[3]),
             MixedSingleTaskGP(train_X=X, train_Y=Y, cat_dims=[1]),
             PairwiseGP(datapoints=X, comparisons=None),
         )
@@ -382,7 +382,7 @@ class TestIsEnsemble(BotorchTestCase):
             SingleTaskGP(train_X=X, train_Y=Y),
             MultiTaskGP(train_X=X, train_Y=Y, task_feature=-1),
             HigherOrderGP(train_X=X, train_Y=Y),
-            SingleTaskMultiFidelityGP(train_X=X, train_Y=Y, data_fidelity=3),
+            SingleTaskMultiFidelityGP(train_X=X, train_Y=Y, data_fidelities=[3]),
             MixedSingleTaskGP(train_X=X, train_Y=Y, cat_dims=[1]),
             PairwiseGP(datapoints=X, comparisons=None),
         )
