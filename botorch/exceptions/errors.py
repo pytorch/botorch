@@ -72,3 +72,17 @@ class OptimizationTimeoutError(BotorchError):
         super().__init__(*args, **kwargs)
         self.current_x = current_x
         self.runtime = runtime
+
+
+class OptimizationGradientError(BotorchError, RuntimeError):
+    r"""Exception raised when gradient array `gradf` containts NaNs."""
+
+    def __init__(self, /, *args: Any, current_x: np.ndarray, **kwargs: Any) -> None:
+        r"""
+        Args:
+            *args: Standard args to `BoTorchError`.
+            current_x: A numpy array representing the current iterate.
+            **kwargs: Standard kwargs to `BoTorchError`.
+        """
+        super().__init__(*args, **kwargs)
+        self.current_x = current_x

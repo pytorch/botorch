@@ -9,6 +9,7 @@ import warnings
 
 import torch
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
+from botorch.exceptions.warnings import UserInputWarning
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.approximate_gp import (
     _SingleTaskVariationalGP,
@@ -200,6 +201,26 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
                 self.assertIsInstance(posterior, TransformedPosterior)
             else:
                 self.assertFalse(hasattr(model, "outcome_transform"))
+
+        # test user warnings when using transforms
+        with self.assertWarnsRegex(
+            UserInputWarning,
+            "Using an input transform with `SingleTaskVariationalGP`",
+        ):
+            SingleTaskVariationalGP(
+                train_X=train_X,
+                train_Y=train_Y,
+                input_transform=Normalize(d=1),
+            )
+        with self.assertWarnsRegex(
+            UserInputWarning,
+            "Using an outcome transform with `SingleTaskVariationalGP`",
+        ):
+            SingleTaskVariationalGP(
+                train_X=train_X,
+                train_Y=train_Y,
+                outcome_transform=Log(),
+            )
 
         # test default inducing point allocator
         self.assertIsInstance(model._inducing_point_allocator, GreedyVarianceReduction)

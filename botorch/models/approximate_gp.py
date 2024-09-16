@@ -35,6 +35,7 @@ from typing import Optional, TypeVar, Union
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
+from botorch.exceptions.warnings import UserInputWarning
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
@@ -67,9 +68,17 @@ from gpytorch.variational import (
 )
 from torch import Tensor
 from torch.nn import Module
+from typing_extensions import Self
 
 
-TApproxModel = TypeVar("TApproxModel", bound="ApproximateGPyTorchModel")
+TRANSFORM_WARNING = (
+    "Using an {ttype} transform with `SingleTaskVariationalGP`. If this "
+    "model is trained in minibatches, a {ttype} transform with learnable "
+    "parameters would update its parameters for each minibatch, which is "
+    "undesirable. If you do intend to train in minibatches, we recommend "
+    "you not use a {ttype} transform and instead pre-transform your whole "
+    "data set before fitting the model."
+)
 
 
 class ApproximateGPyTorchModel(GPyTorchModel):
@@ -123,11 +132,11 @@ class ApproximateGPyTorchModel(GPyTorchModel):
     def num_outputs(self):
         return self._desired_num_outputs
 
-    def eval(self: TApproxModel) -> TApproxModel:
+    def eval(self) -> Self:
         r"""Puts the model in `eval` mode."""
         return Module.eval(self)
 
-    def train(self: TApproxModel, mode: bool = True) -> TApproxModel:
+    def train(self, mode: bool = True) -> Self:
         r"""Put the model in `train` mode.
 
         Args:
@@ -335,9 +344,9 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
         variational_distribution: Optional[_VariationalDistribution] = None,
         variational_strategy: type[_VariationalStrategy] = VariationalStrategy,
         inducing_points: Optional[Union[Tensor, int]] = None,
-        outcome_transform: Optional[OutcomeTransform] = None,
-        input_transform: Optional[InputTransform] = None,
         inducing_point_allocator: Optional[InducingPointAllocator] = None,
+        outcome_transform: OutcomeTransform | None = None,
+        input_transform: InputTransform | None = None,
     ) -> None:
         r"""
         Args:
@@ -348,6 +357,8 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
                 either a `GaussianLikelihood` (if `num_outputs=1`) or a
                 `MultitaskGaussianLikelihood`(if `num_outputs>1`).
             num_outputs: Number of output responses per input (default: 1).
+            learn_inducing_points: If True, the inducing point locations are learned
+                jointly with the other model parameters.
             covar_module: Kernel function. If omitted, uses an `RBFKernel`.
             mean_module: Mean of GP model. If omitted, uses a `ConstantMean`.
             variational_distribution: Type of variational distribution to use
@@ -361,6 +372,20 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
             inducing_point_allocator: The `InducingPointAllocator` used to
                 initialize the inducing point locations. If omitted,
                 uses `GreedyVarianceReduction`.
+            outcome_transform: An outcome transform that is applied to the training
+                data during instantiation and to the posterior during inference.
+                NOTE: If this model is trained in minibatches, an outcome transform
+                with learnable parameters (such as `Standardize`) would update its
+                parameters for each minibatch, which is undesirable. If you do intend
+                to train in minibatches, we recommend you not use an outcome transform
+                and instead pre-transform your whole data set before fitting the model.
+            input_transform: An input transform that is applied in the model's
+                forward pass.
+                NOTE: If this model is trained in minibatches, an input transform
+                with learnable parameters (such as `Normalize`) would update its
+                parameters for each minibatch, which is undesirable. If you do intend
+                to train in minibatches, we recommend you not use an input transform
+                and instead pre-transform your whole data set before fitting the model.
         """
         with torch.no_grad():
             transformed_X = self.transform_inputs(
@@ -368,6 +393,11 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
             )
         if train_Y is not None:
             if outcome_transform is not None:
+                warnings.warn(
+                    TRANSFORM_WARNING.format(ttype="outcome"),
+                    UserInputWarning,
+                    stacklevel=3,
+                )
                 train_Y, _ = outcome_transform(train_Y)
             self._validate_tensor_args(X=transformed_X, Y=train_Y)
             validate_input_scaling(train_X=transformed_X, train_Y=train_Y)
@@ -398,6 +428,7 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
                 "being further optimized during the model fit. If so "
                 "then set `learn_inducing_points` to False.",
                 UserWarning,
+                stacklevel=3,
             )
 
         if inducing_point_allocator is None:
@@ -422,6 +453,11 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
         if outcome_transform is not None:
             self.outcome_transform = outcome_transform
         if input_transform is not None:
+            warnings.warn(
+                TRANSFORM_WARNING.format(ttype="input"),
+                UserInputWarning,
+                stacklevel=3,
+            )
             self.input_transform = input_transform
 
         # for model fitting utilities

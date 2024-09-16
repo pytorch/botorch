@@ -34,12 +34,16 @@ class TestMixedSingleTaskGP(BotorchTestCase):
     def test_gp(self):
         d = 3
         bounds = torch.tensor([[-1.0] * d, [1.0] * d])
-        for batch_shape, m, ncat, dtype, observed_noise in (
-            (torch.Size(), 1, 0, torch.float, False),
-            (torch.Size(), 2, 1, torch.double, True),
-            (torch.Size([2]), 2, 3, torch.double, False),
+        for batch_shape, m, ncat, dtype, observed_noise, use_octf in (
+            (torch.Size(), 1, 0, torch.float, False, False),
+            (torch.Size(), 2, 1, torch.double, True, True),
+            (torch.Size([2]), 2, 3, torch.double, False, True),
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
+            # The model by default uses a `Standardize` outcome transform, so
+            # to test without that transform we need to explicitly pass in `None`.
+            outcome_transform_kwargs = {} if use_octf else {"outcome_transform": None}
+
             train_X, train_Y = _get_random_data(
                 batch_shape=batch_shape, m=m, d=d, **tkwargs
             )
@@ -70,6 +74,7 @@ class TestMixedSingleTaskGP(BotorchTestCase):
                 train_Y=train_Y,
                 cat_dims=cat_dims,
                 train_Yvar=train_Yvar,
+                **outcome_transform_kwargs,
             )
             self.assertEqual(model._ignore_X_dims_scaling_check, cat_dims)
             mll = ExactMarginalLogLikelihood(model.likelihood, model).to(**tkwargs)
@@ -118,7 +123,7 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             self.assertEqual(posterior_pred.mean.shape, expected_shape)
             self.assertEqual(posterior_pred.variance.shape, expected_shape)
             pvar = posterior_pred.variance
-            pvar_exp = get_pvar_expected(posterior, model, X, m)
+            pvar_exp = get_pvar_expected(posterior=posterior, model=model, X=X, m=m)
             self.assertAllClose(pvar, pvar_exp, rtol=1e-4, atol=1e-5)
 
             # test batch evaluation
@@ -132,7 +137,7 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             self.assertIsInstance(posterior_pred, GPyTorchPosterior)
             self.assertEqual(posterior_pred.mean.shape, expected_shape)
             pvar = posterior_pred.variance
-            pvar_exp = get_pvar_expected(posterior, model, X, m)
+            pvar_exp = get_pvar_expected(posterior=posterior, model=model, X=X, m=m)
             self.assertAllClose(pvar, pvar_exp, rtol=1e-4, atol=1e-5)
 
             # test that model converter throws an exception
