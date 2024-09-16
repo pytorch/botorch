@@ -10,6 +10,7 @@ from unittest import mock
 
 import torch
 from botorch.acquisition import qExpectedImprovement, qKnowledgeGradient
+from botorch.exceptions.errors import OptimizationGradientError
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_mll
 from botorch.generation.gen import (
@@ -318,7 +319,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
             test_grad = torch.tensor([0.5, 0.2, float("nan")], **ckwargs)
             # test NaN in grad
             with mock.patch("torch.autograd.grad", return_value=[test_grad]):
-                with self.assertRaisesRegex(RuntimeError, expected_regex):
+                with self.assertRaisesRegex(OptimizationGradientError, expected_regex):
                     gen_candidates_scipy(
                         initial_conditions=test_ics,
                         acquisition_function=mock.Mock(return_value=test_ics),

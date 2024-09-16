@@ -36,13 +36,14 @@ from typing import Optional, Union
 from typing_extensions import Self
 
 import torch
+from botorch.exceptions.warnings import UserInputWarning
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.models.utils import validate_input_scaling
 from botorch.models.utils.gpytorch_modules import (
-    get_gaussian_likelihood_with_gamma_prior,
-    get_matern_kernel_with_gamma_prior,
+    get_covar_module_with_dim_scaled_prior,
+    get_gaussian_likelihood_with_lognormal_prior,
 )
 from botorch.models.utils.inducing_point_allocators import (
     GreedyVarianceReduction,
@@ -68,6 +69,16 @@ from gpytorch.variational import (
 )
 from torch import Tensor
 from torch.nn import Module
+
+
+TRANSFORM_WARNING = (
+    "Using an {ttype} transform with `SingleTaskVariationalGP`. If this "
+    "model is trained in minibatches, a {ttype} transform with learnable "
+    "parameters would update its parameters for each minibatch, which is "
+    "undesirable. If you do intend to train in minibatches, we recommend "
+    "you not use a {ttype} transform and instead pre-transform your whole "
+    "data set before fitting the model."
+)
 
 
 class ApproximateGPyTorchModel(GPyTorchModel):
@@ -191,7 +202,7 @@ class _SingleTaskVariationalGP(ApproximateGP):
                 this does not have to be all of the training inputs).
             train_Y: Not used.
             num_outputs: Number of output responses per input.
-            covar_module: Kernel function. If omitted, uses a `MaternKernel`.
+            covar_module: Kernel function. If omitted, uses an `RBFKernel`.
             mean_module: Mean of GP model. If omitted, uses a `ConstantMean`.
             variational_distribution: Type of variational distribution to use
                 (default: CholeskyVariationalDistribution), the properties of the
@@ -215,15 +226,10 @@ class _SingleTaskVariationalGP(ApproximateGP):
         self._aug_batch_shape = aug_batch_shape
 
         if covar_module is None:
-            covar_module = get_matern_kernel_with_gamma_prior(
+            covar_module = get_covar_module_with_dim_scaled_prior(
                 ard_num_dims=train_X.shape[-1],
                 batch_shape=self._aug_batch_shape,
             ).to(train_X)
-            self._subset_batch_dict = {
-                "mean_module.constant": -2,
-                "covar_module.raw_outputscale": -1,
-                "covar_module.base_kernel.raw_lengthscale": -3,
-            }
 
         if inducing_point_allocator is None:
             inducing_point_allocator = GreedyVarianceReduction()
@@ -328,9 +334,9 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
         variational_distribution: Optional[_VariationalDistribution] = None,
         variational_strategy: type[_VariationalStrategy] = VariationalStrategy,
         inducing_points: Optional[Union[Tensor, int]] = None,
-        outcome_transform: Optional[OutcomeTransform] = None,
-        input_transform: Optional[InputTransform] = None,
         inducing_point_allocator: Optional[InducingPointAllocator] = None,
+        outcome_transform: OutcomeTransform | None = None,
+        input_transform: InputTransform | None = None,
     ) -> None:
         r"""
         Args:
@@ -341,7 +347,9 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
                 either a `GaussianLikelihood` (if `num_outputs=1`) or a
                 `MultitaskGaussianLikelihood`(if `num_outputs>1`).
             num_outputs: Number of output responses per input (default: 1).
-            covar_module: Kernel function. If omitted, uses a `MaternKernel`.
+            learn_inducing_points: If True, the inducing point locations are learned
+                jointly with the other model parameters.
+            covar_module: Kernel function. If omitted, uses an `RBFKernel`.
             mean_module: Mean of GP model. If omitted, uses a `ConstantMean`.
             variational_distribution: Type of variational distribution to use
                 (default: CholeskyVariationalDistribution), the properties of the
@@ -354,6 +362,20 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
             inducing_point_allocator: The `InducingPointAllocator` used to
                 initialize the inducing point locations. If omitted,
                 uses `GreedyVarianceReduction`.
+            outcome_transform: An outcome transform that is applied to the training
+                data during instantiation and to the posterior during inference.
+                NOTE: If this model is trained in minibatches, an outcome transform
+                with learnable parameters (such as `Standardize`) would update its
+                parameters for each minibatch, which is undesirable. If you do intend
+                to train in minibatches, we recommend you not use an outcome transform
+                and instead pre-transform your whole data set before fitting the model.
+            input_transform: An input transform that is applied in the model's
+                forward pass.
+                NOTE: If this model is trained in minibatches, an input transform
+                with learnable parameters (such as `Normalize`) would update its
+                parameters for each minibatch, which is undesirable. If you do intend
+                to train in minibatches, we recommend you not use an input transform
+                and instead pre-transform your whole data set before fitting the model.
         """
         with torch.no_grad():
             transformed_X = self.transform_inputs(
@@ -361,6 +383,11 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
             )
         if train_Y is not None:
             if outcome_transform is not None:
+                warnings.warn(
+                    TRANSFORM_WARNING.format(ttype="outcome"),
+                    UserInputWarning,
+                    stacklevel=3,
+                )
                 train_Y, _ = outcome_transform(train_Y)
             self._validate_tensor_args(X=transformed_X, Y=train_Y)
             validate_input_scaling(train_X=transformed_X, train_Y=train_Y)
@@ -376,7 +403,7 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
 
         if likelihood is None:
             if num_outputs == 1:
-                likelihood = get_gaussian_likelihood_with_gamma_prior(
+                likelihood = get_gaussian_likelihood_with_lognormal_prior(
                     batch_shape=self._aug_batch_shape
                 )
             else:
@@ -391,6 +418,7 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
                 "being further optimized during the model fit. If so "
                 "then set `learn_inducing_points` to False.",
                 UserWarning,
+                stacklevel=3,
             )
 
         if inducing_point_allocator is None:
@@ -415,6 +443,11 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
         if outcome_transform is not None:
             self.outcome_transform = outcome_transform
         if input_transform is not None:
+            warnings.warn(
+                TRANSFORM_WARNING.format(ttype="input"),
+                UserInputWarning,
+                stacklevel=3,
+            )
             self.input_transform = input_transform
 
         # for model fitting utilities

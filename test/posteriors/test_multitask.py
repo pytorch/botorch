@@ -13,35 +13,40 @@ from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.testing import BotorchTestCase
 
 
+def get_posterior_test_cases(
+    device: torch.device, dtype: torch.dtype
+) -> list[tuple[KroneckerMultiTaskGP, torch.Tensor, MultitaskGPPosterior]]:
+    torch.random.manual_seed(0)
+
+    train_x = torch.rand(10, 1, device=device, dtype=dtype)
+    train_y = torch.randn(10, 3, device=device, dtype=dtype)
+
+    m2 = KroneckerMultiTaskGP(train_x, train_y)
+
+    torch.random.manual_seed(0)
+    test_x = torch.rand(2, 5, 1, device=device, dtype=dtype)
+
+    posterior0 = m2.posterior(test_x[0])
+    posterior1 = m2.posterior(test_x)
+    posterior2 = m2.posterior(test_x[0], observation_noise=True)
+    posterior3 = m2.posterior(test_x, observation_noise=True)
+
+    post_list = [
+        (m2, test_x[0], posterior0),
+        (m2, test_x, posterior1),
+        (m2, test_x[0], posterior2),
+        (m2, test_x, posterior3),
+    ]
+    return post_list
+
+
 class TestMultitaskGPPosterior(BotorchTestCase):
-    def setUp(self):
-        super().setUp()
-        torch.random.manual_seed(0)
 
-        train_x = torch.rand(10, 1, device=self.device)
-        train_y = torch.randn(10, 3, device=self.device)
-
-        m2 = KroneckerMultiTaskGP(train_x, train_y)
-
-        torch.random.manual_seed(0)
-        test_x = torch.rand(2, 5, 1, device=self.device)
-
-        posterior0 = m2.posterior(test_x[0])
-        posterior1 = m2.posterior(test_x)
-        posterior2 = m2.posterior(test_x[0], observation_noise=True)
-        posterior3 = m2.posterior(test_x, observation_noise=True)
-
-        self.post_list = [
-            [m2, test_x[0], posterior0],
-            [m2, test_x, posterior1],
-            [m2, test_x[0], posterior2],
-            [m2, test_x, posterior3],
-        ]
-
-    def test_MultitaskGPPosterior(self):
+    def _test_MultitaskGPPosterior(self, dtype: torch.dtype) -> None:
+        post_list = get_posterior_test_cases(device=self.device, dtype=dtype)
         sample_shaping = torch.Size([5, 3])
 
-        for post_collection in self.post_list:
+        for post_collection in post_list:
             model, test_x, posterior = post_collection
 
             self.assertIsInstance(posterior, MultitaskGPPosterior)
@@ -70,7 +75,10 @@ class TestMultitaskGPPosterior(BotorchTestCase):
                 expected_base_sample_shape,
             )
             base_samples = torch.randn(
-                8, *expected_base_sample_shape, device=self.device
+                8,
+                *expected_base_sample_shape,
+                device=self.device,
+                dtype=dtype,
             )
 
             samples_1 = posterior.rsample_from_base_samples(
@@ -79,7 +87,7 @@ class TestMultitaskGPPosterior(BotorchTestCase):
             samples_2 = posterior.rsample_from_base_samples(
                 base_samples=base_samples, sample_shape=torch.Size((8,))
             )
-            self.assertTrue(torch.allclose(samples_1, samples_2))
+            self.assertAllClose(samples_1, samples_2)
 
             # test that botorch.sampler picks up the correct shapes
             sampler = IIDNormalSampler(sample_shape=torch.Size([5]))
@@ -90,7 +98,10 @@ class TestMultitaskGPPosterior(BotorchTestCase):
 
             # test that providing only some base samples is okay
             base_samples = torch.randn(
-                8, np.prod(expected_extended_shape), device=self.device
+                8,
+                np.prod(expected_extended_shape),
+                device=self.device,
+                dtype=dtype,
             )
             samples_3 = posterior.rsample_from_base_samples(
                 base_samples=base_samples, sample_shape=torch.Size((8,))
@@ -137,9 +148,12 @@ class TestMultitaskGPPosterior(BotorchTestCase):
             posterior_variance = posterior_variance.view(-1)
 
             # slightly higher tolerance here because of the potential for low norms
+            # Note: This check appears to yield different results with CUDA
+            # depending on what machine it is run on, so you may see better
+            # convergence.
             self.assertLess(
                 (posterior_mean - sampled_mean).norm() / posterior_mean.norm(),
-                0.12,
+                0.13,
             )
             self.assertLess(
                 (posterior_variance - sampled_variance).norm()
@@ -147,9 +161,16 @@ class TestMultitaskGPPosterior(BotorchTestCase):
                 5e-2,
             )
 
+    def test_MultitaskGPPosterior(self) -> None:
+        for dtype in (torch.float, torch.double):
+            with self.subTest(dtype=dtype):
+                self._test_MultitaskGPPosterior(dtype=dtype)
+
     def test_draw_from_base_covar(self):
         # grab a posterior
-        posterior = self.post_list[0][2]
+        posterior = get_posterior_test_cases(device=self.device, dtype=torch.float32)[
+            0
+        ][2]
 
         base_samples = torch.randn(4, 30, 1, device=self.device)
         base_mat = torch.randn(30, 30, device=self.device)

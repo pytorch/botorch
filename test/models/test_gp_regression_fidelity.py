@@ -11,10 +11,7 @@ import torch
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_mll
-from botorch.models.gp_regression_fidelity import (
-    FixedNoiseMultiFidelityGP,
-    SingleTaskMultiFidelityGP,
-)
+from botorch.models.gp_regression_fidelity import SingleTaskMultiFidelityGP
 from botorch.models.transforms import Normalize, Standardize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
@@ -45,6 +42,7 @@ def _get_random_data_with_fidelity(
 class TestSingleTaskMultiFidelityGP(BotorchTestCase):
 
     FIDELITY_TEST_PAIRS = (
+        # (iteration_fidelity, data_fidelities)
         (None, [1]),
         (1, None),
         (None, [-1]),
@@ -80,13 +78,10 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 "train_Y": train_Y,
                 "iteration_fidelity": iteration_fidelity,
                 "linear_truncated": lin_truncated,
+                "outcome_transform": outcome_transform,
+                "input_transform": input_transform,
             }
         )
-
-        if outcome_transform is not None:
-            model_kwargs["outcome_transform"] = outcome_transform
-        if input_transform is not None:
-            model_kwargs["input_transform"] = input_transform
         model = SingleTaskMultiFidelityGP(**model_kwargs)
         return model, model_kwargs
 
@@ -105,14 +100,6 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 SingleTaskMultiFidelityGP(
                     train_X, train_Y, linear_truncated=lin_truncated, data_fidelities=[]
                 )
-        with self.assertRaises(ValueError):
-            SingleTaskMultiFidelityGP(
-                train_X, train_Y, data_fidelities=[1], data_fidelity=2
-            )
-        with self.assertWarnsRegex(DeprecationWarning, "data_fidelity"):
-            SingleTaskMultiFidelityGP(
-                train_X, train_Y, data_fidelity=1, linear_truncated=False
-            )
 
     def test_gp(self) -> None:
         for iteration_fidelity, data_fidelities in self.FIDELITY_TEST_PAIRS:
@@ -299,6 +286,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                                 "iteration_fidelity",
                                 "data_fidelities",
                                 "linear_truncated",
+                                "outcome_transform",
                                 "input_transform",
                             ):
                                 model_kwargs_non_batch[k] = v
@@ -441,8 +429,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 self.assertTrue(kwargs["train_Y"].equal(data_dict["train_Y"]))
 
 
-class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
-    model_class = FixedNoiseMultiFidelityGP
+class TestFixedNoiseSingleTaskMultiFidelityGP(TestSingleTaskMultiFidelityGP):
 
     def _get_model_and_data(
         self,
@@ -471,17 +458,11 @@ class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
                 "train_Yvar": train_Yvar,
                 "iteration_fidelity": iteration_fidelity,
                 "linear_truncated": lin_truncated,
+                "outcome_transform": outcome_transform,
+                "input_transform": input_transform,
             }
         )
-        if outcome_transform is not None:
-            model_kwargs["outcome_transform"] = outcome_transform
-        if input_transform is not None:
-            model_kwargs["input_transform"] = input_transform
-        if self.model_class is FixedNoiseMultiFidelityGP:
-            with self.assertWarnsRegex(DeprecationWarning, "SingleTaskMultiFidelityGP"):
-                model = FixedNoiseMultiFidelityGP(**model_kwargs)
-        else:
-            model = self.model_class(**model_kwargs)
+        model = SingleTaskMultiFidelityGP(**model_kwargs)
         return model, model_kwargs
 
     def test_init_error(self):
@@ -490,17 +471,9 @@ class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
         train_Yvar = torch.full_like(train_Y, 0.01)
         for lin_truncated in (True, False):
             with self.assertRaises(UnsupportedError):
-                FixedNoiseMultiFidelityGP(
+                SingleTaskMultiFidelityGP(
                     train_X, train_Y, train_Yvar, linear_truncated=lin_truncated
                 )
-        with self.assertRaises(ValueError):
-            FixedNoiseMultiFidelityGP(
-                train_X, train_Y, train_Yvar, data_fidelities=[1], data_fidelity=2
-            )
-        with self.assertWarnsRegex(DeprecationWarning, "data_fidelity"):
-            FixedNoiseMultiFidelityGP(
-                train_X, train_Y, train_Yvar, data_fidelity=1, linear_truncated=False
-            )
 
     def test_fixed_noise_likelihood(self):
         for iteration_fidelity, data_fidelities in self.FIDELITY_TEST_PAIRS:
@@ -571,8 +544,3 @@ class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
                 self.assertEqual(data_dict.get("data_fidelities", None), [1])
                 self.assertTrue(kwargs["train_X"].equal(data_dict["train_X"]))
                 self.assertTrue(kwargs["train_Y"].equal(data_dict["train_Y"]))
-
-
-class TestFixedNoiseSingleTaskMultiFidelityGP(TestFixedNoiseMultiFidelityGP):
-    # Test SingleTaskMultiFidelityGP with observed noise.
-    model_class = SingleTaskMultiFidelityGP

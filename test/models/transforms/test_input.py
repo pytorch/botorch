@@ -228,7 +228,10 @@ class TestInputTransforms(BotorchTestCase):
             self.assertTrue(nlz.mins.dtype == other_dtype)
             # test incompatible dimensions of specified bounds
             bounds = torch.zeros(2, 3, device=self.device, dtype=dtype)
-            with self.assertRaises(BotorchTensorDimensionError):
+            with self.assertRaisesRegex(
+                BotorchTensorDimensionError,
+                "Dimensions of provided `bounds` are incompatible",
+            ):
                 Normalize(d=2, bounds=bounds)
 
             # test jitter
@@ -237,8 +240,18 @@ class TestInputTransforms(BotorchTestCase):
             X = torch.cat((torch.randn(4, 1), torch.zeros(4, 1)), dim=-1)
             X = X.to(self.device)
             self.assertEqual(torch.isfinite(nlz(X)).sum(), X.numel())
-            with self.assertRaisesRegex(ValueError, r"must have at least \d+ dim"):
+            with self.assertRaisesRegex(
+                BotorchTensorDimensionError, r"must have at least 2 dimensions"
+            ):
                 nlz(torch.randn(X.shape[-1], dtype=dtype))
+
+            # using unbatched X to train batched transform
+            nlz = Normalize(d=2, min_range=1e-4, batch_shape=torch.Size([3]))
+            X = torch.rand(4, 2)
+            with self.assertRaisesRegex(
+                ValueError, "must have at least 3 dimensions, 1 batch and 2 innate"
+            ):
+                nlz(X)
 
             # basic usage
             for batch_shape in (torch.Size(), torch.Size([3])):
@@ -266,7 +279,12 @@ class TestInputTransforms(BotorchTestCase):
                 # test errors on wrong shape
                 nlz = Normalize(d=2, batch_shape=batch_shape)
                 X = torch.randn(*batch_shape, 2, 1, device=self.device, dtype=dtype)
-                with self.assertRaises(BotorchTensorDimensionError):
+                expected_msg = "Wrong input dimension. Received 1, expected 2."
+                with self.assertRaisesRegex(BotorchTensorDimensionError, expected_msg):
+                    nlz(X)
+                # Same error in eval mode
+                nlz.eval()
+                with self.assertRaisesRegex(BotorchTensorDimensionError, expected_msg):
                     nlz(X)
 
                 # fixed bounds
@@ -328,13 +346,15 @@ class TestInputTransforms(BotorchTestCase):
                     [X.min(dim=-2, keepdim=True)[0], X.max(dim=-2, keepdim=True)[0]],
                     dim=-2,
                 )[..., indices]
-                self.assertTrue(
-                    torch.allclose(nlz.bounds, expected_bounds, atol=1e-4, rtol=1e-4)
-                )
+                self.assertAllClose(nlz.bounds, expected_bounds, atol=1e-4, rtol=1e-4)
+
                 # test errors on wrong shape
                 nlz = Normalize(d=2, batch_shape=batch_shape)
                 X = torch.randn(*batch_shape, 2, 1, device=self.device, dtype=dtype)
-                with self.assertRaises(BotorchTensorDimensionError):
+                with self.assertRaisesRegex(
+                    BotorchTensorDimensionError,
+                    "Wrong input dimension. Received 1, expected 2.",
+                ):
                     nlz(X)
 
                 # test equals
@@ -396,6 +416,22 @@ class TestInputTransforms(BotorchTestCase):
             expected_X = torch.tensor([[1.5, 0.75]], device=self.device, dtype=dtype)
             self.assertAllClose(nlzd_X, expected_X)
 
+            # Test broadcasting across batch dimensions in eval mode
+            x = torch.tensor(
+                [[0.0, 2.0], [3.0, 5.0]], device=self.device, dtype=dtype
+            ).unsqueeze(-1)
+            self.assertEqual(x.shape, torch.Size([2, 2, 1]))
+            nlz = Normalize(d=1, batch_shape=torch.Size([2]))
+            nlz(x)
+            nlz.eval()
+            x2 = torch.tensor([[1.0]], device=self.device, dtype=dtype)
+            nlzd_x2 = nlz.transform(x2)
+            self.assertEqual(nlzd_x2.shape, torch.Size([2, 1, 1]))
+            self.assertAllClose(
+                nlzd_x2.squeeze(),
+                torch.tensor([0.5, -1.0], dtype=dtype, device=self.device),
+            )
+
     def test_standardize(self) -> None:
         for dtype in (torch.float, torch.double):
             # basic init
@@ -452,7 +488,9 @@ class TestInputTransforms(BotorchTestCase):
             X = torch.cat((torch.randn(4, 1), torch.zeros(4, 1)), dim=-1)
             X = X.to(self.device, dtype=dtype)
             self.assertEqual(torch.isfinite(stdz(X)).sum(), X.numel())
-            with self.assertRaisesRegex(ValueError, r"must have at least \d+ dim"):
+            with self.assertRaisesRegex(
+                BotorchTensorDimensionError, r"must have at least \d+ dim"
+            ):
                 stdz(torch.randn(X.shape[-1], dtype=dtype))
 
             # basic usage

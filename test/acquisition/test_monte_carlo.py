@@ -4,6 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import math
 import warnings
 from copy import deepcopy
 from functools import partial
@@ -17,6 +18,7 @@ from botorch import settings
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
     qExpectedImprovement,
+    qLowerConfidenceBound,
     qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
     qSimpleRegret,
@@ -871,7 +873,9 @@ class TestQSimpleRegret(BotorchTestCase):
 
 
 class TestQUpperConfidenceBound(BotorchTestCase):
-    def test_q_upper_confidence_bound(self):
+    acqf_class = qUpperConfidenceBound
+
+    def test_q_confidence_bound(self):
         for dtype in (torch.float, torch.double):
             # the event shape is `b x q x t` = 1 x 1 x 1
             samples = torch.zeros(1, 1, 1, device=self.device, dtype=dtype)
@@ -881,13 +885,13 @@ class TestQUpperConfidenceBound(BotorchTestCase):
 
             # basic test
             sampler = IIDNormalSampler(sample_shape=torch.Size([2]))
-            acqf = qUpperConfidenceBound(model=mm, beta=0.5, sampler=sampler)
+            acqf = self.acqf_class(model=mm, beta=0.5, sampler=sampler)
             res = acqf(X)
             self.assertEqual(res.item(), 0.0)
 
             # basic test
             sampler = IIDNormalSampler(sample_shape=torch.Size([2]), seed=12345)
-            acqf = qUpperConfidenceBound(model=mm, beta=0.5, sampler=sampler)
+            acqf = self.acqf_class(model=mm, beta=0.5, sampler=sampler)
             res = acqf(X)
             self.assertEqual(res.item(), 0.0)
             self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 1, 1]))
@@ -924,7 +928,7 @@ class TestQUpperConfidenceBound(BotorchTestCase):
                     sum(issubclass(w.category, BotorchWarning) for w in ws), 1
                 )
 
-    def test_q_upper_confidence_bound_batch(self):
+    def test_q_confidence_bound_batch(self):
         # TODO: T41739913 Implement tests for all MCAcquisitionFunctions
         for dtype in (torch.float, torch.double):
             samples = torch.zeros(2, 2, 1, device=self.device, dtype=dtype)
@@ -935,14 +939,14 @@ class TestQUpperConfidenceBound(BotorchTestCase):
 
             # test batch mode
             sampler = IIDNormalSampler(sample_shape=torch.Size([2]))
-            acqf = qUpperConfidenceBound(model=mm, beta=0.5, sampler=sampler)
+            acqf = self.acqf_class(model=mm, beta=0.5, sampler=sampler)
             res = acqf(X)
             self.assertEqual(res[0].item(), 1.0)
             self.assertEqual(res[1].item(), 0.0)
 
             # test batch mode
             sampler = IIDNormalSampler(sample_shape=torch.Size([2]), seed=12345)
-            acqf = qUpperConfidenceBound(model=mm, beta=0.5, sampler=sampler)
+            acqf = self.acqf_class(model=mm, beta=0.5, sampler=sampler)
             res = acqf(X)  # 1-dim batch
             self.assertEqual(res[0].item(), 1.0)
             self.assertEqual(res[1].item(), 0.0)
@@ -961,7 +965,7 @@ class TestQUpperConfidenceBound(BotorchTestCase):
 
             # test batch mode, qmc
             sampler = SobolQMCNormalSampler(sample_shape=torch.Size([2]))
-            acqf = qUpperConfidenceBound(model=mm, beta=0.5, sampler=sampler)
+            acqf = self.acqf_class(model=mm, beta=0.5, sampler=sampler)
             res = acqf(X)
             self.assertEqual(res[0].item(), 1.0)
             self.assertEqual(res[1].item(), 0.0)
@@ -991,7 +995,28 @@ class TestQUpperConfidenceBound(BotorchTestCase):
                     sum(issubclass(w.category, BotorchWarning) for w in ws), 1
                 )
 
+    def test_beta_prime(self, negate: bool = False) -> None:
+        acqf = self.acqf_class(
+            model=MockModel(
+                posterior=MockPosterior(
+                    samples=torch.zeros(2, 2, 1, device=self.device, dtype=torch.double)
+                )
+            ),
+            beta=1.96,
+        )
+        expected_value = math.sqrt(1.96 * math.pi / 2)
+        if negate:
+            expected_value *= -1
+        self.assertEqual(acqf.beta_prime, expected_value)
+
     # TODO: Test different objectives (incl. constraints)
+
+
+class TestQLowerConfidenceBound(TestQUpperConfidenceBound):
+    acqf_class = qLowerConfidenceBound
+
+    def test_beta_prime(self):
+        super().test_beta_prime(negate=True)
 
 
 class TestMCAcquisitionFunctionWithConstraints(BotorchTestCase):

@@ -11,9 +11,7 @@ Methods for optimizing acquisition functions.
 from __future__ import annotations
 
 import dataclasses
-
 import warnings
-
 from typing import Any, Callable, Optional, Union
 
 import torch
@@ -160,21 +158,27 @@ def _optimize_acqf_all_features_fixed(
 
 
 def _validate_sequential_inputs(opt_inputs: OptimizeAcqfInputs) -> None:
-    # validate that linear constraints across the q-dim and
-    # self.sequential are not present together
+    # Validate that constraints across the q-dim and
+    # self.sequential are not present together.
+    const_err_message = (
+        "Inter-point constraints are not supported for sequential optimization. "
+        "But the {}th {} constraint is defined as inter-point."
+    )
     if opt_inputs.inequality_constraints is not None:
-        for constraint in opt_inputs.inequality_constraints:
+        for i, constraint in enumerate(opt_inputs.inequality_constraints):
             if len(constraint[0].shape) > 1:
-                raise UnsupportedError(
-                    "Linear inequality constraints across the q-dimension are not "
-                    "supported for sequential optimization."
-                )
+                raise UnsupportedError(const_err_message.format(i, "linear inequality"))
     if opt_inputs.equality_constraints is not None:
-        for constraint in opt_inputs.equality_constraints:
+        for i, constraint in enumerate(opt_inputs.equality_constraints):
             if len(constraint[0].shape) > 1:
+                raise UnsupportedError(const_err_message.format(i, "linear equality"))
+    if opt_inputs.nonlinear_inequality_constraints is not None:
+        for i, (_, intra_point) in enumerate(
+            opt_inputs.nonlinear_inequality_constraints
+        ):
+            if not intra_point:
                 raise UnsupportedError(
-                    "Linear equality constraints across the q-dimension are not "
-                    "supported for sequential optimization."
+                    const_err_message.format(i, "non-linear inequality")
                 )
 
     # TODO: Validate constraints if provided:

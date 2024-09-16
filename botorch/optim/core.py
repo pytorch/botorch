@@ -192,11 +192,11 @@ def torch_minimize(
         else {name: limits for name, limits in bounds.items() if name in parameters}
     )
     for step in range(1, step_limit + 1):
-        fval, _ = closure()
+        fval = closure()[0].detach()
         runtime = monotonic() - start_time
         result = OptimizationResult(
             step=step,
-            fval=fval.detach().cpu().item(),
+            fval=fval.cpu().item(),
             status=OptimizationStatus.RUNNING,
             runtime=runtime,
         )

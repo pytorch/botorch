@@ -18,12 +18,13 @@ from typing import Any, Callable, NoReturn, Optional, Union
 import numpy as np
 import torch
 from botorch.acquisition import AcquisitionFunction
+from botorch.exceptions.errors import OptimizationGradientError
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.generation.utils import (
     _convert_nonlinear_inequality_constraints,
     _remove_fixed_features_from_optimization,
 )
-from botorch.logging import _get_logger
+from botorch.logging import logger
 from botorch.optim.parameter_constraints import (
     _arrayify,
     make_scipy_bounds,
@@ -37,8 +38,6 @@ from botorch.optim.utils.timeout import minimize_with_timeout
 from scipy.optimize import OptimizeResult
 from torch import Tensor
 from torch.optim import Optimizer
-
-logger = _get_logger()
 
 TGenCandidates = Callable[[Tensor, AcquisitionFunction, Any], tuple[Tensor, Tensor]]
 
@@ -217,7 +216,7 @@ def gen_candidates_scipy(
                 )
                 if initial_conditions.dtype != torch.double:
                     msg += " Consider using `dtype=torch.double`."
-                raise RuntimeError(msg)
+                raise OptimizationGradientError(msg, current_x=x)
             fval = loss.item()
             return fval, gradf
 

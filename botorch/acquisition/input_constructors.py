@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Hashable, Iterable, Sequence
-from typing import Any, Callable, Optional, TypeVar, Union
+from typing import Any, Callable, List, Optional, TypeVar, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -50,6 +50,7 @@ from botorch.acquisition.max_value_entropy_search import (
 )
 from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
+    qLowerConfidenceBound,
     qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
     qSimpleRegret,
@@ -60,6 +61,11 @@ from botorch.acquisition.multi_objective import (
     MCMultiOutputObjective,
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
+)
+from botorch.acquisition.multi_objective.hypervolume_knowledge_gradient import (
+    _get_hv_value_function,
+    qHypervolumeKnowledgeGradient,
+    qMultiFidelityHypervolumeKnowledgeGradient,
 )
 from botorch.acquisition.multi_objective.logei import (
     qLogExpectedHypervolumeImprovement,
@@ -767,13 +773,15 @@ def construct_inputs_qPI(
     }
 
 
-@acqf_input_constructor(qUpperConfidenceBound)
+@acqf_input_constructor(qLowerConfidenceBound, qUpperConfidenceBound)
 def construct_inputs_qUCB(
     model: Model,
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
     X_pending: Optional[Tensor] = None,
     sampler: Optional[MCSampler] = None,
+    X_baseline: Optional[Tensor] = None,
+    constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     beta: float = 0.2,
 ) -> dict[str, Any]:
     r"""Construct kwargs for the `qUpperConfidenceBound` constructor.
@@ -788,11 +796,30 @@ def construct_inputs_qUCB(
             Concatenated into X upon forward call.
         sampler: The sampler used to draw base samples. If omitted, uses
             the acquisition functions's default sampler.
+        X_baseline: A `batch_shape x r x d`-dim Tensor of `r` design points
+            that have already been observed. These points are used to
+            compute with infeasible cost when there are constraints.
+        constraints: A list of constraint callables which map a Tensor of posterior
+            samples of dimension `sample_shape x batch-shape x q x m`-dim to a
+            `sample_shape x batch-shape x q`-dim Tensor. The associated constraints
+            are considered satisfied if the output is less than zero.
         beta: Controls tradeoff between mean and standard deviation in UCB.
 
     Returns:
         A dict mapping kwarg names of the constructor to values.
     """
+    if constraints is not None:
+        if X_baseline is None:
+            raise ValueError("Constraints require an X_baseline.")
+        if objective is None:
+            objective = IdentityMCObjective()
+        objective = ConstrainedMCObjective(
+            objective=objective,
+            constraints=constraints,
+            infeasible_cost=get_infeasible_cost(
+                X=X_baseline, model=model, objective=objective
+            ),
+        )
     return {
         "model": model,
         "objective": objective,
@@ -1218,6 +1245,46 @@ def construct_inputs_qKG(
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
     num_fantasies: int = 64,
+    with_current_value: bool = False,
+    **optimize_objective_kwargs: TOptimizeObjectiveKwargs,
+) -> dict[str, Any]:
+    r"""Construct kwargs for `qKnowledgeGradient` constructor."""
+
+    inputs_qkg = {
+        "model": model,
+        "objective": objective,
+        "posterior_transform": posterior_transform,
+        "num_fantasies": num_fantasies,
+    }
+
+    if with_current_value:
+
+        X = _get_dataset_field(training_data, "X", first_only=True)
+        _bounds = torch.as_tensor(bounds, dtype=X.dtype, device=X.device)
+
+        _, current_value = optimize_objective(
+            model=model,
+            bounds=_bounds.t(),
+            q=1,
+            objective=objective,
+            posterior_transform=posterior_transform,
+            **optimize_objective_kwargs,
+        )
+        inputs_qkg["current_value"] = current_value.detach().cpu().max()
+
+    return inputs_qkg
+
+
+@acqf_input_constructor(qHypervolumeKnowledgeGradient)
+def construct_inputs_qHVKG(
+    model: Model,
+    training_data: MaybeDict[SupervisedDataset],
+    bounds: list[tuple[float, float]],
+    objective_thresholds: Tensor,
+    objective: Optional[MCMultiOutputObjective] = None,
+    posterior_transform: Optional[PosteriorTransform] = None,
+    num_fantasies: int = 8,
+    num_pareto: int = 10,
     **optimize_objective_kwargs: TOptimizeObjectiveKwargs,
 ) -> dict[str, Any]:
     r"""Construct kwargs for `qKnowledgeGradient` constructor."""
@@ -1225,20 +1292,31 @@ def construct_inputs_qKG(
     X = _get_dataset_field(training_data, "X", first_only=True)
     _bounds = torch.as_tensor(bounds, dtype=X.dtype, device=X.device)
 
+    ref_point = _get_ref_point(
+        objective_thresholds=objective_thresholds, objective=objective
+    )
+
+    acq_function = _get_hv_value_function(
+        model=model,
+        ref_point=ref_point,
+        use_posterior_mean=True,
+        objective=objective,
+    )
+
     _, current_value = optimize_objective(
         model=model,
         bounds=_bounds.t(),
-        q=1,
-        objective=objective,
-        posterior_transform=posterior_transform,
+        q=num_pareto,
+        acq_function=acq_function,
         **optimize_objective_kwargs,
     )
 
     return {
         "model": model,
         "objective": objective,
-        "posterior_transform": posterior_transform,
+        "ref_point": ref_point,
         "num_fantasies": num_fantasies,
+        "num_pareto": num_pareto,
         "current_value": current_value.detach().cpu().max(),
     }
 
@@ -1255,8 +1333,12 @@ def construct_inputs_qMFKG(
     cost_intercept: float = 1.0,
     num_trace_observations: int = 0,
     num_fantasies: int = 64,
+    **optimize_objective_kwargs: TOptimizeObjectiveKwargs,
 ) -> dict[str, Any]:
     r"""Construct kwargs for `qMultiFidelityKnowledgeGradient` constructor."""
+
+    X = _get_dataset_field(training_data, "X", first_only=True)
+    _bounds = torch.as_tensor(bounds, dtype=X.dtype, device=X.device)
 
     inputs_mf = construct_inputs_mf_base(
         target_fidelities=target_fidelities,
@@ -1265,16 +1347,94 @@ def construct_inputs_qMFKG(
         num_trace_observations=num_trace_observations,
     )
 
-    inputs_kg = construct_inputs_qKG(
+    _, current_value = optimize_objective(
         model=model,
-        training_data=training_data,
-        bounds=bounds,
+        bounds=_bounds.t(),
+        q=1,
         objective=objective,
         posterior_transform=posterior_transform,
-        num_fantasies=num_fantasies,
+        fixed_features=target_fidelities,
+        **optimize_objective_kwargs,
     )
 
-    return {**inputs_mf, **inputs_kg}
+    return {
+        "model": model,
+        "objective": objective,
+        "posterior_transform": posterior_transform,
+        "num_fantasies": num_fantasies,
+        "current_value": current_value.detach().cpu().max(),
+        **inputs_mf,
+    }
+
+
+@acqf_input_constructor(qMultiFidelityHypervolumeKnowledgeGradient)
+def construct_inputs_qMFHVKG(
+    model: Model,
+    training_data: MaybeDict[SupervisedDataset],
+    bounds: list[tuple[float, float]],
+    target_fidelities: dict[int, Union[int, float]],
+    objective_thresholds: Tensor,
+    objective: Optional[MCMultiOutputObjective] = None,
+    posterior_transform: Optional[PosteriorTransform] = None,
+    fidelity_weights: Optional[dict[int, float]] = None,
+    cost_intercept: float = 1.0,
+    num_trace_observations: int = 0,
+    num_fantasies: int = 8,
+    num_pareto: int = 10,
+    **optimize_objective_kwargs: TOptimizeObjectiveKwargs,
+) -> dict[str, Any]:
+    r"""
+    Construct kwargs for `qMultiFidelityHypervolumeKnowledgeGradient` constructor.
+    """
+
+    inputs_mf = construct_inputs_mf_base(
+        target_fidelities=target_fidelities,
+        fidelity_weights=fidelity_weights,
+        cost_intercept=cost_intercept,
+        num_trace_observations=num_trace_observations,
+    )
+
+    if num_trace_observations > 0:
+        raise NotImplementedError(
+            "Trace observations are not currently supported "
+            "by `qMultiFidelityHypervolumeKnowledgeGradient`."
+        )
+
+    del inputs_mf["expand"]
+
+    X = _get_dataset_field(training_data, "X", first_only=True)
+    _bounds = torch.as_tensor(bounds, dtype=X.dtype, device=X.device)
+
+    ref_point = _get_ref_point(
+        objective_thresholds=objective_thresholds, objective=objective
+    )
+
+    acq_function = _get_hv_value_function(
+        model=model,
+        ref_point=ref_point,
+        use_posterior_mean=True,
+        objective=objective,
+    )
+
+    _, current_value = optimize_objective(
+        model=model,
+        bounds=_bounds.t(),
+        q=num_pareto,
+        acq_function=acq_function,
+        fixed_features=target_fidelities,
+        **optimize_objective_kwargs,
+    )
+
+    return {
+        "model": model,
+        "objective": objective,
+        "ref_point": ref_point,
+        "num_fantasies": num_fantasies,
+        "num_pareto": num_pareto,
+        "current_value": current_value.detach().cpu().max(),
+        "target_fidelities": target_fidelities,
+        **inputs_mf,
+    }
 
 
 @acqf_input_constructor(qMultiFidelityMaxValueEntropy)
@@ -1532,6 +1692,7 @@ def optimize_objective(
     model: Model,
     bounds: Tensor,
     q: int,
+    acq_function: Optional[AcquisitionFunction] = None,
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
     linear_constraints: Optional[tuple[Tensor, Tensor]] = None,
@@ -1574,18 +1735,21 @@ def optimize_objective(
     if optimizer_options is None:
         optimizer_options = {}
 
-    if objective is not None:
-        sampler_cls = SobolQMCNormalSampler if qmc else IIDNormalSampler
-        acq_function = qSimpleRegret(
-            model=model,
-            objective=objective,
-            posterior_transform=posterior_transform,
-            sampler=sampler_cls(sample_shape=torch.Size([mc_samples]), seed=seed_inner),
-        )
-    else:
-        acq_function = PosteriorMean(
-            model=model, posterior_transform=posterior_transform
-        )
+    if acq_function is None:
+        if objective is None:
+            acq_function = PosteriorMean(
+                model=model, posterior_transform=posterior_transform
+            )
+        else:
+            sampler_cls = SobolQMCNormalSampler if qmc else IIDNormalSampler
+            acq_function = qSimpleRegret(
+                model=model,
+                objective=objective,
+                posterior_transform=posterior_transform,
+                sampler=sampler_cls(
+                    sample_shape=torch.Size([mc_samples]), seed=seed_inner
+                ),
+            )
 
     if fixed_features:
         acq_function = FixedFeatureAcquisitionFunction(
@@ -1698,3 +1862,18 @@ def construct_inputs_NIPV(
         "posterior_transform": posterior_transform,
     }
     return inputs
+
+
+def _get_ref_point(
+    objective_thresholds: Tensor,
+    objective: Optional[MCMultiOutputObjective] = None,
+) -> Tensor:
+
+    if objective is None:
+        ref_point = objective_thresholds
+    elif isinstance(objective, RiskMeasureMCObjective):
+        ref_point = objective.preprocessing_function(objective_thresholds)
+    else:
+        ref_point = objective(objective_thresholds)
+
+    return ref_point

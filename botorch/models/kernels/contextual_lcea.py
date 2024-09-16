@@ -7,9 +7,9 @@
 from typing import Any, Optional
 
 import torch
+from botorch.models.utils.gpytorch_modules import get_covar_module_with_dim_scaled_prior
 from gpytorch.constraints import Positive
 from gpytorch.kernels.kernel import Kernel
-from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.priors.torch_priors import GammaPrior
 from linear_operator.operators import DiagLinearOperator
 from linear_operator.operators.dense_linear_operator import DenseLinearOperator
@@ -158,18 +158,14 @@ class LCEAKernel(Kernel):
         if train_embedding:
             self._set_emb_layers()
         # task covariance matrix
-        self.task_covar_module = MaternKernel(
-            nu=2.5,
+        self.task_covar_module = get_covar_module_with_dim_scaled_prior(
             ard_num_dims=self.n_embs,
             batch_shape=batch_shape,
-            lengthscale_prior=GammaPrior(3.0, 6.0),
         )
         # base kernel
-        self.base_kernel = MaternKernel(
-            nu=2.5,
+        self.base_kernel = get_covar_module_with_dim_scaled_prior(
             ard_num_dims=self.num_param,
             batch_shape=batch_shape,
-            lengthscale_prior=GammaPrior(3.0, 6.0),
         )
         # outputscales for each context (note this is like sqrt of outputscale)
         self.context_weight = None
