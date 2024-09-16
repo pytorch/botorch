@@ -31,10 +31,10 @@ from __future__ import annotations
 
 import copy
 import warnings
-
 from typing import Optional, Union
 
 import torch
+from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions.warnings import UserInputWarning
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.transforms.input import InputTransform
@@ -146,8 +146,16 @@ class ApproximateGPyTorchModel(GPyTorchModel):
         return Module.train(self, mode=mode)
 
     def posterior(
-        self, X, output_indices=None, observation_noise=False, *args, **kwargs
+        self,
+        X,
+        output_indices: Optional[list[int]] = None,
+        observation_noise: bool = False,
+        posterior_transform: Optional[PosteriorTransform] = None,
     ) -> GPyTorchPosterior:
+        if output_indices is not None:
+            raise NotImplementedError(  # pragma: no cover
+                f"{self.__class__.__name__}.posterior does not support output indices."
+            )
         self.eval()  # make sure model is in eval mode
 
         # input transforms are applied at `posterior` in `eval` mode, and at
@@ -161,11 +169,13 @@ class ApproximateGPyTorchModel(GPyTorchModel):
             X = X.unsqueeze(-3).repeat(*[1] * (X_ndim - 2), self.num_outputs, 1, 1)
         dist = self.model(X)
         if observation_noise:
-            dist = self.likelihood(dist, *args, **kwargs)
+            dist = self.likelihood(dist)
 
         posterior = GPyTorchPosterior(distribution=dist)
         if hasattr(self, "outcome_transform"):
             posterior = self.outcome_transform.untransform_posterior(posterior)
+        if posterior_transform is not None:
+            posterior = posterior_transform(posterior)
         return posterior
 
     def forward(self, X) -> MultivariateNormal:

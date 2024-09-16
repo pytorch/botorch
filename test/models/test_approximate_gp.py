@@ -8,6 +8,7 @@ import itertools
 import warnings
 
 import torch
+from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions.warnings import UserInputWarning
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.approximate_gp import (
@@ -102,6 +103,16 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
                 self.assertIsInstance(posterior, GPyTorchPosterior)
                 # test batch_shape property
                 self.assertEqual(model.batch_shape, tx.shape[:-2])
+
+        # Test that checks if posterior_transform is correctly applied
+        [tx1, ty1, test1] = all_tests["non_batched_mo"]
+        model1 = SingleTaskVariationalGP(tx1, ty1, inducing_points=tx1)
+        posterior_transform = ScalarizedPosteriorTransform(
+            weights=torch.tensor([1.0, 1.0], device=self.device)
+        )
+        posterior1 = model1.posterior(test1, posterior_transform=posterior_transform)
+        self.assertIsInstance(posterior1, GPyTorchPosterior)
+        self.assertEqual(posterior1.mean.shape[1], 1)
 
     def test_variational_setUp(self):
         for dtype in [torch.float, torch.double]:
