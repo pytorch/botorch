@@ -856,7 +856,10 @@ class qUpperConfidenceBound(SampleReducingMCAcquisitionFunction):
             posterior_transform=posterior_transform,
             X_pending=X_pending,
         )
-        self.beta_prime = math.sqrt(beta * math.pi / 2)
+        self.beta_prime = self._get_beta_prime(beta=beta)
+
+    def _get_beta_prime(self, beta: float) -> float:
+        return math.sqrt(beta * math.pi / 2)
 
     def _sample_forward(self, obj: Tensor) -> Tensor:
         r"""Evaluate qUpperConfidenceBound per sample on the candidate set `X`.
@@ -869,3 +872,17 @@ class qUpperConfidenceBound(SampleReducingMCAcquisitionFunction):
         """
         mean = obj.mean(dim=0)
         return mean + self.beta_prime * (obj - mean).abs()
+
+
+class qLowerConfidenceBound(qUpperConfidenceBound):
+    r"""MC-based batched lower confidence bound.
+
+    This acquisition function is useful for confident/risk-averse decision making.
+    This acquisition function is intended to be maximized as with qUpperConfidenceBound,
+    but the qLowerConfidenceBound will be pessimistic in the face of uncertainty and
+    lead to conservative candidates.
+    """
+
+    def _get_beta_prime(self, beta: float) -> float:
+        """Multiply beta prime by -1 to get the lower confidence bound."""
+        return -super()._get_beta_prime(beta=beta)

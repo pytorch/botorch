@@ -76,7 +76,9 @@ class TestAugmentedSingleTaskGP(BotorchTestCase):
                 None if train_Yvar else get_gaussian_likelihood_with_gamma_prior()
             ),
         }
-        model = SingleTaskAugmentedGP(**model_kwargs, **extra_model_kwargs)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=OptimizationWarning)
+            model = SingleTaskAugmentedGP(**model_kwargs, **extra_model_kwargs)
         return model, model_kwargs
 
     def test_data_init(self):
@@ -139,8 +141,8 @@ class TestAugmentedSingleTaskGP(BotorchTestCase):
         self.assertListEqual(res.tolist(), true_res.tolist())
 
     def test_gp(self):
-        bounds = torch.tensor([[-1.0], [1.0]])
         d = 5
+        bounds = torch.stack((torch.full((d - 1,), -1), torch.ones(d - 1)))
         for batch_shape, dtype, use_octf, use_intf, train_Yvar in itertools.product(
             (torch.Size(), torch.Size([2])),
             (torch.float, torch.double),
@@ -151,7 +153,7 @@ class TestAugmentedSingleTaskGP(BotorchTestCase):
             tkwargs = {"device": self.device, "dtype": dtype}
             octf = Standardize(m=1, batch_shape=torch.Size()) if use_octf else None
             intf = (
-                Normalize(d=1, bounds=bounds.to(**tkwargs), transform_on_train=True)
+                Normalize(d=d - 1, bounds=bounds.to(**tkwargs), transform_on_train=True)
                 if use_intf
                 else None
             )

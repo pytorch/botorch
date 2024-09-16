@@ -38,25 +38,23 @@ from botorch.exceptions.errors import UnsupportedError
 from botorch.models.gpytorch import GPyTorchModel, MultiTaskGPyTorchModel
 from botorch.models.model import FantasizeMixin
 from botorch.models.transforms.input import InputTransform
-from botorch.models.transforms.outcome import OutcomeTransform
+from botorch.models.transforms.outcome import OutcomeTransform, Standardize
 from botorch.models.utils.gpytorch_modules import (
-    get_matern_kernel_with_gamma_prior,
+    get_covar_module_with_dim_scaled_prior,
+    get_gaussian_likelihood_with_lognormal_prior,
     MIN_INFERRED_NOISE_LEVEL,
 )
 from botorch.posteriors.multitask import MultitaskGPPosterior
 from botorch.utils.datasets import MultiTaskDataset, SupervisedDataset
+from botorch.utils.types import _DefaultType, DEFAULT
 from gpytorch.constraints import GreaterThan
 from gpytorch.distributions.multitask_multivariate_normal import (
     MultitaskMultivariateNormal,
 )
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.index_kernel import IndexKernel
-from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.multitask_kernel import MultitaskKernel
-from gpytorch.likelihoods.gaussian_likelihood import (
-    FixedNoiseGaussianLikelihood,
-    GaussianLikelihood,
-)
+from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 from gpytorch.likelihoods.likelihood import Likelihood
 from gpytorch.likelihoods.multitask_gaussian_likelihood import (
     MultitaskGaussianLikelihood,
@@ -68,7 +66,7 @@ from gpytorch.module import Module
 from gpytorch.priors.lkj_prior import LKJCovariancePrior
 from gpytorch.priors.prior import Prior
 from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
-from gpytorch.priors.torch_priors import GammaPrior
+from gpytorch.priors.torch_priors import GammaPrior, LogNormalPrior
 from gpytorch.settings import detach_test_caches
 from gpytorch.utils.errors import CachingError
 from gpytorch.utils.memoize import cached, pop_from_cache
@@ -111,7 +109,7 @@ def get_task_value_remapping(
         # Create a tensor that maps task values to new task values.
         # The number of tasks should be small, so this should be quite efficient.
         mapper = torch.full(
-            (task_values.max().item() + 1,),
+            (int(task_values.max().item()) + 1,),
             float("nan"),
             dtype=dtype,
             device=task_values.device,
@@ -125,11 +123,11 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
     kernel. See [Bonilla2007MTGP]_ and [Swersky2013MTBO]_ for a reference on the
     model and its use in Bayesian optimization.
 
-
     The model can be single-output or multi-output, determined by the `output_tasks`.
     This model uses relatively strong priors on the base Kernel hyperparameters, which
     work best when covariates are normalized to the unit cube and outcomes are
-    standardized (zero mean, unit variance).
+    standardized (zero mean, unit variance) - this standardization should be applied in
+    a stratified fashion at the level of the tasks, rather than across all data points.
 
     If the `train_Yvar` is None, this model infers the noise level. If you have
     known observation noise, you can set `train_Yvar` to a tensor containing
@@ -150,8 +148,8 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         output_tasks: Optional[list[int]] = None,
         rank: Optional[int] = None,
         all_tasks: Optional[list[int]] = None,
+        outcome_transform: Optional[Union[OutcomeTransform, _DefaultType]] = DEFAULT,
         input_transform: Optional[InputTransform] = None,
-        outcome_transform: Optional[OutcomeTransform] = None,
     ) -> None:
         r"""Multi-Task GP model using an ICM kernel.
 
@@ -167,7 +165,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
                 Note that the inferred noise is common across all tasks.
             mean_module: The mean function to be used. Defaults to `ConstantMean`.
             covar_module: The module for computing the covariance matrix between
-                the non-task features. Defaults to `MaternKernel`.
+                the non-task features. Defaults to `RBFKernel`.
             likelihood: A likelihood. The default is selected based on `train_Yvar`.
                 If `train_Yvar` is None, a standard `GaussianLikelihood` with inferred
                 noise level is used. Otherwise, a FixedNoiseGaussianLikelihood is used.
@@ -183,12 +181,15 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
                 training data. Note that when a task is not observed, the corresponding
                 task covariance will heavily depend on random initialization and may
                 behave unexpectedly.
-            input_transform: An input transform that is applied in the model's
-                forward pass.
             outcome_transform: An outcome transform that is applied to the
                 training data during instantiation and to the posterior during
                 inference (that is, the `Posterior` obtained by calling
-                `.posterior` on the model will be on the original scale).
+                `.posterior` on the model will be on the original scale). We use a
+                `Standardize` transform if no `outcome_transform` is specified.
+                Pass down `None` to use no outcome transform. NOTE: Standardization
+                should be applied in a stratified fashion, separately for each task.
+            input_transform: An input transform that is applied in the model's
+                forward pass.
 
         Example:
             >>> X1, X2 = torch.rand(10, 2), torch.rand(20, 2)
@@ -217,6 +218,8 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
             )
         all_tasks = all_tasks or all_tasks_inferred
         self.num_tasks = len(all_tasks)
+        if outcome_transform == DEFAULT:
+            outcome_transform = Standardize(m=1, batch_shape=train_X.shape[:-2])
         if outcome_transform is not None:
             train_Y, train_Yvar = outcome_transform(Y=train_Y, Yvar=train_Yvar)
 
@@ -233,7 +236,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         # TODO (T41270962): Support task-specific noise levels in likelihood
         if likelihood is None:
             if train_Yvar is None:
-                likelihood = GaussianLikelihood(noise_prior=GammaPrior(1.1, 0.05))
+                likelihood = get_gaussian_likelihood_with_lognormal_prior()
             else:
                 likelihood = FixedNoiseGaussianLikelihood(noise=train_Yvar.squeeze(-1))
 
@@ -247,7 +250,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         )
         self.mean_module = mean_module or ConstantMean()
         if covar_module is None:
-            self.covar_module = get_matern_kernel_with_gamma_prior(
+            self.covar_module = get_covar_module_with_dim_scaled_prior(
                 ard_num_dims=self.num_non_task_features
             )
         else:
@@ -442,7 +445,7 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel, FantasizeMixin):
                 `MultitaskGaussianLikelihood` with a `GammaPrior(1.1, 0.05)`
                 noise prior.
             data_covar_module: The module computing the covariance (Kernel) matrix
-                in data space. If omitted, use a `MaternKernel`.
+                in data space. If omitted, uses an `RBFKernel`.
             task_covar_prior : A Prior on the task covariance matrix. Must operate
                 on p.s.d. matrices. A common prior for this is the `LKJ` prior. If
                 omitted, uses `LKJCovariancePrior` with `eta` parameter as specified
@@ -473,8 +476,7 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel, FantasizeMixin):
         if rank is None:
             rank = num_tasks
         if likelihood is None:
-            noise_prior = GammaPrior(1.1, 0.05)
-            noise_prior_mode = (noise_prior.concentration - 1) / noise_prior.rate
+            noise_prior = LogNormalPrior(loc=-4.0, scale=1.0)
             likelihood = MultitaskGaussianLikelihood(
                 num_tasks=num_tasks,
                 batch_shape=batch_shape,
@@ -482,7 +484,7 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel, FantasizeMixin):
                 noise_constraint=GreaterThan(
                     MIN_INFERRED_NOISE_LEVEL,
                     transform=None,
-                    initial_value=noise_prior_mode,
+                    initial_value=noise_prior.mode,
                 ),
                 rank=kwargs.get("likelihood_rank", 0),
             )
@@ -500,10 +502,8 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel, FantasizeMixin):
             base_means=ConstantMean(batch_shape=batch_shape), num_tasks=num_tasks
         )
         if data_covar_module is None:
-            data_covar_module = MaternKernel(
-                nu=2.5,
+            data_covar_module = get_covar_module_with_dim_scaled_prior(
                 ard_num_dims=ard_num_dims,
-                lengthscale_prior=GammaPrior(3.0, 6.0),
                 batch_shape=batch_shape,
             )
         else:

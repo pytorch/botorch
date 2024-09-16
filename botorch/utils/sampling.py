@@ -683,7 +683,9 @@ class HitAndRunPolytopeSampler(PolytopeSampler):
             # Run this on the cpu since there is a lot of looping going on
             A=self.new_A.cpu(),
             b=(self.b - self.A @ self.x0).cpu(),
-            x0=torch.zeros((self.nullC.size(1), 1), dtype=self.A.dtype),
+            x0=torch.zeros(
+                (self.nullC.size(1), 1), dtype=self.A.dtype, device=torch.device("cpu")
+            ),
             n=n,
             n0=self.n_burnin if self.num_samples_generated == 0 else 0,
             n_thinning=self.n_thinning,

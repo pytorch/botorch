@@ -8,6 +8,7 @@ import itertools
 import warnings
 
 import torch
+from botorch.exceptions.warnings import UserInputWarning
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.approximate_gp import (
     _SingleTaskVariationalGP,
@@ -133,7 +134,7 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
 
                 # but that the covariance does have a gradient
                 self.assertIsNotNone(
-                    batched_model.model.covar_module.raw_outputscale.grad
+                    batched_model.model.covar_module.raw_lengthscale.grad
                 )
 
                 # check that we always have three outputs
@@ -189,6 +190,26 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
                 self.assertIsInstance(posterior, TransformedPosterior)
             else:
                 self.assertFalse(hasattr(model, "outcome_transform"))
+
+        # test user warnings when using transforms
+        with self.assertWarnsRegex(
+            UserInputWarning,
+            "Using an input transform with `SingleTaskVariationalGP`",
+        ):
+            SingleTaskVariationalGP(
+                train_X=train_X,
+                train_Y=train_Y,
+                input_transform=Normalize(d=1),
+            )
+        with self.assertWarnsRegex(
+            UserInputWarning,
+            "Using an outcome transform with `SingleTaskVariationalGP`",
+        ):
+            SingleTaskVariationalGP(
+                train_X=train_X,
+                train_Y=train_Y,
+                outcome_transform=Log(),
+            )
 
         # test default inducing point allocator
         self.assertIsInstance(model._inducing_point_allocator, GreedyVarianceReduction)
@@ -327,5 +348,5 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
                     model.likelihood, model.model, num_data=train_X.shape[-2]
                 )
                 fit_gpytorch_mll(mll)
-                post = model.posterior(torch.tensor([train_X.mean()]))
+                post = model.posterior(torch.tensor([[train_X.mean()]]))
                 self.assertAllClose(post.mean[0][0], y.mean(), atol=1e-3, rtol=1e-3)

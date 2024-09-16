@@ -211,8 +211,18 @@ class TestConverters(BotorchTestCase):
             batch_gp = model_list_to_batched(list_gp)
             self.assertIsInstance(batch_gp.likelihood, FixedNoiseGaussianLikelihood)
             # test SingleTaskMultiFidelityGP
-            gp1_ = SingleTaskMultiFidelityGP(train_X, train_Y1, iteration_fidelity=1)
-            gp2_ = SingleTaskMultiFidelityGP(train_X, train_Y2, iteration_fidelity=1)
+            gp1_ = SingleTaskMultiFidelityGP(
+                train_X,
+                train_Y1,
+                iteration_fidelity=1,
+                outcome_transform=None,
+            )
+            gp2_ = SingleTaskMultiFidelityGP(
+                train_X,
+                train_Y2,
+                iteration_fidelity=1,
+                outcome_transform=None,
+            )
             list_gp = ModelListGP(gp1_, gp2_)
             batch_gp = model_list_to_batched(list_gp)
             gp2_ = SingleTaskMultiFidelityGP(train_X, train_Y2, iteration_fidelity=2)
@@ -278,13 +288,21 @@ class TestConverters(BotorchTestCase):
                 batch_shape=torch.Size([3]),
             )
             gp1_ = SingleTaskGP(
-                train_X, train_Y1, input_transform=input_tf2, outcome_transform=None
+                train_X=train_X.unsqueeze(0),
+                train_Y=train_Y1.unsqueeze(0),
+                input_transform=input_tf2,
+                outcome_transform=None,
             )
             gp2_ = SingleTaskGP(
-                train_X, train_Y2, input_transform=input_tf2, outcome_transform=None
+                train_X=train_X.unsqueeze(0),
+                train_Y=train_Y2.unsqueeze(0),
+                input_transform=input_tf2,
+                outcome_transform=None,
             )
             list_gp = ModelListGP(gp1_, gp2_)
-            with self.assertRaises(UnsupportedError):
+            with self.assertRaisesRegex(
+                UnsupportedError, "Batched input_transforms are not supported."
+            ):
                 model_list_to_batched(list_gp)
 
             # test outcome transform
@@ -364,7 +382,11 @@ class TestConverters(BotorchTestCase):
             # SingleTaskMultiFidelityGP
             for lin_trunc in (False, True):
                 batch_gp = SingleTaskMultiFidelityGP(
-                    train_X, train_Y, iteration_fidelity=1, linear_truncated=lin_trunc
+                    train_X=train_X,
+                    train_Y=train_Y,
+                    iteration_fidelity=1,
+                    linear_truncated=lin_trunc,
+                    outcome_transform=None,
                 )
                 list_gp = batched_to_model_list(batch_gp)
                 batch_gp_recov = model_list_to_batched(list_gp)
@@ -421,7 +443,10 @@ class TestConverters(BotorchTestCase):
             self.assertEqual(batched_so_model.num_outputs, 1)
             # test SingleTaskMultiFidelityGP
             batched_mo_model = SingleTaskMultiFidelityGP(
-                train_X, train_Y, iteration_fidelity=1
+                train_X,
+                train_Y,
+                iteration_fidelity=1,
+                outcome_transform=None,
             )
             batched_so_model = batched_multi_output_to_single_output(batched_mo_model)
             self.assertIsInstance(batched_so_model, SingleTaskMultiFidelityGP)
@@ -457,7 +482,6 @@ class TestConverters(BotorchTestCase):
                 bounds=torch.tensor(
                     [[-1.0, -1.0], [1.0, 1.0]], device=self.device, dtype=dtype
                 ),
-                batch_shape=torch.Size([2]),
             )
             batched_mo_model = SingleTaskGP(
                 train_X, train_Y, input_transform=input_tf, outcome_transform=None
@@ -471,5 +495,8 @@ class TestConverters(BotorchTestCase):
             batched_mo_model = SingleTaskGP(
                 train_X, train_Y, outcome_transform=Standardize(m=2)
             )
-            with self.assertRaises(NotImplementedError):
+            with self.assertRaisesRegex(
+                NotImplementedError,
+                "Converting batched multi-output models with outcome transforms",
+            ):
                 batched_multi_output_to_single_output(batched_mo_model)

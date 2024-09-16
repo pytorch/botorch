@@ -543,7 +543,9 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
             subset_batch_dict = self._subset_batch_dict
         except AttributeError:
             raise NotImplementedError(
-                "subset_output requires the model to define a `_subset_dict` attribute"
+                "`subset_output` requires the model to define a `_subset_batch_dict` "
+                "attribute that lists the indices of the output dimensions in each "
+                "model parameter that needs to be subset."
             )
 
         m = len(idcs)

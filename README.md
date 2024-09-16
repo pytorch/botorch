@@ -56,9 +56,9 @@ Optimization simply use Ax.
 
 **Installation Requirements**
 - Python >= 3.10
-- PyTorch >= 1.13.1
-- gpytorch == 1.12
-- linear_operator == 0.5.2
+- PyTorch >= 2.0.1
+- gpytorch == 1.13
+- linear_operator == 0.5.3
 - pyro-ppl >= 1.8.4
 - scipy
 - multiple-dispatch
@@ -174,7 +174,7 @@ For more details see our [Documentation](https://botorch.org/docs/introduction) 
   ```python
   from botorch.acquisition import LogExpectedImprovement
 
-  logNEI = LogExpectedImprovement(model=gp, best_f=Y.max())
+  logEI = LogExpectedImprovement(model=gp, best_f=Y.max())
   ```
 
 3. Optimize the acquisition function
@@ -183,7 +183,7 @@ For more details see our [Documentation](https://botorch.org/docs/introduction) 
 
   bounds = torch.stack([torch.zeros(2), torch.ones(2)]).to(torch.double)
   candidate, acq_value = optimize_acqf(
-      logNEI, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
+      logEI, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
   )
   ```
 
