@@ -58,6 +58,7 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">UserInputWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
@@ -93,6 +94,14 @@
 
 
 <span class="n">TApproxModel</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"TApproxModel"</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">"ApproximateGPyTorchModel"</span><span class="p">)</span>
+<span class="n">TRANSFORM_WARNING</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Using an </span><span class="si">{ttype}</span><span class="s2"> transform with `SingleTaskVariationalGP`. If this "</span>
+    <span class="s2">"model is trained in minibatches, a </span><span class="si">{ttype}</span><span class="s2"> transform with learnable "</span>
+    <span class="s2">"parameters would update its parameters for each minibatch, which is "</span>
+    <span class="s2">"undesirable. If you do intend to train in minibatches, we recommend "</span>
+    <span class="s2">"you not use a </span><span class="si">{ttype}</span><span class="s2"> transform and instead pre-transform your whole "</span>
+    <span class="s2">"data set before fitting the model."</span>
+<span class="p">)</span>
 
 
 <div class="viewcode-block" id="ApproximateGPyTorchModel">
@@ -365,9 +374,9 @@
         <span class="n">variational_distribution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">_VariationalDistribution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">variational_strategy</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">_VariationalStrategy</span><span class="p">]</span> <span class="o">=</span> <span class="n">VariationalStrategy</span><span class="p">,</span>
         <span class="n">inducing_points</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">inducing_point_allocator</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InducingPointAllocator</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">OutcomeTransform</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">input_transform</span><span class="p">:</span> <span class="n">InputTransform</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
@@ -378,6 +387,8 @@
 <span class="sd">                either a `GaussianLikelihood` (if `num_outputs=1`) or a</span>
 <span class="sd">                `MultitaskGaussianLikelihood`(if `num_outputs&gt;1`).</span>
 <span class="sd">            num_outputs: Number of output responses per input (default: 1).</span>
+<span class="sd">            learn_inducing_points: If True, the inducing point locations are learned</span>
+<span class="sd">                jointly with the other model parameters.</span>
 <span class="sd">            covar_module: Kernel function. If omitted, uses an `RBFKernel`.</span>
 <span class="sd">            mean_module: Mean of GP model. If omitted, uses a `ConstantMean`.</span>
 <span class="sd">            variational_distribution: Type of variational distribution to use</span>
@@ -391,6 +402,20 @@
 <span class="sd">            inducing_point_allocator: The `InducingPointAllocator` used to</span>
 <span class="sd">                initialize the inducing point locations. If omitted,</span>
 <span class="sd">                uses `GreedyVarianceReduction`.</span>
+<span class="sd">            outcome_transform: An outcome transform that is applied to the training</span>
+<span class="sd">                data during instantiation and to the posterior during inference.</span>
+<span class="sd">                NOTE: If this model is trained in minibatches, an outcome transform</span>
+<span class="sd">                with learnable parameters (such as `Standardize`) would update its</span>
+<span class="sd">                parameters for each minibatch, which is undesirable. If you do intend</span>
+<span class="sd">                to train in minibatches, we recommend you not use an outcome transform</span>
+<span class="sd">                and instead pre-transform your whole data set before fitting the model.</span>
+<span class="sd">            input_transform: An input transform that is applied in the model's</span>
+<span class="sd">                forward pass.</span>
+<span class="sd">                NOTE: If this model is trained in minibatches, an input transform</span>
+<span class="sd">                with learnable parameters (such as `Normalize`) would update its</span>
+<span class="sd">                parameters for each minibatch, which is undesirable. If you do intend</span>
+<span class="sd">                to train in minibatches, we recommend you not use an input transform</span>
+<span class="sd">                and instead pre-transform your whole data set before fitting the model.</span>
 <span class="sd">        """</span>
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
             <span class="n">transformed_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span>
@@ -398,6 +423,11 @@
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">train_Y</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="n">TRANSFORM_WARNING</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ttype</span><span class="o">=</span><span class="s2">"outcome"</span><span class="p">),</span>
+                    <span class="n">UserInputWarning</span><span class="p">,</span>
+                    <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                <span class="p">)</span>
                 <span class="n">train_Y</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">outcome_transform</span><span class="p">(</span><span class="n">train_Y</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">transformed_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
             <span class="n">validate_input_scaling</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">transformed_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
@@ -428,6 +458,7 @@
                 <span class="s2">"being further optimized during the model fit. If so "</span>
                 <span class="s2">"then set `learn_inducing_points` to False."</span><span class="p">,</span>
                 <span class="ne">UserWarning</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">inducing_point_allocator</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -452,6 +483,11 @@
         <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">outcome_transform</span>
         <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="n">TRANSFORM_WARNING</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ttype</span><span class="o">=</span><span class="s2">"input"</span><span class="p">),</span>
+                <span class="n">UserInputWarning</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+            <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">input_transform</span> <span class="o">=</span> <span class="n">input_transform</span>
 
         <span class="c1"># for model fitting utilities</span>

@@ -108,7 +108,7 @@ train_obj = exact_obj + NOISE_SE * torch.randn_like(exact_obj)
 
 
 # #### Input warping and model initialization
-# We initialize the `Warp` input transformation and pass it a `FixedNoiseGP` to model the noiseless objective. The `Warp` object is a `torch.nn.Module` that contains the concentration parameters and applies the warping function in the `Model`'s `forward` pass.
+# We initialize the `Warp` input transformation and pass it a `SingleTaskGP` to model the noiseless objective. The `Warp` object is a `torch.nn.Module` that contains the concentration parameters and applies the warping function in the `Model`'s `forward` pass.
 
 # In[5]:
 

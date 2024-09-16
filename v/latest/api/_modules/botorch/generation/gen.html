@@ -41,6 +41,7 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">OptimizationGradientError</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">OptimizationWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.generation.utils</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">_convert_nonlinear_inequality_constraints</span><span class="p">,</span>
@@ -240,7 +241,7 @@
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">initial_conditions</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">:</span>
                     <span class="n">msg</span> <span class="o">+=</span> <span class="s2">" Consider using `dtype=torch.double`."</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">OptimizationGradientError</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">current_x</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
             <span class="n">fval</span> <span class="o">=</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
             <span class="k">return</span> <span class="n">fval</span><span class="p">,</span> <span class="n">gradf</span>
 

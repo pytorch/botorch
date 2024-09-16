@@ -48,14 +48,14 @@ problem = BraninCurrin(negate=True).to(**tkwargs)
 
 # #### Model initialization
 # 
-# We use a list of `FixedNoiseGP`s to model the two objectives with known noise variances. Homoskedastic noise levels can be inferred by using `SingleTaskGP`s instead of `FixedNoiseGP`s.
+# We use a list of `SingleTaskGP`s to model the two objectives with known noise variances. If no noise variances were provided, `SingleTaskGP` would infer (homoskedastic) noise levels instead.
 # 
 # The models are initialized with $2(d+1)=6$ points drawn randomly from $[0,1]^2$.
 
 # In[10]:
 
 
-from botorch.models.gp_regression import FixedNoiseGP
+from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
@@ -81,7 +81,7 @@ def initialize_model(train_x, train_obj):
         train_y = train_obj[..., i : i + 1]
         train_yvar = torch.full_like(train_y, NOISE_SE[i] ** 2)
         models.append(
-            FixedNoiseGP(
+            SingleTaskGP(
                 train_x, train_y, train_yvar, outcome_transform=Standardize(m=1)
             )
         )

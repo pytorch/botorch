@@ -214,7 +214,7 @@ We first warp each input dimension through a different inverse Kumaraswamy CDF.<
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h4 id="Input-warping-and-model-initialization">Input warping and model initialization<a class="anchor-link" href="#Input-warping-and-model-initialization">¶</a></h4><p>We initialize the <code>Warp</code> input transformation and pass it a <code>FixedNoiseGP</code> to model the noiseless objective. The <code>Warp</code> object is a <code>torch.nn.Module</code> that contains the concentration parameters and applies the warping function in the <code>Model</code>'s <code>forward</code> pass.</p>
+<h4 id="Input-warping-and-model-initialization">Input warping and model initialization<a class="anchor-link" href="#Input-warping-and-model-initialization">¶</a></h4><p>We initialize the <code>Warp</code> input transformation and pass it a <code>SingleTaskGP</code> to model the noiseless objective. The <code>Warp</code> object is a <code>torch.nn.Module</code> that contains the concentration parameters and applies the warping function in the <code>Model</code>'s <code>forward</code> pass.</p>
 </div>
 </div>
 </div>

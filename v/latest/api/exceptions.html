@@ -87,6 +87,24 @@ timed out.</p></li>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="botorch.exceptions.errors.OptimizationGradientError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.exceptions.errors.</span></span><span class="sig-name descname"><span class="pre">OptimizationGradientError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_x</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/exceptions/errors.html#OptimizationGradientError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.exceptions.errors.OptimizationGradientError" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.exceptions.errors.BotorchError" title="botorch.exceptions.errors.BotorchError"><code class="xref py py-class docutils literal notranslate"><span class="pre">BotorchError</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></p>
+<p>Exception raised when gradient array <cite>gradf</cite> containts NaNs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*args</strong> (<em>Any</em>) – Standard args to <cite>BoTorchError</cite>.</p></li>
+<li><p><strong>current_x</strong> (<em>ndarray</em>) – A numpy array representing the current iterate.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) – Standard kwargs to <cite>BoTorchError</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
 </section>
 <section id="module-botorch.exceptions.warnings">
 <span id="warnings"></span><h2>Warnings<a class="headerlink" href="#module-botorch.exceptions.warnings" title="Link to this heading">¶</a></h2>

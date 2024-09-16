@@ -62,7 +62,7 @@ cv_folds.test_X.shape, cv_folds.test_Y.shape
 
 # ### Perform LOOCV
 # 
-# We can use the `batch_cross_validation` function to perform LOOCV using batching (meaning that the `b = 20` sets of training data can be fit as `b = 20` separate GP models with separate hyperparameters in parallel through GPyTorch) and return a CVResult tuple with the batched `GPyTorchPosterior` object over the LOOCV test points and the observed targets. The `batch_cross_validation` requires a model class (`model_cls`) and a marginal log likelihood class (`mll_cls`). Since we have an observed and constant noise level, we will use the FixedNoiseGP as the `model_cls` and an ExactMarginalLogLikelihood as the `mll_cls`.
+# We can use the `batch_cross_validation` function to perform LOOCV using batching (meaning that the `b = 20` sets of training data can be fit as `b = 20` separate GP models with separate hyperparameters in parallel through GPyTorch) and return a CVResult tuple with the batched `GPyTorchPosterior` object over the LOOCV test points and the observed targets. The `batch_cross_validation` requires a model class (`model_cls`) and a marginal log likelihood class (`mll_cls`). We will use the SingleTaskGP as the `model_cls` and an ExactMarginalLogLikelihood as the `mll_cls`.
 
 # In[6]:
 

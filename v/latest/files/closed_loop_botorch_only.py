@@ -60,13 +60,13 @@ def weighted_obj(X):
 # 
 # We use a `MultiOutputGP` to model the objective (output 0) and the constraint (output 1). We assume known homoskedastic observation noise on both the objective and constraint with standard error $\sigma = 0.5$. 
 # 
-# Each component is a `FixedNoiseGP`. The models are initialized with 10 points drawn randomly from $[0,1]^6$.
+# Each component is a `SingleTaskGP`. The models are initialized with 10 points drawn randomly from $[0,1]^6$.
 
 # In[16]:
 
 
 from botorch.models.transforms.input import Normalize
-from botorch.models import FixedNoiseGP, ModelListGP
+from botorch.models import SingleTaskGP, ModelListGP
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 
 NOISE_SE = 0.25
@@ -86,13 +86,13 @@ def generate_initial_data(n=10):
 
 def initialize_model(train_x, train_obj, train_con, state_dict=None):
     # define models for objective and constraint
-    model_obj = FixedNoiseGP(
+    model_obj = SingleTaskGP(
         train_x,
         train_obj,
         train_yvar.expand_as(train_obj),
         input_transform=Normalize(d=train_x.shape[-1]),
     ).to(train_x)
-    model_con = FixedNoiseGP(
+    model_con = SingleTaskGP(
         train_x,
         train_con,
         train_yvar.expand_as(train_con),

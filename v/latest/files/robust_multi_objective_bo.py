@@ -195,7 +195,7 @@ class MVaRHV(torch.nn.Module):
 # In[6]:
 
 
-from botorch.models.gp_regression import FixedNoiseGP
+from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
 from gpytorch.mlls import SumMarginalLogLikelihood
 from botorch.models.transforms.outcome import Standardize
@@ -214,7 +214,7 @@ def initialize_model(train_x, train_y, perturbation_set):
     models = []
     for i in range(train_y.shape[-1]):
         models.append(
-            FixedNoiseGP(
+            SingleTaskGP(
                 train_X=train_x,
                 train_Y=train_y[..., i : i + 1],
                 train_Yvar=train_Yvar[..., i : i + 1],

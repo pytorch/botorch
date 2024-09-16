@@ -36,7 +36,6 @@
 <span class="sd">    Advances in Neural Information Processing Systems 33, NeurIPS 2020.</span>
 <span class="sd">"""</span>
 
-<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -44,6 +43,7 @@
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">MultiTaskDataset</span><span class="p">,</span> <span class="n">SupervisedDataset</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.types</span> <span class="kn">import</span> <span class="n">_DefaultType</span><span class="p">,</span> <span class="n">DEFAULT</span>
 <span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">Interval</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.rbf_kernel</span> <span class="kn">import</span> <span class="n">RBFKernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.likelihoods.likelihood</span> <span class="kn">import</span> <span class="n">Likelihood</span>
@@ -76,8 +76,8 @@
         <span class="n">embs_dim_list</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">output_tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">all_tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">OutcomeTransform</span> <span class="o">|</span> <span class="n">_DefaultType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">DEFAULT</span><span class="p">,</span>
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
@@ -110,12 +110,14 @@
 <span class="sd">                training data. Note that when a task is not observed, the corresponding</span>
 <span class="sd">                task covariance will heavily depend on random initialization and may</span>
 <span class="sd">                behave unexpectedly.</span>
-<span class="sd">            input_transform: An input transform that is applied in the model's</span>
-<span class="sd">                forward pass.</span>
 <span class="sd">            outcome_transform: An outcome transform that is applied to the</span>
 <span class="sd">                training data during instantiation and to the posterior during</span>
 <span class="sd">                inference (that is, the `Posterior` obtained by calling</span>
-<span class="sd">                `.posterior` on the model will be on the original scale).</span>
+<span class="sd">                `.posterior` on the model will be on the original scale). We use a</span>
+<span class="sd">                `Standardize` transform if no `outcome_transform` is specified.</span>
+<span class="sd">                Pass down `None` to use no outcome transform.</span>
+<span class="sd">            input_transform: An input transform that is applied in the model's</span>
+<span class="sd">                forward pass.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
@@ -127,8 +129,8 @@
             <span class="n">likelihood</span><span class="o">=</span><span class="n">likelihood</span><span class="p">,</span>
             <span class="n">output_tasks</span><span class="o">=</span><span class="n">output_tasks</span><span class="p">,</span>
             <span class="n">all_tasks</span><span class="o">=</span><span class="n">all_tasks</span><span class="p">,</span>
-            <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span>
             <span class="n">outcome_transform</span><span class="o">=</span><span class="n">outcome_transform</span><span class="p">,</span>
+            <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">device</span>
         <span class="k">if</span> <span class="n">all_tasks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -278,68 +280,6 @@
             <span class="n">base_inputs</span><span class="p">[</span><span class="s2">"embs_dim_list"</span><span class="p">]</span> <span class="o">=</span> <span class="n">embs_dim_list</span>
         <span class="k">return</span> <span class="n">base_inputs</span></div>
 </div>
-
-
-
-<div class="viewcode-block" id="FixedNoiseLCEMGP">
-<a class="viewcode-back" href="../../../models.html#botorch.models.contextual_multioutput.FixedNoiseLCEMGP">[docs]</a>
-<span class="k">class</span> <span class="nc">FixedNoiseLCEMGP</span><span class="p">(</span><span class="n">LCEMGP</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""The Multi-Task GP the latent context embedding multioutput</span>
-<span class="sd">    (LCE-M) kernel, with known observation noise.</span>
-
-<span class="sd">    DEPRECATED: Please use `LCEMGP` with `train_Yvar` instead.</span>
-<span class="sd">    Will be removed in a future release (~v0.11).</span>
-<span class="sd">    """</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">task_feature</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">context_cat_feature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">context_emb_feature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">embs_dim_list</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">output_tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">        Args:</span>
-<span class="sd">            train_X: (n x d) X training data.</span>
-<span class="sd">            train_Y: (n x 1) Y training data.</span>
-<span class="sd">            train_Yvar: (n x 1) Observed variances of each training Y.</span>
-<span class="sd">            task_feature: Column index of train_X to get context indices.</span>
-<span class="sd">            context_cat_feature: (n_contexts x k) one-hot encoded context</span>
-<span class="sd">                features. Rows are ordered by context indices, where k is the</span>
-<span class="sd">                number of categorical variables. If None, task indices will</span>
-<span class="sd">                be used and k = 1.</span>
-<span class="sd">            context_emb_feature: (n_contexts x m) pre-given continuous</span>
-<span class="sd">                embedding features. Rows are ordered by context indices.</span>
-<span class="sd">            embs_dim_list: Embedding dimension for each categorical variable.</span>
-<span class="sd">                The length equals to k. If None, the embedding dimension is set to</span>
-<span class="sd">                1 for each categorical variable.</span>
-<span class="sd">            output_tasks: A list of task indices for which to compute model</span>
-<span class="sd">                outputs for. If omitted, return outputs for all task indices.</span>
-
-<span class="sd">        """</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-            <span class="s2">"`FixedNoiseLCEMGP` has been deprecated and will be removed in a "</span>
-            <span class="s2">"future release. Please use the `LCEMGP` model instead. "</span>
-            <span class="s2">"When `train_Yvar` is specified, `LCEMGP` behaves the same "</span>
-            <span class="s2">"as the `FixedNoiseLCEMGP`."</span><span class="p">,</span>
-            <span class="ne">DeprecationWarning</span><span class="p">,</span>
-            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
-            <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span>
-            <span class="n">task_feature</span><span class="o">=</span><span class="n">task_feature</span><span class="p">,</span>
-            <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">,</span>
-            <span class="n">context_cat_feature</span><span class="o">=</span><span class="n">context_cat_feature</span><span class="p">,</span>
-            <span class="n">context_emb_feature</span><span class="o">=</span><span class="n">context_emb_feature</span><span class="p">,</span>
-            <span class="n">embs_dim_list</span><span class="o">=</span><span class="n">embs_dim_list</span><span class="p">,</span>
-            <span class="n">output_tasks</span><span class="o">=</span><span class="n">output_tasks</span><span class="p">,</span>
-        <span class="p">)</span></div>
 
 </pre></div>
 </div>

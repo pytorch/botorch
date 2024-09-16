@@ -136,7 +136,7 @@
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h4 id="Model-initialization">Model initialization<a class="anchor-link" href="#Model-initialization">¶</a></h4><p>We use a <code>MultiOutputGP</code> to model the objective (output 0) and the constraint (output 1). We assume known homoskedastic observation noise on both the objective and constraint with standard error $\sigma = 0.5$.</p>
-<p>Each component is a <code>FixedNoiseGP</code>. The models are initialized with 10 points drawn randomly from $[0,1]^6$.</p>
+<p>Each component is a <code>SingleTaskGP</code>. The models are initialized with 10 points drawn randomly from $[0,1]^6$.</p>
 </div>
 </div>
 </div>
@@ -146,7 +146,7 @@
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">Normalize</span>
-<span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">FixedNoiseGP</span><span class="p">,</span> <span class="n">ModelListGP</span>
+<span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span><span class="p">,</span> <span class="n">ModelListGP</span>
 <span class="kn">from</span> <span class="nn">gpytorch.mlls.sum_marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">SumMarginalLogLikelihood</span>
 
 <span class="n">NOISE_SE</span> <span class="o">=</span> <span class="mf">0.25</span>
@@ -166,13 +166,13 @@
 
 <span class="k">def</span> <span class="nf">initialize_model</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">,</span> <span class="n">train_con</span><span class="p">,</span> <span class="n">state_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="c1"># define models for objective and constraint</span>
-    <span class="n">model_obj</span> <span class="o">=</span> <span class="n">FixedNoiseGP</span><span class="p">(</span>
+    <span class="n">model_obj</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span>
         <span class="n">train_x</span><span class="p">,</span>
         <span class="n">train_obj</span><span class="p">,</span>
         <span class="n">train_yvar</span><span class="o">.</span><span class="n">expand_as</span><span class="p">(</span><span class="n">train_obj</span><span class="p">),</span>
         <span class="n">input_transform</span><span class="o">=</span><span class="n">Normalize</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="n">train_x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>
     <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_x</span><span class="p">)</span>
-    <span class="n">model_con</span> <span class="o">=</span> <span class="n">FixedNoiseGP</span><span class="p">(</span>
+    <span class="n">model_con</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span>
         <span class="n">train_x</span><span class="p">,</span>
         <span class="n">train_con</span><span class="p">,</span>
         <span class="n">train_yvar</span><span class="o">.</span><span class="n">expand_as</span><span class="p">(</span><span class="n">train_con</span><span class="p">),</span>

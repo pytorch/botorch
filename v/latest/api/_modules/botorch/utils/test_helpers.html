@@ -42,13 +42,13 @@
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.fully_bayesian</span> <span class="kn">import</span> <span class="n">SaasFullyBayesianSingleTaskGP</span>
-<span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span>
+<span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">,</span> <span class="n">GPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">FantasizeMixin</span><span class="p">,</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model_list_gp_regression</span> <span class="kn">import</span> <span class="n">ModelListGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">Standardize</span>
 <span class="kn">from</span> <span class="nn">botorch.models.utils</span> <span class="kn">import</span> <span class="n">add_output_dim</span>
 <span class="kn">from</span> <span class="nn">botorch.models.utils.assorted</span> <span class="kn">import</span> <span class="n">fantasize</span>
-<span class="kn">from</span> <span class="nn">botorch.posteriors.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
+<span class="kn">from</span> <span class="nn">botorch.posteriors.torch</span> <span class="kn">import</span> <span class="n">TorchPosterior</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">MultiTaskDataset</span><span class="p">,</span> <span class="n">SupervisedDataset</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions.multivariate_normal</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">RBFKernel</span><span class="p">,</span> <span class="n">ScaleKernel</span>
@@ -287,21 +287,58 @@
 
 <div class="viewcode-block" id="get_pvar_expected">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.test_helpers.get_pvar_expected">[docs]</a>
-<span class="k">def</span> <span class="nf">get_pvar_expected</span><span class="p">(</span><span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">get_pvar_expected</span><span class="p">(</span>
+    <span class="n">posterior</span><span class="p">:</span> <span class="n">TorchPosterior</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Computes the expected variance of a posterior after adding the</span>
 <span class="sd">    predictive noise from the likelihood.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        posterior: The posterior to compute the variance of. Must be a</span>
+<span class="sd">            `TorchPosterior` object.</span>
+<span class="sd">        model: The model that generated the posterior. If `m &gt; 1`, this must be</span>
+<span class="sd">            a `BatchedMultiOutputGPyTorchModel`.</span>
+<span class="sd">        X: The test inputs.</span>
+<span class="sd">        m: The number of outputs.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The expected variance of the posterior after adding the observation</span>
+<span class="sd">        noise from the likelihood.</span>
 <span class="sd">    """</span>
     <span class="n">X</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
     <span class="n">lh_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">odim</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>  <span class="c1"># this is the output dimension index</span>
+
+    <span class="k">if</span> <span class="n">m</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                <span class="s2">"`get_pvar_expected` only supports `BatchedMultiOutputGPyTorchModel`s."</span>
+            <span class="p">)</span>
+        <span class="c1"># We need to add a batch dimension to the input to be compatible with the</span>
+        <span class="c1"># augmented batch shape of the model. This also changes the output dimension</span>
+        <span class="c1"># index.</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">odim</span> <span class="o">=</span> <span class="n">add_output_dim</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">original_batch_shape</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">_input_batch_shape</span><span class="p">)</span>
+
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">FixedNoiseGaussianLikelihood</span><span class="p">):</span>
-        <span class="n">lh_kwargs</span><span class="p">[</span><span class="s2">"noise"</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">noise</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">broadcasted_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">broadcast_shapes</span><span class="p">(</span><span class="n">noise</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">lh_kwargs</span><span class="p">[</span><span class="s2">"noise"</span><span class="p">]</span> <span class="o">=</span> <span class="n">noise</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">broadcasted_shape</span><span class="p">)</span>
+
+    <span class="n">pvar_exp</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">X</span><span class="p">,</span> <span class="o">**</span><span class="n">lh_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">variance</span>
     <span class="k">if</span> <span class="n">m</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">(</span>
-            <span class="n">posterior</span><span class="o">.</span><span class="n">distribution</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">**</span><span class="n">lh_kwargs</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">X_</span><span class="p">,</span> <span class="n">odi</span> <span class="o">=</span> <span class="n">add_output_dim</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">original_batch_shape</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">_input_batch_shape</span><span class="p">)</span>
-    <span class="n">pvar_exp</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">X_</span><span class="p">),</span> <span class="n">X_</span><span class="p">,</span> <span class="o">**</span><span class="n">lh_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">variance</span>
-    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">pvar_exp</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">odi</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+        <span class="n">pvar_exp</span> <span class="o">=</span> <span class="n">pvar_exp</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">pvar_exp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">pvar_exp</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">odim</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
+    <span class="p">)</span>
+
+    <span class="c1"># If the model has an outcome transform, we need to untransform the</span>
+    <span class="c1"># variance according to that transform.</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">):</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">pvar_exp</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">outcome_transform</span><span class="o">.</span><span class="n">untransform</span><span class="p">(</span>
+            <span class="n">Y</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">pvar_exp</span><span class="p">),</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">pvar_exp</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">pvar_exp</span></div>
 
 
 
