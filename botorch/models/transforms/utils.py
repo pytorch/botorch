@@ -32,7 +32,7 @@ def lognorm_to_norm(mu: Tensor, Cov: Tensor) -> tuple[Tensor, Tensor]:
         - The `batch_shape x n` mean vector of the Normal distribution
         - The `batch_shape x n x n` covariance matrix of the Normal distribution
     """
-    Cov_n = torch.log(1 + Cov / (mu.unsqueeze(-1) * mu.unsqueeze(-2)))
+    Cov_n = torch.log1p(Cov / (mu.unsqueeze(-1) * mu.unsqueeze(-2)))
     mu_n = torch.log(mu) - 0.5 * torch.diagonal(Cov_n, dim1=-1, dim2=-2)
     return mu_n, Cov_n
 
