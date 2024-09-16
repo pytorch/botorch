@@ -32,7 +32,7 @@ from __future__ import annotations
 import copy
 import warnings
 
-from typing import Optional, TypeVar, Union
+from typing import Optional, Union
 
 import torch
 from botorch.exceptions.warnings import UserInputWarning
@@ -68,9 +68,9 @@ from gpytorch.variational import (
 )
 from torch import Tensor
 from torch.nn import Module
+from typing_extensions import Self
 
 
-TApproxModel = TypeVar("TApproxModel", bound="ApproximateGPyTorchModel")
 TRANSFORM_WARNING = (
     "Using an {ttype} transform with `SingleTaskVariationalGP`. If this "
     "model is trained in minibatches, a {ttype} transform with learnable "
@@ -132,11 +132,11 @@ class ApproximateGPyTorchModel(GPyTorchModel):
     def num_outputs(self):
         return self._desired_num_outputs
 
-    def eval(self: TApproxModel) -> TApproxModel:
+    def eval(self) -> Self:
         r"""Puts the model in `eval` mode."""
         return Module.eval(self)
 
-    def train(self: TApproxModel, mode: bool = True) -> TApproxModel:
+    def train(self, mode: bool = True) -> Self:
         r"""Put the model in `train` mode.
 
         Args:
