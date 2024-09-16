@@ -10,22 +10,22 @@ Gaussian Process Regression models based on GPyTorch models.
 These models are often a good starting point and are further documented in the
 tutorials.
 
-`SingleTaskGP`, `FixedNoiseGP`, and `HeteroskedasticSingleTaskGP` are all
-single-task exact GP models, differing in how they treat noise. They use
-relatively strong priors on the Kernel hyperparameters, which work best when
-covariates are normalized to the unit cube and outcomes are standardized (zero
-mean, unit variance).
+`SingleTaskGP` and `HeteroskedasticSingleTaskGP` are single-task exact GP models,
+differing in how they treat noise. They use relatively strong priors on the Kernel
+hyperparameters, which work best when covariates are normalized to the unit cube
+and outcomes are standardized (zero mean, unit variance). By default, these models
+use a `Standardize` outcome transform, which applies this standardization. However,
+they do not (yet) use an input transform by default.
 
 These models all work in batch mode (each batch having its own hyperparameters).
 When the training observations include multiple outputs, these models use
 batching to model outputs independently.
 
 These models all support multiple outputs. However, as single-task models,
-`SingleTaskGP`, `FixedNoiseGP`, and `HeteroskedasticSingleTaskGP` should be
-used only when the outputs are independent and all use the same training data.
-If outputs are independent and outputs have different training data, use the
-`ModelListGP`. When modeling correlations between outputs, use a multi-task
-model like `MultiTaskGP`.
+`SingleTaskGP` and `HeteroskedasticSingleTaskGP` should be used only when the
+outputs are independent and all use the same training data. If outputs are
+independent and outputs have different training data, use the `ModelListGP`.
+When modeling correlations between outputs, use a multi-task model like `MultiTaskGP`.
 """
 
 from __future__ import annotations
@@ -255,49 +255,14 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         return MultivariateNormal(mean_x, covar_x)
 
 
-class FixedNoiseGP(SingleTaskGP):
-    r"""A single-task exact GP model using fixed noise levels.
-
-    DEPRECATED: `FixedNoiseGP` has been merged into `SingleTaskGP`. Please use
-    `SingleTaskGP` with `train_Yvar` instead.
-    Will be removed in a future release (~v0.12).
-    """
-
-    def __init__(
-        self,
-        train_X: Tensor,
-        train_Y: Tensor,
-        train_Yvar: Tensor,
-        covar_module: Optional[Module] = None,
-        mean_module: Optional[Mean] = None,
-        outcome_transform: Optional[OutcomeTransform] = None,
-        input_transform: Optional[InputTransform] = None,
-    ) -> None:
-        r"""DEPRECATED. See SingleTaskGP."""
-        warnings.warn(
-            "`FixedNoiseGP` has been merged into `SingleTaskGP`. "
-            "Please use `SingleTaskGP` with `train_Yvar` instead.",
-            DeprecationWarning,
-        )
-        super().__init__(
-            train_X=train_X,
-            train_Y=train_Y,
-            train_Yvar=train_Yvar,
-            covar_module=covar_module,
-            mean_module=mean_module,
-            outcome_transform=outcome_transform,
-            input_transform=input_transform,
-        )
-
-
 class HeteroskedasticSingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
     r"""A single-task exact GP model using a heteroskedastic noise model.
 
-    This model differs from `SingleTaskGP` in that noise levels are provided
-    rather than inferred, and differs from `FixedNoiseGP` in that it can
-    predict noise levels out of sample, because it internally wraps another
-    GP (a SingleTaskGP) to model the observation noise.
-    Noise levels must be provided to `HeteroskedasticSingleTaskGP` as `train_Yvar`.
+    This model differs from `SingleTaskGP` with observed observation noise
+    variances (`train_Yvar`) in that it can predict noise levels out of sample.
+    This is achieved by internally wrapping another GP (a `SingleTaskGP`) to model
+    the (log of) the observation noise. Noise levels must be provided to
+    `HeteroskedasticSingleTaskGP` as `train_Yvar`.
 
     Examples of cases in which noise levels are known include online
     experimentation and simulation optimization.
