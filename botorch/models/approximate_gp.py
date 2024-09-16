@@ -33,7 +33,6 @@ import copy
 import warnings
 
 from typing import Optional, Union
-from typing_extensions import Self
 
 import torch
 from botorch.models.gpytorch import GPyTorchModel
@@ -68,6 +67,7 @@ from gpytorch.variational import (
 )
 from torch import Tensor
 from torch.nn import Module
+from typing_extensions import Self
 
 
 class ApproximateGPyTorchModel(GPyTorchModel):
