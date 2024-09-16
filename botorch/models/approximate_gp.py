@@ -31,7 +31,7 @@ from __future__ import annotations
 
 import copy
 import warnings
-from typing import Optional, TypeVar, Union
+from typing import Optional, Union
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
