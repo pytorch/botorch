@@ -898,7 +898,7 @@
 <span class="sd">            - The un-transformed outcome observations.</span>
 <span class="sd">            - The un-transformed observation noise (if applicable).</span>
 <span class="sd">        """</span>
-        <span class="n">Y_utf</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">sign</span><span class="p">()</span> <span class="o">*</span> <span class="p">(</span><span class="n">Y</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">Y_utf</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">sign</span><span class="p">()</span> <span class="o">*</span> <span class="n">Y</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">expm1</span><span class="p">()</span>
         <span class="n">outputs</span> <span class="o">=</span> <span class="n">normalize_indices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">outputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">Y_utf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
@@ -933,7 +933,7 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">TransformedPosterior</span><span class="p">(</span>
             <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span>
-            <span class="n">sample_transform</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">sign</span><span class="p">()</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">),</span>
+            <span class="n">sample_transform</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">sign</span><span class="p">()</span> <span class="o">*</span> <span class="n">x</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">expm1</span><span class="p">(),</span>
         <span class="p">)</span></div>
 </div>
 

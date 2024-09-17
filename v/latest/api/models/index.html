@@ -279,13 +279,12 @@ a <cite>condition_on_observations</cite> method.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>self</strong> (<em>TFantasizeMixin</em>)</p></li>
 <li><p><strong>X</strong> (<em>Tensor</em>)</p></li>
 <li><p><strong>Y</strong> (<em>Tensor</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>TFantasizeMixin</em></p>
+<dd class="field-even"><p><em>Self</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -351,14 +350,13 @@ If None and using an inferred noise likelihood, the noise will be the
 inferred noise level. If using a fixed noise likelihood, the mean across
 the observation noise in the training data is used as observation noise.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – Will be passed to <cite>model.condition_on_observations</cite></p></li>
-<li><p><strong>self</strong> (<em>TFantasizeMixin</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The constructed fantasy model.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>TFantasizeMixin</em></p>
+<dd class="field-odd"><p><em>Self</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3014,11 +3012,8 @@ either a <cite>GaussianLikelihood</cite> (if <cite>num_outputs=1</cite>) or a
 <span class="sig-name descname"><span class="pre">eval</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/approximate_gp.html#ApproximateGPyTorchModel.eval"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.approximate_gp.ApproximateGPyTorchModel.eval" title="Link to this definition">¶</a></dt>
 <dd><p>Puts the model in <cite>eval</cite> mode.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>self</strong> (<em>TApproxModel</em>)</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>TApproxModel</em></p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Self</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3028,20 +3023,17 @@ either a <cite>GaussianLikelihood</cite> (if <cite>num_outputs=1</cite>) or a
 <dd><p>Put the model in <cite>train</cite> mode.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>mode</strong> (<em>bool</em>) – A boolean denoting whether to put in <cite>train</cite> or <cite>eval</cite> mode.
-If <cite>False</cite>, model is put in <cite>eval</cite> mode.</p></li>
-<li><p><strong>self</strong> (<em>TApproxModel</em>)</p></li>
-</ul>
+<dd class="field-odd"><p><strong>mode</strong> (<em>bool</em>) – A boolean denoting whether to put in <cite>train</cite> or <cite>eval</cite> mode.
+If <cite>False</cite>, model is put in <cite>eval</cite> mode.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>TApproxModel</em></p>
+<dd class="field-even"><p><em>Self</em></p>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.approximate_gp.ApproximateGPyTorchModel.posterior">
-<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/approximate_gp.html#ApproximateGPyTorchModel.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.approximate_gp.ApproximateGPyTorchModel.posterior" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/approximate_gp.html#ApproximateGPyTorchModel.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.approximate_gp.ApproximateGPyTorchModel.posterior" title="Link to this definition">¶</a></dt>
 <dd><p>Computes the posterior over model outputs at the provided points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -3049,12 +3041,13 @@ If <cite>False</cite>, model is put in <cite>eval</cite> mode.</p></li>
 <li><p><strong>X</strong> – A <cite>(batch_shape) x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension
 of the feature space and <cite>q</cite> is the number of points considered
 jointly.</p></li>
-<li><p><strong>observation_noise</strong> – If True, add the observation noise from the
+<li><p><strong>observation_noise</strong> (<em>bool</em>) – If True, add the observation noise from the
 likelihood to the posterior. If a Tensor, use it directly as the
 observation noise (must be of shape <cite>(batch_shape) x q</cite>). It is
 assumed to be in the outcome-transformed space if an outcome
 transform is used.</p></li>
-<li><p><strong>posterior_transform</strong> – An optional PosteriorTransform.</p></li>
+<li><p><strong>posterior_transform</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
+<li><p><strong>output_indices</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
