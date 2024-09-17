@@ -3,7 +3,7 @@
               function gtag(){dataLayer.push(arguments); }
               gtag('js', new Date());
               gtag('config', 'G-CXN3PGE3CC');
-            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_SVG"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
             {"zIndex":100}
@@ -21,7 +21,8 @@
 <div class="bodywrapper">
 <div class="body" role="main">
 <h1>Source code for torch.distributions.utils</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">update_wrapper</span>
+<span></span><span class="c1"># mypy: allow-untyped-defs</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">update_wrapper</span>
 <span class="kn">from</span> <span class="nn">numbers</span> <span class="kn">import</span> <span class="n">Number</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span>
 
@@ -113,6 +114,27 @@
 
 
 <span class="k">def</span> <span class="nf">clamp_probs</span><span class="p">(</span><span class="n">probs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Clamps the probabilities to be in the open interval `(0, 1)`.</span>
+
+<span class="sd">    The probabilities would be clamped between `eps` and `1 - eps`,</span>
+<span class="sd">    and `eps` would be the smallest representable positive number for the input data type.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        probs (Tensor): A tensor of probabilities.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tensor: The clamped probabilities.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; probs = torch.tensor([0.0, 0.5, 1.0])</span>
+<span class="sd">        &gt;&gt;&gt; clamp_probs(probs)</span>
+<span class="sd">        tensor([1.1921e-07, 5.0000e-01, 1.0000e+00])</span>
+
+<span class="sd">        &gt;&gt;&gt; probs = torch.tensor([0.0, 0.5, 1.0], dtype=torch.float64)</span>
+<span class="sd">        &gt;&gt;&gt; clamp_probs(probs)</span>
+<span class="sd">        tensor([2.2204e-16, 5.0000e-01, 1.0000e+00], dtype=torch.float64)</span>
+
+<span class="sd">    """</span>
     <span class="n">eps</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">probs</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span>
     <span class="k">return</span> <span class="n">probs</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">1</span> <span class="o">-</span> <span class="n">eps</span><span class="p">)</span>
 
@@ -205,7 +227,15 @@
 <div aria-label="Main" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
-<h3>Navigation</h3>
+<search id="searchbox" role="search" style="display: none">
+<div class="searchformwrapper">
+<form action="../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" placeholder="Search" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
@@ -231,16 +261,6 @@
 </ul></li>
 </ul>
 </div>
-<search id="searchbox" role="search" style="display: none">
-<h3 id="searchlabel">Quick search</h3>
-<div class="searchformwrapper">
-<form action="../../../search.html" class="search" method="get">
-<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
-<input type="submit" value="Go"/>
-</form>
-</div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

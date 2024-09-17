@@ -3,7 +3,7 @@
               function gtag(){dataLayer.push(arguments); }
               gtag('js', new Date());
               gtag('config', 'G-CXN3PGE3CC');
-            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_SVG"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
             {"zIndex":100}
@@ -171,10 +171,14 @@ Useful for multi-fidelity optimization.</li>
 a fully Bayesian multi-task GP using an ICM kernel. The data kernel uses the
 SAAS prior to model high-dimensional parameter spaces.</li>
 </ul>
-<p>All of the above models use Matérn 5/2 kernels with Automatic Relevance
-Discovery (ARD), and have reasonable priors on hyperparameters that make them
-work well in settings where the <strong>input features are normalized to the unit
-cube</strong> and the <strong>observations are standardized</strong> (zero mean, unit variance).</p>
+<p>All of the above models use RBF kernels with Automatic Relevance Discovery
+(ARD), and have reasonable priors on hyperparameters that make them work well in
+settings where the <strong>input features are normalized to the unit cube</strong> and the
+<strong>observations are standardized</strong> (zero mean, unit variance). The lengthscale
+priors scale with the input dimension, which makes them adaptable to both low
+and high dimensional problems. See
+<a href="https://github.com/pytorch/botorch/discussions/2451">this discussion</a> for
+additional context on the default hyperparameters.</p>
 <h2><a class="anchor" aria-hidden="true" id="other-useful-models"></a><a href="#other-useful-models" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Other useful models</h2>
 <ul>
 <li><a href="../api/models.html#botorch.models.model.ModelList"><code>ModelList</code></a>: a
@@ -227,7 +231,7 @@ must implement an <code>rsample()</code> method for sampling from the posterior 
 model. If you wish to use gradient-based optimization algorithms, the model
 should allow back-propagating gradients through the samples to the model input.</p>
 <p>If you happen to implement a model that would be useful for other researchers as
-well (and involves more than just swapping out the Matérn kernel for an RBF
+well (and involves more than just swapping out the RBF kernel for a Matérn
 kernel), please consider <a href="getting_started#contributing">contributing</a> this model
 to BoTorch.</p>
 </span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/docs/overview"><span class="arrow-prev">← </span><span>Overview</span></a><a class="docs-next button" href="/docs/posteriors"><span>Posteriors</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#terminology">Terminology</a><ul class="toc-headings"><li><a href="#multi-output-and-multi-task">Multi-Output and Multi-Task</a></li><li><a href="#noise-homoskedastic-fixed-and-heteroskedastic">Noise: Homoskedastic, fixed, and heteroskedastic</a></li></ul></li><li><a href="#standard-botorch-models">Standard BoTorch Models</a><ul class="toc-headings"><li><a href="#single-task-gps">Single-Task GPs</a></li><li><a href="#model-list-of-single-task-gps">Model List of Single-Task GPs</a></li><li><a href="#multi-task-gps">Multi-Task GPs</a></li></ul></li><li><a href="#other-useful-models">Other useful models</a></li><li><a href="#implementing-custom-models">Implementing Custom Models</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2024 Meta Platforms, Inc</section><script>

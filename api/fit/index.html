@@ -3,7 +3,7 @@
               function gtag(){dataLayer.push(arguments); }
               gtag('js', new Date());
               gtag('config', 'G-CXN3PGE3CC');
-            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_SVG"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
             {"zIndex":100}
@@ -31,13 +31,13 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – A GPyTorch MarginalLogLikelihood instance.</p></li>
-<li><p><strong>closure</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Tensor</em><em> | </em><em>None</em><em>]</em><em>]</em><em>] </em><em>| </em><em>None</em>) – Forward-backward closure for obtaining objective values and gradients.
+<li><p><strong>closure</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Tensor</em><em> | </em><em>None</em><em>]</em><em>]</em><em>] </em><em>| </em><em>None</em>) – Forward-backward closure for obtaining objective values and gradients.
 Responsible for setting parameters’ <cite>grad</cite> attributes. If no closure is
 provided, one will be obtained by calling <cite>get_loss_closure_with_grads</cite>.</p></li>
 <li><p><strong>optimizer</strong> (<em>Callable</em><em> | </em><em>None</em>) – User specified optimization algorithm. When <cite>optimizer is None</cite>,
 this keyword argument is omitted when calling the dispatcher.</p></li>
-<li><p><strong>closure_kwargs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Keyword arguments passed when calling <cite>closure</cite>.</p></li>
-<li><p><strong>optimizer_kwargs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – A dictionary of keyword arguments passed when
+<li><p><strong>closure_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Keyword arguments passed when calling <cite>closure</cite>.</p></li>
+<li><p><strong>optimizer_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – A dictionary of keyword arguments passed when
 calling <cite>optimizer</cite>.</p></li>
 <li><p><strong>**kwargs</strong> (<em>Any</em>) – Keyword arguments passed down through the dispatcher to
 fit subroutines. Unexpected keywords are ignored.</p></li>
@@ -89,7 +89,15 @@ errors, e.g., <a class="reference external" href="https://github.com/pyro-ppl/py
 <div aria-label="Main" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="index.html">BoTorch</a></h1>
-<h3>Navigation</h3>
+<search id="searchbox" role="search" style="display: none">
+<div class="searchformwrapper">
+<form action="search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" placeholder="Search" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="acquisition.html">botorch.acquisition</a></li>
@@ -115,16 +123,6 @@ errors, e.g., <a class="reference external" href="https://github.com/pyro-ppl/py
 </ul></li>
 </ul>
 </div>
-<search id="searchbox" role="search" style="display: none">
-<h3 id="searchlabel">Quick search</h3>
-<div class="searchformwrapper">
-<form action="search.html" class="search" method="get">
-<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
-<input type="submit" value="Go"/>
-</form>
-</div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

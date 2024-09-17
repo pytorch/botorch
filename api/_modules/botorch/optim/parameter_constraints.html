@@ -3,7 +3,7 @@
               function gtag(){dataLayer.push(arguments); }
               gtag('js', new Date());
               gtag('config', 'G-CXN3PGE3CC');
-            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_SVG"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
             {"zIndex":100}
@@ -34,7 +34,7 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -43,7 +43,7 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<span class="n">ScipyConstraintDict</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">[</span>
+<span class="n">ScipyConstraintDict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">[</span>
     <span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="nb">float</span><span class="p">],</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span>
 <span class="p">]</span>
 <span class="n">NLC_TOL</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1e-6</span>
@@ -95,9 +95,9 @@
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.parameter_constraints.make_scipy_linear_constraints">[docs]</a>
 <span class="k">def</span> <span class="nf">make_scipy_linear_constraints</span><span class="p">(</span>
     <span class="n">shapeX</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
-    <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">ScipyConstraintDict</span><span class="p">]:</span>
+    <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ScipyConstraintDict</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Generate scipy constraints from torch representation.</span>
 
 <span class="sd">    Args:</span>
@@ -160,7 +160,7 @@
 <div class="viewcode-block" id="eval_lin_constraint">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.parameter_constraints.eval_lin_constraint">[docs]</a>
 <span class="k">def</span> <span class="nf">eval_lin_constraint</span><span class="p">(</span>
-    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">flat_idxr</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">coeffs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">rhs</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">flat_idxr</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">coeffs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">rhs</span><span class="p">:</span> <span class="nb">float</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Evaluate a single linear constraint.</span>
 
@@ -180,7 +180,7 @@
 <div class="viewcode-block" id="lin_constraint_jac">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.parameter_constraints.lin_constraint_jac">[docs]</a>
 <span class="k">def</span> <span class="nf">lin_constraint_jac</span><span class="p">(</span>
-    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">flat_idxr</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">coeffs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">flat_idxr</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">coeffs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Return the Jacobian associated with a linear constraint.</span>
 
@@ -254,7 +254,7 @@
     <span class="n">rhs</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">shapeX</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
     <span class="n">eq</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">ScipyConstraintDict</span><span class="p">]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ScipyConstraintDict</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Create linear constraints to be used by `scipy.minimize`.</span>
 
 <span class="sd">    Encodes constraints of the form</span>
@@ -317,7 +317,7 @@
     <span class="n">b</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">shapeX</span>
     <span class="n">_validate_linear_constraints_indices_input</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
     <span class="n">n</span> <span class="o">=</span> <span class="n">shapeX</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
-    <span class="n">constraints</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ScipyConstraintDict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ScipyConstraintDict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">coeffs</span> <span class="o">=</span> <span class="n">_arrayify</span><span class="p">(</span><span class="n">coefficients</span><span class="p">)</span>
     <span class="n">ctype</span> <span class="o">=</span> <span class="s2">"eq"</span> <span class="k">if</span> <span class="n">eq</span> <span class="k">else</span> <span class="s2">"ineq"</span>
 
@@ -349,7 +349,7 @@
 
 <span class="k">def</span> <span class="nf">_make_nonlinear_constraints</span><span class="p">(</span>
     <span class="n">f_np_wrapper</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">nlc</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">is_intrapoint</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">shapeX</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">ScipyConstraintDict</span><span class="p">]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ScipyConstraintDict</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Create nonlinear constraints to be used by `scipy.minimize`.</span>
 
 <span class="sd">    Args:</span>
@@ -405,10 +405,10 @@
 
 
 <span class="k">def</span> <span class="nf">_generate_unfixed_nonlin_constraints</span><span class="p">(</span>
-    <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]]],</span>
-    <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]]],</span>
+    <span class="n">fixed_features</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
     <span class="n">dimension</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]]:</span>
 <span class="w">    </span><span class="sd">"""Given a dictionary of fixed features, returns a list of callables for</span>
 <span class="sd">    nonlinear inequality constraints expecting only a tensor with the non-fixed</span>
 <span class="sd">    features as input.</span>
@@ -445,11 +445,11 @@
 
 
 <span class="k">def</span> <span class="nf">_generate_unfixed_lin_constraints</span><span class="p">(</span>
-    <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]],</span>
-    <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]],</span>
+    <span class="n">fixed_features</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
     <span class="n">dimension</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">eq</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]:</span>
     <span class="c1"># If constraints is None or an empty list, then return itself</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">constraints</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">constraints</span>
@@ -508,7 +508,7 @@
 
 <span class="k">def</span> <span class="nf">_make_f_and_grad_nonlinear_inequality_constraints</span><span class="p">(</span>
     <span class="n">f_np_wrapper</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">nlc</span><span class="p">:</span> <span class="n">Callable</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Create callables for objective + grad for the nonlinear inequality constraints.</span>
 <span class="sd">    The Scipy interface requires specifying separate callables and we use caching to</span>
@@ -579,11 +579,11 @@
 <div class="viewcode-block" id="make_scipy_nonlinear_inequality_constraints">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.parameter_constraints.make_scipy_nonlinear_inequality_constraints">[docs]</a>
 <span class="k">def</span> <span class="nf">make_scipy_nonlinear_inequality_constraints</span><span class="p">(</span>
-    <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]],</span>
+    <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]],</span>
     <span class="n">f_np_wrapper</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">x0</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">shapeX</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Generate Scipy nonlinear inequality constraints from callables.</span>
 
 <span class="sd">    Args:</span>
@@ -647,7 +647,15 @@
 <div aria-label="Main" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
-<h3>Navigation</h3>
+<search id="searchbox" role="search" style="display: none">
+<div class="searchformwrapper">
+<form action="../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" placeholder="Search" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
@@ -673,16 +681,6 @@
 </ul></li>
 </ul>
 </div>
-<search id="searchbox" role="search" style="display: none">
-<h3 id="searchlabel">Quick search</h3>
-<div class="searchformwrapper">
-<form action="../../../search.html" class="search" method="get">
-<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
-<input type="submit" value="Go"/>
-</form>
-</div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

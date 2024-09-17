@@ -3,7 +3,7 @@
               function gtag(){dataLayer.push(arguments); }
               gtag('js', new Date());
               gtag('config', 'G-CXN3PGE3CC');
-            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_SVG"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
             {"zIndex":100}
@@ -31,7 +31,8 @@
 <span class="sd">"""</span>
 
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">NoReturn</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Mapping</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">NoReturn</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">pyro</span>
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -166,8 +167,8 @@
 <div class="viewcode-block" id="MultitaskSaasPyroModel.load_mcmc_samples">
 <a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.load_mcmc_samples">[docs]</a>
     <span class="k">def</span> <span class="nf">load_mcmc_samples</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">mcmc_samples</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Mean</span><span class="p">,</span> <span class="n">Kernel</span><span class="p">,</span> <span class="n">Likelihood</span><span class="p">,</span> <span class="n">Kernel</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">]:</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">mcmc_samples</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Mean</span><span class="p">,</span> <span class="n">Kernel</span><span class="p">,</span> <span class="n">Likelihood</span><span class="p">,</span> <span class="n">Kernel</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Load the MCMC samples into the mean_module, covar_module, and likelihood."""</span>
         <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"device"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="s2">"dtype"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_X</span><span class="o">.</span><span class="n">dtype</span><span class="p">}</span>
         <span class="n">num_mcmc_samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"mean"</span><span class="p">])</span>
@@ -209,7 +210,7 @@
 
 <span class="sd">    This model assumes that the inputs have been normalized to [0, 1]^d and that the</span>
 <span class="sd">    output has been stratified standardized to have zero mean and unit variance for</span>
-<span class="sd">    each task.The SAAS model [Eriksson2021saasbo]_ with a Matern-5/2 is used as data</span>
+<span class="sd">    each task. The SAAS model [Eriksson2021saasbo]_ with a Matern-5/2 is used as data</span>
 <span class="sd">    kernel by default.</span>
 
 <span class="sd">    You are expected to use `fit_fully_bayesian_model_nuts` to fit this model as it</span>
@@ -239,9 +240,9 @@
         <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">task_feature</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">output_tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">output_tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">rank</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">all_tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">all_tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pyro_model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MultitaskSaasPyroModel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -285,6 +286,7 @@
                 <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">outcome_transform</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>  <span class="c1"># Ensure we learn parameters here on init</span>
             <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">outcome_transform</span><span class="p">(</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">train_Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># Clamp after transforming</span>
             <span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">train_Yvar</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="n">MIN_INFERRED_NOISE_LEVEL</span><span class="p">)</span>
@@ -296,6 +298,11 @@
             <span class="n">task_feature</span><span class="o">=</span><span class="n">task_feature</span><span class="p">,</span>
             <span class="n">output_tasks</span><span class="o">=</span><span class="n">output_tasks</span><span class="p">,</span>
             <span class="n">rank</span><span class="o">=</span><span class="n">rank</span><span class="p">,</span>
+            <span class="c1"># We already transformed the data above, this avoids applying the</span>
+            <span class="c1"># default `Standardize` transform twice. As outcome_transform is</span>
+            <span class="c1"># set on `self` below, it will be applied to the posterior in the</span>
+            <span class="c1"># `posterior` method of `MultiTaskGP`.</span>
+            <span class="n">outcome_transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">all_tasks</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expected_task_values</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="n">all_tasks</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
@@ -375,7 +382,7 @@
 
 <div class="viewcode-block" id="SaasFullyBayesianMultiTaskGP.load_mcmc_samples">
 <a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.load_mcmc_samples">[docs]</a>
-    <span class="k">def</span> <span class="nf">load_mcmc_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mcmc_samples</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">load_mcmc_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mcmc_samples</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Load the MCMC hyperparameter samples into the model.</span>
 
 <span class="sd">        This method will be called by `fit_fully_bayesian_model_nuts` when the model</span>
@@ -395,7 +402,7 @@
     <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">output_indices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">output_indices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">observation_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
@@ -503,7 +510,15 @@
 <div aria-label="Main" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
-<h3>Navigation</h3>
+<search id="searchbox" role="search" style="display: none">
+<div class="searchformwrapper">
+<form action="../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" placeholder="Search" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
@@ -529,16 +544,6 @@
 </ul></li>
 </ul>
 </div>
-<search id="searchbox" role="search" style="display: none">
-<h3 id="searchlabel">Quick search</h3>
-<div class="searchformwrapper">
-<form action="../../../search.html" class="search" method="get">
-<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
-<input type="submit" value="Go"/>
-</form>
-</div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

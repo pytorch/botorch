@@ -3,7 +3,7 @@
               function gtag(){dataLayer.push(arguments); }
               gtag('js', new Date());
               gtag('config', 'G-CXN3PGE3CC');
-            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_SVG"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
             {"zIndex":100}
@@ -272,6 +272,13 @@
 </li>
 </ul></li>
 <li>
+    botorch.acquisition.bayesian_active_learning
+
+      <ul>
+<li><a href="acquisition.html#module-botorch.acquisition.bayesian_active_learning">module</a>
+</li>
+</ul></li>
+<li>
     botorch.acquisition.cached_cholesky
 
       <ul>
@@ -353,6 +360,13 @@
 
       <ul>
 <li><a href="acquisition.html#module-botorch.acquisition.multi_objective.analytic">module</a>
+</li>
+</ul></li>
+<li>
+    botorch.acquisition.multi_objective.base
+
+      <ul>
+<li><a href="acquisition.html#module-botorch.acquisition.multi_objective.base">module</a>
 </li>
 </ul></li>
 <li>
@@ -486,6 +500,13 @@
 
       <ul>
 <li><a href="acquisition.html#module-botorch.acquisition.risk_measures">module</a>
+</li>
+</ul></li>
+<li>
+    botorch.acquisition.thompson_sampling
+
+      <ul>
+<li><a href="acquisition.html#module-botorch.acquisition.thompson_sampling">module</a>
 </li>
 </ul></li>
 <li>
@@ -775,6 +796,8 @@
 <li><a href="models.html#module-botorch.models.transforms.input">module</a>
 </li>
 </ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.models.transforms.outcome
 
@@ -782,8 +805,6 @@
 <li><a href="models.html#module-botorch.models.transforms.outcome">module</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.models.transforms.utils
 
@@ -1495,6 +1516,8 @@
 </li>
 <li><a href="models.html#botorch.models.utils.assorted.check_min_max_scaling">check_min_max_scaling() (in module botorch.models.utils.assorted)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.bayesian_active_learning.check_negative_info_gain">check_negative_info_gain() (in module botorch.acquisition.bayesian_active_learning)</a>
+</li>
 <li><a href="models.html#botorch.models.utils.assorted.check_no_nans">check_no_nans() (in module botorch.models.utils.assorted)</a>
 </li>
 <li><a href="models.html#botorch.models.utils.assorted.check_standardization">check_standardization() (in module botorch.models.utils.assorted)</a>
@@ -1582,12 +1605,12 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.base.ConstrainedBaseTestProblem">ConstrainedBaseTestProblem (class in botorch.test_functions.base)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.ConstrainedBraninCurrin">ConstrainedBraninCurrin (class in botorch.test_functions.multi_objective)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.analytic.ConstrainedExpectedImprovement">ConstrainedExpectedImprovement (class in botorch.acquisition.analytic)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.ConstrainedGramacy">ConstrainedGramacy (class in botorch.test_functions.synthetic)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.ConstrainedHartmann">ConstrainedHartmann (class in botorch.test_functions.synthetic)</a>
@@ -1627,11 +1650,15 @@
 </ul></li>
 <li><a href="acquisition.html#botorch.acquisition.input_constructors.construct_inputs_analytic_eubo">construct_inputs_analytic_eubo() (in module botorch.acquisition.input_constructors)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.input_constructors.construct_inputs_BALD">construct_inputs_BALD() (in module botorch.acquisition.input_constructors)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.input_constructors.construct_inputs_best_f">construct_inputs_best_f() (in module botorch.acquisition.input_constructors)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.input_constructors.construct_inputs_EHVI">construct_inputs_EHVI() (in module botorch.acquisition.input_constructors)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.input_constructors.construct_inputs_mf_base">construct_inputs_mf_base() (in module botorch.acquisition.input_constructors)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.input_constructors.construct_inputs_NIPV">construct_inputs_NIPV() (in module botorch.acquisition.input_constructors)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.input_constructors.construct_inputs_noisy_ei">construct_inputs_noisy_ei() (in module botorch.acquisition.input_constructors)</a>
 </li>
@@ -1642,6 +1669,8 @@
 <li><a href="acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qEI">construct_inputs_qEI() (in module botorch.acquisition.input_constructors)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qeubo">construct_inputs_qeubo() (in module botorch.acquisition.input_constructors)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qHVKG">construct_inputs_qHVKG() (in module botorch.acquisition.input_constructors)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qJES">construct_inputs_qJES() (in module botorch.acquisition.input_constructors)</a>
 </li>
@@ -1656,6 +1685,8 @@
 <li><a href="acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qLogNParEGO">construct_inputs_qLogNParEGO() (in module botorch.acquisition.input_constructors)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qMES">construct_inputs_qMES() (in module botorch.acquisition.input_constructors)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qMFHVKG">construct_inputs_qMFHVKG() (in module botorch.acquisition.input_constructors)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qMFKG">construct_inputs_qMFKG() (in module botorch.acquisition.input_constructors)</a>
 </li>
@@ -2265,12 +2296,6 @@
 </li>
 <li><a href="utils.html#botorch.utils.datasets.FixedNoiseDataset">FixedNoiseDataset (class in botorch.utils.datasets)</a>
 </li>
-<li><a href="models.html#botorch.models.gp_regression.FixedNoiseGP">FixedNoiseGP (class in botorch.models.gp_regression)</a>
-</li>
-<li><a href="models.html#botorch.models.contextual_multioutput.FixedNoiseLCEMGP">FixedNoiseLCEMGP (class in botorch.models.contextual_multioutput)</a>
-</li>
-<li><a href="models.html#botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP">FixedNoiseMultiFidelityGP (class in botorch.models.gp_regression_fidelity)</a>
-</li>
 <li><a href="models.html#botorch.models.deterministic.FixedSingleSampleModel">FixedSingleSampleModel (class in botorch.models.deterministic)</a>
 </li>
 <li><a href="models.html#botorch.models.higher_order_gp.FlattenedStandardize">FlattenedStandardize (class in botorch.models.higher_order_gp)</a>
@@ -2309,6 +2334,8 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.analytic.UpperConfidenceBound.forward">(botorch.acquisition.analytic.UpperConfidenceBound method)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.bayesian_active_learning.qBayesianActiveLearningByDisagreement.forward">(botorch.acquisition.bayesian_active_learning.qBayesianActiveLearningByDisagreement method)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.cost_aware.CostAwareUtility.forward">(botorch.acquisition.cost_aware.CostAwareUtility method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.cost_aware.GenericCostAwareUtility.forward">(botorch.acquisition.cost_aware.GenericCostAwareUtility method)</a>
@@ -2335,7 +2362,9 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement.forward">(botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement method)</a>
 </li>
-<li><a href="acquisition.html#botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction.forward">(botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction method)</a>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.base.MultiObjectiveAnalyticAcquisitionFunction.forward">(botorch.acquisition.multi_objective.base.MultiObjectiveAnalyticAcquisitionFunction method)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.base.MultiObjectiveMCAcquisitionFunction.forward">(botorch.acquisition.multi_objective.base.MultiObjectiveMCAcquisitionFunction method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qHypervolumeKnowledgeGradient.forward">(botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qHypervolumeKnowledgeGradient method)</a>
 </li>
@@ -2352,8 +2381,6 @@
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.max_value_entropy_search.qLowerBoundMultiObjectiveMaxValueEntropySearch.forward">(botorch.acquisition.multi_objective.max_value_entropy_search.qLowerBoundMultiObjectiveMaxValueEntropySearch method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.max_value_entropy_search.qMultiObjectiveMaxValueEntropy.forward">(botorch.acquisition.multi_objective.max_value_entropy_search.qMultiObjectiveMaxValueEntropy method)</a>
-</li>
-<li><a href="acquisition.html#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction.forward">(botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement.forward">(botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement method)</a>
 </li>
@@ -2438,6 +2465,8 @@
 <li><a href="acquisition.html#botorch.acquisition.risk_measures.VaR.forward">(botorch.acquisition.risk_measures.VaR method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.risk_measures.WorstCase.forward">(botorch.acquisition.risk_measures.WorstCase method)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.thompson_sampling.PathwiseThompsonSampling.forward">(botorch.acquisition.thompson_sampling.PathwiseThompsonSampling method)</a>
 </li>
 <li><a href="generation.html#botorch.generation.sampling.BoltzmannSampling.forward">(botorch.generation.sampling.BoltzmannSampling method)</a>
 </li>
@@ -2562,6 +2591,8 @@
 </li>
 <li><a href="optim.html#botorch.optim.optimize.OptimizeAcqfInputs.full_tree">full_tree (botorch.optim.optimize.OptimizeAcqfInputs property)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.bayesian_active_learning.FullyBayesianAcquisitionFunction">FullyBayesianAcquisitionFunction (class in botorch.acquisition.bayesian_active_learning)</a>
+</li>
 <li><a href="posteriors.html#botorch.posteriors.fully_bayesian.FullyBayesianPosterior">FullyBayesianPosterior (class in botorch.posteriors.fully_bayesian)</a>
 </li>
 <li><a href="utils.html#botorch.utils.dispatcher.Dispatcher.funcs">funcs (botorch.utils.dispatcher.Dispatcher attribute)</a>
@@ -2668,6 +2699,8 @@
 <li><a href="utils.html#botorch.utils.probability.utils.get_constants_like">(in module botorch.utils.probability.utils)</a>
 </li>
 </ul></li>
+<li><a href="models.html#botorch.models.utils.gpytorch_modules.get_covar_module_with_dim_scaled_prior">get_covar_module_with_dim_scaled_prior() (in module botorch.models.utils.gpytorch_modules)</a>
+</li>
 <li><a href="optim.html#botorch.optim.utils.model_utils.get_data_loader">get_data_loader() (in module botorch.optim.utils.model_utils)</a>
 </li>
 <li><a href="utils.html#botorch.utils.datasets.MultiTaskDataset.get_dataset_without_task_feature">get_dataset_without_task_feature() (botorch.utils.datasets.MultiTaskDataset method)</a>
@@ -2688,11 +2721,17 @@
 </li>
 <li><a href="models.html#botorch.models.higher_order_gp.HigherOrderGP.get_fantasy_model">get_fantasy_model() (botorch.models.higher_order_gp.HigherOrderGP method)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="utils.html#botorch.utils.feasible_volume.get_feasible_samples">get_feasible_samples() (in module botorch.utils.feasible_volume)</a>
 </li>
+<li><a href="utils.html#botorch.utils.test_helpers.get_fully_bayesian_model">get_fully_bayesian_model() (in module botorch.utils.test_helpers)</a>
+</li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="utils.html#botorch.utils.test_helpers.get_fully_bayesian_model_list">get_fully_bayesian_model_list() (in module botorch.utils.test_helpers)</a>
+</li>
 <li><a href="models.html#botorch.models.utils.gpytorch_modules.get_gaussian_likelihood_with_gamma_prior">get_gaussian_likelihood_with_gamma_prior() (in module botorch.models.utils.gpytorch_modules)</a>
+</li>
+<li><a href="models.html#botorch.models.utils.gpytorch_modules.get_gaussian_likelihood_with_lognormal_prior">get_gaussian_likelihood_with_lognormal_prior() (in module botorch.models.utils.gpytorch_modules)</a>
 </li>
 <li><a href="utils.html#botorch.utils.gp_sampling.get_gp_samples">get_gp_samples() (in module botorch.utils.gp_sampling)</a>
 </li>
@@ -2727,6 +2766,8 @@
 <li><a href="models.html#botorch.models.utils.gpytorch_modules.get_matern_kernel_with_gamma_prior">get_matern_kernel_with_gamma_prior() (in module botorch.models.utils.gpytorch_modules)</a>
 </li>
 <li><a href="sampling.html#botorch.sampling.pathwise.posterior_samplers.get_matheron_path_model">get_matheron_path_model() (in module botorch.sampling.pathwise.posterior_samplers)</a>
+</li>
+<li><a href="utils.html#botorch.utils.test_helpers.get_model">get_model() (in module botorch.utils.test_helpers)</a>
 </li>
 <li><a href="utils.html#botorch.utils.constraints.get_monotonicity_constraints">get_monotonicity_constraints() (in module botorch.utils.constraints)</a>
 </li>
@@ -3221,6 +3262,8 @@
 </li>
 <li><a href="acquisition.html#module-botorch.acquisition.analytic">botorch.acquisition.analytic</a>
 </li>
+<li><a href="acquisition.html#module-botorch.acquisition.bayesian_active_learning">botorch.acquisition.bayesian_active_learning</a>
+</li>
 <li><a href="acquisition.html#module-botorch.acquisition.cached_cholesky">botorch.acquisition.cached_cholesky</a>
 </li>
 <li><a href="acquisition.html#module-botorch.acquisition.cost_aware">botorch.acquisition.cost_aware</a>
@@ -3244,6 +3287,8 @@
 <li><a href="acquisition.html#module-botorch.acquisition.monte_carlo">botorch.acquisition.monte_carlo</a>
 </li>
 <li><a href="acquisition.html#module-botorch.acquisition.multi_objective.analytic">botorch.acquisition.multi_objective.analytic</a>
+</li>
+<li><a href="acquisition.html#module-botorch.acquisition.multi_objective.base">botorch.acquisition.multi_objective.base</a>
 </li>
 <li><a href="acquisition.html#module-botorch.acquisition.multi_objective.hypervolume_knowledge_gradient">botorch.acquisition.multi_objective.hypervolume_knowledge_gradient</a>
 </li>
@@ -3282,6 +3327,8 @@
 <li><a href="acquisition.html#module-botorch.acquisition.proximal">botorch.acquisition.proximal</a>
 </li>
 <li><a href="acquisition.html#module-botorch.acquisition.risk_measures">botorch.acquisition.risk_measures</a>
+</li>
+<li><a href="acquisition.html#module-botorch.acquisition.thompson_sampling">botorch.acquisition.thompson_sampling</a>
 </li>
 <li><a href="acquisition.html#module-botorch.acquisition.utils">botorch.acquisition.utils</a>
 </li>
@@ -3572,9 +3619,9 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.acquisition.MultiModelAcquisitionFunction">MultiModelAcquisitionFunction (class in botorch.acquisition.acquisition)</a>
 </li>
-<li><a href="acquisition.html#botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction">MultiObjectiveAnalyticAcquisitionFunction (class in botorch.acquisition.multi_objective.analytic)</a>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.base.MultiObjectiveAnalyticAcquisitionFunction">MultiObjectiveAnalyticAcquisitionFunction (class in botorch.acquisition.multi_objective.base)</a>
 </li>
-<li><a href="acquisition.html#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction">MultiObjectiveMCAcquisitionFunction (class in botorch.acquisition.multi_objective.monte_carlo)</a>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.base.MultiObjectiveMCAcquisitionFunction">MultiObjectiveMCAcquisitionFunction (class in botorch.acquisition.multi_objective.base)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.base.MultiObjectiveTestProblem">MultiObjectiveTestProblem (class in botorch.test_functions.base)</a>
 </li>
@@ -3802,6 +3849,8 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.SyntheticTestFunction.optimal_value">optimal_value (botorch.test_functions.synthetic.SyntheticTestFunction property)</a>
 </li>
+<li><a href="exceptions.html#botorch.exceptions.errors.OptimizationGradientError">OptimizationGradientError</a>
+</li>
 <li><a href="optim.html#botorch.optim.core.OptimizationResult">OptimizationResult (class in botorch.optim.core)</a>
 </li>
 <li><a href="optim.html#botorch.optim.core.OptimizationStatus">OptimizationStatus (class in botorch.optim.core)</a>
@@ -3816,10 +3865,10 @@
 </li>
 <li><a href="optim.html#botorch.optim.optimize.optimize_acqf_discrete">optimize_acqf_discrete() (in module botorch.optim.optimize)</a>
 </li>
-<li><a href="optim.html#botorch.optim.optimize.optimize_acqf_discrete_local_search">optimize_acqf_discrete_local_search() (in module botorch.optim.optimize)</a>
-</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="optim.html#botorch.optim.optimize.optimize_acqf_discrete_local_search">optimize_acqf_discrete_local_search() (in module botorch.optim.optimize)</a>
+</li>
 <li><a href="optim.html#botorch.optim.optimize_homotopy.optimize_acqf_homotopy">optimize_acqf_homotopy() (in module botorch.optim.optimize_homotopy)</a>
 </li>
 <li><a href="optim.html#botorch.optim.optimize.optimize_acqf_list">optimize_acqf_list() (in module botorch.optim.optimize)</a>
@@ -3904,6 +3953,8 @@
 </li>
 <li><a href="sampling.html#botorch.sampling.pathwise.paths.PathList">PathList (class in botorch.sampling.pathwise.paths)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.thompson_sampling.PathwiseThompsonSampling">PathwiseThompsonSampling (class in botorch.acquisition.thompson_sampling)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.penalized.PenalizedAcquisitionFunction">PenalizedAcquisitionFunction (class in botorch.acquisition.penalized)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.penalized.PenalizedMCObjective">PenalizedMCObjective (class in botorch.acquisition.penalized)</a>
@@ -3940,6 +3991,8 @@
 </li>
 <li><a href="posteriors.html#botorch.posteriors.posterior.Posterior">Posterior (class in botorch.posteriors.posterior)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel.posterior">posterior() (botorch.models.approximate_gp.ApproximateGPyTorchModel method)</a>
 <ul>
 <li><a href="models.html#botorch.models.ensemble.EnsembleModel.posterior">(botorch.models.ensemble.EnsembleModel method)</a>
@@ -3971,8 +4024,6 @@
 <li><a href="utils.html#botorch.utils.testing.MockModel.posterior">(botorch.utils.testing.MockModel method)</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="posteriors.html#botorch.posteriors.posterior_list.PosteriorList">PosteriorList (class in botorch.posteriors.posterior_list)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.analytic.PosteriorMean">PosteriorMean (class in botorch.acquisition.analytic)</a>
@@ -4034,6 +4085,8 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.analytic.qAnalyticProbabilityOfImprovement">qAnalyticProbabilityOfImprovement (class in botorch.acquisition.analytic)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.bayesian_active_learning.qBayesianActiveLearningByDisagreement">qBayesianActiveLearningByDisagreement (class in botorch.acquisition.bayesian_active_learning)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement">qExpectedHypervolumeImprovement (class in botorch.acquisition.multi_objective.monte_carlo)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.monte_carlo.qExpectedImprovement">qExpectedImprovement (class in botorch.acquisition.monte_carlo)</a>
@@ -4062,12 +4115,14 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.max_value_entropy_search.qLowerBoundMultiObjectiveMaxValueEntropySearch">qLowerBoundMultiObjectiveMaxValueEntropySearch (class in botorch.acquisition.multi_objective.max_value_entropy_search)</a>
 </li>
-<li><a href="acquisition.html#botorch.acquisition.max_value_entropy_search.qMaxValueEntropy">qMaxValueEntropy (class in botorch.acquisition.max_value_entropy_search)</a>
+<li><a href="acquisition.html#botorch.acquisition.monte_carlo.qLowerConfidenceBound">qLowerConfidenceBound (class in botorch.acquisition.monte_carlo)</a>
 </li>
-<li><a href="acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qMultiFidelityHypervolumeKnowledgeGradient">qMultiFidelityHypervolumeKnowledgeGradient (class in botorch.acquisition.multi_objective.hypervolume_knowledge_gradient)</a>
+<li><a href="acquisition.html#botorch.acquisition.max_value_entropy_search.qMaxValueEntropy">qMaxValueEntropy (class in botorch.acquisition.max_value_entropy_search)</a>
 </li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qMultiFidelityHypervolumeKnowledgeGradient">qMultiFidelityHypervolumeKnowledgeGradient (class in botorch.acquisition.multi_objective.hypervolume_knowledge_gradient)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient">qMultiFidelityKnowledgeGradient (class in botorch.acquisition.knowledge_gradient)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.max_value_entropy_search.qMultiFidelityLowerBoundMaxValueEntropy">qMultiFidelityLowerBoundMaxValueEntropy (class in botorch.acquisition.max_value_entropy_search)</a>
@@ -4124,6 +4179,8 @@
 </li>
 <li><a href="optim.html#botorch.optim.optimize.OptimizeAcqfInputs.raw_samples">raw_samples (botorch.optim.optimize.OptimizeAcqfInputs attribute)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.thompson_sampling.PathwiseThompsonSampling.redraw">redraw() (botorch.acquisition.thompson_sampling.PathwiseThompsonSampling method)</a>
+</li>
 <li><a href="utils.html#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.ref_point">ref_point (botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition property)</a>
 <ul>
 <li><a href="utils.html#botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.ref_point">(botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList property)</a>
@@ -4159,10 +4216,10 @@
 </li>
 <li><a href="models.html#botorch.models.transforms.input.ReversibleInputTransform">ReversibleInputTransform (class in botorch.models.transforms.input)</a>
 </li>
-<li><a href="acquisition.html#botorch.acquisition.risk_measures.RiskMeasureMCObjective">RiskMeasureMCObjective (class in botorch.acquisition.risk_measures)</a>
-</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="acquisition.html#botorch.acquisition.risk_measures.RiskMeasureMCObjective">RiskMeasureMCObjective (class in botorch.acquisition.risk_measures)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Rosenbrock">Rosenbrock (class in botorch.test_functions.synthetic)</a>
 </li>
 <li><a href="models.html#botorch.models.transforms.input.Round">Round (class in botorch.models.transforms.input)</a>
@@ -4336,7 +4393,7 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.max_value_entropy_search.qMaxValueEntropy.set_X_pending">(botorch.acquisition.max_value_entropy_search.qMaxValueEntropy method)</a>
 </li>
-<li><a href="acquisition.html#botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction.set_X_pending">(botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction method)</a>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.base.MultiObjectiveAnalyticAcquisitionFunction.set_X_pending">(botorch.acquisition.multi_objective.base.MultiObjectiveAnalyticAcquisitionFunction method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.max_value_entropy_search.qMultiObjectiveMaxValueEntropy.set_X_pending">(botorch.acquisition.multi_objective.max_value_entropy_search.qMultiObjectiveMaxValueEntropy method)</a>
 </li>
@@ -4511,7 +4568,7 @@
 </li>
 <li><a href="utils.html#botorch.utils.testing.ConstrainedTestProblemTestCaseMixin.test_evaluate_slack">test_evaluate_slack() (botorch.utils.testing.ConstrainedTestProblemTestCaseMixin method)</a>
 </li>
-<li><a href="utils.html#botorch.utils.testing.BaseTestProblemTestCaseMixIn.test_forward">test_forward() (botorch.utils.testing.BaseTestProblemTestCaseMixIn method)</a>
+<li><a href="utils.html#botorch.utils.testing.BaseTestProblemTestCaseMixIn.test_forward_and_evaluate_true">test_forward_and_evaluate_true() (botorch.utils.testing.BaseTestProblemTestCaseMixIn method)</a>
 </li>
 <li><a href="utils.html#botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin.test_max_hv">test_max_hv() (botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin method)</a>
 </li>
@@ -4824,7 +4881,15 @@
 <div aria-label="Main" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="index.html">BoTorch</a></h1>
-<h3>Navigation</h3>
+<search id="searchbox" role="search" style="display: none">
+<div class="searchformwrapper">
+<form action="search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" placeholder="Search" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="acquisition.html">botorch.acquisition</a></li>
@@ -4848,16 +4913,6 @@
 </ul></li>
 </ul>
 </div>
-<search id="searchbox" role="search" style="display: none">
-<h3 id="searchlabel">Quick search</h3>
-<div class="searchformwrapper">
-<form action="search.html" class="search" method="get">
-<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
-<input type="submit" value="Go"/>
-</form>
-</div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

@@ -3,7 +3,7 @@
               function gtag(){dataLayer.push(arguments); }
               gtag('js', new Date());
               gtag('config', 'G-CXN3PGE3CC');
-            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_SVG"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
             {"zIndex":100}
@@ -32,7 +32,7 @@
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">pi</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.models.converter</span> <span class="kn">import</span> <span class="n">batched_to_model_list</span>
@@ -174,10 +174,9 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">ScaleKernel</span><span class="p">):</span>
             <span class="n">base_kernel</span> <span class="o">=</span> <span class="n">kernel</span>
-            <span class="n">outputscale</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
-                <span class="mf">1.0</span><span class="p">,</span>
-                <span class="n">dtype</span><span class="o">=</span><span class="n">base_kernel</span><span class="o">.</span><span class="n">lengthscale</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-                <span class="n">device</span><span class="o">=</span><span class="n">base_kernel</span><span class="o">.</span><span class="n">lengthscale</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+            <span class="n">outputscale</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">kernel</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">kernel</span><span class="o">.</span><span class="n">lengthscale</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                <span class="n">device</span><span class="o">=</span><span class="n">kernel</span><span class="o">.</span><span class="n">lengthscale</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">base_kernel</span> <span class="o">=</span> <span class="n">kernel</span><span class="o">.</span><span class="n">base_kernel</span>
@@ -330,8 +329,8 @@
 <div class="viewcode-block" id="get_deterministic_model_multi_samples">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.gp_sampling.get_deterministic_model_multi_samples">[docs]</a>
 <span class="k">def</span> <span class="nf">get_deterministic_model_multi_samples</span><span class="p">(</span>
-    <span class="n">weights</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
-    <span class="n">bases</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">RandomFourierFeatures</span><span class="p">],</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">bases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">RandomFourierFeatures</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GenericDeterministicModel</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Get a batched deterministic model that batch evaluates `n_samples` function</span>
@@ -378,7 +377,7 @@
 <div class="viewcode-block" id="get_deterministic_model">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.gp_sampling.get_deterministic_model">[docs]</a>
 <span class="k">def</span> <span class="nf">get_deterministic_model</span><span class="p">(</span>
-    <span class="n">weights</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">bases</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">RandomFourierFeatures</span><span class="p">]</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">bases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">RandomFourierFeatures</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GenericDeterministicModel</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Get a deterministic model using the provided weights and bases for each output.</span>
 
@@ -404,8 +403,8 @@
 <div class="viewcode-block" id="get_deterministic_model_list">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.gp_sampling.get_deterministic_model_list">[docs]</a>
 <span class="k">def</span> <span class="nf">get_deterministic_model_list</span><span class="p">(</span>
-    <span class="n">weights</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
-    <span class="n">bases</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">RandomFourierFeatures</span><span class="p">],</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">bases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">RandomFourierFeatures</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelList</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Get a deterministic model list using the provided weights and bases</span>
 <span class="sd">    for each output.</span>
@@ -601,7 +600,15 @@
 <div aria-label="Main" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
-<h3>Navigation</h3>
+<search id="searchbox" role="search" style="display: none">
+<div class="searchformwrapper">
+<form action="../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" placeholder="Search" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
@@ -627,16 +634,6 @@
 </ul></li>
 </ul>
 </div>
-<search id="searchbox" role="search" style="display: none">
-<h3 id="searchlabel">Quick search</h3>
-<div class="searchformwrapper">
-<form action="../../../search.html" class="search" method="get">
-<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
-<input type="submit" value="Go"/>
-</form>
-</div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

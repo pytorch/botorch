@@ -3,7 +3,7 @@
               function gtag(){dataLayer.push(arguments); }
               gtag('js', new Date());
               gtag('config', 'G-CXN3PGE3CC');
-            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_SVG"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
             {"zIndex":100}
@@ -35,11 +35,12 @@
 
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">BotorchWarning</span>
+<span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">HeteroskedasticSingleTaskGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gp_regression_fidelity</span> <span class="kn">import</span> <span class="n">SingleTaskMultiFidelityGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gp_regression_mixed</span> <span class="kn">import</span> <span class="n">MixedSingleTaskGP</span>
@@ -91,7 +92,7 @@
                 <span class="s2">"Sub-modules must be of the same type across models."</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="s2">"prior"</span> <span class="ow">in</span> <span class="n">modn</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">mod</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>  <span class="c1"># pragma no cover -- not tested after GPyTorch 2551.</span>
                 <span class="s2">"Model converter cannot verify compatibility of GPyTorch priors "</span>
                 <span class="s2">"that do not register their parameters as buffers. If the prior "</span>
                 <span class="s2">"is different than the default prior set by the model constructor "</span>
@@ -122,7 +123,8 @@
     <span class="c1"># TODO: Add support for outcome transforms.</span>
     <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">models</span><span class="p">):</span>
         <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
-            <span class="s2">"Conversion of models with outcome transforms is currently unsupported."</span>
+            <span class="s2">"Conversion of models with outcome transforms is unsupported. "</span>
+            <span class="s2">"To fix this error, explicitly pass `outcome_transform=None`."</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="c1"># check that each model is single-output</span>
@@ -204,6 +206,11 @@
         <span class="n">batch_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>
         <span class="n">covar_module</span> <span class="o">=</span> <span class="n">_batched_kernel</span><span class="p">(</span><span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">covar_module</span><span class="p">,</span> <span class="n">batch_length</span><span class="p">)</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">"covar_module"</span><span class="p">]</span> <span class="o">=</span> <span class="n">covar_module</span>
+    <span class="c1"># SingleTaskGP uses a default outcome transforms while this converter doesn't</span>
+    <span class="c1"># support outcome transforms. We need to explicitly pass down `None` to make</span>
+    <span class="c1"># sure no outcome transform is being used.</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">SingleTaskGP</span><span class="p">):</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"outcome_transform"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="c1"># construct the batched GP model</span>
     <span class="n">input_transform</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">"input_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -418,8 +425,8 @@
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; train_X = torch.rand(5, 2)</span>
 <span class="sd">        &gt;&gt;&gt; train_Y = torch.rand(5, 2)</span>
-<span class="sd">        &gt;&gt;&gt; batch_mo_gp = SingleTaskGP(train_X, train_Y)</span>
-<span class="sd">        &gt;&gt;&gt; batch_so_gp = batched_multioutput_to_single_output(batch_gp)</span>
+<span class="sd">        &gt;&gt;&gt; batch_mo_gp = SingleTaskGP(train_X, train_Y, outcome_transform=None)</span>
+<span class="sd">        &gt;&gt;&gt; batch_so_gp = batched_multi_output_to_single_output(batch_mo_gp)</span>
 <span class="sd">    """</span>
     <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">DEPRECATION_MESSAGE</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
     <span class="n">was_training</span> <span class="o">=</span> <span class="n">batch_mo_model</span><span class="o">.</span><span class="n">training</span>
@@ -455,6 +462,12 @@
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">"train_Yvar"</span><span class="p">]</span> <span class="o">=</span> <span class="n">noise_covar</span><span class="o">.</span><span class="n">noise</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">batch_mo_model</span><span class="p">,</span> <span class="n">SingleTaskMultiFidelityGP</span><span class="p">):</span>
         <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">batch_mo_model</span><span class="o">.</span><span class="n">_init_args</span><span class="p">)</span>
+    <span class="c1"># SingleTaskGP uses a default outcome transforms while this converter doesn't</span>
+    <span class="c1"># support outcome transforms. We need to explicitly pass down `None` to make</span>
+    <span class="c1"># sure no outcome transform is being used.</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">batch_mo_model</span><span class="p">,</span> <span class="n">SingleTaskGP</span><span class="p">):</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"outcome_transform"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
     <span class="n">single_outcome_model</span> <span class="o">=</span> <span class="n">batch_mo_model</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
         <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">)</span>
@@ -464,10 +477,10 @@
 
 
 <span class="k">def</span> <span class="nf">_get_adjusted_batch_keys</span><span class="p">(</span>
-    <span class="n">batch_state_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">batch_state_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
     <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">],</span>
     <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Group the keys based on whether the value requires batch shape changes.</span>
 
 <span class="sd">    Args:</span>
@@ -505,7 +518,15 @@
 <div aria-label="Main" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
-<h3>Navigation</h3>
+<search id="searchbox" role="search" style="display: none">
+<div class="searchformwrapper">
+<form action="../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" placeholder="Search" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
@@ -531,16 +552,6 @@
 </ul></li>
 </ul>
 </div>
-<search id="searchbox" role="search" style="display: none">
-<h3 id="searchlabel">Quick search</h3>
-<div class="searchformwrapper">
-<form action="../../../search.html" class="search" method="get">
-<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
-<input type="submit" value="Go"/>
-</form>
-</div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

@@ -3,7 +3,7 @@
               function gtag(){dataLayer.push(arguments); }
               gtag('js', new Date());
               gtag('config', 'G-CXN3PGE3CC');
-            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_SVG"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
             {"zIndex":100}
@@ -34,7 +34,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
@@ -52,8 +52,8 @@ objective in a multiobjective problem.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
-function.</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to evaluate
+the function.</p></li>
 <li><p><strong>noise</strong> (<em>bool</em>) – If <cite>True</cite>, add observation noise as specified by <cite>noise_std</cite>.</p></li>
 </ul>
 </dd>
@@ -71,10 +71,14 @@ function.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -91,7 +95,7 @@ constraints of the form <cite>c_i(x) &gt;= 0</cite> for <cite>i=1, …, n_c</cit
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
@@ -104,7 +108,7 @@ objective in a multiobjective problem.</p></li>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.test_functions.base.ConstrainedBaseTestProblem.constraint_noise_std">
-<span class="sig-name descname"><span class="pre">constraint_noise_std</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.test_functions.base.ConstrainedBaseTestProblem.constraint_noise_std" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">constraint_noise_std</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.test_functions.base.ConstrainedBaseTestProblem.constraint_noise_std" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.test_functions.base.ConstrainedBaseTestProblem.evaluate_slack">
@@ -191,7 +195,7 @@ between a provided point and the closest point on the true pareto front.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -274,11 +278,11 @@ Technometrics, 2016.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -312,7 +316,7 @@ objective in a multiobjective problem.</p></li>
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -322,10 +326,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -337,11 +345,11 @@ objective in a multiobjective problem.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -355,10 +363,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -379,11 +391,11 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -397,10 +409,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -412,11 +428,11 @@ objective in a multiobjective problem.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -430,10 +446,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -452,11 +472,11 @@ objective in a multiobjective problem.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -470,10 +490,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -485,11 +509,11 @@ objective in a multiobjective problem.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -503,10 +527,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -521,7 +549,7 @@ objective in a multiobjective problem.</p></li>
 <li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -531,10 +559,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -552,11 +584,11 @@ objective in a multiobjective problem.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -570,10 +602,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -596,7 +632,7 @@ The global minimum is at <cite>z = (0, …, 0)</cite> with <cite>G(z) = 0</cite>
 <li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -606,10 +642,14 @@ The global minimum is at <cite>z = (0, …, 0)</cite> with <cite>G(z) = 0</cite>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -635,7 +675,7 @@ The global minimum is at <cite>z = (0, …, 0)</cite> with <cite>G(z) = 0</cite>
 <li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -649,10 +689,14 @@ The global minimum is at <cite>z = (0, …, 0)</cite> with <cite>G(z) = 0</cite>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -676,11 +720,11 @@ z_4 = ( 8.05502, -9.66459)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -694,10 +738,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -724,7 +772,7 @@ objective in a multiobjective problem.</p></li>
 <li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -734,10 +782,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -757,7 +809,7 @@ objective in a multiobjective problem.</p></li>
 <li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -771,10 +823,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -800,7 +856,7 @@ objective in a multiobjective problem.</p></li>
 <li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -810,10 +866,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -828,7 +888,7 @@ objective in a multiobjective problem.</p></li>
 <li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -838,10 +898,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -863,7 +927,7 @@ objective in a multiobjective problem.</p></li>
 <li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -873,10 +937,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -898,7 +966,7 @@ objective in a multiobjective problem.</p></li>
 <li><p><strong>m</strong> (<em>int</em>) – Defaults to 10.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -912,10 +980,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -927,11 +999,11 @@ objective in a multiobjective problem.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -945,10 +1017,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -969,7 +1045,7 @@ objective in a multiobjective problem.</p></li>
 <li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -979,10 +1055,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -994,11 +1074,11 @@ objective in a multiobjective problem.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1012,10 +1092,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1028,14 +1112,14 @@ objective in a multiobjective problem.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
-<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
 If a list is provided, specifies separate noise standard
 deviations for each constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1052,14 +1136,14 @@ and x1^2 + x2^2 - 1.5 &lt;= 0.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
-<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
 If a list is provided, specifies separate noise standard
 deviations for each constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1123,11 +1207,11 @@ uses <cite>||x||_2 &lt;= 1</cite> as the constraint. This problem comes from <a 
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
 If a list is provided, specifies separate noise standard
 deviations for each constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1169,11 +1253,11 @@ uses <cite>||x||_2^2 &lt;= 1</cite> as the constraint to obtain smoother constra
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
 If a list is provided, specifies separate noise standard
 deviations for each constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1213,14 +1297,14 @@ constraints from <a class="reference internal" href="#coellocoello2002constraint
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
-<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
 If a list is provided, specifies separate noise standard
 deviations for each constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1238,10 +1322,14 @@ deviations for each constraint.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1279,14 +1367,14 @@ black-box constraints from <a class="reference internal" href="#coellocoello2002
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
-<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
 If a list is provided, specifies separate noise standard
 deviations for each constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1304,10 +1392,14 @@ deviations for each constraint.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1343,14 +1435,14 @@ four black-box constraints from <a class="reference internal" href="#hedar2006de
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
-<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
 If a list is provided, specifies separate noise standard
 deviations for each constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1368,10 +1460,14 @@ deviations for each constraint.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1407,14 +1503,14 @@ constraints from <a class="reference internal" href="#lemonge2010constrained" id
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
-<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the constraint noise.
 If a list is provided, specifies separate noise standard
 deviations for each constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1432,10 +1528,14 @@ deviations for each constraint.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1485,11 +1585,11 @@ and <cite>B_min = 0.397887</cite></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective in a multiobjective problem.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – Custom bounds for the function specified as (lower, upper) pairs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1503,10 +1603,14 @@ objective in a multiobjective problem.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1545,10 +1649,14 @@ dimension is the fidelity parameter.</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1583,10 +1691,14 @@ where the last two dimensions are the fidelity parameters:</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1697,7 +1809,7 @@ evolutionary algorithms: Empirical results. Evolutionary Computation, vol.
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
 </dd>
@@ -1716,10 +1828,14 @@ evolutionary algorithms: Empirical results. Evolutionary Computation, vol.
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1745,7 +1861,7 @@ on DH. The reference points were set using <cite>infer_reference_point</cite>.</
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -1775,7 +1891,7 @@ S(x_0) = alpha / (0.2 + x_0) + beta * x_0^2</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -1794,10 +1910,14 @@ S(x_0) = alpha / (0.2 + x_0) + beta * x_0^2</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1812,7 +1932,7 @@ S(x_0) = alpha / (0.2 + x_0) + beta * x_0^2</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -1844,7 +1964,7 @@ The specific values on the Pareto fronts can be found by varying <cite>x_0</cite
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -1855,10 +1975,14 @@ The specific values on the Pareto fronts can be found by varying <cite>x_0</cite
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1880,7 +2004,7 @@ near <cite>x_0 + x_1 = 0.35</cite> and the global one near <cite>x_0 + x_1 = 0.8
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -1897,7 +2021,7 @@ near <cite>x_0 + x_1 = 0.35</cite> and the global one near <cite>x_0 + x_1 = 0.8
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -1924,7 +2048,7 @@ The goal is to minimize both objectives. The reference point comes from <a class
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -1935,10 +2059,14 @@ The goal is to minimize both objectives. The reference point comes from <a class
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1976,7 +2104,7 @@ both objectives.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -1987,10 +2115,14 @@ both objectives.</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2029,7 +2161,7 @@ the one global Pareto-optimal front.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2040,10 +2172,14 @@ the one global Pareto-optimal front.</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2061,7 +2197,7 @@ resulting in dense solutions near the f_M-f_1 plane.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2085,7 +2221,7 @@ g(x) = sum_{i=m}^{d-1} (x_i - 0.5)^2</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2096,10 +2232,14 @@ g(x) = sum_{i=m}^{d-1} (x_i - 0.5)^2</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2125,7 +2265,7 @@ M - sum_{i=0}^{M-2} f_i(x)/(1+g(x)) * (1 + sin(3 * pi * f_i(x)))</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2134,6 +2274,15 @@ M - sum_{i=0}^{M-2} f_i(x)/(1+g(x)) * (1 + sin(3 * pi * f_i(x)))</p>
 <dt class="sig sig-object py" id="botorch.test_functions.multi_objective.DTLZ7.evaluate_true">
 <span class="sig-name descname"><span class="pre">evaluate_true</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#DTLZ7.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.DTLZ7.evaluate_true" title="Link to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+</dl>
 </dd></dl>
 </dd></dl>
 <dl class="py class">
@@ -2149,7 +2298,7 @@ core/util/objectives.py.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – The number of objectives.</p></li>
 </ul>
@@ -2189,7 +2338,7 @@ on the Pareto frontier over a large discrete set of random designs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -2321,10 +2470,14 @@ rate, substrate feed concentration, and H+ concentration.</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2346,7 +2499,7 @@ random designs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -2395,10 +2548,14 @@ objective.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2417,7 +2574,7 @@ pareto front from <a class="reference internal" href="#tanabe2020" id="id18"><sp
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -2438,10 +2595,14 @@ objective.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2457,7 +2618,7 @@ objective.</p></li>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Number of objectives. Must not be larger than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2481,7 +2642,7 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Number of objectives. Must not be larger than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2492,10 +2653,14 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2531,7 +2696,7 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Number of objectives. Must not be larger than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2542,10 +2707,14 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2581,7 +2750,7 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Number of objectives. Must not be larger than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2592,10 +2761,14 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2627,7 +2800,7 @@ based on the approximate Pareto frontier from <a class="reference internal" href
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -2648,10 +2821,14 @@ objective.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2667,7 +2844,7 @@ minimization problem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -2692,10 +2869,14 @@ objective.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2732,7 +2913,7 @@ minimization problem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -2757,10 +2938,14 @@ objective.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2795,8 +2980,8 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise of the objectives.</p></li>
-<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise of the
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise of the objectives.</p></li>
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise of the
 constraint.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
@@ -2845,7 +3030,7 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
 <li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
@@ -2891,7 +3076,7 @@ random designs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -2916,10 +3101,14 @@ objective.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2958,8 +3147,8 @@ frontier. It supports arbitrary input dimension &gt; 1. See <a class="reference 
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function. Must be at least 2.</p></li>
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise of the objectives.</p></li>
-<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise of the
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise of the objectives.</p></li>
+<li><p><strong>constraint_noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise of the
 constraints.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
@@ -2988,10 +3177,14 @@ constraints.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3029,7 +3222,7 @@ Note that this implementation assumes minimization, so please choose negate=True
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -3054,10 +3247,14 @@ objective.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3094,7 +3291,7 @@ minimization problem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -3119,10 +3316,14 @@ objective.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3162,7 +3363,7 @@ Note that this implementation assumes minimization, so please choose negate=True
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -3187,10 +3388,14 @@ objective.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3261,7 +3466,7 @@ Both functions assume minimization. See <a class="reference internal" href="#irs
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -3282,10 +3487,14 @@ objective.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3315,7 +3524,7 @@ is the fidelity parameter <cite>s</cite>. See <a class="reference internal" href
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
+<li><p><strong>noise_std</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>float</em><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Standard deviation of the observation noise. If a list is
 provided, specifies separate noise standard deviations for each
 objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
@@ -3336,10 +3545,14 @@ objective.</p></li>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3381,7 +3594,7 @@ as attributes dgsm_gradient, dgsm_gradient_bas, and dgsm_gradient_square.</p>
 <dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – Set of points at which to compute derivative measures.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tuple</em>[<em>List</em>[float], <em>List</em>[float], <em>List</em>[float]]</p>
+<dd class="field-even"><p>tuple[list[float], list[float], list[float]]</p>
 </dd>
 </dl>
 <p>Returns: The average gradient, absolute gradient, and square gradients.</p>
@@ -3392,10 +3605,14 @@ as attributes dgsm_gradient, dgsm_gradient_bas, and dgsm_gradient_square.</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3425,7 +3642,7 @@ V= Prod_{i=1}^{d} (1+V_i) - 1</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – Dimensionality of the problem. If 6, 8, or 15, will use standard a.</p></li>
-<li><p><strong>a</strong> (<em>List</em>) – a parameter, unless dim is 6, 8, or 15.</p></li>
+<li><p><strong>a</strong> (<em>list</em>) – a parameter, unless dim is 6, 8, or 15.</p></li>
 <li><p><strong>noise_std</strong> (<em>float</em><em> | </em><em>None</em>) – Standard deviation of observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – Return negatie of function.</p></li>
 </ul>
@@ -3441,10 +3658,14 @@ V= Prod_{i=1}^{d} (1+V_i) - 1</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3474,10 +3695,14 @@ V= Prod_{i=1}^{d} (1+V_i) - 1</p>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>)</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3494,7 +3719,7 @@ V= Prod_{i=1}^{d} (1+V_i) - 1</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>Tensor</em>) – The input to be rounded.</p></li>
 <li><p><strong>increment</strong> (<em>float</em>) – The increment to round to.</p></li>
-<li><p><strong>bounds</strong> (<em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – An optional tuple of two floats representing the lower and upper
+<li><p><strong>bounds</strong> (<em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – An optional tuple of two floats representing the lower and upper
 bounds on <cite>X</cite>. If provided, this will round to the nearest multiple
 of <cite>increment</cite> that lies within the bounds.</p></li>
 </ul>
@@ -3515,7 +3740,15 @@ of <cite>increment</cite> that lies within the bounds.</p></li>
 <div aria-label="Main" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="index.html">BoTorch</a></h1>
-<h3>Navigation</h3>
+<search id="searchbox" role="search" style="display: none">
+<div class="searchformwrapper">
+<form action="search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" placeholder="Search" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="acquisition.html">botorch.acquisition</a></li>
@@ -3541,16 +3774,6 @@ of <cite>increment</cite> that lies within the bounds.</p></li>
 </ul></li>
 </ul>
 </div>
-<search id="searchbox" role="search" style="display: none">
-<h3 id="searchlabel">Quick search</h3>
-<div class="searchformwrapper">
-<form action="search.html" class="search" method="get">
-<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
-<input type="submit" value="Go"/>
-</form>
-</div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

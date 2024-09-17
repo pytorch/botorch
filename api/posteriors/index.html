@@ -3,7 +3,7 @@
               function gtag(){dataLayer.push(arguments); }
               gtag('js', new Date());
               gtag('config', 'G-CXN3PGE3CC');
-            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_SVG"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
             {"zIndex":100}
@@ -144,7 +144,7 @@ the marginal distributions.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.posterior.Posterior.batch_range">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_range</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.posteriors.posterior.Posterior.batch_range" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_range</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.posteriors.posterior.Posterior.batch_range" title="Link to this definition">¶</a></dt>
 <dd><p>The t-batch range.</p>
 <p>This is used in samplers to identify the t-batch component of the
 <cite>base_sample_shape</cite>. The base samples are expanded over the t-batches to
@@ -333,7 +333,7 @@ MultitaskMultivariateNormal (multi-output case).</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.gpytorch.GPyTorchPosterior.batch_range">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_range</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.batch_range" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_range</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.batch_range" title="Link to this definition">¶</a></dt>
 <dd><p>The t-batch range.</p>
 <p>This is used in samplers to identify the t-batch component of the
 <cite>base_sample_shape</cite>. The base samples are expanded over the t-batches to
@@ -447,7 +447,7 @@ Supports <cite>t</cite>-batching.</p></li>
 </p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em> | <em>LinearOperator</em>]</p>
+<dd class="field-odd"><p>tuple[<em>Tensor</em>, <em>Tensor</em> | <em>LinearOperator</em>]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -638,7 +638,7 @@ in the data space.</p></li>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.higher_order.HigherOrderGPPosterior.batch_range">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_range</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.posteriors.higher_order.HigherOrderGPPosterior.batch_range" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_range</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.posteriors.higher_order.HigherOrderGPPosterior.batch_range" title="Link to this definition">¶</a></dt>
 <dd><p>The t-batch range.</p>
 <p>This is used in samplers to identify the t-batch component of the
 <cite>base_sample_shape</cite>. The base samples are expanded over the t-batches to
@@ -733,7 +733,7 @@ Testing noise covariance.</p></li>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.multitask.MultitaskGPPosterior.batch_range">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_range</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.posteriors.multitask.MultitaskGPPosterior.batch_range" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_range</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.posteriors.multitask.MultitaskGPPosterior.batch_range" title="Link to this definition">¶</a></dt>
 <dd><p>The t-batch range.</p>
 <p>This is used in samplers to identify the t-batch component of the
 <cite>base_sample_shape</cite>. The base samples are expanded over the t-batches to
@@ -819,7 +819,7 @@ posterior to a variance of the transformed posterior.</p></li>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.transformed.TransformedPosterior.batch_range">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_range</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior.batch_range" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_range</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior.batch_range" title="Link to this definition">¶</a></dt>
 <dd><p>The t-batch range.</p>
 <p>This is used in samplers to identify the t-batch component of the
 <cite>base_sample_shape</cite>. The base samples are expanded over the t-batches to
@@ -959,7 +959,7 @@ distributions.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.fully_bayesian.GaussianMixturePosterior.batch_range">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_range</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.posteriors.fully_bayesian.GaussianMixturePosterior.batch_range" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_range</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.posteriors.fully_bayesian.GaussianMixturePosterior.batch_range" title="Link to this definition">¶</a></dt>
 <dd><p>The t-batch range.</p>
 <p>This is used in samplers to identify the t-batch component of the
 <cite>base_sample_shape</cite>. The base samples are expanded over the t-batches to
@@ -994,7 +994,15 @@ candidate produces same value regardless of its position on the t-batch.</p>
 <div aria-label="Main" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="index.html">BoTorch</a></h1>
-<h3>Navigation</h3>
+<search id="searchbox" role="search" style="display: none">
+<div class="searchformwrapper">
+<form action="search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" placeholder="Search" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="acquisition.html">botorch.acquisition</a></li>
@@ -1020,16 +1028,6 @@ candidate produces same value regardless of its position on the t-batch.</p>
 </ul></li>
 </ul>
 </div>
-<search id="searchbox" role="search" style="display: none">
-<h3 id="searchlabel">Quick search</h3>
-<div class="searchformwrapper">
-<form action="search.html" class="search" method="get">
-<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
-<input type="submit" value="Go"/>
-</form>
-</div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

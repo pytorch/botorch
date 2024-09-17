@@ -3,7 +3,7 @@
               function gtag(){dataLayer.push(arguments); }
               gtag('js', new Date());
               gtag('config', 'G-CXN3PGE3CC');
-            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_SVG"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
             {"zIndex":100}
@@ -30,7 +30,6 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
@@ -38,7 +37,7 @@
 
 <div class="viewcode-block" id="lognorm_to_norm">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.utils.lognorm_to_norm">[docs]</a>
-<span class="k">def</span> <span class="nf">lognorm_to_norm</span><span class="p">(</span><span class="n">mu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="k">def</span> <span class="nf">lognorm_to_norm</span><span class="p">(</span><span class="n">mu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Compute mean and covariance of a MVN from those of the associated log-MVN</span>
 
 <span class="sd">    If `Y` is log-normal with mean mu_ln and covariance Cov_ln, then</span>
@@ -58,7 +57,7 @@
 <span class="sd">        - The `batch_shape x n` mean vector of the Normal distribution</span>
 <span class="sd">        - The `batch_shape x n x n` covariance matrix of the Normal distribution</span>
 <span class="sd">    """</span>
-    <span class="n">Cov_n</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">Cov</span> <span class="o">/</span> <span class="p">(</span><span class="n">mu</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">mu</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)))</span>
+    <span class="n">Cov_n</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="n">Cov</span> <span class="o">/</span> <span class="p">(</span><span class="n">mu</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">mu</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)))</span>
     <span class="n">mu_n</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">mu</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">Cov_n</span><span class="p">,</span> <span class="n">dim1</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dim2</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">mu_n</span><span class="p">,</span> <span class="n">Cov_n</span></div>
 
@@ -66,7 +65,7 @@
 
 <div class="viewcode-block" id="norm_to_lognorm">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.utils.norm_to_lognorm">[docs]</a>
-<span class="k">def</span> <span class="nf">norm_to_lognorm</span><span class="p">(</span><span class="n">mu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="k">def</span> <span class="nf">norm_to_lognorm</span><span class="p">(</span><span class="n">mu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Compute mean and covariance of a log-MVN from its MVN sufficient statistics</span>
 
 <span class="sd">    If `X ~ N(mu, Cov)` and `Y = exp(X)`, then `Y` is log-normal with</span>
@@ -89,7 +88,7 @@
     <span class="n">diag</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">Cov</span><span class="p">,</span> <span class="n">dim1</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dim2</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
     <span class="n">b</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">diag</span>
     <span class="n">mu_ln</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
-    <span class="n">Cov_ln</span> <span class="o">=</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">Cov</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">Cov_ln</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span><span class="n">Cov</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">mu_ln</span><span class="p">,</span> <span class="n">Cov_ln</span></div>
 
 
@@ -123,7 +122,7 @@
 <span class="sd">        The `batch_shape x n` variance vector of the log-Normal distribution.</span>
 <span class="sd">    """</span>
     <span class="n">b</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">var</span>
-    <span class="k">return</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">var</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span><span class="n">var</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span></div>
 
 
 
@@ -175,7 +174,15 @@
 <div aria-label="Main" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="../../../../index.html">BoTorch</a></h1>
-<h3>Navigation</h3>
+<search id="searchbox" role="search" style="display: none">
+<div class="searchformwrapper">
+<form action="../../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" placeholder="Search" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../acquisition.html">botorch.acquisition</a></li>
@@ -201,16 +208,6 @@
 </ul></li>
 </ul>
 </div>
-<search id="searchbox" role="search" style="display: none">
-<h3 id="searchlabel">Quick search</h3>
-<div class="searchformwrapper">
-<form action="../../../../search.html" class="search" method="get">
-<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
-<input type="submit" value="Go"/>
-</form>
-</div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

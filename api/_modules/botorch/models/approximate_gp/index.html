@@ -3,7 +3,7 @@
               function gtag(){dataLayer.push(arguments); }
               gtag('js', new Date());
               gtag('config', 'G-CXN3PGE3CC');
-            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_SVG"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
             {"zIndex":100}
@@ -54,17 +54,18 @@
 
 <span class="kn">import</span> <span class="nn">copy</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
-
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">PosteriorTransform</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">UserInputWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.utils</span> <span class="kn">import</span> <span class="n">validate_input_scaling</span>
 <span class="kn">from</span> <span class="nn">botorch.models.utils.gpytorch_modules</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">get_gaussian_likelihood_with_gamma_prior</span><span class="p">,</span>
-    <span class="n">get_matern_kernel_with_gamma_prior</span><span class="p">,</span>
+    <span class="n">get_covar_module_with_dim_scaled_prior</span><span class="p">,</span>
+    <span class="n">get_gaussian_likelihood_with_lognormal_prior</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.models.utils.inducing_point_allocators</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">GreedyVarianceReduction</span><span class="p">,</span>
@@ -90,9 +91,17 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">Self</span>
 
 
-<span class="n">TApproxModel</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"TApproxModel"</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">"ApproximateGPyTorchModel"</span><span class="p">)</span>
+<span class="n">TRANSFORM_WARNING</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Using an </span><span class="si">{ttype}</span><span class="s2"> transform with `SingleTaskVariationalGP`. If this "</span>
+    <span class="s2">"model is trained in minibatches, a </span><span class="si">{ttype}</span><span class="s2"> transform with learnable "</span>
+    <span class="s2">"parameters would update its parameters for each minibatch, which is "</span>
+    <span class="s2">"undesirable. If you do intend to train in minibatches, we recommend "</span>
+    <span class="s2">"you not use a </span><span class="si">{ttype}</span><span class="s2"> transform and instead pre-transform your whole "</span>
+    <span class="s2">"data set before fitting the model."</span>
+<span class="p">)</span>
 
 
 <div class="viewcode-block" id="ApproximateGPyTorchModel">
@@ -150,14 +159,14 @@
 
 <div class="viewcode-block" id="ApproximateGPyTorchModel.eval">
 <a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel.eval">[docs]</a>
-    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">TApproxModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TApproxModel</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Puts the model in `eval` mode."""</span>
         <span class="k">return</span> <span class="n">Module</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ApproximateGPyTorchModel.train">
 <a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel.train">[docs]</a>
-    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">TApproxModel</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TApproxModel</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Put the model in `train` mode.</span>
 
 <span class="sd">        Args:</span>
@@ -170,8 +179,16 @@
 <div class="viewcode-block" id="ApproximateGPyTorchModel.posterior">
 <a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel.posterior">[docs]</a>
     <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">output_indices</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">,</span>
+        <span class="n">output_indices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">observation_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchPosterior</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">output_indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>  <span class="c1"># pragma: no cover</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.posterior does not support output indices."</span>
+            <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>  <span class="c1"># make sure model is in eval mode</span>
 
         <span class="c1"># input transforms are applied at `posterior` in `eval` mode, and at</span>
@@ -185,11 +202,13 @@
             <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">X_ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">observation_noise</span><span class="p">:</span>
-            <span class="n">dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">(</span><span class="n">dist</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">(</span><span class="n">dist</span><span class="p">)</span>
 
         <span class="n">posterior</span> <span class="o">=</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="n">dist</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">):</span>
             <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span><span class="o">.</span><span class="n">untransform_posterior</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">posterior_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">posterior</span> <span class="o">=</span> <span class="n">posterior_transform</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">posterior</span></div>
 
 
@@ -221,7 +240,7 @@
         <span class="n">covar_module</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Kernel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">mean_module</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mean</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">variational_distribution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">_VariationalDistribution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">variational_strategy</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">_VariationalStrategy</span><span class="p">]</span> <span class="o">=</span> <span class="n">VariationalStrategy</span><span class="p">,</span>
+        <span class="n">variational_strategy</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">_VariationalStrategy</span><span class="p">]</span> <span class="o">=</span> <span class="n">VariationalStrategy</span><span class="p">,</span>
         <span class="n">inducing_points</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">inducing_point_allocator</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InducingPointAllocator</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -231,7 +250,7 @@
 <span class="sd">                this does not have to be all of the training inputs).</span>
 <span class="sd">            train_Y: Not used.</span>
 <span class="sd">            num_outputs: Number of output responses per input.</span>
-<span class="sd">            covar_module: Kernel function. If omitted, uses a `MaternKernel`.</span>
+<span class="sd">            covar_module: Kernel function. If omitted, uses an `RBFKernel`.</span>
 <span class="sd">            mean_module: Mean of GP model. If omitted, uses a `ConstantMean`.</span>
 <span class="sd">            variational_distribution: Type of variational distribution to use</span>
 <span class="sd">                (default: CholeskyVariationalDistribution), the properties of the</span>
@@ -255,15 +274,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span> <span class="o">=</span> <span class="n">aug_batch_shape</span>
 
         <span class="k">if</span> <span class="n">covar_module</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">covar_module</span> <span class="o">=</span> <span class="n">get_matern_kernel_with_gamma_prior</span><span class="p">(</span>
+            <span class="n">covar_module</span> <span class="o">=</span> <span class="n">get_covar_module_with_dim_scaled_prior</span><span class="p">(</span>
                 <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
                 <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
             <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_subset_batch_dict</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s2">"mean_module.constant"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
-                <span class="s2">"covar_module.raw_outputscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
-                <span class="s2">"covar_module.base_kernel.raw_lengthscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span>
-            <span class="p">}</span>
 
         <span class="k">if</span> <span class="n">inducing_point_allocator</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">inducing_point_allocator</span> <span class="o">=</span> <span class="n">GreedyVarianceReduction</span><span class="p">()</span>
@@ -368,11 +382,11 @@
         <span class="n">covar_module</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Kernel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">mean_module</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mean</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">variational_distribution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">_VariationalDistribution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">variational_strategy</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">_VariationalStrategy</span><span class="p">]</span> <span class="o">=</span> <span class="n">VariationalStrategy</span><span class="p">,</span>
+        <span class="n">variational_strategy</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">_VariationalStrategy</span><span class="p">]</span> <span class="o">=</span> <span class="n">VariationalStrategy</span><span class="p">,</span>
         <span class="n">inducing_points</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">inducing_point_allocator</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InducingPointAllocator</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">OutcomeTransform</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">input_transform</span><span class="p">:</span> <span class="n">InputTransform</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
@@ -383,7 +397,9 @@
 <span class="sd">                either a `GaussianLikelihood` (if `num_outputs=1`) or a</span>
 <span class="sd">                `MultitaskGaussianLikelihood`(if `num_outputs&gt;1`).</span>
 <span class="sd">            num_outputs: Number of output responses per input (default: 1).</span>
-<span class="sd">            covar_module: Kernel function. If omitted, uses a `MaternKernel`.</span>
+<span class="sd">            learn_inducing_points: If True, the inducing point locations are learned</span>
+<span class="sd">                jointly with the other model parameters.</span>
+<span class="sd">            covar_module: Kernel function. If omitted, uses an `RBFKernel`.</span>
 <span class="sd">            mean_module: Mean of GP model. If omitted, uses a `ConstantMean`.</span>
 <span class="sd">            variational_distribution: Type of variational distribution to use</span>
 <span class="sd">                (default: CholeskyVariationalDistribution), the properties of the</span>
@@ -396,6 +412,20 @@
 <span class="sd">            inducing_point_allocator: The `InducingPointAllocator` used to</span>
 <span class="sd">                initialize the inducing point locations. If omitted,</span>
 <span class="sd">                uses `GreedyVarianceReduction`.</span>
+<span class="sd">            outcome_transform: An outcome transform that is applied to the training</span>
+<span class="sd">                data during instantiation and to the posterior during inference.</span>
+<span class="sd">                NOTE: If this model is trained in minibatches, an outcome transform</span>
+<span class="sd">                with learnable parameters (such as `Standardize`) would update its</span>
+<span class="sd">                parameters for each minibatch, which is undesirable. If you do intend</span>
+<span class="sd">                to train in minibatches, we recommend you not use an outcome transform</span>
+<span class="sd">                and instead pre-transform your whole data set before fitting the model.</span>
+<span class="sd">            input_transform: An input transform that is applied in the model's</span>
+<span class="sd">                forward pass.</span>
+<span class="sd">                NOTE: If this model is trained in minibatches, an input transform</span>
+<span class="sd">                with learnable parameters (such as `Normalize`) would update its</span>
+<span class="sd">                parameters for each minibatch, which is undesirable. If you do intend</span>
+<span class="sd">                to train in minibatches, we recommend you not use an input transform</span>
+<span class="sd">                and instead pre-transform your whole data set before fitting the model.</span>
 <span class="sd">        """</span>
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
             <span class="n">transformed_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span>
@@ -403,6 +433,11 @@
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">train_Y</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="n">TRANSFORM_WARNING</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ttype</span><span class="o">=</span><span class="s2">"outcome"</span><span class="p">),</span>
+                    <span class="n">UserInputWarning</span><span class="p">,</span>
+                    <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                <span class="p">)</span>
                 <span class="n">train_Y</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">outcome_transform</span><span class="p">(</span><span class="n">train_Y</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">transformed_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
             <span class="n">validate_input_scaling</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">transformed_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
@@ -418,7 +453,7 @@
 
         <span class="k">if</span> <span class="n">likelihood</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">num_outputs</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">likelihood</span> <span class="o">=</span> <span class="n">get_gaussian_likelihood_with_gamma_prior</span><span class="p">(</span>
+                <span class="n">likelihood</span> <span class="o">=</span> <span class="n">get_gaussian_likelihood_with_lognormal_prior</span><span class="p">(</span>
                     <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span>
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
@@ -433,6 +468,7 @@
                 <span class="s2">"being further optimized during the model fit. If so "</span>
                 <span class="s2">"then set `learn_inducing_points` to False."</span><span class="p">,</span>
                 <span class="ne">UserWarning</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">inducing_point_allocator</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -457,6 +493,11 @@
         <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">outcome_transform</span>
         <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="n">TRANSFORM_WARNING</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ttype</span><span class="o">=</span><span class="s2">"input"</span><span class="p">),</span>
+                <span class="n">UserInputWarning</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+            <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">input_transform</span> <span class="o">=</span> <span class="n">input_transform</span>
 
         <span class="c1"># for model fitting utilities</span>
@@ -522,7 +563,15 @@
 <div aria-label="Main" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
-<h3>Navigation</h3>
+<search id="searchbox" role="search" style="display: none">
+<div class="searchformwrapper">
+<form action="../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" placeholder="Search" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
@@ -548,16 +597,6 @@
 </ul></li>
 </ul>
 </div>
-<search id="searchbox" role="search" style="display: none">
-<h3 id="searchlabel">Quick search</h3>
-<div class="searchformwrapper">
-<form action="../../../search.html" class="search" method="get">
-<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
-<input type="submit" value="Go"/>
-</form>
-</div>
-</search>
-<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>
