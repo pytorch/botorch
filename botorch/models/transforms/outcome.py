@@ -790,7 +790,7 @@ class Bilog(OutcomeTransform):
             - The un-transformed outcome observations.
             - The un-transformed observation noise (if applicable).
         """
-        Y_utf = Y.sign() * (Y.abs().exp() - 1.0)
+        Y_utf = Y.sign() * Y.abs().expm1()
         outputs = normalize_indices(self._outputs, d=Y.size(-1))
         if outputs is not None:
             Y_utf = torch.stack(
@@ -822,5 +822,5 @@ class Bilog(OutcomeTransform):
             )
         return TransformedPosterior(
             posterior=posterior,
-            sample_transform=lambda x: x.sign() * (x.abs().exp() - 1.0),
+            sample_transform=lambda x: x.sign() * x.abs().expm1(),
         )
