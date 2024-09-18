@@ -65,7 +65,6 @@ def get_gaussian_likelihood_with_gamma_prior(
         batch_shape=batch_shape,
         noise_constraint=GreaterThan(
             MIN_INFERRED_NOISE_LEVEL,
-            transform=None,
             initial_value=noise_prior_mode,
         ),
     )
@@ -91,7 +90,6 @@ def get_gaussian_likelihood_with_lognormal_prior(
         batch_shape=batch_shape,
         noise_constraint=GreaterThan(
             MIN_INFERRED_NOISE_LEVEL,
-            transform=None,
             initial_value=noise_prior.mode,
         ),
     )
@@ -125,7 +123,7 @@ def get_covar_module_with_dim_scaled_prior(
         batch_shape=batch_shape,
         lengthscale_prior=lengthscale_prior,
         lengthscale_constraint=GreaterThan(
-            2.5e-2, transform=None, initial_value=lengthscale_prior.mode
+            2.5e-2, initial_value=lengthscale_prior.mode
         ),
         # pyre-ignore[6] GPyTorch type is unnecessarily restrictive.
         active_dims=active_dims,

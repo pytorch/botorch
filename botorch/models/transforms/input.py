@@ -1016,7 +1016,6 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
             p_name = f"concentration{i}"
             constraint = GreaterThan(
                 self._min_concentration_level,
-                transform=None,
                 # set the initial value to be the identity transformation
                 initial_value=1.0,
             )

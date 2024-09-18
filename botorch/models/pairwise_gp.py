@@ -272,7 +272,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
                     ard_num_dims=self.dim,
                     lengthscale_prior=ls_prior,
                     lengthscale_constraint=GreaterThan(
-                        lower_bound=1e-4, transform=None, initial_value=ls_prior_mode
+                        lower_bound=1e-4, initial_value=ls_prior_mode
                     ),
                     dtype=torch.float64,
                 ),

@@ -483,7 +483,6 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel, FantasizeMixin):
                 noise_prior=noise_prior,
                 noise_constraint=GreaterThan(
                     MIN_INFERRED_NOISE_LEVEL,
-                    transform=None,
                     initial_value=noise_prior.mode,
                 ),
                 rank=kwargs.get("likelihood_rank", 0),
