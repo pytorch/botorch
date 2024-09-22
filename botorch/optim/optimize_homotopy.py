@@ -78,7 +78,7 @@ def optimize_acqf_homotopy(
         final_options: Options for candidate generation in the last homotopy step.
         batch_initial_conditions: A tensor to specify the initial conditions. Set
             this if you do not want to use default initialization strategy.
-        post_processing_func: Post processing function (such as roundingor clamping)
+        post_processing_func: Post processing function (such as rounding or clamping)
             that is applied before choosing the final candidate.
     """
     candidate_list, acq_value_list = [], []
