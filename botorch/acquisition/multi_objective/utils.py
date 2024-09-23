@@ -154,7 +154,7 @@ def prune_inferior_points_multi_objective(
     probs = pareto_mask.to(dtype=X.dtype).mean(dim=0)
     idcs = probs.nonzero().view(-1)
     if idcs.shape[0] > max_points:
-        counts, order_idcs = torch.sort(probs, descending=True)
+        counts, order_idcs = torch.sort(probs, stable=True, descending=True)
         idcs = order_idcs[:max_points]
     effective_n_w = obj_vals.shape[-2] // X.shape[-2]
     idcs = (idcs / effective_n_w).long().unique()

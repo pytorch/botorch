@@ -335,15 +335,16 @@ def prune_inferior_points(
         marginalize_dim=marginalize_dim,
     )
     if infeas.any():
-        # set infeasible points to worse than worst objective
-        # across all samples
+        # set infeasible points to worse than worst objective across all samples
+        # Use clone() here to avoid deprecated `index_put_` on an expanded tensor
+        obj_vals = obj_vals.clone()
         obj_vals[infeas] = obj_vals.min() - 1
 
     is_best = torch.argmax(obj_vals, dim=-1)
     idcs, counts = torch.unique(is_best, return_counts=True)
 
     if len(idcs) > max_points:
-        counts, order_idcs = torch.sort(counts, descending=True)
+        counts, order_idcs = torch.sort(counts, stable=True, descending=True)
         idcs = order_idcs[:max_points]
 
     return X[idcs]
