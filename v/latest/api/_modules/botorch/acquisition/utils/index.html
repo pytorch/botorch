@@ -372,15 +372,16 @@
         <span class="n">marginalize_dim</span><span class="o">=</span><span class="n">marginalize_dim</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="n">infeas</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-        <span class="c1"># set infeasible points to worse than worst objective</span>
-        <span class="c1"># across all samples</span>
+        <span class="c1"># set infeasible points to worse than worst objective across all samples</span>
+        <span class="c1"># Use clone() here to avoid deprecated `index_put_` on an expanded tensor</span>
+        <span class="n">obj_vals</span> <span class="o">=</span> <span class="n">obj_vals</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
         <span class="n">obj_vals</span><span class="p">[</span><span class="n">infeas</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj_vals</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span>
 
     <span class="n">is_best</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">obj_vals</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">idcs</span><span class="p">,</span> <span class="n">counts</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">is_best</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">idcs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">max_points</span><span class="p">:</span>
-        <span class="n">counts</span><span class="p">,</span> <span class="n">order_idcs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="n">descending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">counts</span><span class="p">,</span> <span class="n">order_idcs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="n">stable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">descending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">idcs</span> <span class="o">=</span> <span class="n">order_idcs</span><span class="p">[:</span><span class="n">max_points</span><span class="p">]</span>
 
     <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">idcs</span><span class="p">]</span></div>

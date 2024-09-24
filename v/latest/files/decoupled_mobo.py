@@ -556,9 +556,9 @@ log_hv_difference_qnehvi = np.log10(problem.max_hv - np.asarray(hvs_qnehvi))
 log_hv_difference_rnd = np.log10(problem.max_hv - np.asarray(hvs_random))
 
 fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-running_cost_random = np.cumsum(cost_random.cpu()[N_INIT-1:])
-running_cost_qnehvi = np.cumsum(cost_qnehvi.cpu()[N_INIT-1:])
-running_cost_hvkg = np.cumsum(cost_hvkg.cpu()[N_INIT-1:])
+running_cost_random = np.cumsum(cost_random.cpu().numpy()[N_INIT-1:])
+running_cost_qnehvi = np.cumsum(cost_qnehvi.cpu().numpy()[N_INIT-1:])
+running_cost_hvkg = np.cumsum(cost_hvkg.cpu().numpy()[N_INIT-1:])
 ax.errorbar(
     running_cost_random,
     log_hv_difference_rnd[: len(running_cost_random)],
