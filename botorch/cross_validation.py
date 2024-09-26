@@ -13,8 +13,10 @@ from __future__ import annotations
 from typing import Any, NamedTuple, Optional
 
 import torch
+from botorch.exceptions.errors import UnsupportedError
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.gpytorch import GPyTorchModel
+from botorch.models.multitask import MultiTaskGP
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from torch import Tensor
@@ -166,6 +168,10 @@ def batch_cross_validation(
         ...    },
         ... )
     """
+    if issubclass(model_cls, MultiTaskGP):
+        raise UnsupportedError(
+            "Multi-task GPs are not currently supported by `batch_cross_validation`."
+        )
     model_init_kws = model_init_kwargs if model_init_kwargs is not None else {}
     if cv_folds.train_Yvar is not None:
         model_init_kws["train_Yvar"] = cv_folds.train_Yvar
