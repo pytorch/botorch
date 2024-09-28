@@ -326,3 +326,52 @@ def swap_along_dim_(
         values[j] = buffer
 
     return values
+
+
+def compute_log_prob_feas_from_bounds(
+    con_lower_inds: Tensor,
+    con_upper_inds: Tensor,
+    con_both_inds: Tensor,
+    con_lower: Tensor,
+    con_upper: Tensor,
+    con_both: Tensor,
+    means: Tensor,
+    sigmas: Tensor,
+) -> Tensor:
+    r"""Compute logarithm of the feasibility probability for each batch of mean/sigma.
+
+    Args:
+        means: A `(b) x m`-dim Tensor of means.
+        sigmas: A `(b) x m`-dim Tensor of standard deviations.
+        con_lower_inds: 1d Tensor of indices con_lower applies to
+            in the second dimension of means and sigmas.
+        con_upper_inds: 1d Tensor of indices con_upper applies to
+            in the second dimension of means and sigmas.
+        con_both_inds: 1d Tensor of indices con_both applies to
+            in the second dimension of means and sigmas.
+        con_lower: 1d Tensor of lower bounds on the constraints
+            equal in dimension to con_lower_inds.
+        con_upper: 1d Tensor of upper bounds on the constraints
+            equal in dimension to con_upper_inds.
+        con_both: 2d Tensor of "both" bounds on the constraints
+            equal in length to con_both_inds.
+    Returns:
+        A `b`-dim tensor of log feasibility probabilities
+    """
+    log_prob = torch.zeros_like(means[..., 0])
+    if len(con_lower_inds) > 0:
+        i = con_lower_inds
+        dist_l = (con_lower - means[..., i]) / sigmas[..., i]
+        log_prob = log_prob + log_ndtr(-dist_l).sum(dim=-1)  # 1 - Phi(x) = Phi(-x)
+    if len(con_upper_inds) > 0:
+        i = con_upper_inds
+        dist_u = (con_upper - means[..., i]) / sigmas[..., i]
+        log_prob = log_prob + log_ndtr(dist_u).sum(dim=-1)
+    if len(con_both_inds) > 0:
+        i = con_both_inds
+        con_lower, con_upper = con_both[:, 0], con_both[:, 1]
+        # scaled distance to lower and upper constraint boundary:
+        dist_l = (con_lower - means[..., i]) / sigmas[..., i]
+        dist_u = (con_upper - means[..., i]) / sigmas[..., i]
+        log_prob = log_prob + log_prob_normal_in(a=dist_l, b=dist_u).sum(dim=-1)
+    return log_prob
