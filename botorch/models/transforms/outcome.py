@@ -24,7 +24,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Union
 
 import torch
 from botorch.models.transforms.utils import (
@@ -44,7 +44,7 @@ class OutcomeTransform(Module, ABC):
     @abstractmethod
     def forward(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> Tuple[Tensor, Optional[Tensor]]:
+    ) -> tuple[Tensor, Optional[Tensor]]:
         r"""Transform the outcomes in a model's training targets
 
         Args:
@@ -60,7 +60,7 @@ class OutcomeTransform(Module, ABC):
         """
         pass  # pragma: no cover
 
-    def subset_output(self, idcs: List[int]) -> OutcomeTransform:
+    def subset_output(self, idcs: list[int]) -> OutcomeTransform:
         r"""Subset the transform along the output dimension.
 
         This functionality is used to properly treat outcome transformations
@@ -79,7 +79,7 @@ class OutcomeTransform(Module, ABC):
 
     def untransform(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> Tuple[Tensor, Optional[Tensor]]:
+    ) -> tuple[Tensor, Optional[Tensor]]:
         r"""Un-transform previously transformed outcomes
 
         Args:
@@ -141,7 +141,7 @@ class ChainedOutcomeTransform(OutcomeTransform, ModuleDict):
 
     def forward(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> Tuple[Tensor, Optional[Tensor]]:
+    ) -> tuple[Tensor, Optional[Tensor]]:
         r"""Transform the outcomes in a model's training targets
 
         Args:
@@ -159,7 +159,7 @@ class ChainedOutcomeTransform(OutcomeTransform, ModuleDict):
             Y, Yvar = tf.forward(Y, Yvar)
         return Y, Yvar
 
-    def subset_output(self, idcs: List[int]) -> OutcomeTransform:
+    def subset_output(self, idcs: list[int]) -> OutcomeTransform:
         r"""Subset the transform along the output dimension.
 
         Args:
@@ -174,7 +174,7 @@ class ChainedOutcomeTransform(OutcomeTransform, ModuleDict):
 
     def untransform(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> Tuple[Tensor, Optional[Tensor]]:
+    ) -> tuple[Tensor, Optional[Tensor]]:
         r"""Un-transform previously transformed outcomes
 
         Args:
@@ -226,7 +226,7 @@ class Standardize(OutcomeTransform):
     def __init__(
         self,
         m: int,
-        outputs: Optional[List[int]] = None,
+        outputs: Optional[list[int]] = None,
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         min_stdv: float = 1e-8,
     ) -> None:
@@ -252,7 +252,7 @@ class Standardize(OutcomeTransform):
 
     def forward(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> Tuple[Tensor, Optional[Tensor]]:
+    ) -> tuple[Tensor, Optional[Tensor]]:
         r"""Standardize outcomes.
 
         If the module is in train mode, this updates the module state (i.e. the
@@ -306,7 +306,7 @@ class Standardize(OutcomeTransform):
         Yvar_tf = Yvar / self._stdvs_sq if Yvar is not None else None
         return Y_tf, Yvar_tf
 
-    def subset_output(self, idcs: List[int]) -> OutcomeTransform:
+    def subset_output(self, idcs: list[int]) -> OutcomeTransform:
         r"""Subset the transform along the output dimension.
 
         Args:
@@ -341,7 +341,7 @@ class Standardize(OutcomeTransform):
 
     def untransform(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> Tuple[Tensor, Optional[Tensor]]:
+    ) -> tuple[Tensor, Optional[Tensor]]:
         r"""Un-standardize outcomes.
 
         Args:
@@ -455,7 +455,7 @@ class Log(OutcomeTransform):
     log-transformed outcomes and un-transform the model posterior of that GP.
     """
 
-    def __init__(self, outputs: Optional[List[int]] = None) -> None:
+    def __init__(self, outputs: Optional[list[int]] = None) -> None:
         r"""Log-transform outcomes.
 
         Args:
@@ -465,7 +465,7 @@ class Log(OutcomeTransform):
         super().__init__()
         self._outputs = outputs
 
-    def subset_output(self, idcs: List[int]) -> OutcomeTransform:
+    def subset_output(self, idcs: list[int]) -> OutcomeTransform:
         r"""Subset the transform along the output dimension.
 
         Args:
@@ -489,7 +489,7 @@ class Log(OutcomeTransform):
 
     def forward(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> Tuple[Tensor, Optional[Tensor]]:
+    ) -> tuple[Tensor, Optional[Tensor]]:
         r"""Log-transform outcomes.
 
         Args:
@@ -522,7 +522,7 @@ class Log(OutcomeTransform):
 
     def untransform(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> Tuple[Tensor, Optional[Tensor]]:
+    ) -> tuple[Tensor, Optional[Tensor]]:
         r"""Un-transform log-transformed outcomes
 
         Args:
@@ -583,7 +583,7 @@ class Power(OutcomeTransform):
     power-transformed outcomes and un-transform the model posterior of that GP.
     """
 
-    def __init__(self, power: float, outputs: Optional[List[int]] = None) -> None:
+    def __init__(self, power: float, outputs: Optional[list[int]] = None) -> None:
         r"""Power-transform outcomes.
 
         Args:
@@ -594,7 +594,7 @@ class Power(OutcomeTransform):
         self._outputs = outputs
         self.power = power
 
-    def subset_output(self, idcs: List[int]) -> OutcomeTransform:
+    def subset_output(self, idcs: list[int]) -> OutcomeTransform:
         r"""Subset the transform along the output dimension.
 
         Args:
@@ -618,7 +618,7 @@ class Power(OutcomeTransform):
 
     def forward(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> Tuple[Tensor, Optional[Tensor]]:
+    ) -> tuple[Tensor, Optional[Tensor]]:
         r"""Power-transform outcomes.
 
         Args:
@@ -651,7 +651,7 @@ class Power(OutcomeTransform):
 
     def untransform(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> Tuple[Tensor, Optional[Tensor]]:
+    ) -> tuple[Tensor, Optional[Tensor]]:
         r"""Un-transform power-transformed outcomes
 
         Args:
@@ -709,7 +709,7 @@ class Bilog(OutcomeTransform):
     constraints as it magnifies values near zero and flattens extreme values.
     """
 
-    def __init__(self, outputs: Optional[List[int]] = None) -> None:
+    def __init__(self, outputs: Optional[list[int]] = None) -> None:
         r"""Bilog-transform outcomes.
 
         Args:
@@ -719,7 +719,7 @@ class Bilog(OutcomeTransform):
         super().__init__()
         self._outputs = outputs
 
-    def subset_output(self, idcs: List[int]) -> OutcomeTransform:
+    def subset_output(self, idcs: list[int]) -> OutcomeTransform:
         r"""Subset the transform along the output dimension.
 
         Args:
@@ -743,7 +743,7 @@ class Bilog(OutcomeTransform):
 
     def forward(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> Tuple[Tensor, Optional[Tensor]]:
+    ) -> tuple[Tensor, Optional[Tensor]]:
         r"""Bilog-transform outcomes.
 
         Args:
@@ -775,7 +775,7 @@ class Bilog(OutcomeTransform):
 
     def untransform(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> Tuple[Tensor, Optional[Tensor]]:
+    ) -> tuple[Tensor, Optional[Tensor]]:
         r"""Un-transform bilog-transformed outcomes
 
         Args:
@@ -790,7 +790,7 @@ class Bilog(OutcomeTransform):
             - The un-transformed outcome observations.
             - The un-transformed observation noise (if applicable).
         """
-        Y_utf = Y.sign() * (Y.abs().exp() - 1.0)
+        Y_utf = Y.sign() * Y.abs().expm1()
         outputs = normalize_indices(self._outputs, d=Y.size(-1))
         if outputs is not None:
             Y_utf = torch.stack(
@@ -822,5 +822,5 @@ class Bilog(OutcomeTransform):
             )
         return TransformedPosterior(
             posterior=posterior,
-            sample_transform=lambda x: x.sign() * (x.abs().exp() - 1.0),
+            sample_transform=lambda x: x.sign() * x.abs().expm1(),
         )

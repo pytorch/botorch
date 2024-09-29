@@ -9,7 +9,7 @@ from __future__ import annotations
 import itertools
 import warnings
 from abc import ABC
-from typing import Any, Dict, Type
+from typing import Any
 from unittest import mock
 
 import numpy as np
@@ -206,6 +206,13 @@ class TestSampleUtils(BotorchTestCase):
             )
             expected_rhs = 0.5
             self.assertAlmostEqual(new_constraints[0][-1], expected_rhs)
+            with self.assertRaisesRegex(
+                ValueError, "`indices` must be a one-dimensional tensor."
+            ):
+                normalize_sparse_linear_constraints(
+                    bounds,
+                    [(torch.tensor([[1, 2], [3, 4]]), torch.tensor([1.0, 1.0]), 1.0)],
+                )
 
     def test_normalize_sparse_linear_constraints_wrong_dtype(self):
         for dtype in (torch.float, torch.double):
@@ -352,10 +359,10 @@ class TestSampleUtils(BotorchTestCase):
 
 
 class PolytopeSamplerTestBase(ABC):
-    sampler_class: Type[PolytopeSampler]
-    sampler_kwargs: Dict[str, Any] = {}
-    constructor_seed_kwarg: Dict[str, int] = {}
-    draw_seed_kwarg: Dict[str, int] = {}
+    sampler_class: type[PolytopeSampler]
+    sampler_kwargs: dict[str, Any] = {}
+    constructor_seed_kwarg: dict[str, int] = {}
+    draw_seed_kwarg: dict[str, int] = {}
 
     def test_sample_polytope(self):
         for dtype in (torch.float, torch.double):
@@ -541,9 +548,8 @@ class TestDelaunayPolytopeSampler(PolytopeSamplerTestBase, BotorchTestCase):
 
 class TestOptimizePosteriorSamples(BotorchTestCase):
     def test_optimize_posterior_samples(self):
-        # Restrict the random seed to prevent flaky failures.
-        seed = torch.randint(high=5, size=(1,)).item()
-        torch.manual_seed(seed)
+        # Fix the random seed to prevent flaky failures.
+        torch.manual_seed(1)
         dims = 2
         dtype = torch.float64
         eps = 1e-6

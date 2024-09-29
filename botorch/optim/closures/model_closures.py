@@ -8,9 +8,10 @@ r"""Utilities for building model-based closures."""
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from itertools import chain, repeat
 from types import NoneType
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple
+from typing import Any, Callable, Optional
 
 from botorch.optim.closures.core import ForwardBackwardClosure
 from botorch.utils.dispatcher import Dispatcher, type_bypassing_encoder
@@ -62,13 +63,13 @@ def get_loss_closure(
 
 def get_loss_closure_with_grads(
     mll: MarginalLogLikelihood,
-    parameters: Dict[str, Tensor],
+    parameters: dict[str, Tensor],
     data_loader: Optional[DataLoader] = None,
     backward: Callable[[Tensor], None] = Tensor.backward,
     reducer: Optional[Callable[[Tensor], Tensor]] = Tensor.sum,
     context_manager: Optional[Callable] = None,
     **kwargs: Any,
-) -> Callable[[], Tuple[Tensor, Tuple[Tensor, ...]]]:
+) -> Callable[[], tuple[Tensor, tuple[Tensor, ...]]]:
     r"""Public API for GetLossClosureWithGrads dispatcher.
 
     In most cases, this method simply adds a backward pass to a loss closure obtained by
@@ -107,7 +108,7 @@ def _get_loss_closure_with_grads_fallback(
     _likelihood_type: object,
     _model_type: object,
     data_loader: Optional[DataLoader],
-    parameters: Dict[str, Tensor],
+    parameters: dict[str, Tensor],
     reducer: Callable[[Tensor], Tensor] = Tensor.sum,
     backward: Callable[[Tensor], None] = Tensor.backward,
     context_manager: Callable = None,  # pyre-ignore [9]
@@ -172,9 +173,17 @@ def _get_loss_closure_exact_internal(
     r"""ExactMarginalLogLikelihood loss closure with internally managed data."""
 
     def closure(**kwargs: Any) -> Tensor:
-        model_output = mll.model(*mll.model.train_inputs)
+        model = mll.model
+        # The inputs will get transformed in forward here.
+        model_output = model(*model.train_inputs)
         log_likelihood = mll(
-            model_output, mll.model.train_targets, *mll.model.train_inputs, **kwargs
+            model_output,
+            model.train_targets,
+            # During model training, the model inputs get transformed in the forward
+            # pass. The train_inputs property is not transformed yet, so we need to
+            # transform it before passing it to the likelihood for consistency.
+            *(model.transform_inputs(X=t_in) for t_in in model.train_inputs),
+            **kwargs,
         )
         return -log_likelihood
 
@@ -188,11 +197,19 @@ def _get_loss_closure_sum_internal(
     r"""SumMarginalLogLikelihood loss closure with internally managed data."""
 
     def closure(**kwargs: Any) -> Tensor:
-        model_output = mll.model(*mll.model.train_inputs)
+        model = mll.model
+        # The inputs will get transformed in forward here.
+        model_output = model(*model.train_inputs)
         log_likelihood = mll(
             model_output,
-            mll.model.train_targets,
-            *map(list, mll.model.train_inputs),
+            model.train_targets,
+            # During model training, the model inputs get transformed in the forward
+            # pass. The train_inputs property is not transformed yet, so we need to
+            # transform it before passing it to the likelihood for consistency.
+            *(
+                (model.transform_inputs(X=t_in) for t_in in sub_t_in)
+                for sub_t_in in model.train_inputs
+            ),
             **kwargs,
         )
         return -log_likelihood

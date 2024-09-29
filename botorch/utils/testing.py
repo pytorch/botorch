@@ -10,7 +10,9 @@ import math
 import warnings
 from abc import abstractproperty
 from collections import OrderedDict
-from typing import Any, List, Optional, Sequence, Tuple
+from collections.abc import Sequence
+from itertools import product
+from typing import Any, Optional
 from unittest import mock, TestCase
 
 import torch
@@ -60,12 +62,12 @@ class BotorchTestCase(TestCase):
             )
             warnings.filterwarnings(
                 "ignore",
-                message="Data is not standardized.",
+                message=r"Data \(outcome observations\) is not standardized ",
                 category=InputDataWarning,
             )
             warnings.filterwarnings(
                 "ignore",
-                message="Input data is not contained to the unit cube.",
+                message=r"Data \(input features\) is not",
                 category=InputDataWarning,
             )
 
@@ -101,15 +103,22 @@ class BotorchTestCase(TestCase):
 
 
 class BaseTestProblemTestCaseMixIn:
-    def test_forward(self):
-        for dtype in (torch.float, torch.double):
-            for batch_shape in (torch.Size(), torch.Size([2]), torch.Size([2, 3])):
-                for f in self.functions:
-                    f.to(device=self.device, dtype=dtype)
-                    X = torch.rand(*batch_shape, f.dim, device=self.device, dtype=dtype)
-                    X = f.bounds[0] + X * (f.bounds[1] - f.bounds[0])
-                    res = f(X)
-                    f(X, noise=False)
+    def test_forward_and_evaluate_true(self):
+        dtypes = (torch.float, torch.double)
+        batch_shapes = (torch.Size(), torch.Size([2]), torch.Size([2, 3]))
+        for dtype, batch_shape, f in product(dtypes, batch_shapes, self.functions):
+            f.to(device=self.device, dtype=dtype)
+            X = torch.rand(*batch_shape, f.dim, device=self.device, dtype=dtype)
+            X = f.bounds[0] + X * (f.bounds[1] - f.bounds[0])
+            res_forward = f(X)
+            res_evaluate_true = f.evaluate_true(X)
+            for method, res in {
+                "forward": res_forward,
+                "evaluate_true": res_evaluate_true,
+            }.items():
+                with self.subTest(
+                    f"{dtype}_{batch_shape}_{f.__class__.__name__}_{method}"
+                ):
                     self.assertEqual(res.dtype, dtype)
                     self.assertEqual(res.device.type, self.device.type)
                     tail_shape = torch.Size(
@@ -285,7 +294,7 @@ class MockPosterior(Posterior):
         return torch.Size()
 
     @property
-    def batch_range(self) -> Tuple[int, int]:
+    def batch_range(self) -> tuple[int, int]:
         return self._batch_range
 
     @property
@@ -337,9 +346,9 @@ class MockModel(Model, FantasizeMixin):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[List[int]] = None,
+        output_indices: Optional[list[int]] = None,
         posterior_transform: Optional[PosteriorTransform] = None,
-        observation_noise: bool = False,
+        observation_noise: bool | torch.Tensor = False,
     ) -> MockPosterior:
         if posterior_transform is not None:
             return posterior_transform(self._posterior)
@@ -356,7 +365,7 @@ class MockModel(Model, FantasizeMixin):
         extended_shape = self._posterior._extended_shape()
         return extended_shape[:-2]
 
-    def state_dict(self) -> None:
+    def state_dict(self, *args, **kwargs) -> None:
         pass
 
     def load_state_dict(
@@ -381,7 +390,7 @@ class MockAcquisitionFunction:
 
 def _get_random_data(
     batch_shape: torch.Size, m: int, d: int = 1, n: int = 10, **tkwargs
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Generate random data for testing purposes.
 
     Args:
@@ -473,7 +482,7 @@ def _get_max_violation_of_bounds(samples: torch.Tensor, bounds: torch.Tensor) ->
 
 def _get_max_violation_of_constraints(
     samples: torch.Tensor,
-    constraints: Optional[List[Tuple[Tensor, Tensor, float]]],
+    constraints: Optional[list[tuple[Tensor, Tensor, float]]],
     equality: bool,
 ) -> float:
     r"""

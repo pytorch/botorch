@@ -13,7 +13,7 @@ from __future__ import annotations
 import math
 import warnings
 from math import ceil
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Optional
 
 import torch
 from botorch.acquisition import monte_carlo  # noqa F401
@@ -69,7 +69,7 @@ def prune_inferior_points_multi_objective(
     X: Tensor,
     ref_point: Tensor,
     objective: Optional[MCMultiOutputObjective] = None,
-    constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+    constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
     num_samples: int = 2048,
     max_frac: float = 1.0,
     marginalize_dim: Optional[int] = None,
@@ -154,7 +154,7 @@ def prune_inferior_points_multi_objective(
     probs = pareto_mask.to(dtype=X.dtype).mean(dim=0)
     idcs = probs.nonzero().view(-1)
     if idcs.shape[0] > max_points:
-        counts, order_idcs = torch.sort(probs, descending=True)
+        counts, order_idcs = torch.sort(probs, stable=True, descending=True)
         idcs = order_idcs[:max_points]
     effective_n_w = obj_vals.shape[-2] // X.shape[-2]
     idcs = (idcs / effective_n_w).long().unique()
@@ -269,7 +269,7 @@ def random_search_optimizer(
     maximize: bool,
     pop_size: int = 1024,
     max_tries: int = 10,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Optimize a function via random search.
 
     Args:
@@ -318,11 +318,11 @@ def sample_optimal_points(
     num_samples: int,
     num_points: int,
     optimizer: Callable[
-        [GenericDeterministicModel, Tensor, int, bool, Any], Tuple[Tensor, Tensor]
+        [GenericDeterministicModel, Tensor, int, bool, Any], tuple[Tensor, Tensor]
     ] = random_search_optimizer,
     maximize: bool = True,
-    optimizer_kwargs: Optional[Dict[str, Any]] = None,
-) -> Tuple[Tensor, Tensor]:
+    optimizer_kwargs: Optional[dict[str, Any]] = None,
+) -> tuple[Tensor, Tensor]:
     r"""Compute a collection of optimal inputs and outputs from samples of a Gaussian
     Process (GP).
 
@@ -354,7 +354,7 @@ def sample_optimal_points(
         - A `num_samples x num_points x M`-dim Tensor containing the collection of
             optimal objectives.
     """
-    tkwargs: Dict[str, Any] = {"dtype": bounds.dtype, "device": bounds.device}
+    tkwargs: dict[str, Any] = {"dtype": bounds.dtype, "device": bounds.device}
     M = model.num_outputs
     d = bounds.shape[-1]
     if M == 1:

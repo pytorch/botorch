@@ -6,7 +6,7 @@
 
 r"""Utilities for box decomposition algorithms."""
 
-from typing import Optional, Tuple
+from typing import Optional
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedError
@@ -102,7 +102,7 @@ def _pad_batch_pareto_frontier(
 
 def compute_local_upper_bounds(
     U: Tensor, Z: Tensor, z: Tensor
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Compute local upper bounds.
 
     Note: this assumes minimization.
@@ -197,7 +197,7 @@ def get_partition_bounds(Z: Tensor, U: Tensor, ref_point: Tensor) -> Tensor:
 
 def update_local_upper_bounds_incremental(
     new_pareto_Y: Tensor, U: Tensor, Z: Tensor
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Update the current local upper with the new pareto points.
 
     This assumes minimization.

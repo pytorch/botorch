@@ -387,6 +387,16 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             self.assertIsNone(model.covar_module)
             self.assertIsNone(model.likelihood)
 
+    def test_empty(self):
+        model = SaasFullyBayesianSingleTaskGP(
+            train_X=torch.rand(0, 3),
+            train_Y=torch.rand(0, 1),
+        )
+        fit_fully_bayesian_model_nuts(
+            model, warmup_steps=2, num_samples=6, thinning=3, disable_progbar=True
+        )
+        self.assertEqual(model.covar_module.outputscale.shape, torch.Size([2]))
+
     def test_transforms(self):
         for infer_noise in [True, False]:
             tkwargs = {"device": self.device, "dtype": torch.double}

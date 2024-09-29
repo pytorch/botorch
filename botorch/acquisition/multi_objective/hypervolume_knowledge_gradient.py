@@ -16,8 +16,9 @@ References:
     Learning, 2023.
 """
 
+import warnings
 from copy import deepcopy
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type
+from typing import Any, Callable, Optional
 
 import torch
 from botorch import settings
@@ -29,12 +30,13 @@ from botorch.acquisition.acquisition import (
 from botorch.acquisition.cost_aware import CostAwareUtility
 from botorch.acquisition.decoupled import DecoupledAcquisitionFunction
 from botorch.acquisition.knowledge_gradient import ProjectedAcquisitionFunction
+from botorch.acquisition.multi_objective.base import MultiObjectiveMCAcquisitionFunction
 from botorch.acquisition.multi_objective.monte_carlo import (
-    MultiObjectiveMCAcquisitionFunction,
     qExpectedHypervolumeImprovement,
 )
 from botorch.acquisition.multi_objective.objective import MCMultiOutputObjective
 from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.warnings import NumericsWarning
 from botorch.models.deterministic import PosteriorMeanModel
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
@@ -78,7 +80,7 @@ class qHypervolumeKnowledgeGradient(
         sampler: Optional[ListSampler] = None,
         objective: Optional[MCMultiOutputObjective] = None,
         inner_sampler: Optional[MCSampler] = None,
-        X_evaluation_mask: Optional[List[Tensor]] = None,
+        X_evaluation_mask: Optional[list[Tensor]] = None,
         X_pending: Optional[Tensor] = None,
         X_pending_evaluation_mask: Optional[Tensor] = None,
         current_value: Optional[Tensor] = None,
@@ -306,7 +308,7 @@ class qMultiFidelityHypervolumeKnowledgeGradient(qHypervolumeKnowledgeGradient):
         self,
         model: Model,
         ref_point: Tensor,
-        target_fidelities: Dict[int, float],
+        target_fidelities: dict[int, float],
         num_fantasies: int = 8,
         num_pareto: int = 10,
         sampler: Optional[MCSampler] = None,
@@ -318,8 +320,8 @@ class qMultiFidelityHypervolumeKnowledgeGradient(qHypervolumeKnowledgeGradient):
         current_value: Optional[Tensor] = None,
         cost_aware_utility: Optional[CostAwareUtility] = None,
         project: Callable[[Tensor], Tensor] = lambda X: X,
-        valfunc_cls: Optional[Type[AcquisitionFunction]] = None,
-        valfunc_argfac: Optional[Callable[[Model], Dict[str, Any]]] = None,
+        valfunc_cls: Optional[type[AcquisitionFunction]] = None,
+        valfunc_argfac: Optional[Callable[[Model], dict[str, Any]]] = None,
         use_posterior_mean: bool = True,
         **kwargs: Any,
     ) -> None:
@@ -387,7 +389,10 @@ class qMultiFidelityHypervolumeKnowledgeGradient(qHypervolumeKnowledgeGradient):
         )
         self.project = project
         if kwargs.get("expand") is not None:
-            raise NotImplementedError("Trace observations are not currently supported.")
+            raise NotImplementedError(
+                "Trace observations are not currently supported "
+                "by `qMultiFidelityHypervolumeKnowledgeGradient`."
+            )
         self.expand = lambda X: X
         self.valfunc_cls = valfunc_cls
         self.valfunc_argfac = valfunc_argfac
@@ -490,8 +495,8 @@ def _get_hv_value_function(
     objective: Optional[MCMultiOutputObjective] = None,
     sampler: Optional[MCSampler] = None,
     project: Optional[Callable[[Tensor], Tensor]] = None,
-    valfunc_cls: Optional[Type[AcquisitionFunction]] = None,
-    valfunc_argfac: Optional[Callable[[Model], Dict[str, Any]]] = None,
+    valfunc_cls: Optional[type[AcquisitionFunction]] = None,
+    valfunc_argfac: Optional[Callable[[Model], dict[str, Any]]] = None,
     use_posterior_mean: bool = False,
 ) -> AcquisitionFunction:
     r"""Construct value function (i.e. inner acquisition function).
@@ -500,20 +505,26 @@ def _get_hv_value_function(
     if use_posterior_mean:
         model = PosteriorMeanModel(model=model)
         sampler = StochasticSampler(sample_shape=torch.Size([1]))  # dummy sampler
-    base_value_function = qExpectedHypervolumeImprovement(
-        model=model,
-        ref_point=ref_point,
-        partitioning=FastNondominatedPartitioning(
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            message="qExpectedHypervolumeImprovement has known",
+            action="ignore",
+            category=NumericsWarning,
+        )
+        base_value_function = qExpectedHypervolumeImprovement(
+            model=model,
             ref_point=ref_point,
-            Y=torch.empty(
-                (0, ref_point.shape[0]),
-                dtype=ref_point.dtype,
-                device=ref_point.device,
-            ),
-        ),  # create empty partitioning
-        sampler=sampler,
-        objective=objective,
-    )
+            partitioning=FastNondominatedPartitioning(
+                ref_point=ref_point,
+                Y=torch.empty(
+                    (0, ref_point.shape[0]),
+                    dtype=ref_point.dtype,
+                    device=ref_point.device,
+                ),
+            ),  # create empty partitioning
+            sampler=sampler,
+            objective=objective,
+        )
     # ProjectedAcquisitionFunction requires this
     base_value_function.posterior_transform = None
 
@@ -528,7 +539,7 @@ def _get_hv_value_function(
 
 def _split_hvkg_fantasy_points(
     X: Tensor, n_f: int, num_pareto: int
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Split a one-shot HV-KGoptimization input into actual and fantasy points
 
     Args:

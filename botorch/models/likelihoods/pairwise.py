@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import math
 from abc import ABC, abstractmethod
-from typing import Tuple
 
 import torch
 from botorch.utils.probability.utils import (
@@ -121,7 +120,7 @@ class PairwiseProbitLikelihood(PairwiseLikelihood):
         z = z.clamp(-self._zlim, self._zlim).squeeze(-1)
         return z
 
-    def _calc_z_derived(self, z: Tensor) -> Tuple[Tensor, Tensor, Tensor]:
+    def _calc_z_derived(self, z: Tensor) -> tuple[Tensor, Tensor, Tensor]:
         """Calculate auxiliary statistics derived from z, including log pdf,
         log cdf, and the hazard function (pdf divided by cdf)
 

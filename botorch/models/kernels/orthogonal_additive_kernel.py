@@ -4,17 +4,23 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
-from typing import List, Optional, Tuple
+from typing import Optional
 
 import numpy
 import torch
 from botorch.exceptions.errors import UnsupportedError
 from gpytorch.constraints import Interval, Positive
 from gpytorch.kernels import Kernel
+from gpytorch.module import Module
+from gpytorch.priors import Prior
 
 from torch import nn, Tensor
 
 _positivity_constraint = Positive()
+SECOND_ORDER_PRIOR_ERROR_MSG = (
+    "Second order interactions are disabled, but there is a prior on the second order "
+    "coefficients. Please remove the second order prior or enable second order terms."
+)
 
 
 class OrthogonalAdditiveKernel(Kernel):
@@ -40,6 +46,9 @@ class OrthogonalAdditiveKernel(Kernel):
         dtype: Optional[torch.dtype] = None,
         device: Optional[torch.device] = None,
         coeff_constraint: Interval = _positivity_constraint,
+        offset_prior: Optional[Prior] = None,
+        coeffs_1_prior: Optional[Prior] = None,
+        coeffs_2_prior: Optional[Prior] = None,
     ):
         """
         Args:
@@ -52,9 +61,18 @@ class OrthogonalAdditiveKernel(Kernel):
             dtype: Initialization dtype for required Tensors.
             device: Initialization device for required Tensors.
             coeff_constraint: Constraint on the coefficients of the additive kernel.
+            offset_prior: Prior on the offset coefficient. Should be prior with non-
+                negative support.
+            coeffs_1_prior: Prior on the parameter main effects. Should be prior with
+                non-negative support.
+            coeffs_2_prior: coeffs_1_prior: Prior on the parameter interactions. Should
+                be prior with non-negative support.
         """
         super().__init__(batch_shape=batch_shape)
         self.base_kernel = base_kernel
+        if not second_order and coeffs_2_prior is not None:
+            raise AttributeError(SECOND_ORDER_PRIOR_ERROR_MSG)
+
         # integration nodes, weights for [0, 1]
         tkwargs = {"dtype": dtype, "device": device}
         z, w = leggauss(deg=quad_deg, a=0, b=1, **tkwargs)
@@ -82,6 +100,29 @@ class OrthogonalAdditiveKernel(Kernel):
                 else None
             ),
         )
+        if offset_prior is not None:
+            self.register_prior(
+                name="offset_prior",
+                prior=offset_prior,
+                param_or_closure=_offset_param,
+                setting_closure=_offset_closure,
+            )
+        if coeffs_1_prior is not None:
+            self.register_prior(
+                name="coeffs_1_prior",
+                prior=coeffs_1_prior,
+                param_or_closure=_coeffs_1_param,
+                setting_closure=_coeffs_1_closure,
+            )
+        if coeffs_2_prior is not None:
+            self.register_prior(
+                name="coeffs_2_prior",
+                prior=coeffs_2_prior,
+                param_or_closure=_coeffs_2_param,
+                setting_closure=_coeffs_2_closure,
+            )
+
+        # for second order interactions, we only
         if second_order:
             self._rev_triu_indices = torch.tensor(
                 _reverse_triu_indices(dim),
@@ -90,12 +131,12 @@ class OrthogonalAdditiveKernel(Kernel):
             )
             # zero tensor for construction of upper-triangular coefficient matrix
             self._quad_zero = torch.zeros(
-                tuple(1 for _ in range(len(batch_shape) + 1)), **tkwargs
-            ).expand(*batch_shape, 1)
+                tuple(1 for _ in range(len(self.batch_shape) + 1)), **tkwargs
+            ).expand(*self.batch_shape, 1)
         self.coeff_constraint = coeff_constraint
         self.dim = dim
 
-    def k(self, x1, x2) -> Tensor:
+    def k(self, x1: Tensor, x2: Tensor) -> Tensor:
         """Evaluates the kernel matrix base_kernel(x1, x2) on each input dimension
         independently.
 
@@ -139,6 +180,34 @@ class OrthogonalAdditiveKernel(Kernel):
             return C2.reshape(*self.batch_shape, self.dim, self.dim)
         else:
             return None
+
+    def _set_coeffs_1(self, value: Tensor) -> None:
+        value = torch.as_tensor(value).to(self.raw_coeffs_1)
+        value = value.expand(*self.batch_shape, self.dim)
+        self.initialize(raw_coeffs_1=self.coeff_constraint.inverse_transform(value))
+
+    def _set_coeffs_2(self, value: Tensor) -> None:
+        value = torch.as_tensor(value).to(self.raw_coeffs_1)
+        value = value.expand(*self.batch_shape, self.dim, self.dim)
+        row_idcs, col_idcs = torch.triu_indices(self.dim, self.dim, offset=1)
+        value = value[..., row_idcs, col_idcs].to(self.raw_coeffs_2)
+        self.initialize(raw_coeffs_2=self.coeff_constraint.inverse_transform(value))
+
+    def _set_offset(self, value: Tensor) -> None:
+        value = torch.as_tensor(value).to(self.raw_offset)
+        self.initialize(raw_offset=self.coeff_constraint.inverse_transform(value))
+
+    @coeffs_1.setter
+    def coeffs_1(self, value) -> None:
+        self._set_coeffs_1(value)
+
+    @coeffs_2.setter
+    def coeffs_2(self, value) -> None:
+        self._set_coeffs_2(value)
+
+    @offset.setter
+    def offset(self, value) -> None:
+        self._set_offset(value)
 
     def forward(
         self,
@@ -237,7 +306,7 @@ def leggauss(
     b: float = 1.0,
     dtype: Optional[torch.dtype] = None,
     device: Optional[torch.device] = None,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     """Computes Gauss-Legendre quadrature nodes and weights. Wraps
     `numpy.polynomial.legendre.leggauss` and returns Torch Tensors.
 
@@ -272,7 +341,7 @@ def _check_hypercube(x: Tensor, name: str) -> None:
         raise ValueError(name + " is not in hypercube [0, 1]^d.")
 
 
-def _reverse_triu_indices(d: int) -> List[int]:
+def _reverse_triu_indices(d: int) -> list[int]:
     """Computes a list of indices which, upon indexing a `d * (d - 1) / 2 + 1`-dim
     Tensor whose last element is zero, will lead to a vectorized representation of
     an upper-triangular matrix, whose diagonal is set to zero and whose super-diagonal
@@ -296,3 +365,27 @@ def _reverse_triu_indices(d: int) -> List[int]:
         indices.extend(range(j, j + d - i - 1))  # indexing coeffs (super-diagonal)
         j += d - i - 1
     return indices
+
+
+def _coeffs_1_param(m: Module) -> Tensor:
+    return m.coeffs_1
+
+
+def _coeffs_2_param(m: Module) -> Tensor:
+    return m.coeffs_2
+
+
+def _offset_param(m: Module) -> Tensor:
+    return m.offset
+
+
+def _coeffs_1_closure(m: Module, v: Tensor) -> Tensor:
+    return m._set_coeffs_1(v)
+
+
+def _coeffs_2_closure(m: Module, v: Tensor) -> Tensor:
+    return m._set_coeffs_2(v)
+
+
+def _offset_closure(m: Module, v: Tensor) -> Tensor:
+    return m._set_offset(v)

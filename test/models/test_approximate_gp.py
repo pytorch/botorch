@@ -8,6 +8,8 @@ import itertools
 import warnings
 
 import torch
+from botorch.acquisition.objective import ScalarizedPosteriorTransform
+from botorch.exceptions.warnings import UserInputWarning
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.approximate_gp import (
     _SingleTaskVariationalGP,
@@ -102,6 +104,16 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
                 # test batch_shape property
                 self.assertEqual(model.batch_shape, tx.shape[:-2])
 
+        # Test that checks if posterior_transform is correctly applied
+        [tx1, ty1, test1] = all_tests["non_batched_mo"]
+        model1 = SingleTaskVariationalGP(tx1, ty1, inducing_points=tx1)
+        posterior_transform = ScalarizedPosteriorTransform(
+            weights=torch.tensor([1.0, 1.0], device=self.device)
+        )
+        posterior1 = model1.posterior(test1, posterior_transform=posterior_transform)
+        self.assertIsInstance(posterior1, GPyTorchPosterior)
+        self.assertEqual(posterior1.mean.shape[1], 1)
+
     def test_variational_setUp(self):
         for dtype in [torch.float, torch.double]:
             train_X = torch.rand(10, 1, device=self.device, dtype=dtype)
@@ -133,7 +145,7 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
 
                 # but that the covariance does have a gradient
                 self.assertIsNotNone(
-                    batched_model.model.covar_module.raw_outputscale.grad
+                    batched_model.model.covar_module.raw_lengthscale.grad
                 )
 
                 # check that we always have three outputs
@@ -189,6 +201,26 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
                 self.assertIsInstance(posterior, TransformedPosterior)
             else:
                 self.assertFalse(hasattr(model, "outcome_transform"))
+
+        # test user warnings when using transforms
+        with self.assertWarnsRegex(
+            UserInputWarning,
+            "Using an input transform with `SingleTaskVariationalGP`",
+        ):
+            SingleTaskVariationalGP(
+                train_X=train_X,
+                train_Y=train_Y,
+                input_transform=Normalize(d=1),
+            )
+        with self.assertWarnsRegex(
+            UserInputWarning,
+            "Using an outcome transform with `SingleTaskVariationalGP`",
+        ):
+            SingleTaskVariationalGP(
+                train_X=train_X,
+                train_Y=train_Y,
+                outcome_transform=Log(),
+            )
 
         # test default inducing point allocator
         self.assertIsInstance(model._inducing_point_allocator, GreedyVarianceReduction)
@@ -327,5 +359,5 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
                     model.likelihood, model.model, num_data=train_X.shape[-2]
                 )
                 fit_gpytorch_mll(mll)
-                post = model.posterior(torch.tensor([train_X.mean()]))
+                post = model.posterior(torch.tensor([[train_X.mean()]]))
                 self.assertAllClose(post.mean[0][0], y.mean(), atol=1e-3, rtol=1e-3)

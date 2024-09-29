@@ -10,11 +10,13 @@ Cross-validation utilities using batch evaluation mode.
 
 from __future__ import annotations
 
-from typing import Any, Dict, NamedTuple, Optional, Type
+from typing import Any, NamedTuple, Optional
 
 import torch
+from botorch.exceptions.errors import UnsupportedError
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.gpytorch import GPyTorchModel
+from botorch.models.multitask import MultiTaskGP
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from torch import Tensor
@@ -107,12 +109,12 @@ def gen_loo_cv_folds(
 
 
 def batch_cross_validation(
-    model_cls: Type[GPyTorchModel],
-    mll_cls: Type[MarginalLogLikelihood],
+    model_cls: type[GPyTorchModel],
+    mll_cls: type[MarginalLogLikelihood],
     cv_folds: CVFolds,
-    fit_args: Optional[Dict[str, Any]] = None,
+    fit_args: Optional[dict[str, Any]] = None,
     observation_noise: bool = False,
-    model_init_kwargs: Optional[Dict[str, Any]] = None,
+    model_init_kwargs: Optional[dict[str, Any]] = None,
 ) -> CVResults:
     r"""Perform cross validation by using GPyTorch batch mode.
 
@@ -166,6 +168,10 @@ def batch_cross_validation(
         ...    },
         ... )
     """
+    if issubclass(model_cls, MultiTaskGP):
+        raise UnsupportedError(
+            "Multi-task GPs are not currently supported by `batch_cross_validation`."
+        )
     model_init_kws = model_init_kwargs if model_init_kwargs is not None else {}
     if cv_folds.train_Yvar is not None:
         model_init_kws["train_Yvar"] = cv_folds.train_Yvar

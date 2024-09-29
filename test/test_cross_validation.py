@@ -9,8 +9,10 @@ import warnings
 
 import torch
 from botorch.cross_validation import batch_cross_validation, gen_loo_cv_folds
+from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.models.gp_regression import SingleTaskGP
+from botorch.models.multitask import MultiTaskGP
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.utils.testing import _get_random_data, BotorchTestCase
@@ -107,3 +109,18 @@ class TestFitBatchCrossValidation(BotorchTestCase):
                     cv_results.posterior.mean.device.type, self.device.type
                 )
                 self.assertIs(cv_results.posterior.mean.dtype, dtype)
+
+    def test_mtgp(self):
+        train_X, train_Y = _get_random_data(
+            batch_shape=torch.Size(), m=1, n=3, device=self.device
+        )
+        cv_folds = gen_loo_cv_folds(train_X=train_X, train_Y=train_Y)
+        with self.assertRaisesRegex(
+            UnsupportedError, "Multi-task GPs are not currently supported."
+        ):
+            batch_cross_validation(
+                model_cls=MultiTaskGP,
+                mll_cls=ExactMarginalLogLikelihood,
+                cv_folds=cv_folds,
+                fit_args={"optimizer_kwargs": {"options": {"maxiter": 1}}},
+            )

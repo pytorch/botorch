@@ -8,7 +8,7 @@ r"""Utilities for maximizing acquisition functions."""
 
 from __future__ import annotations
 
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 from warnings import warn
 
 import torch
@@ -64,7 +64,7 @@ def columnwise_clamp(
 
 
 def fix_features(
-    X: Tensor, fixed_features: Optional[Dict[int, Optional[float]]] = None
+    X: Tensor, fixed_features: Optional[dict[int, Optional[float]]] = None
 ) -> Tensor:
     r"""Fix feature values in a Tensor.
 

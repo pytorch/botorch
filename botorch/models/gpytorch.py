@@ -17,7 +17,7 @@ import itertools
 import warnings
 from abc import ABC
 from copy import deepcopy
-from typing import Any, List, Optional, Tuple, TYPE_CHECKING, Union
+from typing import Any, Optional, TYPE_CHECKING, Union
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
@@ -276,7 +276,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
     @staticmethod
     def get_batch_dimensions(
         train_X: Tensor, train_Y: Tensor
-    ) -> Tuple[torch.Size, torch.Size]:
+    ) -> tuple[torch.Size, torch.Size]:
         r"""Get the raw batch shape and output-augmented batch shape of the inputs.
 
         Args:
@@ -326,7 +326,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
 
     def _transform_tensor_args(
         self, X: Tensor, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> Tuple[Tensor, Tensor, Optional[Tensor]]:
+    ) -> tuple[Tensor, Tensor, Optional[Tensor]]:
         r"""Transforms tensor arguments: for single output models, the output
         dimension is squeezed and for multi-output models, the output dimension is
         transformed into the left-most batch dimension.
@@ -405,7 +405,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[List[int]] = None,
+        output_indices: Optional[list[int]] = None,
         observation_noise: Union[bool, Tensor] = False,
         posterior_transform: Optional[PosteriorTransform] = None,
     ) -> Union[GPyTorchPosterior, TransformedPosterior]:
@@ -530,7 +530,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
             fantasy_model._aug_batch_shape = fantasy_model.train_targets.shape[:-1]
         return fantasy_model
 
-    def subset_output(self, idcs: List[int]) -> BatchedMultiOutputGPyTorchModel:
+    def subset_output(self, idcs: list[int]) -> BatchedMultiOutputGPyTorchModel:
         r"""Subset the model along the output dimension.
 
         Args:
@@ -543,7 +543,9 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
             subset_batch_dict = self._subset_batch_dict
         except AttributeError:
             raise NotImplementedError(
-                "subset_output requires the model to define a `_subset_dict` attribute"
+                "`subset_output` requires the model to define a `_subset_batch_dict` "
+                "attribute that lists the indices of the output dimensions in each "
+                "model parameter that needs to be subset."
             )
 
         m = len(idcs)
@@ -629,7 +631,7 @@ class ModelListGPyTorchModel(ModelList, GPyTorchModel, ABC):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[List[int]] = None,
+        output_indices: Optional[list[int]] = None,
         observation_noise: Union[bool, Tensor] = False,
         posterior_transform: Optional[PosteriorTransform] = None,
     ) -> Union[GPyTorchPosterior, PosteriorList]:
@@ -834,7 +836,7 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[List[int]] = None,
+        output_indices: Optional[list[int]] = None,
         observation_noise: Union[bool, Tensor] = False,
         posterior_transform: Optional[PosteriorTransform] = None,
     ) -> Union[GPyTorchPosterior, TransformedPosterior]:
@@ -917,7 +919,7 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
             return posterior_transform(posterior)
         return posterior
 
-    def subset_output(self, idcs: List[int]) -> MultiTaskGPyTorchModel:
+    def subset_output(self, idcs: list[int]) -> MultiTaskGPyTorchModel:
         r"""Returns a new model that only outputs a subset of the outputs.
 
         Args:

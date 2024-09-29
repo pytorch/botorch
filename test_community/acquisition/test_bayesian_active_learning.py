@@ -7,68 +7,13 @@
 from itertools import product
 
 import torch
-from botorch.acquisition.bayesian_active_learning import (
-    FullyBayesianAcquisitionFunction,
-)
-from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
-from botorch.models.gp_regression import SingleTaskGP
-from botorch.models.transforms.outcome import Standardize
+from botorch.utils.test_helpers import get_fully_bayesian_model
 from botorch.utils.testing import BotorchTestCase
 from botorch_community.acquisition.bayesian_active_learning import (
     qBayesianQueryByComittee,
     qBayesianVarianceReduction,
     qStatisticalDistanceActiveLearning,
 )
-
-
-def _get_mcmc_samples(num_samples: int, dim: int, infer_noise: bool, **tkwargs):
-
-    mcmc_samples = {
-        "lengthscale": torch.rand(num_samples, 1, dim, **tkwargs),
-        "outputscale": torch.rand(num_samples, **tkwargs),
-        "mean": torch.randn(num_samples, **tkwargs),
-    }
-    if infer_noise:
-        mcmc_samples["noise"] = torch.rand(num_samples, 1, **tkwargs)
-    return mcmc_samples
-
-
-def get_model(
-    train_X,
-    train_Y,
-    num_models,
-    standardize_model,
-    infer_noise,
-    **tkwargs,
-):
-    num_objectives = train_Y.shape[-1]
-
-    if standardize_model:
-        outcome_transform = Standardize(m=num_objectives)
-    else:
-        outcome_transform = None
-
-    mcmc_samples = _get_mcmc_samples(
-        num_samples=num_models,
-        dim=train_X.shape[-1],
-        infer_noise=infer_noise,
-        **tkwargs,
-    )
-
-    model = SaasFullyBayesianSingleTaskGP(
-        train_X=train_X,
-        train_Y=train_Y,
-        outcome_transform=outcome_transform,
-    )
-    model.load_mcmc_samples(mcmc_samples)
-
-    return model
-
-
-class TestFullyBayesianActuisitionFunction(BotorchTestCase):
-    def test_abstract_raises(self):
-        with self.assertRaises(TypeError):
-            FullyBayesianAcquisitionFunction()
 
 
 class TestQStatisticalDistanceActiveLearning(BotorchTestCase):
@@ -94,12 +39,12 @@ class TestQStatisticalDistanceActiveLearning(BotorchTestCase):
             train_X = torch.rand(4, input_dim, **tkwargs)
             train_Y = torch.rand(4, num_objectives, **tkwargs)
 
-            model = get_model(
-                train_X,
-                train_Y,
-                num_models,
-                standardize_model,
-                infer_noise,
+            model = get_fully_bayesian_model(
+                train_X=train_X,
+                train_Y=train_Y,
+                num_models=num_models,
+                standardize_model=standardize_model,
+                infer_noise=infer_noise,
                 **tkwargs,
             )
 
@@ -134,14 +79,6 @@ class TestQStatisticalDistanceActiveLearning(BotorchTestCase):
                 X_pending=X_pending,
             )
 
-        # Support with non-fully bayesian models is not possible. Thus, we
-        # throw an error.
-        non_fully_bayesian_model = SingleTaskGP(train_X, train_Y)
-        with self.assertRaises(ValueError):
-            acq = qStatisticalDistanceActiveLearning(
-                model=non_fully_bayesian_model,
-            )
-
 
 class TestQBayesianQueryByComittee(BotorchTestCase):
     def test_q_bayesian_query_by_comittee(self):
@@ -163,12 +100,12 @@ class TestQBayesianQueryByComittee(BotorchTestCase):
             train_X = torch.rand(4, input_dim, **tkwargs)
             train_Y = torch.rand(4, num_objectives, **tkwargs)
 
-            model = get_model(
-                train_X,
-                train_Y,
-                num_models,
-                standardize_model,
-                infer_noise,
+            model = get_fully_bayesian_model(
+                train_X=train_X,
+                train_Y=train_Y,
+                num_models=num_models,
+                standardize_model=standardize_model,
+                infer_noise=infer_noise,
                 **tkwargs,
             )
 
@@ -195,14 +132,6 @@ class TestQBayesianQueryByComittee(BotorchTestCase):
                     # assess shape
                     self.assertTrue(acq_X.shape == test_Xs[j].shape[:-2])
 
-        # Support with non-fully bayesian models is not possible. Thus, we
-        # throw an error.
-        non_fully_bayesian_model = SingleTaskGP(train_X, train_Y)
-        with self.assertRaises(ValueError):
-            acq = qBayesianQueryByComittee(
-                model=non_fully_bayesian_model,
-            )
-
 
 class TestQBayesianVarianceReduction(BotorchTestCase):
     def test_q_bayesian_variance_reduction(self):
@@ -224,12 +153,12 @@ class TestQBayesianVarianceReduction(BotorchTestCase):
             train_X = torch.rand(4, input_dim, **tkwargs)
             train_Y = torch.rand(4, num_objectives, **tkwargs)
 
-            model = get_model(
-                train_X,
-                train_Y,
-                num_models,
-                standardize_model,
-                infer_noise,
+            model = get_fully_bayesian_model(
+                train_X=train_X,
+                train_Y=train_Y,
+                num_models=num_models,
+                standardize_model=standardize_model,
+                infer_noise=infer_noise,
                 **tkwargs,
             )
 
@@ -255,11 +184,3 @@ class TestQBayesianVarianceReduction(BotorchTestCase):
                     acq_X = acq(test_Xs[j])
                     # assess shape
                     self.assertTrue(acq_X.shape == test_Xs[j].shape[:-2])
-
-        # Support with non-fully bayesian models is not possible. Thus, we
-        # throw an error.
-        non_fully_bayesian_model = SingleTaskGP(train_X, train_Y)
-        with self.assertRaises(ValueError):
-            acq = qBayesianVarianceReduction(
-                model=non_fully_bayesian_model,
-            )

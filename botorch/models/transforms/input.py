@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Optional, Union
 from warnings import warn
 
 import numpy as np
@@ -322,7 +322,7 @@ class AffineInputTransform(ReversibleInputTransform, Module):
         d: int,
         coefficient: Tensor,
         offset: Tensor,
-        indices: Optional[Union[List[int], Tensor]] = None,
+        indices: Optional[Union[list[int], Tensor]] = None,
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
@@ -412,8 +412,8 @@ class AffineInputTransform(ReversibleInputTransform, Module):
         Returns:
             A `batch_shape x n x d`-dim tensor of transformed inputs.
         """
+        self._check_shape(X)
         if self.learn_coefficients and self.training:
-            self._check_shape(X)
             self._update_coefficients(X)
         self._to(X)
         return (X - self.offset) / self.coefficient
@@ -462,9 +462,13 @@ class AffineInputTransform(ReversibleInputTransform, Module):
                 f"Wrong input dimension. Received {X.size(-1)}, "
                 f"expected {self.offset.size(-1)}."
             )
+        if X.ndim < 2:
+            raise BotorchTensorDimensionError(
+                f"`X` must have at least 2 dimensions, but has {X.ndim}."
+            )
 
         n = len(self.batch_shape) + 2
-        if X.ndim < n:
+        if self.training and X.ndim < n:
             raise ValueError(
                 f"`X` must have at least {n} dimensions, {n - 2} batch and 2 innate"
                 f" , but has {X.ndim}."
@@ -499,7 +503,7 @@ class Normalize(AffineInputTransform):
     def __init__(
         self,
         d: int,
-        indices: Optional[Union[List[int], Tensor]] = None,
+        indices: Optional[Union[list[int], Tensor]] = None,
         bounds: Optional[Tensor] = None,
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         transform_on_train: bool = True,
@@ -621,7 +625,7 @@ class Normalize(AffineInputTransform):
         self._coefficient = torch.where(almost_zero, 1.0, coefficient)
         self._offset = torch.where(almost_zero, 0.0, offset)
 
-    def get_init_args(self) -> Dict[str, Any]:
+    def get_init_args(self) -> dict[str, Any]:
         r"""Get the arguments necessary to construct an exact copy of the transform."""
         return {
             "d": self._d,
@@ -648,7 +652,7 @@ class InputStandardize(AffineInputTransform):
     def __init__(
         self,
         d: int,
-        indices: Optional[Union[List[int], Tensor]] = None,
+        indices: Optional[Union[list[int], Tensor]] = None,
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
@@ -770,8 +774,8 @@ class Round(InputTransform, Module):
 
     def __init__(
         self,
-        integer_indices: Union[List[int], LongTensor, None] = None,
-        categorical_features: Optional[Dict[int, int]] = None,
+        integer_indices: Union[list[int], LongTensor, None] = None,
+        categorical_features: Optional[dict[int, int]] = None,
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
         transform_on_fantasize: bool = True,
@@ -850,7 +854,7 @@ class Round(InputTransform, Module):
             and self.tau == other.tau
         )
 
-    def get_init_args(self) -> Dict[str, Any]:
+    def get_init_args(self) -> dict[str, Any]:
         r"""Get the arguments necessary to construct an exact copy of the transform."""
         return {
             "integer_indices": self.integer_indices,
@@ -868,7 +872,7 @@ class Log10(ReversibleInputTransform, Module):
 
     def __init__(
         self,
-        indices: List[int],
+        indices: list[int],
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
         transform_on_fantasize: bool = True,
@@ -939,7 +943,7 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
 
     def __init__(
         self,
-        indices: List[int],
+        indices: list[int],
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
         transform_on_fantasize: bool = True,
@@ -1132,8 +1136,8 @@ class AppendFeatures(InputTransform, Module):
         self,
         feature_set: Optional[Tensor] = None,
         f: Optional[Callable[[Tensor], Tensor]] = None,
-        indices: Optional[List[int]] = None,
-        fkwargs: Optional[Dict[str, Any]] = None,
+        indices: Optional[list[int]] = None,
+        fkwargs: Optional[dict[str, Any]] = None,
         skip_expand: bool = False,
         transform_on_train: bool = False,
         transform_on_eval: bool = True,
@@ -1330,7 +1334,7 @@ class InputPerturbation(InputTransform, Module):
         self,
         perturbation_set: Union[Tensor, Callable[[Tensor], Tensor]],
         bounds: Optional[Tensor] = None,
-        indices: Optional[List[int]] = None,
+        indices: Optional[list[int]] = None,
         multiplicative: bool = False,
         transform_on_train: bool = False,
         transform_on_eval: bool = True,
@@ -1447,7 +1451,7 @@ class OneHotToNumeric(InputTransform, Module):
     def __init__(
         self,
         dim: int,
-        categorical_features: Optional[Dict[int, int]] = None,
+        categorical_features: Optional[dict[int, int]] = None,
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
         transform_on_fantasize: bool = True,

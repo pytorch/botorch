@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import Callable, List, Optional, TYPE_CHECKING, Union
+from typing import Callable, Optional, TYPE_CHECKING, Union
 
 import torch
 from botorch.exceptions.errors import UnsupportedError
@@ -412,7 +412,7 @@ class ConstrainedMCObjective(GenericMCObjective):
     def __init__(
         self,
         objective: Callable[[Tensor, Optional[Tensor]], Tensor],
-        constraints: List[Callable[[Tensor], Tensor]],
+        constraints: list[Callable[[Tensor], Tensor]],
         infeasible_cost: Union[Tensor, float] = 0.0,
         eta: Union[Tensor, float] = 1e-3,
     ) -> None:

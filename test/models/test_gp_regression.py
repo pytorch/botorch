@@ -5,18 +5,16 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
+import math
 import warnings
 
 import torch
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_mll
-from botorch.models.gp_regression import (
-    FixedNoiseGP,
-    HeteroskedasticSingleTaskGP,
-    SingleTaskGP,
-)
+from botorch.models.gp_regression import HeteroskedasticSingleTaskGP, SingleTaskGP
 from botorch.models.transforms import Normalize, Standardize
 from botorch.models.transforms.input import InputStandardize
+from botorch.models.transforms.outcome import Log
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
 from botorch.utils.datasets import SupervisedDataset
@@ -114,9 +112,7 @@ class TestGPRegressionBase(BotorchTestCase):
             # test param sizes
             params = dict(model.named_parameters())
             for p in params:
-                self.assertEqual(
-                    params[p].numel(), m * torch.tensor(batch_shape).prod().item()
-                )
+                self.assertEqual(params[p].numel(), m * math.prod(batch_shape))
 
             # test posterior
             # test non batch evaluation
@@ -132,18 +128,9 @@ class TestGPRegressionBase(BotorchTestCase):
             self.assertIsInstance(posterior_pred, GPyTorchPosterior)
             self.assertEqual(posterior_pred.mean.shape, expected_shape)
             self.assertEqual(posterior_pred.variance.shape, expected_shape)
-            if use_octf:
-                # ensure un-transformation is applied
-                tmp_tf = model.outcome_transform
-                del model.outcome_transform
-                pp_tf = model.posterior(X, observation_noise=True)
-                model.outcome_transform = tmp_tf
-                expected_var = tmp_tf.untransform_posterior(pp_tf).variance
-                self.assertAllClose(posterior_pred.variance, expected_var)
-            else:
-                pvar = posterior_pred.variance
-                pvar_exp = get_pvar_expected(posterior, model, X, m)
-                self.assertAllClose(pvar, pvar_exp, rtol=1e-4, atol=1e-5)
+            pvar = posterior_pred.variance
+            pvar_exp = get_pvar_expected(posterior=posterior, model=model, X=X, m=m)
+            self.assertAllClose(pvar, pvar_exp, rtol=1e-4, atol=1e-5)
 
             # Tensor valued observation noise.
             obs_noise = torch.rand(X.shape, **tkwargs)
@@ -166,18 +153,9 @@ class TestGPRegressionBase(BotorchTestCase):
             posterior_pred = model.posterior(X, observation_noise=True)
             self.assertIsInstance(posterior_pred, GPyTorchPosterior)
             self.assertEqual(posterior_pred.mean.shape, expected_shape)
-            if use_octf:
-                # ensure un-transformation is applied
-                tmp_tf = model.outcome_transform
-                del model.outcome_transform
-                pp_tf = model.posterior(X, observation_noise=True)
-                model.outcome_transform = tmp_tf
-                expected_var = tmp_tf.untransform_posterior(pp_tf).variance
-                self.assertAllClose(posterior_pred.variance, expected_var)
-            else:
-                pvar = posterior_pred.variance
-                pvar_exp = get_pvar_expected(posterior, model, X, m)
-                self.assertAllClose(pvar, pvar_exp, rtol=1e-4, atol=1e-5)
+            pvar = posterior_pred.variance
+            pvar_exp = get_pvar_expected(posterior=posterior, model=model, X=X, m=m)
+            self.assertAllClose(pvar, pvar_exp, rtol=1e-4, atol=1e-5)
 
             # test batch evaluation with broadcasting
             for input_batch_shape in ([], [3], [1]):
@@ -185,11 +163,10 @@ class TestGPRegressionBase(BotorchTestCase):
 
                 if input_batch_shape == [3] and len(batch_shape) > 0:
                     msg = (
-                        "Shape mismatch: objects cannot be broadcast to a"
-                        " single shape"
+                        "Shape mismatch: objects cannot be broadcast to a single shape"
                         if m == 1
-                        else "The trailing batch dimensions of X must match"
-                        " the trailing batch dimensions of the training inputs."
+                        else "The trailing batch dimensions of X must match "
+                        "the trailing batch dimensions of the training inputs."
                     )
                     with self.assertRaisesRegex(RuntimeError, msg):
                         model.posterior(X, observation_noise=True)
@@ -203,6 +180,37 @@ class TestGPRegressionBase(BotorchTestCase):
                 expected_shape = batch_shape + torch.Size(new_dims + [3, m])
                 self.assertIsInstance(posterior, GPyTorchPosterior)
                 self.assertEqual(posterior.mean.shape, expected_shape)
+
+    def test_default_transforms(self):
+        for batch_shape, m, dtype, octf in itertools.product(
+            (torch.Size(), torch.Size([2])),
+            (1, 2),
+            (torch.float, torch.double),
+            ("Default", "None", "Log"),  # Outcome transform
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            train_X, train_Y = _get_random_data(batch_shape=batch_shape, m=m, **tkwargs)
+
+            model_kwargs = {}
+            if octf == "None":
+                model_kwargs["outcome_transform"] = None
+            elif octf == "Log":
+                model_kwargs["outcome_transform"] = Log()
+                train_Y = train_Y.abs() + 1
+
+            model = SingleTaskGP(train_X=train_X, train_Y=train_Y, **model_kwargs)
+
+            # Check outcome transform
+            if octf == "Default":
+                self.assertIsInstance(model.outcome_transform, Standardize)
+                self.assertEqual(model.outcome_transform._batch_shape, batch_shape)
+                self.assertEqual(model.outcome_transform._m, m)
+            elif octf == "None":
+                self.assertFalse(hasattr(model, "outcome_transform"))
+            else:
+                self.assertIsInstance(model.outcome_transform, Log)
+            # Make sure there is no input transform
+            self.assertFalse(hasattr(model, "input_transform"))
 
     def test_custom_init(self):
         extra_model_kwargs = self._get_extra_model_kwargs()
@@ -295,6 +303,8 @@ class TestGPRegressionBase(BotorchTestCase):
                         ][0]
                     if model_kwargs["outcome_transform"] is not None:
                         model_kwargs_non_batch["outcome_transform"] = Standardize(m=m)
+                    else:
+                        model_kwargs_non_batch["outcome_transform"] = None
                     model_non_batch = type(model)(**model_kwargs_non_batch)
                     model_non_batch.load_state_dict(state_dict_non_batch)
                     model_non_batch.eval()
@@ -445,8 +455,7 @@ class TestSingleTaskGP(TestGPRegressionBase):
             model.construct_inputs(training_data, task_feature=0)
 
 
-class TestFixedNoiseGP(TestSingleTaskGP):
-    model_class = FixedNoiseGP
+class TestSingleTaskGPFixedNoise(TestSingleTaskGP):
 
     def _get_model_and_data(
         self,
@@ -466,14 +475,7 @@ class TestFixedNoiseGP(TestSingleTaskGP):
             "input_transform": input_transform,
             "outcome_transform": outcome_transform,
         }
-        if self.model_class is FixedNoiseGP:
-            with self.assertWarnsRegex(
-                DeprecationWarning,
-                "`FixedNoiseGP` has been merged into `SingleTaskGP`. ",
-            ):
-                model = FixedNoiseGP(**model_kwargs, **extra_model_kwargs)
-        else:
-            model = self.model_class(**model_kwargs, **extra_model_kwargs)
+        model = SingleTaskGP(**model_kwargs, **extra_model_kwargs)
         return model, model_kwargs
 
     def _get_extra_model_kwargs(self):
@@ -582,11 +584,6 @@ class TestFixedNoiseGP(TestSingleTaskGP):
                     == obs_noise.expand(X_f.shape[:-1] + torch.Size([m]))
                 ).all()
             )
-
-
-class TestFixedNoiseSingleTaskGP(TestFixedNoiseGP):
-    # Repeat the FixedNoiseGP tests using SingleTaskGP.
-    model_class = SingleTaskGP
 
 
 class TestHeteroskedasticSingleTaskGP(TestGPRegressionBase):

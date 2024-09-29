@@ -18,7 +18,7 @@ References
 
 from __future__ import annotations
 
-from typing import Callable, List, Optional, Union
+from typing import Callable, Optional, Union
 
 import torch
 from botorch.acquisition.cost_aware import InverseCostWeightedUtility
@@ -41,12 +41,12 @@ class MOMF(qExpectedHypervolumeImprovement):
     def __init__(
         self,
         model: Model,
-        ref_point: Union[List[float], Tensor],
+        ref_point: Union[list[float], Tensor],
         partitioning: NondominatedPartitioning,
         sampler: Optional[MCSampler] = None,
         objective: Optional[MCMultiOutputObjective] = None,
-        constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
-        eta: Optional[Union[Tensor, float]] = 1e-3,
+        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
+        eta: Union[Tensor, float] = 1e-3,
         X_pending: Optional[Tensor] = None,
         cost_call: Optional[Callable[[Tensor], Tensor]] = None,
     ) -> None:

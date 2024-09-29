@@ -7,13 +7,12 @@
 from __future__ import annotations
 
 from functools import wraps
-from typing import Tuple
 
 import torch
 from torch import Tensor
 
 
-def lognorm_to_norm(mu: Tensor, Cov: Tensor) -> Tuple[Tensor, Tensor]:
+def lognorm_to_norm(mu: Tensor, Cov: Tensor) -> tuple[Tensor, Tensor]:
     """Compute mean and covariance of a MVN from those of the associated log-MVN
 
     If `Y` is log-normal with mean mu_ln and covariance Cov_ln, then
@@ -33,12 +32,12 @@ def lognorm_to_norm(mu: Tensor, Cov: Tensor) -> Tuple[Tensor, Tensor]:
         - The `batch_shape x n` mean vector of the Normal distribution
         - The `batch_shape x n x n` covariance matrix of the Normal distribution
     """
-    Cov_n = torch.log(1 + Cov / (mu.unsqueeze(-1) * mu.unsqueeze(-2)))
+    Cov_n = torch.log1p(Cov / (mu.unsqueeze(-1) * mu.unsqueeze(-2)))
     mu_n = torch.log(mu) - 0.5 * torch.diagonal(Cov_n, dim1=-1, dim2=-2)
     return mu_n, Cov_n
 
 
-def norm_to_lognorm(mu: Tensor, Cov: Tensor) -> Tuple[Tensor, Tensor]:
+def norm_to_lognorm(mu: Tensor, Cov: Tensor) -> tuple[Tensor, Tensor]:
     """Compute mean and covariance of a log-MVN from its MVN sufficient statistics
 
     If `X ~ N(mu, Cov)` and `Y = exp(X)`, then `Y` is log-normal with
@@ -61,7 +60,7 @@ def norm_to_lognorm(mu: Tensor, Cov: Tensor) -> Tuple[Tensor, Tensor]:
     diag = torch.diagonal(Cov, dim1=-1, dim2=-2)
     b = mu + 0.5 * diag
     mu_ln = torch.exp(b)
-    Cov_ln = (torch.exp(Cov) - 1) * torch.exp(b.unsqueeze(-1) + b.unsqueeze(-2))
+    Cov_ln = torch.special.expm1(Cov) * torch.exp(b.unsqueeze(-1) + b.unsqueeze(-2))
     return mu_ln, Cov_ln
 
 
@@ -89,7 +88,7 @@ def norm_to_lognorm_variance(mu: Tensor, var: Tensor) -> Tensor:
         The `batch_shape x n` variance vector of the log-Normal distribution.
     """
     b = mu + 0.5 * var
-    return (torch.exp(var) - 1) * torch.exp(2 * b)
+    return torch.special.expm1(var) * torch.exp(2 * b)
 
 
 def expand_and_copy_tensor(X: Tensor, batch_shape: torch.Size) -> Tensor:

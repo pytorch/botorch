@@ -12,17 +12,20 @@ should be defined here to avoid relative imports.
 from __future__ import annotations
 
 import math
-from typing import List, Optional, Tuple
+from typing import Any, Optional, Union
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions.errors import UnsupportedError
-from botorch.models.gpytorch import GPyTorchModel
+from botorch.models import SingleTaskGP
+from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
+from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel, GPyTorchModel
 from botorch.models.model import FantasizeMixin, Model
+from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.transforms.outcome import Standardize
 from botorch.models.utils import add_output_dim
 from botorch.models.utils.assorted import fantasize
-from botorch.posteriors.posterior import Posterior
+from botorch.posteriors.torch import TorchPosterior
 from botorch.utils.datasets import MultiTaskDataset, SupervisedDataset
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels import RBFKernel, ScaleKernel
@@ -36,7 +39,110 @@ from torch import Size, Tensor
 from torch.nn.functional import pad
 
 
-def get_sample_moments(samples: Tensor, sample_shape: Size) -> Tuple[Tensor, Tensor]:
+def _get_mcmc_samples(num_samples: int, dim: int, infer_noise: bool, **tkwargs):
+
+    mcmc_samples = {
+        "lengthscale": 1 + torch.rand(num_samples, 1, dim, **tkwargs),
+        "outputscale": 1 + torch.rand(num_samples, **tkwargs),
+        "mean": torch.randn(num_samples, **tkwargs),
+    }
+    if infer_noise:
+        mcmc_samples["noise"] = torch.rand(num_samples, 1, **tkwargs)
+    mcmc_samples["lengthscale"] = mcmc_samples["lengthscale"]
+
+    return mcmc_samples
+
+
+def get_model(
+    train_X: Tensor,
+    train_Y: Tensor,
+    standardize_model: bool = False,
+    use_model_list: bool = False,
+) -> Union[SingleTaskGP, ModelListGP]:
+    num_objectives = train_Y.shape[-1]
+
+    if standardize_model:
+        if use_model_list:
+            outcome_transform = Standardize(m=1)
+        else:
+            outcome_transform = Standardize(m=num_objectives)
+    else:
+        outcome_transform = None
+
+    if use_model_list:
+        model = ModelListGP(
+            *[
+                SingleTaskGP(
+                    train_X=train_X,
+                    train_Y=train_Y[:, i : i + 1],
+                    outcome_transform=outcome_transform,
+                )
+                for i in range(num_objectives)
+            ]
+        )
+    else:
+        model = SingleTaskGP(
+            train_X=train_X,
+            train_Y=train_Y,
+            outcome_transform=outcome_transform,
+        )
+
+    return model
+
+
+def get_fully_bayesian_model(
+    train_X: Tensor,
+    train_Y: Tensor,
+    num_models: int,
+    standardize_model: bool,
+    infer_noise: bool,
+    **tkwargs: Any,
+) -> SaasFullyBayesianSingleTaskGP:
+    num_objectives = train_Y.shape[-1]
+
+    if standardize_model:
+        outcome_transform = Standardize(m=num_objectives)
+    else:
+        outcome_transform = None
+    mcmc_samples = _get_mcmc_samples(
+        num_samples=num_models,
+        dim=train_X.shape[-1],
+        infer_noise=infer_noise,
+        **tkwargs,
+    )
+    train_Yvar = None if infer_noise else torch.full_like(train_Y, 0.01)
+
+    model = SaasFullyBayesianSingleTaskGP(
+        train_X=train_X,
+        train_Y=train_Y,
+        train_Yvar=train_Yvar,
+        outcome_transform=outcome_transform,
+    )
+    model.load_mcmc_samples(mcmc_samples)
+
+    return model
+
+
+def get_fully_bayesian_model_list(
+    train_X: Tensor,
+    train_Y: Tensor,
+    num_models: int,
+    standardize_model: bool,
+    infer_noise: bool,
+    **tkwargs: Any,
+) -> ModelListGP:
+    model = ModelListGP(
+        *[
+            get_fully_bayesian_model(
+                train_X, train_Y, num_models, standardize_model, infer_noise, **tkwargs
+            )
+            for _ in range(2)
+        ]
+    )
+    return model
+
+
+def get_sample_moments(samples: Tensor, sample_shape: Size) -> tuple[Tensor, Tensor]:
     """Computes the mean and covariance of a set of samples.
 
     Args:
@@ -55,7 +161,7 @@ def standardize_moments(
     transform: Standardize,
     loc: Tensor,
     covariance_matrix: Tensor,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     """Standardizes the loc and covariance_matrix using the mean and standard
     deviations from a Standardize transform.
     """
@@ -68,10 +174,10 @@ def standardize_moments(
 
 def gen_multi_task_dataset(
     yvar: Optional[float] = None,
-    task_values: Optional[List[int]] = None,
+    task_values: Optional[list[int]] = None,
     skip_task_features_in_datasets: bool = False,
     **tkwargs,
-) -> Tuple[MultiTaskDataset, Tuple[Tensor, Tensor, Optional[Tensor]]]:
+) -> tuple[MultiTaskDataset, tuple[Tensor, Tensor, Optional[Tensor]]]:
     """Constructs a multi-task dataset with two tasks, each with 10 data points.
 
     Args:
@@ -138,21 +244,58 @@ def gen_multi_task_dataset(
     return dataset, (train_X, train_Y, train_Yvar)
 
 
-def get_pvar_expected(posterior: Posterior, model: Model, X: Tensor, m: int) -> Tensor:
+def get_pvar_expected(
+    posterior: TorchPosterior, model: Model, X: Tensor, m: int
+) -> Tensor:
     """Computes the expected variance of a posterior after adding the
     predictive noise from the likelihood.
+
+    Args:
+        posterior: The posterior to compute the variance of. Must be a
+            `TorchPosterior` object.
+        model: The model that generated the posterior. If `m > 1`, this must be
+            a `BatchedMultiOutputGPyTorchModel`.
+        X: The test inputs.
+        m: The number of outputs.
+
+    Returns:
+        The expected variance of the posterior after adding the observation
+        noise from the likelihood.
     """
     X = model.transform_inputs(X)
     lh_kwargs = {}
+    odim = -1  # this is the output dimension index
+
+    if m > 1:
+        if not isinstance(model, BatchedMultiOutputGPyTorchModel):
+            raise UnsupportedError(
+                "`get_pvar_expected` only supports `BatchedMultiOutputGPyTorchModel`s."
+            )
+        # We need to add a batch dimension to the input to be compatible with the
+        # augmented batch shape of the model. This also changes the output dimension
+        # index.
+        X, odim = add_output_dim(X=X, original_batch_shape=model._input_batch_shape)
+
     if isinstance(model.likelihood, FixedNoiseGaussianLikelihood):
-        lh_kwargs["noise"] = model.likelihood.noise.mean().expand(X.shape[:-1])
+        noise = model.likelihood.noise.mean(dim=-1, keepdim=True)
+        broadcasted_shape = torch.broadcast_shapes(noise.shape, X.shape[:-1])
+        lh_kwargs["noise"] = noise.expand(broadcasted_shape)
+
+    pvar_exp = model.likelihood(model(X), X, **lh_kwargs).variance
     if m == 1:
-        return model.likelihood(
-            posterior.distribution, X, **lh_kwargs
-        ).variance.unsqueeze(-1)
-    X_, odi = add_output_dim(X=X, original_batch_shape=model._input_batch_shape)
-    pvar_exp = model.likelihood(model(X_), X_, **lh_kwargs).variance
-    return torch.stack([pvar_exp.select(dim=odi, index=i) for i in range(m)], dim=-1)
+        pvar_exp = pvar_exp.unsqueeze(-1)
+    pvar_exp = torch.stack(
+        [pvar_exp.select(dim=odim, index=i) for i in range(m)], dim=-1
+    )
+
+    # If the model has an outcome transform, we need to untransform the
+    # variance according to that transform.
+    if hasattr(model, "outcome_transform"):
+        _, pvar_exp = model.outcome_transform.untransform(
+            Y=torch.zeros_like(pvar_exp), Yvar=pvar_exp
+        )
+
+    return pvar_exp
 
 
 class DummyNonScalarizingPosteriorTransform(PosteriorTransform):

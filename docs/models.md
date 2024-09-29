@@ -121,10 +121,14 @@ instead.
   a fully Bayesian multi-task GP using an ICM kernel. The data kernel uses the
   SAAS prior to model high-dimensional parameter spaces.
 
-All of the above models use Matérn 5/2 kernels with Automatic Relevance
-Discovery (ARD), and have reasonable priors on hyperparameters that make them
-work well in settings where the **input features are normalized to the unit
-cube** and the **observations are standardized** (zero mean, unit variance).
+All of the above models use RBF kernels with Automatic Relevance Discovery
+(ARD), and have reasonable priors on hyperparameters that make them work well in
+settings where the **input features are normalized to the unit cube** and the
+**observations are standardized** (zero mean, unit variance). The lengthscale
+priors scale with the input dimension, which makes them adaptable to both low
+and high dimensional problems. See
+[this discussion](https://github.com/pytorch/botorch/discussions/2451) for
+additional context on the default hyperparameters.
 
 ## Other useful models
 
@@ -182,6 +186,6 @@ model. If you wish to use gradient-based optimization algorithms, the model
 should allow back-propagating gradients through the samples to the model input.
 
 If you happen to implement a model that would be useful for other researchers as
-well (and involves more than just swapping out the Matérn kernel for an RBF
+well (and involves more than just swapping out the RBF kernel for a Matérn
 kernel), please consider [contributing](getting_started#contributing) this model
 to BoTorch.

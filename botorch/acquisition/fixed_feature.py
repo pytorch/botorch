@@ -11,8 +11,10 @@ This is useful e.g. for performing contextual optimization.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from numbers import Number
-from typing import List, Optional, Sequence, Union
+from typing import Optional, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -65,7 +67,7 @@ class FixedFeatureAcquisitionFunction(AcquisitionFunction):
         self,
         acq_function: AcquisitionFunction,
         d: int,
-        columns: List[int],
+        columns: list[int],
         values: Union[Tensor, Sequence[Union[Tensor, float]]],
     ) -> None:
         r"""Derived Acquisition Function by fixing a subset of input features.

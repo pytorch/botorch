@@ -21,8 +21,9 @@ Preference Learning with Gaussian Process
 from __future__ import annotations
 
 import warnings
+from collections.abc import Iterable
 from copy import deepcopy
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 import numpy as np
 import torch
@@ -59,7 +60,7 @@ from torch.nn.modules.module import _IncompatibleKeys
 
 # Helper functions
 def _check_strict_input(
-    inputs: Iterable[Tensor], t_inputs: List[Tensor], target_or_inputs: str
+    inputs: Iterable[Tensor], t_inputs: list[Tensor], target_or_inputs: str
 ):
     for input_, t_input in zip(inputs, t_inputs or (None,)):
         for attr in {"shape", "dtype", "device"}:
@@ -380,7 +381,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
         """
         return self.mean_module(X)
 
-    def _prior_predict(self, X: Tensor) -> Tuple[Tensor, Tensor]:
+    def _prior_predict(self, X: Tensor) -> tuple[Tensor, Tensor]:
         r"""Predict utility based on prior info only
 
         Args:
@@ -618,7 +619,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
             dp=datapoints, x0=f.clone().requires_grad_(True), max_iter=2
         )
 
-    def _transform_batch_shape(self, X: Tensor, X_new: Tensor) -> Tuple[Tensor, Tensor]:
+    def _transform_batch_shape(self, X: Tensor, X_new: Tensor) -> tuple[Tensor, Tensor]:
         r"""Transform X and X_new into the same shape
 
         Transform the batch shape of X to be compatible
@@ -702,7 +703,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
 
     def _consolidate_duplicates(
         self, datapoints: Tensor, comparisons: Tensor
-    ) -> Tuple[Tensor, Tensor]:
+    ) -> tuple[Tensor, Tensor]:
         """Consolidate and cache datapoints and comparisons"""
         # check if consolidated datapoints/comparisons are cached
         if (
@@ -781,7 +782,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
     def construct_inputs(
         cls,
         training_data: SupervisedDataset,
-    ) -> Dict[str, Tensor]:
+    ) -> dict[str, Tensor]:
         r"""
         Construct `Model` keyword arguments from a `RankingDataset`.
 
@@ -897,7 +898,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
         self.to(self.datapoints)
 
     def load_state_dict(
-        self, state_dict: Dict[str, Tensor], strict: bool = False
+        self, state_dict: dict[str, Tensor], strict: bool = False
     ) -> _IncompatibleKeys:
         r"""Removes data related buffers from the `state_dict` and calls
         `super().load_state_dict` with `strict=False`.
@@ -920,13 +921,13 @@ class PairwiseGP(Model, GP, FantasizeMixin):
 
     def _load_from_state_dict(
         self,
-        state_dict: Dict[str, Tensor],
+        state_dict: dict[str, Tensor],
         prefix: str,
-        local_metadata: Dict[str, Any],
+        local_metadata: dict[str, Any],
         strict: bool,
-        missing_keys: List[str],
-        unexpected_keys: List[str],
-        error_msgs: List[str],
+        missing_keys: list[str],
+        unexpected_keys: list[str],
+        error_msgs: list[str],
     ) -> None:
         super()._load_from_state_dict(
             state_dict={
@@ -1067,7 +1068,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[List[int]] = None,
+        output_indices: Optional[list[int]] = None,
         observation_noise: bool = False,
         posterior_transform: Optional[PosteriorTransform] = None,
     ) -> Posterior:

@@ -11,10 +11,8 @@ Methods for optimizing acquisition functions.
 from __future__ import annotations
 
 import dataclasses
-
 import warnings
-
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Optional, Union
 
 import torch
 from botorch.acquisition.acquisition import (
@@ -69,11 +67,11 @@ class OptimizeAcqfInputs:
     q: int
     num_restarts: int
     raw_samples: Optional[int]
-    options: Optional[Dict[str, Union[bool, float, int, str]]]
-    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]]
-    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]]
-    nonlinear_inequality_constraints: Optional[List[Tuple[Callable, bool]]]
-    fixed_features: Optional[Dict[int, float]]
+    options: Optional[dict[str, Union[bool, float, int, str]]]
+    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]]
+    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]]
+    nonlinear_inequality_constraints: Optional[list[tuple[Callable, bool]]]
+    fixed_features: Optional[dict[int, float]]
     post_processing_func: Optional[Callable[[Tensor], Tensor]]
     batch_initial_conditions: Optional[Tensor]
     return_best_only: bool
@@ -83,7 +81,7 @@ class OptimizeAcqfInputs:
     timeout_sec: Optional[float] = None
     return_full_tree: bool = False
     retry_on_optimization_warning: bool = True
-    ic_gen_kwargs: Dict = dataclasses.field(default_factory=dict)
+    ic_gen_kwargs: dict = dataclasses.field(default_factory=dict)
 
     @property
     def full_tree(self) -> bool:
@@ -140,10 +138,10 @@ class OptimizeAcqfInputs:
 def _optimize_acqf_all_features_fixed(
     *,
     bounds: Tensor,
-    fixed_features: Dict[int, float],
+    fixed_features: dict[int, float],
     q: int,
     acq_function: AcquisitionFunction,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     """
     Helper function for `optimize_acqf` for the trivial case where
     all features are fixed.
@@ -160,21 +158,27 @@ def _optimize_acqf_all_features_fixed(
 
 
 def _validate_sequential_inputs(opt_inputs: OptimizeAcqfInputs) -> None:
-    # validate that linear constraints across the q-dim and
-    # self.sequential are not present together
+    # Validate that constraints across the q-dim and
+    # self.sequential are not present together.
+    const_err_message = (
+        "Inter-point constraints are not supported for sequential optimization. "
+        "But the {}th {} constraint is defined as inter-point."
+    )
     if opt_inputs.inequality_constraints is not None:
-        for constraint in opt_inputs.inequality_constraints:
+        for i, constraint in enumerate(opt_inputs.inequality_constraints):
             if len(constraint[0].shape) > 1:
-                raise UnsupportedError(
-                    "Linear inequality constraints across the q-dimension are not "
-                    "supported for sequential optimization."
-                )
+                raise UnsupportedError(const_err_message.format(i, "linear inequality"))
     if opt_inputs.equality_constraints is not None:
-        for constraint in opt_inputs.equality_constraints:
+        for i, constraint in enumerate(opt_inputs.equality_constraints):
             if len(constraint[0].shape) > 1:
+                raise UnsupportedError(const_err_message.format(i, "linear equality"))
+    if opt_inputs.nonlinear_inequality_constraints is not None:
+        for i, (_, intra_point) in enumerate(
+            opt_inputs.nonlinear_inequality_constraints
+        ):
+            if not intra_point:
                 raise UnsupportedError(
-                    "Linear equality constraints across the q-dimension are not "
-                    "supported for sequential optimization."
+                    const_err_message.format(i, "non-linear inequality")
                 )
 
     # TODO: Validate constraints if provided:
@@ -201,7 +205,7 @@ def _validate_sequential_inputs(opt_inputs: OptimizeAcqfInputs) -> None:
 
 def _optimize_acqf_sequential_q(
     opt_inputs: OptimizeAcqfInputs,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     """
     Helper function for `optimize_acqf` when sequential=True and q > 1.
 
@@ -243,7 +247,7 @@ def _optimize_acqf_sequential_q(
     return candidates, torch.stack(acq_value_list)
 
 
-def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> Tuple[Tensor, Tensor]:
+def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> tuple[Tensor, Tensor]:
     options = opt_inputs.options or {}
 
     initial_conditions_provided = opt_inputs.batch_initial_conditions is not None
@@ -274,9 +278,9 @@ def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> Tuple[Tensor, Tensor
         ),
     )
 
-    def _optimize_batch_candidates() -> Tuple[Tensor, Tensor, List[Warning]]:
-        batch_candidates_list: List[Tensor] = []
-        batch_acq_values_list: List[Tensor] = []
+    def _optimize_batch_candidates() -> tuple[Tensor, Tensor, list[Warning]]:
+        batch_candidates_list: list[Tensor] = []
+        batch_acq_values_list: list[Tensor] = []
         batched_ics = batch_initial_conditions.split(batch_limit)
         opt_warnings = []
         timeout_sec = (
@@ -286,7 +290,7 @@ def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> Tuple[Tensor, Tensor
         )
 
         bounds = opt_inputs.bounds
-        gen_kwargs: Dict[str, Any] = {
+        gen_kwargs: dict[str, Any] = {
             "lower_bounds": None if bounds[0].isinf().all() else bounds[0],
             "upper_bounds": None if bounds[1].isinf().all() else bounds[1],
             "options": {k: v for k, v in options.items() if k not in INIT_OPTION_KEYS},
@@ -400,11 +404,11 @@ def optimize_acqf(
     q: int,
     num_restarts: int,
     raw_samples: Optional[int] = None,
-    options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
-    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    nonlinear_inequality_constraints: Optional[List[Tuple[Callable, bool]]] = None,
-    fixed_features: Optional[Dict[int, float]] = None,
+    options: Optional[dict[str, Union[bool, float, int, str]]] = None,
+    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
+    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
+    nonlinear_inequality_constraints: Optional[list[tuple[Callable, bool]]] = None,
+    fixed_features: Optional[dict[int, float]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
     batch_initial_conditions: Optional[Tensor] = None,
     return_best_only: bool = True,
@@ -416,7 +420,7 @@ def optimize_acqf(
     return_full_tree: bool = False,
     retry_on_optimization_warning: bool = True,
     **ic_gen_kwargs: Any,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Generate a set of candidates via multi-start optimization.
 
     Args:
@@ -543,7 +547,7 @@ def optimize_acqf(
     return _optimize_acqf(opt_acqf_inputs)
 
 
-def _optimize_acqf(opt_inputs: OptimizeAcqfInputs) -> Tuple[Tensor, Tensor]:
+def _optimize_acqf(opt_inputs: OptimizeAcqfInputs) -> tuple[Tensor, Tensor]:
     # Handle the trivial case when all features are fixed
     if (
         opt_inputs.fixed_features is not None
@@ -570,20 +574,20 @@ def optimize_acqf_cyclic(
     q: int,
     num_restarts: int,
     raw_samples: Optional[int] = None,
-    options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
-    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    fixed_features: Optional[Dict[int, float]] = None,
+    options: Optional[dict[str, Union[bool, float, int, str]]] = None,
+    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
+    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
+    fixed_features: Optional[dict[int, float]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
     batch_initial_conditions: Optional[Tensor] = None,
-    cyclic_options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
+    cyclic_options: Optional[dict[str, Union[bool, float, int, str]]] = None,
     *,
     ic_generator: Optional[TGenInitialConditions] = None,
     timeout_sec: Optional[float] = None,
     return_full_tree: bool = False,
     retry_on_optimization_warning: bool = True,
     **ic_gen_kwargs: Any,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Generate a set of `q` candidates via cyclic optimization.
 
     Args:
@@ -701,20 +705,20 @@ def optimize_acqf_cyclic(
 
 
 def optimize_acqf_list(
-    acq_function_list: List[AcquisitionFunction],
+    acq_function_list: list[AcquisitionFunction],
     bounds: Tensor,
     num_restarts: int,
     raw_samples: Optional[int] = None,
-    options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
-    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    nonlinear_inequality_constraints: Optional[List[Tuple[Callable, bool]]] = None,
-    fixed_features: Optional[Dict[int, float]] = None,
-    fixed_features_list: Optional[List[Dict[int, float]]] = None,
+    options: Optional[dict[str, Union[bool, float, int, str]]] = None,
+    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
+    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
+    nonlinear_inequality_constraints: Optional[list[tuple[Callable, bool]]] = None,
+    fixed_features: Optional[dict[int, float]] = None,
+    fixed_features_list: Optional[list[dict[int, float]]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
     ic_generator: Optional[TGenInitialConditions] = None,
-    ic_gen_kwargs: Optional[Dict] = None,
-) -> Tuple[Tensor, Tensor]:
+    ic_gen_kwargs: Optional[dict] = None,
+) -> tuple[Tensor, Tensor]:
     r"""Generate a list of candidates from a list of acquisition functions.
 
     The acquisition functions are optimized in sequence, with previous candidates
@@ -837,17 +841,17 @@ def optimize_acqf_mixed(
     bounds: Tensor,
     q: int,
     num_restarts: int,
-    fixed_features_list: List[Dict[int, float]],
+    fixed_features_list: list[dict[int, float]],
     raw_samples: Optional[int] = None,
-    options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
-    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    nonlinear_inequality_constraints: Optional[List[Tuple[Callable, bool]]] = None,
+    options: Optional[dict[str, Union[bool, float, int, str]]] = None,
+    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
+    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
+    nonlinear_inequality_constraints: Optional[list[tuple[Callable, bool]]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
     batch_initial_conditions: Optional[Tensor] = None,
     ic_generator: Optional[TGenInitialConditions] = None,
-    ic_gen_kwargs: Optional[Dict] = None,
-) -> Tuple[Tensor, Tensor]:
+    ic_gen_kwargs: Optional[dict] = None,
+) -> tuple[Tensor, Tensor]:
     r"""Optimize over a list of fixed_features and returns the best solution.
 
     This is useful for optimizing over mixed continuous and discrete domains.
@@ -993,7 +997,7 @@ def optimize_acqf_discrete(
     choices: Tensor,
     max_batch_size: int = 2048,
     unique: bool = True,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Optimize over a discrete set of points using batch evaluation.
 
     For `q > 1` this function generates candidates by means of sequential
@@ -1071,9 +1075,9 @@ def _split_batch_eval_acqf(
 
 def _generate_neighbors(
     x: Tensor,
-    discrete_choices: List[Tensor],
+    discrete_choices: list[Tensor],
     X_avoid: Tensor,
-    inequality_constraints: List[Tuple[Tensor, Tensor, float]],
+    inequality_constraints: list[tuple[Tensor, Tensor, float]],
 ):
     # generate all 1D perturbations
     npts = sum([len(c) for c in discrete_choices])
@@ -1089,7 +1093,7 @@ def _generate_neighbors(
 
 
 def _filter_infeasible(
-    X: Tensor, inequality_constraints: List[Tuple[Tensor, Tensor, float]]
+    X: Tensor, inequality_constraints: list[tuple[Tensor, Tensor, float]]
 ):
     """Remove all points from `X` that don't satisfy the constraints."""
     is_feasible = torch.ones(X.shape[0], dtype=torch.bool, device=X.device)
@@ -1104,10 +1108,10 @@ def _filter_invalid(X: Tensor, X_avoid: Tensor):
 
 
 def _gen_batch_initial_conditions_local_search(
-    discrete_choices: List[Tensor],
+    discrete_choices: list[Tensor],
     raw_samples: int,
     X_avoid: Tensor,
-    inequality_constraints: List[Tuple[Tensor, Tensor, float]],
+    inequality_constraints: list[tuple[Tensor, Tensor, float]],
     min_points: int,
     max_tries: int = 100,
 ):
@@ -1132,16 +1136,16 @@ def _gen_batch_initial_conditions_local_search(
 
 def optimize_acqf_discrete_local_search(
     acq_function: AcquisitionFunction,
-    discrete_choices: List[Tensor],
+    discrete_choices: list[Tensor],
     q: int,
     num_restarts: int = 20,
     raw_samples: int = 4096,
-    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
     X_avoid: Optional[Tensor] = None,
     batch_initial_conditions: Optional[Tensor] = None,
     max_batch_size: int = 2048,
     unique: bool = True,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Optimize acquisition function over a lattice.
 
     This is useful when d is large and enumeration of the search space

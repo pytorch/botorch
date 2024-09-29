@@ -20,15 +20,43 @@ References
 
 from __future__ import annotations
 
-from typing import Optional
+import warnings
+
+from typing import Optional, Union
 
 from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
 from botorch.acquisition.objective import PosteriorTransform
+from botorch.models import ModelListGP
 from botorch.models.fully_bayesian import MCMC_DIM, SaasFullyBayesianSingleTaskGP
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
-from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
+from botorch.utils.transforms import (
+    concatenate_pending_points,
+    is_fully_bayesian,
+    t_batch_mode_transform,
+)
+from gpytorch.distributions.multitask_multivariate_normal import (
+    MultitaskMultivariateNormal,
+)
 from torch import Tensor
+
+
+FULLY_BAYESIAN_ERROR_MSG = (
+    "Fully Bayesian acquisition functions require a SaasFullyBayesianSingleTaskGP "
+    "or of ModelList of SaasFullyBayesianSingleTaskGPs to run."
+)
+
+NEGATIVE_INFOGAIN_WARNING = (
+    "Information gain is negative. This is likely due to a poor Monte Carlo "
+    "estimation of the entropies, extremely high or extremely low correlation "
+    "in the data."  # because both of those cases result in no information gain
+)
+
+
+def check_negative_info_gain(info_gain: Tensor) -> None:
+    r"""Check if the (expected) information gain is negative, raise a warning if so."""
+    if info_gain.lt(0).any():
+        warnings.warn(NEGATIVE_INFOGAIN_WARNING, RuntimeWarning, stacklevel=2)
 
 
 class FullyBayesianAcquisitionFunction(AcquisitionFunction):
@@ -39,14 +67,11 @@ class FullyBayesianAcquisitionFunction(AcquisitionFunction):
         Args:
             model: A fully bayesian single-outcome model.
         """
-        if model._is_fully_bayesian:
+        if is_fully_bayesian(model):
             super().__init__(model)
 
         else:
-            raise ValueError(
-                "Fully Bayesian acquisition functions require "
-                "a SaasFullyBayesianSingleTaskGP to run."
-            )
+            raise RuntimeError(FULLY_BAYESIAN_ERROR_MSG)
 
 
 class qBayesianActiveLearningByDisagreement(
@@ -54,7 +79,7 @@ class qBayesianActiveLearningByDisagreement(
 ):
     def __init__(
         self,
-        model: SaasFullyBayesianSingleTaskGP,
+        model: Union[ModelListGP, SaasFullyBayesianSingleTaskGP],
         sampler: Optional[MCSampler] = None,
         posterior_transform: Optional[PosteriorTransform] = None,
         X_pending: Optional[Tensor] = None,
@@ -96,6 +121,13 @@ class qBayesianActiveLearningByDisagreement(
         posterior = self.model.posterior(
             X, observation_noise=True, posterior_transform=self.posterior_transform
         )
+        if isinstance(posterior.mvn, MultitaskMultivariateNormal):
+            # The default MultitaskMultivariateNormal conversion for
+            # GuassianMixturePosteriors does not interleave (and models task and data)
+            # covariances in the unintended order. This is a inter-task block-diagonal,
+            # and not inter-data block-diagonal, which is the default for GMMPosteriors
+            posterior.mvn._interleaved = True
+
         # draw samples from the mixture posterior.
         # samples: num_samples x batch_shape x num_models x q x num_outputs
         samples = self.get_posterior_samples(posterior=posterior)
@@ -115,12 +147,16 @@ class qBayesianActiveLearningByDisagreement(
         component_sample_probs = posterior.mvn.log_prob(prev_samples).exp()
 
         # average over mixture components
-        mixture_sample_probs = component_sample_probs.mean(dim=-1)
+        mixture_sample_probs = component_sample_probs.mean(dim=-1, keepdim=True)
 
         # this is the average over the model and sample dim
         prev_entropy = -mixture_sample_probs.log().mean(dim=[0, 1])
 
         # the posterior entropy is an average entropy over gaussians, so no mixture
         post_entropy = -posterior.mvn.log_prob(samples.squeeze(-1)).mean(0)
-        bald = prev_entropy.unsqueeze(-1) - post_entropy
+
+        # The BALD acq is defined as an expectation over a fully bayesian model,
+        # so thus, the mean is computed here and not outside of the forward pass
+        bald = (prev_entropy - post_entropy).mean(-1, keepdim=True)
+        check_negative_info_gain(bald)
         return bald

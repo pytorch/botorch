@@ -33,7 +33,8 @@ References:
 
 import math
 from abc import abstractmethod
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from collections.abc import Mapping
+from typing import Any, Optional
 
 import pyro
 import torch
@@ -132,15 +133,15 @@ class PyroModel:
     @abstractmethod
     def postprocess_mcmc_samples(
         self,
-        mcmc_samples: Dict[str, Tensor],
-    ) -> Dict[str, Tensor]:
+        mcmc_samples: dict[str, Tensor],
+    ) -> dict[str, Tensor]:
         """Post-process the final MCMC samples."""
         pass  # pragma: no cover
 
     @abstractmethod
     def load_mcmc_samples(
-        self, mcmc_samples: Dict[str, Tensor]
-    ) -> Tuple[Mean, Kernel, Likelihood]:
+        self, mcmc_samples: dict[str, Tensor]
+    ) -> tuple[Mean, Kernel, Likelihood]:
         pass  # pragma: no cover
 
 
@@ -175,16 +176,19 @@ class SaasPyroModel(PyroModel):
         mean = self.sample_mean(**tkwargs)
         noise = self.sample_noise(**tkwargs)
         lengthscale = self.sample_lengthscale(dim=self.ard_num_dims, **tkwargs)
-        K = matern52_kernel(X=self.train_X, lengthscale=lengthscale)
-        K = outputscale * K + noise * torch.eye(self.train_X.shape[0], **tkwargs)
-        pyro.sample(
-            "Y",
-            pyro.distributions.MultivariateNormal(
-                loc=mean.view(-1).expand(self.train_X.shape[0]),
-                covariance_matrix=K,
-            ),
-            obs=self.train_Y.squeeze(-1),
-        )
+        if self.train_Y.shape[-2] > 0:
+            # Do not attempt to sample Y if the data is empty.
+            # This leads to errors with empty data.
+            K = matern52_kernel(X=self.train_X, lengthscale=lengthscale)
+            K = outputscale * K + noise * torch.eye(self.train_X.shape[0], **tkwargs)
+            pyro.sample(
+                "Y",
+                pyro.distributions.MultivariateNormal(
+                    loc=mean.view(-1).expand(self.train_X.shape[0]),
+                    covariance_matrix=K,
+                ),
+                obs=self.train_Y.squeeze(-1),
+            )
 
     def sample_outputscale(
         self, concentration: float = 2.0, rate: float = 0.15, **tkwargs: Any
@@ -243,8 +247,8 @@ class SaasPyroModel(PyroModel):
         return lengthscale
 
     def postprocess_mcmc_samples(
-        self, mcmc_samples: Dict[str, Tensor]
-    ) -> Dict[str, Tensor]:
+        self, mcmc_samples: dict[str, Tensor]
+    ) -> dict[str, Tensor]:
         r"""Post-process the MCMC samples.
 
         This computes the true lengthscales and removes the inverse lengthscales and
@@ -261,8 +265,8 @@ class SaasPyroModel(PyroModel):
         return mcmc_samples
 
     def load_mcmc_samples(
-        self, mcmc_samples: Dict[str, Tensor]
-    ) -> Tuple[Mean, Kernel, Likelihood]:
+        self, mcmc_samples: dict[str, Tensor]
+    ) -> tuple[Mean, Kernel, Likelihood]:
         r"""Load the MCMC samples into the mean_module, covar_module, and likelihood."""
         tkwargs = {"device": self.train_X.device, "dtype": self.train_X.dtype}
         num_mcmc_samples = len(mcmc_samples["mean"])
@@ -442,7 +446,7 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
             self.covar_module = None
             self.likelihood = None
 
-    def load_mcmc_samples(self, mcmc_samples: Dict[str, Tensor]) -> None:
+    def load_mcmc_samples(self, mcmc_samples: dict[str, Tensor]) -> None:
         r"""Load the MCMC hyperparameter samples into the model.
 
         This method will be called by `fit_fully_bayesian_model_nuts` when the model
@@ -505,7 +509,7 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[List[int]] = None,
+        output_indices: Optional[list[int]] = None,
         observation_noise: bool = False,
         posterior_transform: Optional[PosteriorTransform] = None,
         **kwargs: Any,

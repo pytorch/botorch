@@ -26,7 +26,7 @@ from copy import deepcopy
 
 from itertools import combinations
 
-from typing import Callable, List, Optional, Union
+from typing import Callable, Optional, Union
 
 import torch
 from botorch.acquisition.cached_cholesky import CachedCholeskyMCSamplerMixin
@@ -322,7 +322,7 @@ class Hypervolume:
             self.list.extend(nodes, i)
 
 
-def sort_by_dimension(nodes: List[Node], i: int) -> None:
+def sort_by_dimension(nodes: list[Node], i: int) -> None:
     r"""Sorts the list of nodes in-place by the specified objective.
 
     Args:
@@ -399,7 +399,7 @@ class MultiList:
         self.sentinel.prev[index] = node
         last.next[index] = node
 
-    def extend(self, nodes: List[Node], index: int) -> None:
+    def extend(self, nodes: list[Node], index: int) -> None:
         r"""Extends the list at the given index with the nodes.
 
         Args:
@@ -508,11 +508,11 @@ class NoisyExpectedHypervolumeMixin(CachedCholeskyMCSamplerMixin):
     def __init__(
         self,
         model: Model,
-        ref_point: Union[List[float], Tensor],
+        ref_point: Union[list[float], Tensor],
         X_baseline: Tensor,
         sampler: Optional[MCSampler] = None,
         objective: Optional[MCMultiOutputObjective] = None,
-        constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
         X_pending: Optional[Tensor] = None,
         prune_baseline: bool = False,
         alpha: float = 0.0,

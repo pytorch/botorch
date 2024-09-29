@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
-from typing import List, Optional, Tuple
+from typing import Optional
 
 import torch
 
@@ -59,7 +59,7 @@ class Ishigami(SyntheticTestFunction):
     def _optimal_value(self) -> float:
         raise NotImplementedError
 
-    def compute_dgsm(self, X: Tensor) -> Tuple[List[float], List[float], List[float]]:
+    def compute_dgsm(self, X: Tensor) -> tuple[list[float], list[float], list[float]]:
         r"""Compute derivative global sensitivity measures.
 
         This function can be called separately to estimate the dgsm measure
@@ -125,7 +125,7 @@ class Gsobol(SyntheticTestFunction):
     def __init__(
         self,
         dim: int,
-        a: List = None,
+        a: list = None,
         noise_std: Optional[float] = None,
         negate: bool = False,
     ) -> None:

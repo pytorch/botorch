@@ -6,22 +6,21 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Optional, Union
 
 import torch
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.kernels.categorical import CategoricalKernel
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
+from botorch.models.utils.gpytorch_modules import get_covar_module_with_dim_scaled_prior
 from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.transforms import normalize_indices
+from botorch.utils.types import _DefaultType, DEFAULT
 from gpytorch.constraints import GreaterThan
 from gpytorch.kernels.kernel import Kernel
-from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
-from gpytorch.likelihoods.gaussian_likelihood import GaussianLikelihood
 from gpytorch.likelihoods.likelihood import Likelihood
-from gpytorch.priors import GammaPrior
 from torch import Tensor
 
 
@@ -61,13 +60,13 @@ class MixedSingleTaskGP(SingleTaskGP):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        cat_dims: List[int],
+        cat_dims: list[int],
         train_Yvar: Optional[Tensor] = None,
         cont_kernel_factory: Optional[
-            Callable[[torch.Size, int, List[int]], Kernel]
+            Callable[[torch.Size, int, list[int]], Kernel]
         ] = None,
         likelihood: Optional[Likelihood] = None,
-        outcome_transform: Optional[OutcomeTransform] = None,  # TODO
+        outcome_transform: Optional[Union[OutcomeTransform, _DefaultType]] = DEFAULT,
         input_transform: Optional[InputTransform] = None,  # TODO
     ) -> None:
         r"""A single-task exact GP model supporting categorical parameters.
@@ -82,14 +81,16 @@ class MixedSingleTaskGP(SingleTaskGP):
             cont_kernel_factory: A method that accepts  `batch_shape`, `ard_num_dims`,
                 and `active_dims` arguments and returns an instantiated GPyTorch
                 `Kernel` object to be used as the base kernel for the continuous
-                dimensions. If omitted, this model uses a Matern-2.5 kernel as
+                dimensions. If omitted, this model uses an `RBFKernel` as
                 the kernel for the ordinal parameters.
             likelihood: A likelihood. If omitted, use a standard
                 GaussianLikelihood with inferred noise level.
             outcome_transform: An outcome transform that is applied to the
                 training data during instantiation and to the posterior during
                 inference (that is, the `Posterior` obtained by calling
-                `.posterior` on the model will be on the original scale).
+                `.posterior` on the model will be on the original scale). We use a
+                `Standardize` transform if no `outcome_transform` is specified.
+                Pass down `None` to use no outcome transform.
             input_transform: An input transform that is applied in the model's
                 forward pass. Only input transforms are allowed which do not
                 transform the categorical dimensions. If you want to use it
@@ -105,30 +106,7 @@ class MixedSingleTaskGP(SingleTaskGP):
         _, aug_batch_shape = self.get_batch_dimensions(train_X=train_X, train_Y=train_Y)
 
         if cont_kernel_factory is None:
-
-            def cont_kernel_factory(
-                batch_shape: torch.Size,
-                ard_num_dims: int,
-                active_dims: List[int],
-            ) -> MaternKernel:
-                return MaternKernel(
-                    nu=2.5,
-                    batch_shape=batch_shape,
-                    ard_num_dims=ard_num_dims,
-                    active_dims=active_dims,
-                    lengthscale_constraint=GreaterThan(1e-04),
-                )
-
-        if likelihood is None and train_Yvar is None:
-            # This Gamma prior is quite close to the Horseshoe prior
-            min_noise = 1e-5 if train_X.dtype == torch.float else 1e-6
-            likelihood = GaussianLikelihood(
-                batch_shape=aug_batch_shape,
-                noise_constraint=GreaterThan(
-                    min_noise, transform=None, initial_value=1e-3
-                ),
-                noise_prior=GammaPrior(0.9, 10.0),
-            )
+            cont_kernel_factory = get_covar_module_with_dim_scaled_prior
 
         d = train_X.shape[-1]
         cat_dims = normalize_indices(indices=cat_dims, d=d)
@@ -185,9 +163,9 @@ class MixedSingleTaskGP(SingleTaskGP):
     def construct_inputs(
         cls,
         training_data: SupervisedDataset,
-        categorical_features: List[int],
+        categorical_features: list[int],
         likelihood: Optional[Likelihood] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         r"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`.
 
         Args:

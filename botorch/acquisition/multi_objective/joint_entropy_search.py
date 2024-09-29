@@ -19,13 +19,12 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from math import pi
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 import torch
 from botorch import settings
 from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
 from botorch.exceptions.errors import UnsupportedError
-
 from botorch.models.model import Model
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.utils import fantasize as fantasize_flag
@@ -154,7 +153,7 @@ class LowerBoundMultiObjectiveEntropySearch(AcquisitionFunction, MCSamplerMixin)
     @abstractmethod
     def _compute_monte_carlo_variables(
         self, posterior: GPyTorchPosterior
-    ) -> Tuple[Tensor, Tensor]:
+    ) -> tuple[Tensor, Tensor]:
         r"""Compute the samples and log-probability associated with a posterior
         distribution.
 
@@ -406,7 +405,7 @@ class qLowerBoundMultiObjectiveJointEntropySearch(
 
     def _compute_monte_carlo_variables(
         self, posterior: GPyTorchPosterior
-    ) -> Tuple[Tensor, Tensor]:
+    ) -> tuple[Tensor, Tensor]:
         r"""Compute the samples and log-probability associated with the posterior
         distribution that conditions on the Pareto optimal points.
 

@@ -414,6 +414,7 @@ class TestBatchedMultiOutputGPyTorchModel(BotorchTestCase):
 
 class TestModelListGPyTorchModel(BotorchTestCase):
     def test_model_list_gpytorch_model(self):
+        torch.manual_seed(12345)
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
             train_X1, train_X2 = (
@@ -436,13 +437,12 @@ class TestModelListGPyTorchModel(BotorchTestCase):
             m2 = SimpleGPyTorchModel(train_X2, train_Y2)
             model = SimpleModelListGPyTorchModel(m1, m2)
             self.assertEqual(model.num_outputs, 2)
-            with warnings.catch_warnings(record=True) as ws:
+            msg = (
+                "Component models of SimpleModelListGPyTorchModel have "
+                "different batch shapes"
+            )
+            with self.assertWarnsRegex(Warning, msg):
                 self.assertEqual(model.batch_shape, torch.Size([2]))
-                msg = (
-                    "Component models of SimpleModelListGPyTorchModel have "
-                    "different batch shapes"
-                )
-                self.assertTrue(any(msg in str(w.message) for w in ws))
             # test different batch shapes (not broadcastable)
             m2 = SimpleGPyTorchModel(
                 train_X2.expand(3, *train_X2.shape), train_Y2.expand(3, *train_Y2.shape)
@@ -490,17 +490,15 @@ class TestModelListGPyTorchModel(BotorchTestCase):
                 ),
                 dim=1,
             )
-            self.assertTrue(torch.allclose(expected_mean, posterior2.mean))
+            self.assertAllClose(expected_mean, posterior2.mean)
             expected_covariance = torch.block_diag(
                 posterior.covariance_matrix[:2, :2],
                 mt_posterior.covariance_matrix[:2, :2],
                 mt_posterior.covariance_matrix[-2:, -2:],
                 posterior.covariance_matrix[-2:, -2:],
             )
-            self.assertTrue(
-                torch.allclose(
-                    expected_covariance, posterior2.covariance_matrix, atol=1e-5
-                )
+            self.assertAllClose(
+                expected_covariance, posterior2.covariance_matrix, atol=1e-5
             )
             # test output indices
             posterior = model.posterior(test_X)
@@ -512,16 +510,16 @@ class TestModelListGPyTorchModel(BotorchTestCase):
                 self.assertEqual(
                     posterior_subset.mean.shape, torch.Size([2, len(output_indices)])
                 )
-                self.assertTrue(
-                    torch.allclose(
-                        posterior_subset.mean, posterior.mean[..., output_indices]
-                    )
+                self.assertAllClose(
+                    posterior_subset.mean,
+                    posterior.mean[..., output_indices],
+                    atol=1e-6,
                 )
-                self.assertTrue(
-                    torch.allclose(
-                        posterior_subset.variance,
-                        posterior.variance[..., output_indices],
-                    )
+                self.assertAllClose(
+                    posterior_subset.variance,
+                    posterior.variance[..., output_indices],
+                    atol=2e-6 if dtype is torch.float else 1e-6,
+                    rtol=3e-4 if dtype is torch.float else 1e-5,
                 )
             # test observation noise
             model = SimpleModelListGPyTorchModel(m1, m2)

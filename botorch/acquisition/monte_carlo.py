@@ -26,7 +26,7 @@ import math
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from functools import partial
-from typing import Callable, List, Optional, Protocol, Tuple, Union
+from typing import Callable, Optional, Protocol, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
@@ -104,7 +104,7 @@ class MCAcquisitionFunction(AcquisitionFunction, MCSamplerMixin, ABC):
         self.objective: MCAcquisitionObjective = objective
         self.set_X_pending(X_pending)
 
-    def _get_samples_and_objectives(self, X: Tensor) -> Tuple[Tensor, Tensor]:
+    def _get_samples_and_objectives(self, X: Tensor) -> tuple[Tensor, Tensor]:
         """Computes posterior samples and objective values at input X.
 
         Args:
@@ -186,7 +186,7 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
         X_pending: Optional[Tensor] = None,
         sample_reduction: SampleReductionProtocol = torch.mean,
         q_reduction: SampleReductionProtocol = torch.amax,
-        constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
         eta: Union[Tensor, float] = 1e-3,
         fat: bool = False,
     ):
@@ -361,7 +361,7 @@ class qExpectedImprovement(SampleReducingMCAcquisitionFunction):
         objective: Optional[MCAcquisitionObjective] = None,
         posterior_transform: Optional[PosteriorTransform] = None,
         X_pending: Optional[Tensor] = None,
-        constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
         eta: Union[Tensor, float] = 1e-3,
     ) -> None:
         r"""q-Expected Improvement.
@@ -448,7 +448,7 @@ class qNoisyExpectedImprovement(
         X_pending: Optional[Tensor] = None,
         prune_baseline: bool = True,
         cache_root: bool = True,
-        constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
         eta: Union[Tensor, float] = 1e-3,
         marginalize_dim: Optional[int] = None,
     ) -> None:
@@ -588,7 +588,7 @@ class qNoisyExpectedImprovement(
         """
         return (obj - self.compute_best_f(obj).unsqueeze(-1)).clamp_min(0)
 
-    def _get_samples_and_objectives(self, X: Tensor) -> Tuple[Tensor, Tensor]:
+    def _get_samples_and_objectives(self, X: Tensor) -> tuple[Tensor, Tensor]:
         r"""Compute samples at new points, using the cached root decomposition.
 
         Args:
@@ -673,7 +673,7 @@ class qProbabilityOfImprovement(SampleReducingMCAcquisitionFunction):
         posterior_transform: Optional[PosteriorTransform] = None,
         X_pending: Optional[Tensor] = None,
         tau: float = 1e-3,
-        constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
         eta: Union[Tensor, float] = 1e-3,
     ) -> None:
         r"""q-Probability of Improvement.
@@ -856,7 +856,10 @@ class qUpperConfidenceBound(SampleReducingMCAcquisitionFunction):
             posterior_transform=posterior_transform,
             X_pending=X_pending,
         )
-        self.beta_prime = math.sqrt(beta * math.pi / 2)
+        self.beta_prime = self._get_beta_prime(beta=beta)
+
+    def _get_beta_prime(self, beta: float) -> float:
+        return math.sqrt(beta * math.pi / 2)
 
     def _sample_forward(self, obj: Tensor) -> Tensor:
         r"""Evaluate qUpperConfidenceBound per sample on the candidate set `X`.
@@ -869,3 +872,17 @@ class qUpperConfidenceBound(SampleReducingMCAcquisitionFunction):
         """
         mean = obj.mean(dim=0)
         return mean + self.beta_prime * (obj - mean).abs()
+
+
+class qLowerConfidenceBound(qUpperConfidenceBound):
+    r"""MC-based batched lower confidence bound.
+
+    This acquisition function is useful for confident/risk-averse decision making.
+    This acquisition function is intended to be maximized as with qUpperConfidenceBound,
+    but the qLowerConfidenceBound will be pessimistic in the face of uncertainty and
+    lead to conservative candidates.
+    """
+
+    def _get_beta_prime(self, beta: float) -> float:
+        """Multiply beta prime by -1 to get the lower confidence bound."""
+        return -super()._get_beta_prime(beta=beta)

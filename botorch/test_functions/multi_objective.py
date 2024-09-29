@@ -76,7 +76,7 @@ from __future__ import annotations
 import math
 from abc import ABC, abstractmethod
 from math import pi
-from typing import List, Tuple, Union
+from typing import Union
 
 import torch
 from botorch.exceptions.errors import UnsupportedError
@@ -118,7 +118,7 @@ class BraninCurrin(MultiObjectiveTestProblem):
 
     def __init__(
         self,
-        noise_std: Union[None, float, List[float]] = None,
+        noise_std: Union[None, float, list[float]] = None,
         negate: bool = False,
     ) -> None:
         r"""
@@ -170,7 +170,7 @@ class DH(MultiObjectiveTestProblem, ABC):
     """
 
     num_objectives = 2
-    _ref_point: List[float] = [1.1, 1.1]
+    _ref_point: list[float] = [1.1, 1.1]
     _x_1_lb: float
     _area_under_curve: float
     _min_dim: int
@@ -178,7 +178,7 @@ class DH(MultiObjectiveTestProblem, ABC):
     def __init__(
         self,
         dim: int,
-        noise_std: Union[None, float, List[float]] = None,
+        noise_std: Union[None, float, list[float]] = None,
         negate: bool = False,
     ) -> None:
         r"""
@@ -286,7 +286,7 @@ class DH3(DH):
     _min_dim = 3
 
     @staticmethod
-    def _exp_args(x: Tensor) -> Tuple[Tensor, Tensor]:
+    def _exp_args(x: Tensor) -> tuple[Tensor, Tensor]:
         exp_arg_1 = -((x - 0.35) / 0.25).pow(2)
         exp_arg_2 = -((x - 0.85) / 0.03).pow(2)
         return exp_arg_1, exp_arg_2
@@ -338,7 +338,7 @@ class DTLZ(MultiObjectiveTestProblem):
         self,
         dim: int,
         num_objectives: int = 2,
-        noise_std: Union[None, float, List[float]] = None,
+        noise_std: Union[None, float, list[float]] = None,
         negate: bool = False,
     ) -> None:
         r"""
@@ -606,7 +606,7 @@ class GMM(MultiObjectiveTestProblem):
 
     def __init__(
         self,
-        noise_std: Union[None, float, List[float]] = None,
+        noise_std: Union[None, float, list[float]] = None,
         negate: bool = False,
         num_objectives: int = 2,
     ) -> None:
@@ -934,7 +934,7 @@ class ZDT(MultiObjectiveTestProblem):
         self,
         dim: int,
         num_objectives: int = 2,
-        noise_std: Union[None, float, List[float]] = None,
+        noise_std: Union[None, float, list[float]] = None,
         negate: bool = False,
     ) -> None:
         r"""
@@ -1244,8 +1244,8 @@ class ConstrainedBraninCurrin(BraninCurrin, ConstrainedBaseTestProblem):
 
     def __init__(
         self,
-        noise_std: Union[None, float, List[float]] = None,
-        constraint_noise_std: Union[None, float, List[float]] = None,
+        noise_std: Union[None, float, list[float]] = None,
+        constraint_noise_std: Union[None, float, list[float]] = None,
         negate: bool = False,
     ) -> None:
         r"""
@@ -1356,8 +1356,8 @@ class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     def __init__(
         self,
         dim: int,
-        noise_std: Union[None, float, List[float]] = None,
-        constraint_noise_std: Union[None, float, List[float]] = None,
+        noise_std: Union[None, float, list[float]] = None,
+        constraint_noise_std: Union[None, float, list[float]] = None,
         negate: bool = False,
     ) -> None:
         r"""

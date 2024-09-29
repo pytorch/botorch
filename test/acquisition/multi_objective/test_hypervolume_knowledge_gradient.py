@@ -4,6 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import warnings
 from itertools import product
 from unittest import mock
 
@@ -22,6 +23,7 @@ from botorch.acquisition.multi_objective.objective import (
     IdentityMCMultiOutputObjective,
 )
 from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.warnings import NumericsWarning
 from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
@@ -366,24 +368,26 @@ class TestHypervolumeKnowledgeGradient(BotorchTestCase):
                 for use_posterior_mean in (True, False):
                     with mock.patch.object(
                         ModelListGP, "fantasize", return_value=mfm
-                    ) as patch_f:
-                        with mock.patch(
-                            NO, new_callable=mock.PropertyMock
-                        ) as mock_num_outputs:
-                            mock_num_outputs.return_value = 3
-                            qHVKG = acqf_class(
-                                model=model,
-                                num_fantasies=n_f,
-                                objective=objective,
-                                ref_point=ref_point,
-                                num_pareto=num_pareto,
-                                use_posterior_mean=use_posterior_mean,
-                                **mf_kwargs,
-                            )
-                            val = qHVKG(X)
-                            patch_f.assert_called_once()
-                            cargs, ckwargs = patch_f.call_args
-                            self.assertEqual(ckwargs["X"].shape, torch.Size([1, 1, 1]))
+                    ) as patch_f, mock.patch(
+                        NO, new_callable=mock.PropertyMock
+                    ) as mock_num_outputs, warnings.catch_warnings(
+                        record=True
+                    ) as ws:
+                        mock_num_outputs.return_value = 3
+                        qHVKG = acqf_class(
+                            model=model,
+                            num_fantasies=n_f,
+                            objective=objective,
+                            ref_point=ref_point,
+                            num_pareto=num_pareto,
+                            use_posterior_mean=use_posterior_mean,
+                            **mf_kwargs,
+                        )
+                        val = qHVKG(X)
+                    patch_f.assert_called_once()
+                    cargs, ckwargs = patch_f.call_args
+                    self.assertEqual(ckwargs["X"].shape, torch.Size([1, 1, 1]))
+                    self.assertFalse(any(w.category is NumericsWarning for w in ws))
                     Ys = mean if use_posterior_mean else samples
                     objs = objective(Ys.squeeze(1)).view(-1, num_pareto, num_objectives)
                     if num_objectives == 2:

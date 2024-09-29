@@ -10,7 +10,7 @@ Model List GP Regression models.
 
 from __future__ import annotations
 
-from typing import Any, List
+from typing import Any
 
 import torch
 
@@ -56,7 +56,7 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel, FantasizeMixin):
     # pyre-fixme[14]: Inconsistent override. Here `X` is a List[Tensor], but in the
     # parent method it's a Tensor.
     def condition_on_observations(
-        self, X: List[Tensor], Y: Tensor, **kwargs: Any
+        self, X: list[Tensor], Y: Tensor, **kwargs: Any
     ) -> ModelListGP:
         r"""Condition the model on new observations.
 

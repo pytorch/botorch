@@ -11,7 +11,7 @@ Utility functions for constrained optimization.
 from __future__ import annotations
 
 from functools import partial
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Optional, Union
 
 import numpy as np
 import torch
@@ -20,7 +20,7 @@ from scipy.optimize import Bounds
 from torch import Tensor
 
 
-ScipyConstraintDict = Dict[
+ScipyConstraintDict = dict[
     str, Union[str, Callable[[np.ndarray], float], Callable[[np.ndarray], np.ndarray]]
 ]
 NLC_TOL = -1e-6
@@ -67,9 +67,9 @@ def make_scipy_bounds(
 
 def make_scipy_linear_constraints(
     shapeX: torch.Size,
-    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-) -> List[ScipyConstraintDict]:
+    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
+    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
+) -> list[ScipyConstraintDict]:
     r"""Generate scipy constraints from torch representation.
 
     Args:
@@ -129,7 +129,7 @@ def make_scipy_linear_constraints(
 
 
 def eval_lin_constraint(
-    x: np.ndarray, flat_idxr: List[int], coeffs: np.ndarray, rhs: float
+    x: np.ndarray, flat_idxr: list[int], coeffs: np.ndarray, rhs: float
 ) -> np.float64:
     r"""Evaluate a single linear constraint.
 
@@ -146,7 +146,7 @@ def eval_lin_constraint(
 
 
 def lin_constraint_jac(
-    x: np.ndarray, flat_idxr: List[int], coeffs: np.ndarray, n: int
+    x: np.ndarray, flat_idxr: list[int], coeffs: np.ndarray, n: int
 ) -> np.ndarray:
     r"""Return the Jacobian associated with a linear constraint.
 
@@ -219,7 +219,7 @@ def _make_linear_constraints(
     rhs: float,
     shapeX: torch.Size,
     eq: bool = False,
-) -> List[ScipyConstraintDict]:
+) -> list[ScipyConstraintDict]:
     r"""Create linear constraints to be used by `scipy.minimize`.
 
     Encodes constraints of the form
@@ -282,7 +282,7 @@ def _make_linear_constraints(
     b, q, d = shapeX
     _validate_linear_constraints_indices_input(indices, q, d)
     n = shapeX.numel()
-    constraints: List[ScipyConstraintDict] = []
+    constraints: list[ScipyConstraintDict] = []
     coeffs = _arrayify(coefficients)
     ctype = "eq" if eq else "ineq"
 
@@ -314,7 +314,7 @@ def _make_linear_constraints(
 
 def _make_nonlinear_constraints(
     f_np_wrapper: Callable, nlc: Callable, is_intrapoint: bool, shapeX: torch.Size
-) -> List[ScipyConstraintDict]:
+) -> list[ScipyConstraintDict]:
     """Create nonlinear constraints to be used by `scipy.minimize`.
 
     Args:
@@ -370,10 +370,10 @@ def _make_nonlinear_constraints(
 
 
 def _generate_unfixed_nonlin_constraints(
-    constraints: Optional[List[Tuple[Callable[[Tensor], Tensor], bool]]],
-    fixed_features: Dict[int, float],
+    constraints: Optional[list[tuple[Callable[[Tensor], Tensor], bool]]],
+    fixed_features: dict[int, float],
     dimension: int,
-) -> Optional[List[Callable[[Tensor], Tensor]]]:
+) -> Optional[list[Callable[[Tensor], Tensor]]]:
     """Given a dictionary of fixed features, returns a list of callables for
     nonlinear inequality constraints expecting only a tensor with the non-fixed
     features as input.
@@ -410,11 +410,11 @@ def _generate_unfixed_nonlin_constraints(
 
 
 def _generate_unfixed_lin_constraints(
-    constraints: Optional[List[Tuple[Tensor, Tensor, float]]],
-    fixed_features: Dict[int, float],
+    constraints: Optional[list[tuple[Tensor, Tensor, float]]],
+    fixed_features: dict[int, float],
     dimension: int,
     eq: bool,
-) -> Optional[List[Tuple[Tensor, Tensor, float]]]:
+) -> Optional[list[tuple[Tensor, Tensor, float]]]:
     # If constraints is None or an empty list, then return itself
     if not constraints:
         return constraints
@@ -473,7 +473,7 @@ def _generate_unfixed_lin_constraints(
 
 def _make_f_and_grad_nonlinear_inequality_constraints(
     f_np_wrapper: Callable, nlc: Callable
-) -> Tuple[Callable[[Tensor], Tensor], Callable[[Tensor], Tensor]]:
+) -> tuple[Callable[[Tensor], Tensor], Callable[[Tensor], Tensor]]:
     """
     Create callables for objective + grad for the nonlinear inequality constraints.
     The Scipy interface requires specifying separate callables and we use caching to
@@ -539,11 +539,11 @@ def nonlinear_constraint_is_feasible(
 
 
 def make_scipy_nonlinear_inequality_constraints(
-    nonlinear_inequality_constraints: List[Tuple[Callable, bool]],
+    nonlinear_inequality_constraints: list[tuple[Callable, bool]],
     f_np_wrapper: Callable,
     x0: Tensor,
     shapeX: torch.Size,
-) -> List[Dict]:
+) -> list[dict]:
     r"""Generate Scipy nonlinear inequality constraints from callables.
 
     Args:

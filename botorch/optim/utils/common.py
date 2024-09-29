@@ -9,7 +9,7 @@ r"""General-purpose optimization utilities."""
 from __future__ import annotations
 
 from logging import debug as logging_debug
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional
 from warnings import warn_explicit, WarningMessage
 
 import numpy as np
@@ -18,7 +18,7 @@ from linear_operator.utils.errors import NanError, NotPSDError
 
 def _handle_numerical_errors(
     error: RuntimeError, x: np.ndarray, dtype: Optional[np.dtype] = None
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     if isinstance(error, NotPSDError):
         raise error
     error_message = error.args[0] if len(error.args) > 0 else ""

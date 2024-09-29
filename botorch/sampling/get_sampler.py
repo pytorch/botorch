@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 
-from typing import Optional, Type, Union
+from typing import Optional, Union
 
 import torch
 from botorch.logging import logger
@@ -31,7 +31,7 @@ from torch.quasirandom import SobolEngine
 
 def _posterior_to_distribution_encoder(
     posterior: Posterior,
-) -> Union[Type[Distribution], Type[Posterior]]:
+) -> Union[type[Distribution], type[Posterior]]:
     r"""An encoder returning the type of the distribution for `TorchPosterior`
     and the type of the posterior for the rest.
     """

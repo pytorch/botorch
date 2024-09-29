@@ -16,7 +16,7 @@ import math
 from abc import ABC
 from contextlib import nullcontext
 from copy import deepcopy
-from typing import Dict, Optional, Tuple, Union
+from typing import Optional, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -29,9 +29,9 @@ from botorch.models.model import Model
 from botorch.utils.constants import get_constants_like
 from botorch.utils.probability import MVNXPB
 from botorch.utils.probability.utils import (
+    compute_log_prob_feas_from_bounds,
     log_ndtr as log_Phi,
     log_phi,
-    log_prob_normal_in,
     ndtr as Phi,
     phi,
 )
@@ -83,7 +83,7 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
 
     def _mean_and_sigma(
         self, X: Tensor, compute_sigma: bool = True, min_var: float = 1e-12
-    ) -> Tuple[Tensor, Optional[Tensor]]:
+    ) -> tuple[Tensor, Optional[Tensor]]:
         """Computes the first and second moments of the model posterior.
 
         Args:
@@ -449,7 +449,7 @@ class LogConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
         model: Model,
         best_f: Union[float, Tensor],
         objective_index: int,
-        constraints: Dict[int, Tuple[Optional[float], Optional[float]]],
+        constraints: dict[int, tuple[Optional[float], Optional[float]]],
         maximize: bool = True,
     ) -> None:
         r"""Analytic Log Constrained Expected Improvement.
@@ -527,7 +527,7 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
         model: Model,
         best_f: Union[float, Tensor],
         objective_index: int,
-        constraints: Dict[int, Tuple[Optional[float], Optional[float]]],
+        constraints: dict[int, tuple[Optional[float], Optional[float]]],
         maximize: bool = True,
     ) -> None:
         r"""Analytic Constrained Expected Improvement.
@@ -1091,15 +1091,17 @@ def _get_noiseless_fantasy_model(
     # are used across all batches (by default, a GP with batched training data
     # uses independent hyperparameters for each batch).
 
-    # Don't apply `outcome_transform` and `input_transform` here,
-    # since the data being passed has already been transformed.
-    # So we will instead set them afterwards.
+    # We don't want to use the true `outcome_transform` and `input_transform` here
+    # since the data being passed has already been transformed. We thus pass `None`
+    # and will instead set them afterwards.
     fantasy_model = SingleTaskGP(
         train_X=model.train_inputs[0],
         train_Y=model.train_targets.unsqueeze(-1),
         train_Yvar=model.likelihood.noise_covar.noise.unsqueeze(-1),
         covar_module=deepcopy(model.covar_module),
         mean_module=deepcopy(model.mean_module),
+        outcome_transform=None,
+        input_transform=None,
     )
 
     Yvar = torch.full_like(Y_fantasized, 1e-7)
@@ -1134,7 +1136,7 @@ def _get_noiseless_fantasy_model(
 
 def _preprocess_constraint_bounds(
     acqf: Union[LogConstrainedExpectedImprovement, ConstrainedExpectedImprovement],
-    constraints: Dict[int, Tuple[Optional[float], Optional[float]]],
+    constraints: dict[int, tuple[Optional[float], Optional[float]]],
 ) -> None:
     r"""Set up constraint bounds.
 
@@ -1199,20 +1201,13 @@ def _compute_log_prob_feas(
     TODO: Investigate further.
     """
     acqf.to(device=means.device)
-    log_prob = torch.zeros_like(means[..., 0])
-    if len(acqf.con_lower_inds) > 0:
-        i = acqf.con_lower_inds
-        dist_l = (acqf.con_lower - means[..., i]) / sigmas[..., i]
-        log_prob = log_prob + log_Phi(-dist_l).sum(dim=-1)  # 1 - Phi(x) = Phi(-x)
-    if len(acqf.con_upper_inds) > 0:
-        i = acqf.con_upper_inds
-        dist_u = (acqf.con_upper - means[..., i]) / sigmas[..., i]
-        log_prob = log_prob + log_Phi(dist_u).sum(dim=-1)
-    if len(acqf.con_both_inds) > 0:
-        i = acqf.con_both_inds
-        con_lower, con_upper = acqf.con_both[:, 0], acqf.con_both[:, 1]
-        # scaled distance to lower and upper constraint boundary:
-        dist_l = (con_lower - means[..., i]) / sigmas[..., i]
-        dist_u = (con_upper - means[..., i]) / sigmas[..., i]
-        log_prob = log_prob + log_prob_normal_in(a=dist_l, b=dist_u).sum(dim=-1)
-    return log_prob
+    return compute_log_prob_feas_from_bounds(
+        acqf.con_lower_inds,
+        acqf.con_upper_inds,
+        acqf.con_both_inds,
+        acqf.con_lower,
+        acqf.con_upper,
+        acqf.con_both,
+        means,
+        sigmas,
+    )

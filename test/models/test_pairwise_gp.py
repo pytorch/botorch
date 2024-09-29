@@ -7,7 +7,7 @@
 import itertools
 import random
 import warnings
-from typing import Dict, Tuple, Union
+from typing import Union
 
 import torch
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
@@ -49,7 +49,7 @@ class TestPairwiseGP(BotorchTestCase):
         self,
         batch_shape,
         X_dim=2,
-    ) -> Tuple[Tensor, Tensor]:
+    ) -> tuple[Tensor, Tensor]:
         train_X = torch.rand(
             *batch_shape, 2, X_dim, device=self.device, dtype=self.dtype
         )
@@ -63,7 +63,7 @@ class TestPairwiseGP(BotorchTestCase):
         batch_shape,
         X_dim=2,
         likelihood_cls=None,
-    ) -> Tuple[Model, Dict[str, Union[Tensor, PairwiseLikelihood]]]:
+    ) -> tuple[Model, dict[str, Union[Tensor, PairwiseLikelihood]]]:
         train_X, train_comp = self._make_rand_mini_data(
             batch_shape=batch_shape,
             X_dim=X_dim,

@@ -10,34 +10,34 @@ Gaussian Process Regression models based on GPyTorch models.
 These models are often a good starting point and are further documented in the
 tutorials.
 
-`SingleTaskGP`, `FixedNoiseGP`, and `HeteroskedasticSingleTaskGP` are all
-single-task exact GP models, differing in how they treat noise. They use
-relatively strong priors on the Kernel hyperparameters, which work best when
-covariates are normalized to the unit cube and outcomes are standardized (zero
-mean, unit variance).
+`SingleTaskGP` and `HeteroskedasticSingleTaskGP` are single-task exact GP models,
+differing in how they treat noise. They use relatively strong priors on the Kernel
+hyperparameters, which work best when covariates are normalized to the unit cube
+and outcomes are standardized (zero mean, unit variance). By default, these models
+use a `Standardize` outcome transform, which applies this standardization. However,
+they do not (yet) use an input transform by default.
 
 These models all work in batch mode (each batch having its own hyperparameters).
 When the training observations include multiple outputs, these models use
 batching to model outputs independently.
 
 These models all support multiple outputs. However, as single-task models,
-`SingleTaskGP`, `FixedNoiseGP`, and `HeteroskedasticSingleTaskGP` should be
-used only when the outputs are independent and all use the same training data.
-If outputs are independent and outputs have different training data, use the
-`ModelListGP`. When modeling correlations between outputs, use a multi-task
-model like `MultiTaskGP`.
+`SingleTaskGP` and `HeteroskedasticSingleTaskGP` should be used only when the
+outputs are independent and all use the same training data. If outputs are
+independent and outputs have different training data, use the `ModelListGP`.
+When modeling correlations between outputs, use a multi-task model like `MultiTaskGP`.
 """
 
 from __future__ import annotations
 
 import warnings
-from typing import Dict, NoReturn, Optional, Union
+from typing import NoReturn, Optional, Union
 
 import torch
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.model import FantasizeMixin
 from botorch.models.transforms.input import InputTransform
-from botorch.models.transforms.outcome import Log, OutcomeTransform
+from botorch.models.transforms.outcome import Log, OutcomeTransform, Standardize
 from botorch.models.utils import validate_input_scaling
 from botorch.models.utils.gpytorch_modules import (
     get_covar_module_with_dim_scaled_prior,
@@ -46,6 +46,7 @@ from botorch.models.utils.gpytorch_modules import (
 )
 from botorch.utils.containers import BotorchContainer
 from botorch.utils.datasets import SupervisedDataset
+from botorch.utils.types import _DefaultType, DEFAULT
 from gpytorch.constraints.constraints import GreaterThan
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.likelihoods.gaussian_likelihood import (
@@ -134,7 +135,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         likelihood: Optional[Likelihood] = None,
         covar_module: Optional[Module] = None,
         mean_module: Optional[Mean] = None,
-        outcome_transform: Optional[OutcomeTransform] = None,
+        outcome_transform: Optional[Union[OutcomeTransform, _DefaultType]] = DEFAULT,
         input_transform: Optional[InputTransform] = None,
     ) -> None:
         r"""
@@ -148,22 +149,30 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
                 is None, and a `FixedNoiseGaussianLikelihood` with the given
                 noise observations if `train_Yvar` is not None.
             covar_module: The module computing the covariance (Kernel) matrix.
-                If omitted, use a `MaternKernel`.
+                If omitted, uses an `RBFKernel`.
             mean_module: The mean function to be used. If omitted, use a
                 `ConstantMean`.
             outcome_transform: An outcome transform that is applied to the
                 training data during instantiation and to the posterior during
                 inference (that is, the `Posterior` obtained by calling
-                `.posterior` on the model will be on the original scale).
+                `.posterior` on the model will be on the original scale). We use a
+                `Standardize` transform if no `outcome_transform` is specified.
+                Pass down `None` to use no outcome transform.
             input_transform: An input transform that is applied in the model's
                 forward pass.
         """
+        self._validate_tensor_args(X=train_X, Y=train_Y, Yvar=train_Yvar)
+        if outcome_transform == DEFAULT:
+            outcome_transform = Standardize(
+                m=train_Y.shape[-1], batch_shape=train_X.shape[:-2]
+            )
         with torch.no_grad():
             transformed_X = self.transform_inputs(
                 X=train_X, input_transform=input_transform
             )
         if outcome_transform is not None:
             train_Y, train_Yvar = outcome_transform(train_Y, train_Yvar)
+        # Validate again after applying the transforms
         self._validate_tensor_args(X=transformed_X, Y=train_Y, Yvar=train_Yvar)
         ignore_X_dims = getattr(self, "_ignore_X_dims_scaling_check", None)
         validate_input_scaling(
@@ -198,6 +207,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
                 ard_num_dims=transformed_X.shape[-1],
                 batch_shape=self._aug_batch_shape,
             )
+            # Used for subsetting along the output dimension. See Model.subset_output.
             self._subset_batch_dict = {
                 "mean_module.raw_constant": -1,
                 "covar_module.raw_lengthscale": -3,
@@ -215,7 +225,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
     @classmethod
     def construct_inputs(
         cls, training_data: SupervisedDataset, *, task_feature: Optional[int] = None
-    ) -> Dict[str, Union[BotorchContainer, Tensor]]:
+    ) -> dict[str, Union[BotorchContainer, Tensor]]:
         r"""Construct `SingleTaskGP` keyword arguments from a `SupervisedDataset`.
 
         Args:
@@ -245,49 +255,14 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         return MultivariateNormal(mean_x, covar_x)
 
 
-class FixedNoiseGP(SingleTaskGP):
-    r"""A single-task exact GP model using fixed noise levels.
-
-    DEPRECATED: `FixedNoiseGP` has been merged into `SingleTaskGP`. Please use
-    `SingleTaskGP` with `train_Yvar` instead.
-    Will be removed in a future release (~v0.12).
-    """
-
-    def __init__(
-        self,
-        train_X: Tensor,
-        train_Y: Tensor,
-        train_Yvar: Tensor,
-        covar_module: Optional[Module] = None,
-        mean_module: Optional[Mean] = None,
-        outcome_transform: Optional[OutcomeTransform] = None,
-        input_transform: Optional[InputTransform] = None,
-    ) -> None:
-        r"""DEPRECATED. See SingleTaskGP."""
-        warnings.warn(
-            "`FixedNoiseGP` has been merged into `SingleTaskGP`. "
-            "Please use `SingleTaskGP` with `train_Yvar` instead.",
-            DeprecationWarning,
-        )
-        super().__init__(
-            train_X=train_X,
-            train_Y=train_Y,
-            train_Yvar=train_Yvar,
-            covar_module=covar_module,
-            mean_module=mean_module,
-            outcome_transform=outcome_transform,
-            input_transform=input_transform,
-        )
-
-
 class HeteroskedasticSingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
     r"""A single-task exact GP model using a heteroskedastic noise model.
 
-    This model differs from `SingleTaskGP` in that noise levels are provided
-    rather than inferred, and differs from `FixedNoiseGP` in that it can
-    predict noise levels out of sample, because it internally wraps another
-    GP (a SingleTaskGP) to model the observation noise.
-    Noise levels must be provided to `HeteroskedasticSingleTaskGP` as `train_Yvar`.
+    This model differs from `SingleTaskGP` with observed observation noise
+    variances (`train_Yvar`) in that it can predict noise levels out of sample.
+    This is achieved by internally wrapping another GP (a `SingleTaskGP`) to model
+    the (log of) the observation noise. Noise levels must be provided to
+    `HeteroskedasticSingleTaskGP` as `train_Yvar`.
 
     Examples of cases in which noise levels are known include online
     experimentation and simulation optimization.
@@ -335,12 +310,17 @@ class HeteroskedasticSingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 MIN_INFERRED_NOISE_LEVEL, transform=None, initial_value=1.0
             ),
         )
+        # Likelihood will always get evaluated with transformed X, so we need to
+        # transform the training data before constructing the noise model.
+        with torch.no_grad():
+            transformed_X = self.transform_inputs(
+                X=train_X, input_transform=input_transform
+            )
         noise_model = SingleTaskGP(
-            train_X=train_X,
+            train_X=transformed_X,
             train_Y=train_Yvar,
             likelihood=noise_likelihood,
             outcome_transform=Log(),
-            input_transform=input_transform,
         )
         likelihood = _GaussianLikelihoodBase(HeteroskedasticNoise(noise_model))
         # This is hacky -- this class used to inherit from SingleTaskGP, but it
@@ -352,6 +332,7 @@ class HeteroskedasticSingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             train_X=train_X,
             train_Y=train_Y,
             likelihood=likelihood,
+            outcome_transform=None,
             input_transform=input_transform,
         )
         self.register_added_loss_term("noise_added_loss")

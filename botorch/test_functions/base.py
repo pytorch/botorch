@@ -11,7 +11,7 @@ Base class for test functions for optimization benchmarks.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Union
 
 import torch
 from botorch.exceptions.errors import InputDataError
@@ -23,12 +23,12 @@ class BaseTestProblem(Module, ABC):
     r"""Base class for test functions."""
 
     dim: int
-    _bounds: List[Tuple[float, float]]
+    _bounds: list[tuple[float, float]]
     _check_grad_at_opt: bool = True
 
     def __init__(
         self,
-        noise_std: Union[None, float, List[float]] = None,
+        noise_std: Union[None, float, list[float]] = None,
         negate: bool = False,
     ) -> None:
         r"""Base constructor for test functions.
@@ -55,26 +55,33 @@ class BaseTestProblem(Module, ABC):
         r"""Evaluate the function on a set of points.
 
         Args:
-            X: A `batch_shape x d`-dim tensor of point(s) at which to evaluate the
-                function.
+            X: A `(batch_shape) x d`-dim tensor of point(s) at which to evaluate
+                the function.
             noise: If `True`, add observation noise as specified by `noise_std`.
 
         Returns:
             A `batch_shape`-dim tensor ouf function evaluations.
         """
-        batch = X.ndimension() > 1
-        X = X if batch else X.unsqueeze(0)
         f = self.evaluate_true(X=X)
         if noise and self.noise_std is not None:
             _noise = torch.tensor(self.noise_std, device=X.device, dtype=X.dtype)
             f += _noise * torch.randn_like(f)
         if self.negate:
             f = -f
-        return f if batch else f.squeeze(0)
+        return f
 
     @abstractmethod
     def evaluate_true(self, X: Tensor) -> Tensor:
-        r"""Evaluate the function (w/o observation noise) on a set of points."""
+        r"""
+        Evaluate the function (w/o observation noise) on a set of points.
+
+        Args:
+            X: A `(batch_shape) x d`-dim tensor of point(s) at which to
+                evaluate.
+
+        Returns:
+            A `batch_shape`-dim tensor.
+        """
         pass  # pragma: no cover
 
 
@@ -89,7 +96,7 @@ class ConstrainedBaseTestProblem(BaseTestProblem, ABC):
 
     num_constraints: int
     _check_grad_at_opt: bool = False
-    constraint_noise_std: Union[None, float, List[float]] = None
+    constraint_noise_std: Union[None, float, list[float]] = None
 
     def evaluate_slack(self, X: Tensor, noise: bool = True) -> Tensor:
         r"""Evaluate the constraint slack on a set of points.
@@ -153,12 +160,12 @@ class MultiObjectiveTestProblem(BaseTestProblem, ABC):
     """
 
     num_objectives: int
-    _ref_point: List[float]
+    _ref_point: list[float]
     _max_hv: Optional[float] = None
 
     def __init__(
         self,
-        noise_std: Union[None, float, List[float]] = None,
+        noise_std: Union[None, float, list[float]] = None,
         negate: bool = False,
     ) -> None:
         r"""Base constructor for multi-objective test functions.

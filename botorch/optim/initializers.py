@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import warnings
 from math import ceil
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Optional, Union
 
 import torch
 from botorch import settings
@@ -60,18 +60,18 @@ TGenInitialConditions = Callable[
         int,
         int,
         int,
-        Optional[Dict[int, float]],
-        Optional[Dict[str, Union[bool, float, int]]],
-        Optional[List[Tuple[Tensor, Tensor, float]]],
-        Optional[List[Tuple[Tensor, Tensor, float]]],
+        Optional[dict[int, float]],
+        Optional[dict[str, Union[bool, float, int]]],
+        Optional[list[tuple[Tensor, Tensor, float]]],
+        Optional[list[tuple[Tensor, Tensor, float]]],
     ],
     Optional[Tensor],
 ]
 
 
 def transform_constraints(
-    constraints: Union[List[Tuple[Tensor, Tensor, float]], None], q: int, d: int
-) -> List[Tuple[Tensor, Tensor, float]]:
+    constraints: Union[list[tuple[Tensor, Tensor, float]], None], q: int, d: int
+) -> list[tuple[Tensor, Tensor, float]]:
     r"""Transform constraints to sample from a d*q-dimensional space instead of a
     d-dimensional state.
 
@@ -103,8 +103,8 @@ def transform_constraints(
 
 
 def transform_intra_point_constraint(
-    constraint: Tuple[Tensor, Tensor, float], d: int, q: int
-) -> List[Tuple[Tensor, Tensor, float]]:
+    constraint: tuple[Tensor, Tensor, float], d: int, q: int
+) -> list[tuple[Tensor, Tensor, float]]:
     r"""Transforms an intra-point/pointwise constraint from
     d-dimensional space to a d*q-dimesional space.
 
@@ -141,8 +141,8 @@ def transform_intra_point_constraint(
 
 
 def transform_inter_point_constraint(
-    constraint: Tuple[Tensor, Tensor, float], d: int
-) -> Tuple[Tensor, Tensor, float]:
+    constraint: tuple[Tensor, Tensor, float], d: int
+) -> tuple[Tensor, Tensor, float]:
     r"""Transforms an inter-point constraint from
     d-dimensional space to a d*q dimesional space.
 
@@ -182,8 +182,8 @@ def sample_q_batches_from_polytope(
     n_burnin: int,
     n_thinning: int,
     seed: int,
-    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
+    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
 ) -> Tensor:
     r"""Samples `n` q-baches from a polytope of dimension `d`.
 
@@ -246,10 +246,10 @@ def gen_batch_initial_conditions(
     q: int,
     num_restarts: int,
     raw_samples: int,
-    fixed_features: Optional[Dict[int, float]] = None,
-    options: Optional[Dict[str, Union[bool, float, int]]] = None,
-    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    fixed_features: Optional[dict[int, float]] = None,
+    options: Optional[dict[str, Union[bool, float, int]]] = None,
+    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
+    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
     generator: Optional[Callable[[int, int, Optional[int]], Tensor]] = None,
     fixed_X_fantasies: Optional[Tensor] = None,
 ) -> Tensor:
@@ -444,10 +444,10 @@ def gen_one_shot_kg_initial_conditions(
     q: int,
     num_restarts: int,
     raw_samples: int,
-    fixed_features: Optional[Dict[int, float]] = None,
-    options: Optional[Dict[str, Union[bool, float, int]]] = None,
-    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    fixed_features: Optional[dict[int, float]] = None,
+    options: Optional[dict[str, Union[bool, float, int]]] = None,
+    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
+    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
 ) -> Optional[Tensor]:
     r"""Generate a batch of smart initializations for qKnowledgeGradient.
 
@@ -563,10 +563,10 @@ def gen_one_shot_hvkg_initial_conditions(
     q: int,
     num_restarts: int,
     raw_samples: int,
-    fixed_features: Optional[Dict[int, float]] = None,
-    options: Optional[Dict[str, Union[bool, float, int]]] = None,
-    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    fixed_features: Optional[dict[int, float]] = None,
+    options: Optional[dict[str, Union[bool, float, int]]] = None,
+    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
+    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
 ) -> Optional[Tensor]:
     r"""Generate a batch of smart initializations for qHypervolumeKnowledgeGradient.
 
@@ -761,8 +761,8 @@ def gen_value_function_initial_conditions(
     num_restarts: int,
     raw_samples: int,
     current_model: Model,
-    fixed_features: Optional[Dict[int, float]] = None,
-    options: Optional[Dict[str, Union[bool, float, int]]] = None,
+    fixed_features: Optional[dict[int, float]] = None,
+    options: Optional[dict[str, Union[bool, float, int]]] = None,
 ) -> Tensor:
     r"""Generate a batch of smart initializations for optimizing
     the value function of qKnowledgeGradient.

@@ -19,14 +19,14 @@ References
 
 from __future__ import annotations
 
-from abc import abstractmethod
 from itertools import product
-from typing import List, Optional
+from typing import Optional
 
 import torch
-from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.multi_objective.base import (
+    MultiObjectiveAnalyticAcquisitionFunction,
+)
 from botorch.acquisition.objective import PosteriorTransform
-from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
@@ -36,50 +36,11 @@ from torch import Tensor
 from torch.distributions import Normal
 
 
-class MultiObjectiveAnalyticAcquisitionFunction(AcquisitionFunction):
-    r"""Abstract base class for Multi-Objective batch acquisition functions."""
-
-    def __init__(
-        self,
-        model: Model,
-        posterior_transform: Optional[PosteriorTransform] = None,
-    ) -> None:
-        r"""Constructor for the MultiObjectiveAnalyticAcquisitionFunction base class.
-
-        Args:
-            model: A fitted model.
-            posterior_transform: A PosteriorTransform (optional).
-        """
-        super().__init__(model=model)
-        if posterior_transform is None or isinstance(
-            posterior_transform, PosteriorTransform
-        ):
-            self.posterior_transform = posterior_transform
-        else:
-            raise UnsupportedError(
-                "Only a posterior_transform of type PosteriorTransform is "
-                "supported for Multi-Objective analytic acquisition functions."
-            )
-
-    @abstractmethod
-    def forward(self, X: Tensor) -> Tensor:
-        r"""Takes in a `batch_shape x 1 x d` X Tensor of t-batches with `1` `d`-dim
-        design point each, and returns a Tensor with shape `batch_shape'`, where
-        `batch_shape'` is the broadcasted batch shape of model and input `X`.
-        """
-        pass  # pragma: no cover
-
-    def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
-        raise UnsupportedError(
-            "Analytic acquisition functions do not account for X_pending yet."
-        )
-
-
 class ExpectedHypervolumeImprovement(MultiObjectiveAnalyticAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        ref_point: List[float],
+        ref_point: list[float],
         partitioning: NondominatedPartitioning,
         posterior_transform: Optional[PosteriorTransform] = None,
     ) -> None:

@@ -19,8 +19,9 @@ from __future__ import annotations
 import warnings
 
 from abc import ABC, abstractmethod
+from collections.abc import Generator, Iterable
 from contextlib import contextmanager
-from typing import Any, Generator, Iterable, List, Optional, Tuple, TYPE_CHECKING, Union
+from typing import Any, Optional, TYPE_CHECKING, Union
 
 import numpy as np
 import scipy
@@ -352,7 +353,7 @@ def batched_multinomial(
     return flat_samples.view(*batch_shape, num_samples)
 
 
-def _convert_bounds_to_inequality_constraints(bounds: Tensor) -> Tuple[Tensor, Tensor]:
+def _convert_bounds_to_inequality_constraints(bounds: Tensor) -> tuple[Tensor, Tensor]:
     r"""Convert bounds into inequality constraints of the form Ax <= b.
 
     Args:
@@ -458,8 +459,8 @@ class PolytopeSampler(ABC):
 
     def __init__(
         self,
-        inequality_constraints: Optional[Tuple[Tensor, Tensor]] = None,
-        equality_constraints: Optional[Tuple[Tensor, Tensor]] = None,
+        inequality_constraints: Optional[tuple[Tensor, Tensor]] = None,
+        equality_constraints: Optional[tuple[Tensor, Tensor]] = None,
         bounds: Optional[Tensor] = None,
         interior_point: Optional[Tensor] = None,
     ) -> None:
@@ -582,8 +583,8 @@ class HitAndRunPolytopeSampler(PolytopeSampler):
 
     def __init__(
         self,
-        inequality_constraints: Optional[Tuple[Tensor, Tensor]] = None,
-        equality_constraints: Optional[Tuple[Tensor, Tensor]] = None,
+        inequality_constraints: Optional[tuple[Tensor, Tensor]] = None,
+        equality_constraints: Optional[tuple[Tensor, Tensor]] = None,
         bounds: Optional[Tensor] = None,
         interior_point: Optional[Tensor] = None,
         n_burnin: int = 200,
@@ -682,7 +683,9 @@ class HitAndRunPolytopeSampler(PolytopeSampler):
             # Run this on the cpu since there is a lot of looping going on
             A=self.new_A.cpu(),
             b=(self.b - self.A @ self.x0).cpu(),
-            x0=torch.zeros((self.nullC.size(1), 1), dtype=self.A.dtype),
+            x0=torch.zeros(
+                (self.nullC.size(1), 1), dtype=self.A.dtype, device=torch.device("cpu")
+            ),
             n=n,
             n0=self.n_burnin if self.num_samples_generated == 0 else 0,
             n_thinning=self.n_thinning,
@@ -725,8 +728,8 @@ class DelaunayPolytopeSampler(PolytopeSampler):
 
     def __init__(
         self,
-        inequality_constraints: Optional[Tuple[Tensor, Tensor]] = None,
-        equality_constraints: Optional[Tuple[Tensor, Tensor]] = None,
+        inequality_constraints: Optional[tuple[Tensor, Tensor]] = None,
+        equality_constraints: Optional[tuple[Tensor, Tensor]] = None,
         bounds: Optional[Tensor] = None,
         interior_point: Optional[Tensor] = None,
     ) -> None:
@@ -825,20 +828,28 @@ class DelaunayPolytopeSampler(PolytopeSampler):
 
 
 def normalize_sparse_linear_constraints(
-    bounds: Tensor, constraints: List[Tuple[Tensor, Tensor, float]]
-) -> List[Tuple[Tensor, Tensor, float]]:
+    bounds: Tensor, constraints: list[tuple[Tensor, Tensor, float]]
+) -> list[tuple[Tensor, Tensor, float]]:
     r"""Normalize sparse linear constraints to the unit cube.
 
     Args:
-        bounds (Tensor): A `2 x d`-dim tensor containing the box bounds.
-        constraints (List[Tuple[Tensor, Tensor, float]]): A list of
-            tuples (indices, coefficients, rhs), with each tuple encoding
-            an inequality constraint of the form
+        bounds: A `2 x d`-dim tensor containing the box bounds.
+        constraints: A list of tuples (`indices`, `coefficients`, `rhs`), with
+            `indices` and `coefficients` one-dimensional tensors and `rhs` a
+            scalar, where each tuple encodes an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs` or
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
     """
     new_constraints = []
     for index, coefficient, rhs in constraints:
+        if index.ndim != 1:
+            raise ValueError(
+                "`indices` must be a one-dimensional tensor. This method does not "
+                "support the kind of 'inter-point constraints' that are supported by "
+                "`optimize_acqf()`. To achieve this behavior, you need define the "
+                "problem on the joint space over `q` points and impose use constraints,"
+                "see https://github.com/pytorch/botorch/issues/2468#issuecomment-2287706461"  # noqa: E501
+            )
         lower, upper = bounds[:, index]
         s = upper - lower
         new_constraints.append(
@@ -849,8 +860,8 @@ def normalize_sparse_linear_constraints(
 
 def normalize_dense_linear_constraints(
     bounds: Tensor,
-    constraints: Tuple[Tensor, Tensor],
-) -> Tuple[Tensor, Tensor]:
+    constraints: tuple[Tensor, Tensor],
+) -> tuple[Tensor, Tensor]:
     r"""Normalize dense linear constraints to the unit cube.
 
     Args:
@@ -873,8 +884,8 @@ def normalize_dense_linear_constraints(
 def get_polytope_samples(
     n: int,
     bounds: Tensor,
-    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
+    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
     seed: Optional[int] = None,
     n_burnin: int = 10_000,
     n_thinning: int = 32,
@@ -893,14 +904,21 @@ def get_polytope_samples(
     from the `Ax >= b` format expecxted here to the `Ax <= b` format expected by
     `PolytopeSampler` by multiplying both `A` and `b` by -1.)
 
+    NOTE: This method does not support the kind of "inter-point constraints" that
+    are supported by `optimize_acqf()`. To achieve this behavior, you need define the
+    problem on the joint space over `q` points and impose use constraints, see:
+    https://github.com/pytorch/botorch/issues/2468#issuecomment-2287706461
+
     Args:
         n: The number of samples.
         bounds: A `2 x d`-dim tensor containing the box bounds.
-        inequality constraints: A list of tuples (indices, coefficients, rhs),
-            with each tuple encoding an inequality constraint of the form
+        inequality_constraints: A list of tuples (`indices`, `coefficients`, `rhs`),
+            with `indices` and `coefficients` one-dimensional tensors and `rhs` a
+            scalar, where each tuple encodes an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`.
-        equality constraints: A list of tuples (indices, coefficients, rhs),
-            with each tuple encoding an inequality constraint of the form
+        equality_constraints: A list of tuples (`indices`, `coefficients`, `rhs`),
+            with `indices` and `coefficients` one-dimensional tensors and `rhs` a
+            scalar, where each tuple encodes an equality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
         seed: The random seed.
         n_burnin: The number of burn-in samples for the Markov chain sampler.
@@ -940,8 +958,8 @@ def get_polytope_samples(
 
 def sparse_to_dense_constraints(
     d: int,
-    constraints: List[Tuple[Tensor, Tensor, float]],
-) -> Tuple[Tensor, Tensor]:
+    constraints: list[tuple[Tensor, Tensor, float]],
+) -> tuple[Tensor, Tensor]:
     r"""Convert parameter constraints from a sparse format into a dense format.
 
     This method converts sparse triples of the form (indices, coefficients, rhs)
@@ -949,8 +967,9 @@ def sparse_to_dense_constraints(
 
     Args:
         d: The input dimension.
-        inequality constraints: A list of tuples (indices, coefficients, rhs),
-            with each tuple encoding an (in)equality constraint of the form
+        constraints: A list of tuples (`indices`, `coefficients`, `rhs`),
+            with `indices` and `coefficients` one-dimensional tensors and `rhs` a
+            scalar, where each tuple encodes an (in)equality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs` or
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
 
@@ -976,7 +995,7 @@ def optimize_posterior_samples(
     num_restarts: int = 20,
     maximize: bool = True,
     **kwargs: Any,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Cheaply maximizes posterior samples by random querying followed by vanilla
     gradient descent on the best num_restarts points.
 

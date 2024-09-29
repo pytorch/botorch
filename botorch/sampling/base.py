@@ -11,7 +11,7 @@ The base class for sampler modules to be used with MC-evaluated acquisition func
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple
+from typing import Optional
 
 import torch
 from botorch.exceptions.errors import InputDataError
@@ -76,7 +76,7 @@ class MCSampler(Module, ABC):
         """
         pass  # pragma no cover
 
-    def _get_batch_range(self, posterior: Posterior) -> Tuple[int, int]:
+    def _get_batch_range(self, posterior: Posterior) -> tuple[int, int]:
         r"""Get the t-batch range of the posterior with an optional override.
 
         In rare cases, e.g., in `qMultiStepLookahead`, we may want to override the

@@ -13,12 +13,13 @@ from __future__ import annotations
 
 import math
 from functools import reduce
-from typing import Callable, Type
+from typing import Callable
 from unittest import mock
 from unittest.mock import MagicMock
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.active_learning import qNegIntegratedPosteriorVariance
 from botorch.acquisition.analytic import (
     ExpectedImprovement,
     LogExpectedImprovement,
@@ -60,6 +61,7 @@ from botorch.acquisition.max_value_entropy_search import (
 )
 from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
+    qLowerConfidenceBound,
     qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
     qSimpleRegret,
@@ -70,6 +72,11 @@ from botorch.acquisition.multi_objective import (
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
 )
+from botorch.acquisition.multi_objective.hypervolume_knowledge_gradient import (
+    qHypervolumeKnowledgeGradient,
+    qMultiFidelityHypervolumeKnowledgeGradient,
+)
+
 from botorch.acquisition.multi_objective.logei import (
     qLogExpectedHypervolumeImprovement,
     qLogNoisyExpectedHypervolumeImprovement,
@@ -85,6 +92,7 @@ from botorch.acquisition.multi_objective.parego import qLogNParEGO
 from botorch.acquisition.multi_objective.utils import get_default_partitioning_alpha
 from botorch.acquisition.objective import (
     ConstrainedMCObjective,
+    IdentityMCObjective,
     LinearMCObjective,
     ScalarizedPosteriorTransform,
 )
@@ -218,6 +226,16 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase):
 
         mock_model = self.mock_model
         bounds = torch.rand(2, len(self.bounds))
+
+        with self.subTest("scalarObjective_acquisitionFunction"):
+            optimize_objective(
+                model=mock_model,
+                bounds=bounds,
+                q=1,
+                acq_function=UpperConfidenceBound(model=mock_model, beta=0.1),
+            )
+            kwargs = mock_optimize_acqf.call_args[1]
+            self.assertIsInstance(kwargs["acq_function"], UpperConfidenceBound)
 
         A = torch.rand(1, bounds.shape[-1])
         b = torch.zeros([1, 1])
@@ -743,34 +761,86 @@ class TestMCAcquisitionFunctionInputConstructors(InputConstructorBaseTestCase):
         self.assertIs(acqf.model, mock_model)
         self.assertIs(acqf.objective, objective)
 
-    def test_construct_inputs_qUCB(self) -> None:
-        c = get_acqf_input_constructor(qUpperConfidenceBound)
+
+class TestQUpperConfidenceBoundInputConstructor(InputConstructorBaseTestCase):
+    acqf_class = qUpperConfidenceBound
+
+    def setUp(self, suppress_input_warnings: bool = True) -> None:
+        super().setUp(suppress_input_warnings=suppress_input_warnings)
+        self.c = get_acqf_input_constructor(self.acqf_class)
+
+    def test_confidence_bound(self) -> None:
         mock_model = self.mock_model
-        kwargs = c(model=mock_model, training_data=self.blockX_blockY)
+        kwargs = self.c(model=mock_model, training_data=self.blockX_blockY)
         self.assertEqual(kwargs["model"], mock_model)
-        self.assertIsNone(kwargs["objective"])
         self.assertIsNone(kwargs["X_pending"])
         self.assertIsNone(kwargs["sampler"])
         self.assertEqual(kwargs["beta"], 0.2)
-        acqf = qUpperConfidenceBound(**kwargs)
+        acqf = self.acqf_class(**kwargs)
         self.assertIs(acqf.model, mock_model)
 
+    def test_confidence_bound_with_objective(self) -> None:
         X_pending = torch.rand(2, 2)
         objective = LinearMCObjective(torch.rand(2))
-        kwargs = c(
-            model=mock_model,
+        kwargs = self.c(
+            model=self.mock_model,
             training_data=self.blockX_blockY,
             objective=objective,
             X_pending=X_pending,
             beta=0.1,
         )
-        self.assertEqual(kwargs["model"], mock_model)
+        self.assertEqual(kwargs["model"], self.mock_model)
         self.assertTrue(torch.equal(kwargs["objective"].weights, objective.weights))
         self.assertTrue(torch.equal(kwargs["X_pending"], X_pending))
         self.assertIsNone(kwargs["sampler"])
         self.assertEqual(kwargs["beta"], 0.1)
-        acqf = qUpperConfidenceBound(**kwargs)
-        self.assertIs(acqf.model, mock_model)
+        acqf = self.acqf_class(**kwargs)
+        self.assertIs(acqf.model, self.mock_model)
+
+    def test_confidence_bound_with_constraints_error(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Constraints require an X_baseline."):
+            self.c(
+                model=self.mock_model,
+                training_data=self.blockX_blockY,
+                constraints=torch.rand(2, 2),
+            )
+
+    def test_confidence_bound_with_constraints(self) -> None:
+        # these are needed for computing the infeasible cost
+        self.mock_model._posterior._mean = torch.zeros(2, 2)
+        self.mock_model._posterior._variance = torch.ones(2, 2)
+
+        X_baseline = torch.rand(2, 2)
+        outcome_constraints = (torch.tensor([[0.0, 1.0]]), torch.tensor([[0.5]]))
+        constraints = get_outcome_constraint_transforms(
+            outcome_constraints=outcome_constraints
+        )
+        for objective in (LinearMCObjective(torch.rand(2)), None):
+            with self.subTest(objective=objective):
+                kwargs = self.c(
+                    model=self.mock_model,
+                    training_data=self.blockX_blockY,
+                    objective=objective,
+                    constraints=constraints,
+                    X_baseline=X_baseline,
+                )
+                final_objective = kwargs["objective"]
+                self.assertIsInstance(final_objective, ConstrainedMCObjective)
+                if objective is None:
+                    self.assertIsInstance(
+                        final_objective.objective, IdentityMCObjective
+                    )
+                else:
+                    self.assertIs(final_objective.objective, objective)
+                self.assertIs(final_objective.constraints, constraints)
+                # test that we can construct the acquisition function
+                self.acqf_class(**kwargs)
+
+
+class TestQLowerConfidenceBoundInputConstructor(
+    TestQUpperConfidenceBoundInputConstructor
+):
+    acqf_class = qLowerConfidenceBound
 
 
 class TestMultiObjectiveAcquisitionFunctionInputConstructors(
@@ -1007,8 +1077,9 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             self.assertIs(kwargs["constraints"], constraints)
             self.assertEqual(kwargs["eta"], 1e-2)
 
-        with self.subTest("block designs"), self.assertRaisesRegex(
-            ValueError, "Field `X` must be shared"
+        with (
+            self.subTest("block designs"),
+            self.assertRaisesRegex(ValueError, "Field `X` must be shared"),
         ):
             c(
                 model=mm,
@@ -1043,7 +1114,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
     def test_construct_inputs_qLogNEHVI(self) -> None:
         self._test_construct_inputs_qNEHVI(qLogNoisyExpectedHypervolumeImprovement)
 
-    def _test_construct_inputs_qNEHVI(self, acqf_class: Type[AcquisitionFunction]):
+    def _test_construct_inputs_qNEHVI(self, acqf_class: type[AcquisitionFunction]):
         c = get_acqf_input_constructor(acqf_class)
         objective_thresholds = torch.rand(2)
 
@@ -1192,24 +1263,202 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
 
 class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCase):
     def test_construct_inputs_kg(self) -> None:
-        current_value = torch.tensor(1.23)
-        with mock.patch(
-            target="botorch.acquisition.input_constructors.optimize_objective",
-            return_value=(None, current_value),
-        ):
-            from botorch.acquisition import input_constructors
+        func = get_acqf_input_constructor(qKnowledgeGradient)
 
-            func = input_constructors.get_acqf_input_constructor(qKnowledgeGradient)
+        with self.subTest("test_with_current_value"):
+
+            current_value = torch.tensor(1.23)
+
+            with mock.patch(
+                target="botorch.acquisition.input_constructors.optimize_objective",
+                return_value=(None, current_value),
+            ):
+
+                kwargs = func(
+                    model=mock.Mock(),
+                    training_data=self.blockX_blockY,
+                    objective=LinearMCObjective(torch.rand(2)),
+                    bounds=self.bounds,
+                    num_fantasies=33,
+                    with_current_value=True,
+                )
+
+                self.assertEqual(kwargs["num_fantasies"], 33)
+                self.assertEqual(kwargs["current_value"], current_value)
+
+        with self.subTest("test_without_current_value"):
             kwargs = func(
                 model=mock.Mock(),
                 training_data=self.blockX_blockY,
                 objective=LinearMCObjective(torch.rand(2)),
                 bounds=self.bounds,
                 num_fantasies=33,
+                with_current_value=False,
+            )
+            self.assertNotIn("current_value", kwargs)
+
+    def test_construct_inputs_mfhvkg(self) -> None:
+
+        get_kwargs = get_acqf_input_constructor(
+            qMultiFidelityHypervolumeKnowledgeGradient
+        )
+
+        model = mock.Mock()
+        objective = IdentityMCMultiOutputObjective()
+        objective_thresholds = torch.rand(2)
+
+        with self.assertRaisesRegex(
+            NotImplementedError, "Trace observations are not currently supported"
+        ):
+            get_kwargs(
+                model=model,
+                training_data=self.blockX_blockY,
+                objective_thresholds=objective_thresholds,
+                objective=objective,
+                bounds=self.bounds,
+                num_fantasies=33,
+                num_pareto=11,
+                target_fidelities={0: 0.987},
+                fidelity_weights={0: 0.654},
+                cost_intercept=0.321,
+                num_trace_observations=5,
             )
 
+    @mock.patch("botorch.acquisition.input_constructors._get_hv_value_function")
+    def test_construct_inputs_hvkg(self, mock_get_hv_value_function) -> None:
+
+        current_value = torch.tensor(1.23)
+        objective_thresholds = torch.rand(2)
+
+        for acqf_cls in (
+            qHypervolumeKnowledgeGradient,
+            qMultiFidelityHypervolumeKnowledgeGradient,
+        ):
+
+            get_kwargs = get_acqf_input_constructor(acqf_cls)
+
+            model = mock.Mock()
+            objective = IdentityMCMultiOutputObjective()
+
+            input_constructor_extra_kwargs = {}
+            if acqf_cls == qMultiFidelityHypervolumeKnowledgeGradient:
+                input_constructor_extra_kwargs.update(
+                    target_fidelities={0: 0.987},
+                    fidelity_weights={0: 0.654},
+                    cost_intercept=0.321,
+                )
+
+            with mock.patch(
+                target="botorch.acquisition.input_constructors.optimize_acqf",
+                return_value=(None, current_value),
+            ) as mock_optimize_acqf:
+
+                kwargs = get_kwargs(
+                    model=model,
+                    training_data=self.blockX_blockY,
+                    objective_thresholds=objective_thresholds,
+                    objective=objective,
+                    bounds=self.bounds,
+                    num_fantasies=33,
+                    num_pareto=11,
+                    **input_constructor_extra_kwargs,
+                )
+
+                self.assertEqual(
+                    mock_get_hv_value_function.call_args.kwargs["model"], model
+                )
+                self.assertEqual(
+                    mock_get_hv_value_function.call_args.kwargs["objective"], objective
+                )
+                self.assertTrue(
+                    torch.equal(
+                        mock_get_hv_value_function.call_args.kwargs["ref_point"],
+                        objective_thresholds,
+                    )
+                )
+
+                # check that `optimize_acqf` is called with the desired value function
+                if acqf_cls == qMultiFidelityHypervolumeKnowledgeGradient:
+                    self.assertIsInstance(
+                        mock_optimize_acqf.call_args.kwargs["acq_function"],
+                        FixedFeatureAcquisitionFunction,
+                    )
+                else:
+                    self.assertEqual(
+                        mock_optimize_acqf.call_args.kwargs["acq_function"],
+                        mock_get_hv_value_function(),
+                    )
+
+            self.assertLessEqual(
+                {
+                    "model",
+                    "ref_point",
+                    "num_fantasies",
+                    "num_pareto",
+                    "objective",
+                    "current_value",
+                },
+                set(kwargs.keys()),
+            )
             self.assertEqual(kwargs["num_fantasies"], 33)
+            self.assertEqual(kwargs["num_pareto"], 11)
             self.assertEqual(kwargs["current_value"], current_value)
+            self.assertTrue(torch.equal(kwargs["ref_point"], objective_thresholds))
+
+            with self.subTest("custom objective"):
+                weights = torch.rand(2)
+                objective = WeightedMCMultiOutputObjective(weights=weights)
+                with mock.patch(
+                    target="botorch.acquisition.input_constructors.optimize_acqf",
+                    return_value=(None, current_value),
+                ) as mock_optimize_acqf:
+                    kwargs = get_kwargs(
+                        model=model,
+                        training_data=self.blockX_blockY,
+                        objective_thresholds=objective_thresholds,
+                        objective=objective,
+                        bounds=self.bounds,
+                        num_fantasies=33,
+                        num_pareto=11,
+                        **input_constructor_extra_kwargs,
+                    )
+                self.assertIsInstance(
+                    kwargs["objective"], WeightedMCMultiOutputObjective
+                )
+                self.assertTrue(
+                    torch.equal(kwargs["ref_point"], objective_thresholds * weights)
+                )
+
+            with self.subTest("risk measures"):
+                for use_preprocessing in (True, False):
+                    objective = MultiOutputExpectation(
+                        n_w=3,
+                        preprocessing_function=(
+                            WeightedMCMultiOutputObjective(torch.tensor([-1.0, -1.0]))
+                            if use_preprocessing
+                            else None
+                        ),
+                    )
+                    with mock.patch(
+                        target="botorch.acquisition.input_constructors.optimize_acqf",
+                        return_value=(None, current_value),
+                    ) as mock_optimize_acqf:
+                        kwargs = get_kwargs(
+                            model=model,
+                            training_data=self.blockX_blockY,
+                            objective_thresholds=objective_thresholds,
+                            objective=objective,
+                            bounds=self.bounds,
+                            num_fantasies=33,
+                            num_pareto=11,
+                            **input_constructor_extra_kwargs,
+                        )
+                    expected_obj_t = (
+                        -objective_thresholds
+                        if use_preprocessing
+                        else objective_thresholds
+                    )
+                    self.assertTrue(torch.equal(kwargs["ref_point"], expected_obj_t))
 
     def test_construct_inputs_mes(self) -> None:
         func = get_acqf_input_constructor(qMaxValueEntropy)
@@ -1293,28 +1542,49 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
                 )
 
     def test_construct_inputs_mfkg(self) -> None:
+        current_value = torch.tensor(1.23)
+
         constructor_args = {
-            "model": None,
+            "model": self.mock_model,
             "training_data": self.blockX_blockY,
-            "objective": None,
             "bounds": self.bounds,
-            "num_fantasies": 123,
             "target_fidelities": {0: 0.987},
+            "objective": None,
             "fidelity_weights": {0: 0.654},
             "cost_intercept": 0.321,
+            "num_fantasies": 123,
         }
 
         input_constructor = get_acqf_input_constructor(qMultiFidelityKnowledgeGradient)
         with mock.patch(
-            target="botorch.acquisition.input_constructors.construct_inputs_mf_base",
-            return_value={"foo": 0},
-        ), mock.patch(
-            target="botorch.acquisition.input_constructors.construct_inputs_qKG",
-            return_value={"bar": 1},
-        ):
+            target="botorch.acquisition.input_constructors.optimize_acqf",
+            return_value=(None, current_value),
+        ) as mock_optimize_acqf:
             inputs_mfkg = input_constructor(**constructor_args)
-        inputs_test = {"foo": 0, "bar": 1}
-        self.assertEqual(inputs_mfkg, inputs_test)
+
+            mock_optimize_acqf_kwargs = mock_optimize_acqf.call_args.kwargs
+
+            self.assertIsInstance(
+                mock_optimize_acqf_kwargs["acq_function"],
+                FixedFeatureAcquisitionFunction,
+            )
+            self.assertLessEqual(
+                {
+                    "model",
+                    "objective",
+                    "current_value",
+                    "project",
+                    "expand",
+                    "cost_aware_utility",
+                    "posterior_transform",
+                    "num_fantasies",
+                },
+                set(inputs_mfkg.keys()),
+            )
+            self.assertEqual(
+                inputs_mfkg["num_fantasies"], constructor_args["num_fantasies"]
+            )
+            self.assertEqual(inputs_mfkg["current_value"], current_value)
 
     def test_construct_inputs_mfmes(self) -> None:
         target_fidelities = {0: 0.987}
@@ -1328,12 +1598,17 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
             "cost_intercept": 0.321,
         }
         input_constructor = get_acqf_input_constructor(qMultiFidelityMaxValueEntropy)
-        with mock.patch(
-            target="botorch.acquisition.input_constructors.construct_inputs_mf_base",
-            return_value={"foo": 0},
-        ), mock.patch(
-            target="botorch.acquisition.input_constructors.construct_inputs_qMES",
-            return_value={"bar": 1},
+        with (
+            mock.patch(
+                target=(
+                    "botorch.acquisition.input_constructors.construct_inputs_mf_base"
+                ),
+                return_value={"foo": 0},
+            ),
+            mock.patch(
+                target="botorch.acquisition.input_constructors.construct_inputs_qMES",
+                return_value={"bar": 1},
+            ),
         ):
             inputs_mfmes = input_constructor(**constructor_args)
         inputs_test = {"foo": 0, "bar": 1, "num_fantasies": 64}
@@ -1392,6 +1667,25 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
 
         qBayesianActiveLearningByDisagreement(**kwargs)
 
+    def test_construct_inputs_nipv(self) -> None:
+        X = torch.rand(3, 2)
+        Y = torch.rand(3, 1)
+        blockX_blockY = {
+            0: SupervisedDataset(X, Y, feature_names=["X1", "X2"], outcome_names=["Y"])
+        }
+
+        func = get_acqf_input_constructor(qNegIntegratedPosteriorVariance)
+        model = SingleTaskGP(blockX_blockY[0].X, blockX_blockY[0].Y)
+        kwargs = func(
+            model=model,
+            bounds=self.bounds,
+            num_mc_points=17,
+            X_pending=torch.rand(3, 2, dtype=torch.double),
+            training_data=blockX_blockY,
+        )
+        nipv = qNegIntegratedPosteriorVariance(**kwargs)
+        self.assertEqual(nipv.mc_points.shape, torch.Size([17, 2]))
+
 
 class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
     """End-to-end tests, ensuring that the input constructors are functional."""
@@ -1401,7 +1695,12 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
         # {key: (list of acquisition functions, arguments they accept)}
         self.cases = {
             "PosteriorMean-type": (
-                [PosteriorMean, UpperConfidenceBound, qUpperConfidenceBound],
+                [
+                    PosteriorMean,
+                    UpperConfidenceBound,
+                    qUpperConfidenceBound,
+                    qLowerConfidenceBound,
+                ],
                 {"model": self.mock_model},
             ),
         }
@@ -1437,7 +1736,19 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
             },
         )
         self.cases["MF look-ahead"] = (
-            [qMultiFidelityKnowledgeGradient, qMultiFidelityMaxValueEntropy],
+            [qMultiFidelityMaxValueEntropy],
+            {
+                "model": kg_model,
+                "training_data": self.blockX_blockY,
+                "bounds": bounds,
+                "target_fidelities": {0: 0.987},
+                "num_fantasies": 30,
+            },
+        )
+        bounds = torch.ones((2, 2))
+        kg_model = SingleTaskGP(train_X=torch.rand((3, 2)), train_Y=torch.rand((3, 1)))
+        self.cases["MF look-ahead (KG)"] = (
+            [qMultiFidelityKnowledgeGradient],
             {
                 "model": kg_model,
                 "training_data": self.blockX_blockY,
@@ -1466,6 +1777,34 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
                 "training_data": self.blockX_blockY,
             },
         )
+
+        X = torch.rand(3, 2)
+        Y1 = torch.rand(3, 1)
+        Y2 = torch.rand(3, 1)
+        m1 = SingleTaskGP(X, Y1)
+        m2 = SingleTaskGP(X, Y2)
+        model_list = ModelListGP(m1, m2)
+        self.cases["HV Look-ahead"] = (
+            [qHypervolumeKnowledgeGradient],
+            {
+                "model": model_list,
+                "training_data": self.blockX_blockY,
+                "bounds": bounds,
+                "objective_thresholds": objective_thresholds,
+            },
+        )
+        self.cases["MF HV Look-ahead"] = (
+            [qMultiFidelityHypervolumeKnowledgeGradient],
+            {
+                "model": model_list,
+                "training_data": self.blockX_blockY,
+                "bounds": bounds,
+                "target_fidelities": {0: 0.987},
+                "num_fantasies": 30,
+                "objective_thresholds": objective_thresholds,
+            },
+        )
+
         pref_model = self.mock_model
         pref_model.dim = 2
         pref_model.datapoints = torch.tensor([])
@@ -1495,6 +1834,14 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
                 "model": SaasFullyBayesianSingleTaskGP(
                     self.blockX_blockY[0].X, self.blockX_blockY[0].Y
                 ),
+            },
+        )
+        self.cases["ActiveLearning"] = (
+            [qNegIntegratedPosteriorVariance],
+            {
+                "model": SingleTaskGP(self.blockX_blockY[0].X, self.blockX_blockY[0].Y),
+                "training_data": self.blockX_blockY,
+                "bounds": self.bounds,
             },
         )
 

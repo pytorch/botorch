@@ -10,11 +10,11 @@ Multi-objective variants of the LogEI family of acquisition functions, see
 
 from __future__ import annotations
 
-from typing import Callable, List, Optional, Tuple, Union
+from typing import Callable, Optional, Union
 
 import torch
 from botorch.acquisition.logei import TAU_MAX, TAU_RELU
-from botorch.acquisition.multi_objective import MultiObjectiveMCAcquisitionFunction
+from botorch.acquisition.multi_objective.base import MultiObjectiveMCAcquisitionFunction
 from botorch.acquisition.multi_objective.objective import MCMultiOutputObjective
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
@@ -54,13 +54,13 @@ class qLogExpectedHypervolumeImprovement(
     def __init__(
         self,
         model: Model,
-        ref_point: Union[List[float], Tensor],
+        ref_point: Union[list[float], Tensor],
         partitioning: NondominatedPartitioning,
         sampler: Optional[MCSampler] = None,
         objective: Optional[MCMultiOutputObjective] = None,
-        constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
         X_pending: Optional[Tensor] = None,
-        eta: Optional[Union[Tensor, float]] = 1e-2,
+        eta: Union[Tensor, float] = 1e-2,
         fat: bool = True,
         tau_relu: float = TAU_RELU,
         tau_max: float = TAU_MAX,
@@ -267,7 +267,7 @@ class qLogExpectedHypervolumeImprovement(
         return logmeanexp(logsumexp(log_areas_per_segment, dim=-1), dim=0)
 
     def _log_improvement(
-        self, obj_subsets: Tensor, view_shape: Union[Tuple, torch.Size]
+        self, obj_subsets: Tensor, view_shape: Union[tuple, torch.Size]
     ) -> Tensor:
         # smooth out the clamp and take the log (previous step 3)
         # subtract cell lower bounds, clamp min at zero, but first
@@ -282,7 +282,7 @@ class qLogExpectedHypervolumeImprovement(
         return log_Zi  # mc_samples x batch_shape x num_cells x q_choose_i x i x m
 
     def _log_cell_lengths(
-        self, log_improvement_i: Tensor, view_shape: Union[Tuple, torch.Size]
+        self, log_improvement_i: Tensor, view_shape: Union[tuple, torch.Size]
     ) -> Tensor:
         cell_upper_bounds = self.cell_upper_bounds.clamp_max(
             1e10 if log_improvement_i.dtype == torch.double else 1e8
@@ -327,13 +327,13 @@ class qLogNoisyExpectedHypervolumeImprovement(
     def __init__(
         self,
         model: Model,
-        ref_point: Union[List[float], Tensor],
+        ref_point: Union[list[float], Tensor],
         X_baseline: Tensor,
         sampler: Optional[MCSampler] = None,
         objective: Optional[MCMultiOutputObjective] = None,
-        constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
         X_pending: Optional[Tensor] = None,
-        eta: Optional[Union[Tensor, float]] = 1e-3,
+        eta: Union[Tensor, float] = 1e-3,
         prune_baseline: bool = False,
         alpha: float = 0.0,
         cache_pending: bool = True,

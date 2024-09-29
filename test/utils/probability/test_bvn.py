@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 from itertools import count
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Any, Callable, Optional, Union
 
 import torch
 from botorch.exceptions import UnsupportedError
@@ -24,7 +24,7 @@ from torch import Tensor
 
 
 def run_gaussian_estimator(
-    estimator: Callable[[Tensor], Tuple[Tensor, Union[Tensor, float, int]]],
+    estimator: Callable[[Tensor], tuple[Tensor, Union[Tensor, float, int]]],
     sqrt_cov: Tensor,
     num_samples: int,
     batch_limit: Optional[int] = None,
@@ -64,7 +64,7 @@ class TestBVN(BotorchTestCase):
     def setUp(
         self,
         nprobs_per_coeff: int = 3,
-        bound_range: Tuple[float, float] = (-3.0, 3.0),
+        bound_range: tuple[float, float] = (-3.0, 3.0),
         mc_num_samples: int = 10000,
         mc_batch_limit: int = 1000,
         mc_atol_multiplier: float = 4.0,
@@ -106,7 +106,7 @@ class TestBVN(BotorchTestCase):
         self.sqrt_covariances[:, 1, 1] = (1 - self.correlations**2) ** 0.5
 
     @property
-    def tkwargs(self) -> Dict[str, Any]:
+    def tkwargs(self) -> dict[str, Any]:
         return {"dtype": self.dtype, "device": self.device}
 
     @property

@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import List, Optional
+from typing import Optional
 
 import torch
 from botorch.acquisition.objective import GenericMCObjective, MCAcquisitionObjective
@@ -72,7 +72,7 @@ class IdentityMCMultiOutputObjective(MCMultiOutputObjective):
     """
 
     def __init__(
-        self, outcomes: Optional[List[int]] = None, num_outcomes: Optional[int] = None
+        self, outcomes: Optional[list[int]] = None, num_outcomes: Optional[int] = None
     ) -> None:
         r"""Initialize Objective.
 
@@ -114,7 +114,7 @@ class WeightedMCMultiOutputObjective(IdentityMCMultiOutputObjective):
     def __init__(
         self,
         weights: Tensor,
-        outcomes: Optional[List[int]] = None,
+        outcomes: Optional[list[int]] = None,
         num_outcomes: Optional[int] = None,
     ) -> None:
         r"""Initialize Objective.
@@ -147,7 +147,7 @@ class FeasibilityWeightedMCMultiOutputObjective(MCMultiOutputObjective):
         self,
         model: Model,
         X_baseline: Tensor,
-        constraint_idcs: List[int],
+        constraint_idcs: list[int],
         objective: Optional[MCMultiOutputObjective] = None,
     ) -> None:
         r"""Construct a feasibility-weighted objective.

@@ -11,7 +11,7 @@ Modules to add regularization to acquisition functions.
 from __future__ import annotations
 
 import math
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, Optional
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -112,7 +112,7 @@ class GroupLassoPenalty(torch.nn.Module):
     r"""Group lasso penalty class to be added to any arbitrary acquisition function
     to construct a PenalizedAcquisitionFunction."""
 
-    def __init__(self, init_point: Tensor, groups: List[List[int]]):
+    def __init__(self, init_point: Tensor, groups: list[list[int]]):
         r"""Initializing Group-Lasso regularization.
 
         Args:
@@ -246,7 +246,7 @@ class PenalizedAcquisitionFunction(AcquisitionFunction):
             )
 
 
-def group_lasso_regularizer(X: Tensor, groups: List[List[int]]) -> Tensor:
+def group_lasso_regularizer(X: Tensor, groups: list[list[int]]) -> Tensor:
     r"""Computes the group lasso regularization function for the given point.
 
     Args:

@@ -15,18 +15,8 @@ from __future__ import annotations
 import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    Mapping,
-    Optional,
-    Set,
-    TYPE_CHECKING,
-    TypeVar,
-    Union,
-)
+from collections.abc import Mapping
+from typing import Any, Callable, Optional, TYPE_CHECKING, Union
 
 import numpy as np
 import torch
@@ -47,11 +37,10 @@ from botorch.utils.transforms import is_fully_bayesian
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 from torch import Tensor
 from torch.nn import Module, ModuleDict, ModuleList
+from typing_extensions import Self
 
 if TYPE_CHECKING:
     from botorch.acquisition.objective import PosteriorTransform  # pragma: no cover
-
-TFantasizeMixin = TypeVar("TFantasizeMixin", bound="FantasizeMixin")
 
 
 class Model(Module, ABC):
@@ -92,7 +81,7 @@ class Model(Module, ABC):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[List[int]] = None,
+        output_indices: Optional[list[int]] = None,
         observation_noise: Union[bool, Tensor] = False,
         posterior_transform: Optional[PosteriorTransform] = None,
     ) -> Posterior:
@@ -144,7 +133,7 @@ class Model(Module, ABC):
         cls_name = self.__class__.__name__
         raise NotImplementedError(f"{cls_name} does not define num_outputs property")
 
-    def subset_output(self, idcs: List[int]) -> Model:
+    def subset_output(self, idcs: list[int]) -> Model:
         r"""Subset the model along the output dimension.
 
         Args:
@@ -185,7 +174,7 @@ class Model(Module, ABC):
     def construct_inputs(
         cls,
         training_data: SupervisedDataset,
-    ) -> Dict[str, Union[BotorchContainer, Tensor]]:
+    ) -> dict[str, Union[BotorchContainer, Tensor]]:
         """
         Construct `Model` keyword arguments from a `SupervisedDataset`.
 
@@ -275,7 +264,7 @@ class Model(Module, ABC):
         return super().train(mode=mode)
 
     @property
-    def dtypes_of_buffers(self) -> Set[torch.dtype]:
+    def dtypes_of_buffers(self) -> set[torch.dtype]:
         return {t.dtype for t in self.buffers() if t is not None}
 
 
@@ -299,11 +288,7 @@ class FantasizeMixin(ABC):
     """
 
     @abstractmethod
-    def condition_on_observations(
-        self: TFantasizeMixin,
-        X: Tensor,
-        Y: Tensor,
-    ) -> TFantasizeMixin:
+    def condition_on_observations(self, X: Tensor, Y: Tensor) -> Self:
         """
         Classes that inherit from `FantasizeMixin` must implement
         a `condition_on_observations` method.
@@ -332,16 +317,13 @@ class FantasizeMixin(ABC):
         a `transform_inputs` method.
         """
 
-    # When Python 3.11 arrives we can start annotating return types like
-    # this as
-    # 'Self', but at this point the verbose 'T...' syntax is needed.
     def fantasize(
-        self: TFantasizeMixin,
+        self,
         X: Tensor,
         sampler: MCSampler,
         observation_noise: Optional[Tensor] = None,
         **kwargs: Any,
-    ) -> TFantasizeMixin:
+    ) -> Self:
         r"""Construct a fantasy model.
 
         Constructs a fantasy model in the following fashion:
@@ -443,8 +425,8 @@ class ModelList(Model):
         self.models = ModuleList(models)
 
     def _get_group_subset_indices(
-        self, idcs: Optional[List[int]]
-    ) -> Dict[int, List[int]]:
+        self, idcs: Optional[list[int]]
+    ) -> dict[int, list[int]]:
         r"""Convert global subset indices to indices for the individual models.
 
         Args:
@@ -460,7 +442,7 @@ class ModelList(Model):
         output_sizes = [model.num_outputs for model in self.models]
         cum_output_sizes = np.cumsum(output_sizes)
         idcs = [idx % cum_output_sizes[-1] for idx in idcs]
-        group_indices: Dict[int, List[int]] = defaultdict(list)
+        group_indices: dict[int, list[int]] = defaultdict(list)
         for idx in idcs:
             grp_idx = np.argwhere(idx < cum_output_sizes)[0].item()
             sub_idx = idx - int(np.sum(output_sizes[:grp_idx]))
@@ -470,7 +452,7 @@ class ModelList(Model):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[List[int]] = None,
+        output_indices: Optional[list[int]] = None,
         observation_noise: Union[bool, Tensor] = False,
         posterior_transform: Optional[Callable[[PosteriorList], Posterior]] = None,
     ) -> Posterior:
@@ -551,7 +533,7 @@ class ModelList(Model):
         """
         return sum(model.num_outputs for model in self.models)
 
-    def subset_output(self, idcs: List[int]) -> Model:
+    def subset_output(self, idcs: list[int]) -> Model:
         r"""Subset the model along the output dimension.
 
         Args:
@@ -581,7 +563,7 @@ class ModelList(Model):
             return subset_models[0]
         return self.__class__(*subset_models)
 
-    def transform_inputs(self, X: Tensor) -> List[Tensor]:
+    def transform_inputs(self, X: Tensor) -> list[Tensor]:
         r"""Individually transform the inputs for each model.
 
         Args:

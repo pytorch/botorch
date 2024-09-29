@@ -20,16 +20,13 @@ References
 from __future__ import annotations
 
 from math import pi
-
-from typing import Callable, Optional, Tuple, Union
+from typing import Callable, Optional, Union
 
 import torch
 from botorch.acquisition.max_value_entropy_search import qMaxValueEntropy
+from botorch.acquisition.multi_objective.base import MultiObjectiveMCAcquisitionFunction
 from botorch.acquisition.multi_objective.joint_entropy_search import (
     LowerBoundMultiObjectiveEntropySearch,
-)
-from botorch.acquisition.multi_objective.monte_carlo import (
-    MultiObjectiveMCAcquisitionFunction,
 )
 from botorch.models.converter import (
     batched_multi_output_to_single_output,
@@ -64,7 +61,7 @@ class qMultiObjectiveMaxValueEntropy(
         _default_sample_shape: The `sample_shape` for the default sampler.
 
     Example:
-        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> model = SingleTaskGP(train_X, train_Y, outcome_transform=None)
         >>> MESMO = qMultiObjectiveMaxValueEntropy(model, sample_pfs)
         >>> mesmo = MESMO(test_X)
     """
@@ -322,7 +319,7 @@ class qLowerBoundMultiObjectiveMaxValueEntropySearch(
 
     def _compute_monte_carlo_variables(
         self, posterior: GPyTorchPosterior
-    ) -> Tuple[Tensor, Tensor]:
+    ) -> tuple[Tensor, Tensor]:
         r"""Compute the samples and log-probability associated with a posterior
         distribution.
 

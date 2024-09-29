@@ -46,7 +46,7 @@ class TestUtils(BotorchTestCase):
 
 
 class DummyMCMultiOutputObjective(MCMultiOutputObjective):
-    def forward(self, samples: Tensor) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None) -> Tensor:
         return samples
 
 
@@ -130,13 +130,12 @@ class TestMultiObjectiveUtils(BotorchTestCase):
                 X_pruned = prune_inferior_points_multi_objective(
                     model=mm, X=X, ref_point=ref_point, max_frac=2 / 3
                 )
-            if self.device.type == "cuda":
-                # sorting has different order on cuda
-                self.assertTrue(
-                    torch.equal(X_pruned, X[[2, 1]]) or torch.equal(X_pruned, X[[1, 2]])
+            self.assertTrue(
+                torch.equal(
+                    torch.sort(X_pruned, stable=True).values,
+                    torch.sort(X[:2], stable=True).values,
                 )
-            else:
-                self.assertTrue(torch.equal(X_pruned, X[:2]))
+            )
             # test that zero-probability is in fact pruned
             samples[2, 0, 0] = 10
             with mock.patch.object(MockPosterior, "rsample", return_value=samples):
@@ -276,10 +275,7 @@ class TestThompsonSampling(BotorchTestCase):
         input_dim = 3
         num_initial = 5
         tkwargs = {"device": self.device}
-        optimizer_kwargs = {
-            "pop_size": 1000,
-            "max_tries": 5,
-        }
+        optimizer_kwargs = {"pop_size": 1000, "max_tries": 5}
 
         for (
             dtype,
@@ -350,10 +346,7 @@ class TestThompsonSampling(BotorchTestCase):
         input_dim = 3
         num_initial = 5
         tkwargs = {"device": self.device}
-        optimizer_kwargs = {
-            "pop_size": 100,
-            "max_tries": 1,
-        }
+        optimizer_kwargs = {"pop_size": 100, "max_tries": 1}
         num_samples = 2
         num_points = 1
 

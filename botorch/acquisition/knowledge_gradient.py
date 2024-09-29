@@ -27,7 +27,7 @@ and [Wu2016parallelkg]_.
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Any, Callable, Dict, Optional, Tuple, Type
+from typing import Any, Callable, Optional
 
 import torch
 from botorch import settings
@@ -329,8 +329,8 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
         cost_aware_utility: Optional[CostAwareUtility] = None,
         project: Callable[[Tensor], Tensor] = lambda X: X,
         expand: Callable[[Tensor], Tensor] = lambda X: X,
-        valfunc_cls: Optional[Type[AcquisitionFunction]] = None,
-        valfunc_argfac: Optional[Callable[[Model], Dict[str, Any]]] = None,
+        valfunc_cls: Optional[type[AcquisitionFunction]] = None,
+        valfunc_argfac: Optional[Callable[[Model], dict[str, Any]]] = None,
     ) -> None:
         r"""Multi-Fidelity q-Knowledge Gradient (one-shot optimization).
 
@@ -520,12 +520,12 @@ def _get_value_function(
     posterior_transform: Optional[PosteriorTransform] = None,
     sampler: Optional[MCSampler] = None,
     project: Optional[Callable[[Tensor], Tensor]] = None,
-    valfunc_cls: Optional[Type[AcquisitionFunction]] = None,
-    valfunc_argfac: Optional[Callable[[Model], Dict[str, Any]]] = None,
+    valfunc_cls: Optional[type[AcquisitionFunction]] = None,
+    valfunc_argfac: Optional[Callable[[Model], dict[str, Any]]] = None,
 ) -> AcquisitionFunction:
     r"""Construct value function (i.e. inner acquisition function)."""
     if valfunc_cls is not None:
-        common_kwargs: Dict[str, Any] = {
+        common_kwargs: dict[str, Any] = {
             "model": model,
             "posterior_transform": posterior_transform,
         }
@@ -556,7 +556,7 @@ def _get_value_function(
         )
 
 
-def _split_fantasy_points(X: Tensor, n_f: int) -> Tuple[Tensor, Tensor]:
+def _split_fantasy_points(X: Tensor, n_f: int) -> tuple[Tensor, Tensor]:
     r"""Split a one-shot optimization input into actual and fantasy points
 
     Args:

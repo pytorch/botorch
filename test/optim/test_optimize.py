@@ -7,6 +7,7 @@
 import itertools
 import warnings
 from itertools import product
+from typing import Any
 from unittest import mock
 
 import numpy as np
@@ -462,11 +463,19 @@ class TestOptimizeAcqf(BotorchTestCase):
             )
 
     def test_optimize_acqf_sequential_q_constraint_notimplemented(self):
-        # Sequential acquisition function not supported with q-constraints
-        with self.assertRaises(UnsupportedError):
+        # Sequential optimization is not supported with constraints across q-dim.
+        shared_args: dict[str, Any] = {
+            "acq_function": MockAcquisitionFunction(),
+            "bounds": torch.stack([torch.zeros(3), 4 * torch.ones(3)]),
+            "num_restarts": 2,
+            "raw_samples": 10,
+            "q": 3,
+            "sequential": True,
+        }
+        with self.assertRaisesRegex(
+            UnsupportedError, "Inter-point constraints .* linear equality"
+        ):
             optimize_acqf(
-                acq_function=MockAcquisitionFunction(),
-                bounds=torch.stack([torch.zeros(3), 4 * torch.ones(3)]),
                 equality_constraints=[
                     (
                         torch.tensor(
@@ -478,16 +487,12 @@ class TestOptimizeAcqf(BotorchTestCase):
                         0,
                     ),
                 ],
-                q=3,
-                num_restarts=2,
-                raw_samples=10,
-                return_best_only=True,
-                sequential=True,
+                **shared_args,
             )
-        with self.assertRaises(UnsupportedError):
+        with self.assertRaisesRegex(
+            UnsupportedError, "Inter-point constraints .* linear inequality"
+        ):
             optimize_acqf(
-                acq_function=MockAcquisitionFunction(),
-                bounds=torch.stack([torch.zeros(3), 4 * torch.ones(3)]),
                 inequality_constraints=[
                     (
                         torch.tensor(
@@ -499,11 +504,17 @@ class TestOptimizeAcqf(BotorchTestCase):
                         0,
                     ),
                 ],
-                q=3,
-                num_restarts=2,
-                raw_samples=10,
-                return_best_only=True,
-                sequential=True,
+                **shared_args,
+            )
+        with self.assertRaisesRegex(
+            UnsupportedError, "Inter-point constraints .* non-linear inequality"
+        ):
+            optimize_acqf(
+                nonlinear_inequality_constraints=[
+                    (lambda X: X.sum(dim=(-1, -2)), False)
+                ],
+                ic_generator=lambda *args, **kwargs: torch.zeros(1, 1, 3),
+                **shared_args,
             )
 
     def test_optimize_acqf_batch_limit(self) -> None:
@@ -1058,7 +1069,7 @@ class TestOptimizeAcqf(BotorchTestCase):
                     num_restarts=num_restarts,
                     raw_samples=raw_samples,
                     options=options,
-                    nonlinear_inequality_constraints=[nlc],
+                    nonlinear_inequality_constraints=[(nlc, True)],
                     sequential=True,
                     ic_generator=mock_gen_batch_initial_conditions,
                     gen_candidates=mock_gen_candidates_scipy,

@@ -4,7 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Optional, Tuple
+from typing import Optional
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
@@ -77,7 +77,7 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
         return batch_shape + sampling_shape
 
     @property
-    def batch_range(self) -> Tuple[int, int]:
+    def batch_range(self) -> tuple[int, int]:
         r"""The t-batch range.
 
         This is used in samplers to identify the t-batch component of the

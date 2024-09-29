@@ -4,12 +4,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import torch
+from botorch.models.utils.gpytorch_modules import get_covar_module_with_dim_scaled_prior
 from gpytorch.constraints import Positive
 from gpytorch.kernels.kernel import Kernel
-from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.priors.torch_priors import GammaPrior
 from linear_operator.operators import DiagLinearOperator
 from linear_operator.operators.dense_linear_operator import DenseLinearOperator
@@ -17,7 +17,7 @@ from torch import Tensor
 from torch.nn import ModuleList
 
 
-def get_order(indices: List[int]) -> List[int]:
+def get_order(indices: list[int]) -> list[int]:
     r"""Get the order indices as integers ranging from 0 to the number of indices.
 
     Args:
@@ -29,7 +29,7 @@ def get_order(indices: List[int]) -> List[int]:
     return [i % len(indices) for i in indices]
 
 
-def is_contiguous(indices: List[int]) -> bool:
+def is_contiguous(indices: list[int]) -> bool:
     r"""Check if the list of integers is contiguous.
 
     Args:
@@ -41,7 +41,7 @@ def is_contiguous(indices: List[int]) -> bool:
     return set(indices) == set(range(min_idx, min_idx + len(indices)))
 
 
-def get_permutation(decomposition: Dict[str, List[int]]) -> Optional[List[int]]:
+def get_permutation(decomposition: dict[str, list[int]]) -> Optional[list[int]]:
     """Construct permutation to reorder the parameters such that:
 
     1) the parameters for each context are contiguous.
@@ -74,7 +74,7 @@ def get_permutation(decomposition: Dict[str, List[int]]) -> Optional[List[int]]:
     return permutation
 
 
-def _create_new_permutation(decomposition: Dict[str, List[int]]) -> List[int]:
+def _create_new_permutation(decomposition: dict[str, list[int]]) -> list[int]:
     # make contiguous and ordered
     permutation = []
     for active_parameters in decomposition.values():
@@ -95,13 +95,13 @@ class LCEAKernel(Kernel):
 
     def __init__(
         self,
-        decomposition: Dict[str, List[int]],
+        decomposition: dict[str, list[int]],
         batch_shape: torch.Size,
         train_embedding: bool = True,
-        cat_feature_dict: Optional[Dict] = None,
-        embs_feature_dict: Optional[Dict] = None,
-        embs_dim_list: Optional[List[int]] = None,
-        context_weight_dict: Optional[Dict] = None,
+        cat_feature_dict: Optional[dict] = None,
+        embs_feature_dict: Optional[dict] = None,
+        embs_dim_list: Optional[list[int]] = None,
+        context_weight_dict: Optional[dict] = None,
         device: Optional[torch.device] = None,
     ) -> None:
         r"""
@@ -158,18 +158,14 @@ class LCEAKernel(Kernel):
         if train_embedding:
             self._set_emb_layers()
         # task covariance matrix
-        self.task_covar_module = MaternKernel(
-            nu=2.5,
+        self.task_covar_module = get_covar_module_with_dim_scaled_prior(
             ard_num_dims=self.n_embs,
             batch_shape=batch_shape,
-            lengthscale_prior=GammaPrior(3.0, 6.0),
         )
         # base kernel
-        self.base_kernel = MaternKernel(
-            nu=2.5,
+        self.base_kernel = get_covar_module_with_dim_scaled_prior(
             ard_num_dims=self.num_param,
             batch_shape=batch_shape,
-            lengthscale_prior=GammaPrior(3.0, 6.0),
         )
         # outputscales for each context (note this is like sqrt of outputscale)
         self.context_weight = None
@@ -216,9 +212,9 @@ class LCEAKernel(Kernel):
 
     def _set_context_features(
         self,
-        cat_feature_dict: Optional[Dict] = None,
-        embs_feature_dict: Optional[Dict] = None,
-        embs_dim_list: Optional[List[int]] = None,
+        cat_feature_dict: Optional[dict] = None,
+        embs_feature_dict: Optional[dict] = None,
+        embs_dim_list: Optional[list[int]] = None,
     ) -> None:
         """Set context categorical features and continuous embedding features.
         If cat_feature_dict is None, context indices will be used; If embs_dim_list

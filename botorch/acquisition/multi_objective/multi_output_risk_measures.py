@@ -29,7 +29,7 @@ References
 import warnings
 from abc import ABC, abstractmethod
 from math import ceil
-from typing import Callable, List, Optional, Union
+from typing import Callable, Optional, Union
 
 import torch
 from botorch.acquisition.multi_objective.objective import (
@@ -295,7 +295,7 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
         self.filter_dominated = filter_dominated
         self.use_counting = use_counting
 
-    def get_mvar_set_via_counting(self, Y: Tensor) -> List[Tensor]:
+    def get_mvar_set_via_counting(self, Y: Tensor) -> list[Tensor]:
         r"""Find MVaR set based on the definition in [Prekopa2012MVaR]_.
 
         This first calculates the CDF for each point on the extended domain of the
@@ -386,7 +386,7 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
             mvar = alpha_level_points
         return [mvar]
 
-    def get_mvar_set_vectorized(self, Y: Tensor) -> List[Tensor]:
+    def get_mvar_set_vectorized(self, Y: Tensor) -> list[Tensor]:
         r"""Find MVaR set based on the definition in [Prekopa2012MVaR]_.
 
         This first calculates the CDF for each point on the extended domain of the
@@ -549,9 +549,9 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
         self,
         alpha: float,
         n_w: int,
-        chebyshev_weights: Union[Tensor, List[float]],
+        chebyshev_weights: Union[Tensor, list[float]],
         baseline_Y: Optional[Tensor] = None,
-        ref_point: Optional[Union[Tensor, List[float]]] = None,
+        ref_point: Optional[Union[Tensor, list[float]]] = None,
         preprocessing_function: Optional[Callable[[Tensor], Tensor]] = None,
     ) -> None:
         r"""Transform the posterior samples to samples of a risk measure.
@@ -629,7 +629,7 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
         return self._chebyshev_weights
 
     @chebyshev_weights.setter
-    def chebyshev_weights(self, chebyshev_weights: Union[Tensor, List[float]]) -> None:
+    def chebyshev_weights(self, chebyshev_weights: Union[Tensor, list[float]]) -> None:
         r"""Update the Chebyshev weights.
 
         Invalidates the cached Chebyshev objective.

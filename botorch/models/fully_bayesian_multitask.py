@@ -8,7 +8,8 @@ r"""Multi-task Gaussian Process Regression models with fully Bayesian inference.
 """
 
 
-from typing import Any, Dict, List, Mapping, NoReturn, Optional, Tuple
+from collections.abc import Mapping
+from typing import Any, NoReturn, Optional
 
 import pyro
 import torch
@@ -127,8 +128,8 @@ class MultitaskSaasPyroModel(SaasPyroModel):
         )
 
     def load_mcmc_samples(
-        self, mcmc_samples: Dict[str, Tensor]
-    ) -> Tuple[Mean, Kernel, Likelihood, Kernel, Parameter]:
+        self, mcmc_samples: dict[str, Tensor]
+    ) -> tuple[Mean, Kernel, Likelihood, Kernel, Parameter]:
         r"""Load the MCMC samples into the mean_module, covar_module, and likelihood."""
         tkwargs = {"device": self.train_X.device, "dtype": self.train_X.dtype}
         num_mcmc_samples = len(mcmc_samples["mean"])
@@ -166,7 +167,7 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
 
     This model assumes that the inputs have been normalized to [0, 1]^d and that the
     output has been stratified standardized to have zero mean and unit variance for
-    each task.The SAAS model [Eriksson2021saasbo]_ with a Matern-5/2 is used as data
+    each task. The SAAS model [Eriksson2021saasbo]_ with a Matern-5/2 is used as data
     kernel by default.
 
     You are expected to use `fit_fully_bayesian_model_nuts` to fit this model as it
@@ -196,9 +197,9 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
         train_Y: Tensor,
         task_feature: int,
         train_Yvar: Optional[Tensor] = None,
-        output_tasks: Optional[List[int]] = None,
+        output_tasks: Optional[list[int]] = None,
         rank: Optional[int] = None,
-        all_tasks: Optional[List[int]] = None,
+        all_tasks: Optional[list[int]] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
         pyro_model: Optional[MultitaskSaasPyroModel] = None,
@@ -242,6 +243,7 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
                 X=train_X, input_transform=input_transform
             )
         if outcome_transform is not None:
+            outcome_transform.train()  # Ensure we learn parameters here on init
             train_Y, train_Yvar = outcome_transform(train_Y, train_Yvar)
         if train_Yvar is not None:  # Clamp after transforming
             train_Yvar = train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL)
@@ -253,6 +255,11 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
             task_feature=task_feature,
             output_tasks=output_tasks,
             rank=rank,
+            # We already transformed the data above, this avoids applying the
+            # default `Standardize` transform twice. As outcome_transform is
+            # set on `self` below, it will be applied to the posterior in the
+            # `posterior` method of `MultiTaskGP`.
+            outcome_transform=None,
         )
         if all_tasks is not None and self._expected_task_values != set(all_tasks):
             raise NotImplementedError(
@@ -324,7 +331,7 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
                 "`fit_fully_bayesian_model_nuts` to fit the model."
             )
 
-    def load_mcmc_samples(self, mcmc_samples: Dict[str, Tensor]) -> None:
+    def load_mcmc_samples(self, mcmc_samples: dict[str, Tensor]) -> None:
         r"""Load the MCMC hyperparameter samples into the model.
 
         This method will be called by `fit_fully_bayesian_model_nuts` when the model
@@ -341,7 +348,7 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[List[int]] = None,
+        output_indices: Optional[list[int]] = None,
         observation_noise: bool = False,
         posterior_transform: Optional[PosteriorTransform] = None,
         **kwargs: Any,

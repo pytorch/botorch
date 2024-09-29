@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, Optional
 
 from botorch.models.approximate_gp import ApproximateGPyTorchModel
 from botorch.models.model_list_gp_regression import ModelListGP
@@ -109,7 +109,7 @@ def _draw_kernel_feature_paths_ExactGP(
 @DrawKernelFeaturePaths.register(ModelListGP)
 def _draw_kernel_feature_paths_list(
     model: ModelListGP,
-    join: Optional[Callable[[List[Tensor]], Tensor]] = None,
+    join: Optional[Callable[[list[Tensor]], Tensor]] = None,
     **kwargs: Any,
 ) -> PathList:
     paths = [draw_kernel_feature_paths(m, **kwargs) for m in model.models]

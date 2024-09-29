@@ -7,18 +7,19 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Iterable, Iterator
 
 from functools import lru_cache
 from math import pi
 from numbers import Number
-from typing import Any, Callable, Iterable, Iterator, Optional, Tuple, Union
+from typing import Any, Callable, Optional, Union
 
 import torch
 from botorch.utils.safe_math import logdiffexp
 from numpy.polynomial.legendre import leggauss as numpy_leggauss
 from torch import BoolTensor, LongTensor, Tensor
 
-CaseNd = Tuple[Callable[[], BoolTensor], Callable[[BoolTensor], Tensor]]
+CaseNd = tuple[Callable[[], BoolTensor], Callable[[BoolTensor], Tensor]]
 
 _log_2 = math.log(2)
 _sqrt_pi = math.sqrt(pi)
@@ -27,7 +28,7 @@ _inv_sqrt_2pi = 1 / math.sqrt(2 * pi)
 _inv_sqrt_2 = 1 / math.sqrt(2)
 _neg_inv_sqrt_2 = -_inv_sqrt_2
 _log_sqrt_2pi = math.log(2 * pi) / 2
-STANDARDIZED_RANGE: Tuple[float, float] = (-1e6, 1e6)
+STANDARDIZED_RANGE: tuple[float, float] = (-1e6, 1e6)
 _log_two_inv_sqrt_2pi = _log_2 - _log_sqrt_2pi  # = log(2 / sqrt(2 * pi))
 
 
@@ -82,7 +83,7 @@ def get_constants(
     values: Union[Number, Iterator[Number]],
     device: Optional[torch.device] = None,
     dtype: Optional[torch.dtype] = None,
-) -> Union[Tensor, Tuple[Tensor, ...]]:
+) -> Union[Tensor, tuple[Tensor, ...]]:
     r"""Returns scalar-valued Tensors containing each of the given constants.
     Used to expedite tensor operations involving scalar arithmetic. Note that
     the returned Tensors should not be modified in-place."""
@@ -124,7 +125,7 @@ def build_positional_indices(
 
 
 @lru_cache(maxsize=None)
-def leggauss(deg: int, **tkwargs: Any) -> Tuple[Tensor, Tensor]:
+def leggauss(deg: int, **tkwargs: Any) -> tuple[Tensor, Tensor]:
     x, w = numpy_leggauss(deg)
     return torch.as_tensor(x, **tkwargs), torch.as_tensor(w, **tkwargs)
 
@@ -325,3 +326,52 @@ def swap_along_dim_(
         values[j] = buffer
 
     return values
+
+
+def compute_log_prob_feas_from_bounds(
+    con_lower_inds: Tensor,
+    con_upper_inds: Tensor,
+    con_both_inds: Tensor,
+    con_lower: Tensor,
+    con_upper: Tensor,
+    con_both: Tensor,
+    means: Tensor,
+    sigmas: Tensor,
+) -> Tensor:
+    r"""Compute logarithm of the feasibility probability for each batch of mean/sigma.
+
+    Args:
+        means: A `(b) x m`-dim Tensor of means.
+        sigmas: A `(b) x m`-dim Tensor of standard deviations.
+        con_lower_inds: 1d Tensor of indices con_lower applies to
+            in the second dimension of means and sigmas.
+        con_upper_inds: 1d Tensor of indices con_upper applies to
+            in the second dimension of means and sigmas.
+        con_both_inds: 1d Tensor of indices con_both applies to
+            in the second dimension of means and sigmas.
+        con_lower: 1d Tensor of lower bounds on the constraints
+            equal in dimension to con_lower_inds.
+        con_upper: 1d Tensor of upper bounds on the constraints
+            equal in dimension to con_upper_inds.
+        con_both: 2d Tensor of "both" bounds on the constraints
+            equal in length to con_both_inds.
+    Returns:
+        A `b`-dim tensor of log feasibility probabilities
+    """
+    log_prob = torch.zeros_like(means[..., 0])
+    if len(con_lower_inds) > 0:
+        i = con_lower_inds
+        dist_l = (con_lower - means[..., i]) / sigmas[..., i]
+        log_prob = log_prob + log_ndtr(-dist_l).sum(dim=-1)  # 1 - Phi(x) = Phi(-x)
+    if len(con_upper_inds) > 0:
+        i = con_upper_inds
+        dist_u = (con_upper - means[..., i]) / sigmas[..., i]
+        log_prob = log_prob + log_ndtr(dist_u).sum(dim=-1)
+    if len(con_both_inds) > 0:
+        i = con_both_inds
+        con_lower, con_upper = con_both[:, 0], con_both[:, 1]
+        # scaled distance to lower and upper constraint boundary:
+        dist_l = (con_lower - means[..., i]) / sigmas[..., i]
+        dist_u = (con_upper - means[..., i]) / sigmas[..., i]
+        log_prob = log_prob + log_prob_normal_in(a=dist_l, b=dist_u).sum(dim=-1)
+    return log_prob
