@@ -5497,6 +5497,37 @@ when passed as a Tensor.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.probability.utils.compute_log_prob_feas_from_bounds">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.probability.utils.</span></span><span class="sig-name descname"><span class="pre">compute_log_prob_feas_from_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">con_lower_inds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">con_upper_inds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">con_both_inds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">con_lower</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">con_upper</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">con_both</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">means</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigmas</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/probability/utils.html#compute_log_prob_feas_from_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.probability.utils.compute_log_prob_feas_from_bounds" title="Link to this definition">¶</a></dt>
+<dd><p>Compute logarithm of the feasibility probability for each batch of mean/sigma.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>means</strong> (<em>Tensor</em>) – A <cite>(b) x m</cite>-dim Tensor of means.</p></li>
+<li><p><strong>sigmas</strong> (<em>Tensor</em>) – A <cite>(b) x m</cite>-dim Tensor of standard deviations.</p></li>
+<li><p><strong>con_lower_inds</strong> (<em>Tensor</em>) – 1d Tensor of indices con_lower applies to
+in the second dimension of means and sigmas.</p></li>
+<li><p><strong>con_upper_inds</strong> (<em>Tensor</em>) – 1d Tensor of indices con_upper applies to
+in the second dimension of means and sigmas.</p></li>
+<li><p><strong>con_both_inds</strong> (<em>Tensor</em>) – 1d Tensor of indices con_both applies to
+in the second dimension of means and sigmas.</p></li>
+<li><p><strong>con_lower</strong> (<em>Tensor</em>) – 1d Tensor of lower bounds on the constraints
+equal in dimension to con_lower_inds.</p></li>
+<li><p><strong>con_upper</strong> (<em>Tensor</em>) – 1d Tensor of upper bounds on the constraints
+equal in dimension to con_upper_inds.</p></li>
+<li><p><strong>con_both</strong> (<em>Tensor</em>) – 2d Tensor of “both” bounds on the constraints
+equal in length to con_both_inds.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>b</cite>-dim tensor of log feasibility probabilities</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
 </section>
 </section>
 </div>

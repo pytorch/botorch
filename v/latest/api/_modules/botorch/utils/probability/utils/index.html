@@ -394,6 +394,58 @@
 
     <span class="k">return</span> <span class="n">values</span></div>
 
+
+
+<div class="viewcode-block" id="compute_log_prob_feas_from_bounds">
+<a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.utils.compute_log_prob_feas_from_bounds">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_log_prob_feas_from_bounds</span><span class="p">(</span>
+    <span class="n">con_lower_inds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">con_upper_inds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">con_both_inds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">con_lower</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">con_upper</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">con_both</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">means</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">sigmas</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Compute logarithm of the feasibility probability for each batch of mean/sigma.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        means: A `(b) x m`-dim Tensor of means.</span>
+<span class="sd">        sigmas: A `(b) x m`-dim Tensor of standard deviations.</span>
+<span class="sd">        con_lower_inds: 1d Tensor of indices con_lower applies to</span>
+<span class="sd">            in the second dimension of means and sigmas.</span>
+<span class="sd">        con_upper_inds: 1d Tensor of indices con_upper applies to</span>
+<span class="sd">            in the second dimension of means and sigmas.</span>
+<span class="sd">        con_both_inds: 1d Tensor of indices con_both applies to</span>
+<span class="sd">            in the second dimension of means and sigmas.</span>
+<span class="sd">        con_lower: 1d Tensor of lower bounds on the constraints</span>
+<span class="sd">            equal in dimension to con_lower_inds.</span>
+<span class="sd">        con_upper: 1d Tensor of upper bounds on the constraints</span>
+<span class="sd">            equal in dimension to con_upper_inds.</span>
+<span class="sd">        con_both: 2d Tensor of "both" bounds on the constraints</span>
+<span class="sd">            equal in length to con_both_inds.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A `b`-dim tensor of log feasibility probabilities</span>
+<span class="sd">    """</span>
+    <span class="n">log_prob</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">means</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">con_lower_inds</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">con_lower_inds</span>
+        <span class="n">dist_l</span> <span class="o">=</span> <span class="p">(</span><span class="n">con_lower</span> <span class="o">-</span> <span class="n">means</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">])</span> <span class="o">/</span> <span class="n">sigmas</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+        <span class="n">log_prob</span> <span class="o">=</span> <span class="n">log_prob</span> <span class="o">+</span> <span class="n">log_ndtr</span><span class="p">(</span><span class="o">-</span><span class="n">dist_l</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># 1 - Phi(x) = Phi(-x)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">con_upper_inds</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">con_upper_inds</span>
+        <span class="n">dist_u</span> <span class="o">=</span> <span class="p">(</span><span class="n">con_upper</span> <span class="o">-</span> <span class="n">means</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">])</span> <span class="o">/</span> <span class="n">sigmas</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+        <span class="n">log_prob</span> <span class="o">=</span> <span class="n">log_prob</span> <span class="o">+</span> <span class="n">log_ndtr</span><span class="p">(</span><span class="n">dist_u</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">con_both_inds</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">con_both_inds</span>
+        <span class="n">con_lower</span><span class="p">,</span> <span class="n">con_upper</span> <span class="o">=</span> <span class="n">con_both</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">con_both</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="c1"># scaled distance to lower and upper constraint boundary:</span>
+        <span class="n">dist_l</span> <span class="o">=</span> <span class="p">(</span><span class="n">con_lower</span> <span class="o">-</span> <span class="n">means</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">])</span> <span class="o">/</span> <span class="n">sigmas</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+        <span class="n">dist_u</span> <span class="o">=</span> <span class="p">(</span><span class="n">con_upper</span> <span class="o">-</span> <span class="n">means</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">])</span> <span class="o">/</span> <span class="n">sigmas</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+        <span class="n">log_prob</span> <span class="o">=</span> <span class="n">log_prob</span> <span class="o">+</span> <span class="n">log_prob_normal_in</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="n">dist_l</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">dist_u</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">log_prob</span></div>
+
 </pre></div>
 </div>
 </div>
