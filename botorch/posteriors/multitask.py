@@ -227,25 +227,9 @@ class MultitaskGPPosterior(GPyTorchPosterior):
             train_diff.reshape(*train_diff.shape[:-2], -1) - updated_obs_samples
         )
         train_covar_plus_noise = self.train_train_covar + self.train_noise
-
-        # permute dimensions to move largest batch dimension to the end (more efficient 
-        # than unsqueezing)
-        largest_batch_dim = max(enumerate(obs_minus_samples.shape[:-1]), key=lambda t: t[0])
-        perm = list(range(obs_minus_samples.ndim))
-        perm.remove(largest_batch_dim)
-        perm.append(largest_batch_dim)
-        # perm[-1], perm[largest_batch_dim] = perm[largest_batch_dim], perm[-1]
-        inverse_perm = torch.argsort(torch.tensor(perm))
-
-        # solve
-        obs_minus_samples_p = obs_minus_samples.permute(*perm)
-        obs_solve_p = train_covar_plus_noise.solve(obs_minus_samples_p)
-
-        # Undo permutation
-        obs_solve = obs_solve_p.permute(*inverse_perm).unsqueeze(-1)
+        obs_solve = _permute_solve(train_covar_plus_noise, obs_minus_samples)
 
         # and multiply the test-observed matrix against the result of the solve
-        # TODO: this might be made more efficient with obs_solve_p (permuted)
         updated_samples = self.test_train_covar.matmul(obs_solve).squeeze(-1)
 
         # finally, we add the conditioned samples to the prior samples
@@ -303,3 +287,38 @@ class MultitaskGPPosterior(GPyTorchPosterior):
         res = covar_root.matmul(base_samples)
 
         return res.squeeze(-1)
+
+
+def _permute_solve(A: LinearOperator, b: LinearOperator) -> LinearOperator:
+    r"""Solve the batched linear system AX = b, where b is a batched column
+    vector. The solve is carried out after permuting the largest batch
+    dimension of b to the final position, which results in a more efficient
+    matrix-matrix solve.
+
+    This ideally should be handled upstream (in GPyTorch, linear_operator or
+    PyTorch), after which any uses of this method can be replaced with
+    `A.solve(b)`.
+
+    Args:
+        A: LinearOperator of shape (n, n)
+        b: LinearOperator of shape (..., n, 1)
+
+    Returns:
+        LinearOperator of shape (..., n, 1)
+    """
+    # permute dimensions to move largest batch dimension to the end (more efficient
+    # than unsqueezing)
+    largest_batch_dim = max(enumerate(b.shape[:-1]), key=lambda t: t[0])
+    perm = list(range(b.ndim))
+    perm.remove(largest_batch_dim)
+    perm.append(largest_batch_dim)
+    b_p = b.permute(*perm)
+
+    # solve
+    x_p = A.solve(b_p)
+
+    # Undo permutation
+    inverse_perm = torch.argsort(torch.tensor(perm))
+    x = x_p.permute(*inverse_perm).unsqueeze(-1)
+
+    return x
