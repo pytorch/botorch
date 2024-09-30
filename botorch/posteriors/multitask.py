@@ -308,7 +308,7 @@ def _permute_solve(A: LinearOperator, b: LinearOperator) -> LinearOperator:
     """
     # permute dimensions to move largest batch dimension to the end (more efficient
     # than unsqueezing)
-    largest_batch_dim = max(enumerate(b.shape[:-1]), key=lambda t: t[0])
+    largest_batch_dim, _ = max(enumerate(b.shape[:-1]), key=lambda t: t[0])
     perm = list(range(b.ndim))
     perm.remove(largest_batch_dim)
     perm.append(largest_batch_dim)
