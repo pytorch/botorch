@@ -230,8 +230,7 @@ class MultitaskGPPosterior(GPyTorchPosterior):
 
         # permute dimensions to move largest batch dimension to the end (more efficient 
         # than unsqueezing)
-        largest_batch_dim = torch.argmax(torch.tensor(obs_minus_samples.shape[:-1])).item()
-        # largest_batch_dim = torch.argmax(torch.tensor(sample_shape))
+        largest_batch_dim = max(enumerate(obs_minus_samples.shape[:-1]), key=lambda t: t[0])
         perm = list(range(obs_minus_samples.ndim))
         perm.remove(largest_batch_dim)
         perm.append(largest_batch_dim)
