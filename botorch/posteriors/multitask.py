@@ -8,6 +8,7 @@ from typing import Optional, Union
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.posteriors.gpytorch import GPyTorchPosterior
+from botorch.utils.linalg import permute_solve
 from gpytorch.distributions import MultivariateNormal
 from linear_operator.operators import LinearOperator, to_linear_operator
 from torch import Tensor
@@ -227,25 +228,9 @@ class MultitaskGPPosterior(GPyTorchPosterior):
             train_diff.reshape(*train_diff.shape[:-2], -1) - updated_obs_samples
         )
         train_covar_plus_noise = self.train_train_covar + self.train_noise
-
-        # permute dimensions to move largest batch dimension to the end (more efficient 
-        # than unsqueezing)
-        largest_batch_dim = max(enumerate(obs_minus_samples.shape[:-1]), key=lambda t: t[0])
-        perm = list(range(obs_minus_samples.ndim))
-        perm.remove(largest_batch_dim)
-        perm.append(largest_batch_dim)
-        # perm[-1], perm[largest_batch_dim] = perm[largest_batch_dim], perm[-1]
-        inverse_perm = torch.argsort(torch.tensor(perm))
-
-        # solve
-        obs_minus_samples_p = obs_minus_samples.permute(*perm)
-        obs_solve_p = train_covar_plus_noise.solve(obs_minus_samples_p)
-
-        # Undo permutation
-        obs_solve = obs_solve_p.permute(*inverse_perm).unsqueeze(-1)
+        obs_solve = permute_solve(train_covar_plus_noise, obs_minus_samples)
 
         # and multiply the test-observed matrix against the result of the solve
-        # TODO: this might be made more efficient with obs_solve_p (permuted)
         updated_samples = self.test_train_covar.matmul(obs_solve).squeeze(-1)
 
         # finally, we add the conditioned samples to the prior samples
