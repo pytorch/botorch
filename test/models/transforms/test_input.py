@@ -14,6 +14,7 @@ from botorch.exceptions.warnings import UserInputWarning
 from botorch.models.transforms.input import (
     AffineInputTransform,
     AppendFeatures,
+    BatchBroadcastedInputTransform,
     ChainedInputTransform,
     FilterFeatures,
     InputPerturbation,
@@ -651,6 +652,132 @@ class TestInputTransforms(BotorchTestCase):
         tf2 = InputPerturbation(perturbation_set=bounds)
         tf = ChainedInputTransform(stz=tf1, pert=tf2)
         self.assertTrue(tf.is_one_to_many)
+
+    def test_batch_broadcasted_input_transform(self) -> None:
+        ds = (1, 2)
+        batch_args = [
+            (torch.Size([2]), {}),
+            (torch.Size([3, 2]), {}),
+            (torch.Size([2, 3]), {"broadcast_index": 0}),
+            (torch.Size([5, 2, 3]), {"broadcast_index": 1}),
+        ]
+        dtypes = (torch.float, torch.double)
+        # set seed to range where this is known to not be flaky
+        torch.manual_seed(randint(0, 1000))
+
+        for d, (batch_shape, kwargs), dtype in itertools.product(
+            ds, batch_args, dtypes
+        ):
+            bounds = torch.tensor(
+                [[-2.0] * d, [2.0] * d], device=self.device, dtype=dtype
+            )
+            # when the batch_shape is (2, 3), the transform list is broadcasted across
+            # the first dimension, whereas each individual transform gets broadcasted
+            # over the remaining batch dimensions.
+            if "broadcast_index" not in kwargs:
+                broadcast_index = -3
+                tf_batch_shape = batch_shape[:-1]
+            else:
+                broadcast_index = kwargs["broadcast_index"]
+                # if the broadcast index is negative, we need to adjust the index
+                # when indexing into the batch shape tuple
+                i = broadcast_index + 2 if broadcast_index < 0 else broadcast_index
+                tf_batch_shape = list(batch_shape[:i])
+                tf_batch_shape.extend(list(batch_shape[i + 1 :]))
+                tf_batch_shape = torch.Size(tf_batch_shape)
+
+            tf1 = Normalize(d=d, bounds=bounds, batch_shape=tf_batch_shape)
+            tf2 = InputStandardize(d=d, batch_shape=tf_batch_shape)
+            transforms = [tf1, tf2]
+            tf = BatchBroadcastedInputTransform(transforms=transforms, **kwargs)
+            # make copies for validation below
+            transforms_ = [deepcopy(tf_i) for tf_i in transforms]
+            self.assertTrue(tf.training)
+            # self.assertEqual(sorted(tf.keys()), ["stz_fixed", "stz_learned"])
+            self.assertEqual(tf.transforms[0], tf1)
+            self.assertEqual(tf.transforms[1], tf2)
+            self.assertFalse(tf.is_one_to_many)
+
+            X = torch.rand(*batch_shape, 4, d, device=self.device, dtype=dtype)
+            X_tf = tf(X)
+            Xs = X.unbind(dim=broadcast_index)
+
+            X_tf_ = torch.stack(
+                [tf_i_(Xi) for tf_i_, Xi in zip(transforms_, Xs)], dim=broadcast_index
+            )
+            self.assertTrue(tf1.training)
+            self.assertTrue(tf2.training)
+            self.assertTrue(torch.equal(X_tf, X_tf_))
+            X_utf = tf.untransform(X_tf)
+            self.assertAllClose(X_utf, X, atol=1e-4, rtol=1e-4)
+
+            # test not transformed on eval
+            for tf_i in transforms:
+                tf_i.transform_on_eval = False
+
+            tf = BatchBroadcastedInputTransform(transforms=transforms, **kwargs)
+            tf.eval()
+            self.assertTrue(torch.equal(tf(X), X))
+
+            # test transformed on eval
+            for tf_i in transforms:
+                tf_i.transform_on_eval = True
+
+            tf = BatchBroadcastedInputTransform(transforms=transforms, **kwargs)
+            tf.eval()
+            self.assertTrue(torch.equal(tf(X), X_tf))
+
+            # test not transformed on train
+            for tf_i in transforms:
+                tf_i.transform_on_train = False
+
+            tf = BatchBroadcastedInputTransform(transforms=transforms, **kwargs)
+            tf.train()
+            self.assertTrue(torch.equal(tf(X), X))
+
+            # test __eq__
+            other_tf = BatchBroadcastedInputTransform(transforms=transforms, **kwargs)
+            self.assertTrue(tf.equals(other_tf))
+            # change order
+            other_tf = BatchBroadcastedInputTransform(
+                transforms=list(reversed(transforms))
+            )
+            self.assertFalse(tf.equals(other_tf))
+            # Identical transforms but different objects.
+            other_tf = BatchBroadcastedInputTransform(
+                transforms=deepcopy(transforms), **kwargs
+            )
+            self.assertTrue(tf.equals(other_tf))
+
+            # test preprocess_transform
+            transforms[-1].transform_on_train = False
+            transforms[0].transform_on_train = True
+            tf = BatchBroadcastedInputTransform(transforms=transforms, **kwargs)
+            self.assertTrue(
+                torch.equal(
+                    tf.preprocess_transform(X).unbind(dim=broadcast_index)[0],
+                    transforms[0].transform(Xs[0]),
+                )
+            )
+
+        # test one-to-many
+        tf2 = InputPerturbation(perturbation_set=2 * bounds)
+        with self.assertRaisesRegex(ValueError, r".*one_to_many.*"):
+            tf = BatchBroadcastedInputTransform(transforms=[tf1, tf2], **kwargs)
+
+        # these could technically be batched internally, but we're testing the generic
+        # batch broadcasted transform list here. Could change test to use AppendFeatures
+        tf1 = InputPerturbation(perturbation_set=bounds)
+        tf2 = InputPerturbation(perturbation_set=2 * bounds)
+        tf = BatchBroadcastedInputTransform(transforms=[tf1, tf2], **kwargs)
+        self.assertTrue(tf.is_one_to_many)
+
+        with self.assertRaisesRegex(
+            ValueError, r"The broadcast index cannot be -2 and -1"
+        ):
+            tf = BatchBroadcastedInputTransform(
+                transforms=[tf1, tf2], broadcast_index=-2
+            )
 
     def test_round_transform_init(self) -> None:
         # basic init
