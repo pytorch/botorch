@@ -228,7 +228,9 @@ class MultitaskGPPosterior(GPyTorchPosterior):
             train_diff.reshape(*train_diff.shape[:-2], -1) - updated_obs_samples
         )
         train_covar_plus_noise = self.train_train_covar + self.train_noise
-        obs_solve = _permute_solve(train_covar_plus_noise, obs_minus_samples)
+        obs_solve = _permute_solve(
+            train_covar_plus_noise, obs_minus_samples.unsqueeze(-1)
+        )
 
         # and multiply the test-observed matrix against the result of the solve
         updated_samples = self.test_train_covar.matmul(obs_solve).squeeze(-1)
@@ -290,7 +292,7 @@ class MultitaskGPPosterior(GPyTorchPosterior):
         return res.squeeze(-1)
 
 
-def _permute_solve(A: LinearOperator, b: LinearOperator) -> LinearOperator:
+def _permute_solve(A: LinearOperator, b: Tensor) -> LinearOperator:
     r"""Solve the batched linear system AX = b, where b is a batched column
     vector. The solve is carried out after permuting the largest batch
     dimension of b to the final position, which results in a more efficient
@@ -302,24 +304,23 @@ def _permute_solve(A: LinearOperator, b: LinearOperator) -> LinearOperator:
 
     Args:
         A: LinearOperator of shape (n, n)
-        b: LinearOperator of shape (..., n, 1)
+        b: Tensor of shape (..., n, 1)
 
     Returns:
         LinearOperator of shape (..., n, 1)
     """
     # permute dimensions to move largest batch dimension to the end (more efficient
     # than unsqueezing)
-    largest_batch_dim, _ = max(enumerate(b.shape[:-1]), key=lambda t: t[0])
     perm = list(range(b.ndim))
-    perm.remove(largest_batch_dim)
-    perm.append(largest_batch_dim)
+    if b.ndim > 2:
+        largest_batch_dim, _ = max(enumerate(b.shape[:-2]), key=lambda t: t[1])
+        perm[-1], perm[largest_batch_dim] = perm[largest_batch_dim], perm[-1]
     b_p = b.permute(*perm)
 
-    # solve
     x_p = A.solve(b_p)
 
     # Undo permutation
     inverse_perm = torch.argsort(torch.tensor(perm))
-    x = x_p.permute(*inverse_perm).unsqueeze(-1)
+    x = x_p.permute(*inverse_perm)
 
     return x
