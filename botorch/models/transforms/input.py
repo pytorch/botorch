@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Iterable, List, Optional, Tuple, Union
 from warnings import warn
 
 import numpy as np
@@ -153,6 +153,130 @@ class InputTransform(ABC):
             else:
                 return self.transform(X)
         return X
+
+
+class BatchBroadcastedInputTransform(InputTransform, ModuleDict):
+    r"""An input transform representing a list of transforms to be broadcasted."""
+
+    def __init__(
+        self,
+        transforms: List[InputTransform],
+        broadcast_index: int = -3,
+    ) -> None:
+        r"""A transform list that is broadcasted across a batch dimension specified by
+        `broadcast_index`. This is allows using a batched Gaussian process model when
+        the input transforms are different for different batch dimensions.
+
+        Args:
+            transforms: The transforms to broadcast across the first batch dimension.
+                The transform at position i in the list will be applied to `X[i]` for
+                a given input tensor `X` in the forward pass.
+            broadcast_index: The tensor index at which the transforms are broadcasted.
+
+        Example:
+            >>> tf1 = Normalize(d=2)
+            >>> tf2 = InputStandardize(d=2)
+            >>> tf = BatchBroadcastedTransformList(transforms=[tf1, tf2])
+        """
+        super().__init__()
+        self.transform_on_train = False
+        self.transform_on_eval = False
+        self.transform_on_fantasize = False
+        self.transforms = transforms
+        if broadcast_index in (-2, -1):
+            raise ValueError(
+                "The broadcast index cannot be -2 and -1, as these indices are reserved"
+                " for non-batch, data and input dimensions."
+            )
+        self.broadcast_index = broadcast_index
+        self.is_one_to_many = self.transforms[0].is_one_to_many
+        if not all(tf.is_one_to_many == self.is_one_to_many for tf in self.transforms):
+            raise ValueError(  # output shapes of transforms must be the same
+                "All transforms must have the same is_one_to_many property."
+            )
+        for tf in self.transforms:
+            self.transform_on_train |= tf.transform_on_train
+            self.transform_on_eval |= tf.transform_on_eval
+            self.transform_on_fantasize |= tf.transform_on_fantasize
+
+    def transform(self, X: Tensor) -> Tensor:
+        r"""Transform the inputs to a model.
+
+        Individual transforms are applied in sequence and results are returned as
+        a batched tensor.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of transformed inputs.
+        """
+        return torch.stack(
+            [t.forward(Xi) for Xi, t in self._Xs_and_transforms(X)],
+            dim=self.broadcast_index,
+        )
+
+    def untransform(self, X: Tensor) -> Tensor:
+        r"""Un-transform the inputs to a model.
+
+        Un-transforms of the individual transforms are applied in reverse sequence.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of transformed inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of un-transformed inputs.
+        """
+        return torch.stack(
+            [t.untransform(Xi) for Xi, t in self._Xs_and_transforms(X)],
+            dim=self.broadcast_index,
+        )
+
+    def equals(self, other: InputTransform) -> bool:
+        r"""Check if another input transform is equivalent.
+
+        Args:
+            other: Another input transform.
+
+        Returns:
+            A boolean indicating if the other transform is equivalent.
+        """
+        return (
+            super().equals(other=other)
+            and all(t1.equals(t2) for t1, t2 in zip(self.transforms, other.transforms))
+            and (self.broadcast_index == other.broadcast_index)
+        )
+
+    def preprocess_transform(self, X: Tensor) -> Tensor:
+        r"""Apply transforms for preprocessing inputs.
+
+        The main use cases for this method are 1) to preprocess training data
+        before calling `set_train_data` and 2) preprocess `X_baseline` for noisy
+        acquisition functions so that `X_baseline` is "preprocessed" with the
+        same transformations as the cached training inputs.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of (transformed) inputs.
+        """
+        return torch.stack(
+            [t.preprocess_transform(Xi) for Xi, t in self._Xs_and_transforms(X)],
+            dim=self.broadcast_index,
+        )
+
+    def _Xs_and_transforms(self, X: Tensor) -> Iterable[Tuple[Tensor, InputTransform]]:
+        r"""Returns an iterable of sub-tensors of X and their associated transforms.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            An iterable containing tuples of sub-tensors of X and their transforms.
+        """
+        Xs = X.unbind(dim=self.broadcast_index)
+        return zip(Xs, self.transforms)
 
 
 class ChainedInputTransform(InputTransform, ModuleDict):
