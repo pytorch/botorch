@@ -39,7 +39,7 @@ class TestHigherOrderGP(BotorchTestCase):
         train_x = torch.rand(2, 10, 1, device=self.device)
         train_y = torch.randn(2, 10, 3, 5, device=self.device)
 
-        self.model = HigherOrderGP(train_x, train_y)
+        self.model = HigherOrderGP(train_x, train_y, outcome_transform=None)
 
         # check that we can assign different kernels and likelihoods
         model_2 = HigherOrderGP(
@@ -48,6 +48,7 @@ class TestHigherOrderGP(BotorchTestCase):
             covar_modules=[RBFKernel(), RBFKernel(), RBFKernel()],
             likelihood=GaussianLikelihood(),
         )
+        self.assertIsInstance(model_2.outcome_transform, FlattenedStandardize)
 
         model_3 = HigherOrderGP(
             train_X=train_x,

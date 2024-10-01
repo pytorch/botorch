@@ -342,7 +342,7 @@ class TestPosteriorStandardDeviation(BotorchTestCase):
             acqf = PosteriorStandardDeviation(model=mm)
             X = torch.empty(3, 1, 1, device=self.device, dtype=dtype)
             pm = acqf(X)
-            self.assertTrue(torch.equal(pm, std.view(-1)))
+            self.assertAllClose(pm, std.view(-1))
             # check for proper error if multi-output model
             mean2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
             std2 = torch.rand_like(mean2)

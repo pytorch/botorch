@@ -27,18 +27,20 @@ from botorch.models.transforms.outcome import OutcomeTransform, Standardize
 from botorch.models.utils import gpt_posterior_settings
 from botorch.models.utils.assorted import fantasize as fantasize_flag
 from botorch.models.utils.gpytorch_modules import (
-    get_gaussian_likelihood_with_gamma_prior,
+    get_covar_module_with_dim_scaled_prior,
+    get_gaussian_likelihood_with_lognormal_prior,
 )
 from botorch.posteriors import (
     GPyTorchPosterior,
     HigherOrderGPPosterior,
     TransformedPosterior,
 )
+from botorch.utils.types import _DefaultType, DEFAULT
 from gpytorch.distributions import MultivariateNormal
-from gpytorch.kernels import Kernel, MaternKernel
+from gpytorch.kernels import Kernel
 from gpytorch.likelihoods import Likelihood
 from gpytorch.models import ExactGP
-from gpytorch.priors.torch_priors import GammaPrior, MultivariateNormalPrior
+from gpytorch.priors.torch_priors import MultivariateNormalPrior
 from gpytorch.settings import fast_pred_var, skip_posterior_variances
 from linear_operator.operators import (
     BatchRepeatLinearOperator,
@@ -183,7 +185,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         num_latent_dims: Optional[list[int]] = None,
         learn_latent_pars: bool = True,
         latent_init: str = "default",
-        outcome_transform: Optional[OutcomeTransform] = None,
+        outcome_transform: Union[OutcomeTransform, _DefaultType, None] = DEFAULT,
         input_transform: Optional[InputTransform] = None,
     ):
         r"""
@@ -196,7 +198,6 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
             learn_latent_pars: If true, learn the latent parameters.
             latent_init: [default or gp] how to initialize the latent parameters.
         """
-
         if input_transform is not None:
             input_transform.to(train_X)
 
@@ -207,7 +208,11 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
             raise NotImplementedError(
                 "HigherOrderGP currently only supports 1-dim `batch_shape`."
             )
-
+        if outcome_transform == DEFAULT:
+            outcome_transform = FlattenedStandardize(
+                output_shape=train_Y.shape[-num_output_dims:],
+                batch_shape=batch_shape,
+            )
         if outcome_transform is not None:
             if isinstance(outcome_transform, Standardize) and not isinstance(
                 outcome_transform, FlattenedStandardize
@@ -218,6 +223,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
                     f"{train_Y.shape[- num_output_dims:]} and batch_shape="
                     f"{batch_shape} instead.",
                     RuntimeWarning,
+                    stacklevel=2,
                 )
                 outcome_transform = FlattenedStandardize(
                     output_shape=train_Y.shape[-num_output_dims:],
@@ -232,7 +238,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         self._input_batch_shape = batch_shape
 
         if likelihood is None:
-            likelihood = get_gaussian_likelihood_with_gamma_prior(
+            likelihood = get_gaussian_likelihood_with_lognormal_prior(
                 batch_shape=self._aug_batch_shape
             )
         else:
@@ -249,11 +255,9 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         else:
             self.covar_modules = ModuleList(
                 [
-                    MaternKernel(
-                        nu=2.5,
-                        lengthscale_prior=GammaPrior(3.0, 6.0),
-                        batch_shape=self._aug_batch_shape,
+                    get_covar_module_with_dim_scaled_prior(
                         ard_num_dims=1 if dim > 0 else train_X.shape[-1],
+                        batch_shape=self._aug_batch_shape,
                     )
                     for dim in range(self._num_dimensions)
                 ]
