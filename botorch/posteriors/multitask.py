@@ -36,9 +36,11 @@ class MultitaskGPPosterior(GPyTorchPosterior):
             distribution: Posterior multivariate normal distribution.
             joint_covariance_matrix: Joint test train covariance matrix over the entire
                 tensor.
-            train_train_covar: Covariance matrix of train points in the data space.
-            test_obs_covar: Covariance matrix of test x train points in the data space.
+            test_train_covar: Covariance matrix of test x train points in the data
+                space.
             train_diff: Difference between train mean and train responses.
+            test_mean: Test mean response.
+            train_train_covar: Covariance matrix of train points in the data space.
             train_noise: Training noise covariance.
             test_noise: Only used if posterior should contain observation noise.
                 Testing noise covariance.
@@ -226,7 +228,9 @@ class MultitaskGPPosterior(GPyTorchPosterior):
             train_diff.reshape(*train_diff.shape[:-2], -1) - updated_obs_samples
         )
         train_covar_plus_noise = self.train_train_covar + self.train_noise
-        obs_solve = train_covar_plus_noise.solve(obs_minus_samples.unsqueeze(-1))
+        obs_solve = _permute_solve(
+            train_covar_plus_noise, obs_minus_samples.unsqueeze(-1)
+        )
 
         # and multiply the test-observed matrix against the result of the solve
         updated_samples = self.test_train_covar.matmul(obs_solve).squeeze(-1)
@@ -286,3 +290,37 @@ class MultitaskGPPosterior(GPyTorchPosterior):
         res = covar_root.matmul(base_samples)
 
         return res.squeeze(-1)
+
+
+def _permute_solve(A: LinearOperator, b: Tensor) -> LinearOperator:
+    r"""Solve the batched linear system AX = b, where b is a batched column
+    vector. The solve is carried out after permuting the largest batch
+    dimension of b to the final position, which results in a more efficient
+    matrix-matrix solve.
+
+    This ideally should be handled upstream (in GPyTorch, linear_operator or
+    PyTorch), after which any uses of this method can be replaced with
+    `A.solve(b)`.
+
+    Args:
+        A: LinearOperator of shape (n, n)
+        b: Tensor of shape (..., n, 1)
+
+    Returns:
+        LinearOperator of shape (..., n, 1)
+    """
+    # permute dimensions to move largest batch dimension to the end (more efficient
+    # than unsqueezing)
+    perm = list(range(b.ndim))
+    if b.ndim > 2:
+        largest_batch_dim, _ = max(enumerate(b.shape[:-2]), key=lambda t: t[1])
+        perm[-1], perm[largest_batch_dim] = perm[largest_batch_dim], perm[-1]
+    b_p = b.permute(*perm)
+
+    x_p = A.solve(b_p)
+
+    # Undo permutation
+    inverse_perm = torch.argsort(torch.tensor(perm))
+    x = x_p.permute(*inverse_perm)
+
+    return x
