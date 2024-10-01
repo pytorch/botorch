@@ -36,7 +36,8 @@ class MultitaskGPPosterior(GPyTorchPosterior):
             distribution: Posterior multivariate normal distribution.
             joint_covariance_matrix: Joint test train covariance matrix over the entire
                 tensor.
-            test_train_covar: Covariance matrix of test x train points in the data space.
+            test_train_covar: Covariance matrix of test x train points in the data
+                space.
             train_diff: Difference between train mean and train responses.
             test_mean: Test mean response.
             train_train_covar: Covariance matrix of train points in the data space.
