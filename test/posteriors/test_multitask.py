@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.multitask import KroneckerMultiTaskGP
-from botorch.posteriors.multitask import MultitaskGPPosterior, _permute_solve
+from botorch.posteriors.multitask import _permute_solve, MultitaskGPPosterior
 from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.testing import BotorchTestCase
 from linear_operator.operators import to_linear_operator
