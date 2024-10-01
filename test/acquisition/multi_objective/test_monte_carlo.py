@@ -1857,7 +1857,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
         def get_acqf(model):
             return acqf_class(
                 model=model,
-                ref_point=torch.tensor([0.0, 0.0], **tkwargs),
+                ref_point=torch.tensor([-1.0, -1.0], **tkwargs),
                 X_baseline=train_x,
                 sampler=IIDNormalSampler(sample_shape=torch.Size([2])),
                 objective=hogp_obj if isinstance(model, HigherOrderGP) else None,

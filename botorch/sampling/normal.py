@@ -66,7 +66,7 @@ class NormalMCSampler(MCSampler, ABC):
         pass  # pragma: no cover
 
     def _update_base_samples(
-        self, posterior: Posterior, base_sampler: NormalMCSampler
+        self, posterior: Posterior, base_sampler: MCSampler
     ) -> None:
         r"""Update the sampler to use the original base samples for X_baseline.
 
@@ -102,7 +102,15 @@ class NormalMCSampler(MCSampler, ABC):
             expanded_samples = current_base_samples.view(view_shape).expand(
                 expanded_shape
             )
-            if isinstance(posterior, (HigherOrderGPPosterior, MultitaskGPPosterior)):
+            non_transformed_posterior = (
+                posterior._posterior
+                if isinstance(posterior, TransformedPosterior)
+                else posterior
+            )
+            if isinstance(
+                non_transformed_posterior,
+                (HigherOrderGPPosterior, MultitaskGPPosterior),
+            ):
                 n_train_samples = current_base_samples.shape[-1] // 2
                 # The train base samples.
                 self.base_samples[..., :n_train_samples] = expanded_samples[
@@ -113,11 +121,7 @@ class NormalMCSampler(MCSampler, ABC):
                     ..., -n_train_samples:
                 ]
             else:
-                batch_shape = (
-                    posterior._posterior.batch_shape
-                    if isinstance(posterior, TransformedPosterior)
-                    else posterior.batch_shape
-                )
+                batch_shape = non_transformed_posterior.batch_shape
                 single_output = (
                     len(posterior.base_sample_shape) - len(batch_shape)
                 ) == 1
