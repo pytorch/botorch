@@ -4,8 +4,6 @@ on:
   schedule:
     # 2:30 PST
     - cron:  '30 10 * * *'
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 
