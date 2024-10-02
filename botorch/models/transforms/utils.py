@@ -126,3 +126,18 @@ def subset_transform(transform):
         return Y
 
     return f
+
+
+def interaction_features(X: Tensor) -> Tensor:
+    """Computes the interaction features between the inputs.
+
+    Args:
+        X: A `batch_shape x q x d`-dim tensor of inputs.
+        indices: The input dimensions to generate interaction features for.
+
+    Returns:
+        A `n x q x 1 x (d * (d-1) / 2))`-dim tensor of interaction features.
+    """
+    dim = X.shape[-1]
+    row_idcs, col_idcs = torch.triu_indices(dim, dim, offset=1)
+    return (X.unsqueeze(-1) @ X.unsqueeze(-2))[..., row_idcs, col_idcs].unsqueeze(-2)
