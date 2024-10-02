@@ -6,7 +6,9 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Optional, Union
+from collections.abc import Callable
+
+from typing import Any
 
 import torch
 from botorch.models.gp_regression import SingleTaskGP
@@ -61,13 +63,13 @@ class MixedSingleTaskGP(SingleTaskGP):
         train_X: Tensor,
         train_Y: Tensor,
         cat_dims: list[int],
-        train_Yvar: Optional[Tensor] = None,
-        cont_kernel_factory: Optional[
+        train_Yvar: Tensor | None = None,
+        cont_kernel_factory: None | (
             Callable[[torch.Size, int, list[int]], Kernel]
-        ] = None,
-        likelihood: Optional[Likelihood] = None,
-        outcome_transform: Optional[Union[OutcomeTransform, _DefaultType]] = DEFAULT,
-        input_transform: Optional[InputTransform] = None,  # TODO
+        ) = None,
+        likelihood: Likelihood | None = None,
+        outcome_transform: OutcomeTransform | _DefaultType | None = DEFAULT,
+        input_transform: InputTransform | None = None,  # TODO
     ) -> None:
         r"""A single-task exact GP model supporting categorical parameters.
 
@@ -164,7 +166,7 @@ class MixedSingleTaskGP(SingleTaskGP):
         cls,
         training_data: SupervisedDataset,
         categorical_features: list[int],
-        likelihood: Optional[Likelihood] = None,
+        likelihood: Likelihood | None = None,
     ) -> dict[str, Any]:
         r"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`.
 

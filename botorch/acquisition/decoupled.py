@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC
-from typing import Optional
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -52,7 +51,7 @@ class DecoupledAcquisitionFunction(AcquisitionFunction, ABC):
     """
 
     def __init__(
-        self, model: ModelList, X_evaluation_mask: Optional[Tensor] = None, **kwargs
+        self, model: ModelList, X_evaluation_mask: Tensor | None = None, **kwargs
     ) -> None:
         r"""Initialize.
 
@@ -71,12 +70,12 @@ class DecoupledAcquisitionFunction(AcquisitionFunction, ABC):
         self.X_pending = None
 
     @property
-    def X_evaluation_mask(self) -> Optional[Tensor]:
+    def X_evaluation_mask(self) -> Tensor | None:
         r"""Get the evaluation indices for the new candidate."""
         return self._X_evaluation_mask
 
     @X_evaluation_mask.setter
-    def X_evaluation_mask(self, X_evaluation_mask: Optional[Tensor] = None) -> None:
+    def X_evaluation_mask(self, X_evaluation_mask: Tensor | None = None) -> None:
         r"""Set the evaluation indices for the new candidate."""
         if X_evaluation_mask is not None:
             # TODO: Add batch support
@@ -92,8 +91,8 @@ class DecoupledAcquisitionFunction(AcquisitionFunction, ABC):
 
     def set_X_pending(
         self,
-        X_pending: Optional[Tensor] = None,
-        X_pending_evaluation_mask: Optional[Tensor] = None,
+        X_pending: Tensor | None = None,
+        X_pending_evaluation_mask: Tensor | None = None,
     ) -> None:
         r"""Informs the AF about pending design points for different outcomes.
 
@@ -135,7 +134,7 @@ class DecoupledAcquisitionFunction(AcquisitionFunction, ABC):
             self.X_pending = X_pending
             self.X_pending_evaluation_mask = X_pending_evaluation_mask
 
-    def construct_evaluation_mask(self, X: Tensor) -> Optional[Tensor]:
+    def construct_evaluation_mask(self, X: Tensor) -> Tensor | None:
         r"""Construct the boolean evaluation mask for X and X_pending
 
         Args:

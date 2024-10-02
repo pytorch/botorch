@@ -15,8 +15,9 @@ References
 from __future__ import annotations
 
 import warnings
+from collections.abc import Callable
 from math import ceil
-from typing import Callable, Optional, Union
+from typing import Optional, Union
 
 import torch
 from botorch import settings
@@ -70,7 +71,7 @@ TGenInitialConditions = Callable[
 
 
 def transform_constraints(
-    constraints: Union[list[tuple[Tensor, Tensor, float]], None], q: int, d: int
+    constraints: list[tuple[Tensor, Tensor, float]] | None, q: int, d: int
 ) -> list[tuple[Tensor, Tensor, float]]:
     r"""Transform constraints to sample from a d*q-dimensional space instead of a
     d-dimensional state.
@@ -182,8 +183,8 @@ def sample_q_batches_from_polytope(
     n_burnin: int,
     n_thinning: int,
     seed: int,
-    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
 ) -> Tensor:
     r"""Samples `n` q-baches from a polytope of dimension `d`.
 
@@ -246,12 +247,12 @@ def gen_batch_initial_conditions(
     q: int,
     num_restarts: int,
     raw_samples: int,
-    fixed_features: Optional[dict[int, float]] = None,
-    options: Optional[dict[str, Union[bool, float, int]]] = None,
-    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
-    generator: Optional[Callable[[int, int, Optional[int]], Tensor]] = None,
-    fixed_X_fantasies: Optional[Tensor] = None,
+    fixed_features: dict[int, float] | None = None,
+    options: dict[str, bool | float | int] | None = None,
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    generator: Callable[[int, int, int | None], Tensor] | None = None,
+    fixed_X_fantasies: Tensor | None = None,
 ) -> Tensor:
     r"""Generate a batch of initial conditions for random-restart optimziation.
 
@@ -318,8 +319,8 @@ def gen_batch_initial_conditions(
             "Option 'sample_around_best' is not supported when custom "
             "generator is be used."
         )
-    seed: Optional[int] = options.get("seed")
-    batch_limit: Optional[int] = options.get(
+    seed: int | None = options.get("seed")
+    batch_limit: int | None = options.get(
         "init_batch_limit", options.get("batch_limit")
     )
     factor, max_factor = 1, 5
@@ -444,11 +445,11 @@ def gen_one_shot_kg_initial_conditions(
     q: int,
     num_restarts: int,
     raw_samples: int,
-    fixed_features: Optional[dict[int, float]] = None,
-    options: Optional[dict[str, Union[bool, float, int]]] = None,
-    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
-) -> Optional[Tensor]:
+    fixed_features: dict[int, float] | None = None,
+    options: dict[str, bool | float | int] | None = None,
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+) -> Tensor | None:
     r"""Generate a batch of smart initializations for qKnowledgeGradient.
 
     This function generates initial conditions for optimizing one-shot KG using
@@ -563,11 +564,11 @@ def gen_one_shot_hvkg_initial_conditions(
     q: int,
     num_restarts: int,
     raw_samples: int,
-    fixed_features: Optional[dict[int, float]] = None,
-    options: Optional[dict[str, Union[bool, float, int]]] = None,
-    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
-) -> Optional[Tensor]:
+    fixed_features: dict[int, float] | None = None,
+    options: dict[str, bool | float | int] | None = None,
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+) -> Tensor | None:
     r"""Generate a batch of smart initializations for qHypervolumeKnowledgeGradient.
 
     This function generates initial conditions for optimizing one-shot HVKG using
@@ -761,8 +762,8 @@ def gen_value_function_initial_conditions(
     num_restarts: int,
     raw_samples: int,
     current_model: Model,
-    fixed_features: Optional[dict[int, float]] = None,
-    options: Optional[dict[str, Union[bool, float, int]]] = None,
+    fixed_features: dict[int, float] | None = None,
+    options: dict[str, bool | float | int] | None = None,
 ) -> Tensor:
     r"""Generate a batch of smart initializations for optimizing
     the value function of qKnowledgeGradient.
@@ -818,7 +819,7 @@ def gen_value_function_initial_conditions(
         >>> )
     """
     options = options or {}
-    seed: Optional[int] = options.get("seed")
+    seed: int | None = options.get("seed")
     frac_random: float = options.get("frac_random", 0.6)
     if not 0 < frac_random < 1:
         raise ValueError(
@@ -1044,8 +1045,8 @@ def sample_points_around_best(
     bounds: Tensor,
     best_pct: float = 5.0,
     subset_sigma: float = 1e-1,
-    prob_perturb: Optional[float] = None,
-) -> Optional[Tensor]:
+    prob_perturb: float | None = None,
+) -> Tensor | None:
     r"""Find best points and sample nearby points.
 
     Args:
@@ -1199,7 +1200,7 @@ def sample_perturbed_subset_dims(
     n_discrete_points: int,
     sigma: float = 1e-1,
     qmc: bool = True,
-    prob_perturb: Optional[float] = None,
+    prob_perturb: float | None = None,
 ) -> Tensor:
     r"""Sample around `X` by perturbing a subset of the dimensions.
 

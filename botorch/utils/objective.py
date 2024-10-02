@@ -10,7 +10,7 @@ Helpers for handling objectives.
 
 from __future__ import annotations
 
-from typing import Callable, Optional, Union
+from collections.abc import Callable
 
 import torch
 from botorch.utils.safe_math import log_fatmoid, logexpit
@@ -19,8 +19,8 @@ from torch import Tensor
 
 
 def get_objective_weights_transform(
-    weights: Optional[Tensor],
-) -> Callable[[Tensor, Optional[Tensor]], Tensor]:
+    weights: Tensor | None,
+) -> Callable[[Tensor, Tensor | None], Tensor]:
     r"""Create a linear objective callable from a set of weights.
 
     Create a callable mapping a Tensor of size `b x q x m` and an (optional)
@@ -42,7 +42,7 @@ def get_objective_weights_transform(
         >>> transform = get_objective_weights_transform(weights)
     """
 
-    def _objective(Y: Tensor, X: Optional[Tensor] = None):
+    def _objective(Y: Tensor, X: Tensor | None = None):
         r"""Evaluate objective.
 
         Note: einsum multiples Y by weights and sums over the `m`-dimension.
@@ -67,7 +67,7 @@ def apply_constraints_nonnegative_soft(
     obj: Tensor,
     constraints: list[Callable[[Tensor], Tensor]],
     samples: Tensor,
-    eta: Union[Tensor, float],
+    eta: Tensor | float,
 ) -> Tensor:
     r"""Applies constraints to a non-negative objective.
 
@@ -99,9 +99,9 @@ def apply_constraints_nonnegative_soft(
 
 
 def compute_feasibility_indicator(
-    constraints: Optional[list[Callable[[Tensor], Tensor]]],
+    constraints: list[Callable[[Tensor], Tensor]] | None,
     samples: Tensor,
-    marginalize_dim: Optional[int] = None,
+    marginalize_dim: int | None = None,
 ) -> Tensor:
     r"""Computes the feasibility of a list of constraints given posterior samples.
 
@@ -134,7 +134,7 @@ def compute_feasibility_indicator(
 def compute_smoothed_feasibility_indicator(
     constraints: list[Callable[[Tensor], Tensor]],
     samples: Tensor,
-    eta: Union[Tensor, float],
+    eta: Tensor | float,
     log: bool = False,
     fat: bool = False,
 ) -> Tensor:
@@ -185,7 +185,7 @@ def apply_constraints(
     constraints: list[Callable[[Tensor], Tensor]],
     samples: Tensor,
     infeasible_cost: float,
-    eta: Union[Tensor, float] = 1e-3,
+    eta: Tensor | float = 1e-3,
 ) -> Tensor:
     r"""Apply constraints using an infeasible_cost `M` for negative objectives.
 

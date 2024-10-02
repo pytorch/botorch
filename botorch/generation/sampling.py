@@ -17,7 +17,6 @@ q-acquisition functions we evaluate the joint value of the q-batch).
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -69,8 +68,8 @@ class MaxPosteriorSampling(SamplingStrategy):
     def __init__(
         self,
         model: Model,
-        objective: Optional[MCAcquisitionObjective] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
         replacement: bool = True,
     ) -> None:
         r"""Constructor for the SamplingStrategy base class.
@@ -243,9 +242,9 @@ class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
     def __init__(
         self,
         model: Model,
-        constraint_model: Union[ModelListGP, MultiTaskGP],
-        objective: Optional[MCAcquisitionObjective] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        constraint_model: ModelListGP | MultiTaskGP,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
         replacement: bool = True,
     ) -> None:
         r"""Constructor for the SamplingStrategy base class.

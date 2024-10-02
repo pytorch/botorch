@@ -28,8 +28,6 @@ and its MC-based generalization qEUBO as proposed in [Astudillo2023qeubo]_.
 
 from __future__ import annotations
 
-from typing import Optional
-
 import torch
 from botorch.acquisition import AnalyticAcquisitionFunction
 from botorch.acquisition.monte_carlo import MCAcquisitionFunction
@@ -55,8 +53,8 @@ class AnalyticExpectedUtilityOfBestOption(AnalyticAcquisitionFunction):
     def __init__(
         self,
         pref_model: Model,
-        outcome_model: Optional[DeterministicModel] = None,
-        previous_winner: Optional[Tensor] = None,
+        outcome_model: DeterministicModel | None = None,
+        previous_winner: Tensor | None = None,
     ) -> None:
         r"""Analytic implementation of Expected Utility of the Best Option under the
         Laplace model (assumes a PairwiseGP is used as the preference model) as
@@ -145,11 +143,11 @@ class qExpectedUtilityOfBestOption(MCAcquisitionFunction):
     def __init__(
         self,
         pref_model: Model,
-        outcome_model: Optional[DeterministicModel] = None,
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCAcquisitionObjective] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
-        X_pending: Optional[Tensor] = None,
+        outcome_model: DeterministicModel | None = None,
+        sampler: MCSampler | None = None,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
+        X_pending: Tensor | None = None,
     ) -> None:
         r"""MC-based Expected Utility of Best Option (qEUBO) as proposed
         in [Astudillo2023qeubo]_.
@@ -208,9 +206,9 @@ class PairwiseBayesianActiveLearningByDisagreement(MCAcquisitionFunction):
     def __init__(
         self,
         pref_model: Model,
-        outcome_model: Optional[DeterministicModel] = None,
-        num_samples: Optional[int] = 1024,
-        std_noise: Optional[float] = 0.0,
+        outcome_model: DeterministicModel | None = None,
+        num_samples: int | None = 1024,
+        std_noise: float | None = 0.0,
     ) -> None:
         """
         Monte Carlo implementation of Bayesian Active Learning by Disagreement (BALD)

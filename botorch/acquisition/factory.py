@@ -10,7 +10,7 @@ Utilities for acquisition functions.
 
 from __future__ import annotations
 
-from typing import Callable, Optional, Union
+from collections.abc import Callable
 
 import torch
 
@@ -35,21 +35,21 @@ def get_acquisition_function(
     model: Model,
     objective: MCAcquisitionObjective,
     X_observed: Tensor,
-    posterior_transform: Optional[PosteriorTransform] = None,
-    X_pending: Optional[Tensor] = None,
-    constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-    eta: Optional[Union[Tensor, float]] = 1e-3,
+    posterior_transform: PosteriorTransform | None = None,
+    X_pending: Tensor | None = None,
+    constraints: list[Callable[[Tensor], Tensor]] | None = None,
+    eta: Tensor | float | None = 1e-3,
     mc_samples: int = 512,
-    seed: Optional[int] = None,
+    seed: int | None = None,
     *,
     # optional parameters that are only needed for certain acquisition functions
     tau: float = 1e-3,
     prune_baseline: bool = True,
-    marginalize_dim: Optional[int] = None,
+    marginalize_dim: int | None = None,
     cache_root: bool = True,
-    beta: Optional[float] = None,
-    ref_point: Union[None, list[float], Tensor] = None,
-    Y: Optional[Tensor] = None,
+    beta: float | None = None,
+    ref_point: None | list[float] | Tensor = None,
+    Y: Tensor | None = None,
     alpha: float = 0.0,
 ) -> monte_carlo.MCAcquisitionFunction:
     r"""Convenience function for initializing botorch acquisition functions.

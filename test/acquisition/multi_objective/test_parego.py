@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Optional
+from typing import Any
 
 import torch
 from botorch.acquisition.logei import qLogNoisyExpectedImprovement
@@ -25,7 +25,7 @@ class TestqLogNParEGO(BotorchTestCase):
         with_constraints: bool = False,
         with_scalarization_weights: bool = False,
         with_objective: bool = False,
-        model: Optional[Model] = None,
+        model: Model | None = None,
     ) -> None:
         if with_constraints:
             assert with_objective, "Objective must be specified if constraints are."

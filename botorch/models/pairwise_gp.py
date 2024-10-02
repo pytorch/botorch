@@ -23,7 +23,7 @@ from __future__ import annotations
 import warnings
 from collections.abc import Iterable
 from copy import deepcopy
-from typing import Any, Optional, Union
+from typing import Any
 
 import numpy as np
 import torch
@@ -74,7 +74,7 @@ def _check_strict_input(
 
 
 def _scaled_psd_safe_cholesky(
-    matrix: Tensor, scale: Tensor, jitter: Optional[float] = None
+    matrix: Tensor, scale: Tensor, jitter: float | None = None
 ) -> Tensor:
     r"""scale matrix by 1/outputscale before cholesky for better numerical stability"""
     matrix = matrix / scale
@@ -85,7 +85,7 @@ def _scaled_psd_safe_cholesky(
 
 def _ensure_psd_with_jitter(
     matrix: Tensor,
-    scale: Union[float, Tensor] = 1.0,
+    scale: float | Tensor = 1.0,
     jitter: float = 1e-8,
     max_tries: int = 3,
 ) -> Tensor:
@@ -163,17 +163,17 @@ class PairwiseGP(Model, GP, FantasizeMixin):
 
     def __init__(
         self,
-        datapoints: Optional[Tensor],
-        comparisons: Optional[Tensor],
-        likelihood: Optional[PairwiseLikelihood] = None,
-        covar_module: Optional[ScaleKernel] = None,
-        input_transform: Optional[InputTransform] = None,
+        datapoints: Tensor | None,
+        comparisons: Tensor | None,
+        likelihood: PairwiseLikelihood | None = None,
+        covar_module: ScaleKernel | None = None,
+        input_transform: InputTransform | None = None,
         *,
         jitter: float = 1e-6,
-        xtol: Optional[float] = None,
+        xtol: float | None = None,
         consolidate_rtol: float = 0.0,
         consolidate_atol: float = 1e-4,
-        maxfev: Optional[int] = None,
+        maxfev: int | None = None,
     ) -> None:
         r"""
         Args:
@@ -340,7 +340,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
             or self.comparisons is None
         )
 
-    def _calc_covar(self, X1: Tensor, X2: Tensor) -> Union[Tensor, LinearOperator]:
+    def _calc_covar(self, X1: Tensor, X2: Tensor) -> Tensor | LinearOperator:
         r"""Calculate the covariance matrix given two sets of datapoints"""
         covar = self.covar_module(X1, X2).to_dense()
         # making sure covar is PSD when it's a covariance matrix
@@ -370,7 +370,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
         )
         self.covar_inv = torch.cholesky_inverse(self.covar_chol)
 
-    def _prior_mean(self, X: Tensor) -> Union[Tensor, LinearOperator]:
+    def _prior_mean(self, X: Tensor) -> Tensor | LinearOperator:
         r"""Return point prediction using prior only
 
         Args:
@@ -397,13 +397,13 @@ class PairwiseGP(Model, GP, FantasizeMixin):
 
     def _grad_posterior_f(
         self,
-        utility: Union[Tensor, np.ndarray],
+        utility: Tensor | np.ndarray,
         datapoints: Tensor,
         D: Tensor,
         covar_chol: Tensor,
-        covar_inv: Optional[Tensor] = None,
+        covar_inv: Tensor | None = None,
         ret_np: bool = False,
-    ) -> Union[Tensor, np.ndarray]:
+    ) -> Tensor | np.ndarray:
         r"""Compute the gradient of S loss wrt to f/utility in [Chu2005preference]_.
 
         For finding f_map, which is negative of the log posterior, i.e., -log(p(f|D))
@@ -441,13 +441,13 @@ class PairwiseGP(Model, GP, FantasizeMixin):
 
     def _hess_posterior_f(
         self,
-        utility: Union[Tensor, np.ndarray],
+        utility: Tensor | np.ndarray,
         datapoints: Tensor,
         D: Tensor,
         covar_chol: Tensor,
         covar_inv: Tensor,
         ret_np: bool = False,
-    ) -> Union[Tensor, np.ndarray]:
+    ) -> Tensor | np.ndarray:
         r"""Compute the hessian of S loss wrt utility for finding f_map.
 
         which is negative of the log posterior, i.e., -log(p(f|D))
@@ -651,7 +651,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
             return X.expand(X_new_bs + X.shape[-2:]), X_new
 
     def _util_newton_updates(
-        self, dp: Tensor, x0: Tensor, max_iter: int = 1, xtol: Optional[float] = None
+        self, dp: Tensor, x0: Tensor, max_iter: int = 1, xtol: float | None = None
     ) -> Tensor:
         r"""Make `max_iter` newton updates on utility.
 
@@ -811,8 +811,8 @@ class PairwiseGP(Model, GP, FantasizeMixin):
 
     def set_train_data(
         self,
-        datapoints: Optional[Tensor] = None,
-        comparisons: Optional[Tensor] = None,
+        datapoints: Tensor | None = None,
+        comparisons: Tensor | None = None,
         strict: bool = False,
         update_model: bool = True,
     ) -> None:
@@ -1068,9 +1068,9 @@ class PairwiseGP(Model, GP, FantasizeMixin):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[list[int]] = None,
+        output_indices: list[int] | None = None,
         observation_noise: bool = False,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        posterior_transform: PosteriorTransform | None = None,
     ) -> Posterior:
         r"""Computes the posterior over model outputs at the provided points.
 

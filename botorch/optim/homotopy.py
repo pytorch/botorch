@@ -6,8 +6,8 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Optional, Union
 
 import torch
 from torch import Tensor
@@ -87,7 +87,7 @@ class HomotopyParameter:
     correspond to a buffer of a module. The parameter has a corresponding schedule.
     """
 
-    parameter: Union[Parameter, Tensor]
+    parameter: Parameter | Tensor
     schedule: FixedHomotopySchedule
 
 
@@ -104,7 +104,7 @@ class Homotopy:
     def __init__(
         self,
         homotopy_parameters: list[HomotopyParameter],
-        callbacks: Optional[list[Callable]] = None,
+        callbacks: list[Callable] | None = None,
     ) -> None:
         r"""Initialize the homotopy.
 

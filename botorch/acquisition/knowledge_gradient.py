@@ -26,8 +26,10 @@ and [Wu2016parallelkg]_.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from copy import deepcopy
-from typing import Any, Callable, Optional
+from typing import Any
 
 import torch
 from botorch import settings
@@ -67,13 +69,13 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        num_fantasies: Optional[int] = 64,
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCAcquisitionObjective] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
-        inner_sampler: Optional[MCSampler] = None,
-        X_pending: Optional[Tensor] = None,
-        current_value: Optional[Tensor] = None,
+        num_fantasies: int | None = 64,
+        sampler: MCSampler | None = None,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
+        inner_sampler: MCSampler | None = None,
+        X_pending: Tensor | None = None,
+        current_value: Tensor | None = None,
     ) -> None:
         r"""q-Knowledge Gradient (one-shot optimization).
 
@@ -319,18 +321,18 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
     def __init__(
         self,
         model: Model,
-        num_fantasies: Optional[int] = 64,
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCAcquisitionObjective] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
-        inner_sampler: Optional[MCSampler] = None,
-        X_pending: Optional[Tensor] = None,
-        current_value: Optional[Tensor] = None,
-        cost_aware_utility: Optional[CostAwareUtility] = None,
+        num_fantasies: int | None = 64,
+        sampler: MCSampler | None = None,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
+        inner_sampler: MCSampler | None = None,
+        X_pending: Tensor | None = None,
+        current_value: Tensor | None = None,
+        cost_aware_utility: CostAwareUtility | None = None,
         project: Callable[[Tensor], Tensor] = lambda X: X,
         expand: Callable[[Tensor], Tensor] = lambda X: X,
-        valfunc_cls: Optional[type[AcquisitionFunction]] = None,
-        valfunc_argfac: Optional[Callable[[Model], dict[str, Any]]] = None,
+        valfunc_cls: type[AcquisitionFunction] | None = None,
+        valfunc_argfac: Callable[[Model], dict[str, Any]] | None = None,
     ) -> None:
         r"""Multi-Fidelity q-Knowledge Gradient (one-shot optimization).
 
@@ -516,12 +518,12 @@ class ProjectedAcquisitionFunction(AcquisitionFunction):
 
 def _get_value_function(
     model: Model,
-    objective: Optional[MCAcquisitionObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
-    sampler: Optional[MCSampler] = None,
-    project: Optional[Callable[[Tensor], Tensor]] = None,
-    valfunc_cls: Optional[type[AcquisitionFunction]] = None,
-    valfunc_argfac: Optional[Callable[[Model], dict[str, Any]]] = None,
+    objective: MCAcquisitionObjective | None = None,
+    posterior_transform: PosteriorTransform | None = None,
+    sampler: MCSampler | None = None,
+    project: Callable[[Tensor], Tensor] | None = None,
+    valfunc_cls: type[AcquisitionFunction] | None = None,
+    valfunc_argfac: Callable[[Model], dict[str, Any]] | None = None,
 ) -> AcquisitionFunction:
     r"""Construct value function (i.e. inner acquisition function)."""
     if valfunc_cls is not None:

@@ -7,8 +7,8 @@
 from __future__ import annotations
 
 import warnings
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Optional, Union
 
 import torch
 
@@ -21,7 +21,7 @@ from torch import Tensor
 
 
 def _convert_nonlinear_inequality_constraints(
-    nonlinear_inequality_constraints: list[Union[Callable, tuple[Callable, bool]]]
+    nonlinear_inequality_constraints: list[Callable | tuple[Callable, bool]]
 ) -> list[tuple[Callable, bool]]:
     """Convert legacy defintions of nonlinear inequality constraints into the new
     format. Assumes intra-point constraints.
@@ -92,22 +92,22 @@ class _NoFixedFeatures:
 
     acquisition_function: FixedFeatureAcquisitionFunction
     initial_conditions: Tensor
-    lower_bounds: Optional[Union[float, Tensor]]
-    upper_bounds: Optional[Union[float, Tensor]]
-    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]]
-    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]]
-    nonlinear_inequality_constraints: Optional[list[Callable[[Tensor], Tensor]]]
+    lower_bounds: float | Tensor | None
+    upper_bounds: float | Tensor | None
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None
+    nonlinear_inequality_constraints: list[Callable[[Tensor], Tensor]] | None
 
 
 def _remove_fixed_features_from_optimization(
-    fixed_features: dict[int, Optional[float]],
+    fixed_features: dict[int, float | None],
     acquisition_function: AcquisitionFunction,
     initial_conditions: Tensor,
-    lower_bounds: Optional[Union[float, Tensor]],
-    upper_bounds: Optional[Union[float, Tensor]],
-    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]],
-    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]],
-    nonlinear_inequality_constraints: Optional[list[Callable[[Tensor], Tensor]]],
+    lower_bounds: float | Tensor | None,
+    upper_bounds: float | Tensor | None,
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None,
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None,
+    nonlinear_inequality_constraints: list[Callable[[Tensor], Tensor]] | None,
 ) -> _NoFixedFeatures:
     """
     Given a set of non-empty fixed features, this function effectively reduces the

@@ -10,8 +10,10 @@ Utility functions for constrained optimization.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from functools import partial
-from typing import Callable, Optional, Union
+from typing import Union
 
 import numpy as np
 import torch
@@ -28,9 +30,9 @@ NLC_TOL = -1e-6
 
 def make_scipy_bounds(
     X: Tensor,
-    lower_bounds: Optional[Union[float, Tensor]] = None,
-    upper_bounds: Optional[Union[float, Tensor]] = None,
-) -> Optional[Bounds]:
+    lower_bounds: float | Tensor | None = None,
+    upper_bounds: float | Tensor | None = None,
+) -> Bounds | None:
     r"""Creates a scipy Bounds object for optimziation
 
     Args:
@@ -51,7 +53,7 @@ def make_scipy_bounds(
     if lower_bounds is None and upper_bounds is None:
         return None
 
-    def _expand(bounds: Union[float, Tensor], X: Tensor, lower: bool) -> Tensor:
+    def _expand(bounds: float | Tensor, X: Tensor, lower: bool) -> Tensor:
         if bounds is None:
             ebounds = torch.full_like(X, float("-inf" if lower else "inf"))
         else:
@@ -67,8 +69,8 @@ def make_scipy_bounds(
 
 def make_scipy_linear_constraints(
     shapeX: torch.Size,
-    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
 ) -> list[ScipyConstraintDict]:
     r"""Generate scipy constraints from torch representation.
 
@@ -370,10 +372,10 @@ def _make_nonlinear_constraints(
 
 
 def _generate_unfixed_nonlin_constraints(
-    constraints: Optional[list[tuple[Callable[[Tensor], Tensor], bool]]],
+    constraints: list[tuple[Callable[[Tensor], Tensor], bool]] | None,
     fixed_features: dict[int, float],
     dimension: int,
-) -> Optional[list[Callable[[Tensor], Tensor]]]:
+) -> list[Callable[[Tensor], Tensor]] | None:
     """Given a dictionary of fixed features, returns a list of callables for
     nonlinear inequality constraints expecting only a tensor with the non-fixed
     features as input.
@@ -410,11 +412,11 @@ def _generate_unfixed_nonlin_constraints(
 
 
 def _generate_unfixed_lin_constraints(
-    constraints: Optional[list[tuple[Tensor, Tensor, float]]],
+    constraints: list[tuple[Tensor, Tensor, float]] | None,
     fixed_features: dict[int, float],
     dimension: int,
     eq: bool,
-) -> Optional[list[tuple[Tensor, Tensor, float]]]:
+) -> list[tuple[Tensor, Tensor, float]] | None:
     # If constraints is None or an empty list, then return itself
     if not constraints:
         return constraints

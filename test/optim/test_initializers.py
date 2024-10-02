@@ -8,7 +8,6 @@ import warnings
 from contextlib import ExitStack
 from itertools import product
 from random import random
-from typing import Optional
 from unittest import mock
 
 import torch
@@ -506,8 +505,8 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
 
                 # samples are always on cpu
                 def _to_self_device(
-                    x: Optional[torch.Tensor],
-                ) -> Optional[torch.Tensor]:
+                    x: torch.Tensor | None,
+                ) -> torch.Tensor | None:
                     return None if x is None else x.to(device=self.device)
 
                 self.assertLess(
@@ -714,7 +713,7 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                 [True, False], [None, 1234], [None, 1], [None, {0: 0.5}]
             ):
 
-                def generator(n: int, q: int, seed: Optional[int]):
+                def generator(n: int, q: int, seed: int | None):
                     with manual_seed(seed):
                         X_rnd_nlzd = torch.rand(
                             n,
@@ -770,7 +769,7 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
     def test_error_generator_with_sample_around_best(self):
         tkwargs = {"device": self.device, "dtype": torch.double}
 
-        def generator(n: int, q: int, seed: Optional[int]):
+        def generator(n: int, q: int, seed: int | None):
             return torch.rand(n, q, 3).to(**tkwargs)
 
         with self.assertRaisesRegex(

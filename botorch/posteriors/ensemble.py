@@ -10,8 +10,6 @@ Ensemble posteriors. Used in conjunction with ensemble models.
 
 from __future__ import annotations
 
-from typing import Optional
-
 import torch
 from botorch.posteriors.posterior import Posterior
 from torch import Tensor
@@ -79,7 +77,7 @@ class EnsemblePosterior(Posterior):
 
     def rsample(
         self,
-        sample_shape: Optional[torch.Size] = None,
+        sample_shape: torch.Size | None = None,
     ) -> Tensor:
         r"""Sample from the posterior (with gradients).
 

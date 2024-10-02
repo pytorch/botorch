@@ -19,7 +19,6 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from math import pi
-from typing import Optional, Union
 
 import torch
 from botorch import settings
@@ -46,7 +45,7 @@ class LowerBoundMultiObjectiveEntropySearch(AcquisitionFunction, MCSamplerMixin)
         pareto_sets: Tensor,
         pareto_fronts: Tensor,
         hypercell_bounds: Tensor,
-        X_pending: Optional[Tensor] = None,
+        X_pending: Tensor | None = None,
         estimation_type: str = "LB",
         num_samples: int = 64,
     ) -> None:
@@ -124,7 +123,7 @@ class LowerBoundMultiObjectiveEntropySearch(AcquisitionFunction, MCSamplerMixin)
     @abstractmethod
     def _compute_posterior_statistics(
         self, X: Tensor
-    ) -> dict[str, Union[GPyTorchPosterior, Tensor]]:
+    ) -> dict[str, GPyTorchPosterior | Tensor]:
         r"""Compute the posterior statistics.
 
         Args:
@@ -278,7 +277,7 @@ class qLowerBoundMultiObjectiveJointEntropySearch(
         pareto_sets: Tensor,
         pareto_fronts: Tensor,
         hypercell_bounds: Tensor,
-        X_pending: Optional[Tensor] = None,
+        X_pending: Tensor | None = None,
         estimation_type: str = "LB",
         num_samples: int = 64,
     ) -> None:
@@ -331,7 +330,7 @@ class qLowerBoundMultiObjectiveJointEntropySearch(
 
     def _compute_posterior_statistics(
         self, X: Tensor
-    ) -> dict[str, Union[Tensor, GPyTorchPosterior]]:
+    ) -> dict[str, Tensor | GPyTorchPosterior]:
         r"""Compute the posterior statistics.
         Args:
             X: A `batch_shape x q x d`-dim Tensor of inputs.

@@ -8,7 +8,7 @@ import warnings
 from copy import deepcopy
 from itertools import product
 from math import pi
-from typing import Any, Optional
+from typing import Any
 from unittest import mock
 from warnings import catch_warnings, simplefilter
 
@@ -110,7 +110,7 @@ class TestMultiObjectiveMCAcquisitionFunction(BotorchTestCase):
         self,
         acqf_class: type[MultiObjectiveMCAcquisitionFunction],
         dtype: torch.dtype,
-        acqf_kwargs: Optional[dict[str, Any]] = None,
+        acqf_kwargs: dict[str, Any] | None = None,
     ):
         if acqf_kwargs is None:
             acqf_kwargs = {}
@@ -558,7 +558,7 @@ class TestMultiObjectiveMCAcquisitionFunction(BotorchTestCase):
         self,
         acqf_class: type[AcquisitionFunction],
         dtype: torch.dtype,
-        acqf_kwargs: Optional[dict[str, Any]] = None,
+        acqf_kwargs: dict[str, Any] | None = None,
     ):
         if acqf_kwargs is None:
             acqf_kwargs = {}

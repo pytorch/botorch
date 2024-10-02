@@ -19,8 +19,9 @@ References
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from math import pi
-from typing import Callable, Optional, Union
 
 import torch
 from botorch.acquisition.max_value_entropy_search import qMaxValueEntropy
@@ -73,8 +74,8 @@ class qMultiObjectiveMaxValueEntropy(
         model: Model,
         sample_pareto_frontiers: Callable[[Model], Tensor],
         num_fantasies: int = 16,
-        X_pending: Optional[Tensor] = None,
-        sampler: Optional[MCSampler] = None,
+        X_pending: Tensor | None = None,
+        sampler: MCSampler | None = None,
     ) -> None:
         r"""Multi-objective max-value entropy search acquisition function.
 
@@ -119,7 +120,7 @@ class qMultiObjectiveMaxValueEntropy(
         # This avoids attribute errors in qMaxValueEntropy code.
         self.posterior_transform = None
 
-    def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
+    def set_X_pending(self, X_pending: Tensor | None = None) -> None:
         r"""Set pending points.
 
         Informs the acquisition function about pending design points,
@@ -207,7 +208,7 @@ class qLowerBoundMultiObjectiveMaxValueEntropySearch(
         self,
         model: Model,
         hypercell_bounds: Tensor,
-        X_pending: Optional[Tensor] = None,
+        X_pending: Tensor | None = None,
         estimation_type: str = "LB",
         num_samples: int = 64,
     ) -> None:
@@ -240,7 +241,7 @@ class qLowerBoundMultiObjectiveMaxValueEntropySearch(
 
     def _compute_posterior_statistics(
         self, X: Tensor
-    ) -> dict[str, Union[GPyTorchPosterior, Tensor]]:
+    ) -> dict[str, GPyTorchPosterior | Tensor]:
         r"""Compute the posterior statistics.
 
         Args:

@@ -9,7 +9,7 @@ r"""Multi-task Gaussian Process Regression models with fully Bayesian inference.
 
 
 from collections.abc import Mapping
-from typing import Any, NoReturn, Optional
+from typing import Any, NoReturn
 
 import pyro
 import torch
@@ -46,9 +46,9 @@ class MultitaskSaasPyroModel(SaasPyroModel):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        train_Yvar: Optional[Tensor],
+        train_Yvar: Tensor | None,
         task_feature: int,
-        task_rank: Optional[int] = None,
+        task_rank: int | None = None,
     ) -> None:
         """Set the training data.
 
@@ -196,13 +196,13 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
         train_X: Tensor,
         train_Y: Tensor,
         task_feature: int,
-        train_Yvar: Optional[Tensor] = None,
-        output_tasks: Optional[list[int]] = None,
-        rank: Optional[int] = None,
-        all_tasks: Optional[list[int]] = None,
-        outcome_transform: Optional[OutcomeTransform] = None,
-        input_transform: Optional[InputTransform] = None,
-        pyro_model: Optional[MultitaskSaasPyroModel] = None,
+        train_Yvar: Tensor | None = None,
+        output_tasks: list[int] | None = None,
+        rank: int | None = None,
+        all_tasks: list[int] | None = None,
+        outcome_transform: OutcomeTransform | None = None,
+        input_transform: InputTransform | None = None,
+        pyro_model: MultitaskSaasPyroModel | None = None,
     ) -> None:
         r"""Initialize the fully Bayesian multi-task GP model.
 
@@ -348,9 +348,9 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[list[int]] = None,
+        output_indices: list[int] | None = None,
         observation_noise: bool = False,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        posterior_transform: PosteriorTransform | None = None,
         **kwargs: Any,
     ) -> GaussianMixturePosterior:
         r"""Computes the posterior over model outputs at the provided points.

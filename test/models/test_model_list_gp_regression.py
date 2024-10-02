@@ -7,7 +7,6 @@
 import itertools
 import warnings
 from copy import deepcopy
-from typing import Optional
 
 import torch
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
@@ -561,7 +560,7 @@ class TestModelListGP(BotorchTestCase):
                 def _get_fant_mean(
                     model: ModelListGP,
                     sampler: MCSampler,
-                    eval_mask: Optional[Tensor] = None,
+                    eval_mask: Tensor | None = None,
                 ) -> float:
                     fant = model.fantasize(
                         target_x,  # noqa

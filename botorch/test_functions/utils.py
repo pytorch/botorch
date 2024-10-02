@@ -7,15 +7,13 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 import torch
 
 from torch import Tensor
 
 
 def round_nearest(
-    X: Tensor, increment: float, bounds: Optional[tuple[float, float]]
+    X: Tensor, increment: float, bounds: tuple[float, float] | None
 ) -> Tensor:
     r"""Rounds the input tensor to the nearest multiple of `increment`.
 

@@ -7,7 +7,7 @@
 import itertools
 import math
 import warnings
-from typing import Any, Optional
+from typing import Any
 
 import torch
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
@@ -43,11 +43,11 @@ from gpytorch.settings import max_cholesky_size, max_root_decomposition_size
 def _gen_model_and_data(
     fixed_noise: bool,
     task_feature: int = 0,
-    output_tasks: Optional[list[int]] = None,
-    task_values: Optional[list[int]] = None,
+    output_tasks: list[int] | None = None,
+    task_values: list[int] | None = None,
     skip_task_features_in_datasets: bool = False,
-    input_transform: Optional[InputTransform] = None,
-    outcome_transform: Optional[OutcomeTransform] = None,
+    input_transform: InputTransform | None = None,
+    outcome_transform: OutcomeTransform | None = None,
     **tkwargs,
 ):
     datasets, (train_X, train_Y, train_Yvar) = gen_multi_task_dataset(

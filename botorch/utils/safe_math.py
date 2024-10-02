@@ -16,8 +16,7 @@ solve numerical issues of naive implementations.
 from __future__ import annotations
 
 import math
-
-from typing import Callable, Union
+from collections.abc import Callable
 
 import torch
 from botorch.exceptions import UnsupportedError
@@ -121,9 +120,7 @@ def logdiffexp(log_a: Tensor, log_b: Tensor) -> Tensor:
     return log_b + log1mexp(log_a - log_b.masked_fill(is_inf, 0.0))
 
 
-def logsumexp(
-    x: Tensor, dim: Union[int, tuple[int, ...]], keepdim: bool = False
-) -> Tensor:
+def logsumexp(x: Tensor, dim: int | tuple[int, ...], keepdim: bool = False) -> Tensor:
     """Version of logsumexp that has a well-behaved backward pass when
     x contains infinities.
 
@@ -149,7 +146,7 @@ def logsumexp(
 def _inf_max_helper(
     max_fun: Callable[[Tensor], Tensor],
     x: Tensor,
-    dim: Union[int, tuple[int, ...]],
+    dim: int | tuple[int, ...],
     keepdim: bool,
 ) -> Tensor:
     """Helper function that generalizes the treatment of infinities for approximations
@@ -187,7 +184,7 @@ def _inf_max_helper(
     return res if keepdim else res.sum(dim=dim)
 
 
-def _any(x: Tensor, dim: Union[int, tuple[int, ...]], keepdim: bool = False) -> Tensor:
+def _any(x: Tensor, dim: int | tuple[int, ...], keepdim: bool = False) -> Tensor:
     """Extension of torch.any, which supports reducing over tuples of dimensions.
 
     Args:
@@ -206,9 +203,7 @@ def _any(x: Tensor, dim: Union[int, tuple[int, ...]], keepdim: bool = False) -> 
     return x if keepdim else x.squeeze(dim)
 
 
-def logmeanexp(
-    X: Tensor, dim: Union[int, tuple[int, ...]], keepdim: bool = False
-) -> Tensor:
+def logmeanexp(X: Tensor, dim: int | tuple[int, ...], keepdim: bool = False) -> Tensor:
     """Computes `log(mean(exp(X), dim=dim, keepdim=keepdim))`.
 
     Args:
@@ -223,7 +218,7 @@ def logmeanexp(
     return logsumexp(X, dim=dim, keepdim=keepdim) - math.log(n)
 
 
-def log_softplus(x: Tensor, tau: Union[float, Tensor] = TAU) -> Tensor:
+def log_softplus(x: Tensor, tau: float | Tensor = TAU) -> Tensor:
     """Computes the logarithm of the softplus function with high numerical accuracy.
 
     Args:
@@ -249,9 +244,9 @@ def log_softplus(x: Tensor, tau: Union[float, Tensor] = TAU) -> Tensor:
 
 def smooth_amax(
     X: Tensor,
-    dim: Union[int, tuple[int, ...]] = -1,
+    dim: int | tuple[int, ...] = -1,
     keepdim: bool = False,
-    tau: Union[float, Tensor] = 1.0,
+    tau: float | Tensor = 1.0,
 ) -> Tensor:
     """Computes a smooth approximation to `max(X, dim=dim)`, i.e the maximum value of
     `X` over dimension `dim`, using the logarithm of the `l_(1/tau)` norm of `exp(X)`.
@@ -275,9 +270,9 @@ def smooth_amax(
 
 def smooth_amin(
     X: Tensor,
-    dim: Union[int, tuple[int, ...]] = -1,
+    dim: int | tuple[int, ...] = -1,
     keepdim: bool = False,
-    tau: Union[float, Tensor] = 1.0,
+    tau: float | Tensor = 1.0,
 ) -> Tensor:
     """A smooth approximation to `min(X, dim=dim)`, similar to `smooth_amax`."""
     return -smooth_amax(X=-X, dim=dim, keepdim=keepdim, tau=tau)
@@ -290,7 +285,7 @@ def check_dtype_float32_or_float64(X: Tensor) -> None:
         )
 
 
-def log_fatplus(x: Tensor, tau: Union[float, Tensor] = TAU) -> Tensor:
+def log_fatplus(x: Tensor, tau: float | Tensor = TAU) -> Tensor:
     """Computes the logarithm of the fat-tailed softplus.
 
     NOTE: Separated out in case the complexity of the `log` implementation increases
@@ -299,7 +294,7 @@ def log_fatplus(x: Tensor, tau: Union[float, Tensor] = TAU) -> Tensor:
     return fatplus(x, tau=tau).log()
 
 
-def fatplus(x: Tensor, tau: Union[float, Tensor] = TAU) -> Tensor:
+def fatplus(x: Tensor, tau: float | Tensor = TAU) -> Tensor:
     """Computes a fat-tailed approximation to `ReLU(x) = max(x, 0)` by linearly
     combining a regular softplus function and the density function of a Cauchy
     distribution. The coefficient `alpha` of the Cauchy density is chosen to guarantee
@@ -322,9 +317,9 @@ def fatplus(x: Tensor, tau: Union[float, Tensor] = TAU) -> Tensor:
 
 def fatmax(
     x: Tensor,
-    dim: Union[int, tuple[int, ...]],
+    dim: int | tuple[int, ...],
     keepdim: bool = False,
-    tau: Union[float, Tensor] = TAU,
+    tau: float | Tensor = TAU,
     alpha: float = ALPHA,
 ) -> Tensor:
     """Computes a smooth approximation to amax(X, dim=dim) with a fat tail.
@@ -344,9 +339,7 @@ def fatmax(
         A Tensor of smooth approximations to `amax(X, dim=dim)` with a fat tail.
     """
 
-    def max_fun(
-        x: Tensor, dim: Union[int, tuple[int, ...]], keepdim: bool = False
-    ) -> Tensor:
+    def max_fun(x: Tensor, dim: int | tuple[int, ...], keepdim: bool = False) -> Tensor:
         return tau * _pareto(-x / tau, alpha=alpha).sum(dim=dim, keepdim=keepdim).log()
 
     return _inf_max_helper(max_fun=max_fun, x=x, dim=dim, keepdim=keepdim)
@@ -354,9 +347,9 @@ def fatmax(
 
 def fatmin(
     x: Tensor,
-    dim: Union[int, tuple[int, ...]],
+    dim: int | tuple[int, ...],
     keepdim: bool = False,
-    tau: Union[float, Tensor] = TAU,
+    tau: float | Tensor = TAU,
     alpha: float = ALPHA,
 ) -> Tensor:
     """Computes a smooth approximation to amin(X, dim=dim) with a fat tail.
@@ -379,7 +372,7 @@ def fatmin(
 
 
 def fatmaximum(
-    a: Tensor, b: Tensor, tau: Union[float, Tensor] = TAU, alpha: float = ALPHA
+    a: Tensor, b: Tensor, tau: float | Tensor = TAU, alpha: float = ALPHA
 ) -> Tensor:
     """Computes a smooth approximation to torch.maximum(a, b) with a fat tail.
 
@@ -402,7 +395,7 @@ def fatmaximum(
 
 
 def fatminimum(
-    a: Tensor, b: Tensor, tau: Union[float, Tensor] = TAU, alpha: float = ALPHA
+    a: Tensor, b: Tensor, tau: float | Tensor = TAU, alpha: float = ALPHA
 ) -> Tensor:
     """Computes a smooth approximation to torch.minimum(a, b) with a fat tail.
 
@@ -419,14 +412,14 @@ def fatminimum(
     return -fatmaximum(-a, -b, tau=tau, alpha=alpha)
 
 
-def log_fatmoid(X: Tensor, tau: Union[float, Tensor] = 1.0) -> Tensor:
+def log_fatmoid(X: Tensor, tau: float | Tensor = 1.0) -> Tensor:
     """Computes the logarithm of the fatmoid. Separated out in case the implementation
     of the logarithm becomes more complex in the future to ensure numerical stability.
     """
     return fatmoid(X, tau=tau).log()
 
 
-def fatmoid(X: Tensor, tau: Union[float, Tensor] = 1.0) -> Tensor:
+def fatmoid(X: Tensor, tau: float | Tensor = 1.0) -> Tensor:
     """Computes a twice continuously differentiable approximation to the Heaviside
     step function with a fat tail, i.e. `O(1 / x^2)` as `x` goes to -inf.
 

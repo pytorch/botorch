@@ -22,8 +22,6 @@ from __future__ import annotations
 
 import warnings
 
-from typing import Optional, Union
-
 from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.models import ModelListGP
@@ -79,10 +77,10 @@ class qBayesianActiveLearningByDisagreement(
 ):
     def __init__(
         self,
-        model: Union[ModelListGP, SaasFullyBayesianSingleTaskGP],
-        sampler: Optional[MCSampler] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
-        X_pending: Optional[Tensor] = None,
+        model: ModelListGP | SaasFullyBayesianSingleTaskGP,
+        sampler: MCSampler | None = None,
+        posterior_transform: PosteriorTransform | None = None,
+        X_pending: Tensor | None = None,
     ) -> None:
         """
         Batch implementation [kirsch2019batchbald]_ of BALD [Houlsby2011bald]_,

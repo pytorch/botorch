@@ -9,7 +9,6 @@ from __future__ import annotations
 import warnings
 from copy import deepcopy
 from math import pi
-from typing import Optional
 
 import torch
 from botorch.models.converter import batched_to_model_list
@@ -36,7 +35,7 @@ class GPDraw(Module):
     This does not yet support multi-output models.
     """
 
-    def __init__(self, model: Model, seed: Optional[int] = None) -> None:
+    def __init__(self, model: Model, seed: int | None = None) -> None:
         r"""Construct a GP function sampler.
 
         Args:
@@ -130,7 +129,7 @@ class RandomFourierFeatures(Module):
         kernel: Kernel,
         input_dim: int,
         num_rff_features: int,
-        sample_shape: Optional[torch.Size] = None,
+        sample_shape: torch.Size | None = None,
     ) -> None:
         r"""Initialize RandomFourierFeatures.
 
@@ -186,7 +185,7 @@ class RandomFourierFeatures(Module):
         base_kernel: Kernel,
         input_dim: int,
         num_rff_features: int,
-        sample_shape: Optional[torch.Size] = None,
+        sample_shape: torch.Size | None = None,
     ) -> Tensor:
         r"""Sample weights for RFF.
 

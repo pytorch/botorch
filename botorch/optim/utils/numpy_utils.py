@@ -8,10 +8,9 @@ r"""Utilities for interfacing Numpy and Torch."""
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 
 from itertools import tee
-from typing import Callable, Optional, Union
 
 import numpy as np
 import torch
@@ -35,7 +34,7 @@ torch_to_numpy_dtype_dict = {
 
 
 def as_ndarray(
-    values: Tensor, dtype: Optional[np.dtype] = None, inplace: bool = True
+    values: Tensor, dtype: np.dtype | None = None, inplace: bool = True
 ) -> ndarray:
     r"""Helper for going from torch.Tensor to numpy.ndarray.
 
@@ -67,9 +66,9 @@ def as_ndarray(
 
 
 def get_tensors_as_ndarray_1d(
-    tensors: Union[Iterator[Tensor], dict[str, Tensor]],
-    out: Optional[ndarray] = None,
-    dtype: Optional[Union[np.dtype, str]] = None,
+    tensors: Iterator[Tensor] | dict[str, Tensor],
+    out: ndarray | None = None,
+    dtype: np.dtype | str | None = None,
     as_array: Callable[[Tensor], ndarray] = as_ndarray,
 ) -> ndarray:
     # Create a pair of iterators, one for setup and one for data transfer
@@ -112,7 +111,7 @@ def get_tensors_as_ndarray_1d(
 
 
 def set_tensors_from_ndarray_1d(
-    tensors: Union[Iterator[Tensor], dict[str, Tensor]],
+    tensors: Iterator[Tensor] | dict[str, Tensor],
     array: ndarray,
     as_tensor: Callable[[ndarray], Tensor] = torch.as_tensor,
 ) -> None:
@@ -137,10 +136,8 @@ def set_tensors_from_ndarray_1d(
 
 def get_bounds_as_ndarray(
     parameters: dict[str, Tensor],
-    bounds: dict[
-        str, tuple[Optional[Union[float, Tensor]], Optional[Union[float, Tensor]]]
-    ],
-) -> Optional[np.ndarray]:
+    bounds: dict[str, tuple[float | Tensor | None, float | Tensor | None]],
+) -> np.ndarray | None:
     r"""Helper method for converting bounds into an ndarray.
 
     Args:

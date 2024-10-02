@@ -4,7 +4,6 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
-from typing import Optional
 
 import torch
 
@@ -25,7 +24,7 @@ class Ishigami(SyntheticTestFunction):
     """
 
     def __init__(
-        self, b: float = 0.1, noise_std: Optional[float] = None, negate: bool = False
+        self, b: float = 0.1, noise_std: float | None = None, negate: bool = False
     ) -> None:
         r"""
         Args:
@@ -126,7 +125,7 @@ class Gsobol(SyntheticTestFunction):
         self,
         dim: int,
         a: list = None,
-        noise_std: Optional[float] = None,
+        noise_std: float | None = None,
         negate: bool = False,
     ) -> None:
         r"""
@@ -175,7 +174,7 @@ class Gsobol(SyntheticTestFunction):
         for i in range(self.dim):
             vi.append(1 / (3 * ((1 + self.a[i]) ** 2)))
         self.vi = Tensor(vi)
-        self.V = torch.prod((1 + self.vi)) - 1
+        self.V = torch.prod(1 + self.vi) - 1
         self.si = self.vi / self.V
         si_t = []
         for i in range(self.dim):
@@ -208,7 +207,7 @@ class Morris(SyntheticTestFunction):
     Proposed to test sensitivity analysis methods
     """
 
-    def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
+    def __init__(self, noise_std: float | None = None, negate: bool = False) -> None:
         r"""
         Args:
             noise_std: Standard deviation of observation noise.

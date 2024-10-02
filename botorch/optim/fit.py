@@ -8,10 +8,10 @@ r"""Tools for model fitting."""
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 
 from functools import partial
-from typing import Any, Callable, Optional, Union
+from typing import Any, Optional
 from warnings import warn
 
 from botorch.exceptions.warnings import OptimizationWarning
@@ -46,14 +46,14 @@ TArrayToMod = Callable[[Module, ndarray, dict[str, TorchAttr]], Module]
 
 def fit_gpytorch_mll_scipy(
     mll: MarginalLogLikelihood,
-    parameters: Optional[dict[str, Tensor]] = None,
-    bounds: Optional[dict[str, tuple[Optional[float], Optional[float]]]] = None,
-    closure: Optional[Callable[[], tuple[Tensor, Sequence[Optional[Tensor]]]]] = None,
-    closure_kwargs: Optional[dict[str, Any]] = None,
+    parameters: dict[str, Tensor] | None = None,
+    bounds: dict[str, tuple[float | None, float | None]] | None = None,
+    closure: Callable[[], tuple[Tensor, Sequence[Tensor | None]]] | None = None,
+    closure_kwargs: dict[str, Any] | None = None,
     method: str = "L-BFGS-B",
-    options: Optional[dict[str, Any]] = None,
-    callback: Optional[Callable[[dict[str, Tensor], OptimizationResult], None]] = None,
-    timeout_sec: Optional[float] = None,
+    options: dict[str, Any] | None = None,
+    callback: Callable[[dict[str, Tensor], OptimizationResult], None] | None = None,
+    timeout_sec: float | None = None,
 ) -> OptimizationResult:
     r"""Generic scipy.optimized-based fitting routine for GPyTorch MLLs.
 
@@ -112,16 +112,16 @@ def fit_gpytorch_mll_scipy(
 
 def fit_gpytorch_mll_torch(
     mll: MarginalLogLikelihood,
-    parameters: Optional[dict[str, Tensor]] = None,
-    bounds: Optional[dict[str, tuple[Optional[float], Optional[float]]]] = None,
-    closure: Optional[Callable[[], tuple[Tensor, Sequence[Optional[Tensor]]]]] = None,
-    closure_kwargs: Optional[dict[str, Any]] = None,
-    step_limit: Optional[int] = None,
-    stopping_criterion: Optional[Callable[[Tensor], bool]] = DEFAULT,  # pyre-ignore [9]
-    optimizer: Union[Optimizer, Callable[..., Optimizer]] = Adam,
-    scheduler: Optional[Union[_LRScheduler, Callable[..., _LRScheduler]]] = None,
-    callback: Optional[Callable[[dict[str, Tensor], OptimizationResult], None]] = None,
-    timeout_sec: Optional[float] = None,
+    parameters: dict[str, Tensor] | None = None,
+    bounds: dict[str, tuple[float | None, float | None]] | None = None,
+    closure: Callable[[], tuple[Tensor, Sequence[Tensor | None]]] | None = None,
+    closure_kwargs: dict[str, Any] | None = None,
+    step_limit: int | None = None,
+    stopping_criterion: Callable[[Tensor], bool] | None = DEFAULT,  # pyre-ignore [9]
+    optimizer: Optimizer | Callable[..., Optimizer] = Adam,
+    scheduler: _LRScheduler | Callable[..., _LRScheduler] | None = None,
+    callback: Callable[[dict[str, Tensor], OptimizationResult], None] | None = None,
+    timeout_sec: float | None = None,
 ) -> OptimizationResult:
     r"""Generic torch.optim-based fitting routine for GPyTorch MLLs.
 

@@ -84,7 +84,7 @@ class TestTransformedPosterior(BotorchTestCase):
         # check that `mean` works even if posterior doesn't have `variance`
         for error in (AttributeError, NotImplementedError):
 
-            class DummyPosterior(object):
+            class DummyPosterior:
                 mean = torch.zeros(5)
 
                 @property

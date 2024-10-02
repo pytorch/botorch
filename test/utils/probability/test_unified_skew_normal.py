@@ -12,7 +12,7 @@ from copy import deepcopy
 
 from itertools import count
 
-from typing import Any, Optional
+from typing import Any
 
 import torch
 from botorch.utils.probability.mvnxpb import MVNXPB
@@ -39,7 +39,7 @@ class TestUnifiedSkewNormal(BotorchTestCase):
         mc_atol_multiplier: float = 4.0,
         seed: int = 1,
         dtype: torch.dtype = torch.float64,
-        device: Optional[torch.device] = None,
+        device: torch.device | None = None,
     ):
         super().setUp()
         self.dtype = dtype

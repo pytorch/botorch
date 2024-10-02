@@ -9,7 +9,7 @@ r"""Representations for different kinds of datasets."""
 from __future__ import annotations
 
 import warnings
-from typing import Any, Optional, Union
+from typing import Any
 
 import torch
 from botorch.exceptions.errors import InputDataError, UnsupportedError
@@ -47,12 +47,12 @@ class SupervisedDataset:
 
     def __init__(
         self,
-        X: Union[BotorchContainer, Tensor],
-        Y: Union[BotorchContainer, Tensor],
+        X: BotorchContainer | Tensor,
+        Y: BotorchContainer | Tensor,
         *,
         feature_names: list[str],
         outcome_names: list[str],
-        Yvar: Union[BotorchContainer, Tensor, None] = None,
+        Yvar: BotorchContainer | Tensor | None = None,
         validate_init: bool = True,
     ) -> None:
         r"""Constructs a `SupervisedDataset`.
@@ -87,7 +87,7 @@ class SupervisedDataset:
         return self._Y()
 
     @property
-    def Yvar(self) -> Optional[Tensor]:
+    def Yvar(self) -> Tensor | None:
         if self._Yvar is None or isinstance(self._Yvar, Tensor):
             return self._Yvar
         return self._Yvar()
@@ -159,9 +159,9 @@ class FixedNoiseDataset(SupervisedDataset):
 
     def __init__(
         self,
-        X: Union[BotorchContainer, Tensor],
-        Y: Union[BotorchContainer, Tensor],
-        Yvar: Union[BotorchContainer, Tensor],
+        X: BotorchContainer | Tensor,
+        Y: BotorchContainer | Tensor,
+        Yvar: BotorchContainer | Tensor,
         feature_names: list[str],
         outcome_names: list[str],
         validate_init: bool = True,
@@ -217,7 +217,7 @@ class RankingDataset(SupervisedDataset):
     def __init__(
         self,
         X: SliceContainer,
-        Y: Union[BotorchContainer, Tensor],
+        Y: BotorchContainer | Tensor,
         feature_names: list[str],
         outcome_names: list[str],
         validate_init: bool = True,
@@ -289,7 +289,7 @@ class MultiTaskDataset(SupervisedDataset):
         self,
         datasets: list[SupervisedDataset],
         target_outcome_name: str,
-        task_feature_index: Optional[int] = None,
+        task_feature_index: int | None = None,
     ):
         """Construct a `MultiTaskDataset`.
 
@@ -323,7 +323,7 @@ class MultiTaskDataset(SupervisedDataset):
         dataset: SupervisedDataset,
         task_feature_index: int,
         target_task_value: int,
-        outcome_names_per_task: Optional[dict[int, str]] = None,
+        outcome_names_per_task: dict[int, str] | None = None,
     ) -> MultiTaskDataset:
         r"""Construct a `MultiTaskDataset` from a joint dataset that includes the
         data for all tasks with the task feature index.
@@ -461,7 +461,7 @@ class MultiTaskDataset(SupervisedDataset):
         return torch.cat([ds.Y for ds in self.datasets.values()], dim=0)
 
     @property
-    def Yvar(self) -> Optional[Tensor]:
+    def Yvar(self) -> Tensor | None:
         """Concatenates Yvars of the datasets if they exist."""
         all_Yvars = [ds.Yvar for ds in self.datasets.values()]
         return None if all_Yvars[0] is None else torch.cat(all_Yvars, dim=0)
@@ -503,7 +503,7 @@ class ContextualDataset(SupervisedDataset):
         self,
         datasets: list[SupervisedDataset],
         parameter_decomposition: dict[str, list[str]],
-        metric_decomposition: Optional[dict[str, list[str]]] = None,
+        metric_decomposition: dict[str, list[str]] | None = None,
     ):
         """Construct a `ContextualDataset`.
 

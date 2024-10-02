@@ -10,16 +10,17 @@ Helpers for handling input or outcome constraints.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from functools import partial
-from typing import Callable, Optional
 
 import torch
 from torch import Tensor
 
 
 def get_outcome_constraint_transforms(
-    outcome_constraints: Optional[tuple[Tensor, Tensor]]
-) -> Optional[list[Callable[[Tensor], Tensor]]]:
+    outcome_constraints: tuple[Tensor, Tensor] | None
+) -> list[Callable[[Tensor], Tensor]] | None:
     r"""Create outcome constraint callables from outcome constraint tensors.
 
     Args:
@@ -66,8 +67,8 @@ def get_outcome_constraint_transforms(
 def get_monotonicity_constraints(
     d: int,
     descending: bool = False,
-    dtype: Optional[torch.dtype] = None,
-    device: Optional[torch.device] = None,
+    dtype: torch.dtype | None = None,
+    device: torch.device | None = None,
 ) -> tuple[Tensor, Tensor]:
     """Returns a system of linear inequalities `(A, b)` that generically encodes order
     constraints on the elements of a `d`-dimsensional space, i.e. `A @ x < b` implies

@@ -6,8 +6,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 import torch
 from gpytorch.constraints import Interval, Positive
 from gpytorch.kernels import Kernel
@@ -31,10 +29,10 @@ class ExponentialDecayKernel(Kernel):
 
     def __init__(
         self,
-        power_prior: Optional[Prior] = None,
-        offset_prior: Optional[Prior] = None,
-        power_constraint: Optional[Interval] = None,
-        offset_constraint: Optional[Interval] = None,
+        power_prior: Prior | None = None,
+        offset_prior: Prior | None = None,
+        power_constraint: Interval | None = None,
+        offset_constraint: Interval | None = None,
         **kwargs,
     ):
         r"""

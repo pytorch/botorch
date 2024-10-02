@@ -16,7 +16,7 @@ References
 """
 from __future__ import annotations
 
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedError
@@ -26,7 +26,7 @@ from torch import Tensor
 
 def get_chebyshev_scalarization(
     weights: Tensor, Y: Tensor, alpha: float = 0.05
-) -> Callable[[Tensor, Optional[Tensor]], Tensor]:
+) -> Callable[[Tensor, Tensor | None], Tensor]:
     r"""Construct an augmented Chebyshev scalarization.
 
     The augmented Chebyshev scalarization is given by
@@ -75,7 +75,7 @@ def get_chebyshev_scalarization(
     elif Y.ndim > 2:
         raise NotImplementedError("Batched Y is not currently supported.")
 
-    def chebyshev_obj(Y: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def chebyshev_obj(Y: Tensor, X: Tensor | None = None) -> Tensor:
         product = weights * Y
         return product.max(dim=-1).values + alpha * product.sum(dim=-1)
 
@@ -89,7 +89,7 @@ def get_chebyshev_scalarization(
             )
         # If there are no observations, we do not need to normalize the objectives
 
-        def obj(Y: Tensor, X: Optional[Tensor] = None) -> Tensor:
+        def obj(Y: Tensor, X: Tensor | None = None) -> Tensor:
             # multiply the scalarization by -1, so that the scalarization should
             # be maximized
             return -chebyshev_obj(Y=-Y)
@@ -98,7 +98,7 @@ def get_chebyshev_scalarization(
     # Set the bounds to be [min(Y_m), max(Y_m)], for each objective m.
     Y_bounds = torch.stack([Y.min(dim=-2).values, Y.max(dim=-2).values])
 
-    def obj(Y: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def obj(Y: Tensor, X: Tensor | None = None) -> Tensor:
         # scale to [0,1]
         Y_normalized = normalize(-Y, bounds=Y_bounds)
         # If minimizing an objective, convert Y_normalized values to [-1,0],

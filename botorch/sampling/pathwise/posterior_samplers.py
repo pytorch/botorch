@@ -17,8 +17,6 @@ r"""
 
 from __future__ import annotations
 
-from typing import Optional, Union
-
 import torch
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.approximate_gp import ApproximateGPyTorchModel
@@ -68,8 +66,8 @@ class MatheronPath(PathDict):
         self,
         prior_paths: SamplePath,
         update_paths: SamplePath,
-        input_transform: Optional[TInputTransform] = None,
-        output_transform: Optional[TOutputTransform] = None,
+        input_transform: TInputTransform | None = None,
+        output_transform: TOutputTransform | None = None,
     ) -> None:
         r"""Initializes a MatheronPath instance.
 
@@ -89,7 +87,7 @@ class MatheronPath(PathDict):
 
 
 def get_matheron_path_model(
-    model: GP, sample_shape: Optional[Size] = None
+    model: GP, sample_shape: Size | None = None
 ) -> GenericDeterministicModel:
     r"""Generates a deterministic model using a single Matheron path drawn
     from the model's posterior.
@@ -226,7 +224,7 @@ def _draw_matheron_paths_ExactGP(
 
 @DrawMatheronPaths.register((ApproximateGP, ApproximateGPyTorchModel))
 def _draw_matheron_paths_ApproximateGP(
-    model: Union[ApproximateGP, ApproximateGPyTorchModel],
+    model: ApproximateGP | ApproximateGPyTorchModel,
     *,
     sample_shape: Size,
     prior_sampler: TPathwisePriorSampler,

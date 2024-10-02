@@ -14,7 +14,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from numbers import Number
-from typing import Optional, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -22,7 +21,7 @@ from torch import Tensor
 from torch.nn import Module
 
 
-def get_dtype_of_sequence(values: Sequence[Union[Tensor, float]]) -> torch.dtype:
+def get_dtype_of_sequence(values: Sequence[Tensor | float]) -> torch.dtype:
     """
     Return torch.float32 if everything is single-precision and torch.float64
     otherwise.
@@ -30,21 +29,21 @@ def get_dtype_of_sequence(values: Sequence[Union[Tensor, float]]) -> torch.dtype
     Numbers (non-tensors) are double-precision.
     """
 
-    def _is_single(value: Union[Tensor, float]) -> bool:
+    def _is_single(value: Tensor | float) -> bool:
         return isinstance(value, Tensor) and value.dtype == torch.float32
 
     all_single_precision = all(_is_single(value) for value in values)
     return torch.float32 if all_single_precision else torch.float64
 
 
-def get_device_of_sequence(values: Sequence[Union[Tensor, float]]) -> torch.dtype:
+def get_device_of_sequence(values: Sequence[Tensor | float]) -> torch.dtype:
     """
     CPU if everything is on the CPU; Cuda otherwise.
 
     Numbers (non-tensors) are considered to be on the CPU.
     """
 
-    def _is_cuda(value: Union[Tensor, float]) -> bool:
+    def _is_cuda(value: Tensor | float) -> bool:
         return hasattr(value, "device") and value.device == torch.device("cuda")
 
     any_cuda = any(_is_cuda(value) for value in values)
@@ -68,7 +67,7 @@ class FixedFeatureAcquisitionFunction(AcquisitionFunction):
         acq_function: AcquisitionFunction,
         d: int,
         columns: list[int],
-        values: Union[Tensor, Sequence[Union[Tensor, float]]],
+        values: Tensor | Sequence[Tensor | float],
     ) -> None:
         r"""Derived Acquisition Function by fixing a subset of input features.
 
@@ -167,7 +166,7 @@ class FixedFeatureAcquisitionFunction(AcquisitionFunction):
             )
 
     @X_pending.setter
-    def X_pending(self, X_pending: Optional[Tensor]):
+    def X_pending(self, X_pending: Tensor | None):
         r"""Sets the `X_pending` of the base acquisition function."""
         if X_pending is not None:
             self.acq_func.X_pending = self._construct_X_full(X_pending)

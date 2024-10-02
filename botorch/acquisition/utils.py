@@ -11,7 +11,7 @@ Utilities for acquisition functions.
 from __future__ import annotations
 
 import math
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import torch
 from botorch.acquisition.objective import (
@@ -90,12 +90,12 @@ def repeat_to_match_aug_dim(target_tensor: Tensor, reference_tensor: Tensor) -> 
 def compute_best_feasible_objective(
     samples: Tensor,
     obj: Tensor,
-    constraints: Optional[list[Callable[[Tensor], Tensor]]],
-    model: Optional[Model] = None,
-    objective: Optional[MCAcquisitionObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
-    X_baseline: Optional[Tensor] = None,
-    infeasible_obj: Optional[Tensor] = None,
+    constraints: list[Callable[[Tensor], Tensor]] | None,
+    model: Model | None = None,
+    objective: MCAcquisitionObjective | None = None,
+    posterior_transform: PosteriorTransform | None = None,
+    X_baseline: Tensor | None = None,
+    infeasible_obj: Tensor | None = None,
 ) -> Tensor:
     """Computes the largest `obj` value that is feasible under the `constraints`. If
     `constraints` is None, returns the best unconstrained objective value.
@@ -165,8 +165,8 @@ def compute_best_feasible_objective(
 
 def _estimate_objective_lower_bound(
     model: Model,
-    objective: Optional[MCAcquisitionObjective],
-    posterior_transform: Optional[PosteriorTransform],
+    objective: MCAcquisitionObjective | None,
+    posterior_transform: PosteriorTransform | None,
     X: Tensor,
 ) -> Tensor:
     """Estimates a lower bound on the objective values by evaluating the model at convex
@@ -203,8 +203,8 @@ def _estimate_objective_lower_bound(
 def get_infeasible_cost(
     X: Tensor,
     model: Model,
-    objective: Optional[Callable[[Tensor, Optional[Tensor]], Tensor]] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
+    objective: Callable[[Tensor, Tensor | None], Tensor] | None = None,
+    posterior_transform: PosteriorTransform | None = None,
 ) -> Tensor:
     r"""Get infeasible cost for a model and objective.
 
@@ -229,7 +229,7 @@ def get_infeasible_cost(
     """
     if objective is None:
 
-        def objective(Y: Tensor, X: Optional[Tensor] = None):
+        def objective(Y: Tensor, X: Tensor | None = None):
             return Y.squeeze(-1)
 
     posterior = model.posterior(X, posterior_transform=posterior_transform)
@@ -245,13 +245,13 @@ def get_infeasible_cost(
 def prune_inferior_points(
     model: Model,
     X: Tensor,
-    objective: Optional[MCAcquisitionObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
-    constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
+    objective: MCAcquisitionObjective | None = None,
+    posterior_transform: PosteriorTransform | None = None,
+    constraints: list[Callable[[Tensor], Tensor]] | None = None,
     num_samples: int = 2048,
     max_frac: float = 1.0,
-    sampler: Optional[MCSampler] = None,
-    marginalize_dim: Optional[int] = None,
+    sampler: MCSampler | None = None,
+    marginalize_dim: int | None = None,
 ) -> Tensor:
     r"""Prune points from an input tensor that are unlikely to be the best point.
 
@@ -352,8 +352,8 @@ def prune_inferior_points(
 
 def project_to_target_fidelity(
     X: Tensor,
-    target_fidelities: Optional[dict[int, float]] = None,
-    d: Optional[int] = None,
+    target_fidelities: dict[int, float] | None = None,
+    d: int | None = None,
 ) -> Tensor:
     r"""Project `X` onto the target set of fidelities.
 
@@ -414,7 +414,7 @@ def project_to_target_fidelity(
 
 
 def expand_trace_observations(
-    X: Tensor, fidelity_dims: Optional[list[int]] = None, num_trace_obs: int = 0
+    X: Tensor, fidelity_dims: list[int] | None = None, num_trace_obs: int = 0
 ) -> Tensor:
     r"""Expand `X` with trace observations.
 

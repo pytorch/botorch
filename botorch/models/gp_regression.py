@@ -31,7 +31,7 @@ When modeling correlations between outputs, use a multi-task model like `MultiTa
 from __future__ import annotations
 
 import warnings
-from typing import NoReturn, Optional, Union
+from typing import NoReturn
 
 import torch
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
@@ -131,12 +131,12 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        train_Yvar: Optional[Tensor] = None,
-        likelihood: Optional[Likelihood] = None,
-        covar_module: Optional[Module] = None,
-        mean_module: Optional[Mean] = None,
-        outcome_transform: Optional[Union[OutcomeTransform, _DefaultType]] = DEFAULT,
-        input_transform: Optional[InputTransform] = None,
+        train_Yvar: Tensor | None = None,
+        likelihood: Likelihood | None = None,
+        covar_module: Module | None = None,
+        mean_module: Mean | None = None,
+        outcome_transform: OutcomeTransform | _DefaultType | None = DEFAULT,
+        input_transform: InputTransform | None = None,
     ) -> None:
         r"""
         Args:
@@ -224,8 +224,8 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
 
     @classmethod
     def construct_inputs(
-        cls, training_data: SupervisedDataset, *, task_feature: Optional[int] = None
-    ) -> dict[str, Union[BotorchContainer, Tensor]]:
+        cls, training_data: SupervisedDataset, *, task_feature: int | None = None
+    ) -> dict[str, BotorchContainer | Tensor]:
         r"""Construct `SingleTaskGP` keyword arguments from a `SupervisedDataset`.
 
         Args:
@@ -280,8 +280,8 @@ class HeteroskedasticSingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         train_X: Tensor,
         train_Y: Tensor,
         train_Yvar: Tensor,
-        outcome_transform: Optional[OutcomeTransform] = None,
-        input_transform: Optional[InputTransform] = None,
+        outcome_transform: OutcomeTransform | None = None,
+        input_transform: InputTransform | None = None,
     ) -> None:
         r"""
         Args:

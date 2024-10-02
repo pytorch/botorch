@@ -4,7 +4,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Optional
 
 import torch
 from botorch.exceptions.errors import InputDataError, UnsupportedError
@@ -25,9 +24,9 @@ def make_dataset(
     d: int = 2,
     m: int = 1,
     has_yvar: bool = False,
-    feature_names: Optional[list[str]] = None,
-    outcome_names: Optional[list[str]] = None,
-    batch_shape: Optional[torch.Size] = None,
+    feature_names: list[str] | None = None,
+    outcome_names: list[str] | None = None,
+    batch_shape: torch.Size | None = None,
 ) -> SupervisedDataset:
     feature_names = feature_names or [f"x{i}" for i in range(d)]
     outcome_names = outcome_names or [f"y{i}" for i in range(m)]

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import warnings
 from contextlib import ExitStack
-from typing import Any, Optional, Union
+from typing import Any
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
@@ -64,7 +64,7 @@ class FlattenedStandardize(Standardize):
     def __init__(
         self,
         output_shape: torch.Size,
-        batch_shape: Optional[torch.Size] = None,
+        batch_shape: torch.Size | None = None,
         min_stdv: float = 1e-8,
     ):
         r"""
@@ -77,9 +77,7 @@ class FlattenedStandardize(Standardize):
         if batch_shape is None:
             batch_shape = torch.Size()
 
-        super(FlattenedStandardize, self).__init__(
-            m=1, outputs=None, batch_shape=batch_shape, min_stdv=min_stdv
-        )
+        super().__init__(m=1, outputs=None, batch_shape=batch_shape, min_stdv=min_stdv)
 
         self.output_shape = output_shape
         self.batch_shape = batch_shape
@@ -93,8 +91,8 @@ class FlattenedStandardize(Standardize):
         return out
 
     def forward(
-        self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> tuple[Tensor, Optional[Tensor]]:
+        self, Y: Tensor, Yvar: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
         Y = self._squeeze_to_single_output(Y)
         if Yvar is not None:
             Yvar = self._squeeze_to_single_output(Yvar)
@@ -109,8 +107,8 @@ class FlattenedStandardize(Standardize):
         return Y_out, Yvar_out
 
     def untransform(
-        self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> tuple[Tensor, Optional[Tensor]]:
+        self, Y: Tensor, Yvar: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
         Y = self._squeeze_to_single_output(Y)
         if Yvar is not None:
             Yvar = self._squeeze_to_single_output(Yvar)
@@ -180,13 +178,13 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        likelihood: Optional[Likelihood] = None,
-        covar_modules: Optional[list[Kernel]] = None,
-        num_latent_dims: Optional[list[int]] = None,
+        likelihood: Likelihood | None = None,
+        covar_modules: list[Kernel] | None = None,
+        num_latent_dims: list[int] | None = None,
         learn_latent_pars: bool = True,
         latent_init: str = "default",
-        outcome_transform: Union[OutcomeTransform, _DefaultType, None] = DEFAULT,
-        input_transform: Optional[InputTransform] = None,
+        outcome_transform: OutcomeTransform | _DefaultType | None = DEFAULT,
+        input_transform: InputTransform | None = None,
     ):
         r"""
         Args:
@@ -390,7 +388,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         return super().get_fantasy_model(inputs, reshaped_targets, **kwargs)
 
     def condition_on_observations(
-        self, X: Tensor, Y: Tensor, noise: Optional[torch.Tensor] = None, **kwargs: Any
+        self, X: Tensor, Y: Tensor, noise: torch.Tensor | None = None, **kwargs: Any
     ) -> HigherOrderGP:
         r"""Condition the model on new observations.
 
@@ -439,9 +437,9 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[list[int]] = None,
-        observation_noise: Union[bool, Tensor] = False,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        output_indices: list[int] | None = None,
+        observation_noise: bool | Tensor = False,
+        posterior_transform: PosteriorTransform | None = None,
     ) -> GPyTorchPosterior:
         self.eval()  # make sure we're calling a posterior
 

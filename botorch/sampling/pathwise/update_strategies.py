@@ -6,9 +6,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from types import NoneType
 
-from typing import Any, Callable, Optional, Union
+from typing import Any
 
 import torch
 from botorch.models.approximate_gp import ApproximateGPyTorchModel
@@ -41,7 +43,7 @@ GaussianUpdate = Dispatcher("gaussian_update")
 def gaussian_update(
     model: GP,
     sample_values: Tensor,
-    likelihood: Optional[Likelihood] = DEFAULT,
+    likelihood: Likelihood | None = DEFAULT,
     **kwargs: Any,
 ) -> GeneralizedLinearPath:
     r"""Computes a Gaussian pathwise update in exact arithmetic:
@@ -74,9 +76,9 @@ def _gaussian_update_exact(
     points: Tensor,
     target_values: Tensor,
     sample_values: Tensor,
-    noise_covariance: Optional[Union[Tensor, LinearOperator]] = None,
-    scale_tril: Optional[Union[Tensor, LinearOperator]] = None,
-    input_transform: Optional[TInputTransform] = None,
+    noise_covariance: Tensor | LinearOperator | None = None,
+    scale_tril: Tensor | LinearOperator | None = None,
+    input_transform: TInputTransform | None = None,
 ) -> GeneralizedLinearPath:
     # Prepare Cholesky factor of `Cov(y, y)` and noise sample values as needed
     if isinstance(noise_covariance, (NoneType, ZeroLinearOperator)):
@@ -110,10 +112,10 @@ def _gaussian_update_ExactGP(
     likelihood: _GaussianLikelihoodBase,
     *,
     sample_values: Tensor,
-    target_values: Optional[Tensor] = None,
-    points: Optional[Tensor] = None,
-    noise_covariance: Optional[Union[Tensor, LinearOperator]] = None,
-    scale_tril: Optional[Union[Tensor, LinearOperator]] = None,
+    target_values: Tensor | None = None,
+    points: Tensor | None = None,
+    noise_covariance: Tensor | LinearOperator | None = None,
+    scale_tril: Tensor | LinearOperator | None = None,
 ) -> GeneralizedLinearPath:
     if points is None:
         (points,) = get_train_inputs(model, transformed=True)
@@ -138,7 +140,7 @@ def _gaussian_update_ExactGP(
 @GaussianUpdate.register(ApproximateGPyTorchModel, (Likelihood, NoneType))
 def _gaussian_update_ApproximateGPyTorchModel(
     model: ApproximateGPyTorchModel,
-    likelihood: Optional[Likelihood],
+    likelihood: Likelihood | None,
     **kwargs: Any,
 ) -> GeneralizedLinearPath:
     return GaussianUpdate(
@@ -148,7 +150,7 @@ def _gaussian_update_ApproximateGPyTorchModel(
 
 @GaussianUpdate.register(ApproximateGP, (Likelihood, NoneType))
 def _gaussian_update_ApproximateGP(
-    model: ApproximateGP, likelihood: Optional[Likelihood], **kwargs: Any
+    model: ApproximateGP, likelihood: Likelihood | None, **kwargs: Any
 ) -> GeneralizedLinearPath:
     return GaussianUpdate(model, model.variational_strategy, **kwargs)
 
@@ -159,9 +161,9 @@ def _gaussian_update_ApproximateGP_VariationalStrategy(
     _: VariationalStrategy,
     *,
     sample_values: Tensor,
-    target_values: Optional[Tensor] = None,
-    noise_covariance: Optional[Union[Tensor, LinearOperator]] = None,
-    input_transform: Optional[InputTransform] = None,
+    target_values: Tensor | None = None,
+    noise_covariance: Tensor | LinearOperator | None = None,
+    input_transform: InputTransform | None = None,
     **ignore: Any,
 ) -> GeneralizedLinearPath:
     # TODO: Account for jitter added by `psd_safe_cholesky`
