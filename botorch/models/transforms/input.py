@@ -24,7 +24,7 @@ import numpy as np
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.exceptions.warnings import UserInputWarning
-from botorch.models.transforms.utils import subset_transform
+from botorch.models.transforms.utils import interaction_features, subset_transform
 from botorch.models.utils import fantasize
 from botorch.utils.rounding import approximate_round, OneHotArgmaxSTE, RoundSTE
 from gpytorch import Module as GPyTorchModule
@@ -1368,6 +1368,30 @@ class AppendFeatures(InputTransform, Module):
 
         appended_X = torch.cat([expanded_X, expanded_features], dim=-1)
         return appended_X.view(*X.shape[:-2], -1, appended_X.shape[-1])
+
+
+class InteractionFeatures(AppendFeatures):
+    r"""A transform that appends the first-order interaction terms $x_i * x_j, i < j$,
+    for all or a subset of the input variables."""
+
+    def __init__(
+        self,
+        indices: Optional[list[int]] = None,
+    ) -> None:
+        r"""Initializes the InteractionFeatures transform.
+
+        Args:
+            indices: Indices of the subset of dimensions to compute interaction
+                features on.
+        """
+
+        super().__init__(
+            f=interaction_features,
+            indices=indices,
+            transform_on_train=True,
+            transform_on_eval=True,
+            transform_on_fantasize=True,
+        )
 
 
 class FilterFeatures(InputTransform, Module):

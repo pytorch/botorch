@@ -20,6 +20,7 @@ from botorch.models.transforms.input import (
     InputPerturbation,
     InputStandardize,
     InputTransform,
+    InteractionFeatures,
     Log10,
     Normalize,
     OneHotToNumeric,
@@ -1627,6 +1628,45 @@ class TestAppendFeatures(BotorchTestCase):
             transform.train()
             X_transformed = transform(X)
             self.assertEqual(X_transformed.shape, torch.Size((10, 4)))
+
+
+class TestInteractionFeatures(BotorchTestCase):
+    def test_interaction_features(self) -> None:
+        interaction = InteractionFeatures()
+        X = torch.arange(6, dtype=torch.float).reshape(2, 3)
+        X_tf = interaction(X)
+        self.assertTrue(X_tf.shape, torch.Size([2, 6]))
+
+        # test correct output values
+        self.assertTrue(
+            torch.equal(
+                X_tf,
+                torch.tensor(
+                    [[0.0, 1.0, 2.0, 0.0, 0.0, 2.0], [3.0, 4.0, 5.0, 12.0, 15.0, 20.0]]
+                ),
+            )
+        )
+        X = torch.arange(6, dtype=torch.float).reshape(2, 3)
+        interaction = InteractionFeatures(indices=[1, 2])
+        X_tf = interaction(X)
+        self.assertTrue(
+            torch.equal(
+                X_tf,
+                torch.tensor([[0.0, 1.0, 2.0, 2.0], [3.0, 4.0, 5.0, 20.0]]),
+            )
+        )
+        with self.assertRaisesRegex(
+            IndexError, "index 2 is out of bounds for dimension 0 with size 2"
+        ):
+            interaction(torch.rand(4, 2))
+
+        # test batched evaluation
+        interaction = InteractionFeatures()
+        X_tf = interaction(torch.rand(4, 2, 4))
+        self.assertTrue(X_tf.shape, torch.Size([4, 2, 10]))
+
+        X_tf = interaction(torch.rand(5, 7, 3, 4))
+        self.assertTrue(X_tf.shape, torch.Size([5, 7, 3, 10]))
 
 
 class TestFilterFeatures(BotorchTestCase):
