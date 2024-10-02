@@ -4,7 +4,7 @@ on:
   schedule:
     # 2:30 PST
     - cron:  '30 10 * * *'
-  pull_rquest:
+  pull_request:
     branches: [main]
   workflow_dispatch:
 
